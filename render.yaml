@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: omni-data-hub
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.server:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: AZURE_AI_FOUNDRY_ENDPOINT
+        value: https://genai-demos-resource.services.ai.azure.com/anthropic
+      - key: AZURE_AI_FOUNDRY_DEPLOYMENT
+        value: claude-sonnet-5
+      - key: AZURE_AI_FOUNDRY_API_KEY
+        sync: false

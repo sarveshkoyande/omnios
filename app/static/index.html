@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Omni OS — Campaign Planning Agent</title>
+<style>
+  :root {
+    --bg: #0b0d12; --panel: #12151d; --panel-2: #171b25; --line: #232838;
+    --text: #e7e9ee; --muted: #8b93a4; --faint: #5b6373;
+    --accent: #5b8cff; --accent-dim: #2b3350; --accent-soft: rgba(91,140,255,0.14);
+    --green: #46d39a; --amber: #f0b45b; --red: #ff6b6b;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    background: var(--bg); color: var(--text); font-size: 14px;
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  a { color: #8fb0ff; }
+
+  /* ---- top bar ---- */
+  .topbar {
+    height: 48px; flex: 0 0 48px; display: flex; align-items: center; gap: 10px;
+    padding: 0 16px; border-bottom: 1px solid var(--line); background: var(--panel);
+  }
+  .wordmark { font-weight: 700; letter-spacing: 0.02em; }
+  .wordmark .diamond { color: var(--accent); }
+  .topbar .sub { color: var(--muted); font-size: 12.5px; }
+  .live-pill { margin-left: auto; display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--muted);
+    border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; }
+  .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 0 rgba(70,211,154,0.6); animation: pulse 2s infinite; }
+
+  /* ---- 3-pane layout ---- */
+  .app { flex: 1; display: flex; min-height: 0; }
+  .rail-left { flex: 0 0 208px; border-right: 1px solid var(--line); background: var(--panel); display: flex; flex-direction: column; min-height: 0; }
+  .center { flex: 1 1 auto; display: flex; flex-direction: column; min-width: 300px; min-height: 0; }
+  .rail-right { flex: 0 0 780px; min-width: 520px; border-left: 1px solid var(--line); background: var(--panel); display: flex; flex-direction: column; min-height: 0; container-type: inline-size; }
+
+  /* ---- left rail ---- */
+  .rail-head { padding: 14px 14px 10px; display: flex; align-items: center; justify-content: space-between; }
+  .rail-head h3 { margin: 0; font-size: 12px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--faint); }
+  .btn-new { background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 7px 12px; font-weight: 600; cursor: pointer; font-size: 13px; }
+  .btn-new:hover { background: #4a7bf0; }
+  .project-list { overflow-y: auto; padding: 4px 8px 12px; flex: 1; }
+  .project { padding: 9px 10px; border-radius: 8px; cursor: pointer; margin-bottom: 3px; border: 1px solid transparent; }
+  .project:hover { background: var(--panel-2); }
+  .project.active { background: var(--accent-soft); border-color: rgba(91,140,255,0.35); }
+  .project .p-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .project .p-meta { font-size: 11px; color: var(--faint); margin-top: 3px; display: flex; align-items: center; gap: 6px; }
+  .phase-badge { font-size: 10px; padding: 1px 7px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.03em; }
+  .phase-collecting { background: rgba(240,180,91,0.16); color: var(--amber); }
+  .phase-running { background: var(--accent-soft); color: var(--accent); }
+  .phase-done { background: rgba(70,211,154,0.16); color: var(--green); }
+  .rail-foot { padding: 10px 14px; border-top: 1px solid var(--line); font-size: 11px; color: var(--faint); }
+
+  /* ---- center chat ---- */
+  .chat-head { flex: 0 0 auto; padding: 12px 18px; border-bottom: 1px solid var(--line); }
+  .chat-head .title { font-weight: 600; }
+  .chat-head .desc { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .messages { flex: 1; overflow-y: auto; padding: 20px 18px 8px; }
+  .msg { display: flex; gap: 10px; margin-bottom: 16px; max-width: 760px; }
+  .msg .avatar { flex: 0 0 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; margin-top: 2px; }
+  .msg.agent .avatar { background: var(--accent-soft); color: var(--accent); border: 1px solid rgba(91,140,255,0.35); }
+  .msg.user { flex-direction: row-reverse; margin-left: auto; }
+  .msg.user .avatar { background: #2a2f3d; color: var(--text); }
+  .bubble { border-radius: 12px; padding: 10px 14px; line-height: 1.5; }
+  .msg.agent .bubble { background: var(--panel-2); border: 1px solid var(--line); border-top-left-radius: 4px; }
+  .msg.user .bubble { background: var(--accent); color: #fff; border-top-right-radius: 4px; }
+  .msg.narration .bubble { background: transparent; border: 1px dashed var(--line); color: var(--muted); font-size: 13px; }
+  .bubble strong { color: #fff; }
+  .msg.agent .bubble strong { color: #cdd7ff; }
+  .typing { display: inline-flex; gap: 4px; align-items: center; }
+  .typing span { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); animation: blink 1.3s infinite; }
+  .typing span:nth-child(2) { animation-delay: 0.2s; } .typing span:nth-child(3) { animation-delay: 0.4s; }
+
+  .composer { flex: 0 0 auto; padding: 12px 18px 16px; border-top: 1px solid var(--line); }
+  .composer .box { display: flex; gap: 8px; align-items: flex-end; background: var(--panel-2); border: 1px solid var(--line); border-radius: 12px; padding: 8px 8px 8px 14px; }
+  .composer textarea { flex: 1; resize: none; border: none; background: transparent; color: var(--text); font: inherit; outline: none; max-height: 120px; line-height: 1.4; padding: 4px 0; }
+  .composer .send { background: var(--accent); color: #fff; border: none; border-radius: 9px; width: 36px; height: 36px; cursor: pointer; font-size: 16px; flex: 0 0 auto; }
+  .composer .send:disabled { background: #2a2f3d; color: var(--faint); cursor: not-allowed; }
+  .composer .hint { font-size: 11px; color: var(--faint); margin-top: 6px; padding-left: 4px; }
+
+  /* ---- right rail ---- */
+  .rail-right .rr-scroll { overflow-y: auto; padding: 14px; flex: 1; }
+  .card { background: var(--panel-2); border: 1px solid var(--line); border-radius: 12px; padding: 14px; margin-bottom: 14px; }
+  .card h4 { margin: 0 0 10px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--faint); display: flex; align-items: center; gap: 8px; }
+  .brief-row { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+  .brief-row:last-child { border-bottom: none; }
+  .brief-row .k { color: var(--muted); flex: 0 0 auto; }
+  .brief-row .v { text-align: right; color: var(--faint); }
+  .brief-row .v.filled { color: var(--text); font-weight: 600; }
+  .chips { display: flex; flex-wrap: wrap; gap: 5px; justify-content: flex-end; }
+  .chip { background: #232838; border-radius: 999px; padding: 2px 9px; font-size: 11.5px; }
+
+  .agent-card { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .agent-card:last-child { border-bottom: none; }
+  .agent-ico { flex: 0 0 30px; height: 30px; border-radius: 8px; background: #1c2130; display: flex; align-items: center; justify-content: center; font-size: 15px; position: relative; }
+  .agent-body { flex: 1; min-width: 0; }
+  .agent-top { display: flex; align-items: center; gap: 8px; }
+  .agent-name { font-size: 13px; font-weight: 600; }
+  .agent-status { margin-left: auto; width: 8px; height: 8px; border-radius: 50%; flex: 0 0 auto; }
+  .st-queued { background: #3a4152; }
+  .st-running { background: var(--amber); box-shadow: 0 0 0 0 rgba(240,180,91,0.6); animation: pulse 1.4s infinite; }
+  .st-done { background: var(--green); }
+  .agent-summary { font-size: 12px; color: var(--muted); margin-top: 3px; line-height: 1.4; }
+  .agent-summary.running-txt { color: var(--amber); }
+  .agent-detail { margin-top: 6px; font-size: 11.5px; color: var(--faint); }
+  .agent-detail ul { margin: 4px 0 0; padding-left: 16px; } .agent-detail li { margin-bottom: 3px; }
+  .agent-toggle { font-size: 11px; color: var(--accent); cursor: pointer; margin-top: 4px; display: inline-block; }
+  .shimmer { height: 3px; border-radius: 3px; margin-top: 7px; background: linear-gradient(90deg, #1c2130 25%, #3a4a7a 37%, #1c2130 63%); background-size: 400% 100%; animation: shimmer 1.3s ease infinite; }
+
+  /* ---- plan ---- */
+  .plan-actions { display: flex; gap: 8px; margin-bottom: 12px; }
+  .plan-actions button { flex: 1; background: #1c2130; border: 1px solid var(--line); color: var(--text); border-radius: 8px; padding: 8px; cursor: pointer; font-size: 12.5px; font-weight: 600; }
+  .plan-actions button:hover { background: #232838; }
+  .plan-actions .primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .plan-doc-body { font-size: 12.5px; line-height: 1.55; }
+  .plan-doc-body h1 { font-size: 16px; margin: 0 0 4px; }
+  .plan-doc-body h2 { font-size: 13.5px; margin: 16px 0 6px; padding-top: 10px; border-top: 1px solid var(--line); color: #cdd7ff; }
+  .plan-doc-body h3 { font-size: 12px; margin: 10px 0 4px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  .plan-doc-body p { margin: 6px 0; }
+  .plan-doc-body ul { margin: 4px 0; padding-left: 18px; } .plan-doc-body li { margin-bottom: 3px; }
+  .plan-sub { color: var(--muted); font-size: 11.5px; }
+  .plan-kv, .plan-table { width: 100%; border-collapse: collapse; margin: 6px 0; font-size: 11.5px; }
+  .plan-kv th { text-align: left; color: var(--muted); font-weight: 500; padding: 3px 8px 3px 0; vertical-align: top; white-space: nowrap; }
+  .plan-kv td { padding: 3px 0; }
+  .plan-table th, .plan-table td { border: 1px solid var(--line); padding: 4px 6px; text-align: left; }
+  .plan-table th { color: var(--muted); }
+  .plan-statement { border-left: 3px solid var(--accent); margin: 6px 0; padding: 8px 12px; background: var(--accent-soft); border-radius: 0 8px 8px 0; font-style: italic; }
+  .plan-doc { margin: 3px 0; } .plan-src { color: var(--faint); font-size: 10px; text-transform: uppercase; letter-spacing: 0.03em; margin-right: 5px; }
+  .plan-empty { color: var(--faint); font-style: italic; }
+  .plan-caveat { color: var(--faint); font-style: italic; font-size: 11px; }
+  .plan-bar-row { display: flex; align-items: center; gap: 8px; margin: 4px 0; font-size: 11.5px; }
+  .plan-bar-label { flex: 0 0 96px; color: var(--muted); }
+  .plan-bar-track { flex: 1; height: 12px; background: #12151d; border-radius: 3px; overflow: hidden; }
+  .plan-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), #8fb0ff); }
+  .plan-bar-val { flex: 0 0 auto; color: var(--faint); font-size: 11px; }
+
+  .empty-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--faint); text-align: center; gap: 12px; padding: 40px; }
+  .empty-state .big { font-size: 40px; opacity: 0.6; }
+  .muted-card { color: var(--faint); font-size: 12.5px; font-style: italic; }
+
+  /* ---- right-rail grid (Brief + Agents side by side, Plan full width) ---- */
+  .rr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; margin-bottom: 14px; }
+  .rr-grid .card { margin-bottom: 0; }
+  @container (max-width: 660px) { .rr-grid { grid-template-columns: 1fr; } }
+
+  /* ---- in-chat agent turns (the team working & handing off) ---- */
+  .msg.turn { animation: turnIn .35s ease; }
+  .msg.turn .avatar { background: #1c2130; background: color-mix(in srgb, var(--c) 20%, #1c2130); color: var(--c); border: 1px solid var(--c); }
+  .turn-bubble { border-left: 2px solid var(--c); }
+  .turn-name { font-size: 11px; font-weight: 700; letter-spacing: 0.02em; margin-bottom: 3px; color: var(--c); }
+  .turn-result { margin-top: 7px; font-size: 12.5px; color: var(--muted); border-top: 1px dashed var(--line); padding-top: 6px; }
+  .turn-result strong { color: #cdd7ff; }
+  .turn-work { margin-top: 5px; }
+
+  .handoff { display: flex; align-items: center; gap: 10px; justify-content: center; margin: -4px 0 16px; font-size: 11px; color: var(--faint); opacity: 0; animation: hoIn .4s ease forwards; }
+  .handoff .ho-a, .handoff .ho-b { background: #171b25; border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; white-space: nowrap; }
+  .handoff .ho-b { color: var(--text); border-color: rgba(91,140,255,0.4); }
+  .ho-track { position: relative; width: 64px; height: 2px; background: linear-gradient(90deg, var(--line), #3a4a7a, var(--line)); border-radius: 2px; }
+  .ho-dot { position: absolute; top: -2px; left: 0; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); animation: hoDot 1.1s ease-in-out infinite; }
+  @keyframes turnIn { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: none; } }
+  @keyframes hoIn { to { opacity: 1; } }
+  @keyframes hoDot { 0% { left: 0; } 100% { left: 58px; } }
+
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 currentColor; } 70% { box-shadow: 0 0 0 6px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+  @keyframes blink { 0%, 60%, 100% { opacity: 0.3; } 30% { opacity: 1; } }
+  @keyframes shimmer { 0% { background-position: 100% 0; } 100% { background-position: 0 0; } }
+  ::-webkit-scrollbar { width: 9px; height: 9px; } ::-webkit-scrollbar-thumb { background: #232838; border-radius: 5px; } ::-webkit-scrollbar-track { background: transparent; }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <span class="wordmark"><span class="diamond">◇</span> Omni OS</span>
+    <span class="sub">· Campaign Planning Agent</span>
+    <span class="live-pill" id="llm-pill" style="margin-left:auto" title="Conversation engine">◦ chat: rules</span>
+    <span class="live-pill" style="margin-left:8px"><span class="live-dot"></span> agents online</span>
+  </div>
+  <div id="llm-log" style="display:none; font-size:11.5px; padding:4px 14px; border-bottom:1px solid var(--line); color:var(--muted); background:rgba(255,255,255,0.02)"></div>
+
+  <div class="app">
+    <!-- LEFT: projects -->
+    <aside class="rail-left">
+      <div class="rail-head">
+        <h3>Plans</h3>
+        <button class="btn-new" id="new-plan">+ New</button>
+      </div>
+      <div class="project-list" id="project-list"></div>
+      <div class="rail-foot">Each plan is a saved conversation + campaign document. Frameworks: see the Omni OS docs in your vault.</div>
+    </aside>
+
+    <!-- CENTER: chat -->
+    <main class="center" id="center">
+      <div class="empty-state" id="empty-state">
+        <div class="big">◇</div>
+        <div><strong>No plan open.</strong><br>Start a new plan and just tell the agent what you're working on —<br>which brand, which therapy area, where it is in its lifecycle.</div>
+        <button class="btn-new" id="empty-new">+ New plan</button>
+      </div>
+      <div class="chat-head" id="chat-head" style="display:none">
+        <div class="title" id="chat-title">Untitled plan</div>
+        <div class="desc">The agent captures your brief in conversation, then runs its research agents on the right.</div>
+      </div>
+      <div class="messages" id="messages" style="display:none"></div>
+      <div class="composer" id="composer" style="display:none">
+        <div class="box">
+          <textarea id="input" rows="1" placeholder="Message the planning agent…"></textarea>
+          <button class="send" id="send">↑</button>
+        </div>
+        <div class="hint">Enter to send · Shift+Enter for a new line. No forms — the agent fills the brief on the right as you talk.</div>
+      </div>
+    </main>
+
+    <!-- RIGHT: workspace -->
+    <aside class="rail-right">
+      <div class="rr-scroll">
+        <div class="rr-grid">
+          <div class="card" id="brief-card">
+            <h4>📋 Brief</h4>
+            <div id="brief-body">
+              <div class="muted-card">The brief fills in here as you talk to the agent.</div>
+            </div>
+          </div>
+          <div class="card" id="agents-card">
+            <h4>🤖 Agent team</h4>
+            <div id="agents-body"><div class="muted-card">The agent team appears here and works in real time once the brief is complete.</div></div>
+          </div>
+        </div>
+        <div class="card" id="plan-card" style="display:none">
+          <h4>📝 Campaign Plan</h4>
+          <div class="plan-actions">
+            <button class="primary" id="download-plan">⬇ Download .md</button>
+            <button id="copy-plan">⧉ Copy</button>
+          </div>
+          <div class="plan-doc-body" id="plan-body"></div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+<script>
+const state = {
+  projectId: null,
+  projectName: null,
+  slots: { brand:"", therapy_area:"", lifecycle_key:"", budget:0 },
+  inferred: { persona:"", stage_label:"", lifecycle_label:"", competitors:[] },
+  planMarkdown: null,
+  es: null,
+  busy: false,
+};
+
+const AGENT_COLORS = { lifecycle:"#8b7bff", market:"#5b8cff", competitors:"#46d39a", strategy:"#f0b45b", swot:"#ff6b6b", positioning:"#3fb6d3", budget:"#c58bff", kpi:"#5bd0a0", compose:"#8fb0ff" };
+let agentMeta = {};
+
+const $ = (id) => document.getElementById(id);
+
+function renderInline(text) {
+  const esc = (text || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  return esc.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+           .replace(/\*(.+?)\*/g, "<em>$1</em>")
+           .replace(/\n/g, "<br>");
+}
+
+// ---------- projects ----------
+async function loadProjects() {
+  const res = await fetch("/api/projects");
+  const projects = await res.json();
+  const list = $("project-list");
+  list.innerHTML = "";
+  if (!projects.length) {
+    list.innerHTML = `<div class="muted-card" style="padding:10px">No plans yet.</div>`;
+  }
+  projects.forEach(p => {
+    const el = document.createElement("div");
+    el.className = "project" + (p.id === state.projectId ? " active" : "");
+    el.innerHTML = `<div class="p-name">${renderInline(p.name)}</div>
+      <div class="p-meta"><span class="phase-badge phase-${p.phase}">${p.phase}</span></div>`;
+    el.onclick = () => openProject(p.id);
+    list.appendChild(el);
+  });
+}
+
+async function newProject() {
+  const res = await fetch("/api/projects", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({name:"Untitled plan"}) });
+  const proj = await res.json();
+  await loadProjects();
+  await openProject(proj.id);
+  $("input").focus();
+}
+
+async function openProject(id) {
+  if (state.es) { state.es.close(); state.es = null; }
+  const res = await fetch("/api/projects/" + id);
+  const proj = await res.json();
+  state.projectId = proj.id;
+  state.projectName = proj.name;
+  state.slots = proj.state.slots;
+  state.planMarkdown = proj.plan_markdown || null;
+
+  $("empty-state").style.display = "none";
+  $("chat-head").style.display = "block";
+  $("messages").style.display = "block";
+  $("composer").style.display = "block";
+  $("chat-title").textContent = proj.name;
+
+  // messages
+  $("messages").innerHTML = "";
+  proj.messages.forEach(m => addMessage(m.role, m.text));
+  scrollChat();
+
+  // brief + inferred (from persisted result if present)
+  if (proj.result) {
+    const inf = proj.result.inferred_inputs;
+    state.inferred = { persona: inf.persona, stage_label: inf.stage_label, lifecycle_label: inf.lifecycle_label, competitors: inf.discovered_competitors };
+  } else {
+    state.inferred = { persona:"", stage_label:"", lifecycle_label:"", competitors:[] };
+  }
+  renderBrief();
+
+  // agents + plan
+  if (proj.result) { renderAgentsDoneFromResult(proj.result); }
+  else { $("agents-body").innerHTML = `<div class="muted-card">Agents appear here and work in real time once the brief is complete.</div>`; }
+
+  if (proj.plan_html) { showPlan(proj.plan_html, proj.plan_markdown); }
+  else { $("plan-card").style.display = "none"; }
+
+  await loadProjects();
+}
+
+// ---------- chat ----------
+function addMessage(role, text, isNarration) {
+  const m = document.createElement("div");
+  m.className = "msg " + role + (isNarration ? " narration" : "");
+  const av = role === "agent" ? "◇" : "You";
+  m.innerHTML = `<div class="avatar">${av === "You" ? "Y" : av}</div><div class="bubble">${renderInline(text)}</div>`;
+  $("messages").appendChild(m);
+  return m;
+}
+function addTyping() {
+  const m = document.createElement("div");
+  m.className = "msg agent"; m.id = "typing-indicator";
+  m.innerHTML = `<div class="avatar">◇</div><div class="bubble"><span class="typing"><span></span><span></span><span></span></span></div>`;
+  $("messages").appendChild(m); scrollChat();
+}
+function removeTyping() { const t = $("typing-indicator"); if (t) t.remove(); }
+function scrollChat() { const el = $("messages"); el.scrollTop = el.scrollHeight; }
+
+async function sendMessage() {
+  const input = $("input");
+  const text = input.value.trim();
+  if (!text || state.busy || !state.projectId) return;
+  input.value = ""; autoGrow();
+  addMessage("user", text); scrollChat();
+  state.busy = true; $("send").disabled = true;
+  addTyping();
+  try {
+    const res = await fetch("/api/chat", { method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ project_id: state.projectId, message: text }) });
+    const data = await res.json();
+    removeTyping();
+    state.slots = data.slots;
+    if (data.name && data.name !== state.projectName) { state.projectName = data.name; $("chat-title").textContent = data.name; }
+    addMessage("agent", data.reply); scrollChat();
+    updateLlmStatus(data.llm_status, true);
+    renderBrief();
+    await loadProjects();
+    if (data.action === "run") { startRun(); }
+  } catch (e) {
+    removeTyping(); addMessage("agent", "⚠ Something went wrong reaching the agent. Try again.");
+  } finally {
+    state.busy = false; $("send").disabled = false; input.focus();
+  }
+}
+
+// ---------- run (SSE) ----------
+function startRun() {
+  // reset workspace
+  $("plan-card").style.display = "none";
+  $("agents-body").innerHTML = "";
+  state.busy = true; $("send").disabled = true;
+  const es = new EventSource("/api/run-stream?project_id=" + encodeURIComponent(state.projectId));
+  state.es = es;
+  let closedCleanly = false;
+  es.onmessage = (evt) => {
+    const ev = JSON.parse(evt.data);
+    handleRunEvent(ev);
+    if (ev.type === "done") { closedCleanly = true; es.close(); state.es = null; finishRun(); }
+  };
+  es.onerror = () => {
+    if (!closedCleanly) { es.close(); state.es = null; addMessage("agent", "⚠ The research run was interrupted. You can ask me to re-run."); finishRun(); }
+  };
+}
+function finishRun() { state.busy = false; $("send").disabled = false; loadProjects(); }
+
+function handleRunEvent(ev) {
+  switch (ev.type) {
+    case "agents_init": initAgents(ev.agents); break;
+    case "agent":
+      updateAgent(ev);
+      if (ev.status === "running") postAgentTurnStart(ev.id, ev.say);
+      else if (ev.status === "done") completeAgentTurn(ev.id, ev.summary);
+      break;
+    case "handoff": postHandoff(ev.from_name, ev.to_name); break;
+    case "inferred":
+      if (ev.persona) state.inferred.persona = ev.persona;
+      if (ev.stage_label) state.inferred.stage_label = ev.stage_label;
+      if (ev.lifecycle_label) state.inferred.lifecycle_label = ev.lifecycle_label;
+      if (ev.competitors) state.inferred.competitors = ev.competitors;
+      renderBrief();
+      break;
+    case "narration": addMessage("agent", ev.text); scrollChat(); break;
+    case "plan": showPlan(ev.html, ev.markdown); break;
+    case "error": addMessage("agent", "⚠ " + ev.message); break;
+  }
+}
+
+// ---- in-chat agent team turns + handoff animation ----
+function postAgentTurnStart(id, say) {
+  const meta = agentMeta[id] || { name: id, icon: "◆", color: "#5b8cff" };
+  const m = document.createElement("div");
+  m.className = "msg agent turn"; m.id = "turn-" + id;
+  m.style.setProperty("--c", meta.color);
+  m.innerHTML = `<div class="avatar">${meta.icon}</div>
+    <div class="bubble turn-bubble">
+      <div class="turn-name">${meta.name}</div>
+      <div class="turn-say">${renderInline(say || "Working…")}</div>
+      <div class="turn-work"><span class="typing"><span></span><span></span><span></span></span></div>
+    </div>`;
+  $("messages").appendChild(m); scrollChat();
+}
+function completeAgentTurn(id, summary) {
+  const m = $("turn-" + id); if (!m) return;
+  const work = m.querySelector(".turn-work"); if (work) work.remove();
+  const res = document.createElement("div"); res.className = "turn-result";
+  res.innerHTML = renderInline(summary || "Done");
+  m.querySelector(".bubble").appendChild(res); scrollChat();
+}
+function postHandoff(from, to) {
+  const h = document.createElement("div"); h.className = "handoff";
+  h.innerHTML = `<span class="ho-a">${renderInline(from)}</span>
+    <span class="ho-track"><span class="ho-dot"></span></span>
+    <span class="ho-b">${renderInline(to)}</span>`;
+  $("messages").appendChild(h); scrollChat();
+}
+
+function initAgents(agents) {
+  agentMeta = {};
+  agents.forEach(a => { agentMeta[a.id] = { name: a.name, icon: a.icon, color: AGENT_COLORS[a.id] || "#5b8cff" }; });
+  const body = $("agents-body"); body.innerHTML = "";
+  agents.forEach(a => {
+    const el = document.createElement("div");
+    el.className = "agent-card"; el.id = "agent-" + a.id;
+    el.innerHTML = `<div class="agent-ico">${a.icon}</div>
+      <div class="agent-body">
+        <div class="agent-top"><span class="agent-name">${a.name}</span><span class="agent-status st-queued"></span></div>
+        <div class="agent-summary">Queued</div>
+      </div>`;
+    body.appendChild(el);
+  });
+}
+function updateAgent(ev) {
+  const el = $("agent-" + ev.id); if (!el) return;
+  const dot = el.querySelector(".agent-status");
+  const summary = el.querySelector(".agent-summary");
+  if (ev.status === "running") {
+    dot.className = "agent-status st-running";
+    summary.className = "agent-summary running-txt"; summary.textContent = "Working…";
+    if (!el.querySelector(".shimmer")) { const s = document.createElement("div"); s.className = "shimmer"; el.querySelector(".agent-body").appendChild(s); }
+  } else if (ev.status === "done") {
+    dot.className = "agent-status st-done";
+    summary.className = "agent-summary"; summary.textContent = ev.summary || "Done";
+    const sh = el.querySelector(".shimmer"); if (sh) sh.remove();
+    if (ev.detail && ev.detail.bullets && ev.detail.bullets.length) {
+      const wrap = document.createElement("div");
+      const bullets = ev.detail.bullets.map(b => `<li>${renderInline(b)}</li>`).join("");
+      const detail = document.createElement("div"); detail.className = "agent-detail"; detail.style.display = "none";
+      detail.innerHTML = `<ul>${bullets}</ul>`;
+      const toggle = document.createElement("span"); toggle.className = "agent-toggle"; toggle.textContent = "details";
+      toggle.onclick = () => { detail.style.display = detail.style.display === "none" ? "block" : "none"; toggle.textContent = detail.style.display === "none" ? "details" : "hide"; };
+      wrap.appendChild(toggle); wrap.appendChild(detail);
+      el.querySelector(".agent-body").appendChild(wrap);
+    }
+  }
+}
+function renderAgentsDoneFromResult(result) {
+  // reconstruct a finished agent list when reloading a completed project
+  const roster = [
+    ["lifecycle","Lifecycle Interpreter","🧭", `${result.inferred_inputs.lifecycle_label} → ${result.inferred_inputs.persona}`],
+    ["market","Market Landscape Agent","🔍","Market documents pulled (live)"],
+    ["competitors","Competitor Discovery Agent","🧬", (result.inferred_inputs.discovered_competitors||[]).join(", ") || "No competitors found"],
+    ["strategy","Segmentation & Journey Agent","🎯", result.stage_2_4_strategy.inputs.stage],
+    ["swot","Competitive SWOT Agent","⚔️", result.stage_1b_3_competitive ? "SWOT complete" : "Skipped — no competitors"],
+    ["positioning","Positioning Agent","📌","Positioning statement drafted"],
+    ["budget","Channel Mix & Budget Agent","💰","Channel mix modelled"],
+    ["kpi","Measurement & KPI Agent","📊","KPI framework built"],
+    ["compose","Campaign Plan Composer","📝","Campaign plan ready"],
+  ];
+  const body = $("agents-body"); body.innerHTML = "";
+  roster.forEach(([id,name,icon,summary]) => {
+    const el = document.createElement("div"); el.className = "agent-card";
+    el.innerHTML = `<div class="agent-ico">${icon}</div><div class="agent-body">
+      <div class="agent-top"><span class="agent-name">${name}</span><span class="agent-status st-done"></span></div>
+      <div class="agent-summary">${renderInline(summary)}</div></div>`;
+    body.appendChild(el);
+  });
+}
+
+// ---------- brief ----------
+function fmtBudget(b) { return b ? "$" + Number(b).toLocaleString() : "percentages only"; }
+function renderBrief() {
+  const s = state.slots, inf = state.inferred;
+  const row = (k, v, filled) => `<div class="brief-row"><span class="k">${k}</span><span class="v ${filled ? "filled":""}">${v || "—"}</span></div>`;
+  const chips = (arr) => arr && arr.length ? `<div class="chips">${arr.map(c=>`<span class="chip">${renderInline(c)}</span>`).join("")}</div>` : `<span class="v">—</span>`;
+  let html = "";
+  html += row("Brand", renderInline(s.brand), !!s.brand);
+  html += row("Therapy area", renderInline(s.therapy_area), !!s.therapy_area);
+  html += row("Lifecycle", renderInline(inf.lifecycle_label || s.lifecycle_key), !!(inf.lifecycle_label || s.lifecycle_key));
+  html += row("Budget", fmtBudget(s.budget), !!s.budget);
+  if (inf.persona || inf.stage_label || (inf.competitors && inf.competitors.length)) {
+    html += `<div class="brief-row" style="border-top:1px dashed var(--line);margin-top:4px;padding-top:9px"><span class="k">Inferred by agent</span><span class="v"></span></div>`;
+    html += row("Persona", renderInline(inf.persona), !!inf.persona);
+    html += row("Journey stage", renderInline(inf.stage_label), !!inf.stage_label);
+    html += `<div class="brief-row"><span class="k">Competitors</span>${chips(inf.competitors)}</div>`;
+  }
+  $("brief-body").innerHTML = html;
+}
+
+// ---------- plan ----------
+function showPlan(html, markdown) {
+  state.planMarkdown = markdown || state.planMarkdown;
+  $("plan-body").innerHTML = html;
+  $("plan-card").style.display = "block";
+}
+function downloadPlan() {
+  if (!state.planMarkdown) return;
+  const blob = new Blob([state.planMarkdown], { type: "text/markdown" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const safe = (state.projectName || "campaign-plan").replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+  a.href = url; a.download = safe + ".md"; a.click();
+  URL.revokeObjectURL(url);
+}
+async function copyPlan() {
+  if (!state.planMarkdown) return;
+  try { await navigator.clipboard.writeText(state.planMarkdown); const b = $("copy-plan"); const t = b.textContent; b.textContent = "✓ Copied"; setTimeout(()=>b.textContent=t, 1500); } catch(e){}
+}
+
+// ---------- wiring ----------
+function autoGrow() { const t = $("input"); t.style.height = "auto"; t.style.height = Math.min(t.scrollHeight, 120) + "px"; }
+$("input").addEventListener("input", autoGrow);
+$("input").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
+$("send").onclick = sendMessage;
+$("new-plan").onclick = newProject;
+$("empty-new").onclick = newProject;
+$("download-plan").onclick = downloadPlan;
+$("copy-plan").onclick = copyPlan;
+
+loadProjects();
+
+// Reflect whether the chat is LLM-backed (Claude via Microsoft Foundry) or rules-based,
+// and log *why* on every turn -- not just a boot-time flag -- so a fallback is visible,
+// not silent.
+function updateLlmStatus(status, configured) {
+  const pill = $("llm-pill"); const log = $("llm-log");
+  if (!pill) return;
+  if (!status) status = { engine: "rules", ok: null, detail: "" };
+
+  if (status.engine === "azure-foundry" && status.ok) {
+    pill.textContent = "✦ chat: Claude (Foundry)";
+    pill.style.color = "var(--green)";
+    pill.style.borderColor = "rgba(70,211,154,0.4)";
+  } else if (status.ok === false) {
+    pill.textContent = "⚠ chat: rules (fallback)";
+    pill.style.color = "var(--amber)";
+    pill.style.borderColor = "rgba(240,180,91,0.4)";
+  } else {
+    pill.textContent = "◦ chat: rules";
+    pill.style.color = "var(--muted)";
+    pill.style.borderColor = "";
+  }
+  pill.title = status.detail || "Conversation engine";
+
+  if (log) {
+    if (status.ok === false) {
+      log.textContent = "⚠ " + status.detail;
+      log.style.color = "var(--amber)";
+      log.style.display = "block";
+    } else if (!configured && status.ok === null) {
+      log.style.display = "none";
+    } else {
+      log.style.display = "none";
+    }
+  }
+  console.log("[omni-os] chat engine:", status.engine, "ok=" + status.ok, "-", status.detail);
+}
+
+fetch('/api/options').then(r => r.json()).then(data => {
+  updateLlmStatus(data.llm_status, data.llm_enabled);
+}).catch(() => {});
+</script>
+</body>
+</html>

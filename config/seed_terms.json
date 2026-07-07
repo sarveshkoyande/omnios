@@ -1,0 +1,5 @@
+{
+  "drugs": ["Onivyde", "Bylvay", "Iqirvo", "Tazverik", "Dysport", "Voxzogo", "Palynziq"],
+  "therapy_areas": ["neuroendocrine tumors", "achondroplasia", "phenylketonuria", "cholestatic pruritus", "cervical dystonia", "follicular lymphoma"],
+  "note": "Edit freely -- these seed the scrapers below. Drug names come from the public Ipsen/BioMarin product lines referenced in the vault; therapy areas are their public indications. Add your own brands/indications to broaden the knowledge base."
+}
