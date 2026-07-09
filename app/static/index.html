@@ -153,9 +153,9 @@
   .agent-top { display: flex; align-items: center; gap: 8px; }
   .agent-name { font-size: 13px; font-weight: 600; }
   .agent-status { margin-left: auto; width: 8px; height: 8px; border-radius: 50%; flex: 0 0 auto; }
-  .st-queued { background: rgba(11,61,145,0.22); }
-  .st-running { background: var(--amber); box-shadow: 0 0 0 0 rgba(199,119,0,0.5); animation: pulse 1.4s infinite; }
-  .st-done { background: var(--green); }
+  .agent-status.st-queued { background: rgba(11,61,145,0.22); }
+  .agent-status.st-running { background: var(--amber); box-shadow: 0 0 0 0 rgba(199,119,0,0.5); animation: pulse 1.4s infinite; }
+  .agent-status.st-done { background: var(--green); }
   .agent-summary { font-size: 12px; color: var(--muted); margin-top: 3px; line-height: 1.4; }
   .agent-summary.running-txt { color: var(--amber); }
   .agent-detail { margin-top: 6px; font-size: 11.5px; color: var(--faint); }
@@ -177,14 +177,16 @@
   .team-member { display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 1 1 0; min-width: 0;
     text-align: center; transition: transform .3s ease; }
   .tm-ava { position: relative; display: inline-flex; }
-  .tm-ava .ag-avatar { transition: filter .3s ease, opacity .3s ease; }
+  .tm-ava .ag-avatar { transition: filter .3s ease, opacity .3s ease, box-shadow .3s ease; box-shadow: 0 0 0 2px var(--glass-strong, #fff); }
   .tm-dot { position: absolute; right: 0; bottom: 0; width: 11px; height: 11px; border-radius: 50%;
     border: 2px solid var(--glass-strong, #fff); background: #c3c8d0; transition: background .3s ease; }
   .tm-name { font-size: 11px; color: var(--muted); font-weight: 600; white-space: nowrap; }
   .team-member.st-standby .ag-avatar { filter: grayscale(1); opacity: 0.6; }
   .team-member.st-working { transform: translateY(-3px); }
+  .team-member.st-working .ag-avatar { box-shadow: 0 0 0 3px var(--amber); }
   .team-member.st-working .tm-dot { background: var(--amber); animation: pulse 1.4s infinite; }
   .team-member.st-working .tm-name { color: var(--amber); }
+  .team-member.st-done .ag-avatar { box-shadow: 0 0 0 3px var(--green); }
   .team-member.st-done .tm-dot { background: var(--green); }
   .team-caption { font-size: 11.5px; color: var(--muted); text-align: center; margin-top: 11px;
     padding-top: 10px; border-top: 1px dashed var(--line); min-height: 15px; }
@@ -198,7 +200,7 @@
   .agent-card.st-done-card { opacity: 1; }
   .agent-role { font-size: 10px; color: var(--faint); }
   .agent-top { flex-wrap: wrap; gap: 3px 8px; }
-  .st-standby { background: rgba(11,61,145,0.18); }
+  .agent-status.st-standby { background: rgba(11,61,145,0.18); }
   .avatar.avatar-person { background: none !important; border: none !important; padding: 0; width: 34px; height: 34px; }
   .turn-role { font-weight: 500; color: var(--faint); font-size: 10px; letter-spacing: 0; text-transform: none; }
 

@@ -1,0 +1,409 @@
+{
+  "note": "Per-brand market analysis and lifecycle-stage assessment for the flagship roster (authored 2026-07). Grounds strategy/brand_lifecycle.py and the home dashboard. Lifecycle stage uses the same keys as strategy/lifecycle.py (launch/growth/mature/loe). 'stage_confidence' is the analyst's confidence in the call; 'momentum' is the near-term revenue trajectory (accelerating/steady/declining). Evidence points, sales figures and competitor sets are an editorial synthesis of public information (company reports, FDA actions, trade press) through ~mid-2026 and are intended as a sound, decision-useful starting point -- not an audited financial source. Validate figures with each brand team before external use. Where a specific 2025 sales figure is cited it reflects reported full-year or run-rate figures found in public disclosures.",
+  "as_of": "2026-07",
+  "brands": {
+    "Nubeqa": {
+      "lifecycle_stage": "growth", "stage_confidence": "high", "momentum": "accelerating",
+      "evidence": [
+        "Darolutamide franchise at blockbuster run-rate and among Bayer's fastest-growing assets.",
+        "Label expanded from nmCRPC into mHSPC (with docetaxel, ARASENS) and chemo-free mHSPC (ARANOTE), widening the addressable pool.",
+        "Differentiated on CNS-penetration/tolerability versus other ARIs, supporting share gains."
+      ],
+      "key_catalysts": ["ARANOTE chemo-free mHSPC uptake", "earlier-line penetration", "combination positioning vs. enzalutamide/apalutamide"],
+      "main_competitors": ["Xtandi (enzalutamide)", "Erleada (apalutamide)", "Zytiga (abiraterone, generic)"],
+      "loe_horizon": "early-2030s (no near-term cliff)",
+      "whitespace": "Undertreated mHSPC intensification; broaden beyond urology into oncology co-management.",
+      "campaign_posture": "Grow the market and defend differentiation: HCP education on intensification + tolerability RTBs; expand from urology KOLs to community oncology."
+    },
+    "Kerendia": {
+      "lifecycle_stage": "growth", "stage_confidence": "high", "momentum": "accelerating",
+      "evidence": [
+        "Finerenone uptake building in CKD associated with T2D (FIDELIO/FIGARO evidence base).",
+        "FINEARTS-HF read-out extends opportunity into HFmrEF/HFpEF, a large new population.",
+        "Non-steroidal MRA class carving space between RAAS blockade and SGLT2 inhibition."
+      ],
+      "key_catalysts": ["HFmrEF/HFpEF label expansion (FINEARTS-HF)", "cardio-nephrology co-prescribing with SGLT2is", "PCP/nephrology/cardiology cross-education"],
+      "main_competitors": ["SGLT2 inhibitors (Jardiance, Farxiga)", "spironolactone/eplerenone (steroidal MRAs)", "GLP-1s as adjacent CKM agents"],
+      "loe_horizon": "early-2030s",
+      "whitespace": "Guideline-directed layering (MRA + SGLT2i) is under-adopted; multi-specialty CKM messaging.",
+      "campaign_posture": "Category-building launch-into-growth: reframe finerenone as complementary not competitive to SGLT2is; target the cardio-renal-metabolic overlap."
+    },
+    "Eylea": {
+      "lifecycle_stage": "loe", "stage_confidence": "high", "momentum": "declining",
+      "evidence": [
+        "2 mg Eylea faces active US biosimilar erosion (Amgen's Pavblu launched 2024; Sandoz/Celltrion/Biocon/Alvotech-Teva settlements cluster launches in H2 2026).",
+        "Defense strategy is conversion to Eylea HD (8 mg) for extended dosing intervals.",
+        "Anti-VEGF category also pressured by faricimab (Vabysmo) and longer-duration entrants."
+      ],
+      "key_catalysts": ["Eylea HD switch rate", "biosimilar contracting/payer step-edits", "durability messaging (fewer injections)"],
+      "main_competitors": ["Vabysmo (faricimab)", "aflibercept biosimilars (Pavblu, Yesafili, Enzeevu, Eydenzelt)", "Beovu, ranibizumab/biosimilars"],
+      "loe_horizon": "in progress (2 mg); HD extends franchise life",
+      "whitespace": "Convert existing 2 mg patients to HD before biosimilar step-edits lock in; treatment-burden narrative.",
+      "campaign_posture": "LOE defense: accelerate HD conversion, arm HCPs with durability/real-world persistence data, protect high-volume retina accounts."
+    },
+    "Xarelto": {
+      "lifecycle_stage": "loe", "stage_confidence": "high", "momentum": "declining",
+      "evidence": [
+        "Post-peak DOAC facing generic rivaroxaban across major markets and IRA price negotiation exposure.",
+        "Broad label (NVAF, VTE, CAD/PAD, pediatric VTE) but growth ceded to apixaban in many markets.",
+        "Lifecycle now about managed decline and selective indication defense."
+      ],
+      "key_catalysts": ["generic entry timing by market", "IRA negotiated price", "pediatric/CAD-PAD niche retention"],
+      "main_competitors": ["Eliquis (apixaban)", "generic rivaroxaban", "warfarin (legacy), edoxaban/dabigatran"],
+      "loe_horizon": "in progress across markets",
+      "whitespace": "Differentiated indications (CAD/PAD vascular dose, pediatrics) where genericization is slower.",
+      "campaign_posture": "Harvest + defend: minimize promotional spend on commoditized NVAF, protect vascular/pediatric niches, emphasize adherence programs."
+    },
+    "Lynkuet": {
+      "lifecycle_stage": "launch", "stage_confidence": "high", "momentum": "accelerating",
+      "evidence": [
+        "FDA-approved Oct 2025; US availability from Nov 2025 -- squarely in launch phase.",
+        "First-and-only dual NK1/NK3 receptor antagonist for moderate-to-severe VMS; hormone-free.",
+        "OASIS-1/2 pivotal data show significant VMS frequency reduction vs placebo at weeks 4 and 12."
+      ],
+      "key_catalysts": ["formulary access and coverage", "OB/GYN + primary-care awareness", "differentiation vs. fezolinetant (Veozah) on sleep/mood endpoints"],
+      "main_competitors": ["Veozah (fezolinetant)", "hormone therapy (estradiol-based)", "off-label SSRIs/SNRIs, gabapentin"],
+      "loe_horizon": "long (early launch)",
+      "whitespace": "Large under-treated non-hormonal VMS population; women avoiding/ineligible for HT.",
+      "campaign_posture": "Full launch build: disease-state + brand awareness, HCP mechanism education, patient activation and access support; own the hormone-free narrative."
+    },
+    "Cabometyx": {
+      "lifecycle_stage": "mature", "stage_confidence": "high", "momentum": "steady",
+      "evidence": [
+        "Established RCC/HCC franchise; growth now driven by new indications and combinations.",
+        "CABINET data enabled expansion into neuroendocrine tumors (pNET/epNET).",
+        "IO-TKI combination (with nivolumab) anchors 1L RCC positioning."
+      ],
+      "key_catalysts": ["NET launch execution (CABINET)", "IO-combo share in 1L RCC", "sequencing after other TKIs"],
+      "main_competitors": ["Lenvima (lenvatinib) +/- pembrolizumab", "Inlyta (axitinib)", "Welireg (belzutifan)"],
+      "loe_horizon": "late-2020s/early-2030s",
+      "whitespace": "NET is a fresh growth vector on a mature backbone; combination sequencing education.",
+      "campaign_posture": "Defend-and-extend: sustain oncology share with combination + new-indication messaging; NET as a distinct launch-within-a-brand."
+    },
+    "Somatuline": {
+      "lifecycle_stage": "loe", "stage_confidence": "high", "momentum": "declining",
+      "evidence": [
+        "Lanreotide facing generic/biosimilar depot competition; franchise in managed erosion.",
+        "GEP-NET and acromegaly base being defended while Ipsen rejuvenates the portfolio.",
+        "Somatostatin-analog category commoditizing on the depot formulation."
+      ],
+      "key_catalysts": ["generic depot penetration", "patient-support/administration stickiness", "switch retention in NET"],
+      "main_competitors": ["octreotide LAR (generic Sandostatin)", "lanreotide generics", "Signifor/pasireotide (acromegaly)"],
+      "loe_horizon": "in progress",
+      "whitespace": "Administration convenience and nurse-support programs as switching friction.",
+      "campaign_posture": "LOE defense/harvest: lean on services + adherence, protect NET prescribers, avoid heavy new-patient acquisition spend."
+    },
+    "Dysport": {
+      "lifecycle_stage": "mature", "stage_confidence": "medium", "momentum": "steady",
+      "evidence": [
+        "Established botulinum-toxin franchise spanning therapeutic (cervical dystonia, spasticity) and aesthetic (glabellar lines) uses.",
+        "Competes in a crowded, brand-loyal toxin category with duration/onset differentiation.",
+        "Aesthetic segment cyclical/consumer-sensitive; therapeutic segment steadier."
+      ],
+      "key_catalysts": ["longer-duration toxin entrants", "aesthetic consumer demand", "injector loyalty/training"],
+      "main_competitors": ["Botox (onabotulinumtoxinA)", "Xeomin (incobotulinumtoxinA)", "Daxxify (daxibotulinumtoxinA)", "Jeuveau"],
+      "loe_horizon": "biologic; no simple small-molecule cliff",
+      "whitespace": "Duration-of-effect and injector-relationship differentiation; therapeutic spasticity expansion.",
+      "campaign_posture": "Defend share via injector loyalty + differentiation; segment therapeutic (medical, evidence-led) from aesthetic (consumer, brand-led)."
+    },
+    "Iqirvo": {
+      "lifecycle_stage": "launch", "stage_confidence": "high", "momentum": "accelerating",
+      "evidence": [
+        "Elafibranor is a first-in-class PPAR (alpha/delta) agonist in PBC, early launch phase.",
+        "Second-line PBC (with UDCA or as monotherapy) addressing inadequate responders.",
+        "Competes with a near-simultaneous new PBC entrant, making launch execution decisive."
+      ],
+      "key_catalysts": ["head-to-head positioning vs. seladelpar (Livdelzi)", "hepatology/GI awareness", "pruritus and biochemical-response messaging"],
+      "main_competitors": ["Livdelzi (seladelpar)", "Ocaliva (obeticholic acid, constrained)", "UDCA (backbone)"],
+      "loe_horizon": "long (early launch)",
+      "whitespace": "UDCA-inadequate responders needing 2L options; symptom (pruritus) burden.",
+      "campaign_posture": "Competitive launch: rapid share-of-voice in a two-horse 2L race; differentiate on response + tolerability, secure early prescriber trials."
+    },
+    "Onivyde": {
+      "lifecycle_stage": "growth", "stage_confidence": "medium", "momentum": "accelerating",
+      "evidence": [
+        "Liposomal irinotecan growing on first-line metastatic PDAC expansion (NALIRIFOX regimen, NAPOLI-3).",
+        "Moves from post-gemcitabine 2L into 1L, enlarging the treated population.",
+        "Pancreatic cancer remains high-unmet-need with few regimen options."
+      ],
+      "key_catalysts": ["NALIRIFOX 1L adoption vs. FOLFIRINOX", "regimen familiarity/toxicity management", "guideline inclusion"],
+      "main_competitors": ["FOLFIRINOX / mFOLFIRINOX", "gemcitabine + nab-paclitaxel", "emerging PDAC agents"],
+      "loe_horizon": "late-2020s",
+      "whitespace": "1L regimen switching from FOLFIRINOX where tolerability/logistics favor NALIRIFOX.",
+      "campaign_posture": "Growth via regimen conversion: arm oncologists with 1L efficacy + manageability data; support regimen-adoption logistics."
+    },
+    "Epkinly": {
+      "lifecycle_stage": "launch", "stage_confidence": "high", "momentum": "accelerating",
+      "evidence": [
+        "Epcoritamab (CD3xCD20 bispecific) in early commercial ramp across R/R DLBCL (3L+) and R/R FL (3L+).",
+        "Subcutaneous administration differentiates from IV bispecifics/CAR-T logistics.",
+        "AbbVie/Genmab partnership resourcing a broad development program moving to earlier lines."
+      ],
+      "key_catalysts": ["earlier-line trials read-outs", "community vs academic administration (CRS/step-up dosing)", "bispecific class adoption"],
+      "main_competitors": ["Columvi (glofitamab)", "Lunsumio (mosunetuzumab, FL)", "CAR-T (axi-cel, liso-cel)", "Monjuvi + lenalidomide"],
+      "loe_horizon": "long (early launch)",
+      "whitespace": "Off-the-shelf bispecific for community centers unable to deliver CAR-T; fixed-duration potential.",
+      "campaign_posture": "Launch build with heavy HCP enablement: CRS management + step-up dosing education, site-of-care activation, KOL advocacy."
+    },
+    "Tivdak": {
+      "lifecycle_stage": "growth", "stage_confidence": "medium", "momentum": "accelerating",
+      "evidence": [
+        "Tisotumab vedotin (ADC) converted to full approval on confirmatory data (innovaTV 301) in 2L+ recurrent/metastatic cervical cancer.",
+        "First ADC established in cervical cancer, a modest but underserved population.",
+        "Pfizer partnership supports commercialization reach."
+      ],
+      "key_catalysts": ["OS confirmatory data uptake", "ocular AE risk-mitigation education", "gynecologic-oncology adoption"],
+      "main_competitors": ["chemotherapy (2L cervical)", "pembrolizumab-based regimens (1L/maintenance)", "bevacizumab combinations"],
+      "loe_horizon": "long",
+      "whitespace": "Clear 2L standard where prior options are limited; AE-management support lowers adoption friction.",
+      "campaign_posture": "Growth launch: own the 2L cervical narrative, invest in ocular-AE prophylaxis education to de-risk prescribing."
+    },
+    "Darzalex": {
+      "lifecycle_stage": "mature", "stage_confidence": "high", "momentum": "steady",
+      "evidence": [
+        "Genmab-originated, J&J-commercialized anti-CD38 backbone of multiple-myeloma therapy; multi-billion royalty engine.",
+        "Subcutaneous (Faspro) conversion sustained franchise convenience advantage.",
+        "Expanded into newly-diagnosed (transplant-eligible and -ineligible) and AL amyloidosis."
+      ],
+      "key_catalysts": ["quad-regimen frontline adoption", "SC vs IV persistence", "competition from other CD38s / bispecifics / CAR-T"],
+      "main_competitors": ["Sarclisa (isatuximab)", "myeloma bispecifics (teclistamab, talquetamab)", "BCMA CAR-T (cilta-cel, ide-cel)"],
+      "loe_horizon": "late-2020s/early-2030s (biologic; SC patents extend)",
+      "whitespace": "Frontline quad regimens and maintenance; defend against novel immunotherapy displacement.",
+      "campaign_posture": "Defend the backbone: frontline combination + MRD-negativity messaging; SC convenience; but note commercial lead sits with J&J."
+    },
+    "Kesimpta": {
+      "lifecycle_stage": "growth", "stage_confidence": "high", "momentum": "accelerating",
+      "evidence": [
+        "Genmab-originated, Novartis-commercialized anti-CD20; self-administered SC monthly injection still gaining RMS share.",
+        "At-home administration differentiates from infused anti-CD20 (ocrelizumab).",
+        "High-efficacy B-cell depletion moving earlier in the MS treatment algorithm."
+      ],
+      "key_catalysts": ["at-home convenience adoption", "early high-efficacy positioning", "competition from ocrelizumab SC and ublituximab"],
+      "main_competitors": ["Ocrevus (ocrelizumab, incl. SC Zunovo)", "Briumvi (ublituximab)", "S1P modulators, oral DMTs"],
+      "loe_horizon": "early-2030s",
+      "whitespace": "Patients preferring at-home dosing; early-line high-efficacy switchers.",
+      "campaign_posture": "Growth: convenience + high-efficacy narrative, patient self-injection support; but recognize Novartis owns commercialization."
+    },
+    "Kisqali": {
+      "lifecycle_stage": "growth", "stage_confidence": "high", "momentum": "accelerating",
+      "evidence": [
+        "2025 sales ~USD 4.8B (+58% YoY; +77% US), among the fastest-growing oncology brands.",
+        "NATALEE early-breast-cancer (adjuvant) expansion opened a large new HR+/HER2- population; leading NBRx share in EBC.",
+        "Consistent OS benefit across Phase III metastatic trials; NCCN Category 1 Preferred, high ESMO-MCBS ratings."
+      ],
+      "key_catalysts": ["adjuvant EBC uptake (NATALEE)", "OS differentiation vs. other CDK4/6is", "5-year NATALEE recurrence data (28% reduction)"],
+      "main_competitors": ["Verzenio (abemaciclib, incl. adjuvant)", "Ibrance (palbociclib)", "endocrine therapy backbones"],
+      "loe_horizon": "early-2030s",
+      "whitespace": "Convert EBC NBRx leadership into share; head-to-head OS story vs. abemaciclib.",
+      "campaign_posture": "Aggressive growth: dual metastatic (OS) + adjuvant (recurrence-reduction) narratives; oncology + community activation, adherence support for long adjuvant duration."
+    },
+    "Leqvio": {
+      "lifecycle_stage": "growth", "stage_confidence": "high", "momentum": "accelerating",
+      "evidence": [
+        "Inclisiran (twice-yearly siRNA) scaling through cardiology and primary-care via buy-and-bill/office administration.",
+        "Adherence advantage (2 doses/year) versus daily orals and injectable PCSK9 mAbs.",
+        "V-Innovate/ORION evidence base and guideline positioning building."
+      ],
+      "key_catalysts": ["outcomes-data maturation (ORION-4/VICTORION)", "office-administration workflow adoption", "PCP uptake beyond cardiology"],
+      "main_competitors": ["Repatha/Praluent (PCSK9 mAbs)", "ezetimibe + high-intensity statins", "bempedoic acid (Nexletol)"],
+      "loe_horizon": "early-2030s",
+      "whitespace": "Statin-inadequate/PCSK9-naive patients; adherence-failure populations; PCP channel.",
+      "campaign_posture": "Growth: reframe LDL-C control around twice-yearly adherence; build office-administration operational playbooks; broaden from cardiology to primary care."
+    },
+    "Pluvicto": {
+      "lifecycle_stage": "growth", "stage_confidence": "high", "momentum": "accelerating",
+      "evidence": [
+        "Pre-taxane mCRPC approval (PSMAfore, Mar 2025) roughly tripled eligible patients; a key pillar of >$5B peak-sales ambition.",
+        "Recent run-rate ~USD 564M with +46% growth; supply/manufacturing capacity expanding.",
+        "PSMAddition data extend radioligand therapy toward earlier disease."
+      ],
+      "key_catalysts": ["pre-chemo mCRPC adoption", "radioligand site-of-care/supply scale-up", "earlier-line PSMAddition read-through"],
+      "main_competitors": ["ARPIs (Xtandi, Nubeqa, Erleada)", "taxane chemotherapy", "other radioligand/PSMA agents in development"],
+      "loe_horizon": "long",
+      "whitespace": "Pre-taxane setting is the growth engine; nuclear-medicine capacity is the constraint, not demand.",
+      "campaign_posture": "Growth with operational focus: drive pre-taxane adoption while enabling nuclear-medicine referral pathways and site readiness."
+    },
+    "Cosentyx": {
+      "lifecycle_stage": "mature", "stage_confidence": "high", "momentum": "steady",
+      "evidence": [
+        "Established IL-17A franchise across PsO, PsA, axSpA; defended via new indications (hidradenitis suppurativa) and formulations.",
+        "Large multi-indication base but facing IL-23 and biosimilar-era pressure over the horizon.",
+        "Lifecycle management via HS and IV formulation extends utility."
+      ],
+      "key_catalysts": ["HS launch execution", "IL-23 competitive dynamics", "biosimilar horizon planning"],
+      "main_competitors": ["Taltz (ixekizumab)", "Skyrizi (risankizumab)", "Tremfya (guselkumab)", "Bimzelx (bimekizumab)"],
+      "loe_horizon": "late-2020s (US biologic exclusivity horizon)",
+      "whitespace": "HS as a fresh indication; retention against IL-23 switching.",
+      "campaign_posture": "Defend-and-extend: new-indication (HS) launches inside a mature brand; loyalty + speed-of-response messaging vs. IL-23 class."
+    },
+    "Entresto": {
+      "lifecycle_stage": "loe", "stage_confidence": "high", "momentum": "declining",
+      "evidence": [
+        "US AB-rated generics launched Jul 2025 (MSN/Novadoz Jul 22, Torrent Jul 24) after pediatric-exclusivity lapse.",
+        "Litigation ongoing around the '918 amorphous-form patent (expiry Nov 2026) but generic entry already underway.",
+        "Broad HF label (HFrEF, HFpEF/HFmrEF, pediatric) but revenue now eroding."
+      ],
+      "key_catalysts": ["pace of generic substitution", "'918 patent litigation outcome", "authorized-generic/brand-defense tactics"],
+      "main_competitors": ["generic sacubitril/valsartan", "SGLT2 inhibitors (HF)", "ARNIs/ACE/ARB backbones"],
+      "loe_horizon": "in progress (2025)",
+      "whitespace": "Limited; residual brand loyalty and pediatric/HFpEF niches.",
+      "campaign_posture": "LOE/harvest: pull back new-patient acquisition, defend adherent branded base and specialized indications, redirect spend to growth assets."
+    },
+    "Fabhalta": {
+      "lifecycle_stage": "launch", "stage_confidence": "high", "momentum": "accelerating",
+      "evidence": [
+        "Oral factor-B inhibitor (complement pathway) in early launch across PNH, IgA nephropathy and C3 glomerulopathy.",
+        "Oral monotherapy differentiates from infused C5 inhibitors in PNH.",
+        "Multi-indication complement platform expanding label (IgAN, C3G)."
+      ],
+      "key_catalysts": ["IgAN/C3G indication ramps", "oral vs. infused C5 switching in PNH", "nephrology awareness of complement-mediated disease"],
+      "main_competitors": ["Soliris/Ultomiris (C5 inhibitors)", "Empaveli (pegcetacoplan)", "emerging IgAN agents (Tarpeyo, sparsentan)"],
+      "loe_horizon": "long (early launch)",
+      "whitespace": "Oral convenience in complement disease; rare-nephrology diagnosis expansion.",
+      "campaign_posture": "Multi-indication launch: sequence PNH -> IgAN -> C3G; disease-awareness + oral-convenience narrative; rare-disease HCP finding and patient identification."
+    },
+    "Vyndaqel": {
+      "lifecycle_stage": "growth", "stage_confidence": "medium", "momentum": "steady",
+      "evidence": [
+        "Tafamidis franchise ~USD 6.3B worldwide in 2025 (+17%); still ~75% of ATTR-CM prescription volume.",
+        "Growth now driven by diagnosis expansion rather than uncontested share.",
+        "New competition entering: Attruby (acoramidis, ~$362M 2025, >25% NBRx share) and Amvuttra (vutrisiran, approved ATTR-CM Mar 2025)."
+      ],
+      "key_catalysts": ["ATTR-CM diagnosis-rate growth", "defense vs. acoramidis stabilizer and vutrisiran silencer", "cardiology + amyloidosis-center reach"],
+      "main_competitors": ["Attruby (acoramidis)", "Amvuttra (vutrisiran)", "under-diagnosis / no-treatment"],
+      "loe_horizon": "Vyndamax composition patents contested; generics delayed via settlements (late-2020s)",
+      "whitespace": "Still-large undiagnosed ATTR-CM pool; incumbency and experience as defense assets.",
+      "campaign_posture": "Grow-the-diagnosis while defending share: disease-awareness/screening drives the category; incumbency, real-world experience and access as retention RTBs against new entrants."
+    },
+    "Padcev": {
+      "lifecycle_stage": "growth", "stage_confidence": "high", "momentum": "accelerating",
+      "evidence": [
+        "Enfortumab vedotin + pembrolizumab established as 1L standard of care in locally-advanced/metastatic urothelial cancer (EV-302).",
+        "Displacing platinum chemotherapy in 1L la/mUC, a major share shift.",
+        "Astellas/Pfizer partnership; ADC + IO combination is category-defining."
+      ],
+      "key_catalysts": ["EV-302 1L adoption", "AE management (skin, neuropathy, hyperglycemia)", "earlier-stage/perioperative trials"],
+      "main_competitors": ["platinum-based chemotherapy", "pembrolizumab/avelumab maintenance regimens", "erdafitinib (FGFR)"],
+      "loe_horizon": "long",
+      "whitespace": "Complete 1L conversion from chemo; move toward earlier/muscle-invasive disease.",
+      "campaign_posture": "Growth: entrench the EV+P 1L standard-of-care message; heavy AE-management enablement to sustain persistence; oncology + uro-onc activation."
+    },
+    "Abrysvo": {
+      "lifecycle_stage": "growth", "stage_confidence": "medium", "momentum": "steady",
+      "evidence": [
+        "RSV bivalent prefusion-F vaccine competing for share in older-adult (60+, 18+ at risk) and maternal segments.",
+        "Season-driven demand with ACIP recommendation dynamics shaping the addressable population.",
+        "Maternal immunization is a differentiated indication protecting infants."
+      ],
+      "key_catalysts": ["ACIP age/risk recommendation scope", "retail-pharmacy + OB channel execution", "seasonal campaign timing"],
+      "main_competitors": ["Arexvy (GSK)", "mResvia (Moderna, mRNA)", "no-vaccination / competing adult vaccines for share of visit"],
+      "loe_horizon": "long (vaccine)",
+      "whitespace": "Maternal segment differentiation; expanding eligible-age recommendations.",
+      "campaign_posture": "Seasonal growth: time disease-awareness + co-administration messaging to the respiratory season; dual older-adult and maternal audiences; pharmacy + OB channels."
+    },
+    "Ibrance": {
+      "lifecycle_stage": "loe", "stage_confidence": "high", "momentum": "declining",
+      "evidence": [
+        "Full-year 2025 sales ~USD 4.12B (-6% YoY); multi-year decline expected to continue.",
+        "US patent-term extension to Mar 2027; key patents expire ~2027/2028; IRA price negotiation exposure.",
+        "First-in-class CDK4/6i now ceding share to abemaciclib and ribociclib (OS/adjuvant differentiation)."
+      ],
+      "key_catalysts": ["CDK4/6 competitive OS/adjuvant data gap", "IRA negotiated price", "patent-cliff timing"],
+      "main_competitors": ["Kisqali (ribociclib)", "Verzenio (abemaciclib)", "future generic palbociclib"],
+      "loe_horizon": "~2027-2028",
+      "whitespace": "Limited; adherent metastatic base and combination familiarity.",
+      "campaign_posture": "LOE defense/harvest: protect adherent mBC base and prescriber habit, minimize new-patient spend against differentiated rivals, prepare for genericization."
+    },
+    "Eliquis": {
+      "lifecycle_stage": "loe", "stage_confidence": "high", "momentum": "steady",
+      "evidence": [
+        "Category-leading DOAC (with BMS) but managing IRA negotiated pricing (effective 2026) and approaching patent-cliff horizon.",
+        "Still growing in volume as category leader even as net pricing pressure builds.",
+        "Generic apixaban entry timing shaped by settlements/litigation."
+      ],
+      "key_catalysts": ["IRA negotiated price implementation", "generic entry timing", "category-leadership defense vs. rivaroxaban decline"],
+      "main_competitors": ["Xarelto (rivaroxaban)", "warfarin (legacy)", "future generic apixaban", "edoxaban/dabigatran"],
+      "loe_horizon": "late-2020s (settlement-dependent)",
+      "whitespace": "Sustain leadership and adherence in NVAF/VTE while managing net-price erosion.",
+      "campaign_posture": "Mature-leader defense: adherence + safety leadership messaging, payer/access management under IRA, prepare LOE transition; disciplined spend."
+    },
+    "Litfulo": {
+      "lifecycle_stage": "launch", "stage_confidence": "high", "momentum": "accelerating",
+      "evidence": [
+        "Ritlecitinib (JAK3/TEC inhibitor) in early launch for severe alopecia areata (age 12+).",
+        "Differentiated by adolescent (12+) label in a category with few options.",
+        "Growing disease-awareness and treatment-seeking in AA."
+      ],
+      "key_catalysts": ["adolescent (12+) positioning", "regrowth (SALT) messaging + durability", "derm awareness and patient activation"],
+      "main_competitors": ["Olumiant (baricitinib, adults)", "Leqselvi (deuruxolitinib)", "off-label immunosuppressants / no treatment"],
+      "loe_horizon": "long (early launch)",
+      "whitespace": "Adolescent segment ownership; large untreated AA population newly seeking therapy.",
+      "campaign_posture": "Launch build: disease-state awareness + psychosocial burden narrative, adolescent-inclusive positioning, dermatology activation and patient-support enrollment."
+    },
+    "Jakafi": {
+      "lifecycle_stage": "mature", "stage_confidence": "high", "momentum": "steady",
+      "evidence": [
+        "Franchise anchor across myelofibrosis, polycythemia vera, acute and chronic GVHD; still growing modestly but LOE planning dominates strategy.",
+        "Minimum US/EU/JP exclusivity ~2028; multiple generic filers (Dr. Reddy's, Eugia, Apotex) queued.",
+        "Incyte's portfolio strategy centered on offsetting the Jakafi cliff."
+      ],
+      "key_catalysts": ["2028 LOE horizon", "next-gen/once-daily ruxolitinib lifecycle plays", "MF/GVHD competitive entrants"],
+      "main_competitors": ["Vonjo (pacritinib)", "Inrebic (fedratinib)", "Ojjaara/momelotinib", "future generic ruxolitinib"],
+      "loe_horizon": "~2028",
+      "whitespace": "Retain treaters through LOE; GVHD and PV persistence; lifecycle formulations.",
+      "campaign_posture": "Mature-defend with LOE runway: maximize adherent base and GVHD/PV franchises, support lifecycle formulations, disciplined pre-cliff investment."
+    },
+    "Opzelura": {
+      "lifecycle_stage": "growth", "stage_confidence": "high", "momentum": "accelerating",
+      "evidence": [
+        "Topical ruxolitinib cream growing in atopic dermatitis and nonsegmental vitiligo, including pediatric expansion.",
+        "Only topical JAK inhibitor; vitiligo is a differentiated, previously under-treated indication.",
+        "Repigmentation narrative drives durable, high-engagement treatment courses."
+      ],
+      "key_catalysts": ["vitiligo repigmentation data + persistence", "pediatric label expansion", "topical-JAK access/coverage"],
+      "main_competitors": ["topical corticosteroids/calcineurin inhibitors", "topical PDE4 (roflumilast, crisaborole)", "biologics (adjacent AD)"],
+      "loe_horizon": "long",
+      "whitespace": "Vitiligo is a largely untreated market Opzelura effectively created; AD topical switching.",
+      "campaign_posture": "Growth: own the vitiligo repigmentation category, patient-activation for a visible/psychosocial condition, derm + patient DTC support; pediatric expansion."
+    },
+    "Monjuvi": {
+      "lifecycle_stage": "growth", "stage_confidence": "medium", "momentum": "accelerating",
+      "evidence": [
+        "Tafasitamab (anti-CD19) with full global rights consolidated by Incyte; expanding from R/R DLBCL into follicular lymphoma (inMIND).",
+        "inMIND FL expansion adds a new population to the DLBCL + lenalidomide base.",
+        "Positioned for community-deliverable regimens versus CAR-T/bispecific logistics."
+      ],
+      "key_catalysts": ["inMIND FL launch", "community administration advantage vs. bispecifics/CAR-T", "combination with lenalidomide uptake"],
+      "main_competitors": ["bispecifics (Epkinly, Columvi, Lunsumio)", "CAR-T", "pola-BR and other R/R regimens"],
+      "loe_horizon": "long",
+      "whitespace": "FL expansion; community centers seeking non-CAR-T/bispecific options.",
+      "campaign_posture": "Growth: launch FL indication, emphasize community-deliverable outpatient regimen, differentiate on logistics vs. cell/bispecific therapies."
+    },
+    "Niktimvo": {
+      "lifecycle_stage": "launch", "stage_confidence": "high", "momentum": "accelerating",
+      "evidence": [
+        "Axatilimab is the first anti-CSF-1R for chronic GVHD after failure of >=2 prior lines; early launch phase.",
+        "Novel mechanism (macrophage/fibrosis targeting) complementary to JAK/other cGVHD agents.",
+        "Adds a later-line option in a franchise Incyte already leads with ruxolitinib."
+      ],
+      "key_catalysts": ["3L+ cGVHD adoption", "mechanism differentiation vs. ruxolitinib/belumosudil", "transplant-center activation"],
+      "main_competitors": ["Jakafi (ruxolitinib, cGVHD)", "Rezurock (belumosudil)", "ibrutinib, ECP, steroids"],
+      "loe_horizon": "long (early launch)",
+      "whitespace": "Later-line cGVHD with organ/fibrotic involvement; sequencing after JAK/ROCK2.",
+      "campaign_posture": "Specialist launch: transplant-center + GVHD-KOL focus, mechanism and sequencing education, narrow high-value audience with deep enablement."
+    },
+    "Pemazyre": {
+      "lifecycle_stage": "mature", "stage_confidence": "medium", "momentum": "steady",
+      "evidence": [
+        "Pemigatinib (FGFR inhibitor) is a niche precision-oncology asset with a steady, biomarker-capped population.",
+        "Cholangiocarcinoma (FGFR2 fusion) and myeloid/lymphoid neoplasms (FGFR1) define a small addressable pool.",
+        "Growth gated by biomarker testing rates rather than promotional reach."
+      ],
+      "key_catalysts": ["FGFR2/FGFR1 testing rates", "competition from next-gen FGFR inhibitors", "molecular-testing adoption in CCA"],
+      "main_competitors": ["Tibsovo (ivosidenib, IDH1 CCA)", "futibatinib (Lytgobi)", "chemotherapy"],
+      "loe_horizon": "long but population-capped",
+      "whitespace": "Under-testing for FGFR alterations is the true ceiling; testing-advocacy is the growth lever.",
+      "campaign_posture": "Niche precision play: drive biomarker-testing advocacy (reflex FGFR testing), molecular-tumor-board engagement, efficient specialist targeting."
+    }
+  }
+}

@@ -1,0 +1,132 @@
+{
+  "note": "Target-audience segment library for pharma omnichannel activation (authored 2026-07). Behaviour-based segments (not just specialty/decile) with their likes, dislikes, preferred channels and engagement do's/don'ts -- the practitioner knowledge an omnichannel expert applies when building a channel plan. Grounded in current HCP-engagement research (Indegene HCP Digital Affinity, Viseven, industry 2025 omnichannel reports): ~84% of physicians want to maintain/increase digital interactions; ~68% cite webinars/webcasts as a primary information channel; ~78% prefer a mix of in-person and virtual; ~8 in 10 value personalized content and ~73% engage more when content is tailored. Percentages are directional industry findings, not brand-specific.",
+  "as_of": "2026-07",
+  "hcp_segments": [
+    {
+      "key": "digital_first",
+      "name": "Digital-first engager",
+      "aka": ["self-serve researcher", "digital native prescriber"],
+      "description": "Prefers to pull information on their own schedule; rarely grants rep time. Often younger or high-volume, comfortable with digital tools and independent evidence review.",
+      "likes": ["On-demand content (email, web, portals) they control", "Concise, data-dense clinical summaries and interactive visual aids", "Self-service med-info and reference access", "Personalized, relevant content tied to their patients"],
+      "dislikes": ["Unscheduled rep visits and cold calls", "Generic mass emails with no relevance", "Gated content requiring long forms", "Repetitive follow-ups across channels (frequency fatigue)"],
+      "preferred_channels": ["Email (permissioned)", "Branded/unbranded web + portals", "Webinars/on-demand video", "Programmatic/search", "Peer digital communities"],
+      "dos": ["Lead with rep-triggered but self-serve journeys (NPP-heavy)", "Offer approve-once modular content personalized by specialty/patient mix", "Respect suppression and frequency caps", "Make next-best-action a link, not a call"],
+      "donts": ["Don't force field-rep dependency", "Don't send undifferentiated blasts", "Don't over-contact -- honour channel-level opt-outs"],
+      "primary_bucket": "NPP",
+      "digital_preference": "High-digital"
+    },
+    {
+      "key": "rep_dependent",
+      "name": "Rep-dependent / relationship-led",
+      "aka": ["field-loyal", "traditional prescriber"],
+      "description": "Values the trusted human relationship; forms decisions through in-person dialogue and peer credibility. Often established/community physicians with limited time for self-serve digital.",
+      "likes": ["Face-to-face detailing and trusted rep relationships", "Peer-to-peer/KOL speaker programs", "Printed/leave-behind visual aids", "Practical, patient-type-specific guidance"],
+      "dislikes": ["Being pushed entirely to self-service digital", "Impersonal automated outreach", "Complex portal logins", "Content that ignores real-world practice constraints"],
+      "preferred_channels": ["In-person rep detailing", "Speaker programs / peer events", "Phone/live virtual detailing", "Direct mail"],
+      "dos": ["Anchor the plan in personal promotion (PP), digital as reinforcement", "Equip reps with modular, MLR-approved leave-behinds", "Use peer/KOL proof", "Follow up in-person interactions with a light digital recap"],
+      "donts": ["Don't remove the human channel", "Don't assume portal adoption", "Don't over-automate the relationship"],
+      "primary_bucket": "PP",
+      "digital_preference": "F2F"
+    },
+    {
+      "key": "hybrid_remote",
+      "name": "Hybrid / remote-engager",
+      "aka": ["omnichannel balanced", "virtual-first but relationship-open"],
+      "description": "The largest and growing middle: rarely sees reps in person but actively opens emails, attends webinars and joins virtual details. Wants a coordinated mix, not one channel.",
+      "likes": ["Virtual + occasional in-person mix", "Webinars/webcasts as a primary learning channel", "Coordinated, non-repetitive cross-channel journeys", "Timely, relevant nudges"],
+      "dislikes": ["Disjointed channels repeating the same message", "All-in-person or all-digital extremes", "Irrelevant timing", "Message whiplash across touchpoints"],
+      "preferred_channels": ["Webinar/virtual events", "Email", "Remote/live virtual detailing", "Web + video", "Selective in-person"],
+      "dos": ["Orchestrate PP+NPP with a single message architecture", "Sequence touchpoints (trigger -> reinforce -> convert)", "Use engagement signals to pick the next channel", "Offer hybrid event formats"],
+      "donts": ["Don't silo channels", "Don't duplicate the same asset everywhere", "Don't ignore cross-channel frequency"],
+      "primary_bucket": "PP+NPP",
+      "digital_preference": "Digital"
+    },
+    {
+      "key": "kol_academic",
+      "name": "KOL / academic expert",
+      "aka": ["thought leader", "guideline influencer"],
+      "description": "Shapes peers, guidelines and standards of care. Motivated by science, data depth and scientific-exchange, not promotion. Often at academic/reference centers.",
+      "likes": ["Deep primary data, congress presence, publications", "Scientific exchange and advisory roles", "MSL/medical-affairs relationships", "Early access to emerging evidence"],
+      "dislikes": ["Promotional/superficial messaging", "Being treated as a volume target", "Commercial pressure in scientific contexts"],
+      "preferred_channels": ["Congress / scientific meetings", "MSL / medical affairs (non-promotional)", "Publications / data platforms", "Advisory boards, peer webinars"],
+      "dos": ["Engage via medical affairs, keep commercial separated (compliance)", "Lead with the full evidence base and mechanism", "Involve in advisory/authoring where appropriate"],
+      "donts": ["Don't push branded promo through scientific channels", "Don't oversimplify the data", "Don't blur MSL/commercial lines"],
+      "primary_bucket": "NPP",
+      "digital_preference": "High-digital"
+    },
+    {
+      "key": "community_time_poor",
+      "name": "Community / time-poor generalist",
+      "aka": ["high-volume community", "busy PCP/specialist"],
+      "description": "High patient throughput, minimal time; needs fast, practical, actionable guidance. Common in primary care and community oncology/cardiology.",
+      "likes": ["Short, scannable, practical content", "Point-of-care and EHR-integrated resources", "Clear patient-selection and dosing guidance", "Time-saving tools and support-program shortcuts"],
+      "dislikes": ["Long-form or dense academic material", "Anything adding workflow burden", "Multi-step access processes"],
+      "preferred_channels": ["EHR/point-of-care messaging", "Short email", "Mobile-friendly web", "Brief rep or virtual touch"],
+      "dos": ["Optimize for speed and clarity", "Meet them in workflow (EHR, POC)", "Provide ready-to-use patient materials and access support"],
+      "donts": ["Don't overwhelm with data", "Don't add friction", "Don't assume deep sub-specialty familiarity"],
+      "primary_bucket": "PP+NPP",
+      "digital_preference": "Digital"
+    },
+    {
+      "key": "skeptic_laggard",
+      "name": "Evidence skeptic / late adopter",
+      "aka": ["conservative prescriber", "wait-and-see"],
+      "description": "Slow to change practice; wants robust outcomes, real-world evidence and peer validation before adopting. Low baseline engagement.",
+      "likes": ["Long-term outcomes and real-world evidence", "Peer experience and guideline endorsement", "Head-to-head and safety data", "Low-risk trial experiences"],
+      "dislikes": ["Hype or novelty-led messaging", "Thin or early data", "Pressure to switch quickly"],
+      "preferred_channels": ["Peer/KOL programs", "Guideline/society channels", "Targeted evidence email", "In-person evidence dialogue"],
+      "dos": ["Lead with durability, safety and guideline status", "Use peer proof and RWE", "Be patient -- nurture over many touches"],
+      "donts": ["Don't over-promise", "Don't lead with novelty", "Don't expect fast conversion"],
+      "primary_bucket": "PP",
+      "digital_preference": "Low"
+    }
+  ],
+  "patient_caregiver_segments": [
+    {
+      "key": "newly_diagnosed",
+      "name": "Newly diagnosed / overwhelmed",
+      "likes": ["Plain-language education and 'what happens next'", "Reassurance and validated sources", "Questions-to-ask-your-doctor tools"],
+      "dislikes": ["Jargon and scary statistics", "Overload of options too early", "Feeling rushed"],
+      "preferred_channels": ["Unbranded disease-awareness web/social", "Patient-support onboarding", "HCP-office materials"],
+      "dos": ["Lead unbranded and educational", "Empathetic tone", "Guide to a next step"],
+      "donts": ["Don't lead with branded claims", "Don't overwhelm", "Don't make promises"]
+    },
+    {
+      "key": "activated_engaged",
+      "name": "Activated / self-advocating patient",
+      "likes": ["Detailed treatment info, trial finders, communities", "Digital tracking tools and copay/access help", "Shared decision-making resources"],
+      "dislikes": ["Being talked down to", "Hidden costs/access hurdles", "Thin content"],
+      "preferred_channels": ["Branded patient web", "Social communities", "Apps / patient-support digital", "Email"],
+      "dos": ["Provide depth and self-service tools", "Be transparent on access/cost", "Support shared decision-making"],
+      "donts": ["Don't oversimplify", "Don't gate everything", "Don't ignore affordability"]
+    },
+    {
+      "key": "caregiver",
+      "name": "Caregiver / care partner",
+      "likes": ["Practical caregiving guidance, logistics, adherence tools", "Emotional support and community", "Clear administration/monitoring instructions"],
+      "dislikes": ["Being overlooked as a decision influencer", "Complex regimens without support", "No respite resources"],
+      "preferred_channels": ["Patient-support programs", "Unbranded web/social", "Nurse educator / call-center"],
+      "dos": ["Address the caregiver explicitly", "Simplify regimen logistics", "Offer adherence + support services"],
+      "donts": ["Don't ignore them", "Don't assume clinical fluency", "Don't add burden"]
+    },
+    {
+      "key": "adherence_risk",
+      "name": "Adherence-risk / disengaged patient",
+      "likes": ["Simple reminders, refill/copay help, low-effort nudges", "Encouragement and small wins", "Convenience (fewer doses, home options)"],
+      "dislikes": ["Guilt/pressure messaging", "Complex steps", "Cost surprises"],
+      "preferred_channels": ["SMS/app reminders", "Patient-support outreach", "Pharmacy touchpoints"],
+      "dos": ["Reduce friction and cost", "Use positive reinforcement", "Automate helpful reminders"],
+      "donts": ["Don't shame", "Don't add steps", "Don't ignore cost barriers"]
+    }
+  ],
+  "cross_cutting_principles": [
+    "Segment by behaviour and engagement signals, not just specialty/decile; cohorts should update dynamically as new Rx/engagement data arrive.",
+    "Right channel, right HCP, right moment -- omnichannel means orchestration, not every channel at once.",
+    "One message architecture across PP (personal promotion) and NPP (non-personal promotion); reinforce, never contradict, across channels.",
+    "Personalize: ~8 in 10 HCPs value tailored content and ~73% engage more when it is relevant to their patients/specialty.",
+    "Respect frequency and suppression: repetitive cross-channel outreach is the top driver of disengagement.",
+    "Keep medical (MSL/scientific exchange) and commercial promotion separated for KOL/academic audiences (compliance).",
+    "Lead unbranded/educational for newly diagnosed patients; reserve branded claims for activated, informed audiences.",
+    "Match channel weight to lifecycle stage: launch = awareness + PP-heavy education; growth = orchestrated PP+NPP conversion; mature = efficient defense/adherence; LOE = minimal acquisition, protect adherent base."
+  ]
+}
