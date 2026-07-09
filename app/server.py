@@ -36,6 +36,7 @@ from strategy.document_intake import extract_text  # noqa: E402
 from strategy import dashboard as dashboard_mod  # noqa: E402
 from strategy import feed as feed_mod  # noqa: E402
 from strategy import campaign_store  # noqa: E402
+from strategy import brand_memory  # noqa: E402
 
 app = FastAPI(title="Omni OS Campaign Planning Agent")
 
@@ -199,6 +200,10 @@ def api_run_stream(project_id: str):
                     campaign_store.persist_campaign_from_result(result, slots, plan_md or "", project_id)
                 except Exception as e:  # noqa: BLE001
                     print(f"[campaign_store] persist failed: {e}")
+                try:
+                    brand_memory.save_brand_memory(slots.get("brand", ""), slots)
+                except Exception as e:  # noqa: BLE001
+                    print(f"[brand_memory] save failed: {e}")
 
     return StreamingResponse(
         event_gen(),

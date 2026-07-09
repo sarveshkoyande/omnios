@@ -21,6 +21,8 @@ import time
 BASE_DIR = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from brand_catalog import lookup_brand  # noqa: E402
+from brand_memory import get_brand_memory  # noqa: E402
+from lifecycle import LIFECYCLE_BY_KEY  # noqa: E402
 _seeds = json.loads((BASE_DIR / "config" / "seed_terms.json").read_text())
 KNOWN_BRANDS = [b.lower() for b in _seeds.get("drugs", [])]
 KNOWN_THERAPIES = [t.lower() for t in _seeds.get("therapy_areas", [])]
@@ -112,6 +114,8 @@ def new_state() -> dict:
         "clarify_idx": 0,
         "clarify_answers": {},
         "awaiting_clarify": None,
+        "recall_offered": False,   # whether we've already checked/offered remembered brand details
+        "recalled_memory": None,   # the remembered slots, held until the recall_confirm reply arrives
     }
 
 
@@ -387,11 +391,85 @@ def _interpret_clarify(message: str, state: dict) -> tuple[dict, str, str]:
     ), "ask"
 
 
+_REUSE_PHRASES = ["same", "no change", "unchanged", "reuse", "keep it", "keep the same", "as before", "identical", "still the same", "still holds"]
+_CHANGE_NEGATIONS = ["not the same", "isn't the same", "is not the same", "no longer", "something's different", "something is different", "different this time"]
+
+
+def _human_budget(amount: float) -> str:
+    if not amount:
+        return "not set"
+    if amount >= 1_000_000:
+        return f"${amount / 1_000_000:.1f}M".replace(".0M", "M")
+    if amount >= 1_000:
+        return f"${amount / 1_000:.0f}K"
+    return f"${amount:,.0f}"
+
+
+def _human_date(iso_ts: str) -> str:
+    try:
+        return time.strftime("%b %d, %Y", time.strptime(iso_ts, "%Y-%m-%dT%H:%M:%SZ"))
+    except Exception:  # noqa: BLE001
+        return "previously"
+
+
+def _recall_prompt(brand: str, remembered: dict) -> str:
+    lc = remembered.get("lifecycle_key")
+    lc_label = LIFECYCLE_BY_KEY.get(lc, {}).get("label", lc) if lc else None
+    lines = []
+    if remembered.get("indication"):
+        lines.append(f"  • Indication: **{remembered['indication']}**")
+    if lc_label:
+        lines.append(f"  • Lifecycle: **{lc_label}**")
+    if remembered.get("budget"):
+        lines.append(f"  • Budget: **{_human_budget(remembered['budget'])}**")
+    if remembered.get("maturity_notes"):
+        lines.append(f"  • Notes: {remembered['maturity_notes'][-160:]}")
+    details = "\n".join(lines) if lines else "  • (a few details, no major ones missing)"
+    return (
+        f"I've planned for **{brand}** before ({_human_date(remembered.get('updated_at', ''))}). Here's what you told me last time:\n"
+        f"{details}\n\n"
+        "Should I use the **same details** again, or is something **different** this time? Reply *same* to reuse "
+        "everything, or just tell me what's changed (e.g. \"budget is now $3M\" or \"it's mature now, not growing\")."
+    )
+
+
+def _resolve_recall_reply(message: str, state: dict) -> None:
+    """Merge the remembered brand details into slots, honoring any override mentioned
+    in this reply (e.g. 'same but budget is $5M'); called once, right after the user
+    answers the recall-confirm prompt."""
+    remembered = state.pop("recalled_memory", None) or {}
+    slots = state["slots"]
+    low = message.strip().lower().strip(".!?")
+    reuse_all = any(p in low for p in _REUSE_PHRASES) and not any(p in low for p in _CHANGE_NEGATIONS)
+
+    if remembered.get("indication") and not slots.get("indication"):
+        cat = lookup_brand(slots.get("brand", ""))
+        opts = (cat or {}).get("indications") or []
+        overridden = None if reuse_all else _match_indication(message, opts)
+        slots["indication"] = overridden or remembered["indication"]
+
+    if remembered.get("lifecycle_key") and not slots.get("lifecycle_key"):
+        overridden = None if reuse_all else _match_lifecycle(message)
+        slots["lifecycle_key"] = overridden or remembered["lifecycle_key"]
+
+    if remembered.get("budget") and not state.get("budget_asked"):
+        overridden = None if reuse_all else (_parse_budget(message) if ("$" in message or "budget" in low) else None)
+        slots["budget"] = overridden if overridden is not None else remembered["budget"]
+        state["budget_asked"] = True
+
+    if remembered.get("maturity_notes") and not slots.get("maturity_notes"):
+        slots["maturity_notes"] = remembered["maturity_notes"]
+
+
 def _interpret_message_rules(message: str, state: dict) -> tuple[dict, str, str]:
     """Deterministic slot-filling dialog (no LLM). Used as the default and as the LLM fallback."""
     _extract(message, state)
     slots = state["slots"]
     deferred = _is_deferral(message)
+
+    if state.get("awaiting") == "recall_confirm":
+        state["awaiting"] = None
+        _resolve_recall_reply(message, state)
 
     if not slots["brand"]:
         state["awaiting"] = "brand"
@@ -399,6 +477,16 @@ def _interpret_message_rules(message: str, state: dict) -> tuple[dict, str, str]
             return state, ("That's your real product to name — I can't invent it. Which **brand or molecule** is "
                            "this campaign for? (e.g. the drug you're working on.)"), "ask"
         return state, "Which **brand or molecule** are we planning for?", "ask"
+
+    # First time this conversation sees a resolved brand -- check whether we've planned
+    # for it before and offer to reuse those captured details instead of re-asking them.
+    if slots["brand"] and not state.get("recall_offered"):
+        state["recall_offered"] = True
+        remembered = get_brand_memory(slots["brand"])
+        if remembered:
+            state["recalled_memory"] = remembered
+            state["awaiting"] = "recall_confirm"
+            return state, _recall_prompt(slots["brand"], remembered), "ask"
 
     if not slots["therapy_area"]:
         state["awaiting"] = "therapy_area"

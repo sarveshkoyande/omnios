@@ -256,6 +256,31 @@ CREATE TABLE IF NOT EXISTS review_record (
 );
 CREATE INDEX IF NOT EXISTS ix_review_entity ON review_record(entity_kind, entity_id);
 
+-- ------------------------------------------------------------------ market intel ------
+
+-- Per-brand market analysis + lifecycle-stage assessment (loaded from
+-- config/brand_market_intel.json by strategy/brand_lifecycle.py). One row per brand; the
+-- lifecycle_stage here is the analyst-assessed stage with supporting evidence, distinct
+-- from brand.lifecycle_key (which is the roster default used to seed a chat). List-valued
+-- fields (evidence, catalysts, competitors) are stored as JSON text for portability.
+CREATE TABLE IF NOT EXISTS brand_market_intel (
+    id                INTEGER PRIMARY KEY,
+    brand_id          INTEGER REFERENCES brand(id),
+    brand_name        TEXT NOT NULL UNIQUE,       -- natural key so intel loads even before a brand row exists
+    lifecycle_stage   TEXT NOT NULL,              -- launch | growth | mature | loe
+    stage_confidence  TEXT,                       -- high | medium | low
+    momentum          TEXT,                       -- accelerating | steady | declining
+    evidence_json     TEXT,                       -- JSON array of grounded evidence points
+    catalysts_json    TEXT,                       -- JSON array of near-term catalysts
+    competitors_json  TEXT,                       -- JSON array of main competitors
+    loe_horizon       TEXT,
+    whitespace        TEXT,
+    campaign_posture  TEXT,                        -- recommended omnichannel posture for the stage
+    as_of             TEXT,
+    updated_at        TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_market_intel_stage ON brand_market_intel(lifecycle_stage);
+
 -- ------------------------------------------------------------------ convenience view --
 
 -- Unsubstantiated approved claims (an approved claim with no linked reference) — the MLR
