@@ -1,3 +1,9 @@
+---
+type: Concept
+title: README
+timestamp: 2026-07-07T20:36:50Z
+---
+
 # Omni Data Hub
 
 Local knowledge repository + campaign strategy generator, built to accompany

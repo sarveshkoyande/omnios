@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import pathlib
 
+import awards
 import clinicaltrials
 import dailymed
 import google_trends
@@ -17,6 +18,7 @@ def main() -> None:
     seeds = json.loads((BASE_DIR / "config" / "seed_terms.json").read_text())
     drugs = seeds["drugs"]
     therapy_areas = seeds["therapy_areas"]
+    award_sources = json.loads((BASE_DIR / "config" / "award_sources.json").read_text())
 
     results = {}
     print("=== DailyMed ===")
@@ -29,6 +31,8 @@ def main() -> None:
     results["pubmed"] = pubmed.run(drugs + therapy_areas)
     print("=== Google Trends ===")
     results["google_trends"] = google_trends.run(drugs + therapy_areas)
+    print("=== Award-winning campaigns ===")
+    results["awards"] = awards.run(award_sources)
 
     print("\n=== Summary ===")
     for source, count in results.items():

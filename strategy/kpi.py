@@ -35,6 +35,27 @@ OPERATIONAL_KPIS = [
     "Data completeness / match rate across CRM + CDP + claims sources feeding the NBA engine",
 ]
 
+# Toolkit's own Sheet-10 "Metrics to track CX success" formulas -- transcribed verbatim,
+# grouped by the toolkit's OPTIN (items 1-5) / NON-OPTIN (items 6-7) split.
+TOOLKIT_MEASURES_OPTIN = [
+    {"objective": "Increase Customer Engagement",
+     "measure": "Rate of customers who moved responsiveness from low to high (B to A, D to C): xx % Success rate"},
+    {"objective": "Successful conversion to the next step of the adoption ladder",
+     "measure": "Rate of customers who moved to next step of adoption ladder: xx % Success rate (5% of non user to trial)"},
+    {"objective": "Successful breaking of the barrier",
+     "measure": "Rate of successful breaking the barrier: xx%"},
+    {"objective": "Improved email performance",
+     "measure": "Rate of performance improvement of core campaign journey (email) over previous campaigns -- open rates xx% (+xx% improvement), CTOR rates xx% (+xx% improvement)"},
+    {"objective": "Improved webinar registration & satisfaction",
+     "measure": "Webinar registration CTOR to registration page: XX% (+XX% improvement); CVR on registration page: XX%; webinar satisfaction score above XX"},
+]
+TOOLKIT_MEASURES_NON_OPTIN = [
+    {"objective": "Achieved campaign summary contents for non-openers (successful follow up)",
+     "measure": "Rate of achieved campaign for non-openers -- campaign summary email open rate: XX%, CTOR: XX%"},
+    {"objective": "Generated leads from non opt-ins users through MR-visits (reach)",
+     "measure": "Channel efficiency to generate leads for non-optins -- new opt-ins from social media vs. monthly rep visits; rep-resource efficiency ratio"},
+]
+
 
 def build_kpi_framework(stage_key: str, channel_mix_pct: dict[str, float] | None = None) -> dict:
     stage = STAGE_BY_KEY[stage_key]
@@ -50,6 +71,11 @@ def build_kpi_framework(stage_key: str, channel_mix_pct: dict[str, float] | None
         "leading_indicators": leading,
         "lagging_indicators": LAGGING_INDICATORS,
         "operational_kpis": OPERATIONAL_KPIS,
+        "toolkit_measures": {
+            "toolkit_reference": "Metrics to track CX success (Sheet 10)",
+            "optin": TOOLKIT_MEASURES_OPTIN,
+            "non_optin": TOOLKIT_MEASURES_NON_OPTIN,
+        },
         "cadence_note": (
             "Review leading indicators monthly (or bi-weekly for always-on digital channels), lagging indicators "
             "quarterly alongside claims/Rx data refreshes, and operational KPIs continuously -- mirrors the "

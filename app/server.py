@@ -13,7 +13,7 @@ import pathlib
 import sys
 import time
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -29,14 +29,28 @@ from strategy.lifecycle import list_lifecycle_options  # noqa: E402
 from strategy.autorun import run_full_analysis  # noqa: E402
 from competitive.swot import build_swot  # noqa: E402
 from strategy import projects as pstore  # noqa: E402
-from strategy.conversation import new_state, opening_message, interpret_message, llm_enabled, get_llm_status  # noqa: E402
+from strategy.conversation import (new_state, opening_message, interpret_message, llm_enabled,  # noqa: E402
+                                   get_llm_status, ask_clarify_group, clarify_payload)
 from strategy.orchestrator import run_agents  # noqa: E402
+from strategy.document_intake import extract_text  # noqa: E402
+from strategy import dashboard as dashboard_mod  # noqa: E402
+from strategy import feed as feed_mod  # noqa: E402
+from strategy import campaign_store  # noqa: E402
 
 app = FastAPI(title="Omni OS Campaign Planning Agent")
 
 
-def _msg(role: str, text: str) -> dict:
-    return {"role": role, "text": text, "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+def _msg(role: str, text: str, extra: dict | None = None) -> dict:
+    m = {"role": role, "text": text, "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+    if extra:
+        m.update(extra)
+    return m
+
+
+@app.get("/api/home")
+def api_home():
+    """Landing-page payload: per-brand performance dashboard + the ticker feed."""
+    return {"dashboard": dashboard_mod.brand_performance(), "feed": feed_mod.build_feed()}
 
 
 # ------------------------------------------------------------------ #
@@ -88,17 +102,55 @@ def api_chat(req: ChatRequest):
     messages.append(_msg("user", req.message))
 
     state, reply, action = interpret_message(req.message, state)
-    messages.append(_msg("agent", reply))
+    clarify = clarify_payload(state)  # non-None only while the post-plan clarify Q&A is active
+    messages.append(_msg("agent", reply, {"kind": "clarify", "clarify": clarify} if clarify else None))
 
     # Auto-name the project once brand + therapy area are known.
     name = proj["name"]
     slots = state["slots"]
     if name in ("Untitled plan", "New plan") and slots["brand"] and slots["therapy_area"]:
-        name = f"{slots['brand']} · {slots['therapy_area']}"
+        name = f"{slots['brand']} · {slots.get('indication') or slots['therapy_area']}"
 
     pstore.save_project(req.project_id, name=name, state=state, messages=messages)
     return {"reply": reply, "slots": slots, "phase": state["phase"], "action": action, "name": name,
-            "llm_status": get_llm_status()}
+            "llm_status": get_llm_status(), "clarify": clarify}
+
+
+@app.post("/api/upload")
+async def api_upload(project_id: str = Form(...), file: UploadFile = File(...)):
+    """Extracts text from an uploaded brand-plan document (PDF/DOCX/text) and feeds it
+    through the same interpret_message seam as a normal chat turn -- so brand/therapy/
+    lifecycle/budget mentioned in the document get picked up without retyping them."""
+    proj = pstore.get_project(project_id)
+    if not proj:
+        raise HTTPException(404, "project not found")
+
+    content = await file.read()
+    try:
+        text = extract_text(file.filename or "upload", content)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    if not text:
+        raise HTTPException(400, "Could not extract any text from that file.")
+
+    messages = proj["messages"]
+    state = proj["state"]
+    messages.append(_msg("user", f"📎 Uploaded **{file.filename}**"))
+
+    prompt = (f"[The user attached a document named \"{file.filename}\". Extract the brand, therapy area, "
+              f"lifecycle stage, and budget (if mentioned) from its content below, the same as if they had "
+              f"typed this in chat.]\n\n{text}")
+    state, reply, action = interpret_message(prompt, state)
+    messages.append(_msg("agent", reply))
+
+    name = proj["name"]
+    slots = state["slots"]
+    if name in ("Untitled plan", "New plan") and slots["brand"] and slots["therapy_area"]:
+        name = f"{slots['brand']} · {slots.get('indication') or slots['therapy_area']}"
+
+    pstore.save_project(project_id, name=name, state=state, messages=messages)
+    return {"reply": reply, "slots": slots, "phase": state["phase"], "action": action, "name": name,
+            "llm_status": get_llm_status(), "filename": file.filename}
 
 
 @app.get("/api/run-stream")
@@ -114,13 +166,25 @@ def api_run_stream(project_id: str):
         result = None
         plan_md = plan_html = None
         try:
-            for ev in run_agents(slots["brand"], slots["therapy_area"], slots["lifecycle_key"], slots["budget"]):
+            for ev in run_agents(slots["brand"], slots["therapy_area"], slots["lifecycle_key"], slots["budget"],
+                                 slots.get("maturity_notes", ""), slots.get("indication", "")):
                 if ev["type"] == "narration":
                     messages.append(_msg("agent", ev["text"]))
                 elif ev["type"] == "plan":
                     plan_md, plan_html = ev["markdown"], ev["html"]
                 elif ev["type"] == "result":
                     result = ev["result"]
+                if ev["type"] == "done" and result and result.get("open_questions"):
+                    # Seed the post-plan clarify phase: everything the toolkit templates
+                    # flagged as 'needs alignment' becomes a grouped Q&A the agent leads
+                    # in chat -- streamed before 'done' so it appears live.
+                    state["open_questions"] = result["open_questions"]
+                    state["clarify_idx"] = 0
+                    first_ask = ask_clarify_group(state)
+                    payload = clarify_payload(state)
+                    if first_ask:
+                        messages.append(_msg("agent", first_ask, {"kind": "clarify", "clarify": payload}))
+                        yield f"data: {json.dumps({'type': 'clarify', 'text': first_ask, 'clarify': payload})}\n\n"
                 yield f"data: {json.dumps(ev)}\n\n"
         except Exception as e:  # surface failures to the UI rather than hanging
             yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
@@ -128,6 +192,13 @@ def api_run_stream(project_id: str):
             state["phase"] = "done"
             pstore.save_project(project_id, state=state, messages=messages,
                                 result=result, plan_markdown=plan_md, plan_html=plan_html)
+            # Persist the generated plan into the campaign & content data model (best-effort;
+            # never let a persistence error break the streamed response).
+            if result:
+                try:
+                    campaign_store.persist_campaign_from_result(result, slots, plan_md or "", project_id)
+                except Exception as e:  # noqa: BLE001
+                    print(f"[campaign_store] persist failed: {e}")
 
     return StreamingResponse(
         event_gen(),

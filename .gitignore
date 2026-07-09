@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Local caches -- regenerated automatically (SQLite created on first run,
+# raw/ repopulated by scrapers or by live on-demand API calls). Never commit
+# project data either -- it may contain real brand/therapy-area chat history.
+data/raw/
+data/*.db
+data/*.db-journal
+
+.env
