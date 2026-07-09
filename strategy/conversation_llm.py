@@ -1,11 +1,17 @@
 """LLM-backed implementation of the conversation seam.
 
-Talks to Claude through **Microsoft Foundry (Azure AI)**, not the plain Anthropic API --
-auth is Azure AD (`DefaultAzureCredential`), not an API key. Same return contract as the
-rules engine: `interpret_message_llm(message, state) -> (state, reply, action)` with
+Talks to Claude through **Microsoft Foundry (Azure AI)**. Auth is a plain API key
+(preferred) or Azure AD (`DefaultAzureCredential`) as a fallback. Same return contract as
+the rules engine: `interpret_message_llm(message, state) -> (state, reply, action)` with
 action 'ask' | 'run'. Any failure here is caught by conversation.py, which falls back to
-the rules-based path and records why in `get_llm_status()` -- so a missing/expired Azure
+the rules-based path and records why in `get_llm_status()` -- so a missing/expired
 credential never breaks chat, it just shows up as a fallback in the UI.
+
+Credentials are read from a local `.env` file (`omni-data-hub/.env`, gitignored) FIRST,
+falling back to real process environment variables. This is deliberate: shell environment
+variables set via `$env:` or `setx` in one terminal do not reach a server process started
+from a different shell/process tree (e.g. a fresh automation-tool shell) -- a `.env` file
+is the one mechanism that reliably reaches the app no matter which shell launches it.
 """
 from __future__ import annotations
 
@@ -19,7 +25,34 @@ KNOWN_BRANDS = _seeds.get("drugs", [])
 KNOWN_THERAPIES = _seeds.get("therapy_areas", [])
 LIFECYCLE_KEYS = ["launch", "growth", "mature", "loe"]
 
-ENDPOINT = os.environ.get("AZURE_AI_FOUNDRY_ENDPOINT", "https://genai-demos-resource.services.ai.azure.com/anthropic")
+
+def _load_dotenv() -> None:
+    """Minimal, dependency-free .env loader. Only fills in vars not already set in the
+    real environment, so a genuine env var always takes priority over the file."""
+    env_path = BASE_DIR / ".env"
+    if not env_path.exists():
+        return
+    for line in env_path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        key, value = key.strip(), value.strip().strip('"').strip("'")
+        if key and key not in os.environ:
+            os.environ[key] = value
+
+
+_load_dotenv()
+
+
+# The AnthropicFoundry client builds the correctly-versioned endpoint itself from just the
+# Azure resource name (`resource=`) -- it resolves to https://<resource>.services.ai.azure.com/anthropic/.
+# Passing a hand-built `base_url` (e.g. an Azure AI Foundry *project* endpoint like
+# ".../api/projects/<name>") skips that and 400s with "Missing required query parameter:
+# api-version", because that URL shape is for the separate Azure AI Foundry Agents/Projects API,
+# not the Anthropic-compatible passthrough this app talks to.
+RESOURCE = os.environ.get("AZURE_AI_FOUNDRY_RESOURCE", "genai-demos-resource")
+ENDPOINT = os.environ.get("AZURE_AI_FOUNDRY_ENDPOINT")  # optional full override; usually unset
 MODEL = os.environ.get("AZURE_AI_FOUNDRY_DEPLOYMENT", "claude-sonnet-5")
 API_KEY_ENV = "AZURE_AI_FOUNDRY_API_KEY"
 SCOPE = "https://ai.azure.com/.default"
@@ -45,6 +78,9 @@ Rules of the conversation:
 - If the user defers a required fact ("you decide", "not sure", "your call") for brand or therapy area,
   do NOT invent a value: gently explain it's their real product/indication and re-ask.
 - Ask about budget only once. If they give a number use it; if they skip, set budget 0 and move on.
+- Never ask about their current omnichannel/SFMC/tagging maturity directly -- but if the user volunteers
+  something about it unprompted (e.g. "we don't have SFMC yet", "we already have a tagging system"), copy
+  that sentence verbatim into maturity_notes. Leave maturity_notes empty otherwise.
 - Set ready=true ONLY when brand, therapy_area and lifecycle_key are all known AND you have either a
   budget or the user has been asked about budget and skipped it.
 - When ready=true, write a brief confirmation reply summarizing the locked-in brief (brand, therapy
@@ -54,23 +90,11 @@ Rules of the conversation:
 Known example brands (for grounding only; the user may name any): {', '.join(KNOWN_BRANDS)}.
 Known example therapy areas: {', '.join(KNOWN_THERAPIES)}.
 
-You will receive a JSON object with what's known so far and the new user message. Respond with the
-structured object only."""
-
-_SCHEMA = {
-    "type": "object",
-    "properties": {
-        "brand": {"type": "string"},
-        "therapy_area": {"type": "string"},
-        "lifecycle_key": {"type": "string", "enum": ["launch", "growth", "mature", "loe", ""]},
-        "budget": {"type": "number"},
-        "budget_asked": {"type": "boolean"},
-        "ready": {"type": "boolean"},
-        "reply": {"type": "string"},
-    },
-    "required": ["brand", "therapy_area", "lifecycle_key", "budget", "budget_asked", "ready", "reply"],
-    "additionalProperties": False,
-}
+You will receive a JSON object with what's known so far and the new user message. Respond with
+ONLY a single raw JSON object matching this exact shape -- no markdown code fences, no prose
+before or after it:
+{{"brand": string, "therapy_area": string, "lifecycle_key": "launch"|"growth"|"mature"|"loe"|"",
+"budget": number, "budget_asked": boolean, "maturity_notes": string, "ready": boolean, "reply": string}}"""
 
 _client = None  # lazily built + cached; cleared on construction failure so a later retry can succeed
 
@@ -89,13 +113,16 @@ def _get_client():
     from anthropic import AnthropicFoundry
 
     api_key = os.environ.get(API_KEY_ENV)
+    # Prefer `resource=` -- the SDK derives the correctly-versioned URL from it. Only pass
+    # `base_url=` when the user explicitly set a full override via AZURE_AI_FOUNDRY_ENDPOINT.
+    location_kwargs = {"base_url": ENDPOINT} if ENDPOINT else {"resource": RESOURCE}
     try:
         if api_key:
-            _client = AnthropicFoundry(api_key=api_key, base_url=ENDPOINT)
+            _client = AnthropicFoundry(api_key=api_key, **location_kwargs)
         else:
             from azure.identity import DefaultAzureCredential, get_bearer_token_provider
             token_provider = get_bearer_token_provider(DefaultAzureCredential(), SCOPE)
-            _client = AnthropicFoundry(azure_ad_token_provider=token_provider, base_url=ENDPOINT)
+            _client = AnthropicFoundry(azure_ad_token_provider=token_provider, **location_kwargs)
         return _client
     except Exception:
         _client = None
@@ -110,7 +137,7 @@ def llm_available() -> bool:
     call time (bad key, expired token, no `az login`). Real success/failure of the last
     attempt is reported by conversation.get_llm_status().
     """
-    if not ENDPOINT:
+    if not (ENDPOINT or RESOURCE):
         return False
     try:
         from anthropic import AnthropicFoundry  # noqa: F401
@@ -134,20 +161,28 @@ def interpret_message_llm(message: str, state: dict) -> tuple[dict, str, str]:
             "therapy_area": slots["therapy_area"],
             "lifecycle_key": slots["lifecycle_key"],
             "budget": slots["budget"],
+            "maturity_notes": slots.get("maturity_notes", ""),
         },
         "budget_already_asked": bool(state.get("budget_asked", False)),
         "user_message": message,
     }
 
+    # NOTE: output_config.format (native structured outputs) is not enabled on every Azure AI
+    # Foundry workspace -- it 400s there with "structured_outputs not supported in your
+    # workspace." Falling back to plain-JSON-in-the-system-prompt works everywhere, at the
+    # cost of needing to defensively strip markdown fences the model may still wrap it in.
     resp = client.messages.create(
         model=MODEL,
         max_tokens=700,
         system=_SYSTEM,
         messages=[{"role": "user", "content": json.dumps(payload)}],
-        output_config={"format": {"type": "json_schema", "schema": _SCHEMA}},
     )
     text = next(b.text for b in resp.content if b.type == "text")
-    data = json.loads(text)
+    text = text.strip()
+    if text.startswith("```"):
+        text = text.strip("`")
+        text = text[4:] if text.lower().startswith("json") else text
+    data = json.loads(text.strip())
 
     # Merge results into state (never blank out an already-captured slot).
     if data.get("brand"):
@@ -164,6 +199,8 @@ def interpret_message_llm(message: str, state: dict) -> tuple[dict, str, str]:
             pass
     if data.get("budget_asked"):
         state["budget_asked"] = True
+    if data.get("maturity_notes"):
+        slots["maturity_notes"] = data["maturity_notes"].strip()[-500:]
 
     reply = data.get("reply") or "Could you tell me the brand and therapy area you're planning for?"
     ready = bool(data.get("ready")) and slots["brand"] and slots["therapy_area"] and slots["lifecycle_key"]

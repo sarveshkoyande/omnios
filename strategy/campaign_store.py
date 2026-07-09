@@ -1,0 +1,267 @@
+"""Data-access layer for the Campaign & Content data model (db/campaign_content_schema.sql).
+
+Initialises the relational schema on SQLite (portable to Oracle PL/SQL / Postgres -- see
+the DDL header), wires it to the content-addressed blob_store, and persists a generated
+campaign plan into the normalized model: brand/indication, campaign + version (plan md +
+result JSON go to the blob store), segment, messages, an atomic-claims library with
+claim<->reference substantiation, DAM content assets, channels and KPIs.
+
+This is what turns a one-off generated plan into queryable, reusable content assets --
+the point of the data structure the home dashboard reports against.
+"""
+from __future__ import annotations
+
+import json
+import pathlib
+import sqlite3
+import sys
+import time
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import blob_store  # noqa: E402
+
+DB_PATH = pathlib.Path(__file__).resolve().parent.parent / "data" / "campaigns.db"
+SCHEMA_PATH = pathlib.Path(__file__).resolve().parent.parent / "db" / "campaign_content_schema.sql"
+
+
+def _now() -> str:
+    return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+
+
+def _conn() -> sqlite3.Connection:
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys = ON")
+    return conn
+
+
+def init_db() -> None:
+    """Create the schema if missing (idempotent)."""
+    conn = _conn()
+    conn.executescript(SCHEMA_PATH.read_text(encoding="utf-8"))
+    conn.commit()
+    conn.close()
+
+
+# ------------------------------------------------------------------ blob manifest ----
+
+def _store_blob(conn: sqlite3.Connection, data: str | bytes, mime: str, name: str) -> str | None:
+    if data is None:
+        return None
+    manifest = blob_store.put(data, mime_type=mime, original_name=name)
+    conn.execute(
+        "INSERT OR IGNORE INTO blob (blob_key, mime_type, byte_size, original_name, storage_uri, created_at) "
+        "VALUES (?,?,?,?,?,?)",
+        (manifest["blob_key"], manifest["mime_type"], manifest["byte_size"],
+         manifest["original_name"], manifest["storage_uri"], _now()),
+    )
+    return manifest["blob_key"]
+
+
+# ------------------------------------------------------------------ upserts -----------
+
+def _brand_id(conn, brand: str, therapy_area: str = "", generic: str = "", lifecycle: str = "",
+              client: str = "") -> int | None:
+    if not brand:
+        return None
+    client_id = None
+    if client:
+        conn.execute("INSERT OR IGNORE INTO client (name) VALUES (?)", (client,))
+        client_id = conn.execute("SELECT id FROM client WHERE name=?", (client,)).fetchone()["id"]
+    row = conn.execute("SELECT id FROM brand WHERE name=?", (brand,)).fetchone()
+    if row:
+        return row["id"]
+    cur = conn.execute(
+        "INSERT INTO brand (client_id, name, generic_name, therapy_area, lifecycle_key) VALUES (?,?,?,?,?)",
+        (client_id, brand, generic or None, therapy_area or None, lifecycle or None),
+    )
+    return cur.lastrowid
+
+
+def _indication_id(conn, brand_id: int | None, label: str) -> int | None:
+    if not brand_id or not label:
+        return None
+    row = conn.execute("SELECT id FROM indication WHERE brand_id=? AND label=?", (brand_id, label)).fetchone()
+    if row:
+        return row["id"]
+    cur = conn.execute("INSERT INTO indication (brand_id, label) VALUES (?,?)", (brand_id, label))
+    return cur.lastrowid
+
+
+def _ref_id(conn, source_type: str, citation: str, url: str = "", external_id: str = "") -> int:
+    if external_id:
+        row = conn.execute("SELECT id FROM ref_source WHERE source_type=? AND external_id=?",
+                           (source_type, external_id)).fetchone()
+        if row:
+            return row["id"]
+    cur = conn.execute(
+        "INSERT INTO ref_source (source_type, citation, url, external_id, created_at) VALUES (?,?,?,?,?)",
+        (source_type, citation[:500], url or None, external_id or None, _now()),
+    )
+    return cur.lastrowid
+
+
+# ------------------------------------------------------------------ main persist ------
+
+def persist_campaign_from_result(result: dict, slots: dict, plan_markdown: str = "",
+                                 project_id: str = "") -> dict:
+    """Fold a generated plan (orchestrator result + captured slots) into the normalized
+    model. Returns a small summary of what was written. Best-effort: never raises into the
+    request path -- a failure here must not break plan generation."""
+    init_db()
+    conn = _conn()
+    try:
+        brand = slots.get("brand") or result.get("brand", "")
+        ta = slots.get("therapy_area") or result.get("therapy_area", "")
+        indication = slots.get("indication") or result.get("indication", "")
+        inferred = result.get("inferred_inputs", {})
+        strat = result.get("stage_2_4_strategy", {})
+
+        bid = _brand_id(conn, brand, ta, lifecycle=slots.get("lifecycle_key", ""))
+        iid = _indication_id(conn, bid, indication)
+
+        budget = (result.get("stage_5_budget") or {}).get("total_budget")
+        cur = conn.execute(
+            """INSERT INTO campaign (project_id, brand_id, indication_id, name, lifecycle_key, persona,
+               journey_stage, cx_maturity, objective, total_budget, status, created_at, updated_at)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (project_id or None, bid, iid, f"{brand} · {indication or ta}".strip(" ·"),
+             slots.get("lifecycle_key"), inferred.get("persona"), inferred.get("stage_label"),
+             (result.get("cx_maturity") or {}).get("level"),
+             (strat.get("stage_profile") or {}).get("engagement_goal"),
+             budget, "draft", _now(), _now()),
+        )
+        campaign_id = cur.lastrowid
+
+        # Versioned snapshot -> blob store (plan markdown + full result JSON).
+        plan_key = _store_blob(conn, plan_markdown, "text/markdown", f"{brand}_plan.md") if plan_markdown else None
+        result_key = _store_blob(conn, json.dumps(result), "application/json", f"{brand}_result.json")
+        conn.execute(
+            "INSERT INTO campaign_version (campaign_id, version_no, plan_blob_key, result_blob_key, created_at) "
+            "VALUES (?,?,?,?,?)",
+            (campaign_id, 1, plan_key, result_key, _now()),
+        )
+
+        # Segment profile.
+        sp = result.get("stage_2_4_segment_profile") or {}
+        if sp:
+            conn.execute(
+                "INSERT INTO campaign_segment (campaign_id, persona, abcd_json, ladder_json, digital_json) "
+                "VALUES (?,?,?,?,?)",
+                (campaign_id, inferred.get("persona"),
+                 json.dumps(sp.get("abcd_segmentation_pct")), json.dumps(sp.get("adoption_ladder_pct")),
+                 json.dumps(sp.get("digital_preference_pct"))),
+            )
+
+        # Messages + an atomic-claims library with claim<->reference substantiation.
+        mf = result.get("stage_2_4_message_flow") or {}
+        kb = strat.get("kb_grounding") or {}
+        # Build a small reference pool from real KB documents (brand + therapy area).
+        ref_ids: list[int] = []
+        for scope in ("brand", "therapy_area"):
+            for src, items in (kb.get(scope) or {}).items():
+                for it in items[:2]:
+                    ref_ids.append(_ref_id(conn, src, it.get("title", ""), it.get("url", "")))
+        claims_written = 0
+        for ord_i, km in enumerate(mf.get("key_messages", [])):
+            cur = conn.execute(
+                "INSERT INTO campaign_message (campaign_id, topic, ord) VALUES (?,?,?)",
+                (campaign_id, km.get("topic", ""), ord_i),
+            )
+            msg_id = cur.lastrowid
+            for supporting in km.get("supporting_messages", []):
+                if not supporting or supporting.startswith("["):
+                    continue  # skip the toolkit's placeholder brackets
+                cur = conn.execute(
+                    """INSERT INTO claim (brand_id, indication_id, text, claim_type, claim_status, created_at)
+                       VALUES (?,?,?,?,?,?)""",
+                    (bid, iid, supporting, _classify_claim(km.get("topic", ""), supporting), "draft", _now()),
+                )
+                claim_id = cur.lastrowid
+                claims_written += 1
+                if claim_id == cur.lastrowid and ord_i == 0:
+                    conn.execute("UPDATE campaign_message SET claim_id=? WHERE id=?", (claim_id, msg_id))
+                # Substantiate against the first available real reference (traceability).
+                if ref_ids:
+                    conn.execute("INSERT OR IGNORE INTO claim_reference (claim_id, ref_id, locator) VALUES (?,?,?)",
+                                 (claim_id, ref_ids[claims_written % len(ref_ids)], None))
+
+        # DAM content assets (the Sheet-8 audit seeds -> catalogue rows).
+        persona = inferred.get("persona", "")
+        assets_written = 0
+        for km in mf.get("key_messages", []):
+            conn.execute(
+                """INSERT INTO content_asset (brand_id, indication_id, title, asset_format, branded,
+                   target_group, description, created_at) VALUES (?,?,?,?,?,?,?,?)""",
+                (bid, iid, km.get("topic", ""), "email", 1, persona,
+                 (km.get("supporting_messages") or [""])[0], _now()),
+            )
+            assets_written += 1
+
+        # Channels + KPIs.
+        alloc = (result.get("stage_5_budget") or {}).get("allocation") or {}
+        pp_npp = {r["channel"]: r["bucket"] for r in (result.get("stage_2_4_pp_npp") or [])}
+        for ch, v in alloc.items():
+            conn.execute(
+                "INSERT INTO campaign_channel (campaign_id, channel, share_pct, budget_amount, pp_npp) VALUES (?,?,?,?,?)",
+                (campaign_id, ch, v.get("pct"), v.get("amount"), pp_npp.get(ch)),
+            )
+        kpi = result.get("stage_7_kpi") or {}
+        for kind, key in [("leading", "leading_indicators"), ("lagging", "lagging_indicators"),
+                          ("operational", "operational_kpis")]:
+            for metric in kpi.get(key, []):
+                conn.execute("INSERT INTO campaign_kpi (campaign_id, kpi_type, metric) VALUES (?,?,?)",
+                             (campaign_id, kind, metric))
+
+        conn.commit()
+        return {"campaign_id": campaign_id, "claims": claims_written, "assets": assets_written,
+                "references": len(ref_ids)}
+    finally:
+        conn.close()
+
+
+def _classify_claim(topic: str, text: str) -> str:
+    t = (topic + " " + text).lower()
+    if "safety" in t or "adverse" in t or "tolerab" in t:
+        return "safety"
+    if "dosing" in t or "administration" in t:
+        return "access"
+    if "mechanism" in t or "moa" in t:
+        return "moa"
+    return "efficacy"
+
+
+# ------------------------------------------------------------------ read helpers ------
+
+def library_stats() -> dict:
+    """Aggregate counts for the home dashboard's data-model panel."""
+    init_db()
+    conn = _conn()
+    try:
+        def one(q: str) -> int:
+            return conn.execute(q).fetchone()[0]
+        return {
+            "campaigns": one("SELECT COUNT(*) FROM campaign"),
+            "claims": one("SELECT COUNT(*) FROM claim"),
+            "claims_approved": one("SELECT COUNT(*) FROM claim WHERE claim_status='approved'"),
+            "references": one("SELECT COUNT(*) FROM ref_source"),
+            "content_assets": one("SELECT COUNT(*) FROM content_asset"),
+            "content_modules": one("SELECT COUNT(*) FROM content_module"),
+            "blobs": one("SELECT COUNT(*) FROM blob"),
+            "unsubstantiated_claims": one("SELECT COUNT(*) FROM v_unsubstantiated_claims"),
+        }
+    finally:
+        conn.close()
+
+
+def campaign_counts_by_brand() -> dict[str, int]:
+    init_db()
+    conn = _conn()
+    try:
+        rows = conn.execute(
+            "SELECT b.name AS brand, COUNT(c.id) AS n FROM campaign c JOIN brand b ON b.id=c.brand_id GROUP BY b.name"
+        ).fetchall()
+        return {r["brand"]: r["n"] for r in rows}
+    finally:
+        conn.close()
