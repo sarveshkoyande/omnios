@@ -10,10 +10,14 @@ from __future__ import annotations
 import json
 import pathlib
 import sqlite3
+import sys
 import time
 import uuid
 
-DB_PATH = pathlib.Path(__file__).resolve().parent.parent / "data" / "projects.db"
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from paths import data_path  # noqa: E402
+
+DB_PATH = data_path("projects.db")
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS projects (

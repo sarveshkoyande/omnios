@@ -33,8 +33,9 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "strategy"))
 import blob_store  # noqa: E402
 import campaign_store  # noqa: E402
+from paths import data_path  # noqa: E402
 
-KB_DB = ROOT / "data" / "omni_kb.db"
+KB_DB = data_path("omni_kb.db")
 CATALOG = ROOT / "config" / "client_brands.json"
 INTEL = ROOT / "config" / "brand_market_intel.json"
 

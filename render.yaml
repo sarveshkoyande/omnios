@@ -2,10 +2,22 @@ services:
   - type: web
     name: omni-data-hub
     runtime: python
-    plan: free
+    # A persistent disk (below) requires a paid instance -- disks are not offered on the
+    # free plan, and a web service's own filesystem is ephemeral (wiped on every deploy and
+    # restart). Without this, all SQLite data + blobs under DATA_DIR are lost each deploy.
+    plan: starter
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn app.server:app --host 0.0.0.0 --port $PORT
+    # Durable storage for every SQLite DB (projects/campaigns/brand memory) and the blob
+    # store. paths.py routes all data access under OMNI_DATA_DIR; bootstrap.py seeds this
+    # disk once on first boot (KB snapshot + content library) and it persists thereafter.
+    disk:
+      name: omni-data
+      mountPath: /var/data
+      sizeGB: 1
     envVars:
+      - key: OMNI_DATA_DIR
+        value: /var/data
       # Use the Foundry RESOURCE name (not a full endpoint). The AnthropicFoundry SDK
       # derives the correct Anthropic passthrough URL from it:
       # https://<resource>.services.ai.azure.com/anthropic/ . Do NOT set

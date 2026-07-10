@@ -70,11 +70,13 @@
   /* Hidden until showWorkspace() sets an inline display:flex. Home is the landing view, and
      if this defaulted to flex both views painted at once on first load. */
   .app { flex: 1; display: none; min-height: 0; }
-  .rail-left { flex: 0 0 208px; border-right: 1px solid var(--line);
+  /* Three-pane split: left 15% / center 40% / right 45% of the viewport. Left and right
+     are pinned by percentage; the center flexes to fill the remaining 40%. */
+  .rail-left { flex: 0 0 15%; min-width: 150px; border-right: 1px solid var(--line);
     background: var(--glass); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
     display: flex; flex-direction: column; min-height: 0; }
   .center { flex: 1 1 auto; display: flex; flex-direction: column; min-width: 300px; min-height: 0; }
-  .rail-right { flex: 0 0 780px; min-width: 520px; border-left: 1px solid var(--line);
+  .rail-right { flex: 0 0 45%; min-width: 460px; border-left: 1px solid var(--line);
     background: var(--glass); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
     display: flex; flex-direction: column; min-height: 0; container-type: inline-size; }
 
@@ -132,6 +134,26 @@
   .composer .attach:disabled { color: var(--faint); cursor: not-allowed; background: none; }
   .composer .hint { font-size: 11px; color: var(--faint); margin-top: 6px; padding-left: 4px; }
   .composer .hint .hint-ico { font-size: 13px; vertical-align: -3px; color: var(--faint); }
+
+  /* Fill-in-the-blanks brief intake (shown at the top of a fresh plan) */
+  .intake { margin: 14px 18px 2px; border: 1px solid var(--line); border-radius: 14px;
+    background: var(--glass-strong); padding: 14px 16px 12px; box-shadow: 0 2px 10px rgba(11,61,145,0.06); flex: 0 0 auto; }
+  .intake-head { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 10px; }
+  .intake-head > .material-symbols-outlined { color: var(--indegene-navy); font-size: 22px; flex: 0 0 auto; margin-top: 1px; }
+  .intake-head b { display: block; font-size: 14px; color: var(--text); }
+  .intake-head span { display: block; font-size: 12px; color: var(--muted); line-height: 1.45; margin-top: 2px; }
+  .intake-text { width: 100%; box-sizing: border-box; resize: vertical; min-height: 150px; border: 1px solid var(--line);
+    border-radius: 10px; padding: 11px 12px; font: inherit; font-size: 13px; line-height: 1.65; color: var(--text);
+    background: #fff; outline: none; }
+  .intake-text:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(11,61,145,0.10); }
+  .intake-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; gap: 10px; }
+  .intake-skip { background: transparent; border: none; color: var(--muted); font: inherit; font-size: 12px;
+    cursor: pointer; padding: 6px 8px; border-radius: 8px; }
+  .intake-skip:hover { background: rgba(11,61,145,0.06); color: var(--indegene-navy); }
+  .intake-go { display: inline-flex; align-items: center; gap: 6px; background: var(--accent); color: #fff; border: none;
+    border-radius: 10px; padding: 9px 16px; font: inherit; font-weight: 600; font-size: 13px; cursor: pointer; }
+  .intake-go:hover { filter: brightness(1.08); }
+  .intake-go .material-symbols-outlined { font-size: 18px; }
 
   /* ---- right rail ---- */
   .rail-right .rr-scroll { overflow-y: auto; padding: 14px; flex: 1; }
@@ -1071,6 +1093,20 @@
         <div class="title" id="chat-title">Untitled plan</div>
         <div class="desc">The agent captures your brief in conversation, then runs its research agents on the right.</div>
       </div>
+      <div class="intake" id="intake-card" style="display:none">
+        <div class="intake-head">
+          <span class="material-symbols-outlined">edit_note</span>
+          <div>
+            <b>Start with a quick brief</b>
+            <span>Fill in the blanks below — or paste your own brief in any wording. I'll read it and pull out brand, molecule, indication, lifecycle, audience, budget and the rest, then ask about anything important that's missing.</span>
+          </div>
+        </div>
+        <textarea id="intake-text" class="intake-text" spellcheck="false" rows="9"></textarea>
+        <div class="intake-actions">
+          <button class="intake-skip" id="intake-skip">Skip — I'll just chat</button>
+          <button class="intake-go" id="intake-go">Extract brief <span class="material-symbols-outlined">arrow_forward</span></button>
+        </div>
+      </div>
       <div class="messages" id="messages" style="display:none"></div>
       <div class="composer" id="composer" style="display:none">
         <div class="box">
@@ -1222,6 +1258,24 @@ async function loadProjects() {
   });
 }
 
+// Fill-in-the-blanks brief template. The agent extracts each bracketed field from whatever
+// the user submits (unfilled [brackets] are ignored), so they can edit inline or paste prose.
+const BRIEF_TEMPLATE =
+  "[Campaign name] is an omnichannel campaign for [Brand], a [molecule] indicated for " +
+  "[indication], currently in the [lifecycle stage: launching / growing / mature / facing loss of exclusivity]. " +
+  "We are planning to engage [audience] in [country / region] over [duration] with a budget of [budget]. " +
+  "Our goal is to [business objective] by driving [desired outcome / KPI]. " +
+  "We already have [existing assets] available and plan to use [preferred channels], " +
+  "while considering [constraints]. Additional context or known challenges include [optional notes].";
+
+function submitIntake() {
+  const t = $("intake-text").value.trim();
+  $("intake-card").style.display = "none";
+  if (!t) { $("input").focus(); return; }
+  $("input").value = t;
+  sendMessage();   // routes through the same /api/chat extraction seam as a typed message
+}
+
 async function newProject() {
   showWorkspace();
   const res = await fetch("/api/projects", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({name:"Untitled plan"}) });
@@ -1253,6 +1307,11 @@ async function openProject(id) {
   $("messages").innerHTML = "";
   proj.messages.forEach(m => addMessage(m.role, m.text, false, m.clarify ? { clarify: m.clarify } : null));
   scrollChat();
+
+  // Fill-in-the-blanks brief intake: shown only on a brand-new plan, before any user turn.
+  const fresh = proj.phase === "collecting" && !proj.messages.some(m => m.role === "user");
+  if (fresh) { $("intake-text").value = BRIEF_TEMPLATE; $("intake-card").style.display = "block"; }
+  else { $("intake-card").style.display = "none"; }
 
   // brief + inferred (from persisted result if present)
   if (proj.result) {
@@ -1656,6 +1715,26 @@ function renderBrief() {
   if (s.indication) html += row("Indication", renderInline(s.indication), true);
   html += row("Lifecycle", renderInline(inf.lifecycle_label || s.lifecycle_key), !!(inf.lifecycle_label || s.lifecycle_key));
   html += row("Budget", fmtBudget(s.budget), !!s.budget);
+
+  // Richer brief fields captured from the fill-in-the-blanks intake (shown only when present).
+  const brief = (label, key) => { const v = s[key]; return (v && v !== "(not specified)") ? row(label, renderInline(v), true) : ""; };
+  let extra = "";
+  extra += brief("Campaign", "campaign_name");
+  extra += brief("Molecule", "molecule");
+  extra += brief("Audience", "audience");
+  extra += brief("Geography", "geography");
+  extra += brief("Duration", "duration");
+  extra += brief("Objective", "objective");
+  extra += brief("Target KPI", "kpi");
+  extra += brief("Preferred channels", "preferred_channels");
+  extra += brief("Existing assets", "existing_assets");
+  extra += brief("Constraints", "constraints");
+  extra += brief("Reason", "reason");
+  extra += brief("Notes", "notes");
+  if (extra) {
+    html += `<div class="brief-row" style="border-top:1px dashed var(--line);margin-top:4px;padding-top:9px"><span class="k">From your brief</span><span class="v"></span></div>` + extra;
+  }
+
   if (inf.persona || inf.stage_label || inf.cx_maturity || (inf.competitors && inf.competitors.length)) {
     html += `<div class="brief-row" style="border-top:1px dashed var(--line);margin-top:4px;padding-top:9px"><span class="k">Inferred by agent</span><span class="v"></span></div>`;
     html += row("Persona", renderInline(inf.persona), !!inf.persona);
@@ -2365,6 +2444,8 @@ $("file-input").addEventListener("change", (e) => {
 $("new-plan").onclick = newProject;
 $("empty-new").onclick = newProject;
 $("start-project").onclick = newProject;
+$("intake-go").onclick = submitIntake;
+$("intake-skip").onclick = () => { $("intake-card").style.display = "none"; $("input").focus(); };
 $("download-plan").onclick = downloadPlan;
 $("copy-plan").onclick = copyPlan;
 $("nav-home").onclick = showHome;

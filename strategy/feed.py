@@ -15,9 +15,13 @@ from __future__ import annotations
 import json
 import pathlib
 import sqlite3
+import sys
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from paths import data_path  # noqa: E402
 
 BASE_DIR = pathlib.Path(__file__).resolve().parent.parent
-KB_DB = BASE_DIR / "data" / "omni_kb.db"
+KB_DB = data_path("omni_kb.db")
 CURATED = BASE_DIR / "config" / "regulatory_feed.json"
 CATALOG = BASE_DIR / "config" / "client_brands.json"
 

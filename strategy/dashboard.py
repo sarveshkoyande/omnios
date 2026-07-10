@@ -15,11 +15,12 @@ import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import campaign_store  # noqa: E402
+from paths import data_path  # noqa: E402
 
 BASE_DIR = pathlib.Path(__file__).resolve().parent.parent
-KB_DB = BASE_DIR / "data" / "omni_kb.db"
+KB_DB = data_path("omni_kb.db")
 CATALOG = BASE_DIR / "config" / "client_brands.json"
-COMPETITORS = BASE_DIR / "data" / "client_brand_intel.json"
+COMPETITORS = data_path("client_brand_intel.json")
 
 _LIFECYCLE_LABEL = {"launch": "Launch", "growth": "Growth", "mature": "Mature", "loe": "LOE / defend"}
 
