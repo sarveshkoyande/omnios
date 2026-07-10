@@ -67,7 +67,9 @@
   .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 0 rgba(23,166,115,0.6); animation: pulse 2s infinite; }
 
   /* ---- 3-pane layout ---- */
-  .app { flex: 1; display: flex; min-height: 0; }
+  /* Hidden until showWorkspace() sets an inline display:flex. Home is the landing view, and
+     if this defaulted to flex both views painted at once on first load. */
+  .app { flex: 1; display: none; min-height: 0; }
   .rail-left { flex: 0 0 208px; border-right: 1px solid var(--line);
     background: var(--glass); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
     display: flex; flex-direction: column; min-height: 0; }
@@ -99,8 +101,8 @@
   .chat-head { flex: 0 0 auto; padding: 12px 18px; border-bottom: 1px solid var(--line); background: rgba(255,255,255,0.3); }
   .chat-head .title { font-weight: 600; }
   .chat-head .desc { font-size: 12px; color: var(--muted); margin-top: 2px; }
-  .messages { flex: 1; overflow-y: auto; padding: 20px 18px 8px; }
-  .msg { display: flex; gap: 10px; margin-bottom: 16px; max-width: 760px; }
+  .messages { flex: 1; overflow-y: auto; padding: 26px 18px 14px; }
+  .msg { display: flex; gap: 12px; margin-bottom: 26px; max-width: 760px; }
   .msg .avatar { flex: 0 0 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; margin-top: 2px; }
   .msg .avatar .material-symbols-outlined { font-size: 16px; }
   .msg.agent .avatar { background: var(--accent-soft); color: var(--indegene-navy); border: 1px solid rgba(0,174,239,0.4); }
@@ -201,7 +203,8 @@
   .agent-role { font-size: 10px; color: var(--faint); }
   .agent-top { flex-wrap: wrap; gap: 3px 8px; }
   .agent-status.st-standby { background: rgba(11,61,145,0.18); }
-  .avatar.avatar-person { background: none !important; border: none !important; padding: 0; width: 34px; height: 34px; }
+  .avatar.avatar-person { background: none !important; border: none !important; padding: 0;
+    flex: 0 0 34px; width: 34px; height: 34px; }
   .turn-role { font-weight: 500; color: var(--faint); font-size: 10px; letter-spacing: 0; text-transform: none; }
 
   /* ================= Home screen: ticker + brand dashboard ================= */
@@ -563,6 +566,42 @@
   .tk-raci-r { background: #DFF2E1; color: #1B7A34; } .tk-raci-a { background: #FFE6EF; color: var(--tk-magenta); }
   .tk-raci-c { background: #E4F3FC; color: #0B6FA8; } .tk-raci-i { background: #F1F1F1; color: #666; }
 
+  /* Agent-recommended fields — filled by Maya/Arjun from researched industry benchmarks.
+     Deliberately a DIFFERENT colour from the amber "Needs alignment" chip: violet means the
+     field IS answered (by a benchmark recommendation); amber means nobody has answered it. */
+  .plan-agent-chip { display: inline-flex; align-items: center; gap: 3px; font-size: 9px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .3px; color: #fff; background: linear-gradient(90deg,#5A32E0,#8A63F0);
+    padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+  .plan-agent-chip .material-symbols-outlined { font-size: 12px; }
+  .plan-agent-row { background: rgba(90,50,224,0.055); }
+  .plan-agent-row td { border-left: 0; }
+  .plan-agent-row td:first-child { box-shadow: inset 3px 0 0 #5A32E0; }
+  .plan-agent-val { margin-top: 5px; font-size: 11.5px; line-height: 1.4; }
+  .plan-agent-val strong { color: #4a27c4; }
+  .plan-agent-legend { font-size: 10.5px; color: var(--muted); margin-top: 9px; display: flex;
+    flex-wrap: wrap; align-items: center; gap: 6px; line-height: 1.5; }
+
+  /* Benchmark section (§24) */
+  .bm-block { margin-bottom: 18px; }
+  .bm-headline { font-size: 12.5px; color: var(--indegene-navy); background: rgba(90,50,224,0.06);
+    border-left: 3px solid #5A32E0; border-radius: 0 8px 8px 0; padding: 8px 11px; margin-bottom: 10px;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .bm-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
+  .bm-cols h4, .bm-h4 { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px;
+    color: var(--faint); margin: 0 0 6px; }
+  .bm-h4 { margin-top: 12px; }
+  .bm-total td { background: rgba(11,61,145,0.05); }
+  .conf-pill { font-size: 8.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .3px;
+    padding: 1px 7px; border-radius: 999px; white-space: nowrap; }
+  .conf-cited { background: #DFF2E1; color: #1B7A34; }
+  .conf-derived { background: #E4F3FC; color: #0B6FA8; }
+  .conf-approx { background: #FFF3E0; color: #C77700; }
+  .bm-aff { display: inline-flex; gap: 2px; }
+  .bm-aff i { width: 7px; height: 7px; border-radius: 50%; background: #dfe3e8; display: inline-block; }
+  .bm-aff i.on { background: #5A32E0; }
+  .bm-gov li { margin-bottom: 5px; font-size: 11.5px; line-height: 1.45; }
+  .bm-srcs { font-size: 11px; } .bm-srcs a { color: #0B6FA8; }
+
   /* Content library — claims/references/components that fill Phase 2 & 3 */
   .tk-lib-block { margin-top: 14px; border-top: 2px dashed var(--line); padding-top: 12px; }
   .tk-lib-h { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--indegene-navy); margin: 0 0 3px; }
@@ -631,10 +670,11 @@
   .empty-state .big .material-symbols-outlined { font-size: 46px; color: var(--indegene-navy); }
   .muted-card { color: var(--faint); font-size: 12.5px; font-style: italic; }
 
-  /* ---- right-rail grid (Brief + Agents side by side, Plan full width) ---- */
-  .rr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; margin-bottom: 14px; }
+  /* ---- right-rail grid: Brief, then Agent team, then Plan -- all stacked full width.
+     The agent-team row needs the full rail width for five portraits + status dots, and
+     the brief reads better as one column than squeezed into a half-width card. ---- */
+  .rr-grid { display: grid; grid-template-columns: 1fr; gap: 14px; align-items: start; margin-bottom: 14px; }
   .rr-grid .card { margin-bottom: 0; }
-  @container (max-width: 660px) { .rr-grid { grid-template-columns: 1fr; } }
 
   /* ---- in-chat agent turns (each agent's turn simply appears when it starts running --
      no handoff animation between turns) ---- */
@@ -801,13 +841,148 @@
   .rep-insights li { margin-bottom: 6px; } .rep-insights b { color: var(--indegene-navy); }
   .rep-target { font-size: 9.5px; color: var(--amber); background: #FFF3E0; padding: 1px 7px; border-radius: 999px; }
 
-  /* ---- inter-agent banter (short conversational exchanges between teammates) ---- */
-  .msg.banter { align-items: center; gap: 7px; animation: turnIn .3s ease; margin: 2px 0 2px 16px; }
-  .msg.banter .avatar { width: 26px; height: 26px; min-width: 26px; background: none; border: none; padding: 0; }
+  /* ---- inter-agent banter (short conversational exchanges between teammates) ----
+     Indented under the turn that prompted them and spaced so consecutive asides read as a
+     grouped side-conversation, with a clear break before the next agent's main turn. */
+  .msg.banter { align-items: center; gap: 10px; animation: turnIn .3s ease; margin: 0 0 12px 30px; }
+  .msg.banter .avatar { width: 26px; height: 26px; min-width: 26px; flex: 0 0 26px; background: none; border: none; padding: 0; margin-top: 0; }
+  .msg.turn + .msg.banter { margin-top: 16px; }   /* breathe after a main turn card */
+  .msg.banter + .msg.turn,
+  .msg.banter + .msg.agent,
+  .msg.banter + .msg.user { margin-top: 24px; }   /* clear break before the next main message */
   .banter-bubble { font-size: 11.5px; color: var(--muted); background: rgba(11,61,145,.045);
-    border-radius: 12px; padding: 5px 11px; line-height: 1.4; }
+    border: 1px solid rgba(11,61,145,.06); border-radius: 13px; padding: 7px 13px; line-height: 1.5; }
   .banter-name { font-weight: 700; color: var(--c, var(--indegene-navy)); }
   .banter-to { font-weight: 600; color: var(--tk-cyan, #0B6FA8); }
+  /* the "…is typing" placeholder shown before each aside lands */
+  .banter-typing .banter-bubble { padding: 8px 13px; }
+  .banter-typing .typing span { width: 5px; height: 5px; background: var(--c, var(--muted)); opacity: .75; }
+
+  /* ================= Claims Library ================= */
+  #library-view { flex: 1; min-height: 0; display: none; flex-direction: column; overflow: hidden; }
+  #library-view.show { display: flex; }
+  .lib-scroll { flex: 1; overflow-y: auto; padding: 22px 26px 40px; }
+  .lib-toolbar { display: flex; justify-content: flex-end; margin: 6px 0 14px; }
+  .lib-search { display: flex; align-items: center; gap: 7px; background: var(--glass-strong,#fff);
+    border: 1px solid var(--line); border-radius: 10px; padding: 7px 12px; min-width: 300px; }
+  .lib-search .material-symbols-outlined { font-size: 18px; color: var(--faint); }
+  .lib-search input { border: none; outline: none; background: none; font: inherit; font-size: 12.5px; flex: 1; }
+  .lib-card { cursor: pointer; transition: transform .16s ease, box-shadow .16s ease; }
+  .lib-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(11,61,145,.13); }
+  .pi-browse { width: 100%; margin-top: 11px; display: flex; align-items: center; justify-content: center; gap: 6px;
+    background: rgba(11,61,145,.06); border: 1px solid var(--line); border-radius: 9px; padding: 8px;
+    font: inherit; font-size: 11.5px; font-weight: 600; color: var(--indegene-navy); cursor: pointer; }
+  .pi-browse:hover { background: rgba(11,61,145,.11); }
+  .pi-browse .material-symbols-outlined { font-size: 16px; }
+
+  .lib-head { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 12px; }
+  .lib-back { display: inline-flex; align-items: center; gap: 5px; background: none; border: 1px solid var(--line);
+    border-radius: 9px; padding: 7px 12px; cursor: pointer; font: inherit; font-size: 12px; color: var(--indegene-navy); }
+  .lib-back:hover { background: rgba(11,61,145,.06); }
+  .lib-back .material-symbols-outlined { font-size: 17px; }
+  .lib-title { flex: 1; min-width: 220px; }
+  .lib-title h1 { margin: 0; font-size: 24px; color: var(--indegene-navy); }
+  .lib-generic { font-size: 14px; font-weight: 400; color: var(--faint); }
+  .lib-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .lib-kpis { display: flex; gap: 18px; }
+  .lib-kpis div { text-align: center; } .lib-kpis b { display: block; font-size: 19px; color: var(--indegene-navy); }
+  .lib-kpis span { font-size: 10px; color: var(--faint); text-transform: uppercase; letter-spacing: .4px; }
+  .lib-inds { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+  .lib-ind { font-size: 10.5px; background: rgba(0,174,239,.1); color: #0B6FA8; padding: 3px 10px; border-radius: 999px; }
+
+  .lib-section { margin-bottom: 30px; }
+  .lib-section > h2 { display: flex; align-items: center; gap: 7px; font-size: 15px; color: var(--indegene-navy);
+    margin: 0 0 4px; }
+  .lib-section > h2 .material-symbols-outlined { font-size: 19px; }
+  .lib-count { background: rgba(11,61,145,.1); color: var(--indegene-navy); font-size: 11px; font-weight: 700;
+    border-radius: 999px; padding: 1px 9px; }
+  .lib-note { font-size: 11.5px; color: var(--muted); margin: 0 0 11px; }
+
+  .lib-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 11px; }
+  .lib-img { margin: 0; background: #fff; border: 1px solid var(--line); border-radius: 10px; overflow: hidden;
+    cursor: zoom-in; transition: transform .16s ease, box-shadow .16s ease; }
+  .lib-img:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,.12); }
+  .lib-img img { display: block; width: 100%; height: 120px; object-fit: contain; background: #fbfcfd; padding: 6px; }
+  .lib-img figcaption { font-size: 9.5px; color: var(--faint); padding: 6px 8px; border-top: 1px solid var(--line);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .lib-filters { display: flex; flex-direction: column; gap: 7px; margin-bottom: 13px; }
+  .lib-chiprow { display: flex; flex-wrap: wrap; gap: 6px; }
+  .lib-chip { display: inline-flex; align-items: center; gap: 5px; background: #fff; border: 1px solid var(--line);
+    border-radius: 999px; padding: 4px 11px; font: inherit; font-size: 11px; cursor: pointer; color: var(--muted);
+    text-transform: capitalize; }
+  .lib-chip span { background: rgba(11,61,145,.08); border-radius: 999px; padding: 0 6px; font-size: 9.5px; }
+  .lib-chip:hover { border-color: var(--indegene-navy); }
+  .lib-chip.on { background: var(--indegene-navy); color: #fff; border-color: var(--indegene-navy); }
+  .lib-chip.on span { background: rgba(255,255,255,.22); }
+
+  .claim-card { background: var(--glass-strong,#fff); border: 1px solid var(--line); border-left: 3px solid #ccc;
+    border-radius: 10px; padding: 12px 14px; margin-bottom: 9px; }
+  .claim-card.st-approved { border-left-color: var(--green); }
+  .claim-card.st-in_review { border-left-color: var(--amber); }
+  .claim-card.st-draft { border-left-color: #b9bfc7; }
+  .claim-top { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 7px; }
+  .claim-type { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .3px; color: #fff;
+    background: #5A6B8C; padding: 2px 8px; border-radius: 999px; }
+  .claim-type.t-efficacy { background: #0B6FA8; } .claim-type.t-safety { background: #C0392B; }
+  .claim-type.t-moa { background: #5A32E0; } .claim-type.t-access { background: #12866F; }
+  .claim-type.t-rtb { background: #C77700; } .claim-type.t-isi { background: #444; }
+  .claim-status { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .3px;
+    padding: 2px 8px; border-radius: 999px; }
+  .claim-status.s-approved { background: #DFF2E1; color: #1B7A34; }
+  .claim-status.s-in_review { background: #FFF3E0; color: #C77700; }
+  .claim-status.s-draft { background: #EEF0F3; color: #667; }
+  .claim-mat { font-size: 9.5px; font-family: ui-monospace, monospace; background: #f4f6f9; color: #667;
+    padding: 1px 6px; border-radius: 4px; }
+  .claim-ind { font-size: 9.5px; color: #0B6FA8; background: rgba(0,174,239,.09); padding: 1px 8px; border-radius: 999px; }
+  .claim-text { font-size: 13px; line-height: 1.5; margin: 0 0 9px; color: #1a2330; }
+  .claim-refs { display: flex; flex-wrap: wrap; gap: 6px; }
+  .claim-ref { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: 600;
+    color: #0B6FA8; background: #E4F3FC; padding: 2px 8px; border-radius: 999px; text-decoration: none; }
+  .claim-ref .material-symbols-outlined { font-size: 13px; }
+  .claim-ref.none { background: #fdeaea; color: #9c3232; }
+  .claim-expiry { font-size: 10px; color: var(--faint); margin-top: 7px; display: flex; align-items: center; gap: 4px; }
+  .claim-expiry .material-symbols-outlined { font-size: 13px; }
+
+  .lib-modules { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 10px; }
+  .mod-card { background: var(--glass-strong,#fff); border: 1px solid var(--line); border-radius: 10px; padding: 11px 13px; }
+  .mod-top { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 6px; }
+  .mod-type { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .3px;
+    background: rgba(11,61,145,.09); color: var(--indegene-navy); padding: 2px 8px; border-radius: 999px; }
+  .mod-name { font-size: 12.5px; font-weight: 600; color: var(--indegene-navy); }
+  .mod-rules { font-size: 10.5px; color: var(--muted); margin-top: 5px; display: flex; gap: 5px; line-height: 1.4; }
+  .mod-rules .material-symbols-outlined { font-size: 14px; flex: 0 0 auto; }
+  .mod-claims { margin-top: 7px; } .mod-claims summary { font-size: 10.5px; color: var(--indegene-navy); cursor: pointer; }
+  .mod-claims ul { margin: 6px 0 0; padding-left: 16px; font-size: 11px; color: var(--muted); }
+  .mod-claims li { margin-bottom: 3px; }
+
+  .lib-assets { display: flex; flex-direction: column; gap: 6px; }
+  .asset-row { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid var(--line);
+    border-radius: 9px; padding: 8px 11px; }
+  .asset-fmt { font-size: 9px; font-weight: 700; text-transform: uppercase; color: #fff; background: var(--tk-cyan,#00AEEF);
+    padding: 2px 7px; border-radius: 4px; flex: 0 0 auto; }
+  .asset-body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .asset-body b { font-size: 12px; } .asset-body span { font-size: 10.5px; color: var(--faint);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .asset-brand { font-size: 9.5px; padding: 1px 7px; border-radius: 999px; flex: 0 0 auto; }
+  .asset-brand.b { background: #DFF2E1; color: #1B7A34; } .asset-brand.u { background: #EEF0F3; color: #667; }
+  .asset-id { font-size: 9px; font-family: ui-monospace, monospace; color: var(--faint); flex: 0 0 auto; }
+  .asset-open { display: inline-flex; align-items: center; gap: 3px; font-size: 10.5px; color: #0B6FA8;
+    text-decoration: none; flex: 0 0 auto; }
+  .asset-open .material-symbols-outlined { font-size: 14px; }
+
+  /* lightbox */
+  .lightbox { position: fixed; inset: 0; background: rgba(8,14,26,.86); display: none; align-items: center;
+    justify-content: center; z-index: 999; padding: 40px; }
+  .lightbox.show { display: flex; }
+  .lightbox figure { margin: 0; max-width: 92vw; max-height: 88vh; display: flex; flex-direction: column; gap: 10px; }
+  .lightbox img { max-width: 92vw; max-height: 78vh; object-fit: contain; background: #fff; border-radius: 10px; padding: 10px; }
+  .lightbox figcaption { color: #dfe6f0; font-size: 12px; text-align: center; }
+  .lightbox figcaption a { color: #7cc7ff; }
+  .lb-close { position: absolute; top: 18px; right: 20px; background: rgba(255,255,255,.12); border: none;
+    color: #fff; border-radius: 50%; width: 38px; height: 38px; cursor: pointer; display: flex;
+    align-items: center; justify-content: center; }
+  .lb-close:hover { background: rgba(255,255,255,.22); }
 
   @keyframes pulse { 0% { box-shadow: 0 0 0 0 currentColor; } 70% { box-shadow: 0 0 0 6px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
   @keyframes blink { 0%, 60%, 100% { opacity: 0.3; } 30% { opacity: 1; } }
@@ -822,6 +997,7 @@
     <span class="topnav">
       <button class="topnav-btn active" id="nav-home"><span class="material-symbols-outlined">dashboard</span> Home</button>
       <button class="topnav-btn" id="nav-workspace"><span class="material-symbols-outlined">edit_note</span> Workspace</button>
+      <button class="topnav-btn" id="nav-library"><span class="material-symbols-outlined">inventory_2</span> Claims Library</button>
     </span>
     <span class="live-pill" id="llm-pill" style="margin-left:auto" title="Conversation engine"><span class="material-symbols-outlined">radio_button_unchecked</span> chat: rules</span>
     <span class="live-pill" style="margin-left:8px"><span class="live-dot"></span> agents online</span>
@@ -847,6 +1023,31 @@
       <div id="home-brands"></div>
     </div>
   </div>
+
+  <!-- CLAIMS LIBRARY: browse the governed claims, references, modules and real label imagery -->
+  <div id="library-view">
+    <div class="lib-scroll">
+      <div id="lib-index">
+        <div class="home-hero">
+          <h1>Claims Library</h1>
+          <p>Every governed claim, its substantiating references, the reusable modules built from it,
+             and the brand's real FDA label imagery. Pick a brand to review its content.</p>
+          <div class="home-stats" id="lib-stats"></div>
+        </div>
+        <div class="lib-toolbar">
+          <div class="lib-search"><span class="material-symbols-outlined">search</span>
+            <input id="lib-search" type="text" placeholder="Search brands, generics or therapy areas…"></div>
+        </div>
+        <div id="lib-brands"></div>
+      </div>
+      <div id="lib-detail" style="display:none"></div>
+    </div>
+  </div>
+
+  <!-- image lightbox -->
+  <div id="lightbox" class="lightbox"><button class="lb-close" id="lb-close">
+      <span class="material-symbols-outlined">close</span></button>
+    <figure><img id="lb-img" alt=""><figcaption id="lb-cap"></figcaption></figure></div>
 
   <div class="app">
     <!-- LEFT: projects -->
@@ -951,15 +1152,21 @@ const WORKFLOW_STAGES = [
 const AGENT_COLORS = { intel:"#1768D1", strategy:"#5A32E0", inspiration:"#A6720A", activation:"#12866F", compose:"#3454C4" };
 const AGENT_ICONS = { intel:"travel_explore", strategy:"track_changes", inspiration:"emoji_events", activation:"payments", compose:"description" };
 // Named teammates with profile pictures -- source of truth for the human name (first
-// name, sharing its first letter with the role), role, and a simple self-contained
-// placeholder avatar: a gradient circle with the agent's initials (no external photos --
-// they were blocked/offline; these render everywhere with zero network). Mirrors orchestrator.py.
+// name, sharing its first letter with the role), role, and a portrait avatar. `photo` is
+// the user-supplied portrait; if it fails to load (offline, or the host blocks hotlinking)
+// avatarHtml's onerror drops the <img> and the gradient-initials monogram behind it shows
+// through -- so the UI never renders a broken image. Mirrors orchestrator.py.
 const AGENT_PEOPLE = {
-  intel:       { name:"Maya",   role:"Market & Competitive Intelligence", initials:"Ma", c1:"#1768D1", c2:"#4AA6F2" },
-  strategy:    { name:"Sam",    role:"Strategy & Positioning",            initials:"Sa", c1:"#5A32E0", c2:"#9B6BFF" },
-  inspiration: { name:"Chloe",  role:"Creative Inspiration",              initials:"Ch", c1:"#C77700", c2:"#F2A93B" },
-  activation:  { name:"Arjun",  role:"Activation Planning",               initials:"Ar", c1:"#12866F", c2:"#37B89A" },
-  compose:     { name:"Cooper", role:"Brand Engagement Plan Composer",    initials:"Co", c1:"#3454C4", c2:"#6C8BF0" },
+  intel:       { name:"Maya",   role:"Market & Competitive Intelligence", initials:"Ma", c1:"#1768D1", c2:"#4AA6F2",
+                 photo:"https://i.pinimg.com/736x/84/67/07/846707b49d0ee0924c31dde35e14cb8c.jpg" },
+  strategy:    { name:"Sam",    role:"Strategy & Positioning",            initials:"Sa", c1:"#5A32E0", c2:"#9B6BFF",
+                 photo:"https://i.pinimg.com/736x/98/15/22/981522e80927e19a5641b7265b266085.jpg" },
+  inspiration: { name:"Chloe",  role:"Creative Inspiration",              initials:"Ch", c1:"#C77700", c2:"#F2A93B",
+                 photo:"https://i.pinimg.com/736x/09/fa/2a/09fa2ae07bed26e6962bad898de6dad8.jpg" },
+  activation:  { name:"Arjun",  role:"Activation Planning",               initials:"Ar", c1:"#12866F", c2:"#37B89A",
+                 photo:"https://i.pinimg.com/736x/ae/e5/dc/aee5dc0bd16a86991299c7862577d901.jpg" },
+  compose:     { name:"Cooper", role:"Brand Engagement Plan Composer",    initials:"Co", c1:"#3454C4", c2:"#6C8BF0",
+                 photo:"https://i.pinimg.com/736x/4a/d9/1d/4ad91d1959d7eb2524fe52187973ea12.jpg" },
 };
 let agentMeta = {};
 let _avatarSeq = 0;
@@ -1180,10 +1387,20 @@ function startRun() {
   es.onmessage = (evt) => {
     const ev = JSON.parse(evt.data);
     handleRunEvent(ev);
-    if (ev.type === "done") { closedCleanly = true; es.close(); state.es = null; finishRun(); }
+    if (ev.type === "done") {
+      closedCleanly = true; es.close(); state.es = null;
+      // The stream is finished, but paced asides may still be animating -- let the chat
+      // queue drain before re-enabling input, so the last exchange isn't cut off.
+      if (chatDraining || chatQueue.length) pendingFinish = true; else finishRun();
+    }
   };
   es.onerror = () => {
-    if (!closedCleanly) { es.close(); state.es = null; addMessage("agent", "⚠ The research run was interrupted. You can ask me to re-run."); finishRun(); }
+    if (!closedCleanly) {
+      es.close(); state.es = null;
+      chatQueue.length = 0; pendingFinish = false;   // abandon pending asides on failure
+      addMessage("agent", "⚠ The research run was interrupted. You can ask me to re-run.");
+      finishRun();
+    }
   };
 }
 function finishRun() { state.busy = false; $("send").disabled = false; renderStepper(); loadProjects(); }
@@ -1199,13 +1416,63 @@ function postAgentBanter(id, toId, text) {
   $("messages").appendChild(m); scrollChat();
 }
 
+// ---- paced chat renderer -------------------------------------------------------------
+// The server streams banter back-to-back, which dumps every aside at once. Chat renders go
+// through a FIFO queue instead: each banter line shows a typing indicator, pauses 5-7s,
+// then appears. Agent turns/narration are queued too (with no pause) so nothing overtakes a
+// pending aside and the conversation stays in stream order. Right-rail status updates are
+// NOT queued -- they reflect what the backend is really doing right now.
+// Pause scales with how much there is to read: a short aside lands near 2s, a long one
+// near 4s -- roughly the time it takes to type/read it, rather than a flat wait.
+const BANTER_MIN_MS = 2000, BANTER_MAX_MS = 4000, BANTER_MS_PER_CHAR = 16, BANTER_RUSH_MS = 1000;
+const chatQueue = [];
+let chatDraining = false, pendingFinish = false;
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+const banterDelay = (text) =>
+  Math.min(BANTER_MAX_MS, BANTER_MIN_MS + (text || "").length * BANTER_MS_PER_CHAR);
+
+function enqueueChat(item) { chatQueue.push(item); drainChat(); }
+
+async function drainChat() {
+  if (chatDraining) return;
+  chatDraining = true;
+  while (chatQueue.length) {
+    const item = chatQueue.shift();
+    if (item.kind === "banter") {
+      const typing = addBanterTyping(item.id);
+      // Backpressure: if asides have piled up behind a slow drain, speed through them
+      // rather than let the chat fall behind the agents' real work.
+      const wait = chatQueue.length > 4 ? BANTER_RUSH_MS : banterDelay(item.text);
+      await sleep(wait);
+      if (typing) typing.remove();
+      postAgentBanter(item.id, item.to, item.text);
+    } else {
+      item.run();
+    }
+  }
+  chatDraining = false;
+  if (pendingFinish) { pendingFinish = false; finishRun(); }
+}
+
+// A banter-shaped bubble with the agent's portrait and the typing dots.
+function addBanterTyping(id) {
+  const p = AGENT_PEOPLE[id] || { c1: "#1768D1" };
+  const m = document.createElement("div");
+  m.className = "msg agent banter banter-typing";
+  m.style.setProperty("--c", p.c1);
+  m.innerHTML = `<div class="avatar avatar-person">${avatarHtml(id, 26)}</div>
+    <div class="banter-bubble"><span class="typing"><span></span><span></span><span></span></span></div>`;
+  $("messages").appendChild(m); scrollChat();
+  return m;
+}
+
 function handleRunEvent(ev) {
   switch (ev.type) {
     case "agents_init": initAgents(ev.agents); break;
     case "agent":
-      updateAgent(ev);
-      if (ev.status === "running") postAgentTurnStart(ev.id, ev.say);
-      else if (ev.status === "done") completeAgentTurn(ev.id, ev.summary, ev.detail);
+      updateAgent(ev);   // right-rail status: immediate, reflects real backend progress
+      if (ev.status === "running") enqueueChat({ kind: "fn", run: () => postAgentTurnStart(ev.id, ev.say) });
+      else if (ev.status === "done") enqueueChat({ kind: "fn", run: () => completeAgentTurn(ev.id, ev.summary, ev.detail) });
       break;
     case "inferred":
       if (ev.persona) state.inferred.persona = ev.persona;
@@ -1215,12 +1482,12 @@ function handleRunEvent(ev) {
       if (ev.cx_maturity) state.inferred.cx_maturity = ev.cx_maturity;
       renderBrief();
       break;
-    case "narration": addMessage("agent", ev.text); scrollChat(); break;
-    case "banter": postAgentBanter(ev.id, ev.to, ev.text); break;
-    case "clarify": addMessage("agent", ev.text, false, { clarify: ev.clarify }); scrollChat(); break;
+    case "narration": enqueueChat({ kind: "fn", run: () => { addMessage("agent", ev.text); scrollChat(); } }); break;
+    case "banter": enqueueChat({ kind: "banter", id: ev.id, to: ev.to, text: ev.text }); break;
+    case "clarify": enqueueChat({ kind: "fn", run: () => { addMessage("agent", ev.text, false, { clarify: ev.clarify }); scrollChat(); } }); break;
     case "plan": showPlan(ev.html, ev.markdown); break;
     case "result": state.result = ev.result; renderStepper(); break;
-    case "error": addMessage("agent", "⚠ " + ev.message); break;
+    case "error": enqueueChat({ kind: "fn", run: () => addMessage("agent", "⚠ " + ev.message) }); break;
   }
 }
 
@@ -1671,18 +1938,234 @@ function renderStageReporting() {
        <div class="tk-scroll"><table class="plan-table"><tr><th>Test</th><th>Measure</th><th>Channels</th><th>Frequency</th><th>What good looks like</th></tr>${tmlRows}</table></div></div>` : "");
 }
 
-// ---------- home screen: view toggle + brand dashboard + ticker ----------
-function showHome() {
-  $("home-view").classList.add("show");
-  document.querySelector(".app").style.display = "none";
-  $("nav-home").classList.add("active"); $("nav-workspace").classList.remove("active");
-  loadHome();
+// ---------- view switching (Home / Workspace / Claims Library) ----------
+function setView(view) {
+  $("home-view").classList.toggle("show", view === "home");
+  $("library-view").classList.toggle("show", view === "library");
+  document.querySelector(".app").style.display = view === "workspace" ? "flex" : "none";
+  $("nav-home").classList.toggle("active", view === "home");
+  $("nav-workspace").classList.toggle("active", view === "workspace");
+  $("nav-library").classList.toggle("active", view === "library");
 }
-function showWorkspace() {
-  $("home-view").classList.remove("show");
-  document.querySelector(".app").style.display = "flex";
-  $("nav-workspace").classList.add("active"); $("nav-home").classList.remove("active");
+function showHome() { setView("home"); loadHome(); }
+function showWorkspace() { setView("workspace"); }
+function showLibrary() { setView("library"); loadLibrary(); }
+
+// ================= Claims Library =================
+// Browses the governed content library: claims with their substantiating references, the
+// reusable modules assembled from them, and the brand's real FDA label imagery (served as
+// raw bytes from the content-addressed blob store via /api/blob/<sha256>).
+const libState = { index: null, brand: null, detail: null, status: "all", type: "all", q: "" };
+
+const CLAIM_TYPE_LABEL = { efficacy:"Efficacy", safety:"Safety", moa:"Mechanism", access:"Access & dosing",
+  rtb:"Reason to believe", isi:"Important Safety Info", fair_balance:"Fair balance", other:"Other" };
+const CLAIM_SRC_LABEL = { dailymed:"DailyMed label", clinicaltrials:"ClinicalTrials.gov", pubmed:"PubMed",
+  openfda:"openFDA", data_on_file:"Data on file", congress:"Congress", guideline:"Guideline" };
+
+async function loadLibrary() {
+  if (libState.brand) return;                       // detail view already open
+  if (!libState.index) {
+    try { libState.index = await (await fetch("/api/library")).json(); }
+    catch (e) { $("lib-brands").innerHTML = `<div class="muted-card">Could not load the library.</div>`; return; }
+  }
+  renderLibraryIndex();
 }
+
+function renderLibraryIndex() {
+  $("lib-index").style.display = "block";
+  $("lib-detail").style.display = "none";
+  const { brands, totals } = libState.index;
+  const stat = (n, l, cls) => `<div class="home-stat ${cls||''}"><div class="n">${n}</div><div class="l">${l}</div></div>`;
+  const images = brands.reduce((s, b) => s + b.images, 0);
+  $("lib-stats").innerHTML =
+    stat(totals.claims || 0, "Claims") + stat(totals.claims_approved || 0, "MLR-approved") +
+    stat(totals.references || 0, "References") + stat(totals.content_modules || 0, "Modules") +
+    stat(images, "Label images") + stat(totals.content_assets || 0, "Assets") +
+    stat(totals.unsubstantiated_claims || 0, "Unsubstantiated",
+         totals.unsubstantiated_claims ? "alert" : "");
+
+  const q = libState.q.toLowerCase();
+  const shown = brands.filter(b => !q ||
+    [b.brand, b.generic_name, b.therapy_area, b.client].some(v => (v||"").toLowerCase().includes(q)));
+
+  const byClient = {};
+  shown.forEach(b => (byClient[b.client || "Other"] = byClient[b.client || "Other"] || []).push(b));
+
+  const wrap = $("lib-brands");
+  if (!shown.length) { wrap.innerHTML = `<div class="muted-card" style="padding:14px">No brands match “${renderInline(libState.q)}”.</div>`; return; }
+  wrap.innerHTML = Object.entries(byClient).map(([client, bs]) => `
+    <div class="client-group">
+      <div class="client-group-head"><h2>${renderInline(client)}</h2><span class="cg-count">${bs.length} brands</span></div>
+      <div class="brand-grid">${bs.map(libBrandCard).join("")}</div>
+    </div>`).join("");
+  wrap.querySelectorAll("[data-lib-brand]").forEach(el =>
+    el.onclick = () => openBrandLibrary(el.getAttribute("data-lib-brand")));
+}
+
+function libBrandCard(b) {
+  const pct = b.claims ? Math.round(b.approved / b.claims * 100) : 0;
+  const chip = (ico, n, l) => `<span class="bc-metric">${iconSpan(ico)}<b>${n}</b> ${l}</span>`;
+  return `<div class="brand-card lib-card" data-lib-brand="${b.brand.replace(/"/g,'&quot;')}">
+    <div class="bc-top"><div><h3>${renderInline(b.brand)}</h3>
+      <div class="bc-generic">${renderInline(b.generic_name || "")}</div></div>
+      <span class="bc-life ${b.lifecycle_key}">${renderInline(b.lifecycle_key || "")}</span></div>
+    <div class="bc-ta">${iconSpan("biotech")} ${renderInline(b.therapy_area || "")}</div>
+    <div class="bc-momentum">
+      <div class="bc-momentum-label"><span>MLR-approved claims</span><span>${b.approved}/${b.claims}</span></div>
+      <div class="bc-momentum-track"><div class="bc-momentum-fill" style="width:${pct}%"></div></div>
+    </div>
+    <div class="bc-metrics">${chip("gavel", b.claims, "claims")}${chip("link", b.references, "refs")}
+      ${chip("dashboard_customize", b.modules, "modules")}${chip("image", b.images, "images")}</div>
+    <button class="bc-plan"><span class="material-symbols-outlined">visibility</span> Review content</button>
+  </div>`;
+}
+
+async function openBrandLibrary(brand) {
+  libState.brand = brand; libState.status = "all"; libState.type = "all";
+  $("lib-index").style.display = "none";
+  const d = $("lib-detail"); d.style.display = "block";
+  d.innerHTML = `<div class="muted-card" style="padding:24px">Loading ${renderInline(brand)}…</div>`;
+  try { libState.detail = await (await fetch("/api/library/" + encodeURIComponent(brand))).json(); }
+  catch (e) { d.innerHTML = `<div class="muted-card" style="padding:24px">Could not load ${renderInline(brand)}.</div>`; return; }
+  renderBrandLibrary();
+  document.querySelector(".lib-scroll").scrollTop = 0;
+}
+
+function closeBrandLibrary() {
+  libState.brand = null; libState.detail = null;
+  renderLibraryIndex();
+}
+
+function renderBrandLibrary() {
+  const d = libState.detail, el = $("lib-detail");
+  const c = d.counts;
+  const typeChips = ["all", ...Object.keys(c.by_type)].map(t =>
+    `<button class="lib-chip ${libState.type===t?"on":""}" data-type="${t}">${t==="all"?"All types":(CLAIM_TYPE_LABEL[t]||t)}
+       <span>${t==="all"?c.claims:c.by_type[t]}</span></button>`).join("");
+  const statusChips = ["all", "approved", "in_review", "draft"].filter(s => s==="all" || c.by_status[s]).map(s =>
+    `<button class="lib-chip ${libState.status===s?"on":""}" data-status="${s}">${s==="all"?"All statuses":s.replace("_"," ")}
+       <span>${s==="all"?c.claims:(c.by_status[s]||0)}</span></button>`).join("");
+
+  el.innerHTML = `
+    <div class="lib-head">
+      <button class="lib-back" id="lib-back">${iconSpan("arrow_back")} All brands</button>
+      <div class="lib-title">
+        <h1>${renderInline(d.brand)} <span class="lib-generic">${renderInline(d.generic||"")}</span></h1>
+        <div class="lib-sub">${renderInline(d.client)} · ${renderInline(d.therapy_area)} ·
+          ${d.indications.length} indication${d.indications.length===1?"":"s"}</div>
+      </div>
+      <div class="lib-kpis">
+        <div><b>${c.claims}</b><span>claims</span></div>
+        <div><b>${c.approved}</b><span>approved</span></div>
+        <div><b>${c.modules}</b><span>modules</span></div>
+        <div><b>${c.images}</b><span>images</span></div>
+      </div>
+    </div>
+
+    ${d.indications.length ? `<div class="lib-inds">${d.indications.map(i=>`<span class="lib-ind">${renderInline(i)}</span>`).join("")}</div>` : ""}
+
+    <section class="lib-section">
+      <h2>${iconSpan("image")} Label imagery <span class="lib-count">${d.images.length}</span></h2>
+      <p class="lib-note">Real figures from this brand's FDA Structured Product Label (public-domain, served
+         from the content-addressed blob store). Click to enlarge; the caption links to the source.</p>
+      ${d.images.length ? `<div class="lib-gallery">${d.images.map(imgTileHtml).join("")}</div>`
+        : `<div class="muted-card">No label images captured. Run <code>scripts/fetch_label_images.py</code>.</div>`}
+    </section>
+
+    <section class="lib-section">
+      <h2>${iconSpan("gavel")} Claims <span class="lib-count">${c.claims}</span></h2>
+      <div class="lib-filters"><div class="lib-chiprow">${statusChips}</div><div class="lib-chiprow">${typeChips}</div></div>
+      <div id="lib-claims"></div>
+    </section>
+
+    <section class="lib-section">
+      <h2>${iconSpan("dashboard_customize")} Reusable modules <span class="lib-count">${d.modules.length}</span></h2>
+      <p class="lib-note">Pre-approved building blocks. Approve once, assemble into many assets.</p>
+      <div class="lib-modules">${d.modules.map(moduleCardHtml).join("") || '<div class="muted-card">No modules.</div>'}</div>
+    </section>
+
+    <section class="lib-section">
+      <h2>${iconSpan("folder_open")} Other assets <span class="lib-count">${d.assets.length}</span></h2>
+      <div class="lib-assets">${d.assets.map(assetRowHtml).join("") || '<div class="muted-card">No assets.</div>'}</div>
+    </section>`;
+
+  $("lib-back").onclick = closeBrandLibrary;
+  el.querySelectorAll("[data-status]").forEach(b => b.onclick = () => { libState.status = b.getAttribute("data-status"); renderBrandLibrary(); });
+  el.querySelectorAll("[data-type]").forEach(b => b.onclick = () => { libState.type = b.getAttribute("data-type"); renderBrandLibrary(); });
+  wireLightbox(el);
+  renderClaims();
+}
+
+function renderClaims() {
+  const d = libState.detail;
+  const rows = d.claims.filter(c =>
+    (libState.status === "all" || c.status === libState.status) &&
+    (libState.type === "all" || c.claim_type === libState.type));
+  $("lib-claims").innerHTML = rows.map(claimCardHtml).join("") ||
+    `<div class="muted-card" style="padding:12px">No claims match this filter.</div>`;
+}
+
+function claimCardHtml(c) {
+  const refs = c.references.map(r => {
+    const label = CLAIM_SRC_LABEL[r.source_type] || r.source_type;
+    const id = r.external_id ? ` ${r.external_id}` : "";
+    const inner = `${iconSpan("link")}${label}${id}`;
+    return r.url ? `<a class="claim-ref" href="${r.url}" target="_blank" title="${renderInline(r.citation||"")}">${inner}</a>`
+                 : `<span class="claim-ref">${inner}</span>`;
+  }).join("") || `<span class="claim-ref none">${iconSpan("link_off")} No reference — MLR risk</span>`;
+  const mat = c.material_number ? `<span class="claim-mat">${renderInline(c.material_number)}</span>` : "";
+  const ind = c.indication ? `<span class="claim-ind">${renderInline(c.indication)}</span>` : "";
+  return `<article class="claim-card st-${c.status}">
+    <div class="claim-top">
+      <span class="claim-type t-${c.claim_type}">${CLAIM_TYPE_LABEL[c.claim_type] || c.claim_type}</span>
+      <span class="claim-status s-${c.status}">${c.status.replace("_"," ")}</span>
+      ${mat}${ind}
+    </div>
+    <p class="claim-text">${renderInline(c.text)}</p>
+    <div class="claim-refs">${refs}</div>
+    ${c.expires_at ? `<div class="claim-expiry">${iconSpan("event")} Re-substantiate by ${c.expires_at.slice(0,10)}</div>` : ""}
+  </article>`;
+}
+
+function imgTileHtml(im) {
+  return `<figure class="lib-img" data-full="/api/blob/${im.blob_key}" data-cap="${renderInline(im.title)}" data-src="${im.url||""}">
+    <img src="/api/blob/${im.blob_key}" alt="${renderInline(im.title)}" loading="lazy">
+    <figcaption>${renderInline(im.file_name || im.title)}</figcaption></figure>`;
+}
+
+function moduleCardHtml(m) {
+  const claims = m.claims.map(x => `<li>${renderInline(x.text)}</li>`).join("");
+  return `<div class="mod-card">
+    <div class="mod-top"><span class="mod-type">${renderInline(m.module_type.replace("_"," "))}</span>
+      <span class="claim-status s-${m.status}">${m.status.replace("_"," ")}</span>
+      ${m.material_number ? `<span class="claim-mat">${renderInline(m.material_number)}</span>` : ""}</div>
+    <div class="mod-name">${renderInline(m.name)}</div>
+    ${m.business_rules ? `<div class="mod-rules">${iconSpan("rule")} ${renderInline(m.business_rules)}</div>` : ""}
+    ${claims ? `<details class="mod-claims"><summary>${m.claims.length} claim${m.claims.length===1?"":"s"}</summary><ul>${claims}</ul></details>` : ""}
+  </div>`;
+}
+
+function assetRowHtml(a) {
+  const link = a.blob_key ? `<a class="asset-open" href="/api/blob/${a.blob_key}" target="_blank">${iconSpan("open_in_new")} Open</a>` : "";
+  return `<div class="asset-row">
+    <span class="asset-fmt">${renderInline(a.asset_format)}</span>
+    <div class="asset-body"><b>${renderInline(a.title)}</b>
+      <span>${renderInline(a.description || "")}</span></div>
+    <span class="asset-brand ${a.branded?"b":"u"}">${a.branded?"Branded":"Unbranded"}</span>
+    <span class="asset-id">${renderInline(a.id_code || "")}</span>${link}</div>`;
+}
+
+// ---- image lightbox ----
+function wireLightbox(root) {
+  root.querySelectorAll(".lib-img").forEach(fig => fig.onclick = () => {
+    $("lb-img").src = fig.getAttribute("data-full");
+    const src = fig.getAttribute("data-src");
+    $("lb-cap").innerHTML = renderInline(fig.getAttribute("data-cap")) +
+      (src ? ` — <a href="${src}" target="_blank">view on DailyMed</a>` : "");
+    $("lightbox").classList.add("show");
+  });
+}
+function closeLightbox() { $("lightbox").classList.remove("show"); $("lb-img").src = ""; }
 
 const _FEED_TAG = { approval: "Approval", launch: "Launch", indication_change: "Indication", notice: "Notice",
   label_update: "Label", trial: "New trial", literature: "Literature" };
@@ -1786,8 +2269,10 @@ function renderPortfolioInsights(dash) {
         <div class="pi-kv"><span>Content assets</span><b>${lib.content_assets || 0}</b></div>
         <div class="pi-kv"><span>Reusable modules</span><b>${lib.content_modules || 0}</b></div>
         <div class="pi-kv ${unsub ? "bad" : "good"}"><span>Unsubstantiated claims</span><b>${unsub}</b></div>
+        <button class="pi-browse" id="pi-browse">${iconSpan("inventory_2")} Browse claims library</button>
       </div>
     </div>`;
+  const btn = $("pi-browse"); if (btn) btn.onclick = showLibrary;
 }
 
 function brandCardHtml(b) {
@@ -1884,10 +2369,20 @@ $("download-plan").onclick = downloadPlan;
 $("copy-plan").onclick = copyPlan;
 $("nav-home").onclick = showHome;
 $("nav-workspace").onclick = showWorkspace;
+$("nav-library").onclick = showLibrary;
+$("lb-close").onclick = closeLightbox;
+$("lightbox").onclick = (e) => { if (e.target.id === "lightbox") closeLightbox(); };
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeLightbox(); });
+$("lib-search").addEventListener("input", (e) => {
+  libState.q = e.target.value.trim();
+  if (!libState.brand) renderLibraryIndex();
+});
 
 setupVoice();
 loadProjects();
-loadHome();   // Home (brand dashboard + ticker) is the default landing view.
+// showHome() (not loadHome()) so the workspace is explicitly hidden and the nav state is
+// set -- calling loadHome() alone only fetched data and left both views painted.
+showHome();   // Home (brand dashboard + ticker) is the default landing view.
 
 // Reflect whether the chat is LLM-backed (Claude via Microsoft Foundry) or rules-based,
 // and log *why* on every turn -- not just a boot-time flag -- so a fallback is visible,

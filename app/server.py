@@ -14,7 +14,7 @@ import sys
 import time
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import FileResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -37,6 +37,7 @@ from strategy import dashboard as dashboard_mod  # noqa: E402
 from strategy import feed as feed_mod  # noqa: E402
 from strategy import campaign_store  # noqa: E402
 from strategy import brand_memory  # noqa: E402
+from strategy import blob_store  # noqa: E402  (serves real label images to the Claims Library)
 
 app = FastAPI(title="Omni OS Brand Engagement Planning Agent")
 
@@ -52,6 +53,42 @@ def _msg(role: str, text: str, extra: dict | None = None) -> dict:
 def api_home():
     """Landing-page payload: per-brand performance dashboard + the ticker feed."""
     return {"dashboard": dashboard_mod.brand_performance(), "feed": feed_mod.build_feed()}
+
+
+# ------------------------------------------------------------------ #
+# Claims Library: browse the governed content library + its real assets
+# ------------------------------------------------------------------ #
+
+@app.get("/api/library")
+def api_library():
+    """Index of every brand holding library content, with claim/asset/image counts."""
+    return campaign_store.library_brands()
+
+
+@app.get("/api/library/{brand}")
+def api_library_brand(brand: str):
+    """One brand's full library: claims (with substantiating references), reusable modules,
+    real label images and the rest of the DAM assets."""
+    detail = campaign_store.brand_library_detail(brand)
+    if not detail.get("found"):
+        raise HTTPException(404, f"no library content for brand '{brand}'")
+    return detail
+
+
+@app.get("/api/blob/{blob_key}")
+def api_blob(blob_key: str):
+    """Serve raw bytes from the content-addressed blob store with the right Content-Type,
+    so the library can render the real label images (and download other assets).
+    Blob keys are sha256 hex, so content is immutable -- cache it hard."""
+    if not (len(blob_key) == 64 and all(c in "0123456789abcdef" for c in blob_key.lower())):
+        raise HTTPException(400, "blob_key must be a sha256 hex digest")
+    meta = campaign_store.blob_meta(blob_key)
+    data = blob_store.get(blob_key)
+    if data is None or meta is None:
+        raise HTTPException(404, "blob not found")
+    return Response(content=data, media_type=meta.get("mime_type") or "application/octet-stream",
+                    headers={"Cache-Control": "public, max-age=31536000, immutable",
+                             "Content-Disposition": f'inline; filename="{meta.get("original_name") or blob_key}"'})
 
 
 # ------------------------------------------------------------------ #

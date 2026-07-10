@@ -39,6 +39,7 @@ CATALOG = ROOT / "config" / "client_brands.json"
 INTEL = ROOT / "config" / "brand_market_intel.json"
 
 GEN_TAG = "OMNIGEN"   # marks machine-generated library rows so a rebuild can replace them
+IMG_TAG = f"{GEN_TAG}-IMG"   # owned by scripts/fetch_label_images.py -- never cleared here
 YEAR = 2026
 
 
@@ -348,11 +349,17 @@ def _tag(conn, kind: str, entity_id: int, dimension: str, term: str) -> None:
 
 
 def _clear_generated(conn) -> None:
-    """Remove previously machine-generated rows so a rerun rebuilds cleanly."""
+    """Remove previously machine-generated rows so a rerun rebuilds cleanly.
+
+    Label images (id_code OMNIGEN-IMG-*) are owned by scripts/fetch_label_images.py and are
+    expensive to re-download, so they are explicitly preserved -- without the NOT LIKE guard
+    this would silently wipe every fetched image on the next content-library rebuild.
+    """
     conn.execute("DELETE FROM review_record WHERE reviewer = ?", (GEN_TAG,))
     conn.execute("DELETE FROM claim WHERE mlr_code = ?", (GEN_TAG,))
     conn.execute("DELETE FROM content_module WHERE material_number LIKE ?", (f"{GEN_TAG}-MOD-%",))
-    conn.execute("DELETE FROM content_asset WHERE id_code LIKE ?", (f"{GEN_TAG}-%",))
+    conn.execute("DELETE FROM content_asset WHERE id_code LIKE ? AND id_code NOT LIKE ?",
+                 (f"{GEN_TAG}-%", f"{IMG_TAG}-%"))
     conn.execute("DELETE FROM ref_source WHERE annotation LIKE ? OR source_type IN "
                  "('dailymed','clinicaltrials','pubmed')", (f"%{GEN_TAG}%",))
     conn.commit()
@@ -413,7 +420,10 @@ def build() -> dict:
                     cid = cur.lastrowid
                     stats["claims"] += 1
                     if ref_ids:
-                        if c["claim_type"] in ("isi", "access"):
+                        # Mechanism, ISI and dosing are LABEL facts -- anchor them to the
+                        # DailyMed SPL (ref_ids[0]), not to a rotating trial/paper reference.
+                        # Efficacy/safety claims cycle through the trial + literature refs.
+                        if c["claim_type"] in ("isi", "access", "moa"):
                             ref, locator = ref_ids[0], "full Prescribing Information"
                         else:
                             ref, locator = ref_ids[seq_ref[0] % len(ref_ids)], "see cited section"

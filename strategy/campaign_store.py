@@ -344,6 +344,111 @@ def content_library_for(brand: str, indication: str = "") -> dict:
         conn.close()
 
 
+def blob_meta(blob_key: str) -> dict | None:
+    """Mime type / size / original name for a stored blob, so the API can serve it with the
+    right Content-Type. Returns None for an unknown key."""
+    init_db()
+    conn = _conn()
+    try:
+        r = conn.execute("SELECT blob_key, mime_type, byte_size, original_name FROM blob WHERE blob_key=?",
+                         (blob_key,)).fetchone()
+        return dict(r) if r else None
+    finally:
+        conn.close()
+
+
+def library_brands() -> dict:
+    """Index for the Claims Library view: one row per brand that has library content, with
+    its claim / reference / module / asset / image counts, plus portfolio totals."""
+    init_db()
+    conn = _conn()
+    try:
+        rows = conn.execute("""
+            SELECT b.id, b.name AS brand, b.generic_name, b.therapy_area, b.lifecycle_key,
+                   COALESCE(c.name, '') AS client,
+                   (SELECT COUNT(*) FROM claim x WHERE x.brand_id=b.id) AS claims,
+                   (SELECT COUNT(*) FROM claim x WHERE x.brand_id=b.id AND x.claim_status='approved') AS approved,
+                   (SELECT COUNT(*) FROM content_module m WHERE m.brand_id=b.id) AS modules,
+                   (SELECT COUNT(*) FROM content_asset a WHERE a.brand_id=b.id) AS assets,
+                   (SELECT COUNT(*) FROM content_asset a WHERE a.brand_id=b.id AND a.asset_format='image') AS images,
+                   (SELECT COUNT(DISTINCT i.id) FROM indication i WHERE i.brand_id=b.id) AS indications
+            FROM brand b LEFT JOIN client c ON c.id = b.client_id
+            ORDER BY c.name, b.name""").fetchall()
+        brands = [dict(r) for r in rows if r["claims"] or r["assets"]]
+        for b in brands:
+            b["references"] = conn.execute(
+                "SELECT COUNT(DISTINCT cr.ref_id) FROM claim_reference cr JOIN claim c2 ON c2.id=cr.claim_id "
+                "WHERE c2.brand_id=?", (b["id"],)).fetchone()[0]
+        stats = library_stats()
+        return {"brands": brands, "totals": stats}
+    finally:
+        conn.close()
+
+
+def brand_library_detail(brand: str) -> dict:
+    """Everything the Claims Library shows for one brand: claims grouped by type (each with
+    its substantiating references), reusable modules, and the DAM assets split into images
+    (real bytes in the blob store) and other creative."""
+    init_db()
+    conn = _conn()
+    try:
+        brow = conn.execute("SELECT * FROM brand WHERE name=?", (brand,)).fetchone()
+        if not brow:
+            return {"found": False, "brand": brand}
+        bid = brow["id"]
+        client = conn.execute("SELECT name FROM client WHERE id=?", (brow["client_id"],)).fetchone()
+        indications = [r["label"] for r in conn.execute(
+            "SELECT label FROM indication WHERE brand_id=? ORDER BY id", (bid,)).fetchall()]
+
+        claims = []
+        for c in conn.execute(
+                "SELECT * FROM claim WHERE brand_id=? ORDER BY "
+                "CASE claim_status WHEN 'approved' THEN 0 WHEN 'in_review' THEN 1 ELSE 2 END, id", (bid,)).fetchall():
+            refs = conn.execute(
+                "SELECT rs.source_type, rs.citation, rs.url, rs.external_id, cr.locator "
+                "FROM claim_reference cr JOIN ref_source rs ON rs.id=cr.ref_id WHERE cr.claim_id=?",
+                (c["id"],)).fetchall()
+            ind = conn.execute("SELECT label FROM indication WHERE id=?", (c["indication_id"],)).fetchone() \
+                if c["indication_id"] else None
+            claims.append({"id": c["id"], "text": c["text"], "claim_type": c["claim_type"],
+                           "status": c["claim_status"], "material_number": c["material_number"],
+                           "mlr_code": c["mlr_code"], "approved_at": c["approved_at"],
+                           "expires_at": c["expires_at"], "indication": ind["label"] if ind else "",
+                           "references": [dict(r) for r in refs]})
+
+        modules = []
+        for m in conn.execute("SELECT * FROM content_module WHERE brand_id=? ORDER BY id", (bid,)).fetchall():
+            mc = conn.execute("SELECT c.id, c.text FROM module_claim mc JOIN claim c ON c.id=mc.claim_id "
+                              "WHERE mc.module_id=?", (m["id"],)).fetchall()
+            modules.append({"id": m["id"], "name": m["name"], "module_type": m["module_type"],
+                            "status": m["status"], "material_number": m["material_number"],
+                            "business_rules": m["business_rules"], "claims": [dict(x) for x in mc]})
+
+        images, assets = [], []
+        for a in conn.execute("SELECT * FROM content_asset WHERE brand_id=? ORDER BY asset_format, id", (bid,)).fetchall():
+            item = {"id": a["id"], "title": a["title"], "file_name": a["file_name"],
+                    "asset_format": a["asset_format"], "branded": bool(a["branded"]),
+                    "target_group": a["target_group"], "description": a["description"],
+                    "url": a["url"], "id_code": a["id_code"], "blob_key": a["blob_key"]}
+            (images if a["asset_format"] == "image" else assets).append(item)
+
+        by_type: dict[str, int] = {}
+        by_status: dict[str, int] = {}
+        for c in claims:
+            by_type[c["claim_type"]] = by_type.get(c["claim_type"], 0) + 1
+            by_status[c["status"]] = by_status.get(c["status"], 0) + 1
+
+        return {"found": True, "brand": brand, "generic": brow["generic_name"],
+                "therapy_area": brow["therapy_area"], "lifecycle_key": brow["lifecycle_key"],
+                "client": client["name"] if client else "", "indications": indications,
+                "claims": claims, "modules": modules, "images": images, "assets": assets,
+                "counts": {"claims": len(claims), "approved": by_status.get("approved", 0),
+                           "modules": len(modules), "images": len(images), "assets": len(assets),
+                           "by_type": by_type, "by_status": by_status}}
+    finally:
+        conn.close()
+
+
 def campaign_counts_by_brand() -> dict[str, int]:
     init_db()
     conn = _conn()
