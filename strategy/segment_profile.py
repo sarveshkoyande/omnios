@@ -140,11 +140,20 @@ _TCG_QUESTIONS = [
 ]
 
 
-def build_tcg_template(persona: str, profile: dict, strategy: dict, bam: dict) -> dict:
-    """Sheet 3's full 16-row template with responses auto-filled where the persona/
-    stage/BAM state genuinely answers the question, and 'needs alignment' elsewhere."""
+def build_tcg_template(persona: str, profile: dict, strategy: dict, bam: dict,
+                       agent_answers: dict | None = None, agent_name: str = "") -> dict:
+    """Sheet 3's full 16-row template. Rows are answered from three places, and each row
+    records WHICH so the plan can render them differently:
+
+      * source='state' -- derived from the captured brief / persona / stage / BAM state.
+      * source='agent' -- filled by an agent from researched industry benchmarks
+        (`agent_answers`, e.g. Maya's audience sizing and rep-access read). Rendered as an
+        agent recommendation, not a captured fact.
+      * source='open'  -- nothing can answer it; stays 'needs alignment' for the brand team.
+    """
     sp = strategy["stage_profile"]
     m = strategy["messaging_architecture"]
+    agent_answers = agent_answers or {}
 
     def _dist(d: dict, prefix: str = "") -> str:
         return ", ".join(f"{prefix}{k}: {v}%" for k, v in d.items())
@@ -161,14 +170,25 @@ def build_tcg_template(persona: str, profile: dict, strategy: dict, bam: dict) -
         "t15": _dist(profile["digital_preference_pct"]),
         "t16": profile["personalization_recommendation"],
     }
-    rows = [{"id": qid, "band": band, "text": text,
-             "answer": auto.get(qid, TCG_NEEDS_ALIGNMENT), "auto_answered": qid in auto}
-            for qid, band, text in _TCG_QUESTIONS]
+
+    rows = []
+    for qid, band, text in _TCG_QUESTIONS:
+        if qid in auto:
+            rows.append({"id": qid, "band": band, "text": text, "answer": auto[qid],
+                         "auto_answered": True, "source": "state", "agent_name": ""})
+        elif qid in agent_answers:
+            rows.append({"id": qid, "band": band, "text": text, "answer": agent_answers[qid],
+                         "auto_answered": True, "source": "agent", "agent_name": agent_name})
+        else:
+            rows.append({"id": qid, "band": band, "text": text, "answer": TCG_NEEDS_ALIGNMENT,
+                         "auto_answered": False, "source": "open", "agent_name": ""})
+
     return {
         "toolkit_reference": "Target Customer Group Template (Sheet 3)",
         "rows": rows,
         "open_questions": [r for r in rows if not r["auto_answered"]],
-        "auto_answered_count": len(auto),
+        "auto_answered_count": sum(1 for r in rows if r["source"] == "state"),
+        "agent_answered_count": sum(1 for r in rows if r["source"] == "agent"),
         "total_questions": len(rows),
         "caveat": profile["caveat"],
     }

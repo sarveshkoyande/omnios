@@ -14,6 +14,7 @@ The markdown mirror keeps plain tables/lists (it is the download artifact, not t
 from __future__ import annotations
 
 import html
+import re
 import time
 
 from autorun import STANDARD_RISKS, GOVERNANCE_CADENCE  # noqa: E402
@@ -21,6 +22,12 @@ from autorun import STANDARD_RISKS, GOVERNANCE_CADENCE  # noqa: E402
 
 def _esc(s) -> str:
     return html.escape(str(s))
+
+
+def _md_bold(s) -> str:
+    """Escape, then render **bold** spans. Benchmark prose from benchmarks.py uses **…**
+    to emphasise the numbers, so it must survive escaping."""
+    return re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", html.escape(str(s)))
 
 
 def _icon(name: str) -> str:
@@ -32,6 +39,14 @@ def _badge(icon: str, text) -> str:
 
 
 _NEEDS_CHIP = "<span class='plan-open-chip'>Needs alignment</span>"
+
+
+def _agent_chip(agent_name: str = "Agent") -> str:
+    """Marks a value an agent filled from researched industry benchmarks -- deliberately a
+    different colour from the amber 'Needs alignment' chip, because it means the opposite:
+    the field IS answered, but by a benchmark recommendation rather than a captured fact."""
+    return (f"<span class='plan-agent-chip'>{_icon('auto_awesome')}"
+            f"{_esc(agent_name)} · recommended</span>")
 
 
 def _is_open_answer(answer: str) -> bool:
@@ -65,6 +80,7 @@ _SUPPORTING = [
     (21, "query_stats", "KPI framework"),
     (22, "gpp_maybe", "Risk & governance"),
     (23, "fact_check", "Caveats & data provenance"),
+    (24, "auto_awesome", "Audience & engagement benchmarks"),
 ]
 
 _PHASE_ICONS = {"align": "handshake", "select": "checklist", "create": "design_services", "deploy": "rocket_launch"}
@@ -201,18 +217,31 @@ def _render_tcg(tcg: dict, profile: dict) -> str:
         if r["band"] != last_band:
             rows_html += f"<tr class='tk-band'><td colspan='3'>{_esc(r['band'])}</td></tr>"
             last_band = r["band"]
-        open_row = not r["auto_answered"]
-        ans = (_NEEDS_CHIP if open_row else _esc(r["answer"]))
+        source = r.get("source", "state" if r["auto_answered"] else "open")
+        open_row = source == "open"
+        agent_row = source == "agent"
+        if open_row:
+            ans = _NEEDS_CHIP
+        else:
+            # Agent-recommended answers carry **bold** markers from the benchmark prose.
+            ans = _md_bold(r["answer"])
+            if agent_row:
+                ans = _agent_chip(r.get("agent_name") or "Agent") + f"<div class='plan-agent-val'>{ans}</div>"
         if r["id"] == "t13":
             ans += _dist_boxes(profile["abcd_segmentation_pct"])
         elif r["id"] == "t14":
             ans += _dist_boxes(profile["adoption_ladder_pct"])
         elif r["id"] == "t15":
             ans += _dist_boxes(profile["digital_preference_pct"])
-        rows_html += (f"<tr{' class=plan-open-row' if open_row else ''}><td class='tk-srno'>{i}</td>"
+        cls = " class='plan-open-row'" if open_row else (" class='plan-agent-row'" if agent_row else "")
+        rows_html += (f"<tr{cls}><td class='tk-srno'>{i}</td>"
                       f"<td>{_esc(r['text'])}</td><td>{ans}</td></tr>")
+    n_agent = tcg.get("agent_answered_count", 0)
+    legend = (f"<p class='plan-agent-legend'>{_agent_chip('Agent')} — filled by an agent from researched industry "
+              f"benchmarks ({n_agent} row{'s' if n_agent != 1 else ''} here). {_NEEDS_CHIP} — only your brand team can "
+              f"answer; the agent asks these in chat.</p>") if n_agent else ""
     return ("<table class='tk-qtable'><tr class='tk-qhead'><th>Sr.No.</th><th>Questions</th><th>Responses</th></tr>"
-            + rows_html + "</table>"
+            + rows_html + "</table>" + legend
             + f"<p class='plan-caveat'>{_esc(tcg['caveat'])}</p>")
 
 
@@ -531,6 +560,93 @@ def _render_award_campaigns(awards: list[dict]) -> str:
             f"<div class='aw-grid'>{cards}</div>")
 
 
+_CONF_CLASS = {"cited": "conf-cited", "derived": "conf-derived", "approximate": "conf-approx", "unknown": "conf-approx"}
+
+
+def _conf_pill(conf: str) -> str:
+    label = {"cited": "cited source", "derived": "derived", "approximate": "approximate"}.get(conf, conf)
+    return f"<span class='conf-pill {_CONF_CLASS.get(conf, 'conf-approx')}'>{_esc(label)}</span>"
+
+
+def _render_benchmarks(audience: dict, engagement: dict) -> str:
+    """§24 — the researched industry baselines the agents filled sections from. Every number
+    carries a confidence pill (cited / derived / approximate) and the sources are listed."""
+    if not audience and not engagement:
+        return "<p class='plan-empty'>No benchmark dataset loaded.</p>"
+    out = ""
+
+    if audience and audience.get("audience_size", {}).get("total"):
+        size = audience["audience_size"]
+        acc = audience["rep_access"]
+        aff = audience.get("digital_affinity", {})
+        spec_rows = "".join(
+            f"<tr><td>{_esc(r['specialty'])}</td><td>{r['count']:,}</td><td>{_conf_pill(r['confidence'])}</td></tr>"
+            for r in size["specialties"])
+        access_rows = "".join(
+            f"<tr><td>{_esc(k)}</td><td>{v}%</td></tr>" for k, v in [
+                (f"{acc['lead_specialty']} fully rep-accessible", acc.get("specialty_fully_accessible_pct")),
+                ("US physicians rep-accessible", acc.get("us_rep_accessible_pct")),
+                ("Global HCP access rate", acc.get("global_access_rate_pct")),
+                ("No rep contact in last 6 months", acc.get("no_rep_contact_6mo_pct")),
+                ("Restrict engagement to ≤3 companies", acc.get("restrict_to_3_or_fewer_companies_pct")),
+            ] if v is not None)
+        aff_rows = "".join(
+            f"<tr><td>{_esc(k)}</td><td>{v}%</td></tr>" for k, v in [
+                ("Want same or more digital interaction", aff.get("want_same_or_more_digital_pct")),
+                ("Cite webinars as a primary channel", aff.get("webinar_as_primary_channel_pct")),
+                ("Prefer a hybrid in-person + virtual mix", aff.get("prefer_hybrid_inperson_virtual_pct")),
+                ("Engage more when content is tailored", aff.get("more_likely_to_engage_if_tailored_pct")),
+            ] if v is not None)
+        out += (
+            "<div class='bm-block'><h3 class='plan-sec-sub'>" + _icon("groups") +
+            f"Audience sizing &amp; access {_agent_chip(audience.get('agent_name', 'Maya'))}</h3>"
+            f"<div class='bm-headline'>{_md_bold(audience['headline'])} {_conf_pill(audience['confidence'])}</div>"
+            "<div class='bm-cols'>"
+            f"<div><h4>Addressable US universe</h4><table class='plan-table'>"
+            f"<tr><th>Specialty</th><th>Physicians</th><th>Confidence</th></tr>{spec_rows}"
+            f"<tr class='bm-total'><td><strong>Total</strong></td><td><strong>{size['total']:,}</strong></td><td></td></tr>"
+            "</table></div>"
+            f"<div><h4>Rep-access constraint</h4><table class='plan-table'>{access_rows}</table></div>"
+            f"<div><h4>Digital posture</h4><table class='plan-table'>{aff_rows}</table></div>"
+            "</div></div>")
+
+    if engagement and engagement.get("channels"):
+        rows = ""
+        for r in engagement["channels"]:
+            aff = r.get("affinity")
+            aff_html = (f"<span class='bm-aff' title='Persona affinity 1–5'>"
+                        + "".join(f"<i class='{'on' if i < (aff or 0) else ''}'></i>" for i in range(5)) + "</span>") if aff else "—"
+            tgt = (f"<strong>{r['target_low_pct']}–{r['target_high_pct']}%</strong>"
+                   if r.get("target_low_pct") is not None else "<em>brand-measured</em>")
+            base = f"{r['baseline_pct']}%" if r.get("baseline_pct") is not None else "—"
+            rows += (f"<tr><td>{_esc(r['channel'])}</td><td>{r['share_pct']}%</td><td>{aff_html}</td>"
+                     f"<td>{_esc(r.get('kpi') or '—')}</td><td>{base}</td><td>{tgt}</td></tr>")
+        kpis = "".join(f"<li>{_esc(k)}</li>" for k in engagement.get("priority_kpis", []))
+        gov = engagement.get("governance", {})
+        gov_html = "".join(f"<li><strong>{_esc(k.replace('_', ' ').title())}:</strong> {_esc(v)}</li>"
+                           for k, v in gov.items() if k not in ("confidence", "source_ids"))
+        out += (
+            "<div class='bm-block'><h3 class='plan-sec-sub'>" + _icon("speed") +
+            f"Engagement targets vs industry baseline {_agent_chip(engagement.get('agent_name', 'Arjun'))}</h3>"
+            f"<div class='bm-headline'>{_esc(engagement['headline'])} {_conf_pill(engagement['confidence'])}</div>"
+            "<table class='plan-table'><tr><th>Channel</th><th>Share</th><th>Persona affinity</th>"
+            "<th>Primary KPI</th><th>Industry baseline</th><th>Target band</th></tr>" + rows + "</table>"
+            + (f"<h4 class='bm-h4'>Priority KPIs for this lifecycle stage</h4><ul>{kpis}</ul>" if kpis else "")
+            + (f"<h4 class='bm-h4'>Orchestration governance</h4><ul class='bm-gov'>{gov_html}</ul>" if gov_html else "")
+            + "</div>")
+
+    # Sources
+    srcs = {s["url"]: s["title"] for s in (audience.get("sources", []) + engagement.get("sources", []))}
+    if srcs:
+        out += ("<h3 class='plan-sec-sub'>" + _icon("link") + "Sources</h3><ul class='bm-srcs'>"
+                + "".join(f"<li><a href='{_esc(u)}' target='_blank'>{_esc(t)}</a></li>" for u, t in srcs.items())
+                + "</ul>")
+    caveat = (audience.get("caveat") or engagement.get("caveat") or "")
+    if caveat:
+        out += f"<p class='plan-caveat'>{_esc(caveat)}</p>"
+    return out
+
+
 _PYRAMID_LAYERS = [("tk-pyr-navy", "Business Objective"), ("tk-pyr-mag", "Marketing Objective"),
                    ("tk-pyr-cyan", "Campaign Objective"), ("tk-pyr-green", "Campaign KPI / Metrics")]
 
@@ -577,12 +693,20 @@ def _render_tml(tml: dict) -> str:
             "<tr class='tk-qhead'><th>Measure</th><th>Definition</th><th>Measure Type, Frequency</th><th>Data Source</th>"
             "<th>What does good look like?</th><th>What will we Learn?</th></tr>")
     body = ""
+    n_agent = 0
     for r in tml["rows"]:
-        cells = [r["test"], r["objective"], r["channels"], r["measure"], r["definition"],
-                 r["frequency"], r["data_source"], r["what_good_looks_like"], r["what_we_will_learn"]]
-        body += "<tr>" + "".join(f"<td>{_esc(c)}</td>" for c in cells) + "</tr>"
-    return (f"<div class='tk-scroll'><table class='tk-qtable tk-tml'>{head}{body}</table></div>"
-            f"<p class='plan-caveat'>{_esc(tml['caveat'])}</p>")
+        agent = r.get("agent_recommended")
+        good = (_agent_chip(r.get("agent_name") or "Arjun") + f"<div class='plan-agent-val'>{_esc(r['what_good_looks_like'])}</div>"
+                if agent else _esc(r["what_good_looks_like"]))
+        if agent:
+            n_agent += 1
+        cells = [_esc(r["test"]), _esc(r["objective"]), _esc(r["channels"]), _esc(r["measure"]), _esc(r["definition"]),
+                 _esc(r["frequency"]), _esc(r["data_source"]), good, _esc(r["what_we_will_learn"])]
+        body += (f"<tr{' class=plan-agent-row' if agent else ''}>" + "".join(f"<td>{c}</td>" for c in cells) + "</tr>")
+    legend = (f"<p class='plan-agent-legend'>{_agent_chip('Arjun')} — target band set from researched industry "
+              f"baselines (see §24), scaled by the lifecycle stage.</p>") if n_agent else ""
+    return (f"<div class='tk-scroll'><table class='tk-qtable tk-tml'>{head}{body}</table></div>" + legend
+            + f"<p class='plan-caveat'>{_esc(tml['caveat'])}</p>")
 
 
 # --------------------------------------------------------------------------- #
@@ -1032,5 +1156,35 @@ def compose_plan(ctx: dict) -> tuple[str, str]:
     md.append("## 23. Caveats & data provenance\n\n" + caveat + "\n")
     h.append(_det_open(23, "Caveats & data provenance", "fact_check")
              + f"<p class='plan-caveat'>{_esc(caveat)}</p>" + _DET_CLOSE)
+
+    # 24. Audience & engagement benchmarks (the researched baselines the agents filled from)
+    audience = ctx.get("audience_profile") or {}
+    engagement = ctx.get("engagement_baseline") or {}
+    if audience or engagement:
+        md.append("## 24. Audience & engagement benchmarks (agent-recommended)\n")
+        if audience.get("audience_size", {}).get("total"):
+            md.append(f"**Audience (Maya):** {audience['headline']} — confidence: {audience['confidence']}.\n")
+            for r in audience["audience_size"]["specialties"]:
+                md.append(f"- {r['specialty']}: ~{r['count']:,} ({r['confidence']})")
+            md.append("")
+        if engagement.get("channels"):
+            md.append(f"**Engagement targets (Arjun):** {engagement['headline']}\n")
+            md.append("| Channel | Share | Affinity | Primary KPI | Industry baseline | Target band |")
+            md.append("|---|---|---|---|---|---|")
+            for r in engagement["channels"]:
+                band = (f"{r['target_low_pct']}–{r['target_high_pct']}%" if r.get("target_low_pct") is not None
+                        else "brand-measured")
+                base = f"{r['baseline_pct']}%" if r.get("baseline_pct") is not None else "—"
+                md.append(f"| {r['channel']} | {r['share_pct']}% | {r.get('affinity') or '—'}/5 | "
+                          f"{r.get('kpi') or '—'} | {base} | {band} |")
+            md.append("")
+        md.append(f"*{audience.get('caveat') or engagement.get('caveat', '')}*\n")
+        n_rec = tcg.get("agent_answered_count", 0) + sum(1 for r in ctx["test_measure_learn"]["rows"]
+                                                          if r.get("agent_recommended"))
+        h.append(_det_open(24, "Audience & engagement benchmarks", "auto_awesome")
+                 + f"<p>Maya and Arjun filled <strong>{n_rec}</strong> plan field(s) from these researched industry "
+                   f"baselines. Agent-recommended values are highlighted like this: {_agent_chip('Agent')} — they are "
+                   f"defensible starting points, not brand forecasts.</p>"
+                 + _render_benchmarks(audience, engagement) + _DET_CLOSE)
 
     return "\n".join(md), "".join(h)

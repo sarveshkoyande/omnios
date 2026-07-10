@@ -563,6 +563,42 @@
   .tk-raci-r { background: #DFF2E1; color: #1B7A34; } .tk-raci-a { background: #FFE6EF; color: var(--tk-magenta); }
   .tk-raci-c { background: #E4F3FC; color: #0B6FA8; } .tk-raci-i { background: #F1F1F1; color: #666; }
 
+  /* Agent-recommended fields — filled by Maya/Arjun from researched industry benchmarks.
+     Deliberately a DIFFERENT colour from the amber "Needs alignment" chip: violet means the
+     field IS answered (by a benchmark recommendation); amber means nobody has answered it. */
+  .plan-agent-chip { display: inline-flex; align-items: center; gap: 3px; font-size: 9px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .3px; color: #fff; background: linear-gradient(90deg,#5A32E0,#8A63F0);
+    padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+  .plan-agent-chip .material-symbols-outlined { font-size: 12px; }
+  .plan-agent-row { background: rgba(90,50,224,0.055); }
+  .plan-agent-row td { border-left: 0; }
+  .plan-agent-row td:first-child { box-shadow: inset 3px 0 0 #5A32E0; }
+  .plan-agent-val { margin-top: 5px; font-size: 11.5px; line-height: 1.4; }
+  .plan-agent-val strong { color: #4a27c4; }
+  .plan-agent-legend { font-size: 10.5px; color: var(--muted); margin-top: 9px; display: flex;
+    flex-wrap: wrap; align-items: center; gap: 6px; line-height: 1.5; }
+
+  /* Benchmark section (§24) */
+  .bm-block { margin-bottom: 18px; }
+  .bm-headline { font-size: 12.5px; color: var(--indegene-navy); background: rgba(90,50,224,0.06);
+    border-left: 3px solid #5A32E0; border-radius: 0 8px 8px 0; padding: 8px 11px; margin-bottom: 10px;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .bm-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
+  .bm-cols h4, .bm-h4 { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px;
+    color: var(--faint); margin: 0 0 6px; }
+  .bm-h4 { margin-top: 12px; }
+  .bm-total td { background: rgba(11,61,145,0.05); }
+  .conf-pill { font-size: 8.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .3px;
+    padding: 1px 7px; border-radius: 999px; white-space: nowrap; }
+  .conf-cited { background: #DFF2E1; color: #1B7A34; }
+  .conf-derived { background: #E4F3FC; color: #0B6FA8; }
+  .conf-approx { background: #FFF3E0; color: #C77700; }
+  .bm-aff { display: inline-flex; gap: 2px; }
+  .bm-aff i { width: 7px; height: 7px; border-radius: 50%; background: #dfe3e8; display: inline-block; }
+  .bm-aff i.on { background: #5A32E0; }
+  .bm-gov li { margin-bottom: 5px; font-size: 11.5px; line-height: 1.45; }
+  .bm-srcs { font-size: 11px; } .bm-srcs a { color: #0B6FA8; }
+
   /* Content library — claims/references/components that fill Phase 2 & 3 */
   .tk-lib-block { margin-top: 14px; border-top: 2px dashed var(--line); padding-top: 12px; }
   .tk-lib-h { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--indegene-navy); margin: 0 0 3px; }

@@ -36,6 +36,7 @@ from message_flow import build_message_flow  # noqa: E402
 from channel_selection import build_channel_selection  # noqa: E402
 import campaign_store  # noqa: E402  (content library query for the plan's Phase-2/3 sections)
 import awards_store  # noqa: E402  (award-winning campaign matches for the precedent section)
+import benchmarks  # noqa: E402  (industry baselines Maya and Arjun fill plan sections from)
 from execution_plan import build_execution_work_plan, build_execution_raci  # noqa: E402
 from test_measure_learn import build_test_measure_learn  # noqa: E402
 
@@ -98,16 +99,26 @@ def run_agents(brand: str, therapy_area: str, lifecycle_key: str, budget: float 
     competitors = discover_competitors(therapy_area, brand, limit=5)
     ctx["competitors"] = competitors
     yield {"type": "inferred", "competitors": competitors}
+    # Maya sizes the addressable HCP universe and reads its access / digital posture from
+    # the researched industry benchmarks -- this fills TCG rows the state can't answer.
+    audience_profile = benchmarks.maya_audience_profile(brand, therapy_area, inferred["persona"])
+    ctx["audience_profile"] = audience_profile
     intel_summary = (
         f"{inferred['lifecycle_label']} → targeting **{inferred['persona']}** HCPs. Indexed **{b_n + t_n}** live documents. "
         + (f"Found **{len(competitors)}** competitor(s): {', '.join(competitors)}." if competitors
            else "No distinct competitors found in public trial data.")
     )
+    if audience_profile["audience_size"]["total"]:
+        intel_summary += f" Sized the audience: **{audience_profile['headline']}**."
+    intel_bullets = [
+        inferred["rationale"],
+        f"{b_n} real documents on {brand}, {t_n} on {therapy_area} (FDA labels, ClinicalTrials.gov, PubMed, DailyMed, Google Trends)",
+    ] + (competitors or ["ClinicalTrials.gov returned no distinct competing interventions"])
+    if audience_profile["audience_size"]["total"]:
+        intel_bullets.append(f"Audience benchmark ({audience_profile['confidence']}): {audience_profile['headline']}")
+        intel_bullets.append("I filled 3 Target-Customer-Group rows from industry benchmarks — flagged as agent-recommended in the plan.")
     yield {"type": "agent", "id": "intel", "status": "done", "summary": intel_summary,
-           "detail": {"bullets": [
-               inferred["rationale"],
-               f"{b_n} real documents on {brand}, {t_n} on {therapy_area} (FDA labels, ClinicalTrials.gov, PubMed, DailyMed, Google Trends)",
-           ] + (competitors or ["ClinicalTrials.gov returned no distinct competing interventions"])}}
+           "detail": {"bullets": intel_bullets}}
 
     # --- the team reacts to what Maya found ---
     if competitors:
@@ -119,6 +130,14 @@ def run_agents(brand: str, therapy_area: str, lifecycle_key: str, budget: float 
                                f"{therapy_area}, not defending share. That changes the messaging job.", to="intel")
     yield _say("activation", f"Noting the **{inferred['lifecycle_label']}** stage — it'll drive how I weight the "
                              f"channel mix later.", to="intel")
+    _acc = audience_profile["rep_access"]
+    if audience_profile["audience_size"]["total"]:
+        yield _say("intel", f"Audience is **{audience_profile['headline']}**. I've filled the demographics, "
+                            f"representative-attributes and attitude-to-industry rows from benchmarks.", to="activation")
+        if _acc.get("specialty_fully_accessible_pct"):
+            yield _say("activation", f"Only {_acc['specialty_fully_accessible_pct']:.0f}% of {_acc['lead_specialty']} "
+                                     f"providers are fully rep-accessible — I'll cap Field and push budget to the "
+                                     f"channels they'll actually open.", to="intel")
 
     # 2. Strategy & Positioning -- segmentation/journey/BAM/PP-NPP/micro-journeys/CX-maturity + SWOT + positioning
     yield _run("strategy", "Mapping the journey stage and BAM-chart belief shift, splitting channels, running the SWOT, and drafting positioning…")
@@ -129,7 +148,9 @@ def run_agents(brand: str, therapy_area: str, lifecycle_key: str, budget: float 
     micro_journeys = build_micro_journeys(inferred["stage_key"], strategy["recommended_touchpoints"])
     cx_maturity = assess_cx_maturity(maturity_notes, strategy["channel_mix_pct"])
     segment_profile = build_segment_profile(inferred["persona"], inferred["stage_key"])
-    tcg = build_tcg_template(inferred["persona"], segment_profile, strategy, bam)
+    # Maya's benchmark answers fill the TCG rows the captured state cannot (t2/t7/t10).
+    tcg = build_tcg_template(inferred["persona"], segment_profile, strategy, bam,
+                             agent_answers=ctx["audience_profile"]["answers"], agent_name="Maya")
     message_flow = build_message_flow(inferred["stage_key"], strategy["kb_grounding"])
     ctx["tcg"] = tcg
     ctx["bam"] = bam
@@ -213,6 +234,19 @@ def run_agents(brand: str, therapy_area: str, lifecycle_key: str, budget: float 
     execution_plan = build_execution_work_plan(micro_journeys)
     execution_raci = build_execution_raci()
     test_measure_learn = build_test_measure_learn(inferred["stage_key"], kpi["leading_indicators"])
+    # Arjun turns the funded channel mix into engagement targets against researched industry
+    # baselines (baseline x lifecycle index), and the KPI priorities for this stage.
+    engagement_baseline = benchmarks.arjun_engagement_baseline(lifecycle_key, inferred["persona"], channel_mix)
+    ctx["engagement_baseline"] = engagement_baseline
+    # Fill Test-Measure-Learn's "what good looks like" from the benchmark matching what the
+    # row actually MEASURES (not the channel it is tagged with -- those disagree). Volume
+    # metrics like "impressions delivered" get no percentage band and are left untouched.
+    for _row in test_measure_learn.get("rows", []):
+        _t = benchmarks.measure_target(_row.get("measure", ""), _row.get("channels", ""), lifecycle_key)
+        if _t:
+            _row["what_good_looks_like"] = _t["what_good_looks_like"]
+            _row["agent_recommended"] = True
+            _row["agent_name"] = "Arjun"
     # Pull the brand's real content library (claims + references + modules + DAM assets) so the
     # plan's "Select messages/channels" and "Create" phases render actual content, not placeholders.
     content_library = campaign_store.content_library_for(brand, indication)
@@ -229,6 +263,8 @@ def run_agents(brand: str, therapy_area: str, lifecycle_key: str, budget: float 
           f"**{len(kpi['operational_kpis'])}** operational KPIs set. {execution_plan['total_weeks']}-week execution "
           f"work plan + RACI drafted."
     )
+    act_summary += (f" Set engagement targets against industry baselines — "
+                    f"**{engagement_baseline['emphasis'].lower()}**.")
     lib_counts = content_library.get("counts", {})
     if content_library.get("found") and lib_counts.get("claims"):
         act_summary += (f" Pulled **{lib_counts.get('claims', 0)}** library claims "
@@ -237,7 +273,9 @@ def run_agents(brand: str, therapy_area: str, lifecycle_key: str, budget: float 
                         f"**{lib_counts.get('assets', 0)}** existing content assets into the plan.")
     act_bullets = ([f"{ch}: {v['pct']}%" + (f" · ${int(v['amount']):,}" if v['amount'] else "")
                     for ch, v in sorted(budget_allocation.items(), key=lambda kv: -kv[1]['pct'])]
-                   + kpi["leading_indicators"][:3]
+                   + [f"Target — {r['channel']}: {r['what_good_looks_like']}"
+                      for r in engagement_baseline["channels"][:3] if r.get("target_low_pct") is not None]
+                   + kpi["leading_indicators"][:2]
                    + [execution_plan["mlr_delay_note"]])
     if content_library.get("found") and lib_counts.get("claims"):
         act_bullets.append(f"Content library: {lib_counts.get('claims',0)} claims, {lib_counts.get('modules',0)} "
@@ -245,6 +283,10 @@ def run_agents(brand: str, therapy_area: str, lifecycle_key: str, budget: float 
     yield {"type": "agent", "id": "activation", "status": "done", "summary": act_summary, "detail": {"bullets": act_bullets}}
 
     # --- the team converges before Cooper writes it up ---
+    _eb = engagement_baseline["channels"][0] if engagement_baseline["channels"] else None
+    if _eb and _eb.get("target_low_pct") is not None:
+        yield _say("activation", f"Benchmark target for **{_eb['channel']}**: {_eb['what_good_looks_like']}. "
+                                 f"That's the bar — I've written it into Test-Measure-Learn.", to="compose")
     if top:
         yield _say("compose", f"So the spine is **{top[0][0]}** at {top[0][1]}%. I'll build the message flow around "
                               f"that and let the rest reinforce it.", to="activation")
@@ -323,6 +365,8 @@ def _assemble_result(ctx: dict) -> dict:
                             "caveat": strategy["caveat"]},
         "stage_5_channel_selection": ctx["channel_selection"],
         "content_library": ctx.get("content_library", {}),
+        "audience_profile": ctx.get("audience_profile", {}),
+        "engagement_baseline": ctx.get("engagement_baseline", {}),
         "stage_7_kpi": ctx["kpi"],
         "stage_9_test_measure_learn": ctx["test_measure_learn"],
         "stage_9_execution_plan": ctx["execution_plan"],

@@ -1,0 +1,240 @@
+{
+  "note": "Industry baseline benchmarks for pharma omnichannel engagement (researched 2026-07). Two agents consume this: Maya (Market & Competitive Intelligence) sizes the audience and reads its access/digital posture; Arjun (Activation Planning) sets channel engagement targets and KPI baselines. Every figure carries a `confidence` tag: 'cited' = taken from a named public source listed in `sources`; 'approximate' = a well-established directional industry figure not tied to one source in this capture (validate before external use); 'derived' = computed by us from cited inputs. Rates are directional industry baselines, NOT brand-specific forecasts — a brand's own historical data always supersedes these.",
+  "as_of": "2026-07",
+
+  "channel_tactics": {
+    "email_hcp_broadcast": {
+      "label": "HCP email — broadcast/newsletter",
+      "channel_bucket": "Owned digital",
+      "open_rate_pct": 5.0, "ctr_pct": 2.25, "confidence": "cited",
+      "note": "Traditional (non-triggered) pharma HCP email opens sit near 5%; the pharma brand-email CTR benchmark is ~2.25%. Far below the general healthcare email vertical — do not benchmark pharma HCP broadcast against generic healthcare email.",
+      "source_ids": ["pharma_mkting_email", "phamax_benchmarks", "mobile_locker"]
+    },
+    "email_hcp_triggered": {
+      "label": "HCP email — triggered / behaviour-based",
+      "channel_bucket": "Owned digital",
+      "open_rate_pct": 18.26, "click_to_open_pct": 3.43, "ctr_pct": 3.0, "confidence": "cited",
+      "note": "Triggered campaigns materially outperform broadcast (18.26% open vs ~5%). The single highest-leverage email change is moving from broadcast to behaviour-triggered.",
+      "source_ids": ["dice_comms", "pharma_mkting_email"]
+    },
+    "email_healthcare_vertical": {
+      "label": "Healthcare vertical email (context only)",
+      "channel_bucket": "Owned digital",
+      "open_rate_pct": 34.65, "ctr_pct": 2.8, "confidence": "cited",
+      "note": "Medical/dental/healthcare marketing email benchmark. CONTEXT ONLY — a much broader audience than HCP-targeted pharma promotion; using it as a pharma HCP target sets an unreachable bar.",
+      "source_ids": ["nine_clouds", "iqvia_email"]
+    },
+    "email_hcp_targeted_range": {
+      "label": "HCP-targeted pharma email — CTR working range",
+      "channel_bucket": "Owned digital",
+      "ctr_low_pct": 2.5, "ctr_high_pct": 3.5, "confidence": "cited",
+      "note": "Typical working CTR band for well-targeted HCP pharma email.",
+      "source_ids": ["pharma_mkting_email"]
+    },
+    "webinar_hcp": {
+      "label": "HCP webinar / webcast",
+      "channel_bucket": "Events",
+      "attendance_rate_pct": 50.0, "on_demand_preference_pct": 55.0, "confidence": "cited",
+      "note": "Pharma leads all industries on webinar attendance (~50% of registrants attend). 55% of HCP attendees prefer on-demand over live — always fund the replay.",
+      "source_ids": ["phamax_benchmarks", "amp27"]
+    },
+    "programmatic_display_hcp": {
+      "label": "Programmatic display (HCP endemic/non-endemic)",
+      "channel_bucket": "Reach",
+      "ctr_pct": 0.25, "ctr_vertical_pct": 0.59, "confidence": "cited",
+      "note": "Healthcare Services programmatic display ~0.25% CTR; the broader Healthcare & Pharma display vertical averages ~0.59%. Google Display overall is ~0.10%. Mobile outperforms desktop by 33-68% across creative formats.",
+      "source_ids": ["focus_digital", "aidigital", "innovid"]
+    },
+    "video_display": {
+      "label": "Video display",
+      "channel_bucket": "Reach",
+      "ctr_pct": 0.56, "confidence": "cited",
+      "note": "Video display formats achieve ~0.56% CTR despite lower inventory availability.",
+      "source_ids": ["focus_digital"]
+    },
+    "paid_search_hcp": {
+      "label": "Paid search (HCP-targeted)",
+      "channel_bucket": "Reach",
+      "ctr_pct": 6.88, "confidence": "cited",
+      "note": "Search intent converts far above display — HCP-targeted search CTR ~6.88%. Highest-intent, lowest-reach channel.",
+      "source_ids": ["focus_digital"]
+    },
+    "field_rep_detail": {
+      "label": "Field rep detailing",
+      "channel_bucket": "Field",
+      "hcp_access_rate_pct": 45.0, "confidence": "cited",
+      "note": "See hcp_access block — access is the binding constraint on this channel, not creative quality.",
+      "source_ids": ["pharmaphorum_access", "zs_oncology", "prescriberpoint"]
+    },
+    "patient_support_program": {
+      "label": "Patient support program",
+      "channel_bucket": "Patient-adjacent",
+      "confidence": "approximate",
+      "note": "Enrolment and adherence lift are highly program-specific; no defensible cross-industry rate. Treat as a brand-measured channel, not a benchmarked one.",
+      "source_ids": []
+    }
+  },
+
+  "channel_bucket_baselines": {
+    "Owned digital": { "primary_tactic": "email_hcp_triggered", "primary_kpi": "Open rate", "baseline_pct": 18.26, "secondary_kpi": "CTR", "secondary_pct": 3.0 },
+    "Reach":         { "primary_tactic": "programmatic_display_hcp", "primary_kpi": "CTR", "baseline_pct": 0.25, "secondary_kpi": "Vertical CTR", "secondary_pct": 0.59 },
+    "Events":        { "primary_tactic": "webinar_hcp", "primary_kpi": "Attendance rate", "baseline_pct": 50.0, "secondary_kpi": "On-demand share", "secondary_pct": 55.0 },
+    "Field":         { "primary_tactic": "field_rep_detail", "primary_kpi": "HCP access rate", "baseline_pct": 45.0, "secondary_kpi": "US rep-accessible", "secondary_pct": 35.0 },
+    "Peer":          { "primary_tactic": "webinar_hcp", "primary_kpi": "Peer-program attendance", "baseline_pct": 50.0, "secondary_kpi": "On-demand share", "secondary_pct": 55.0 },
+    "Patient-adjacent": { "primary_tactic": "patient_support_program", "primary_kpi": "Enrolment rate", "baseline_pct": null, "secondary_kpi": "Adherence lift", "secondary_pct": null }
+  },
+
+  "hcp_access": {
+    "global_access_rate_pct": 45.0,
+    "global_access_rate_prior_pct": 60.0,
+    "us_rep_accessible_pct": 35.0,
+    "europe_access_rate_pct": 52.0,
+    "no_rep_contact_6mo_pct": 39.0,
+    "restrict_to_3_or_fewer_companies_pct": 50.0,
+    "confidence": "cited",
+    "note": "Only ~45% of HCPs globally are accessible to biopharma (down from ~60% eighteen months prior); fewer than 35% of US physicians are rep-accessible; ~39% had no rep contact in the last six months. Half of HCPs restrict engagement to three or fewer companies. Access — not message quality — is the first constraint on any Field-heavy plan.",
+    "by_specialty": {
+      "medical oncology": { "fully_accessible_pct": 32.0, "meet_3_or_fewer_companies_pct": 55.0, "confidence": "cited" },
+      "psychiatry":       { "meet_1_company_only_pct": 30.0, "confidence": "cited" }
+    },
+    "source_ids": ["pharmaphorum_access", "zs_oncology", "prescriberpoint", "mmm_rep_access"]
+  },
+
+  "digital_affinity": {
+    "want_same_or_more_digital_pct": 84.0,
+    "webinar_as_primary_channel_pct": 68.0,
+    "prefer_hybrid_inperson_virtual_pct": 78.0,
+    "value_personalized_content_pct": 80.0,
+    "more_likely_to_engage_if_tailored_pct": 73.0,
+    "confidence": "cited",
+    "note": "Directional industry findings, not brand-specific. Personalization/relevance is the single biggest engagement lever cited across sources.",
+    "source_ids": ["indegene_digital_affinity", "viseven", "indegene_hcp_engagement"]
+  },
+
+  "hcp_universe_us": {
+    "_note": "US practising-physician counts used to size a target audience. 'cited' entries are traceable to the named source; 'approximate' entries are well-established directional figures — validate against AMA/AAMC/IQVIA before external use.",
+    "all_active_physicians": { "count": 1032365, "confidence": "cited", "source_ids": ["aamc_dashboard"] },
+    "direct_patient_care":   { "count": 866460,  "confidence": "cited", "source_ids": ["aamc_dashboard"] },
+    "primary care":          { "count": 543523,  "confidence": "cited", "source_ids": ["statista_pcp"] },
+    "hematology-oncology":   { "count": 14547,   "confidence": "cited", "source_ids": ["asco_workforce"],
+      "note": "Hematologist/oncologists billing Medicare in 2024 (up from 12,267 in 2014)." },
+    "medical oncology":      { "count": 14547,   "confidence": "cited", "source_ids": ["asco_workforce"] },
+    "cardiology":            { "count": 33000, "confidence": "approximate" },
+    "neurology":             { "count": 16000, "confidence": "approximate" },
+    "dermatology":           { "count": 13000, "confidence": "approximate" },
+    "nephrology":            { "count": 11000, "confidence": "approximate" },
+    "ophthalmology":         { "count": 19000, "confidence": "approximate", "note": "Retina sub-specialists ~3,000." },
+    "retina":                { "count": 3000,  "confidence": "approximate" },
+    "urology":               { "count": 13000, "confidence": "approximate" },
+    "rheumatology":          { "count": 6000,  "confidence": "approximate" },
+    "endocrinology":         { "count": 8000,  "confidence": "approximate" },
+    "gastroenterology":      { "count": 16000, "confidence": "approximate" },
+    "hepatology":            { "count": 2000,  "confidence": "approximate" },
+    "obstetrics-gynecology": { "count": 43000, "confidence": "approximate" },
+    "gynecologic oncology":  { "count": 1300,  "confidence": "approximate" },
+    "pulmonology":           { "count": 13000, "confidence": "approximate" },
+    "psychiatry":            { "count": 48000, "confidence": "approximate" },
+    "transplant hematology": { "count": 2500,  "confidence": "approximate" }
+  },
+
+  "therapy_area_to_specialty": {
+    "prostate cancer": ["medical oncology", "urology"],
+    "chronic kidney disease": ["nephrology", "cardiology", "primary care"],
+    "retinal disease (ophthalmology)": ["retina", "ophthalmology"],
+    "anticoagulation / thrombosis": ["cardiology", "primary care"],
+    "menopausal vasomotor symptoms": ["obstetrics-gynecology", "primary care"],
+    "solid tumor oncology": ["medical oncology"],
+    "neuroendocrine tumors & acromegaly": ["medical oncology", "endocrinology"],
+    "movement disorders & aesthetics": ["neurology", "dermatology"],
+    "primary biliary cholangitis": ["hepatology", "gastroenterology"],
+    "pancreatic cancer": ["medical oncology"],
+    "B-cell lymphoma": ["hematology-oncology"],
+    "cervical cancer": ["gynecologic oncology", "medical oncology"],
+    "multiple myeloma": ["hematology-oncology"],
+    "multiple sclerosis": ["neurology"],
+    "breast cancer": ["medical oncology"],
+    "hypercholesterolemia / cardiovascular": ["cardiology", "primary care"],
+    "immune-mediated inflammatory disease": ["dermatology", "rheumatology"],
+    "heart failure": ["cardiology"],
+    "complement-mediated diseases": ["hematology-oncology", "nephrology"],
+    "ATTR amyloidosis": ["cardiology"],
+    "urothelial cancer": ["medical oncology", "urology"],
+    "respiratory syncytial virus prevention": ["primary care", "obstetrics-gynecology"],
+    "alopecia areata": ["dermatology"],
+    "myeloproliferative neoplasms & GVHD": ["hematology-oncology"],
+    "medical dermatology (topical)": ["dermatology"],
+    "FGFR-driven cancers": ["medical oncology"],
+    "chronic graft-versus-host disease": ["transplant hematology", "hematology-oncology"]
+  },
+
+  "persona_channel_affinity": {
+    "_note": "Affinity index 1 (low) to 5 (high) per channel bucket, per the tool's persona vocabulary (strategy/rules.py). Derived from PERSONA_MULTIPLIERS and the behaviour-based segment research in config/audience_segments.json.",
+    "_confidence": "derived",
+    "Digital-first":                  { "Reach": 4, "Owned digital": 5, "Events": 3, "Field": 2, "Peer": 3, "Patient-adjacent": 3 },
+    "Hybrid":                         { "Reach": 3, "Owned digital": 4, "Events": 4, "Field": 3, "Peer": 3, "Patient-adjacent": 3 },
+    "Field-only \\ rep-dependent":    { "Reach": 2, "Owned digital": 2, "Events": 4, "Field": 5, "Peer": 3, "Patient-adjacent": 3 },
+    "KOL \\ DOL":                     { "Reach": 2, "Owned digital": 4, "Events": 5, "Field": 3, "Peer": 5, "Patient-adjacent": 2 },
+    "Guideline-follower":             { "Reach": 3, "Owned digital": 4, "Events": 5, "Field": 3, "Peer": 4, "Patient-adjacent": 3 },
+    "Patient-outcome-driven skeptic": { "Reach": 2, "Owned digital": 3, "Events": 4, "Field": 4, "Peer": 4, "Patient-adjacent": 4 },
+    "Fast-follower":                  { "Reach": 3, "Owned digital": 4, "Events": 4, "Field": 3, "Peer": 3, "Patient-adjacent": 3 },
+    "Unknown \\ not yet consented":   { "Reach": 5, "Owned digital": 3, "Events": 2, "Field": 2, "Peer": 1, "Patient-adjacent": 2 }
+  },
+
+  "lifecycle_kpi_targets": {
+    "_note": "Target bands applied to the channel baselines above. 'index' multiplies the baseline; the resulting band is what 'good' looks like for that lifecycle stage. Derived, directional — replace with the brand's own historical performance as soon as one in-market period exists.",
+    "_confidence": "derived",
+    "launch": { "index": 1.15, "emphasis": "Reach and awareness; first-prescription conversion",
+      "priority_kpis": ["Reach against target list", "Email open rate", "Webinar attendance", "New-to-brand prescriptions (NBRx)"] },
+    "growth": { "index": 1.10, "emphasis": "Depth of engagement and share-of-voice conversion",
+      "priority_kpis": ["Email CTR", "Repeat engagement rate", "Share of voice", "NBRx share"] },
+    "mature": { "index": 1.00, "emphasis": "Efficient defence, loyalty and adherence",
+      "priority_kpis": ["Engaged-HCP retention", "Cost per engagement", "Adherence/persistence", "Total prescriptions (TRx)"] },
+    "loe":    { "index": 0.90, "emphasis": "Retention of the adherent base; minimal acquisition spend",
+      "priority_kpis": ["Adherent-patient retention", "Cost per retained HCP", "TRx erosion rate"] }
+  },
+
+  "dtc_patient": {
+    "dtc_ad_spend_usd_2025": 10000000000,
+    "dtc_ad_spend_growth_pct": 6.0,
+    "specialty_launch_dtc_effect": "Specialty launches (2013-2023) investing >= $1M in DTC saw nearly 2x the patients per treating provider in Year 1 versus launches with minimal DTC.",
+    "confidence": "cited",
+    "note": "DTC ROI is declining as costs rise; frequency and creative quality increasingly determine cost per engaged patient.",
+    "source_ids": ["uspharma_dtc", "iqvia_dtc", "fierce_dtc"]
+  },
+
+  "governance": {
+    "frequency_capping": "Coordinate frequency ACROSS channels, not within them — an HCP hit on Doximity, Medscape, Epocrates and email in one day has been contacted four times, not once. Unified frequency management prevents saturation and fatigue.",
+    "trigger_followup": "Layer email onto HCPs who engaged elsewhere — a follow-up within ~48 hours of another-channel engagement is the highest-yield trigger.",
+    "measurement_shift": "Open rate and CTR remain diagnostic, not success criteria; 2025+ practice ties engagement to prescribing behaviour and adherence outcomes.",
+    "confidence": "cited",
+    "source_ids": ["pulsepoint", "improvado", "pharma_mkting_email"]
+  },
+
+  "sources": {
+    "pharma_mkting_email": { "title": "From Open Rates to Outcomes: Rethinking Pharma Email Marketing Strategy", "url": "https://www.pharma-mkting.com/featured/from-open-rates-to-outcomes-rethinking-pharma-email-marketing-strategy/" },
+    "phamax_benchmarks": { "title": "Benchmarks for digital marketing in the pharmaceutical industry (2024)", "url": "https://phamax-digital.ch/academy/benchmarks-for-digital-marketing-in-the-pharmaceutical-industry/" },
+    "nine_clouds": { "title": "Performance Benchmarks for Healthcare Marketing Emails", "url": "https://9clouds.com/blog/performance-benchmarks-for-healthcare-marketing-emails/" },
+    "dice_comms": { "title": "Benchmarking Your Traditional Email Campaigns", "url": "https://www.dice-comms.co.uk/perspectives/measurement/campaign-management-benchmarking-your-traditional-email-campaigns/" },
+    "mobile_locker": { "title": "Pharmaceutical Industry Email Metrics", "url": "https://help.mobilelocker.com/article/260-pharmaceutical-industry-email-metrics" },
+    "iqvia_email": { "title": "Email That Drives Referrals: HCP Engagement (IQVIA)", "url": "https://www.iqvia.com/locations/united-states/blogs/2025/08/email-that-drives-referrals" },
+    "focus_digital": { "title": "Average CTR for Programmatic Display: 2025 report", "url": "https://focus-digital.co/programmatic-display-ctr-benchmarks-2025-report/" },
+    "aidigital": { "title": "Average CTR for Display Ads: Industry Benchmarks", "url": "https://www.aidigital.com/blog/ctr-for-display-ads" },
+    "innovid": { "title": "2024 Advertising Insights Report for Pharma (Innovid)", "url": "https://www.innovid.com/resources/blog/vertical-benchmarks-pharma" },
+    "amp27": { "title": "A quick guide to campaign benchmarking in pharma", "url": "https://amp27.com/insight27/campaign-benchmarking-in-pharma" },
+    "pharmaphorum_access": { "title": "Shifting HCP access calls for new field tactics globally", "url": "https://pharmaphorum.com/market-access/shifting-hcp-access-calls-new-field-tactics-globally" },
+    "mmm_rep_access": { "title": "The return of rep access (MM+M)", "url": "https://www.mmm-online.com/home/channel/the-return-of-rep-access-report-suggests-bounce-back-in-rate-of-pharma-friendly-docs/" },
+    "zs_oncology": { "title": "Restricted access for pharma reps: rethinking sales planning in oncology (ZS)", "url": "https://www.zs.com/insights/restricted-access-pharma-reps-rethinking-sales-planning-oncology" },
+    "prescriberpoint": { "title": "Understanding low and no-see HCPs", "url": "https://business.prescriberpoint.com/news/how-to-reach-no-see-hcps" },
+    "indegene_digital_affinity": { "title": "HCP Digital Affinity Report (Indegene)", "url": "https://www.indegene.com/what-we-think/reports/hcp-digital-affinity-report" },
+    "indegene_hcp_engagement": { "title": "How Pharma Can Finally Reach and Engage HCPs Effectively (Indegene)", "url": "https://www.indegene.com/what-we-think/reports/hcp-engagement-tactics" },
+    "viseven": { "title": "HCP Segmentation: Unlocking Better Pharmaceutical Marketing (Viseven)", "url": "https://viseven.com/hcp-audience-segmentation-omnichannel-pharma-strategy/" },
+    "aamc_dashboard": { "title": "U.S. Physician Workforce Data Dashboard (AAMC)", "url": "https://www.aamc.org/data-reports/report/us-physician-workforce-data-dashboard" },
+    "statista_pcp": { "title": "Number of primary care physicians by field, U.S.", "url": "https://www.statista.com/statistics/1488562/number-of-us-active-primary-care-physicians-by-field/" },
+    "asco_workforce": { "title": "State of the Hematology and Medical Oncologist Workforce in America (ASCO, 2025)", "url": "https://ascopubs.org/doi/10.1200/OP-25-00144" },
+    "pulsepoint": { "title": "A Practical Guide To Omnichannel HCP Engagement (PulsePoint)", "url": "https://www.pulsepoint.com/insights/omnichannel-hcp-engagement" },
+    "improvado": { "title": "HCP Targeting & Segmentation in Pharma (2026 Guide)", "url": "https://improvado.io/blog/hcp-targeting-segmentation-pharma" },
+    "uspharma_dtc": { "title": "Top Pharma Ad Spenders Dominating 2025 DTC Campaigns", "url": "https://uspharmamarketing.com/top-pharma-ad-spenders-dominating-2025-dtc-campaigns-a-deep-dive-into-marketing-dominance-and-competitive-budgets/" },
+    "iqvia_dtc": { "title": "Engaging Consumers at Launch (IQVIA)", "url": "https://www.iqvia.com/locations/united-states/blogs/2025/11/engaging-consumers-at-launch-maximizing-value-in-a-transforming-market" },
+    "fierce_dtc": { "title": "2026 forecast: Pharma clicks with patients (Fierce Pharma)", "url": "https://www.fiercepharma.com/marketing/pharma-clicks-patients-direct-sales-model-shifts-marketing-strategies" }
+  }
+}
