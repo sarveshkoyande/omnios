@@ -86,27 +86,129 @@ MOA = {
 }
 
 # --- independently-verified specific efficacy claims (approved-tier) --------------------
-# Only brands where a specific figure was confirmed in research get a hard-number claim.
+# Each claim cites a real pivotal trial + a specific figure confirmed from public sources
+# (company releases, NEJM/Lancet/JCO, FDA). Claim text carries indication keywords so
+# _indication_claims() attaches it to the matching indication. Brands not listed here fall
+# back to the indication statement + an in_review efficacy scaffold (no number asserted).
 VERIFIED = {
-    "Kisqali": [("efficacy",
-                 "In the Phase III NATALEE trial, ribociclib plus endocrine therapy reduced the risk of "
-                 "disease recurrence by 28.4% versus endocrine therapy alone in HR+/HER2- early breast cancer "
-                 "(5-year analysis).")],
-    "Pluvicto": [("efficacy",
-                  "In the Phase III PSMAfore trial, Pluvicto reduced the risk of radiographic progression or "
-                  "death by 59% versus a change in androgen-receptor pathway inhibitor in PSMA-positive mCRPC.")],
-    "Lynkuet": [("efficacy",
-                 "In the OASIS-1 and OASIS-2 pivotal trials, elinzanetant significantly reduced the frequency of "
-                 "moderate-to-severe vasomotor symptoms versus placebo at both week 4 and week 12.")],
-    "Padcev": [("efficacy",
-                "In EV-302, enfortumab vedotin plus pembrolizumab established a first-line survival benefit versus "
-                "platinum-based chemotherapy in locally advanced or metastatic urothelial cancer.")],
-    "Entresto": [("efficacy",
-                  "In PARADIGM-HF, sacubitril/valsartan reduced the risk of cardiovascular death or heart-failure "
-                  "hospitalization versus enalapril in HFrEF.")],
-    "Vyndaqel": [("efficacy",
-                  "In ATTR-ACT, tafamidis reduced all-cause mortality and cardiovascular-related hospitalizations "
-                  "versus placebo in transthyretin amyloid cardiomyopathy.")],
+    "Kisqali": [
+        ("efficacy", "In the Phase III NATALEE trial, ribociclib plus endocrine therapy reduced the risk of "
+                     "disease recurrence by 28.4% versus endocrine therapy alone in HR+/HER2- early breast cancer "
+                     "(5-year analysis)."),
+        ("efficacy", "Across the Phase III MONALEESA trials, ribociclib plus endocrine therapy showed a consistent "
+                     "overall-survival benefit in HR+/HER2- metastatic breast cancer."),
+    ],
+    "Pluvicto": [
+        ("efficacy", "In the Phase III PSMAfore trial, Pluvicto reduced the risk of radiographic progression or "
+                     "death by 59% (HR 0.41) versus a change in androgen-receptor pathway inhibitor in PSMA-positive "
+                     "mCRPC in the pre-taxane setting."),
+        ("efficacy", "In the Phase III VISION trial, Pluvicto plus standard of care improved median overall survival "
+                     "to 15.3 versus 11.3 months (HR 0.62) in PSMA-positive mCRPC after ARPI and taxane therapy."),
+    ],
+    "Lynkuet": [
+        ("efficacy", "In the OASIS-1 and OASIS-2 pivotal trials, elinzanetant significantly reduced the frequency of "
+                     "moderate-to-severe vasomotor symptoms due to menopause versus placebo at both week 4 and week 12."),
+    ],
+    "Padcev": [
+        ("efficacy", "In the Phase III EV-302 trial, enfortumab vedotin plus pembrolizumab reduced the risk of death "
+                     "by 53% (median OS 31.5 vs 16.1 months, HR 0.47) versus platinum chemotherapy in first-line "
+                     "locally advanced or metastatic urothelial cancer."),
+    ],
+    "Entresto": [
+        ("efficacy", "In PARADIGM-HF, sacubitril/valsartan reduced the risk of cardiovascular death or heart-failure "
+                     "hospitalization versus enalapril in heart failure with reduced ejection fraction (HFrEF)."),
+    ],
+    "Vyndaqel": [
+        ("efficacy", "In ATTR-ACT, tafamidis reduced all-cause mortality and cardiovascular-related hospitalizations "
+                     "versus placebo in transthyretin amyloid cardiomyopathy."),
+    ],
+    "Nubeqa": [
+        ("efficacy", "In the Phase III ARASENS trial, darolutamide plus ADT and docetaxel reduced the risk of death "
+                     "by 32.5% (HR 0.68) versus placebo plus ADT and docetaxel in metastatic hormone-sensitive "
+                     "prostate cancer (mHSPC), with docetaxel."),
+        ("efficacy", "In the Phase III ARANOTE trial, darolutamide plus ADT reduced the risk of radiographic "
+                     "progression or death by 46% (HR 0.54) versus ADT alone in metastatic hormone-sensitive "
+                     "prostate cancer (mHSPC), chemo-free."),
+    ],
+    "Kerendia": [
+        ("efficacy", "In the FIDELIO-DKD and FIGARO-DKD trials, finerenone reduced heart-failure hospitalizations by "
+                     "22% and slowed disease progression versus placebo in CKD associated with type 2 diabetes."),
+        ("efficacy", "In the Phase III FINEARTS-HF trial, finerenone significantly reduced worsening heart-failure "
+                     "events and cardiovascular death versus placebo in heart failure with mildly-reduced/preserved EF."),
+    ],
+    "Leqvio": [
+        ("efficacy", "In the ORION-10 and ORION-11 trials, inclisiran reduced LDL cholesterol by approximately 50% "
+                     "versus placebo, with 75% of patients reaching LDL-C <55 mg/dL, in primary hypercholesterolemia "
+                     "and heterozygous familial hypercholesterolemia."),
+        ("efficacy", "In the ORION program, twice-yearly inclisiran delivered durable ~50% LDL-C lowering as an "
+                     "adjunct to maximally-tolerated statin in ASCVD."),
+    ],
+    "Fabhalta": [
+        ("efficacy", "In the Phase III APPLAUSE-IgAN trial, iptacopan achieved a 38.3% reduction in proteinuria "
+                     "versus placebo in IgA nephropathy."),
+        ("efficacy", "In the APPOINT-PNH and APPULSE-PNH trials, oral iptacopan produced clinically meaningful "
+                     "hemoglobin improvements in paroxysmal nocturnal hemoglobinuria (PNH)."),
+    ],
+    "Epkinly": [
+        ("efficacy", "In the pivotal EPCORE NHL-1 trial, epcoritamab achieved a 61% overall response rate and a 38% "
+                     "complete response rate in relapsed/refractory diffuse large B-cell lymphoma (3L+)."),
+    ],
+    "Abrysvo": [
+        ("efficacy", "In the Phase III RENOIR trial, Abrysvo demonstrated 88.9% efficacy against RSV-associated lower "
+                     "respiratory tract disease (>=3 symptoms) in older adults 60 years and older."),
+    ],
+    "Kesimpta": [
+        ("efficacy", "In the ASCLEPIOS I and II trials, ofatumumab reduced the annualized relapse rate by 51% and "
+                     "59% versus teriflunomide in relapsing forms of multiple sclerosis."),
+    ],
+    "Cabometyx": [
+        ("efficacy", "In the Phase III CABINET trial, cabozantinib extended median progression-free survival to 13.8 "
+                     "versus 3.3 months with placebo (HR 0.22) in advanced pancreatic neuroendocrine tumors (pNET)."),
+        ("efficacy", "In the Phase III CheckMate 9ER trial, cabozantinib plus nivolumab improved median overall "
+                     "survival to 49.5 versus 35.5 months with sunitinib in first-line renal cell carcinoma (RCC)."),
+    ],
+    "Opzelura": [
+        ("efficacy", "In the TRuE-V trials, about 30% of patients achieved F-VASI75 repigmentation at week 24 (rising "
+                     "to ~50% at week 52) with ruxolitinib cream in nonsegmental vitiligo."),
+        ("efficacy", "In the TRuE-AD trials, ruxolitinib cream produced significantly greater skin clearance and itch "
+                     "reduction versus vehicle in atopic dermatitis."),
+    ],
+    "Litfulo": [
+        ("efficacy", "In the Phase IIb/III ALLEGRO trial, 23% of patients achieved SALT <=20 scalp-hair regrowth at "
+                     "week 24 (rising to 43% at week 48) with ritlecitinib in severe alopecia areata."),
+    ],
+    "Eliquis": [
+        ("efficacy", "In the ARISTOTLE trial, apixaban reduced stroke or systemic embolism by 21% (HR 0.79), major "
+                     "bleeding by 31%, and all-cause mortality by 11% versus warfarin in non-valvular atrial fibrillation."),
+    ],
+    "Xarelto": [
+        ("efficacy", "In the ROCKET-AF trial, rivaroxaban was non-inferior to warfarin for stroke and systemic-embolism "
+                     "prevention, with significantly less intracranial hemorrhage, in non-valvular atrial fibrillation."),
+        ("efficacy", "In the COMPASS trial, rivaroxaban 2.5 mg twice daily plus aspirin reduced major cardiovascular "
+                     "events versus aspirin alone in stable coronary or peripheral artery disease (CAD/PAD)."),
+    ],
+    "Darzalex": [
+        ("efficacy", "In the Phase III MAIA trial, daratumumab plus lenalidomide and dexamethasone extended median "
+                     "progression-free survival to 61.9 versus 34.4 months in newly diagnosed multiple myeloma "
+                     "(transplant-ineligible)."),
+    ],
+    "Cosentyx": [
+        ("efficacy", "In the Phase III SUNSHINE and SUNRISE trials, secukinumab achieved HiSCR clinical response in "
+                     "roughly 56-65% of patients at week 52 in moderate-to-severe hidradenitis suppurativa."),
+    ],
+    "Jakafi": [
+        ("efficacy", "In the Phase III COMFORT-I trial, 42% of patients achieved >=35% spleen-volume reduction at week "
+                     "24 with ruxolitinib versus <1% with placebo in myelofibrosis."),
+    ],
+    "Onivyde": [
+        ("efficacy", "In the Phase III NAPOLI-3 trial, the NALIRIFOX regimen improved median overall survival to 11.1 "
+                     "versus 9.2 months with gemcitabine plus nab-paclitaxel in first-line metastatic pancreatic "
+                     "adenocarcinoma."),
+    ],
+    "Tivdak": [
+        ("efficacy", "In the Phase III innovaTV 301 trial, tisotumab vedotin reduced the risk of death by 30% (median "
+                     "OS 11.5 vs 9.5 months, HR 0.70) versus chemotherapy in recurrent or metastatic cervical cancer."),
+    ],
 }
 
 
@@ -160,23 +262,39 @@ def _brand_claims(brand: str, generic: str, intel: dict) -> list[dict]:
     return out
 
 
-def _indication_claims(brand: str, generic: str, indication: str, intel: dict, is_lead: bool) -> list[dict]:
+_STOP = {"the", "of", "with", "and", "for", "in", "a", "an", "to", "or", "versus", "vs"}
+
+
+def _assign_verified(brand: str, indications: list[str]) -> dict[str, list[tuple]]:
+    """Assign each independently-verified claim to its single best-matching indication
+    (max keyword overlap; ties/no-match -> the lead indication). Returns
+    {indication_label: [(claim_type, text), ...]} so no verified claim is duplicated across
+    indications and none is dropped."""
+    assignment: dict[str, list[tuple]] = {ind: [] for ind in indications}
+    lead = indications[0] if indications else ""
+    ind_words = {ind: set(re.findall(r"[a-z0-9]+", ind.lower())) - _STOP for ind in indications}
+    for ctype, text in VERIFIED.get(brand, []):
+        tw = set(re.findall(r"[a-z0-9]+", text.lower()))
+        best, best_score = lead, 0
+        for ind in indications:
+            score = len(ind_words[ind] & tw)
+            if score > best_score:
+                best, best_score = ind, score
+        assignment[best].append((ctype, text))
+    return assignment
+
+
+def _indication_claims(brand: str, generic: str, indication: str, intel: dict,
+                       verified_here: list[tuple]) -> list[dict]:
     """Indication-specific claims (carry that indication's id): the indication statement,
-    any independently-verified efficacy result matching this indication, and an efficacy
-    scaffold that needs substantiation. Verified figures only attach to the indication they
-    actually describe (matched by keyword) or, failing a match, to the lead indication."""
+    the independently-verified efficacy results assigned to THIS indication (by
+    _assign_verified), and an efficacy scaffold that still needs substantiation."""
     comp = (intel.get("competitors") or ["standard of care"])[0]
     out: list[dict] = [
         {"text": f"{brand} is indicated for {indication}.", "claim_type": "efficacy", "status": "approved"},
     ]
-    ind_words = set(re.findall(r"[a-z0-9]+", indication.lower())) - {"the", "of", "with", "and", "for", "in"}
-    for ctype, text in VERIFIED.get(brand, []):
-        tw = set(re.findall(r"[a-z0-9]+", text.lower()))
-        matches_here = len(ind_words & tw) >= 2
-        # Attach a verified claim to the indication it describes; if it matches none of a
-        # brand's indications, fall back to the lead indication so it isn't dropped.
-        if matches_here or (is_lead and not any(w in tw for w in ind_words)):
-            out.append({"text": text, "claim_type": ctype, "status": "approved"})
+    for ctype, text in verified_here:
+        out.append({"text": text, "claim_type": ctype, "status": "approved"})
     out.append({"text": f"In {indication}, {brand} demonstrated a clinically meaningful treatment effect versus "
                         f"{comp} in its pivotal program (efficacy magnitude to be substantiated from the primary "
                         f"endpoint).", "claim_type": "efficacy", "status": "in_review"})
@@ -367,12 +485,13 @@ def build() -> dict:
                 # 2b/3/4) Per-indication claims, an efficacy claim block module, and a full
                 # asset set (email, banner, detail-aid, unbranded social) -- so EVERY indication
                 # is covered, not just the lead one.
+                verified_by_ind = _assign_verified(brand, [i for i in indications if i])
                 for ind in indications:
                     iid = iid_by_ind[ind]
-                    is_lead = (ind == lead_ind)
                     ind_claim_ids: list[int] = []
                     approved_ind_texts: list[str] = []
-                    ind_claims = _indication_claims(brand, generic, ind, intel, is_lead) if ind else []
+                    ind_claims = _indication_claims(brand, generic, ind, intel,
+                                                    verified_by_ind.get(ind, [])) if ind else []
                     for c in ind_claims:
                         cid = _add_claim(c, iid, seq)
                         ind_claim_ids.append(cid)
