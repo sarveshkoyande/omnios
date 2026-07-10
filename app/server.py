@@ -216,7 +216,7 @@ def api_run_stream(project_id: str):
         plan_md = plan_html = None
         try:
             for ev in run_agents(slots["brand"], slots["therapy_area"], slots["lifecycle_key"], slots["budget"],
-                                 slots.get("maturity_notes", ""), slots.get("indication", "")):
+                                 slots.get("maturity_notes", ""), slots.get("indication", ""), brief=slots):
                 if ev["type"] == "narration":
                     messages.append(_msg("agent", ev["text"]))
                 elif ev["type"] == "plan":

@@ -83,7 +83,8 @@ def _clean_freetext(text: str) -> str:
 
 def _parse_budget(text: str) -> float | None:
     t = text.lower()
-    if any(w in t for w in ["skip", "no budget", "not sure", "none", "later", "don't have", "dont have", "n/a", "na"]):
+    # Whole-word match so a skip token can't fire on a substring (e.g. "na" inside "additional").
+    if re.search(r"\b(skip|no budget|not sure|none|later|don't have|dont have|n/?a)\b", t):
         return 0.0
     m = re.search(r"\$?\s*([\d][\d,\.]*)\s*(k|m|mm|thousand|million|bn|billion)?", t)
     if not m:
@@ -102,10 +103,102 @@ def _parse_budget(text: str) -> float | None:
     return num
 
 
+# --------------------------------------------------------------------- brief extraction ---
+# The intake is a fill-in-the-blanks paragraph:
+#   "[Name] is an omnichannel campaign for [Brand], a [Molecule] indicated for [Indication],
+#    currently in the [Lifecycle Stage]. We are planning to engage [Audience] in [Region]
+#    over [Duration] with a budget of [Budget]. Our goal is to [Objective] by driving [KPI].
+#    We already have [Assets] available and plan to use [Channels], while considering
+#    [Constraints]. Additional context or known challenges include [Notes]."
+# Each field is pulled independently off its connective phrase, so a reordered or partially
+# filled brief still yields whatever clauses ARE present (a missing clause just stays empty).
+# The core matchers in _extract() also scan the whole text, so brand/lifecycle/budget are
+# caught even when the surrounding template wording differs.
+_BRIEF_RE = {
+    "campaign_name":      re.compile(r"^\s*(.+?)\s+is an?\b[^.]*?\bcampaign\b", re.I),
+    "brand":              re.compile(r"campaign\s+for\s+(.+?)(?=,|\.|\s+a\s+[A-Za-z])", re.I),
+    "molecule":           re.compile(r",\s*an?\s+(.+?)\s+indicated\s+for", re.I),
+    "indication":         re.compile(r"indicated\s+for\s+(.+?)(?=,|\.|;|\s+currently\b)", re.I),
+    "lifecycle_text":     re.compile(r"currently\s+in(?:\s+the)?\s+(.+?)(?=[.,;]|$)", re.I),
+    "duration":           re.compile(r"\bover\s+(.+?)(?=\s+with\s+a\s+budget\b|[.,;]|$)", re.I),
+    "objective":          re.compile(r"goal\s+is\s+to\s+(.+?)(?=\s+by\s+driving\b|[.]|$)", re.I),
+    "kpi":                re.compile(r"by\s+driving\s+(.+?)(?=[.]|$)", re.I),
+    "existing_assets":    re.compile(r"already\s+have\s+(.+?)(?=\s+available\b|\s+and\s+plan\s+to\s+use\b|[.]|$)", re.I),
+    "preferred_channels": re.compile(r"plan\s+to\s+use\s+(.+?)(?=\s+while\s+considering\b|[.]|$)", re.I),
+    "constraints":        re.compile(r"while\s+considering\s+(.+?)(?=[.]|$)", re.I),
+    "notes":              re.compile(r"(?:challenges|context|notes)[^.]*?\binclude\s+(.+?)(?=$|\.)", re.I),
+}
+# The "engage [Audience] in [Region]" clause needs both halves captured together so the
+# generic "in ..." doesn't run past the region.
+_BRIEF_ENGAGE_RE = re.compile(r"engage\s+(?P<audience>.+?)\s+in\s+(?P<geography>.+?)(?=\s+over\b|\s+with\s+a\s+budget\b|[.,;]|$)", re.I)
+# Stop on a sentence-ending period (". " or end) or a comma/semicolon -- NOT on the decimal
+# point inside an amount like "$2.5M". _parse_budget then reads the first number in the clause.
+_BRIEF_BUDGET_RE = re.compile(r"budget\s+of\s+([^,;]+?)(?=\.\s|\.$|[,;]|$)", re.I)
+
+
+def _clean_field(v: str) -> str:
+    """Trim a captured field and drop unfilled '[Placeholder]' tokens and empty strings."""
+    v = (v or "").strip().strip(".,;:").strip()
+    if not v or (v.startswith("[") and v.endswith("]")):
+        return ""
+    return v[:400]
+
+
+def _looks_like_brief(message: str) -> bool:
+    """Only run the paragraph extractor on something that reads like the intake brief, so
+    short conversational replies never trip a connective by accident."""
+    t = message.lower()
+    return sum(k in t for k in ("campaign for", "indicated for", "goal is to", "budget of",
+                                "plan to use", "currently in", "we are planning", "engage")) >= 2
+
+
+def _extract_brief(message: str, slots: dict) -> None:
+    """Fill any still-empty brief slots from the fill-in-the-blanks paragraph. Never
+    overwrites a slot that already has a value."""
+    if not _looks_like_brief(message):
+        return
+    for field, rx in _BRIEF_RE.items():
+        if field == "lifecycle_text":
+            if not slots.get("lifecycle_key"):
+                m = rx.search(message)
+                if m:
+                    lc = _match_lifecycle(_clean_field(m.group(1)))
+                    if lc:
+                        slots["lifecycle_key"] = lc
+            continue
+        if not slots.get(field):
+            m = rx.search(message)
+            if m:
+                slots[field] = _clean_field(m.group(1))
+    m = _BRIEF_ENGAGE_RE.search(message)
+    if m:
+        if not slots.get("audience"):
+            slots["audience"] = _clean_field(m.group("audience"))
+        if not slots.get("geography"):
+            slots["geography"] = _clean_field(m.group("geography"))
+    if not slots.get("budget"):
+        mb = _BRIEF_BUDGET_RE.search(message)
+        if mb:
+            b = _parse_budget(mb.group(1))
+            if b:
+                slots["budget"] = b
+
+
 def new_state() -> dict:
     return {
-        "slots": {"brand": "", "therapy_area": "", "indication": "", "lifecycle_key": "", "budget": 0.0, "maturity_notes": ""},
+        "slots": {
+            # Core facts the research run requires.
+            "brand": "", "therapy_area": "", "indication": "", "lifecycle_key": "",
+            "budget": 0.0, "maturity_notes": "",
+            # Richer brief captured from the fill-in-the-blanks intake (all optional -- the
+            # agents infer what's missing). Extracted from the pasted paragraph; surfaced in
+            # the brief panel and folded into the plan.
+            "campaign_name": "", "molecule": "", "audience": "", "geography": "",
+            "duration": "", "objective": "", "kpi": "", "existing_assets": "",
+            "preferred_channels": "", "constraints": "", "notes": "", "reason": "",
+        },
         "budget_asked": False,
+        "reason_asked": False,   # whether we've asked the always-on 'why this campaign' follow-up
         "awaiting": None,   # which slot we last asked for
         "phase": "collecting",  # collecting -> ready -> running -> done (-> clarify Q&A while done)
         "ta_from_catalog": False,   # therapy area was auto-mapped from a known brand
@@ -146,10 +239,11 @@ def _match_indication(message: str, options: list[str]) -> str | None:
 
 def opening_message() -> str:
     return (
-        "Hi — I'm your brand engagement planning agent. Tell me what you're working on: which **brand** "
-        "are you planning a campaign for, what **therapy area / indication**, and roughly where the "
-        "brand sits in its **lifecycle** (just launching, growing, mature, or facing loss of "
-        "exclusivity)? A sentence is plenty — I'll take it from there and start the research."
+        "Hi — I'm your brand engagement planning agent. **Fill in the brief above** (edit the "
+        "blanks, or paste your own in any wording) and I'll pull out the details — brand, molecule, "
+        "indication, lifecycle stage, audience, budget and the rest. Don't worry about filling every "
+        "blank; I'll infer what I can and ask about anything important that's missing. Prefer to just "
+        "talk? Tell me the **brand**, **indication** and **lifecycle stage** and we'll go from there."
     )
 
 
@@ -157,6 +251,20 @@ def _extract(message: str, state: dict) -> None:
     """Mutates state['slots'] with anything found in the message, context-aware on state['awaiting']."""
     slots = state["slots"]
     awaiting = state["awaiting"]
+
+    # Pull the whole fill-in-the-blanks brief first; the core matchers below then only fill gaps.
+    _extract_brief(message, slots)
+    if slots.get("budget") and not state.get("budget_asked"):
+        state["budget_asked"] = True   # the brief already gave a budget -- don't re-ask it
+
+    # 'Reason for this campaign' -- the always-on follow-up. Once asked, always record something
+    # (a deferral becomes an explicit '(not specified)') so we never loop on it.
+    if awaiting == "reason" and not slots.get("reason"):
+        low = message.strip().lower().strip(".!?")
+        if _is_deferral(message) or low in ("skip", "none", "n/a", "na", "pass", "later", "no reason"):
+            slots["reason"] = "(not specified)"
+        else:
+            slots["reason"] = message.strip()[:600]
 
     # Lifecycle (distinct keywords, safe to always scan)
     if not slots["lifecycle_key"]:
@@ -206,8 +314,9 @@ def _extract(message: str, state: dict) -> None:
         if picked:
             slots["indication"] = picked
 
-    # Budget (only when relevant, to avoid grabbing unrelated numbers)
-    if awaiting == "budget" or "$" in message or "budget" in message.lower():
+    # Budget (only when relevant, to avoid grabbing unrelated numbers). Skipped once a budget
+    # is already captured, so scanning a long brief can't overwrite it with a stray number.
+    if not slots.get("budget") and (awaiting == "budget" or "$" in message or "budget" in message.lower()):
         b = _parse_budget(message)
         if b is not None:
             slots["budget"] = b
@@ -256,6 +365,17 @@ def interpret_message(message: str, state: dict) -> tuple[dict, str, str]:
             state.get("clarify_idx", 0) < len(state["open_questions"]):
         return _interpret_clarify(message, state)
 
+    # The always-on 'reason for this campaign' answer is captured deterministically for both
+    # engines (the rules path records it and then proceeds straight to the run).
+    if state.get("awaiting") == "reason":
+        return _interpret_message_rules(message, state)
+
+    # Pull the fill-in-the-blanks brief up front so the richer fields (audience, geography,
+    # objective, channels, ...) are captured regardless of which engine drives the turn --
+    # the LLM path only tracks the four core slots. Fills empty slots only.
+    if state.get("phase") in (None, "collecting"):
+        _extract_brief(message, state["slots"])
+
     # For a brand in the fixed catalog, the collecting dialog is handled deterministically
     # (rules path) rather than by the LLM: this guarantees the brand's fixed therapy area
     # is auto-mapped and its real indications are offered as explicit choices, instead of
@@ -273,9 +393,9 @@ def interpret_message(message: str, state: dict) -> tuple[dict, str, str]:
         from conversation_llm import llm_available, interpret_message_llm
         if llm_available():
             try:
-                result = interpret_message_llm(message, state)
+                state, reply, action = interpret_message_llm(message, state)
                 _set_status("azure-foundry", True, "Claude (via Microsoft Foundry) answered this turn.")
-                return result
+                return _reason_gate(state, reply, action)  # ask 'why this campaign' before any run
             except Exception as e:  # noqa: BLE001 -- fall back to rules on any LLM/auth failure
                 short = str(e).strip().splitlines()[0][:200]
                 detail = f"Claude call failed ({short}); used the rule-based fallback for this turn."
@@ -461,6 +581,29 @@ def _resolve_recall_reply(message: str, state: dict) -> None:
         slots["maturity_notes"] = remembered["maturity_notes"]
 
 
+def _reason_prompt(slots: dict) -> str:
+    brand = slots.get("brand") or "this brand"
+    return (
+        f"Last thing before I bring in the agents — **what's prompting this campaign for "
+        f"{brand}** right now? For example: a new launch or indication, defending share against "
+        "a competitor, an upcoming data readout, slowing uptake, or a patient-access push. This "
+        "anchors the whole strategy (and helps me read anything ambiguous in your notes). One "
+        "line is plenty — or say *skip*."
+    )
+
+
+def _reason_gate(state: dict, reply: str, action: str) -> tuple[dict, str, str]:
+    """Before any run kicks off, ensure we've asked the always-on 'why this campaign now'
+    follow-up. Applied to both the rules and LLM engines so the behaviour is identical."""
+    slots = state["slots"]
+    if action == "run" and not slots.get("reason") and not state.get("reason_asked"):
+        state["reason_asked"] = True
+        state["awaiting"] = "reason"
+        state["phase"] = "collecting"
+        return state, _reason_prompt(slots), "ask"
+    return state, reply, action
+
+
 def _interpret_message_rules(message: str, state: dict) -> tuple[dict, str, str]:
     """Deterministic slot-filling dialog (no LLM). Used as the default and as the LLM fallback."""
     _extract(message, state)
@@ -497,6 +640,13 @@ def _interpret_message_rules(message: str, state: dict) -> tuple[dict, str, str]
 
     # Known brand -> offer its indications as choices (never an open question).
     cat = lookup_brand(slots["brand"])
+    # If the brief already named an indication, snap it to the closest catalog label so the
+    # content library and plan tailoring match (e.g. "HR+/HER2- breast cancer" -> the roster's
+    # canonical label). Leaves it untouched if nothing is close.
+    if cat and cat["indications"] and slots.get("indication"):
+        picked = _match_indication(slots["indication"], cat["indications"])
+        if picked:
+            slots["indication"] = picked
     if cat and cat["indications"] and not slots.get("indication"):
         inds = cat["indications"]
         if len(inds) == 1:
@@ -529,19 +679,28 @@ def _interpret_message_rules(message: str, state: dict) -> tuple[dict, str, str]
             "Give me a number (e.g. \"$2M\"), or say *skip* and I'll show the channel split as percentages."
         ), "ask"
 
-    # All required slots captured -> kick off the run
+    # All required slots captured -> kick off the run (after the reason gate below).
     state["awaiting"] = None
     state["phase"] = "running"
     budget_line = f"\n• Budget: ${int(slots['budget']):,}" if slots["budget"] else "\n• Budget: (percentages only)"
     indication_line = f"\n• Indication: **{slots['indication']}**" if slots.get("indication") else ""
+    # Echo back the richer brief fields the intake captured, so the user sees what was parsed.
+    extra_lines = ""
+    for label, key in (("Audience", "audience"), ("Geography", "geography"), ("Duration", "duration"),
+                       ("Objective", "objective"), ("Target KPI", "kpi"), ("Preferred channels", "preferred_channels"),
+                       ("Reason", "reason")):
+        val = slots.get(key)
+        if val and val != "(not specified)":
+            extra_lines += f"\n• {label}: **{val}**"
     reply = (
         "Perfect — here's the brief I've locked in:\n"
         f"• Brand: **{slots['brand']}**\n"
         f"• Therapy area: **{slots['therapy_area']}**"
         f"{indication_line}\n"
         f"• Lifecycle: **{slots['lifecycle_key']}**"
-        f"{budget_line}\n\n"
+        f"{budget_line}"
+        f"{extra_lines}\n\n"
         "I'm putting my research agents to work now — watch them think through the market, competitors, "
         "positioning, channel mix and measurement on the right. This takes ~30–60 seconds while they pull live data…"
     )
-    return state, reply, "run"
+    return _reason_gate(state, reply, "run")

@@ -77,14 +77,14 @@ def _say(agent_id: str, text: str, to: str = ""):
 
 
 def run_agents(brand: str, therapy_area: str, lifecycle_key: str, budget: float = 0, maturity_notes: str = "",
-               indication: str = ""):
+               indication: str = "", brief: dict | None = None):
     """Generator yielding orchestration events. The named teammates work as a group --
     each speaks in the chat (`say` on running, `summary` on done) as it picks up its
     piece; summaries describe what they found, not a hand-off, so the flow reads as a
     team collaborating rather than a linear relay. Terminal events: 'plan', 'result', 'done'."""
     yield {"type": "agents_init", "agents": AGENT_ROSTER}
     ctx: dict = {"brand": brand, "therapy_area": therapy_area, "lifecycle_key": lifecycle_key, "budget": budget,
-                 "maturity_notes": maturity_notes, "indication": indication}
+                 "maturity_notes": maturity_notes, "indication": indication, "brief": brief or {}}
 
     ind_note = f" for the {indication} indication" if indication else ""
 
@@ -333,10 +333,18 @@ def _assemble_result(ctx: dict) -> dict:
     """Same shape as autorun.run_full_analysis, so it persists / renders identically."""
     strategy = ctx["strategy"]
     inferred = ctx["inferred"]
+    _brief = ctx.get("brief") or {}
+    # The user-supplied brief fields from the fill-in-the-blanks intake, echoed into the plan
+    # so the objective/audience/KPI/reason/etc. they gave are on the record (empty ones dropped).
+    campaign_brief = {k: _brief.get(k) for k in (
+        "campaign_name", "molecule", "audience", "geography", "duration", "objective", "kpi",
+        "existing_assets", "preferred_channels", "constraints", "notes", "reason")
+        if _brief.get(k) and _brief.get(k) != "(not specified)"}
     return {
         "brand": ctx["brand"],
         "therapy_area": ctx["therapy_area"],
         "indication": ctx.get("indication", ""),
+        "campaign_brief": campaign_brief,
         "inferred_inputs": {
             "persona": inferred["persona"],
             "stage_key": inferred["stage_key"],

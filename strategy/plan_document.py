@@ -785,6 +785,17 @@ def compose_plan(ctx: dict) -> tuple[str, str]:
         brief_rows.append(("Indication", indication))
     brief_rows += [("Lifecycle", inferred["lifecycle_label"]), ("Priority persona", inferred["persona"]),
                    ("Journey stage", stage_label), ("Competitive set", ", ".join(ctx["competitors"]) or "—")]
+    # User-supplied brief fields captured by the fill-in-the-blanks intake (only those given).
+    _ub = ctx.get("brief") or {}
+    for _lbl, _key in (("Campaign", "campaign_name"), ("Molecule", "molecule"), ("Audience", "audience"),
+                       ("Geography", "geography"), ("Duration", "duration"), ("Objective", "objective"),
+                       ("Target KPI", "kpi"), ("Preferred channels", "preferred_channels"),
+                       ("Existing assets", "existing_assets"), ("Constraints", "constraints"),
+                       ("Reason for campaign", "reason"), ("Notes", "notes")):
+        _v = _ub.get(_key)
+        if _v and _v != "(not specified)":
+            brief_rows.append((_lbl, _v))
+            md.append(f"- **{_lbl}:** {_v}")
     h.append(_det_open(3, "Brief", "assignment")
              + "<table class='plan-kv'>"
              + "".join(f"<tr><th>{k}</th><td>{_esc(v)}</td></tr>" for k, v in brief_rows)
