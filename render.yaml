@@ -6,9 +6,17 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn app.server:app --host 0.0.0.0 --port $PORT
     envVars:
-      - key: AZURE_AI_FOUNDRY_ENDPOINT
-        value: https://genai-demos-resource.services.ai.azure.com/api/projects/genai-demos
+      # Use the Foundry RESOURCE name (not a full endpoint). The AnthropicFoundry SDK
+      # derives the correct Anthropic passthrough URL from it:
+      # https://<resource>.services.ai.azure.com/anthropic/ . Do NOT set
+      # AZURE_AI_FOUNDRY_ENDPOINT to a project endpoint (.../api/projects/<name>) -- that
+      # URL shape is the Agents/Projects API and 400s with "Missing required query
+      # parameter: api-version" on the messages call.
+      - key: AZURE_AI_FOUNDRY_RESOURCE
+        value: genai-demos-resource
       - key: AZURE_AI_FOUNDRY_DEPLOYMENT
         value: claude-sonnet-5
+      # Secret -- set the actual key in the Render dashboard (Environment tab); sync:false
+      # keeps it out of the repo. Without it the LLM path is disabled (rules engine only).
       - key: AZURE_AI_FOUNDRY_API_KEY
         sync: false
