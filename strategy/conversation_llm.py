@@ -56,6 +56,13 @@ ENDPOINT = os.environ.get("AZURE_AI_FOUNDRY_ENDPOINT")  # optional full override
 MODEL = os.environ.get("AZURE_AI_FOUNDRY_DEPLOYMENT", "claude-sonnet-5")
 API_KEY_ENV = "AZURE_AI_FOUNDRY_API_KEY"
 SCOPE = "https://ai.azure.com/.default"
+# Some Azure Foundry deployments require an explicit `?api-version=` query parameter on the
+# Anthropic passthrough and otherwise 400 with "Missing required query parameter: api-version".
+# The SDK's resource= path does NOT add one (anthropic/lib/foundry.py builds a bare
+# .../anthropic/ base_url), so if a deployment needs it, set AZURE_AI_FOUNDRY_API_VERSION in
+# .env and it is injected on every request via default_query. Unset = current working default
+# (no api-version), so this is a no-op unless a deployment actually demands the parameter.
+API_VERSION = os.environ.get("AZURE_AI_FOUNDRY_API_VERSION", "").strip()
 
 _SYSTEM = f"""You are the intake agent for a pharmaceutical omnichannel campaign-planning tool.
 Your job is to hold a short, warm, professional conversation that collects exactly four things,
@@ -113,9 +120,12 @@ def _get_client():
     from anthropic import AnthropicFoundry
 
     api_key = os.environ.get(API_KEY_ENV)
-    # Prefer `resource=` -- the SDK derives the correctly-versioned URL from it. Only pass
-    # `base_url=` when the user explicitly set a full override via AZURE_AI_FOUNDRY_ENDPOINT.
+    # Prefer `resource=` -- the SDK derives the URL from it. Only pass `base_url=` when the
+    # user explicitly set a full override via AZURE_AI_FOUNDRY_ENDPOINT.
     location_kwargs = {"base_url": ENDPOINT} if ENDPOINT else {"resource": RESOURCE}
+    # Inject api-version only if configured (see API_VERSION note above); harmless when unset.
+    if API_VERSION:
+        location_kwargs["default_query"] = {"api-version": API_VERSION}
     try:
         if api_key:
             _client = AnthropicFoundry(api_key=api_key, **location_kwargs)

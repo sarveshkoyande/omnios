@@ -146,7 +146,7 @@ def _match_indication(message: str, options: list[str]) -> str | None:
 
 def opening_message() -> str:
     return (
-        "Hi — I'm your campaign-planning agent. Tell me what you're working on: which **brand** "
+        "Hi — I'm your brand engagement planning agent. Tell me what you're working on: which **brand** "
         "are you planning a campaign for, what **therapy area / indication**, and roughly where the "
         "brand sits in its **lifecycle** (just launching, growing, mature, or facing loss of "
         "exclusivity)? A sentence is plenty — I'll take it from there and start the research."

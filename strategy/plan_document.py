@@ -1,4 +1,4 @@
-"""Campaign Plan document composer -- a ground-up rewrite (2026-07-09) that renders the
+"""Brand Engagement Plan document composer -- a ground-up rewrite (2026-07-09) that renders the
 plan as an exact HTML/CSS replica of the Customer Engagement Planning Toolkit workbook:
 the Sheet-2 home navigator with its four phase ribbons (Align = magenta, Select = cyan,
 Create = navy, Deploy = grey), the Sheet-3/4 question tables with blue band rows, the
@@ -275,7 +275,67 @@ def _render_feasibility(feas: dict) -> str:
             + f"<p class='plan-caveat'>{_esc(feas['caveat'])}</p>")
 
 
-def _render_message_flow_template(mf: dict, persona: str, stage_label: str, engagement_goal: str) -> str:
+# --------------------------------------------------------------------------- #
+# Content-library helpers (claims / references / assets that fill Phase 2 & 3)
+# --------------------------------------------------------------------------- #
+
+_CLAIM_STATUS_CLASS = {"approved": "tk-claim-approved", "in_review": "tk-claim-review",
+                       "draft": "tk-claim-draft", "expired": "tk-claim-draft", "retired": "tk-claim-draft"}
+
+# Which claim types are most relevant to each toolkit key-message topic (keyword-matched).
+_TOPIC_CLAIM_TYPES = {
+    "efficacy": ["efficacy", "moa"], "outcome": ["efficacy"], "survival": ["efficacy"],
+    "clinical": ["efficacy", "moa"], "safety": ["safety", "isi"], "tolerab": ["safety"],
+    "mechanism": ["moa"], "moa": ["moa"], "dosing": ["access"], "administration": ["access"],
+    "access": ["access"], "cost": ["access"], "value": ["rtb", "access"], "burden": ["rtb", "access"],
+    "quality": ["efficacy", "rtb"], "differenti": ["rtb", "efficacy"], "awareness": ["rtb"],
+}
+
+_ASSET_CHANNEL = {  # asset format -> the channel/touchpoint it flows through
+    "email": ("Owned digital", "language"), "banner": ("Reach (programmatic/display)", "campaign"),
+    "detail_aid": ("Field / peer detailing", "groups"), "social": ("Patient-adjacent / social", "favorite"),
+    "video": ("Owned digital", "smart_display"), "webpage": ("Owned digital", "language"),
+}
+
+
+def _match_claims_for_topic(topic: str, claims: list[dict]) -> list[dict]:
+    """Claims from the library most relevant to a key-message topic (by type keyword),
+    approved first. Falls back to all approved claims when nothing matches by type."""
+    tl = topic.lower()
+    wanted: set[str] = set()
+    for kw, types in _TOPIC_CLAIM_TYPES.items():
+        if kw in tl:
+            wanted.update(types)
+    matched = [c for c in claims if c["claim_type"] in wanted] if wanted else []
+    if not matched:
+        matched = [c for c in claims if c["status"] == "approved" and c["claim_type"] in ("efficacy", "moa")]
+    matched.sort(key=lambda c: 0 if c["status"] == "approved" else 1)
+    return matched[:3]
+
+
+def _claim_ref_chip(c: dict) -> str:
+    if not c.get("references"):
+        return ""
+    r = c["references"][0]
+    src = {"dailymed": "DailyMed label", "clinicaltrials": "ClinicalTrials.gov", "pubmed": "PubMed",
+           "openfda": "openFDA"}.get(r.get("source_type"), r.get("source_type", "ref"))
+    ext = f" {r['external_id']}" if r.get("external_id") else ""
+    label = f"{src}{ext}"
+    return (f"<a class='tk-ref-chip' href='{_esc(r.get('url') or '#')}' target='_blank' "
+            f"title='{_esc(r.get('locator') or '')}'>{_icon('link')}{_esc(label)}</a>")
+
+
+def _claim_line(c: dict) -> str:
+    status = c.get("status", "draft")
+    scls = _CLAIM_STATUS_CLASS.get(status, "tk-claim-draft")
+    mat = f"<span class='tk-claim-mat'>{_esc(c['material_number'])}</span>" if c.get("material_number") else ""
+    badge = f"<span class='tk-claim-badge {scls}'>{_esc(status.replace('_', ' '))}</span>"
+    return (f"<div class='tk-claim'><div class='tk-claim-txt'>{_esc(c['text'])}</div>"
+            f"<div class='tk-claim-meta'>{badge}{mat}{_claim_ref_chip(c)}</div></div>")
+
+
+def _render_message_flow_template(mf: dict, persona: str, stage_label: str, engagement_goal: str,
+                                  content_library: dict | None = None) -> str:
     pool = "".join(f"<div class='tk-msg tk-msg-green'>{_esc(t)}</div>" for t in mf["brand_plan_key_message_pool"])
     depri = ("".join(f"<div class='tk-msg tk-msg-plain'>{_esc(t)}</div>" for t in mf["de_prioritized_messages"])
              or "<div class='tk-msg tk-msg-empty'>(none — all pool messages selected)</div>")
@@ -296,7 +356,32 @@ def _render_message_flow_template(mf: dict, persona: str, stage_label: str, enga
         f"<div class='tk-mf-pool'><h4>New key messages</h4><div class='tk-pool-col'>{new_km}</div></div></div>"
         "<div class='tk-mf-bar'>Behavioral objective / adoption/scientific ladder step-up to be achieved</div>"
         f"<div class='tk-mf-grid'><div class='tk-mf-rail'>Key<br>messages<br><br>Supporting<br>messages</div>{km_cols}</div>"
+        + _render_message_claims_block(mf, content_library)
         + f"<p class='plan-caveat'>{_esc(mf['caveat'])}</p>"
+    )
+
+
+def _render_message_claims_block(mf: dict, content_library: dict | None) -> str:
+    """The real substantiated claims from the content library, matched to each key message --
+    this is what fills Q7 with actual claims + references instead of only synthesized text."""
+    lib = content_library or {}
+    claims = lib.get("claims", [])
+    if not lib.get("found") or not claims:
+        return ("<div class='tk-lib-empty'>No approved claims library is indexed for this brand yet — "
+                "run <code>scripts/build_content_library.py</code> to populate it, or the brand team supplies it. "
+                + _NEEDS_CHIP + "</div>")
+    cols = ""
+    for km in mf["key_messages"]:
+        matched = _match_claims_for_topic(km["topic"], claims)
+        chips = "".join(_claim_line(c) for c in matched) or "<div class='tk-claim tk-claim-none'>No library claim matched — brand team to supply.</div>"
+        cols += (f"<div class='tk-lib-col'><div class='tk-lib-col-head'>{_esc(km['topic'])}</div>{chips}</div>")
+    approved = sum(1 for c in claims if c["status"] == "approved")
+    return (
+        "<div class='tk-lib-block'><h4 class='tk-lib-h'>"
+        + _icon("verified") + "Substantiated claims from the content library</h4>"
+        f"<p class='tk-lib-sub'>{len(claims)} claims ({approved} MLR-approved) for this brand/indication, each "
+        "traceable to a reference. Matched to the key messages above.</p>"
+        f"<div class='tk-lib-grid'>{cols}</div></div>"
     )
 
 
@@ -326,8 +411,29 @@ _CONTENT_AUDIT_COLS = ["File Name", "Asset Title", "Target Group", "Branded/Unbr
                        "Key Messages", "Description", "Where to find it: URL", "ID_code"]
 
 
-def _render_content_audit(mf: dict, persona: str, micro_journeys: dict) -> str:
+def _render_content_audit(mf: dict, persona: str, micro_journeys: dict,
+                          content_library: dict | None = None) -> str:
     head = "".join(f"<th>{_esc(c)}</th>" for c in _CONTENT_AUDIT_COLS)
+    lib = content_library or {}
+    assets = lib.get("assets", [])
+    if lib.get("found") and assets:
+        body = ""
+        for a in assets:
+            key_msgs = ", ".join(m for m in a.get("modules", []) if "claim block" in m.lower()) \
+                or ", ".join(a.get("modules", [])[:2]) or "—"
+            branded = "Branded" if a.get("branded") else "Unbranded"
+            url = a.get("url") or (f"blob:{a['blob_key'][:12]}…" if a.get("blob_key") else "—")
+            cells = [_esc(a.get("file_name") or "—"), _esc(a.get("title") or "—"), _esc(a.get("target_group") or persona),
+                     _esc(branded), _esc(a.get("asset_format") or "—"), _esc(key_msgs),
+                     _esc(a.get("description") or "—"), _esc(url), _esc(a.get("id_code") or "—")]
+            body += "<tr>" + "".join(f"<td>{c}</td>" for c in cells) + "</tr>"
+        counts = lib.get("counts", {})
+        intro = (f"<p>Content inventory for this brand/indication — <strong>{counts.get('assets', len(assets))}</strong> "
+                 f"existing assets assembled from <strong>{counts.get('modules', 0)}</strong> reusable modules, each "
+                 f"carrying its key-message claim block and traceable references. This is the real 'Map Existing "
+                 f"Content' audit, populated from the content library.</p>")
+        return (intro + f"<div class='tk-scroll'><table class='tk-qtable tk-audit'><tr class='tk-qhead'>{head}</tr>{body}</table></div>")
+    # Fallback: no library indexed -> the toolkit template with seeded rows.
     body = ""
     journeys = micro_journeys["journeys"]
     for i, km in enumerate(mf["key_messages"]):
@@ -335,21 +441,49 @@ def _render_content_audit(mf: dict, persona: str, micro_journeys: dict) -> str:
         cells = [_NEEDS_CHIP, _NEEDS_CHIP, _esc(persona), _NEEDS_CHIP, _esc(fmt),
                  _esc(km["topic"]), _esc(km["supporting_messages"][0]), _NEEDS_CHIP, _NEEDS_CHIP]
         body += "<tr class='plan-open-row'>" + "".join(f"<td>{c}</td>" for c in cells) + "</tr>"
-    return ("<p>No content library is indexed yet, so this audit ships as the toolkit's template with one seeded "
-            "row per key message — the highlighted cells are exactly what the brand team's content inventory "
-            "needs to fill in. " + _NEEDS_CHIP + "</p>"
+    return ("<p>No content library is indexed for this brand yet, so this audit ships as the toolkit's template with "
+            "one seeded row per key message — the highlighted cells are what the brand team's content inventory needs "
+            "to fill in. " + _NEEDS_CHIP + "</p>"
             f"<div class='tk-scroll'><table class='tk-qtable tk-audit'><tr class='tk-qhead'>{head}</tr>{body}</table></div>")
 
 
-def _render_channel_flow(micro_journeys: dict, pp_npp: list[dict]) -> str:
+def _render_channel_flow(micro_journeys: dict, pp_npp: list[dict], content_library: dict | None = None) -> str:
     mj = "".join(f"<li><strong>{_esc(j['name'])}</strong> — trigger: {_esc(j['trigger'])}; "
                  f"primary touchpoint: {_esc(j['primary_touchpoint'])}; {_esc(j['content_readiness'])}</li>"
                  for j in micro_journeys["journeys"])
     pp = "".join(f"<tr><td>{_esc(r['channel'])}</td><td>{r['pct']}%</td><td>{_esc(r['bucket'])}</td></tr>" for r in pp_npp)
     return ("<h3 class='plan-sec-sub'>Micro-journeys</h3><ul>" + mj + "</ul>"
             f"<p class='plan-caveat'>Governance: {_esc(micro_journeys['interim_check'])}</p>"
-            "<h3 class='plan-sec-sub'>PP / NPP channel split</h3>"
+            + _render_content_to_channel(content_library)
+            + "<h3 class='plan-sec-sub'>PP / NPP channel split</h3>"
             "<table class='plan-table'><tr><th>Channel</th><th>Share</th><th>PP / NPP</th></tr>" + pp + "</table>")
+
+
+def _render_content_to_channel(content_library: dict | None) -> str:
+    """Maps the brand's real DAM assets onto the channels they flow through -- so Design
+    Channel Flow shows which existing content lands in which channel, not an empty diagram."""
+    lib = content_library or {}
+    assets = lib.get("assets", [])
+    if not lib.get("found") or not assets:
+        return ""
+    buckets: dict[str, list[dict]] = {}
+    for a in assets:
+        channel, icon = _ASSET_CHANNEL.get(a.get("asset_format", ""), ("Owned digital", "language"))
+        buckets.setdefault(channel, []).append(a)
+    cards = ""
+    for channel, items in buckets.items():
+        icon = next((ic for ch, ic in _ASSET_CHANNEL.values() if ch == channel), "language")
+        rows = "".join(
+            f"<div class='tk-cf-asset'><span class='tk-cf-fmt'>{_esc(a.get('asset_format',''))}</span>"
+            f"<span class='tk-cf-title'>{_esc(a.get('title',''))}</span>"
+            f"<span class='tk-cf-badge'>{'Branded' if a.get('branded') else 'Unbranded'}</span></div>"
+            for a in items)
+        cards += (f"<div class='tk-cf-col'><div class='tk-cf-head'>{_icon(icon)}{_esc(channel)}"
+                  f"<span class='tk-cf-count'>{len(items)}</span></div>{rows}</div>")
+    return ("<h3 class='plan-sec-sub'>" + _icon("dashboard") + "Content-to-channel mapping</h3>"
+            "<p class='tk-lib-sub'>Existing content assets routed to the channels they flow through — "
+            "the raw material for the channel flow, drawn from the content library.</p>"
+            f"<div class='tk-cf-grid'>{cards}</div>")
 
 
 def _render_design_message_flow(mf: dict) -> str:
@@ -363,6 +497,38 @@ def _render_design_message_flow(mf: dict) -> str:
     cs = (f"<div class='tk-imp-col tk-cs-col'><div class='tk-cs-head'><span class='tk-cs-badge'>CS</span>"
           f"{_esc(nob['node'])}</div><div class='tk-cs-trigger'>{_esc(nob['trigger'])}</div>{cs_items}</div>")
     return f"<div class='tk-impacts'>{cols}{cs}</div><p class='plan-caveat'>{_esc(mf['caveat'])}</p>"
+
+
+_AWARD_TIER_CLASS = {"Grand Prix": "aw-grand", "Grand": "aw-grand", "Gold": "aw-gold",
+                     "Silver": "aw-silver", "Bronze": "aw-bronze", "Finalist": "aw-finalist"}
+_MATCH_LABEL = {"brand": "Same brand", "therapy_area": "Same therapy area", "client": "Same client",
+                "industry": "Industry benchmark"}
+
+
+def _render_award_campaigns(awards: list[dict]) -> str:
+    cards = ""
+    for a in awards:
+        tier_cls = _AWARD_TIER_CLASS.get(a.get("tier", ""), "aw-finalist")
+        srcs = "".join(f"<a href='{_esc(u)}' target='_blank' class='aw-src'>{_icon('link')}source {i + 1}</a>"
+                       for i, u in enumerate(a.get("source_urls", [])[:4]))
+        match = _MATCH_LABEL.get(a.get("match", ""), a.get("match", ""))
+        cards += (
+            f"<div class='aw-card'>"
+            f"<div class='aw-top'><span class='aw-badge {tier_cls}'>{_icon('emoji_events')}{_esc(a.get('award', ''))}</span>"
+            f"<span class='aw-match'>{_esc(match)}</span></div>"
+            f"<div class='aw-title'>{_esc(a.get('title', ''))}</div>"
+            f"<div class='aw-meta'>{_esc(a.get('festival', ''))} {a.get('year', '')} · {_esc(a.get('agency', ''))}"
+            + (f" · {_esc(a.get('client', ''))}" if a.get('client') else "") + "</div>"
+            f"<div class='aw-row'><span class='aw-k'>Why it won</span><span>{_esc(a.get('why_awarded', ''))}</span></div>"
+            f"<div class='aw-row'><span class='aw-k'>Message</span><span>{_esc(a.get('key_message', ''))}</span></div>"
+            f"<div class='aw-row'><span class='aw-k'>Creative</span><span>{_esc(a.get('creative_summary', ''))}</span></div>"
+            f"<div class='aw-row'><span class='aw-k'>Imagery</span><span>{_esc(a.get('images_description', ''))}</span></div>"
+            f"<div class='aw-srcs'>{srcs}</div></div>"
+        )
+    return ("<h3 class='plan-sec-sub'>" + _icon("military_tech") + "Award-winning campaigns to learn from</h3>"
+            "<p class='tk-lib-sub'>Real festival winners matched to this brand, therapy area or client — why each "
+            "won, its core message, and the hero creative. Creative-direction inspiration, grounded in cited sources.</p>"
+            f"<div class='aw-grid'>{cards}</div>")
 
 
 _PYRAMID_LAYERS = [("tk-pyr-navy", "Business Objective"), ("tk-pyr-mag", "Marketing Objective"),
@@ -452,9 +618,9 @@ def compose_plan(ctx: dict) -> tuple[str, str]:
     h: list[str] = []
 
     # ---- Title + badges + home navigator -------------------------------------- #
-    md.append(f"# Campaign Strategy Plan — {brand} · {ta}\n")
+    md.append(f"# Brand Engagement Plan — {brand} · {ta}\n")
     md.append(f"*Lifecycle stage:* {inferred['lifecycle_label']}  |  *Generated:* {ts}\n")
-    h.append(f"<h1>Campaign Strategy Plan</h1><p class='plan-sub'>{_esc(brand)} · {_esc(ta)} — "
+    h.append(f"<h1>Brand Engagement Plan</h1><p class='plan-sub'>{_esc(brand)} · {_esc(ta)} — "
              f"{_esc(inferred['lifecycle_label'])} · generated {ts}</p>")
     h.append("<div class='plan-badges'>"
              + _badge("science", brand) + _badge("biotech", ta)
@@ -554,7 +720,8 @@ def compose_plan(ctx: dict) -> tuple[str, str]:
         md.append(f"- **{km['topic']}** — " + "; ".join(km["supporting_messages"]))
     md.append("")
     h.append(_det_open(7, "Message Flow Template", _PHASE_ICONS["select"], phase="select")
-             + _render_message_flow_template(mf, inferred["persona"], stage_label, sp["engagement_goal"])
+             + _render_message_flow_template(mf, inferred["persona"], stage_label, sp["engagement_goal"],
+                                             ctx.get("content_library"))
              + _DET_CLOSE)
 
     # 8. Channel Selection Template
@@ -572,12 +739,26 @@ def compose_plan(ctx: dict) -> tuple[str, str]:
     md.append("---\n\n# Phase 3 · Create omnichannel CX\n")
 
     # 9. Map Existing Content
+    lib = ctx.get("content_library") or {}
+    lib_assets = lib.get("assets", []) if lib.get("found") else []
     md.append("## 9. Map Existing Content & Identify (Sheet 8)\n")
-    md.append("_No content library is indexed — the audit ships as the toolkit template with one seeded row per key "
-              "message; the brand team's content inventory fills the rest._\n")
+    if lib_assets:
+        md.append(f"_Content inventory for this brand/indication — {len(lib_assets)} existing assets from the content "
+                  "library, each assembled from reusable modules with traceable claims._\n")
+        md.append("| File | Title | Target | Branded | Format | Key messages | ID code |")
+        md.append("|---|---|---|---|---|---|---|")
+        for a in lib_assets:
+            km = ", ".join(m for m in a.get("modules", []) if "claim block" in m.lower()) or "—"
+            md.append(f"| {a.get('file_name','—')} | {a.get('title','—')} | {a.get('target_group','—')} | "
+                      f"{'Branded' if a.get('branded') else 'Unbranded'} | {a.get('asset_format','—')} | {km} | {a.get('id_code','—')} |")
+        md.append("")
+    else:
+        md.append("_No content library is indexed — the audit ships as the toolkit template with one seeded row per key "
+                  "message; the brand team's content inventory fills the rest._\n")
     h.append(_det_open(9, "Map Existing Content & Identify", _PHASE_ICONS["create"], phase="create",
-                       open_count=len(mf["key_messages"]))
-             + _render_content_audit(mf, inferred["persona"], ctx["micro_journeys"]) + _DET_CLOSE)
+                       open_count=0 if lib_assets else len(mf["key_messages"]))
+             + _render_content_audit(mf, inferred["persona"], ctx["micro_journeys"], ctx.get("content_library"))
+             + _DET_CLOSE)
 
     # 10. Design Channel Flow
     md.append("## 10. Design Channel Flow\n")
@@ -589,7 +770,7 @@ def compose_plan(ctx: dict) -> tuple[str, str]:
         md.append(f"| {r['channel']} | {r['pct']}% | {r['bucket']} |")
     md.append("")
     h.append(_det_open(10, "Design Channel Flow", _PHASE_ICONS["create"], phase="create")
-             + _render_channel_flow(ctx["micro_journeys"], ctx["pp_npp"]) + _DET_CLOSE)
+             + _render_channel_flow(ctx["micro_journeys"], ctx["pp_npp"], ctx.get("content_library")) + _DET_CLOSE)
 
     # 11. Design Message Flow
     md.append("## 11. Design Message Flow (Sheet 9)\n")
@@ -783,6 +964,15 @@ def compose_plan(ctx: dict) -> tuple[str, str]:
     else:
         md.append("_No award-winning campaigns indexed yet — run scrapers/awards.py to seed the archive._\n")
         h.append("<p class='plan-empty'>No award-winning campaigns indexed yet.</p>")
+    # Curated, festival-grounded award campaigns matched to this brand/therapy area/client.
+    awards = ctx.get("award_campaigns") or []
+    if awards:
+        md.append("\n**Award-winning campaigns to learn from** (why they won · the message · the creative)\n")
+        for a in awards:
+            md.append(f"- **{a['title']}** — {a['award']} ({a['festival']} {a['year']}, {a['agency']}) · "
+                      f"match: {a['match']}. *Why:* {a['why_awarded']} *Message:* {a['key_message']} "
+                      f"*Creative:* {a['creative_summary']}")
+        h.append(_render_award_campaigns(awards))
     h.append(_DET_CLOSE)
 
     # 20. Channel mix & budget

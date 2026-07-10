@@ -34,6 +34,8 @@ from open_questions import build_open_questions  # noqa: E402
 from plan_document import compose_plan  # noqa: E402
 from message_flow import build_message_flow  # noqa: E402
 from channel_selection import build_channel_selection  # noqa: E402
+import campaign_store  # noqa: E402  (content library query for the plan's Phase-2/3 sections)
+import awards_store  # noqa: E402  (award-winning campaign matches for the precedent section)
 from execution_plan import build_execution_work_plan, build_execution_raci  # noqa: E402
 from test_measure_learn import build_test_measure_learn  # noqa: E402
 
@@ -50,7 +52,7 @@ AGENT_ROSTER = [
      "initials": "Ch", "icon": "emoji_events"},
     {"id": "activation", "name": "Arjun", "role": "Activation Planning",
      "initials": "Ar", "icon": "payments"},
-    {"id": "compose", "name": "Cooper", "role": "Campaign Plan Composer",
+    {"id": "compose", "name": "Cooper", "role": "Brand Engagement Plan Composer",
      "initials": "Co", "icon": "description"},
 ]
 
@@ -145,14 +147,20 @@ def run_agents(brand: str, therapy_area: str, lifecycle_key: str, budget: float 
     yield _run("inspiration", f"Searching real award-winning pharma campaigns for {therapy_area} creative inspiration…")
     precedents = find_precedent_campaigns(therapy_area, brand, limit=3)
     ctx["precedents"] = precedents
+    # Curated, festival-grounded award campaigns matched to this brand / therapy area / client
+    # (why they won, the message, the hero creative) -- the awards data source.
+    award_campaigns = awards_store.awards_for(brand=brand, therapy_area=therapy_area, limit=4)
+    ctx["award_campaigns"] = award_campaigns
     matched_any = any(p["matched"] for p in precedents)
     insp_summary = (
         f"Found **{len(precedents)}** precedent campaign(s)"
         + (" matched to this therapy area" if matched_any else " (no therapy-area match — showing the most recent winners instead)")
-        + "."
+        + (f" and **{len(award_campaigns)}** award-winning campaign(s) relevant to this brand/therapy area." if award_campaigns else ".")
     )
     insp_bullets = [f"“{p['title']}” — {p['tier']} in {p['category']} ({p['agency_sponsor']}), {p['program']} {p['year']}"
                     for p in precedents] or ["No award-winning campaigns indexed yet"]
+    insp_bullets += [f"🏆 {a['title']} — {a['award']} ({a['festival']} {a['year']}): {a['why_awarded'][:120]}…"
+                     for a in award_campaigns[:2]]
     yield {"type": "agent", "id": "inspiration", "status": "done", "summary": insp_summary, "detail": {"bullets": insp_bullets}}
 
     # 4. Activation Planning -- channel mix/budget + measurement/KPI + channel selection + execution plan
@@ -167,10 +175,14 @@ def run_agents(brand: str, therapy_area: str, lifecycle_key: str, budget: float 
     execution_plan = build_execution_work_plan(micro_journeys)
     execution_raci = build_execution_raci()
     test_measure_learn = build_test_measure_learn(inferred["stage_key"], kpi["leading_indicators"])
+    # Pull the brand's real content library (claims + references + modules + DAM assets) so the
+    # plan's "Select messages/channels" and "Create" phases render actual content, not placeholders.
+    content_library = campaign_store.content_library_for(brand, indication)
     ctx["channel_selection"] = channel_selection
     ctx["execution_plan"] = execution_plan
     ctx["execution_raci"] = execution_raci
     ctx["test_measure_learn"] = test_measure_learn
+    ctx["content_library"] = content_library
     top = sorted(channel_mix.items(), key=lambda kv: -kv[1])[:2]
     top_str = ", ".join(f"{k} {v}%" for k, v in top)
     act_summary = (
@@ -179,16 +191,25 @@ def run_agents(brand: str, therapy_area: str, lifecycle_key: str, budget: float 
           f"**{len(kpi['operational_kpis'])}** operational KPIs set. {execution_plan['total_weeks']}-week execution "
           f"work plan + RACI drafted."
     )
+    lib_counts = content_library.get("counts", {})
+    if content_library.get("found") and lib_counts.get("claims"):
+        act_summary += (f" Pulled **{lib_counts.get('claims', 0)}** library claims "
+                        f"({lib_counts.get('approved_claims', 0)} MLR-approved), "
+                        f"**{lib_counts.get('references', 0)}** references and "
+                        f"**{lib_counts.get('assets', 0)}** existing content assets into the plan.")
     act_bullets = ([f"{ch}: {v['pct']}%" + (f" · ${int(v['amount']):,}" if v['amount'] else "")
                     for ch, v in sorted(budget_allocation.items(), key=lambda kv: -kv[1]['pct'])]
                    + kpi["leading_indicators"][:3]
                    + [execution_plan["mlr_delay_note"]])
+    if content_library.get("found") and lib_counts.get("claims"):
+        act_bullets.append(f"Content library: {lib_counts.get('claims',0)} claims, {lib_counts.get('modules',0)} "
+                           f"reusable modules, {lib_counts.get('assets',0)} DAM assets mapped into Phase 2/3")
     yield {"type": "agent", "id": "activation", "status": "done", "summary": act_summary, "detail": {"bullets": act_bullets}}
 
     # 5. Compose -- fills the toolkit questionnaires, collects every 'needs alignment'
     # item into the open-question groups the chat agent asks after the run, and renders
     # the plan as the toolkit-replica document (plan_document.py).
-    yield _run("compose", "Assembling everyone's findings into the campaign plan document…")
+    yield _run("compose", "Assembling everyone's findings into the brand engagement plan document…")
     cx_questionnaire = build_cx_questionnaire(brand, inferred["persona"], strategy, ctx["bam"], kpi)
     ctx["cx_questionnaire"] = cx_questionnaire
     open_qs = build_open_questions(cx_maturity["feasibility_checklist"], cx_questionnaire, ctx["tcg"])
@@ -197,7 +218,7 @@ def run_agents(brand: str, therapy_area: str, lifecycle_key: str, budget: float 
     result = _assemble_result(ctx)
     plan_markdown, plan_html = compose_plan(ctx)
     yield {"type": "agent", "id": "compose", "status": "done",
-           "summary": (f"Campaign plan assembled — all four toolkit phases rendered on the right. "
+           "summary": (f"Brand engagement plan assembled — all four toolkit phases rendered on the right. "
                        f"**{n_open}** questions need brand-team alignment; I'll ask you them in chat."),
            "detail": {"bullets": ["Full toolkit-replica plan on the right — sections are collapsed, click to expand",
                                   f"{n_open} 'needs alignment' items highlighted across "
@@ -205,7 +226,7 @@ def run_agents(brand: str, therapy_area: str, lifecycle_key: str, budget: float 
     yield {"type": "plan", "html": plan_html, "markdown": plan_markdown}
     yield {"type": "result", "result": result}
     yield {"type": "narration", "text": (
-        f"Done — the team has finished. Your campaign plan for **{brand}** in **{therapy_area}** is on the right. "
+        f"Done — the team has finished. Your brand engagement plan for **{brand}** in **{therapy_area}** is on the right. "
         "Download it as Markdown, or tell me what to adjust (persona, competitors, budget) and I'll send the agents back in."
     )}
     yield {"type": "done"}
@@ -240,11 +261,13 @@ def _assemble_result(ctx: dict) -> dict:
         "stage_2_4_message_flow": ctx["message_flow"],
         "cx_maturity": ctx["cx_maturity"],
         "precedent_campaigns": ctx["precedents"],
+        "award_campaigns": ctx.get("award_campaigns", []),
         "stage_1b_3_competitive": ctx["swot"],
         "stage_3_positioning": ctx["positioning"],
         "stage_5_budget": {"total_budget": ctx["budget"] or None, "allocation": ctx["budget_allocation"],
                             "caveat": strategy["caveat"]},
         "stage_5_channel_selection": ctx["channel_selection"],
+        "content_library": ctx.get("content_library", {}),
         "stage_7_kpi": ctx["kpi"],
         "stage_9_test_measure_learn": ctx["test_measure_learn"],
         "stage_9_execution_plan": ctx["execution_plan"],

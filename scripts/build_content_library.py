@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import json
 import pathlib
+import re
 import sqlite3
 import sys
 import time
@@ -135,51 +136,50 @@ def _kb_refs(conn_kb: sqlite3.Connection, brand: str) -> list[dict]:
     return refs
 
 
-def _claims_for(brand: str, generic: str, indication: str, intel: dict) -> list[dict]:
-    """Build a sound, grounded claims set for a brand/indication. Returns dicts:
-    {text, claim_type, status}. Specific-figure claims are 'approved' only when verified;
-    scaffolds needing a number stay 'draft'/'in_review'."""
+def _brand_claims(brand: str, generic: str, intel: dict) -> list[dict]:
+    """Brand-level claims that hold across every indication (indication_id stays NULL):
+    MOA, safety, access, strategic RTB, ISI."""
     moa = MOA.get(brand, "its mechanism of action")
-    ind = indication or (intel.get("whitespace") or "its approved indication")
-    comp = (intel.get("competitors") or ["standard of care"])[0]
-    out: list[dict] = []
-
-    # MOA claim (approved-tier: mechanism is a label fact).
-    out.append({"text": f"{brand} ({generic}) is {moa}.", "claim_type": "moa", "status": "approved"})
-
-    # Verified specific efficacy claim(s) -> approved.
-    for ctype, text in VERIFIED.get(brand, []):
-        out.append({"text": text, "claim_type": ctype, "status": "approved"})
-
-    # Indication / positioning claim (approved: label-anchored).
-    out.append({"text": f"{brand} is indicated for {ind}.", "claim_type": "efficacy", "status": "approved"})
-
-    # Efficacy scaffold requiring substantiation (in_review, no number asserted).
-    out.append({"text": f"{brand} demonstrated a clinically meaningful treatment effect versus {comp} in its "
-                        f"pivotal program (efficacy magnitude to be substantiated from the primary endpoint).",
-                "claim_type": "efficacy", "status": "in_review"})
-
-    # Safety / tolerability (in_review -- directional, no rate asserted).
-    out.append({"text": f"The safety profile of {brand} was consistent with its mechanism class; the most common "
-                        f"adverse reactions are described in the Prescribing Information.",
-                "claim_type": "safety", "status": "in_review"})
-
-    # Access / dosing (draft -- to be confirmed against label dosing section).
-    out.append({"text": f"Dosing, administration and monitoring for {brand} follow the approved Prescribing "
-                        f"Information; patient-support and access resources are available.",
-                "claim_type": "access", "status": "draft"})
-
-    # Reason-to-believe tied to lifecycle posture (draft, strategic).
+    out: list[dict] = [
+        {"text": f"{brand} ({generic}) is {moa}.", "claim_type": "moa", "status": "approved"},
+        {"text": f"The safety profile of {brand} was consistent with its mechanism class; the most common "
+                 f"adverse reactions are described in the Prescribing Information.",
+         "claim_type": "safety", "status": "in_review"},
+        {"text": f"Dosing, administration and monitoring for {brand} follow the approved Prescribing "
+                 f"Information; patient-support and access resources are available.",
+         "claim_type": "access", "status": "draft"},
+    ]
     posture = intel.get("campaign_posture", "")
     if posture:
         out.append({"text": f"Strategic reason-to-believe ({intel.get('lifecycle_stage','')} stage): "
                             f"{intel.get('whitespace') or posture.split(':')[0]}.",
                     "claim_type": "rtb", "status": "draft"})
-
-    # ISI / fair-balance block (approved-tier boilerplate pointer).
     out.append({"text": f"Please see accompanying full Prescribing Information for {brand}, including any Boxed "
                         f"Warning, Contraindications, Warnings and Precautions, and Adverse Reactions.",
                 "claim_type": "isi", "status": "approved"})
+    return out
+
+
+def _indication_claims(brand: str, generic: str, indication: str, intel: dict, is_lead: bool) -> list[dict]:
+    """Indication-specific claims (carry that indication's id): the indication statement,
+    any independently-verified efficacy result matching this indication, and an efficacy
+    scaffold that needs substantiation. Verified figures only attach to the indication they
+    actually describe (matched by keyword) or, failing a match, to the lead indication."""
+    comp = (intel.get("competitors") or ["standard of care"])[0]
+    out: list[dict] = [
+        {"text": f"{brand} is indicated for {indication}.", "claim_type": "efficacy", "status": "approved"},
+    ]
+    ind_words = set(re.findall(r"[a-z0-9]+", indication.lower())) - {"the", "of", "with", "and", "for", "in"}
+    for ctype, text in VERIFIED.get(brand, []):
+        tw = set(re.findall(r"[a-z0-9]+", text.lower()))
+        matches_here = len(ind_words & tw) >= 2
+        # Attach a verified claim to the indication it describes; if it matches none of a
+        # brand's indications, fall back to the lead indication so it isn't dropped.
+        if matches_here or (is_lead and not any(w in tw for w in ind_words)):
+            out.append({"text": text, "claim_type": ctype, "status": "approved"})
+    out.append({"text": f"In {indication}, {brand} demonstrated a clinically meaningful treatment effect versus "
+                        f"{comp} in its pivotal program (efficacy magnitude to be substantiated from the primary "
+                        f"endpoint).", "claim_type": "efficacy", "status": "in_review"})
     return out
 
 
@@ -261,18 +261,17 @@ def build() -> dict:
                 brand = b["brand"]
                 generic = b.get("generic", "")
                 ta = b.get("therapy_area", "")
-                indications = b.get("indications", [])
-                lead_ind = indications[0] if indications else ""
+                indications = b.get("indications", []) or [""]
+                lead_ind = indications[0]
                 intel = intel_all.get(brand, {})
                 stage = intel.get("lifecycle_stage", b.get("lifecycle_key", ""))
 
                 bid = campaign_store._brand_id(conn, brand, ta, generic, b.get("lifecycle_key", ""), client)
-                for ind in indications:
-                    campaign_store._indication_id(conn, bid, ind)
-                iid = campaign_store._indication_id(conn, bid, lead_ind) if lead_ind else None
+                iid_by_ind = {ind: (campaign_store._indication_id(conn, bid, ind) if ind else None)
+                              for ind in indications}
                 stats["brands"] += 1
 
-                # 1) Real references from the KB.
+                # 1) Real references from the KB (shared across the brand's indications).
                 ref_ids = []
                 for r in _kb_refs(conn_kb, brand):
                     rid = campaign_store._ref_id(conn, r["source_type"], r["citation"], r["url"], r["external_id"])
@@ -281,11 +280,11 @@ def build() -> dict:
                     ref_ids.append(rid)
                     stats["refs"] += 1
 
-                # 2) Atomic claims library, each substantiated to a real reference.
-                claim_ids_by_type: dict[str, list[int]] = {}
-                for i, c in enumerate(_claims_for(brand, generic, lead_ind, intel)):
-                    mat = f"{GEN_TAG}-{brand[:4].upper()}-{mat_seq}" if c["status"] == "approved" else None
-                    mat_seq += 1
+                def _add_claim(c, iid, seq_ref):
+                    """Insert one claim, substantiate it, tag + audit-log it. seq_ref is a
+                    1-element list holding the running material-number sequence."""
+                    mat = f"{GEN_TAG}-{brand[:4].upper()}-{seq_ref[0]}" if c["status"] == "approved" else None
+                    seq_ref[0] += 1
                     cur = conn.execute(
                         """INSERT INTO claim (brand_id, indication_id, text, claim_type, claim_status,
                            material_number, mlr_code, approved_at, expires_at, created_at)
@@ -295,17 +294,11 @@ def build() -> dict:
                          _future(365) if c["status"] == "approved" else None, _now()))
                     cid = cur.lastrowid
                     stats["claims"] += 1
-                    claim_ids_by_type.setdefault(c["claim_type"], []).append(cid)
-                    # Substantiate. ISI derives from the label itself, so anchor it to the
-                    # DailyMed label reference (ref_ids[0]); 'access' dosing likewise points at
-                    # the PI. Efficacy/MOA/safety cycle through the trial/paper references.
                     if ref_ids:
                         if c["claim_type"] in ("isi", "access"):
-                            ref = ref_ids[0]  # the DailyMed label
-                            locator = "full Prescribing Information"
+                            ref, locator = ref_ids[0], "full Prescribing Information"
                         else:
-                            ref = ref_ids[i % len(ref_ids)]
-                            locator = "see cited section"
+                            ref, locator = ref_ids[seq_ref[0] % len(ref_ids)], "see cited section"
                         conn.execute("INSERT OR IGNORE INTO claim_reference (claim_id, ref_id, locator) VALUES (?,?,?)",
                                      (cid, ref, locator))
                         stats["claim_refs"] += 1
@@ -315,11 +308,17 @@ def build() -> dict:
                                      "VALUES ('claim',?,?,?,?,?)", (cid, "approved", GEN_TAG, _now(),
                                      "Auto-approved sample claim (mechanism/label-anchored)."))
                         stats["reviews"] += 1
+                    return cid
 
-                # 3) Reusable content modules assembled from claims.
-                def _module(name, mtype, claim_ids, rules, status="approved"):
-                    nonlocal mat_seq
-                    mat = f"{GEN_TAG}-MOD-{mat_seq}"; mat_seq += 1
+                seq = [mat_seq]
+                # 2a) Brand-level claims (indication_id NULL -- true across every indication).
+                brand_claims_by_type: dict[str, list[int]] = {}
+                for c in _brand_claims(brand, generic, intel):
+                    cid = _add_claim(c, None, seq)
+                    brand_claims_by_type.setdefault(c["claim_type"], []).append(cid)
+
+                def _module(name, mtype, claim_ids, rules, iid, status="approved"):
+                    mat = f"{GEN_TAG}-MOD-{seq[0]}"; seq[0] += 1
                     cur = conn.execute(
                         """INSERT INTO content_module (brand_id, indication_id, name, module_type, status,
                            material_number, business_rules, created_at) VALUES (?,?,?,?,?,?,?,?)""",
@@ -336,30 +335,17 @@ def build() -> dict:
                         stats["reviews"] += 1
                     return mid
 
-                m_efficacy = _module(f"{brand} core efficacy claim block", "claim_block",
-                                     claim_ids_by_type.get("efficacy", []) + claim_ids_by_type.get("moa", []),
-                                     "Use in branded HCP materials only; must be paired with the ISI module.")
-                m_isi = _module(f"{brand} Important Safety Information", "isi",
-                                claim_ids_by_type.get("isi", []),
-                                "Mandatory in every branded promotional asset; do not alter wording.")
-                m_ref = _module(f"{brand} reference block", "reference_block", [],
-                                "Insert cited references matching the claims used in the asset.")
-                m_cta = _module(f"{brand} request-info CTA", "cta", [],
-                                "Standard HCP call-to-action; link to the brand HCP portal.", status="approved")
-
-                # 4) DAM content assets assembled from modules, sample rendered to the blob store.
-                claims = _claims_for(brand, generic, lead_ind, intel)
-                def _asset(fmt, title, branded, target, body_bytes, mime, ext, modules):
-                    nonlocal mat_seq
+                def _asset(fmt, title, branded, target, body_bytes, mime, ext, modules, iid, ind_label):
                     key = _store_blob(conn, body_bytes, mime, f"{brand}_{fmt}.{ext}")
                     stats["blobs"] += 1
-                    idc = f"{GEN_TAG}-{brand[:4].upper()}-{fmt.upper()}-{mat_seq}"; mat_seq += 1
+                    idc = f"{GEN_TAG}-{brand[:4].upper()}-{fmt.upper()}-{seq[0]}"; seq[0] += 1
                     cur = conn.execute(
                         """INSERT INTO content_asset (brand_id, indication_id, file_name, title, asset_format,
                            branded, target_group, description, id_code, blob_key, created_at)
                            VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
                         (bid, iid, f"{brand}_{fmt}.{ext}", title, fmt, branded, target,
-                         f"Sample {fmt} for {brand} ({stage} stage).", idc, key, _now()))
+                         f"Sample {fmt} for {brand} ({stage} stage){(' — ' + ind_label) if ind_label else ''}.",
+                         idc, key, _now()))
                     aid = cur.lastrowid
                     for mid in modules:
                         conn.execute("INSERT OR IGNORE INTO asset_module (asset_id, module_id) VALUES (?,?)", (aid, mid))
@@ -368,22 +354,54 @@ def build() -> dict:
                     stats["assets"] += 1
                     return aid
 
+                # Brand-level shared modules (ISI, reference block, CTA) -- reused by every asset.
+                m_isi = _module(f"{brand} Important Safety Information", "isi",
+                                brand_claims_by_type.get("isi", []),
+                                "Mandatory in every branded promotional asset; do not alter wording.", None)
+                m_ref = _module(f"{brand} reference block", "reference_block", [],
+                                "Insert cited references matching the claims used in the asset.", None)
+                m_cta = _module(f"{brand} request-info CTA", "cta", [],
+                                "Standard HCP call-to-action; link to the brand HCP portal.", None)
                 persona = "HCP — specialist"
-                _asset("email", f"{brand} HCP eDetail email", 1, persona,
-                       _email_html(brand, claims, lead_ind).encode("utf-8"), "text/html", "html",
-                       [m_efficacy, m_isi, m_cta])
-                _asset("banner", f"{brand} leaderboard banner (728x90)", 1, persona,
-                       _svg_banner(brand, generic, stage, ta), "image/svg+xml", "svg",
-                       [m_efficacy, m_isi])
-                _asset("detail_aid", f"{brand} core visual aid (summary)", 1, persona,
-                       json.dumps({"brand": brand, "indication": lead_ind, "stage": stage,
-                                   "key_claims": [c["text"] for c in claims if c["status"] == "approved"],
-                                   "posture": intel.get("campaign_posture", "")}, indent=2).encode("utf-8"),
-                       "application/json", "json", [m_efficacy, m_ref, m_isi])
-                _asset("social", f"{brand} unbranded disease-awareness post", 0, "Patient / caregiver",
-                       (f"Talk to a healthcare professional about {ta}. "
-                        f"Learn about options and questions to ask. #DiseaseAwareness").encode("utf-8"),
-                       "text/plain", "txt", [])
+
+                # 2b/3/4) Per-indication claims, an efficacy claim block module, and a full
+                # asset set (email, banner, detail-aid, unbranded social) -- so EVERY indication
+                # is covered, not just the lead one.
+                for ind in indications:
+                    iid = iid_by_ind[ind]
+                    is_lead = (ind == lead_ind)
+                    ind_claim_ids: list[int] = []
+                    approved_ind_texts: list[str] = []
+                    ind_claims = _indication_claims(brand, generic, ind, intel, is_lead) if ind else []
+                    for c in ind_claims:
+                        cid = _add_claim(c, iid, seq)
+                        ind_claim_ids.append(cid)
+                        if c["status"] == "approved":
+                            approved_ind_texts.append(c["text"])
+
+                    m_efficacy = _module(
+                        f"{brand} efficacy claim block — {ind or ta}", "claim_block",
+                        ind_claim_ids + brand_claims_by_type.get("moa", []),
+                        "Use in branded HCP materials only; must be paired with the ISI module.", iid)
+
+                    email_claims = [{"text": t, "status": "approved", "claim_type": "efficacy"} for t in approved_ind_texts]
+                    _asset("email", f"{brand} HCP eDetail email — {ind or ta}", 1, persona,
+                           _email_html(brand, email_claims, ind or ta).encode("utf-8"), "text/html", "html",
+                           [m_efficacy, m_isi, m_cta], iid, ind)
+                    _asset("banner", f"{brand} leaderboard banner (728x90) — {ind or ta}", 1, persona,
+                           _svg_banner(brand, generic, stage, ind or ta), "image/svg+xml", "svg",
+                           [m_efficacy, m_isi], iid, ind)
+                    _asset("detail_aid", f"{brand} core visual aid — {ind or ta}", 1, persona,
+                           json.dumps({"brand": brand, "indication": ind, "stage": stage,
+                                       "key_claims": approved_ind_texts,
+                                       "posture": intel.get("campaign_posture", "")}, indent=2).encode("utf-8"),
+                           "application/json", "json", [m_efficacy, m_ref, m_isi], iid, ind)
+                    _asset("social", f"{brand} unbranded disease-awareness post — {ind or ta}", 0, "Patient / caregiver",
+                           (f"Talk to a healthcare professional about {ta}. "
+                            f"Learn about options and questions to ask. #DiseaseAwareness").encode("utf-8"),
+                           "text/plain", "txt", [], iid, ind)
+
+                mat_seq = seq[0]
 
         conn.commit()
     finally:
