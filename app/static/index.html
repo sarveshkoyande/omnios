@@ -155,6 +155,44 @@
   .intake-go:hover { filter: brightness(1.08); }
   .intake-go .material-symbols-outlined { font-size: 18px; }
 
+  /* Synthetic persona review: offer/picker + feedback cards */
+  .pv-offer > b, .pv-review b { color: var(--text); }
+  .pv-offer p { font-size: 12.5px; color: var(--muted); margin: 4px 0 10px; line-height: 1.5; }
+  .pv-pick, .pv-others { display: flex; flex-direction: column; gap: 6px; }
+  .pv-chip { display: flex; align-items: center; gap: 9px; padding: 7px 9px; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; background: #fff; }
+  .pv-chip:hover { border-color: var(--accent); }
+  .pv-chip input { margin: 0; accent-color: var(--accent); flex: 0 0 auto; }
+  .pv-ava { flex: 0 0 30px; width: 30px; height: 30px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #fff; background: linear-gradient(135deg,#1768D1,#4AA6F2); }
+  .pv-ava.pt { background: linear-gradient(135deg,#8A63F0,#B79BF7); }
+  .pv-meta { display: flex; flex-direction: column; line-height: 1.25; }
+  .pv-meta b { font-size: 12.5px; }
+  .pv-meta span { font-size: 11px; color: var(--muted); }
+  .pv-tag { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--indegene-navy); background: rgba(11,61,145,0.09); border-radius: 5px; padding: 1px 5px; }
+  .pv-more { display: inline-block; margin: 8px 0 2px; font-size: 12px; color: var(--accent); cursor: pointer; }
+  .pv-actions { display: flex; gap: 8px; margin-top: 11px; align-items: center; }
+  .pv-run { background: var(--accent); color: #fff; border: none; border-radius: 9px; padding: 8px 14px; font: inherit; font-weight: 600; font-size: 12.5px; cursor: pointer; }
+  .pv-run:disabled { opacity: .6; cursor: default; }
+  .pv-skip { background: transparent; border: none; color: var(--muted); font: inherit; font-size: 12px; cursor: pointer; }
+  .pv-review { border-left: 3px solid var(--line); padding-left: 12px; }
+  .pv-head { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+  .pv-sub { font-size: 11.5px; color: var(--muted); }
+  .pv-score { margin-left: auto; font-size: 11.5px; font-weight: 700; border-radius: 20px; padding: 3px 10px; color: #fff; white-space: nowrap; }
+  .pv-enthusiastic { background: var(--green); }
+  .pv-interested { background: var(--accent); }
+  .pv-skeptical { background: var(--amber); color: #5a3c00; }
+  .pv-resistant { background: #d94b4b; }
+  .pv-verdict { font-style: italic; color: var(--text); margin: 9px 0 7px; font-size: 12.5px; line-height: 1.5; }
+  .pv-narr { font-size: 12.5px; color: var(--muted); line-height: 1.55; margin: 0 0 10px; }
+  .pv-cols { display: grid; grid-template-columns: 1fr; gap: 8px; }
+  .pv-cols > div { background: var(--glass-strong); border: 1px solid var(--line); border-radius: 9px; padding: 8px 10px; }
+  .pv-cols > b, .pv-cols > div > b { font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; color: var(--faint); }
+  .pv-cols ul { margin: 5px 0 0; padding-left: 16px; }
+  .pv-cols li { font-size: 12px; color: var(--text); line-height: 1.45; margin-bottom: 3px; }
+  .pv-channels { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+  .pv-cpill { font-size: 10.5px; border-radius: 6px; padding: 2px 7px; border: 1px solid var(--line); color: var(--muted); }
+  .pv-cpill.love { background: rgba(23,166,115,.12); border-color: rgba(23,166,115,.4); color: #12724f; }
+  .pv-cpill.waste { background: rgba(217,75,75,.10); border-color: rgba(217,75,75,.35); color: #a83232; }
+
   /* ---- right rail ---- */
   .rail-right .rr-scroll { overflow-y: auto; padding: 14px; flex: 1; }
   .card { background: var(--glass-strong); border: 1px solid var(--line); border-radius: 12px; padding: 14px; margin-bottom: 14px;
@@ -1295,6 +1333,8 @@ async function openProject(id) {
   state.slots = proj.state.slots;
   state.planMarkdown = proj.plan_markdown || null;
   state.result = proj.result || null;
+  state.personaReviews = (proj.state && proj.state.persona_reviews) || null;
+  state.personaOfferShown = false;
   state.stage = 1;
 
   $("empty-state").style.display = "none";
@@ -1332,6 +1372,8 @@ async function openProject(id) {
 
   renderStepper();
   setStage(1);
+  // On a finished plan, re-show any saved persona reviews (or offer to run them).
+  if (state.result) renderOrOfferPersonas();
   await loadProjects();
 }
 
@@ -1439,6 +1481,7 @@ function startRun() {
   // reset workspace
   $("plan-card").style.display = "none";
   $("agents-body").innerHTML = "";
+  state.personaReviews = null; state.personaOfferShown = false;  // a fresh run invalidates old persona reviews
   state.busy = true; $("send").disabled = true;
   const es = new EventSource("/api/run-stream?project_id=" + encodeURIComponent(state.projectId));
   state.es = es;
@@ -1462,7 +1505,103 @@ function startRun() {
     }
   };
 }
-function finishRun() { state.busy = false; $("send").disabled = false; renderStepper(); loadProjects(); }
+function finishRun() {
+  state.busy = false; $("send").disabled = false; renderStepper(); loadProjects();
+  if (state.result) renderOrOfferPersonas();
+}
+
+// ---------- synthetic persona review ----------
+const PV_SENTIMENT_COL = { enthusiastic: "var(--green)", interested: "var(--accent)", skeptical: "var(--amber)", resistant: "#d94b4b" };
+function pvInitials(name) {
+  const parts = (name || "").replace(/^(Dr\.|Prof\.|Mr\.|Ms\.|Mrs\.)\s*/, "").trim().split(/\s+/);
+  return (((parts[0] || "")[0] || "") + ((parts[parts.length - 1] || "")[0] || "")).toUpperCase();
+}
+function renderOrOfferPersonas() {
+  if (!state.result) return;
+  if (state.personaReviews && state.personaReviews.length) { renderPersonaReviews(state.personaReviews); return; }
+  if (state.personaOfferShown) return;
+  offerPersonas();
+}
+async function offerPersonas() {
+  try {
+    const res = await fetch("/api/personas?project_id=" + encodeURIComponent(state.projectId));
+    const data = await res.json();
+    const matched = data.matched || [], others = data.others || [];
+    if (!matched.length && !others.length) return;
+    state.personaOfferShown = true;
+    const pick = (p, checked) => `<label class="pv-chip"><input type="checkbox" value="${p.id}" ${checked ? "checked" : ""}>`
+      + `<span class="pv-ava ${p.audience_type === "HCP" ? "" : "pt"}">${pvInitials(p.name)}</span>`
+      + `<span class="pv-meta"><b>${p.name}</b><span>${p.who} · ${p.segment_name}${checked ? ' <span class="pv-tag">match</span>' : ""}</span></span></label>`;
+    const othersHtml = others.length
+      ? `<span class="pv-more" id="pv-more">+ ${others.length} other personas</span><div class="pv-others" style="display:none">${others.map(p => pick(p, false)).join("")}</div>`
+      : "";
+    const m = document.createElement("div");
+    m.className = "msg agent"; m.id = "persona-offer";
+    m.innerHTML = `<div class="avatar">${iconSpan("groups")}</div><div class="bubble"><div class="pv-offer">`
+      + `<b>Pressure-test this plan with synthetic personas?</b>`
+      + `<p>I can run the plan past people from your target audience — they'll react honestly and tell you what's missing and what would make them engage. Pick who should review it:</p>`
+      + `<div class="pv-pick">${matched.map(p => pick(p, true)).join("") || '<span class="pv-sub">No exact audience match — see other personas below.</span>'}</div>`
+      + othersHtml
+      + `<div class="pv-actions"><button class="pv-run" id="pv-run">Run persona review</button><button class="pv-skip" id="pv-skip">Not now</button></div>`
+      + `</div></div>`;
+    $("messages").appendChild(m); scrollChat();
+    const more = $("pv-more");
+    if (more) more.onclick = () => {
+      const o = m.querySelector(".pv-others");
+      const hidden = o.style.display === "none";
+      o.style.display = hidden ? "flex" : "none";
+      more.textContent = hidden ? "– hide other personas" : `+ ${others.length} other personas`;
+    };
+    $("pv-run").onclick = () => {
+      const ids = [...m.querySelectorAll("input:checked")].map(i => i.value);
+      if (ids.length) runPersonaReview(ids, m);
+    };
+    $("pv-skip").onclick = () => m.remove();
+  } catch (e) { /* offer is best-effort */ }
+}
+async function runPersonaReview(ids, offerEl) {
+  const btn = $("pv-run"); if (btn) { btn.disabled = true; btn.textContent = `Running… asking ${ids.length} persona${ids.length > 1 ? "s" : ""}`; }
+  addMessage("user", `Run the plan past ${ids.length} persona${ids.length > 1 ? "s" : ""}.`); scrollChat();
+  addTyping();
+  try {
+    const res = await fetch("/api/persona-review", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ project_id: state.projectId, persona_ids: ids }) });
+    if (!res.ok) throw new Error("review failed");
+    const data = await res.json();
+    removeTyping();
+    if (offerEl) offerEl.remove();
+    state.personaReviews = data.reviews || [];
+    addMessage("agent", `Here's how ${state.personaReviews.length} of your target personas reacted — honest feedback, in their words:`);
+    renderPersonaReviews(state.personaReviews);
+    await loadProjects();
+  } catch (e) { removeTyping(); addMessage("agent", "⚠ The persona review didn't complete. You can try again."); }
+}
+function renderPersonaReviews(reviews) {
+  reviews.forEach(r => $("messages").appendChild(personaReviewEl(r)));
+  scrollChat();
+}
+function personaReviewEl(r) {
+  const m = document.createElement("div");
+  m.className = "msg agent";
+  const col = PV_SENTIMENT_COL[r.sentiment] || "var(--line)";
+  const list = (arr) => (arr && arr.length) ? `<ul>${arr.map(x => `<li>${renderInline(x)}</li>`).join("")}</ul>` : `<ul><li style="color:var(--faint)">—</li></ul>`;
+  const chans = (r.channel_reactions || []).map(c => {
+    const cls = c.reaction === "love it" ? "love" : (c.reaction === "wasted on me" ? "waste" : "fine");
+    return `<span class="pv-cpill ${cls}" title="${c.reaction}">${c.bucket} ${c.pct}%</span>`;
+  }).join("");
+  m.innerHTML = `<div class="avatar pv-ava ${r.audience_type === "HCP" ? "" : "pt"}" style="width:36px;height:36px;flex:0 0 36px;font-size:12px">${pvInitials(r.persona_name)}</div>`
+    + `<div class="bubble"><div class="pv-review" style="border-left-color:${col}">`
+    + `<div class="pv-head"><b>${r.persona_name}</b> <span class="pv-sub">${r.who} · ${r.segment_name}</span>`
+    + `<span class="pv-score pv-${r.sentiment}">${r.engagement_likelihood}% likely to engage</span></div>`
+    + (r.quote ? `<div class="pv-verdict">“${renderInline(r.quote)}”</div>` : "")
+    + `<p class="pv-narr">${renderInline(r.narrative)}</p>`
+    + `<div class="pv-cols"><div><b>What resonates</b>${list(r.resonates)}</div>`
+    + `<div><b>What's missing</b>${list(r.gaps)}</div>`
+    + `<div><b>To win me over</b>${list(r.asks)}</div></div>`
+    + (chans ? `<div class="pv-channels">${chans}</div>` : "")
+    + `</div></div>`;
+  return m;
+}
 
 // ---- inter-agent banter (short back-and-forth so the team feels alive, not a relay) ----
 function postAgentBanter(id, toId, text) {
