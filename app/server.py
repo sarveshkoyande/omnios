@@ -39,6 +39,8 @@ from strategy import campaign_store  # noqa: E402
 from strategy import brand_memory  # noqa: E402
 from strategy import blob_store  # noqa: E402  (serves real label images to the Claims Library)
 from strategy import bootstrap  # noqa: E402  (first-boot seeding of an empty data disk)
+from strategy import personas as personas_mod  # noqa: E402  (synthetic persona layer)
+from strategy import persona_review as persona_review_mod  # noqa: E402
 
 app = FastAPI(title="Omni OS Brand Engagement Planning Agent")
 
@@ -100,6 +102,52 @@ def api_blob(blob_key: str):
     return Response(content=data, media_type=meta.get("mime_type") or "application/octet-stream",
                     headers={"Cache-Control": "public, max-age=31536000, immutable",
                              "Content-Disposition": f'inline; filename="{meta.get("original_name") or blob_key}"'})
+
+
+# ------------------------------------------------------------------ #
+# Synthetic persona layer: pressure-test a finished plan against the
+# audiences it is trying to reach.
+# ------------------------------------------------------------------ #
+
+@app.get("/api/personas")
+def api_personas(project_id: str = ""):
+    """Personas ranked by relevance to a project's plan (its therapy area / specialty), so the
+    picker can pre-select the natural reviewers. With no project it matches on nothing (all
+    become 'others')."""
+    therapy_area = indication = ""
+    if project_id:
+        proj = pstore.get_project(project_id)
+        if proj:
+            slots = proj["state"]["slots"]
+            therapy_area = (proj.get("result") or {}).get("therapy_area") or slots.get("therapy_area", "")
+            indication = slots.get("indication", "")
+    return personas_mod.match_to_plan(therapy_area, indication)
+
+
+class PersonaReviewRequest(BaseModel):
+    project_id: str
+    persona_ids: list[str]
+    use_llm: bool = True
+
+
+@app.post("/api/persona-review")
+def api_persona_review(req: PersonaReviewRequest):
+    """Run the finished plan past each selected persona and return their honest, in-character
+    feedback. Persists the reviews on the project so they survive a reload."""
+    proj = pstore.get_project(req.project_id)
+    if not proj:
+        raise HTTPException(404, "project not found")
+    result = proj.get("result")
+    if not result:
+        raise HTTPException(400, "no plan to review yet — generate the plan first")
+    chosen = [p for p in (personas_mod.get(pid) for pid in req.persona_ids) if p]
+    if not chosen:
+        raise HTTPException(400, "no valid personas selected")
+    reviews = persona_review_mod.review_many(chosen, result, use_llm=req.use_llm)
+    state = proj["state"]
+    state["persona_reviews"] = reviews
+    pstore.save_project(req.project_id, state=state)
+    return {"reviews": reviews}
 
 
 # ------------------------------------------------------------------ #
