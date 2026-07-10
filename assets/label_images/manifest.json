@@ -1,0 +1,1211 @@
+{
+  "note": "Real figures from each brand's FDA Structured Product Label (DailyMed). Public-domain US-government content, traceable to the SPL that substantiates the brand's claims. Used as an offline seed by scripts/fetch_label_images.py.",
+  "generated_by": "scripts/fetch_label_images.py --export-seeds",
+  "images": 163,
+  "brands": 31,
+  "brand_images": {
+    "Abrysvo": [
+      {
+        "file": "abrysvo-01.jpg",
+        "blob_key": "fdc48a74612340a307ee54e65060319de9d69a1a09543f923b6411bf3beb9d99",
+        "bytes": 21076,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=be18292e-b1a2-4815-a0ed-003efaa6bea3&name=abrysvo-01.jpg",
+        "note": "Figure from the FDA Structured Product Label for Abrysvo (SPL setid be18292e-b1a2-4815-a0ed-003efaa6bea3). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "abrysvo-02.jpg",
+        "blob_key": "0833a09410aebf78bd10b4805257ba3b459ed0a68732cdf9a9eaa8de0b267e88",
+        "bytes": 14347,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=be18292e-b1a2-4815-a0ed-003efaa6bea3&name=abrysvo-02.jpg",
+        "note": "Figure from the FDA Structured Product Label for Abrysvo (SPL setid be18292e-b1a2-4815-a0ed-003efaa6bea3). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "abrysvo-03.jpg",
+        "blob_key": "6e3e30151040495c921e88344895306988d4ed903d0635656e84e8eb05a7f744",
+        "bytes": 22093,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=be18292e-b1a2-4815-a0ed-003efaa6bea3&name=abrysvo-03.jpg",
+        "note": "Figure from the FDA Structured Product Label for Abrysvo (SPL setid be18292e-b1a2-4815-a0ed-003efaa6bea3). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "abrysvo-04.jpg",
+        "blob_key": "2d4b5dfcdf5cf40c8f674b0225d3780ffc3060363a9dc3aa89fbba0eabd76833",
+        "bytes": 8918,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=be18292e-b1a2-4815-a0ed-003efaa6bea3&name=abrysvo-04.jpg",
+        "note": "Figure from the FDA Structured Product Label for Abrysvo (SPL setid be18292e-b1a2-4815-a0ed-003efaa6bea3). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "abrysvo-05.jpg",
+        "blob_key": "261d3bfb600ec21c48fc785999f727e5b6f05f816f22b2abc456e4f7c3c6e4f2",
+        "bytes": 14529,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=be18292e-b1a2-4815-a0ed-003efaa6bea3&name=abrysvo-05.jpg",
+        "note": "Figure from the FDA Structured Product Label for Abrysvo (SPL setid be18292e-b1a2-4815-a0ed-003efaa6bea3). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "abrysvo-06.jpg",
+        "blob_key": "4a8068981290f50dac77cd3ef344bc4c867472f07d53deb9aa5de7dbb34445c5",
+        "bytes": 7284,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=be18292e-b1a2-4815-a0ed-003efaa6bea3&name=abrysvo-06.jpg",
+        "note": "Figure from the FDA Structured Product Label for Abrysvo (SPL setid be18292e-b1a2-4815-a0ed-003efaa6bea3). Public-domain label artwork; use per MLR guidance."
+      }
+    ],
+    "Cabometyx": [
+      {
+        "file": "cabometyx-20mg-ctn-2.jpg",
+        "blob_key": "94702688ecae58c99929b7409f58490b6bb9ae29a6bda0d919c31422b91f92a9",
+        "bytes": 18505,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=3850cce2-6137-42e5-a792-d318c4a4b3b5&name=cabometyx-20mg-ctn-2.jpg",
+        "note": "Figure from the FDA Structured Product Label for Cabometyx (SPL setid 3850cce2-6137-42e5-a792-d318c4a4b3b5). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "cabometyx-20mg-ctn-samp.jpg",
+        "blob_key": "6205cefb1786ec9d9fb5115c6a1bb8de3278ddd428b8d40025bd0d35954794a5",
+        "bytes": 20766,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=3850cce2-6137-42e5-a792-d318c4a4b3b5&name=cabometyx-20mg-ctn-samp.jpg",
+        "note": "Figure from the FDA Structured Product Label for Cabometyx (SPL setid 3850cce2-6137-42e5-a792-d318c4a4b3b5). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "cabometyx-20mg-ctn.jpg",
+        "blob_key": "de26bbc01487b438e47a2dc7ee48d971bf66082804f9f69742067065b5c4f028",
+        "bytes": 19184,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=3850cce2-6137-42e5-a792-d318c4a4b3b5&name=cabometyx-20mg-ctn.jpg",
+        "note": "Figure from the FDA Structured Product Label for Cabometyx (SPL setid 3850cce2-6137-42e5-a792-d318c4a4b3b5). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "cabometyx-20mg-label-2.jpg",
+        "blob_key": "728f2723a3e9fc3e2a73329314aa8d8fc5197c900d27eb00d034c05039992b53",
+        "bytes": 20453,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=3850cce2-6137-42e5-a792-d318c4a4b3b5&name=cabometyx-20mg-label-2.jpg",
+        "note": "Figure from the FDA Structured Product Label for Cabometyx (SPL setid 3850cce2-6137-42e5-a792-d318c4a4b3b5). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "cabometyx-20mg-label.jpg",
+        "blob_key": "508771a836108dcc04472f4c563e5abda2880bd0186ae13560491aeaedc34a01",
+        "bytes": 27361,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=3850cce2-6137-42e5-a792-d318c4a4b3b5&name=cabometyx-20mg-label.jpg",
+        "note": "Figure from the FDA Structured Product Label for Cabometyx (SPL setid 3850cce2-6137-42e5-a792-d318c4a4b3b5). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "cabometyx-20mg-samp.jpg",
+        "blob_key": "3d3d21edb28bbf4a5f73d41ee17cd6fc454b0e070353911495fdf289921fe68e",
+        "bytes": 11614,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=3850cce2-6137-42e5-a792-d318c4a4b3b5&name=cabometyx-20mg-samp.jpg",
+        "note": "Figure from the FDA Structured Product Label for Cabometyx (SPL setid 3850cce2-6137-42e5-a792-d318c4a4b3b5). Public-domain label artwork; use per MLR guidance."
+      }
+    ],
+    "Cosentyx": [
+      {
+        "file": "cosentyx-01.jpg",
+        "blob_key": "db574abaab201a766fc547cc1847f97972ec35a3e96391eebc8ab7fbc521899d",
+        "bytes": 167828,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=77c4b13e-7df3-42d4-81db-3d0cddb7f67a&name=cosentyx-01.jpg",
+        "note": "Figure from the FDA Structured Product Label for Cosentyx (SPL setid 77c4b13e-7df3-42d4-81db-3d0cddb7f67a). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "cosentyx-02.jpg",
+        "blob_key": "5c0e70ac11e6a928214fcbbb016b768f1c887d2b0afb3a810608b973e088d1f2",
+        "bytes": 16249,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=77c4b13e-7df3-42d4-81db-3d0cddb7f67a&name=cosentyx-02.jpg",
+        "note": "Figure from the FDA Structured Product Label for Cosentyx (SPL setid 77c4b13e-7df3-42d4-81db-3d0cddb7f67a). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "cosentyx-03.jpg",
+        "blob_key": "62b0cb15c970288371d1bb7828d962b2e10a1ecff8426ae6450f06656eb27e0c",
+        "bytes": 14505,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=77c4b13e-7df3-42d4-81db-3d0cddb7f67a&name=cosentyx-03.jpg",
+        "note": "Figure from the FDA Structured Product Label for Cosentyx (SPL setid 77c4b13e-7df3-42d4-81db-3d0cddb7f67a). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "cosentyx-04.jpg",
+        "blob_key": "ab79c821f0309f96767737742c2a799f0c1f50fe1f1beba8eb268b97518f0fb4",
+        "bytes": 82075,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=77c4b13e-7df3-42d4-81db-3d0cddb7f67a&name=cosentyx-04.jpg",
+        "note": "Figure from the FDA Structured Product Label for Cosentyx (SPL setid 77c4b13e-7df3-42d4-81db-3d0cddb7f67a). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "cosentyx-05.jpg",
+        "blob_key": "38b14bc5d8626e4a4fc1e82b7bd7801fd55f2a9acbef2dfce28fc4bd26366f9c",
+        "bytes": 17522,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=77c4b13e-7df3-42d4-81db-3d0cddb7f67a&name=cosentyx-05.jpg",
+        "note": "Figure from the FDA Structured Product Label for Cosentyx (SPL setid 77c4b13e-7df3-42d4-81db-3d0cddb7f67a). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "cosentyx-06.jpg",
+        "blob_key": "c282cd401fa3ed04490559811de2e150c9ce10145e5489d76c820c3400d3da16",
+        "bytes": 18123,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=77c4b13e-7df3-42d4-81db-3d0cddb7f67a&name=cosentyx-06.jpg",
+        "note": "Figure from the FDA Structured Product Label for Cosentyx (SPL setid 77c4b13e-7df3-42d4-81db-3d0cddb7f67a). Public-domain label artwork; use per MLR guidance."
+      }
+    ],
+    "Darzalex": [
+      {
+        "file": "darzalex-01.jpg",
+        "blob_key": "e6a22b4d78f0bd98df4885673a14ca954c1bb3329ea65a764fa0b939ebe99c75",
+        "bytes": 51207,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=4bb241af-4299-4373-8762-2d6709515db0&name=darzalex-01.jpg",
+        "note": "Figure from the FDA Structured Product Label for Darzalex (SPL setid 4bb241af-4299-4373-8762-2d6709515db0). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "darzalex-02.jpg",
+        "blob_key": "ff74dcfe53340a981230488632bfc4b0115c4958f19c89bfb74f24f78e1f4ae2",
+        "bytes": 52920,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=4bb241af-4299-4373-8762-2d6709515db0&name=darzalex-02.jpg",
+        "note": "Figure from the FDA Structured Product Label for Darzalex (SPL setid 4bb241af-4299-4373-8762-2d6709515db0). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "darzalex-03.jpg",
+        "blob_key": "8f02a6979f9735e971aba025e1edf83a25f39843f1e9a616cdc1fcbedc5655c2",
+        "bytes": 51293,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=4bb241af-4299-4373-8762-2d6709515db0&name=darzalex-03.jpg",
+        "note": "Figure from the FDA Structured Product Label for Darzalex (SPL setid 4bb241af-4299-4373-8762-2d6709515db0). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "darzalex-04.jpg",
+        "blob_key": "b8f916c544c339c74a0dba5bf385d2034ad306309d4d432ba3c2ed0fb9fbdda0",
+        "bytes": 111733,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=4bb241af-4299-4373-8762-2d6709515db0&name=darzalex-04.jpg",
+        "note": "Figure from the FDA Structured Product Label for Darzalex (SPL setid 4bb241af-4299-4373-8762-2d6709515db0). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "darzalex-05.jpg",
+        "blob_key": "99526dc7672a76c0236fe586261a2eaa70c41d8bc25ebfd07805f0bb46193e8d",
+        "bytes": 68916,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=4bb241af-4299-4373-8762-2d6709515db0&name=darzalex-05.jpg",
+        "note": "Figure from the FDA Structured Product Label for Darzalex (SPL setid 4bb241af-4299-4373-8762-2d6709515db0). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "darzalex-06.jpg",
+        "blob_key": "b68009dae136d799623011a8af7642cab3d5f1a929bf746e9a449ce025b7bb7b",
+        "bytes": 63364,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=4bb241af-4299-4373-8762-2d6709515db0&name=darzalex-06.jpg",
+        "note": "Figure from the FDA Structured Product Label for Darzalex (SPL setid 4bb241af-4299-4373-8762-2d6709515db0). Public-domain label artwork; use per MLR guidance."
+      }
+    ],
+    "Dysport": [
+      {
+        "file": "Dysport_-_Galderma_-_Trade_-_Revised_Carton.jpg",
+        "blob_key": "a485dc1e2e31844fd73e3341afe1f7cb49d16cfc95549fcbb9755ad641004069",
+        "bytes": 93993,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=71313a04-1349-4c26-b840-a39e4a3ddaed&name=Dysport+-+Galderma+-+Trade+-+Revised+Carton.jpg",
+        "note": "Figure from the FDA Structured Product Label for Dysport (SPL setid 71313a04-1349-4c26-b840-a39e4a3ddaed). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "Figure_3_Muscles_for__Injection_for_Lower_Limb_Spasticity_in_Adults.jpg",
+        "blob_key": "49f527185b712cab44c7a69fac65ebc2902c1e1cbc0ff14d85fe110780eac1bd",
+        "bytes": 45380,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=71313a04-1349-4c26-b840-a39e4a3ddaed&name=Figure+3+Muscles_for_+Injection_for_Lower_Limb_Spasticity_in_Adults.jpg",
+        "note": "Figure from the FDA Structured Product Label for Dysport (SPL setid 71313a04-1349-4c26-b840-a39e4a3ddaed). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "Figure_4-2.jpg",
+        "blob_key": "3f6b17e9929b785e88a9d46ece99d5ee7717592febefd5c907d8568c6d29441a",
+        "bytes": 38125,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=71313a04-1349-4c26-b840-a39e4a3ddaed&name=Figure+4-2.jpg",
+        "note": "Figure from the FDA Structured Product Label for Dysport (SPL setid 71313a04-1349-4c26-b840-a39e4a3ddaed). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "dysport-01.jpg",
+        "blob_key": "8373ec9d719bef42a9ba5ddb472ad6a5775e019a8bcd14768bf324f190f3cbb6",
+        "bytes": 24672,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=71313a04-1349-4c26-b840-a39e4a3ddaed&name=dysport-01.jpg",
+        "note": "Figure from the FDA Structured Product Label for Dysport (SPL setid 71313a04-1349-4c26-b840-a39e4a3ddaed). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "dysport-02.jpg",
+        "blob_key": "37a4dffc58f600887cb1fd73547b6cc0eeb1a7509e7e5424c0afd2b1ed65e22f",
+        "bytes": 31257,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=71313a04-1349-4c26-b840-a39e4a3ddaed&name=dysport-02.jpg",
+        "note": "Figure from the FDA Structured Product Label for Dysport (SPL setid 71313a04-1349-4c26-b840-a39e4a3ddaed). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "dysport-04.jpg",
+        "blob_key": "e3a47d3b0758bf57db42da91293b4335e6fe34b27ffa76f9e5ab19bc71b32839",
+        "bytes": 8990,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=71313a04-1349-4c26-b840-a39e4a3ddaed&name=dysport-04.jpg",
+        "note": "Figure from the FDA Structured Product Label for Dysport (SPL setid 71313a04-1349-4c26-b840-a39e4a3ddaed). Public-domain label artwork; use per MLR guidance."
+      }
+    ],
+    "Eliquis": [
+      {
+        "file": "71610-811-83.jpg",
+        "blob_key": "a903e1ce115eb0ae803e164648692b526bf117579197c233074222ee7dd2dac3",
+        "bytes": 18391,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=1523ab32-2c2c-6501-e063-6394a90aa0b3&name=71610-811-83.jpg",
+        "note": "Figure from the FDA Structured Product Label for Eliquis (SPL setid 1523ab32-2c2c-6501-e063-6394a90aa0b3). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "Aphena.jpg",
+        "blob_key": "1d32d5131c995acab0e51eda24cf692e1566aa70b565626c73701ac3b39e25b3",
+        "bytes": 17904,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=1523ab32-2c2c-6501-e063-6394a90aa0b3&name=Aphena.jpg",
+        "note": "Figure from the FDA Structured Product Label for Eliquis (SPL setid 1523ab32-2c2c-6501-e063-6394a90aa0b3). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "apixaban-struct.jpg",
+        "blob_key": "003a36ceb8f8f27b2280e0e1cccfda1cb59f9b9bf41f0282307076148635cad8",
+        "bytes": 5973,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=1523ab32-2c2c-6501-e063-6394a90aa0b3&name=apixaban-struct.jpg",
+        "note": "Figure from the FDA Structured Product Label for Eliquis (SPL setid 1523ab32-2c2c-6501-e063-6394a90aa0b3). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "eliquis-clin-forest-fig5.jpg",
+        "blob_key": "3eb531a0fad02a85d5c53d1c5f589eb2a561e80b59237b21329c0261428e1b08",
+        "bytes": 192955,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=1523ab32-2c2c-6501-e063-6394a90aa0b3&name=eliquis-clin-forest-fig5.jpg",
+        "note": "Figure from the FDA Structured Product Label for Eliquis (SPL setid 1523ab32-2c2c-6501-e063-6394a90aa0b3). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "eliquis-forest-fig1.jpg",
+        "blob_key": "dbc4f8772815b0852e70c09f717d947a375d76e53ba0c91504eb8d82b74eabde",
+        "bytes": 239777,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=1523ab32-2c2c-6501-e063-6394a90aa0b3&name=eliquis-forest-fig1.jpg",
+        "note": "Figure from the FDA Structured Product Label for Eliquis (SPL setid 1523ab32-2c2c-6501-e063-6394a90aa0b3). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "eliquis-km-fig4.jpg",
+        "blob_key": "2a7710fb05b4a27624553ba88d1238c795ea29bb5355257c7b8f8868370c6d94",
+        "bytes": 90790,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=1523ab32-2c2c-6501-e063-6394a90aa0b3&name=eliquis-km-fig4.jpg",
+        "note": "Figure from the FDA Structured Product Label for Eliquis (SPL setid 1523ab32-2c2c-6501-e063-6394a90aa0b3). Public-domain label artwork; use per MLR guidance."
+      }
+    ],
+    "Entresto": [
+      {
+        "file": "ENTRESTO-01.jpg",
+        "blob_key": "1849fdbc9e05b89048f7cbbd3634fbaf5268ae83667f0f5856aead8d09a822f3",
+        "bytes": 24791,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=000dc81d-ab91-450c-8eae-8eb74e72296f&name=ENTRESTO-01.jpg",
+        "note": "Figure from the FDA Structured Product Label for Entresto (SPL setid 000dc81d-ab91-450c-8eae-8eb74e72296f). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "ENTRESTO-02.jpg",
+        "blob_key": "2ce5c542df3ff7bee36a4640af4481b61811456972dcda9de3c8abab5b031953",
+        "bytes": 34950,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=000dc81d-ab91-450c-8eae-8eb74e72296f&name=ENTRESTO-02.jpg",
+        "note": "Figure from the FDA Structured Product Label for Entresto (SPL setid 000dc81d-ab91-450c-8eae-8eb74e72296f). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "ENTRESTO-03.jpg",
+        "blob_key": "33f860f403781b5f5547ae7537cb7ef4fb492405a6f9fa2b71fe2be2372c4fb3",
+        "bytes": 39128,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=000dc81d-ab91-450c-8eae-8eb74e72296f&name=ENTRESTO-03.jpg",
+        "note": "Figure from the FDA Structured Product Label for Entresto (SPL setid 000dc81d-ab91-450c-8eae-8eb74e72296f). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "ENTRESTO-04.jpg",
+        "blob_key": "0f4b678941e88f898154ed7e6a9dc66b38333ef3746518d2f8a7f8bf9a4fa5ef",
+        "bytes": 65602,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=000dc81d-ab91-450c-8eae-8eb74e72296f&name=ENTRESTO-04.jpg",
+        "note": "Figure from the FDA Structured Product Label for Entresto (SPL setid 000dc81d-ab91-450c-8eae-8eb74e72296f). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "ENTRESTO-05.jpg",
+        "blob_key": "3d8cc6de201a3edc6eb5324040574a15538360c7b6dcf86c1a80bdb8149349a7",
+        "bytes": 230766,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=000dc81d-ab91-450c-8eae-8eb74e72296f&name=ENTRESTO-05.jpg",
+        "note": "Figure from the FDA Structured Product Label for Entresto (SPL setid 000dc81d-ab91-450c-8eae-8eb74e72296f). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "ENTRESTO-06.jpg",
+        "blob_key": "68765df4488c6fd524f3408464a4438e3ff6601d83db3257fab1129a11c267ac",
+        "bytes": 48525,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=000dc81d-ab91-450c-8eae-8eb74e72296f&name=ENTRESTO-06.jpg",
+        "note": "Figure from the FDA Structured Product Label for Entresto (SPL setid 000dc81d-ab91-450c-8eae-8eb74e72296f). Public-domain label artwork; use per MLR guidance."
+      }
+    ],
+    "Epkinly": [
+      {
+        "file": "epkinly-01.jpg",
+        "blob_key": "070f8c3a1bfc466b8734e3f0cb33a3104283c3a87a82bf3aa6d2b75f56449287",
+        "bytes": 34432,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=d7836711-b677-412d-bf2d-0f7c8444103a&name=epkinly-01.jpg",
+        "note": "Figure from the FDA Structured Product Label for Epkinly (SPL setid d7836711-b677-412d-bf2d-0f7c8444103a). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "epkinly-02.jpg",
+        "blob_key": "207db85e9f1a549f6ae5fb678d48c7709adba266df2741cac63185f3e80baafa",
+        "bytes": 34178,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=d7836711-b677-412d-bf2d-0f7c8444103a&name=epkinly-02.jpg",
+        "note": "Figure from the FDA Structured Product Label for Epkinly (SPL setid d7836711-b677-412d-bf2d-0f7c8444103a). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "epkinly-03.jpg",
+        "blob_key": "ad3be2071305f9e9c42ca4ad2b5478692ae1fe61f77c1e61550db7ec7ddabe48",
+        "bytes": 34528,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=d7836711-b677-412d-bf2d-0f7c8444103a&name=epkinly-03.jpg",
+        "note": "Figure from the FDA Structured Product Label for Epkinly (SPL setid d7836711-b677-412d-bf2d-0f7c8444103a). Public-domain label artwork; use per MLR guidance."
+      }
+    ],
+    "Eylea": [
+      {
+        "file": "eylea-01.jpg",
+        "blob_key": "cd33bb837633cc5098a063380f5102861ffe14c032a13125b957d87abf1e5f6d",
+        "bytes": 12281,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=86d8848b-111b-4da9-8957-7cccef1b8f66&name=eylea-01.jpg",
+        "note": "Figure from the FDA Structured Product Label for Eylea (SPL setid 86d8848b-111b-4da9-8957-7cccef1b8f66). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "eylea-02.jpg",
+        "blob_key": "a6a6fe04da5c1a6a2f654837fd815db700c3336ab0c6d6c7115940f85f886587",
+        "bytes": 12919,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=86d8848b-111b-4da9-8957-7cccef1b8f66&name=eylea-02.jpg",
+        "note": "Figure from the FDA Structured Product Label for Eylea (SPL setid 86d8848b-111b-4da9-8957-7cccef1b8f66). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "eylea-03.jpg",
+        "blob_key": "0aed2da3a356ca7e7633d6c2a486339c2fe181797d69244f30d42899068ea664",
+        "bytes": 14607,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=86d8848b-111b-4da9-8957-7cccef1b8f66&name=eylea-03.jpg",
+        "note": "Figure from the FDA Structured Product Label for Eylea (SPL setid 86d8848b-111b-4da9-8957-7cccef1b8f66). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "eylea-04.jpg",
+        "blob_key": "03b39aca94c4dc9693ac325238cc63edc4e95f31993e22c8c10bad6351a06048",
+        "bytes": 15518,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=86d8848b-111b-4da9-8957-7cccef1b8f66&name=eylea-04.jpg",
+        "note": "Figure from the FDA Structured Product Label for Eylea (SPL setid 86d8848b-111b-4da9-8957-7cccef1b8f66). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "eylea-05.jpg",
+        "blob_key": "1bf120622ee050cb7dbbdfa0341ef01dc3bbdfa2681ece1bb565457e817ab9f5",
+        "bytes": 17243,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=86d8848b-111b-4da9-8957-7cccef1b8f66&name=eylea-05.jpg",
+        "note": "Figure from the FDA Structured Product Label for Eylea (SPL setid 86d8848b-111b-4da9-8957-7cccef1b8f66). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "eylea-06.jpg",
+        "blob_key": "4cd8abeac2b5f68275069912e9adc290c6e382083f0d9135cae7c2990246a795",
+        "bytes": 12708,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=86d8848b-111b-4da9-8957-7cccef1b8f66&name=eylea-06.jpg",
+        "note": "Figure from the FDA Structured Product Label for Eylea (SPL setid 86d8848b-111b-4da9-8957-7cccef1b8f66). Public-domain label artwork; use per MLR guidance."
+      }
+    ],
+    "Fabhalta": [
+      {
+        "file": "fabhalta-01.jpg",
+        "blob_key": "a2fd1b94d855dc8ed2ce8d72d2d999b2a510440fc72ff1a69a28b4561257ec94",
+        "bytes": 22469,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=a76b5845-6e21-4d3b-ad07-cd8df1b60bee&name=fabhalta-01.jpg",
+        "note": "Figure from the FDA Structured Product Label for Fabhalta (SPL setid a76b5845-6e21-4d3b-ad07-cd8df1b60bee). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "fabhalta-02.jpg",
+        "blob_key": "5047a325831d93744999929d550b68eec13a47db2f343304b0f10e6f4ebe6d36",
+        "bytes": 72849,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=a76b5845-6e21-4d3b-ad07-cd8df1b60bee&name=fabhalta-02.jpg",
+        "note": "Figure from the FDA Structured Product Label for Fabhalta (SPL setid a76b5845-6e21-4d3b-ad07-cd8df1b60bee). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "fabhalta-03.jpg",
+        "blob_key": "6dc171754023df97512693efb5d75896aef0725c575cb8e9d2f332be3ac2c505",
+        "bytes": 32008,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=a76b5845-6e21-4d3b-ad07-cd8df1b60bee&name=fabhalta-03.jpg",
+        "note": "Figure from the FDA Structured Product Label for Fabhalta (SPL setid a76b5845-6e21-4d3b-ad07-cd8df1b60bee). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "fabhalta-04.jpg",
+        "blob_key": "62e0c258a84d64818df9e1bb1b7f772b85520c6d431af73a6e044e214211f197",
+        "bytes": 58533,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=a76b5845-6e21-4d3b-ad07-cd8df1b60bee&name=fabhalta-04.jpg",
+        "note": "Figure from the FDA Structured Product Label for Fabhalta (SPL setid a76b5845-6e21-4d3b-ad07-cd8df1b60bee). Public-domain label artwork; use per MLR guidance."
+      }
+    ],
+    "Ibrance": [
+      {
+        "file": "ibrance-01.jpg",
+        "blob_key": "8793aa37bba6b046f0db892f0cd8e54bc7cd04c54af89406ea6af8ceeeb3b8b4",
+        "bytes": 9267,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=89a142d5-7e61-48bf-9e77-e2cd124c4792&name=ibrance-01.jpg",
+        "note": "Figure from the FDA Structured Product Label for Ibrance (SPL setid 89a142d5-7e61-48bf-9e77-e2cd124c4792). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "ibrance-02.jpg",
+        "blob_key": "22e15fa3e8d8ae1404ed4ea8d4e8046dbe9594e9f3ecae56b225a3ad9d3e40b7",
+        "bytes": 34534,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=89a142d5-7e61-48bf-9e77-e2cd124c4792&name=ibrance-02.jpg",
+        "note": "Figure from the FDA Structured Product Label for Ibrance (SPL setid 89a142d5-7e61-48bf-9e77-e2cd124c4792). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "ibrance-03.jpg",
+        "blob_key": "1d12f38279198a255e13f94393cdaed4acddcbd0cb192bdc438063c5be3262ba",
+        "bytes": 31363,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=89a142d5-7e61-48bf-9e77-e2cd124c4792&name=ibrance-03.jpg",
+        "note": "Figure from the FDA Structured Product Label for Ibrance (SPL setid 89a142d5-7e61-48bf-9e77-e2cd124c4792). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "ibrance-04.jpg",
+        "blob_key": "ae53853f035e4727b51e69ac85e711a2caa6e2ec7e4347fbb70d829fbc2a6c1c",
+        "bytes": 31964,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=89a142d5-7e61-48bf-9e77-e2cd124c4792&name=ibrance-04.jpg",
+        "note": "Figure from the FDA Structured Product Label for Ibrance (SPL setid 89a142d5-7e61-48bf-9e77-e2cd124c4792). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "ibrance-05.jpg",
+        "blob_key": "1b50cfc5efdd8726c1c29660ff997d7ff8285e5ac2dad3c5dabeccf7a31ab375",
+        "bytes": 41836,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=89a142d5-7e61-48bf-9e77-e2cd124c4792&name=ibrance-05.jpg",
+        "note": "Figure from the FDA Structured Product Label for Ibrance (SPL setid 89a142d5-7e61-48bf-9e77-e2cd124c4792). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "ibrance-05a.jpg",
+        "blob_key": "b2872a3edd58fa83d169c60007ab12811891f7c37f75a1c517ac13801007c10d",
+        "bytes": 34022,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=89a142d5-7e61-48bf-9e77-e2cd124c4792&name=ibrance-05a.jpg",
+        "note": "Figure from the FDA Structured Product Label for Ibrance (SPL setid 89a142d5-7e61-48bf-9e77-e2cd124c4792). Public-domain label artwork; use per MLR guidance."
+      }
+    ],
+    "Iqirvo": [
+      {
+        "file": "elafibranor-01.jpg",
+        "blob_key": "665fa2e128a572f53d4f8d4f02bef91887b85d8850295bdc3326891c4ed9b667",
+        "bytes": 5734,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=d78aa14f-6ec1-4b1d-a4ae-e48658137a25&name=elafibranor-01.jpg",
+        "note": "Figure from the FDA Structured Product Label for Iqirvo (SPL setid d78aa14f-6ec1-4b1d-a4ae-e48658137a25). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "elafibranor-02.jpg",
+        "blob_key": "a650c89ec66aeebb1cbf8504de169d47a1f4ce2248286d0cf4e98fbfd3705b16",
+        "bytes": 30856,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=d78aa14f-6ec1-4b1d-a4ae-e48658137a25&name=elafibranor-02.jpg",
+        "note": "Figure from the FDA Structured Product Label for Iqirvo (SPL setid d78aa14f-6ec1-4b1d-a4ae-e48658137a25). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "elafibranor-03.jpg",
+        "blob_key": "ebcfd1fd6bbc23761995aff6a1faf560afaea7388df61f498d071571c940942c",
+        "bytes": 207575,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=d78aa14f-6ec1-4b1d-a4ae-e48658137a25&name=elafibranor-03.jpg",
+        "note": "Figure from the FDA Structured Product Label for Iqirvo (SPL setid d78aa14f-6ec1-4b1d-a4ae-e48658137a25). Public-domain label artwork; use per MLR guidance."
+      }
+    ],
+    "Jakafi": [
+      {
+        "file": "jakafi-1.jpg",
+        "blob_key": "4ab5650e890098ede4d790d4ca44dce48cc263700d25e51da078b6dbe47e22af",
+        "bytes": 6689,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=f1c82580-87ae-11e0-bc84-0002a5d5c51b&name=jakafi-1.jpg",
+        "note": "Figure from the FDA Structured Product Label for Jakafi (SPL setid f1c82580-87ae-11e0-bc84-0002a5d5c51b). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "jakafi-10.jpg",
+        "blob_key": "a8388e6ce03b986316ad57e0b667dac267013cbb587879cc61c742779e90a488",
+        "bytes": 80974,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=f1c82580-87ae-11e0-bc84-0002a5d5c51b&name=jakafi-10.jpg",
+        "note": "Figure from the FDA Structured Product Label for Jakafi (SPL setid f1c82580-87ae-11e0-bc84-0002a5d5c51b). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "jakafi-11.jpg",
+        "blob_key": "f750211fb146a7773c82b9af134e1247c9fe875a7a6f964627d3d5b4b2086d93",
+        "bytes": 80747,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=f1c82580-87ae-11e0-bc84-0002a5d5c51b&name=jakafi-11.jpg",
+        "note": "Figure from the FDA Structured Product Label for Jakafi (SPL setid f1c82580-87ae-11e0-bc84-0002a5d5c51b). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "jakafi-12.jpg",
+        "blob_key": "c4da7fccd51896bc93068ac3dcff6ffd41305de64589ac88a2ab3c96f585d354",
+        "bytes": 145839,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=f1c82580-87ae-11e0-bc84-0002a5d5c51b&name=jakafi-12.jpg",
+        "note": "Figure from the FDA Structured Product Label for Jakafi (SPL setid f1c82580-87ae-11e0-bc84-0002a5d5c51b). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "jakafi-13.jpg",
+        "blob_key": "4a77d54701590fcc3ea23b2b11c91a51b47af14e7769c42074c3c52278d04406",
+        "bytes": 148464,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=f1c82580-87ae-11e0-bc84-0002a5d5c51b&name=jakafi-13.jpg",
+        "note": "Figure from the FDA Structured Product Label for Jakafi (SPL setid f1c82580-87ae-11e0-bc84-0002a5d5c51b). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "jakafi-14.jpg",
+        "blob_key": "177bb3f21f7864e324c5386db7cbfa1173b93cf238dc0e8f600338cd963198f2",
+        "bytes": 145264,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=f1c82580-87ae-11e0-bc84-0002a5d5c51b&name=jakafi-14.jpg",
+        "note": "Figure from the FDA Structured Product Label for Jakafi (SPL setid f1c82580-87ae-11e0-bc84-0002a5d5c51b). Public-domain label artwork; use per MLR guidance."
+      }
+    ],
+    "Kerendia": [
+      {
+        "file": "kerendia-01.jpg",
+        "blob_key": "e6fa892181de3e3fb364fcd5eedd57ff853a1e98fc65aa66abb0819a75481bab",
+        "bytes": 14572,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=fc726765-5d5a-4d6e-b037-b847bda9fb7c&name=kerendia-01.jpg",
+        "note": "Figure from the FDA Structured Product Label for Kerendia (SPL setid fc726765-5d5a-4d6e-b037-b847bda9fb7c). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "kerendia-02.jpg",
+        "blob_key": "5872db077629025107b34c642950a1b1f9c1200399cb945709bdc77cca5af2ec",
+        "bytes": 101396,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=fc726765-5d5a-4d6e-b037-b847bda9fb7c&name=kerendia-02.jpg",
+        "note": "Figure from the FDA Structured Product Label for Kerendia (SPL setid fc726765-5d5a-4d6e-b037-b847bda9fb7c). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "kerendia-03.jpg",
+        "blob_key": "707af320f1332c9eae93e42f6e7c9a91f962526e8ca84da45438297bca20ffc8",
+        "bytes": 107760,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=fc726765-5d5a-4d6e-b037-b847bda9fb7c&name=kerendia-03.jpg",
+        "note": "Figure from the FDA Structured Product Label for Kerendia (SPL setid fc726765-5d5a-4d6e-b037-b847bda9fb7c). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "kerendia-04.jpg",
+        "blob_key": "8f6b47624448a2d7fb6251a066f5eecc72b03cc0d1906125b5bc4b7d1987b7e9",
+        "bytes": 125207,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=fc726765-5d5a-4d6e-b037-b847bda9fb7c&name=kerendia-04.jpg",
+        "note": "Figure from the FDA Structured Product Label for Kerendia (SPL setid fc726765-5d5a-4d6e-b037-b847bda9fb7c). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "kerendia-05.jpg",
+        "blob_key": "e17c2d532934da1ae811aad1417e52db1a0c03612f8844579b60981aff422b79",
+        "bytes": 99710,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=fc726765-5d5a-4d6e-b037-b847bda9fb7c&name=kerendia-05.jpg",
+        "note": "Figure from the FDA Structured Product Label for Kerendia (SPL setid fc726765-5d5a-4d6e-b037-b847bda9fb7c). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "kerendia-06.jpg",
+        "blob_key": "dd83db5e7bf88f28610242ba2061478b853821dea56d79a950e6f1b3e1c11ad9",
+        "bytes": 63746,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=fc726765-5d5a-4d6e-b037-b847bda9fb7c&name=kerendia-06.jpg",
+        "note": "Figure from the FDA Structured Product Label for Kerendia (SPL setid fc726765-5d5a-4d6e-b037-b847bda9fb7c). Public-domain label artwork; use per MLR guidance."
+      }
+    ],
+    "Kesimpta": [
+      {
+        "file": "omb157g-01.jpg",
+        "blob_key": "3ac7d79c270c3b2b554a4fdb359a2c5f773422b65b1ddb1e48c76c96f5a93f7e",
+        "bytes": 37524,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=6a8a3f53-2062-48ff-9dbe-b939df133ca3&name=omb157g-01.jpg",
+        "note": "Figure from the FDA Structured Product Label for Kesimpta (SPL setid 6a8a3f53-2062-48ff-9dbe-b939df133ca3). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "omb157g-02.jpg",
+        "blob_key": "4bf155ee5451647c2981b17456525dbeafac126629f4f893db13ddc960793eeb",
+        "bytes": 175561,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=6a8a3f53-2062-48ff-9dbe-b939df133ca3&name=omb157g-02.jpg",
+        "note": "Figure from the FDA Structured Product Label for Kesimpta (SPL setid 6a8a3f53-2062-48ff-9dbe-b939df133ca3). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "omb157g-03.jpg",
+        "blob_key": "26768ddd85ea4b9e62daf45f9700c465763e525242e254cc8c72e8114e9196f1",
+        "bytes": 25424,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=6a8a3f53-2062-48ff-9dbe-b939df133ca3&name=omb157g-03.jpg",
+        "note": "Figure from the FDA Structured Product Label for Kesimpta (SPL setid 6a8a3f53-2062-48ff-9dbe-b939df133ca3). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "omb157g-04.jpg",
+        "blob_key": "00d28ed1596a34769ff4862e294ee901c6fcdec8b52d75e8f5c45f4d3e477fa7",
+        "bytes": 21492,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=6a8a3f53-2062-48ff-9dbe-b939df133ca3&name=omb157g-04.jpg",
+        "note": "Figure from the FDA Structured Product Label for Kesimpta (SPL setid 6a8a3f53-2062-48ff-9dbe-b939df133ca3). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "omb157g-05.jpg",
+        "blob_key": "e98df8878a95bf0a83289157faf61abf79b9a4c13b12fd5ef301715ea5960299",
+        "bytes": 8528,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=6a8a3f53-2062-48ff-9dbe-b939df133ca3&name=omb157g-05.jpg",
+        "note": "Figure from the FDA Structured Product Label for Kesimpta (SPL setid 6a8a3f53-2062-48ff-9dbe-b939df133ca3). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "omb157g-06.jpg",
+        "blob_key": "51289d5984b94f4be8aae291b55960b9f553c21e00254158923235b44700d176",
+        "bytes": 6726,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=6a8a3f53-2062-48ff-9dbe-b939df133ca3&name=omb157g-06.jpg",
+        "note": "Figure from the FDA Structured Product Label for Kesimpta (SPL setid 6a8a3f53-2062-48ff-9dbe-b939df133ca3). Public-domain label artwork; use per MLR guidance."
+      }
+    ],
+    "Kisqali": [
+      {
+        "file": "kisqali-copack-01.jpg",
+        "blob_key": "b761eb83f1b4b4fe30b16a653d7490d33130313423d4fada242d5c648799035e",
+        "bytes": 75626,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=aa5e4446-19cd-4235-a382-5b48bf6c3b2f&name=kisqali-copack-01.jpg",
+        "note": "Figure from the FDA Structured Product Label for Kisqali (SPL setid aa5e4446-19cd-4235-a382-5b48bf6c3b2f). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "kisqali-copack-02.jpg",
+        "blob_key": "9f18278d1e07cc9022ea1c0cdd90e75e2686ba7c6c4cdc80721fee53f7254ffe",
+        "bytes": 87009,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=aa5e4446-19cd-4235-a382-5b48bf6c3b2f&name=kisqali-copack-02.jpg",
+        "note": "Figure from the FDA Structured Product Label for Kisqali (SPL setid aa5e4446-19cd-4235-a382-5b48bf6c3b2f). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "kisqali-copack-03.jpg",
+        "blob_key": "301a7b92ddbbaca8b3b62cc59ca1c2845c3c84c395d9b57bc067434cf13ee9b9",
+        "bytes": 80555,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=aa5e4446-19cd-4235-a382-5b48bf6c3b2f&name=kisqali-copack-03.jpg",
+        "note": "Figure from the FDA Structured Product Label for Kisqali (SPL setid aa5e4446-19cd-4235-a382-5b48bf6c3b2f). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "kisqali-copack-04.jpg",
+        "blob_key": "55de6eede377e6044f881b5f22bf9f2c58f84008846468e551747e602367d5dc",
+        "bytes": 93962,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=aa5e4446-19cd-4235-a382-5b48bf6c3b2f&name=kisqali-copack-04.jpg",
+        "note": "Figure from the FDA Structured Product Label for Kisqali (SPL setid aa5e4446-19cd-4235-a382-5b48bf6c3b2f). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "kisqali-copack-05.jpg",
+        "blob_key": "a08b1ccaefde312b930dbc6aecce6cb788afc9bd9a84b6d976e0f3b4b2a7219e",
+        "bytes": 80187,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=aa5e4446-19cd-4235-a382-5b48bf6c3b2f&name=kisqali-copack-05.jpg",
+        "note": "Figure from the FDA Structured Product Label for Kisqali (SPL setid aa5e4446-19cd-4235-a382-5b48bf6c3b2f). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "kisqali-copack-06.jpg",
+        "blob_key": "3be4886431c0805523b376b65ef161d74dbfda5805faeafcc55e0a39714365ae",
+        "bytes": 81450,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=aa5e4446-19cd-4235-a382-5b48bf6c3b2f&name=kisqali-copack-06.jpg",
+        "note": "Figure from the FDA Structured Product Label for Kisqali (SPL setid aa5e4446-19cd-4235-a382-5b48bf6c3b2f). Public-domain label artwork; use per MLR guidance."
+      }
+    ],
+    "Leqvio": [
+      {
+        "file": "leqvio-01.jpg",
+        "blob_key": "221a3cc8495b1095164f646ac309a63f5256fe78cae28c599944fffe074c4a79",
+        "bytes": 76071,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=6fc0afca-4513-4c35-b594-6544aee29a44&name=leqvio-01.jpg",
+        "note": "Figure from the FDA Structured Product Label for Leqvio (SPL setid 6fc0afca-4513-4c35-b594-6544aee29a44). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "leqvio-02.jpg",
+        "blob_key": "9d03eb710e3f58a54b0973253894a82fe46dd074c603f75c52fba2d4b8ab8269",
+        "bytes": 30457,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=6fc0afca-4513-4c35-b594-6544aee29a44&name=leqvio-02.jpg",
+        "note": "Figure from the FDA Structured Product Label for Leqvio (SPL setid 6fc0afca-4513-4c35-b594-6544aee29a44). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "leqvio-03.jpg",
+        "blob_key": "48427cbbecf0dfd2248f65f059d6dfeb41802c8d1aff289ca7b73ca0bb1fb6a4",
+        "bytes": 33326,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=6fc0afca-4513-4c35-b594-6544aee29a44&name=leqvio-03.jpg",
+        "note": "Figure from the FDA Structured Product Label for Leqvio (SPL setid 6fc0afca-4513-4c35-b594-6544aee29a44). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "leqvio-04.jpg",
+        "blob_key": "a2e2f3d9dac75b28c46d9a93a9b848fcfcbf83f27b8cbaaee8ee4a73c6cb6071",
+        "bytes": 32830,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=6fc0afca-4513-4c35-b594-6544aee29a44&name=leqvio-04.jpg",
+        "note": "Figure from the FDA Structured Product Label for Leqvio (SPL setid 6fc0afca-4513-4c35-b594-6544aee29a44). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "leqvio-05.jpg",
+        "blob_key": "c182a18bdf7a51da6d8914b057907adfd20c831e16b0dba884ed24d6c5fe69a6",
+        "bytes": 152432,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=6fc0afca-4513-4c35-b594-6544aee29a44&name=leqvio-05.jpg",
+        "note": "Figure from the FDA Structured Product Label for Leqvio (SPL setid 6fc0afca-4513-4c35-b594-6544aee29a44). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "leqvio-06.jpg",
+        "blob_key": "5fe5f42bd17ef942eef38e539e2bc0d7439124f5b9a4cfc14d47f9ce5b5e6582",
+        "bytes": 16689,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=6fc0afca-4513-4c35-b594-6544aee29a44&name=leqvio-06.jpg",
+        "note": "Figure from the FDA Structured Product Label for Leqvio (SPL setid 6fc0afca-4513-4c35-b594-6544aee29a44). Public-domain label artwork; use per MLR guidance."
+      }
+    ],
+    "Litfulo": [
+      {
+        "file": "Litfulo-05.jpg",
+        "blob_key": "2b32d7af4e5984d3acad85b0bd12dfd085173eaa2d5bebd5cd835ae53165d31e",
+        "bytes": 79045,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=1882f799-61b0-4813-965a-4910c4ae419c&name=Litfulo-05.jpg",
+        "note": "Figure from the FDA Structured Product Label for Litfulo (SPL setid 1882f799-61b0-4813-965a-4910c4ae419c). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "litfulo-01.jpg",
+        "blob_key": "136c1b1670ed17705e55fb288f708948af05276c1ee115ef8bbc1e3e106f7c34",
+        "bytes": 12733,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=1882f799-61b0-4813-965a-4910c4ae419c&name=litfulo-01.jpg",
+        "note": "Figure from the FDA Structured Product Label for Litfulo (SPL setid 1882f799-61b0-4813-965a-4910c4ae419c). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "litfulo-02.jpg",
+        "blob_key": "f3d79de681d871414e009902481c167e643c8af12372380159f680fc3fc4d238",
+        "bytes": 12644,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=1882f799-61b0-4813-965a-4910c4ae419c&name=litfulo-02.jpg",
+        "note": "Figure from the FDA Structured Product Label for Litfulo (SPL setid 1882f799-61b0-4813-965a-4910c4ae419c). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "litfulo-03.jpg",
+        "blob_key": "7555aa36bac23e5a81320a2fb4e4929ea36359e066bc0a1cf43fb9adc4253057",
+        "bytes": 10382,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=1882f799-61b0-4813-965a-4910c4ae419c&name=litfulo-03.jpg",
+        "note": "Figure from the FDA Structured Product Label for Litfulo (SPL setid 1882f799-61b0-4813-965a-4910c4ae419c). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "litfulo-04.jpg",
+        "blob_key": "7555aa36bac23e5a81320a2fb4e4929ea36359e066bc0a1cf43fb9adc4253057",
+        "bytes": 10382,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=1882f799-61b0-4813-965a-4910c4ae419c&name=litfulo-04.jpg",
+        "note": "Figure from the FDA Structured Product Label for Litfulo (SPL setid 1882f799-61b0-4813-965a-4910c4ae419c). Public-domain label artwork; use per MLR guidance."
+      }
+    ],
+    "Lynkuet": [
+      {
+        "file": "lynkuet-01.jpg",
+        "blob_key": "245d6894a67330f4f7897485cdee9c8f9cc53c58bf9447ce37fc642b4b79b68c",
+        "bytes": 7087,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=f42884ff-7dff-419c-8a0c-affe2ed73818&name=lynkuet-01.jpg",
+        "note": "Figure from the FDA Structured Product Label for Lynkuet (SPL setid f42884ff-7dff-419c-8a0c-affe2ed73818). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "lynkuet-02.jpg",
+        "blob_key": "8f112f993c6f1d8ab2f16d474e8b69c7122517fcf7ff8d554b4dd6dd20d26e22",
+        "bytes": 120195,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=f42884ff-7dff-419c-8a0c-affe2ed73818&name=lynkuet-02.jpg",
+        "note": "Figure from the FDA Structured Product Label for Lynkuet (SPL setid f42884ff-7dff-419c-8a0c-affe2ed73818). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "lynkuet-03.jpg",
+        "blob_key": "213d49b8c243200a0021773f26850c6c5b8d58c2295a470f032cf5f9f7857525",
+        "bytes": 149502,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=f42884ff-7dff-419c-8a0c-affe2ed73818&name=lynkuet-03.jpg",
+        "note": "Figure from the FDA Structured Product Label for Lynkuet (SPL setid f42884ff-7dff-419c-8a0c-affe2ed73818). Public-domain label artwork; use per MLR guidance."
+      }
+    ],
+    "Monjuvi": [
+      {
+        "file": "monjuvi-1.jpg",
+        "blob_key": "bfc4fa0149a6fcd6eb493eb52a7b5d4144678d67c01fa575fa4b8fb9872bdadf",
+        "bytes": 41183,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=9e0a220b-517f-4c86-b581-ffbab493fb58&name=monjuvi-1.jpg",
+        "note": "Figure from the FDA Structured Product Label for Monjuvi (SPL setid 9e0a220b-517f-4c86-b581-ffbab493fb58). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "monjuvi-2.jpg",
+        "blob_key": "09eb027004b92ed7e7ba4f01b7256b23682ee854f53ebfa68bdf85026dcdc1e5",
+        "bytes": 215085,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=9e0a220b-517f-4c86-b581-ffbab493fb58&name=monjuvi-2.jpg",
+        "note": "Figure from the FDA Structured Product Label for Monjuvi (SPL setid 9e0a220b-517f-4c86-b581-ffbab493fb58). Public-domain label artwork; use per MLR guidance."
+      }
+    ],
+    "Niktimvo": [
+      {
+        "file": "niktimvo-1.jpg",
+        "blob_key": "21e4840fbca99e09ea00af05ee1be583d5b63af44c2ab5b5e5a2cbadf6b602ad",
+        "bytes": 146056,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=bb6dba23-e7a6-4765-a1e6-b9e277ce0381&name=niktimvo-1.jpg",
+        "note": "Figure from the FDA Structured Product Label for Niktimvo (SPL setid bb6dba23-e7a6-4765-a1e6-b9e277ce0381). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "niktimvo-2.jpg",
+        "blob_key": "a429d081210cd86661132a2cacb00d911d42a83ab305f13f099be0b62b495f00",
+        "bytes": 146585,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=bb6dba23-e7a6-4765-a1e6-b9e277ce0381&name=niktimvo-2.jpg",
+        "note": "Figure from the FDA Structured Product Label for Niktimvo (SPL setid bb6dba23-e7a6-4765-a1e6-b9e277ce0381). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "niktimvo-3.jpg",
+        "blob_key": "235a5eafd025e3dbcc468e0968dd9ef37bc0215a1a44fa51cb809760a7423ba8",
+        "bytes": 211998,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=bb6dba23-e7a6-4765-a1e6-b9e277ce0381&name=niktimvo-3.jpg",
+        "note": "Figure from the FDA Structured Product Label for Niktimvo (SPL setid bb6dba23-e7a6-4765-a1e6-b9e277ce0381). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "niktimvo-4.jpg",
+        "blob_key": "bec6fc6e881e5519a1b92106c4b0f4f50d9f8ec849a7a6ffadbdba2abdeb8781",
+        "bytes": 147835,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=bb6dba23-e7a6-4765-a1e6-b9e277ce0381&name=niktimvo-4.jpg",
+        "note": "Figure from the FDA Structured Product Label for Niktimvo (SPL setid bb6dba23-e7a6-4765-a1e6-b9e277ce0381). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "niktimvo-5.jpg",
+        "blob_key": "af06158e7bc7f596a292fc6d04c254f83c147886468d8b9749b547df01549b75",
+        "bytes": 229707,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=bb6dba23-e7a6-4765-a1e6-b9e277ce0381&name=niktimvo-5.jpg",
+        "note": "Figure from the FDA Structured Product Label for Niktimvo (SPL setid bb6dba23-e7a6-4765-a1e6-b9e277ce0381). Public-domain label artwork; use per MLR guidance."
+      }
+    ],
+    "Nubeqa": [
+      {
+        "file": "nubeqa-01.jpg",
+        "blob_key": "d18d1d37f33bb703fa6c005434f58c398c85fce1e41a14db66ca944b2643d2d1",
+        "bytes": 12721,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=1a7cb212-56e4-4b9d-a73d-bfee7fe4735e&name=nubeqa-01.jpg",
+        "note": "Figure from the FDA Structured Product Label for Nubeqa (SPL setid 1a7cb212-56e4-4b9d-a73d-bfee7fe4735e). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "nubeqa-02.jpg",
+        "blob_key": "38c8de62a484714c8dbeeb81ddeabe237fa7cf71a429eecc57a9dae1a2074762",
+        "bytes": 44554,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=1a7cb212-56e4-4b9d-a73d-bfee7fe4735e&name=nubeqa-02.jpg",
+        "note": "Figure from the FDA Structured Product Label for Nubeqa (SPL setid 1a7cb212-56e4-4b9d-a73d-bfee7fe4735e). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "nubeqa-03.jpg",
+        "blob_key": "6ff958827aadcbc05b1881e5572fbf95e54dc3a2dbf159b4f6b0c7b515cb2c2f",
+        "bytes": 41060,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=1a7cb212-56e4-4b9d-a73d-bfee7fe4735e&name=nubeqa-03.jpg",
+        "note": "Figure from the FDA Structured Product Label for Nubeqa (SPL setid 1a7cb212-56e4-4b9d-a73d-bfee7fe4735e). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "nubeqa-04.jpg",
+        "blob_key": "e8dfc2e362a6b02d4e406dc7d4799d38f7272b914c01b3bccf96575610fbf14d",
+        "bytes": 53207,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=1a7cb212-56e4-4b9d-a73d-bfee7fe4735e&name=nubeqa-04.jpg",
+        "note": "Figure from the FDA Structured Product Label for Nubeqa (SPL setid 1a7cb212-56e4-4b9d-a73d-bfee7fe4735e). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "nubeqa-05.jpg",
+        "blob_key": "0371a3d872a307959ed67c0b035427c939a39b41915882664c11d8bb926fb4d5",
+        "bytes": 57630,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=1a7cb212-56e4-4b9d-a73d-bfee7fe4735e&name=nubeqa-05.jpg",
+        "note": "Figure from the FDA Structured Product Label for Nubeqa (SPL setid 1a7cb212-56e4-4b9d-a73d-bfee7fe4735e). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "nubeqa-06.jpg",
+        "blob_key": "92a779d94fcf4906706e4cd1c6c802315a436d9d797860572e5ccff11d3f1045",
+        "bytes": 29747,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=1a7cb212-56e4-4b9d-a73d-bfee7fe4735e&name=nubeqa-06.jpg",
+        "note": "Figure from the FDA Structured Product Label for Nubeqa (SPL setid 1a7cb212-56e4-4b9d-a73d-bfee7fe4735e). Public-domain label artwork; use per MLR guidance."
+      }
+    ],
+    "Onivyde": [
+      {
+        "file": "onivyde-01.jpg",
+        "blob_key": "9621a36b9afe9c478390e9a1f51de97d9abcbc4ee4931b40b7a637718a970135",
+        "bytes": 8455,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=c8b58efa-1820-48a4-b70d-62918fc4abfc&name=onivyde-01.jpg",
+        "note": "Figure from the FDA Structured Product Label for Onivyde (SPL setid c8b58efa-1820-48a4-b70d-62918fc4abfc). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "onivyde-02.jpg",
+        "blob_key": "87a554e535dc33969124e19ad9881a362c7378689700da15c1c6e3fc79c33579",
+        "bytes": 38600,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=c8b58efa-1820-48a4-b70d-62918fc4abfc&name=onivyde-02.jpg",
+        "note": "Figure from the FDA Structured Product Label for Onivyde (SPL setid c8b58efa-1820-48a4-b70d-62918fc4abfc). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "onivyde-03.jpg",
+        "blob_key": "b8320ef245d19b4b963e6da82d49d4143da8917a4175ad1773df27916b5ef8f0",
+        "bytes": 20147,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=c8b58efa-1820-48a4-b70d-62918fc4abfc&name=onivyde-03.jpg",
+        "note": "Figure from the FDA Structured Product Label for Onivyde (SPL setid c8b58efa-1820-48a4-b70d-62918fc4abfc). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "onivyde-04.jpg",
+        "blob_key": "ea4173708b610284a4639935ad29b3bc0c572417a6ab843cd7e56c834e01cff8",
+        "bytes": 63801,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=c8b58efa-1820-48a4-b70d-62918fc4abfc&name=onivyde-04.jpg",
+        "note": "Figure from the FDA Structured Product Label for Onivyde (SPL setid c8b58efa-1820-48a4-b70d-62918fc4abfc). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "onivyde-05.jpg",
+        "blob_key": "650e0fb3edd499e8e06d01e0d627b5d78337a6911fcb8e50a7285d1629b0b8c6",
+        "bytes": 124009,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=c8b58efa-1820-48a4-b70d-62918fc4abfc&name=onivyde-05.jpg",
+        "note": "Figure from the FDA Structured Product Label for Onivyde (SPL setid c8b58efa-1820-48a4-b70d-62918fc4abfc). Public-domain label artwork; use per MLR guidance."
+      }
+    ],
+    "Opzelura": [
+      {
+        "file": "opzelura-1.jpg",
+        "blob_key": "2570f934597b13b2e4d4d51be523dd87adf15e3523a837dd6302812e8f2c74ae",
+        "bytes": 15751,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=24da5509-6631-4795-9d42-273faecd08e7&name=opzelura-1.jpg",
+        "note": "Figure from the FDA Structured Product Label for Opzelura (SPL setid 24da5509-6631-4795-9d42-273faecd08e7). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "opzelura-10.jpg",
+        "blob_key": "0337f3428266b07dfacab822027abad0c117c1b8460c7e57f589863563327005",
+        "bytes": 202909,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=24da5509-6631-4795-9d42-273faecd08e7&name=opzelura-10.jpg",
+        "note": "Figure from the FDA Structured Product Label for Opzelura (SPL setid 24da5509-6631-4795-9d42-273faecd08e7). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "opzelura-11.jpg",
+        "blob_key": "f1c7f17beab79e89475f49a960a84e7da2afb2786e30e3eb69536311d5a6c1b3",
+        "bytes": 114586,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=24da5509-6631-4795-9d42-273faecd08e7&name=opzelura-11.jpg",
+        "note": "Figure from the FDA Structured Product Label for Opzelura (SPL setid 24da5509-6631-4795-9d42-273faecd08e7). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "opzelura-2.jpg",
+        "blob_key": "6520825b9595be5d4972ef9b96a05bed7e0a56f2bf0f72b8d8d0b6652a579f0d",
+        "bytes": 78622,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=24da5509-6631-4795-9d42-273faecd08e7&name=opzelura-2.jpg",
+        "note": "Figure from the FDA Structured Product Label for Opzelura (SPL setid 24da5509-6631-4795-9d42-273faecd08e7). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "opzelura-3.jpg",
+        "blob_key": "d1bea833c0e00200a8e95b2eb8d5e09829ce8a3c0d6dd7fda8b719b57a46a773",
+        "bytes": 77262,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=24da5509-6631-4795-9d42-273faecd08e7&name=opzelura-3.jpg",
+        "note": "Figure from the FDA Structured Product Label for Opzelura (SPL setid 24da5509-6631-4795-9d42-273faecd08e7). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "opzelura-4.jpg",
+        "blob_key": "0ec7c8c818dd5b6b8bee2968e557ebd3fd7b201529a949deb0025df6265990ac",
+        "bytes": 167277,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=24da5509-6631-4795-9d42-273faecd08e7&name=opzelura-4.jpg",
+        "note": "Figure from the FDA Structured Product Label for Opzelura (SPL setid 24da5509-6631-4795-9d42-273faecd08e7). Public-domain label artwork; use per MLR guidance."
+      }
+    ],
+    "Padcev": [
+      {
+        "file": "image-01.jpg",
+        "blob_key": "b89deb74fd5134a023abd5d4f60679506187dc2a3dfd97bb5535dfbb8b89a7d6",
+        "bytes": 25329,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=b5631d3e-4604-4363-8f20-11dfc5a4a8ed&name=image-01.jpg",
+        "note": "Figure from the FDA Structured Product Label for Padcev (SPL setid b5631d3e-4604-4363-8f20-11dfc5a4a8ed). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "image-02.jpg",
+        "blob_key": "a2d0bdd1761ce613d81bea49d463f3f7efbf08c03ed2bdd19f5e8c33b127534a",
+        "bytes": 46117,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=b5631d3e-4604-4363-8f20-11dfc5a4a8ed&name=image-02.jpg",
+        "note": "Figure from the FDA Structured Product Label for Padcev (SPL setid b5631d3e-4604-4363-8f20-11dfc5a4a8ed). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "image-03.jpg",
+        "blob_key": "56b5425d6f1d25998e67ab96c79067612b88c805fcf0dd56e82192b6342c4ab1",
+        "bytes": 47233,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=b5631d3e-4604-4363-8f20-11dfc5a4a8ed&name=image-03.jpg",
+        "note": "Figure from the FDA Structured Product Label for Padcev (SPL setid b5631d3e-4604-4363-8f20-11dfc5a4a8ed). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "image-04.jpg",
+        "blob_key": "d06a3ed42d485fa5feb3aba05b120f816f6b1695c2c9625bd6ed02848aa91abc",
+        "bytes": 30145,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=b5631d3e-4604-4363-8f20-11dfc5a4a8ed&name=image-04.jpg",
+        "note": "Figure from the FDA Structured Product Label for Padcev (SPL setid b5631d3e-4604-4363-8f20-11dfc5a4a8ed). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "image-05.jpg",
+        "blob_key": "a22396d46b902e2e99c24ac8873e1ba052f79f66b8aad74429e6c906fa099f59",
+        "bytes": 28691,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=b5631d3e-4604-4363-8f20-11dfc5a4a8ed&name=image-05.jpg",
+        "note": "Figure from the FDA Structured Product Label for Padcev (SPL setid b5631d3e-4604-4363-8f20-11dfc5a4a8ed). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "image-06.jpg",
+        "blob_key": "2b6e0690087429c4dc14790dc08a38a3b17af2136bf75482ae5a1c698acc0150",
+        "bytes": 58225,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=b5631d3e-4604-4363-8f20-11dfc5a4a8ed&name=image-06.jpg",
+        "note": "Figure from the FDA Structured Product Label for Padcev (SPL setid b5631d3e-4604-4363-8f20-11dfc5a4a8ed). Public-domain label artwork; use per MLR guidance."
+      }
+    ],
+    "Pemazyre": [
+      {
+        "file": "pemazyre-1.jpg",
+        "blob_key": "d5a73a22addf9902662c4d9c8aa0b6024ca4bd8774bf43aaa05e6e514962b0ed",
+        "bytes": 17445,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=9e1f2222-1d89-4e63-989c-ccebe2ab1eb4&name=pemazyre-1.jpg",
+        "note": "Figure from the FDA Structured Product Label for Pemazyre (SPL setid 9e1f2222-1d89-4e63-989c-ccebe2ab1eb4). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "pemazyre-2.jpg",
+        "blob_key": "77e3daddc4162c6b210afe2bd192865e2acaef454e11af75be63e8e9a16b834e",
+        "bytes": 83751,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=9e1f2222-1d89-4e63-989c-ccebe2ab1eb4&name=pemazyre-2.jpg",
+        "note": "Figure from the FDA Structured Product Label for Pemazyre (SPL setid 9e1f2222-1d89-4e63-989c-ccebe2ab1eb4). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "pemazyre-3.jpg",
+        "blob_key": "683b2df2aba9cae842ca45b027e97ee5100dc246093894827990e198b4d20e89",
+        "bytes": 83166,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=9e1f2222-1d89-4e63-989c-ccebe2ab1eb4&name=pemazyre-3.jpg",
+        "note": "Figure from the FDA Structured Product Label for Pemazyre (SPL setid 9e1f2222-1d89-4e63-989c-ccebe2ab1eb4). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "pemazyre-4.jpg",
+        "blob_key": "6895fd0480a692de1235bf76889b1ee60659bc8a31003ddda792f47bcbfe8038",
+        "bytes": 85881,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=9e1f2222-1d89-4e63-989c-ccebe2ab1eb4&name=pemazyre-4.jpg",
+        "note": "Figure from the FDA Structured Product Label for Pemazyre (SPL setid 9e1f2222-1d89-4e63-989c-ccebe2ab1eb4). Public-domain label artwork; use per MLR guidance."
+      }
+    ],
+    "Pluvicto": [
+      {
+        "file": "pluvicto-01.jpg",
+        "blob_key": "e0c387cc06f8ea8113e45dcf20f02cdfcdf69d1df7586c2072aa051e88465c7f",
+        "bytes": 29187,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=14908037-2892-4d98-a053-253ce35afb1a&name=pluvicto-01.jpg",
+        "note": "Figure from the FDA Structured Product Label for Pluvicto (SPL setid 14908037-2892-4d98-a053-253ce35afb1a). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "pluvicto-02.jpg",
+        "blob_key": "3a44f9595e95e44b2abe0382eb3d6297d3253859715d9de936782c1c5435303a",
+        "bytes": 57801,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=14908037-2892-4d98-a053-253ce35afb1a&name=pluvicto-02.jpg",
+        "note": "Figure from the FDA Structured Product Label for Pluvicto (SPL setid 14908037-2892-4d98-a053-253ce35afb1a). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "pluvicto-03.jpg",
+        "blob_key": "233a54bfb35d216d1a52c50e2e2138c73d3284a64aff0b130c7c0cc74b084b0e",
+        "bytes": 66902,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=14908037-2892-4d98-a053-253ce35afb1a&name=pluvicto-03.jpg",
+        "note": "Figure from the FDA Structured Product Label for Pluvicto (SPL setid 14908037-2892-4d98-a053-253ce35afb1a). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "pluvicto-04.jpg",
+        "blob_key": "afee91778b1c4e97f8a60dfe9354e9bc951890c1686b42037421f15b4d4bde33",
+        "bytes": 72423,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=14908037-2892-4d98-a053-253ce35afb1a&name=pluvicto-04.jpg",
+        "note": "Figure from the FDA Structured Product Label for Pluvicto (SPL setid 14908037-2892-4d98-a053-253ce35afb1a). Public-domain label artwork; use per MLR guidance."
+      }
+    ],
+    "Somatuline": [
+      {
+        "file": "somatuline-01.jpg",
+        "blob_key": "e727fac57a46fb9f7820ecb0cc3028f9c9a124f379ddb6526b659605c20339aa",
+        "bytes": 13698,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=6e4a41fd-a753-4362-87ee-8cc56ed3660d&name=somatuline-01.jpg",
+        "note": "Figure from the FDA Structured Product Label for Somatuline (SPL setid 6e4a41fd-a753-4362-87ee-8cc56ed3660d). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "somatuline-02.jpg",
+        "blob_key": "efb3cc7f50c9f3e3daeb8e6df6f370d8424889955132405da59fe2fae629748f",
+        "bytes": 62835,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=6e4a41fd-a753-4362-87ee-8cc56ed3660d&name=somatuline-02.jpg",
+        "note": "Figure from the FDA Structured Product Label for Somatuline (SPL setid 6e4a41fd-a753-4362-87ee-8cc56ed3660d). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "somatuline-03.jpg",
+        "blob_key": "3f2a186c326cfea1677dd25a6c1aeaeef1f304857bc351d1537c2dcfbb9ec205",
+        "bytes": 22177,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=6e4a41fd-a753-4362-87ee-8cc56ed3660d&name=somatuline-03.jpg",
+        "note": "Figure from the FDA Structured Product Label for Somatuline (SPL setid 6e4a41fd-a753-4362-87ee-8cc56ed3660d). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "somatuline-04.jpg",
+        "blob_key": "805c155e12d413e3284e902b343c3310d26a457f3d90742ee60f40cb19fd1e57",
+        "bytes": 20583,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=6e4a41fd-a753-4362-87ee-8cc56ed3660d&name=somatuline-04.jpg",
+        "note": "Figure from the FDA Structured Product Label for Somatuline (SPL setid 6e4a41fd-a753-4362-87ee-8cc56ed3660d). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "somatuline-05.jpg",
+        "blob_key": "ffb216740fec6771660d8767b6d628ac7c2a31f9d902e01966cf6c53642007f5",
+        "bytes": 27418,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=6e4a41fd-a753-4362-87ee-8cc56ed3660d&name=somatuline-05.jpg",
+        "note": "Figure from the FDA Structured Product Label for Somatuline (SPL setid 6e4a41fd-a753-4362-87ee-8cc56ed3660d). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "somatuline-07.jpg",
+        "blob_key": "01fa5013f045fbc8b8630446957ae2098c21cf6c438653e4ad1a0c09fdfd774e",
+        "bytes": 8936,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=6e4a41fd-a753-4362-87ee-8cc56ed3660d&name=somatuline-07.jpg",
+        "note": "Figure from the FDA Structured Product Label for Somatuline (SPL setid 6e4a41fd-a753-4362-87ee-8cc56ed3660d). Public-domain label artwork; use per MLR guidance."
+      }
+    ],
+    "Tivdak": [
+      {
+        "file": "Carton.jpg",
+        "blob_key": "873e22b8e5618805a231a2b52702f2055be3a9c2a906d82c77e88b6136a81da3",
+        "bytes": 149929,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=c9fe3f32-4219-466e-acb9-3f609b4f4df1&name=Carton.jpg",
+        "note": "Figure from the FDA Structured Product Label for Tivdak (SPL setid c9fe3f32-4219-466e-acb9-3f609b4f4df1). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "Label.jpg",
+        "blob_key": "b8a3d58d23ea807c90454c12422110ebc1c5db928a7a5fa043428fb9ac89dfff",
+        "bytes": 74598,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=c9fe3f32-4219-466e-acb9-3f609b4f4df1&name=Label.jpg",
+        "note": "Figure from the FDA Structured Product Label for Tivdak (SPL setid c9fe3f32-4219-466e-acb9-3f609b4f4df1). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "smalllogo.jpg",
+        "blob_key": "ac3fb867eccf560df3b16fbfc6bdb891206e657ebaee9a751f10528f15d4b816",
+        "bytes": 1219,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=c9fe3f32-4219-466e-acb9-3f609b4f4df1&name=smalllogo.jpg",
+        "note": "Figure from the FDA Structured Product Label for Tivdak (SPL setid c9fe3f32-4219-466e-acb9-3f609b4f4df1). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "tivdak01.jpg",
+        "blob_key": "568405cd37480f36323bb28e3754480de6c22bb7c2b3ab1d0efc6a95803c91e8",
+        "bytes": 34448,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=c9fe3f32-4219-466e-acb9-3f609b4f4df1&name=tivdak01.jpg",
+        "note": "Figure from the FDA Structured Product Label for Tivdak (SPL setid c9fe3f32-4219-466e-acb9-3f609b4f4df1). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "tivdak02.jpg",
+        "blob_key": "b3561b23b59692ed98d84b24f24bda02388a0cc88016f19d8696ccd8811f5fec",
+        "bytes": 620438,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=c9fe3f32-4219-466e-acb9-3f609b4f4df1&name=tivdak02.jpg",
+        "note": "Figure from the FDA Structured Product Label for Tivdak (SPL setid c9fe3f32-4219-466e-acb9-3f609b4f4df1). Public-domain label artwork; use per MLR guidance."
+      }
+    ],
+    "Vyndaqel": [
+      {
+        "file": "Fig_2.jpg",
+        "blob_key": "50fbcf9a5f502fa6e664e045e4a8e1376b4268d4be30fa34459611ecae92515a",
+        "bytes": 42248,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=1b4121ee-a733-4456-a917-be2603477839&name=Fig+2.jpg",
+        "note": "Figure from the FDA Structured Product Label for Vyndaqel (SPL setid 1b4121ee-a733-4456-a917-be2603477839). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "Figure_3.jpg",
+        "blob_key": "7e8d40d5e6e64ddc75b871e62400591b3ec6860f7f91756e64c88ff01b995bbf",
+        "bytes": 61347,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=1b4121ee-a733-4456-a917-be2603477839&name=Figure+3.jpg",
+        "note": "Figure from the FDA Structured Product Label for Vyndaqel (SPL setid 1b4121ee-a733-4456-a917-be2603477839). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "tafamidis-01.jpg",
+        "blob_key": "acca89934c797c31bea3b0f6a19f8c5f8b0ccf9a571e9e390d1931ea651f2ec4",
+        "bytes": 11202,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=1b4121ee-a733-4456-a917-be2603477839&name=tafamidis-01.jpg",
+        "note": "Figure from the FDA Structured Product Label for Vyndaqel (SPL setid 1b4121ee-a733-4456-a917-be2603477839). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "tafamidis-02.jpg",
+        "blob_key": "bc6b7925c25b44bd7d9f11e25033bbe360d7fb4037cc00651776866c22a9e584",
+        "bytes": 6422,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=1b4121ee-a733-4456-a917-be2603477839&name=tafamidis-02.jpg",
+        "note": "Figure from the FDA Structured Product Label for Vyndaqel (SPL setid 1b4121ee-a733-4456-a917-be2603477839). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "tafamidis-03.jpg",
+        "blob_key": "8a7e5ca0f65e2ec6ff00b7931db45161e706464e31df41fee573aa8dc642d311",
+        "bytes": 48765,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=1b4121ee-a733-4456-a917-be2603477839&name=tafamidis-03.jpg",
+        "note": "Figure from the FDA Structured Product Label for Vyndaqel (SPL setid 1b4121ee-a733-4456-a917-be2603477839). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "tafamidis-06.jpg",
+        "blob_key": "b3025a4b3d81ffed9e7977024249fe77b0593cbb6b948eae160429e7a5711b8d",
+        "bytes": 58112,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=1b4121ee-a733-4456-a917-be2603477839&name=tafamidis-06.jpg",
+        "note": "Figure from the FDA Structured Product Label for Vyndaqel (SPL setid 1b4121ee-a733-4456-a917-be2603477839). Public-domain label artwork; use per MLR guidance."
+      }
+    ],
+    "Xarelto": [
+      {
+        "file": "Xarelto_Starter_Pack.jpg",
+        "blob_key": "65477f34d46e93c8bcc4e2110ea56a79305bd11fd88cdef252cfabc5269442ee",
+        "bytes": 368914,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=10db92f9-2300-4a80-836b-673e1ae91610&name=Xarelto+Starter+Pack.jpg",
+        "note": "Figure from the FDA Structured Product Label for Xarelto (SPL setid 10db92f9-2300-4a80-836b-673e1ae91610). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "Xarelto-34.jpg",
+        "blob_key": "7d9b3bc98d2bb7a7ed1d15ee90e5f3557a94195df41543a04ae79c1e579c8e4b",
+        "bytes": 162285,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=10db92f9-2300-4a80-836b-673e1ae91610&name=Xarelto-34.jpg",
+        "note": "Figure from the FDA Structured Product Label for Xarelto (SPL setid 10db92f9-2300-4a80-836b-673e1ae91610). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "Xarelto-35.jpg",
+        "blob_key": "fa3b999b0333a605214eb382cde8b0b2449382ead63cdb36c6d0609af63ebdfa",
+        "bytes": 161778,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=10db92f9-2300-4a80-836b-673e1ae91610&name=Xarelto-35.jpg",
+        "note": "Figure from the FDA Structured Product Label for Xarelto (SPL setid 10db92f9-2300-4a80-836b-673e1ae91610). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "Xarelto-36.jpg",
+        "blob_key": "3d4b5f8fe93a6828ba24f3cde4e5c03a66703c6860291a6a2b539df415a98a62",
+        "bytes": 156255,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=10db92f9-2300-4a80-836b-673e1ae91610&name=Xarelto-36.jpg",
+        "note": "Figure from the FDA Structured Product Label for Xarelto (SPL setid 10db92f9-2300-4a80-836b-673e1ae91610). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "Xarelto-37.jpg",
+        "blob_key": "b069f29cd84c4c176a9814c66d07228197a7d4c9e297c14e850d9ad2b7b203d0",
+        "bytes": 156430,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=10db92f9-2300-4a80-836b-673e1ae91610&name=Xarelto-37.jpg",
+        "note": "Figure from the FDA Structured Product Label for Xarelto (SPL setid 10db92f9-2300-4a80-836b-673e1ae91610). Public-domain label artwork; use per MLR guidance."
+      },
+      {
+        "file": "Xarelto_Oral_Solution_1_mg_per_mL_Box_10603001_EDMS-RIM-1540253_2.0_crop.jpg",
+        "blob_key": "b411516573f961c240aca11905901f3f1bd77b0c6b44e11269fc257237c39a8f",
+        "bytes": 557558,
+        "source_url": "https://dailymed.nlm.nih.gov/dailymed/image.cfm?setid=10db92f9-2300-4a80-836b-673e1ae91610&name=Xarelto_Oral+Solution_1+mg+per+mL_Box_10603001_EDMS-RIM-1540253_2.0_crop.jpg",
+        "note": "Figure from the FDA Structured Product Label for Xarelto (SPL setid 10db92f9-2300-4a80-836b-673e1ae91610). Public-domain label artwork; use per MLR guidance."
+      }
+    ]
+  }
+}

@@ -1422,10 +1422,14 @@ function postAgentBanter(id, toId, text) {
 // then appears. Agent turns/narration are queued too (with no pause) so nothing overtakes a
 // pending aside and the conversation stays in stream order. Right-rail status updates are
 // NOT queued -- they reflect what the backend is really doing right now.
-const BANTER_MIN_MS = 5000, BANTER_MAX_MS = 7000, BANTER_RUSH_MS = 1600;
+// Pause scales with how much there is to read: a short aside lands near 2s, a long one
+// near 4s -- roughly the time it takes to type/read it, rather than a flat wait.
+const BANTER_MIN_MS = 2000, BANTER_MAX_MS = 4000, BANTER_MS_PER_CHAR = 16, BANTER_RUSH_MS = 1000;
 const chatQueue = [];
 let chatDraining = false, pendingFinish = false;
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+const banterDelay = (text) =>
+  Math.min(BANTER_MAX_MS, BANTER_MIN_MS + (text || "").length * BANTER_MS_PER_CHAR);
 
 function enqueueChat(item) { chatQueue.push(item); drainChat(); }
 
@@ -1437,9 +1441,8 @@ async function drainChat() {
     if (item.kind === "banter") {
       const typing = addBanterTyping(item.id);
       // Backpressure: if asides have piled up behind a slow drain, speed through them
-      // rather than let the chat fall minutes behind the agents' real work.
-      const wait = chatQueue.length > 4 ? BANTER_RUSH_MS
-                 : BANTER_MIN_MS + Math.random() * (BANTER_MAX_MS - BANTER_MIN_MS);
+      // rather than let the chat fall behind the agents' real work.
+      const wait = chatQueue.length > 4 ? BANTER_RUSH_MS : banterDelay(item.text);
       await sleep(wait);
       if (typing) typing.remove();
       postAgentBanter(item.id, item.to, item.text);
