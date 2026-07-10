@@ -67,7 +67,9 @@
   .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 0 rgba(23,166,115,0.6); animation: pulse 2s infinite; }
 
   /* ---- 3-pane layout ---- */
-  .app { flex: 1; display: flex; min-height: 0; }
+  /* Hidden until showWorkspace() sets an inline display:flex. Home is the landing view, and
+     if this defaulted to flex both views painted at once on first load. */
+  .app { flex: 1; display: none; min-height: 0; }
   .rail-left { flex: 0 0 208px; border-right: 1px solid var(--line);
     background: var(--glass); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
     display: flex; flex-direction: column; min-height: 0; }
@@ -852,6 +854,9 @@
     border: 1px solid rgba(11,61,145,.06); border-radius: 13px; padding: 7px 13px; line-height: 1.5; }
   .banter-name { font-weight: 700; color: var(--c, var(--indegene-navy)); }
   .banter-to { font-weight: 600; color: var(--tk-cyan, #0B6FA8); }
+  /* the "…is typing" placeholder shown before each aside lands */
+  .banter-typing .banter-bubble { padding: 8px 13px; }
+  .banter-typing .typing span { width: 5px; height: 5px; background: var(--c, var(--muted)); opacity: .75; }
 
   @keyframes pulse { 0% { box-shadow: 0 0 0 0 currentColor; } 70% { box-shadow: 0 0 0 6px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
   @keyframes blink { 0%, 60%, 100% { opacity: 0.3; } 30% { opacity: 1; } }
@@ -1230,10 +1235,20 @@ function startRun() {
   es.onmessage = (evt) => {
     const ev = JSON.parse(evt.data);
     handleRunEvent(ev);
-    if (ev.type === "done") { closedCleanly = true; es.close(); state.es = null; finishRun(); }
+    if (ev.type === "done") {
+      closedCleanly = true; es.close(); state.es = null;
+      // The stream is finished, but paced asides may still be animating -- let the chat
+      // queue drain before re-enabling input, so the last exchange isn't cut off.
+      if (chatDraining || chatQueue.length) pendingFinish = true; else finishRun();
+    }
   };
   es.onerror = () => {
-    if (!closedCleanly) { es.close(); state.es = null; addMessage("agent", "⚠ The research run was interrupted. You can ask me to re-run."); finishRun(); }
+    if (!closedCleanly) {
+      es.close(); state.es = null;
+      chatQueue.length = 0; pendingFinish = false;   // abandon pending asides on failure
+      addMessage("agent", "⚠ The research run was interrupted. You can ask me to re-run.");
+      finishRun();
+    }
   };
 }
 function finishRun() { state.busy = false; $("send").disabled = false; renderStepper(); loadProjects(); }
@@ -1249,13 +1264,60 @@ function postAgentBanter(id, toId, text) {
   $("messages").appendChild(m); scrollChat();
 }
 
+// ---- paced chat renderer -------------------------------------------------------------
+// The server streams banter back-to-back, which dumps every aside at once. Chat renders go
+// through a FIFO queue instead: each banter line shows a typing indicator, pauses 5-7s,
+// then appears. Agent turns/narration are queued too (with no pause) so nothing overtakes a
+// pending aside and the conversation stays in stream order. Right-rail status updates are
+// NOT queued -- they reflect what the backend is really doing right now.
+const BANTER_MIN_MS = 5000, BANTER_MAX_MS = 7000, BANTER_RUSH_MS = 1600;
+const chatQueue = [];
+let chatDraining = false, pendingFinish = false;
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+function enqueueChat(item) { chatQueue.push(item); drainChat(); }
+
+async function drainChat() {
+  if (chatDraining) return;
+  chatDraining = true;
+  while (chatQueue.length) {
+    const item = chatQueue.shift();
+    if (item.kind === "banter") {
+      const typing = addBanterTyping(item.id);
+      // Backpressure: if asides have piled up behind a slow drain, speed through them
+      // rather than let the chat fall minutes behind the agents' real work.
+      const wait = chatQueue.length > 4 ? BANTER_RUSH_MS
+                 : BANTER_MIN_MS + Math.random() * (BANTER_MAX_MS - BANTER_MIN_MS);
+      await sleep(wait);
+      if (typing) typing.remove();
+      postAgentBanter(item.id, item.to, item.text);
+    } else {
+      item.run();
+    }
+  }
+  chatDraining = false;
+  if (pendingFinish) { pendingFinish = false; finishRun(); }
+}
+
+// A banter-shaped bubble with the agent's portrait and the typing dots.
+function addBanterTyping(id) {
+  const p = AGENT_PEOPLE[id] || { c1: "#1768D1" };
+  const m = document.createElement("div");
+  m.className = "msg agent banter banter-typing";
+  m.style.setProperty("--c", p.c1);
+  m.innerHTML = `<div class="avatar avatar-person">${avatarHtml(id, 26)}</div>
+    <div class="banter-bubble"><span class="typing"><span></span><span></span><span></span></span></div>`;
+  $("messages").appendChild(m); scrollChat();
+  return m;
+}
+
 function handleRunEvent(ev) {
   switch (ev.type) {
     case "agents_init": initAgents(ev.agents); break;
     case "agent":
-      updateAgent(ev);
-      if (ev.status === "running") postAgentTurnStart(ev.id, ev.say);
-      else if (ev.status === "done") completeAgentTurn(ev.id, ev.summary, ev.detail);
+      updateAgent(ev);   // right-rail status: immediate, reflects real backend progress
+      if (ev.status === "running") enqueueChat({ kind: "fn", run: () => postAgentTurnStart(ev.id, ev.say) });
+      else if (ev.status === "done") enqueueChat({ kind: "fn", run: () => completeAgentTurn(ev.id, ev.summary, ev.detail) });
       break;
     case "inferred":
       if (ev.persona) state.inferred.persona = ev.persona;
@@ -1265,12 +1327,12 @@ function handleRunEvent(ev) {
       if (ev.cx_maturity) state.inferred.cx_maturity = ev.cx_maturity;
       renderBrief();
       break;
-    case "narration": addMessage("agent", ev.text); scrollChat(); break;
-    case "banter": postAgentBanter(ev.id, ev.to, ev.text); break;
-    case "clarify": addMessage("agent", ev.text, false, { clarify: ev.clarify }); scrollChat(); break;
+    case "narration": enqueueChat({ kind: "fn", run: () => { addMessage("agent", ev.text); scrollChat(); } }); break;
+    case "banter": enqueueChat({ kind: "banter", id: ev.id, to: ev.to, text: ev.text }); break;
+    case "clarify": enqueueChat({ kind: "fn", run: () => { addMessage("agent", ev.text, false, { clarify: ev.clarify }); scrollChat(); } }); break;
     case "plan": showPlan(ev.html, ev.markdown); break;
     case "result": state.result = ev.result; renderStepper(); break;
-    case "error": addMessage("agent", "⚠ " + ev.message); break;
+    case "error": enqueueChat({ kind: "fn", run: () => addMessage("agent", "⚠ " + ev.message) }); break;
   }
 }
 
@@ -1937,7 +1999,9 @@ $("nav-workspace").onclick = showWorkspace;
 
 setupVoice();
 loadProjects();
-loadHome();   // Home (brand dashboard + ticker) is the default landing view.
+// showHome() (not loadHome()) so the workspace is explicitly hidden and the nav state is
+// set -- calling loadHome() alone only fetched data and left both views painted.
+showHome();   // Home (brand dashboard + ticker) is the default landing view.
 
 // Reflect whether the chat is LLM-backed (Claude via Microsoft Foundry) or rules-based,
 // and log *why* on every turn -- not just a boot-time flag -- so a fallback is visible,
