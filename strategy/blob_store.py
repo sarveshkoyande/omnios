@@ -12,8 +12,12 @@ from __future__ import annotations
 
 import hashlib
 import pathlib
+import sys
 
-BLOB_DIR = pathlib.Path(__file__).resolve().parent.parent / "data" / "blobs"
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from paths import data_path  # noqa: E402
+
+BLOB_DIR = data_path("blobs")
 
 
 def _key(data: bytes) -> str:

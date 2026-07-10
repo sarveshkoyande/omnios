@@ -19,8 +19,9 @@ import time
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import blob_store  # noqa: E402
+from paths import data_path  # noqa: E402
 
-DB_PATH = pathlib.Path(__file__).resolve().parent.parent / "data" / "campaigns.db"
+DB_PATH = data_path("campaigns.db")
 SCHEMA_PATH = pathlib.Path(__file__).resolve().parent.parent / "db" / "campaign_content_schema.sql"
 
 

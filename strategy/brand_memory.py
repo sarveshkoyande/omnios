@@ -11,10 +11,14 @@ from __future__ import annotations
 
 import pathlib
 import sqlite3
+import sys
 import time
 
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from paths import data_path  # noqa: E402
+
 BASE_DIR = pathlib.Path(__file__).resolve().parent.parent
-DB_PATH = BASE_DIR / "data" / "brand_memory.db"
+DB_PATH = data_path("brand_memory.db")
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS brand_memory (

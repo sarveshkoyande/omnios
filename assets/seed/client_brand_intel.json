@@ -1,0 +1,219 @@
+{
+  "Nubeqa": [
+    "Docetaxel",
+    "Degarelix",
+    "Cyclophosphamide",
+    "Fludarabine",
+    "Leuprolide Injectable Emulsion (CAMCEVI®)"
+  ],
+  "Kerendia": [
+    "Darbepoetin alfa",
+    "Alteplase",
+    "Chlorthalidone",
+    "AZD5718",
+    "Dapagliflozin 10 mg"
+  ],
+  "Eylea": [
+    "Ranibizumab",
+    "Aflibercept",
+    "Lucentis",
+    "LFG316",
+    "Iptacopan (LNP023)"
+  ],
+  "Xarelto": [
+    "Aspirin",
+    "Warfarin",
+    "Rivaroxaban",
+    "Anticoagulation Therapy",
+    "Apixaban"
+  ],
+  "Lynkuet": [
+    "Fezolinetant",
+    "Brisdelle (paroxetine mesylate)",
+    "Placebo capsules",
+    "Elinzanetant (BAY3427080)",
+    "Estradiol"
+  ],
+  "Cabometyx": [
+    "Nivolumab",
+    "Everolimus",
+    "Ipilimumab",
+    "Sunitinib Malate",
+    "cisplatin"
+  ],
+  "Somatuline": [
+    "Pembrolizumab",
+    "Cyclophosphamide",
+    "Fludarabine",
+    "Temozolomide",
+    "Cisplatin"
+  ],
+  "Dysport": [
+    "Botulinum toxin type A",
+    "ABP-450",
+    "MTR-601",
+    "Medytoxin",
+    "Botox"
+  ],
+  "Iqirvo": [
+    "Linerixibat",
+    "golexanolone",
+    "Fenofibrate",
+    "UDCA",
+    "Oral Vancomycin"
+  ],
+  "Onivyde": [
+    "Gemcitabine",
+    "Nab-paclitaxel",
+    "Pumitamig",
+    "recombinant interferon alfa",
+    "cisplatin"
+  ],
+  "Epkinly": [
+    "Rituximab",
+    "rituximab",
+    "Cyclophosphamide",
+    "Dexamethasone",
+    "Prednisone"
+  ],
+  "Tivdak": [
+    "AG013",
+    "Cisplatin",
+    "Capecitabine",
+    "Neoadjuvant Chemotherapy (NACT)",
+    "Toripalimab"
+  ],
+  "Darzalex": [
+    "Dexamethasone",
+    "Lenalidomide",
+    "Bortezomib",
+    "Cyclophosphamide",
+    "Daratumumab"
+  ],
+  "Kesimpta": [
+    "GNbAC1",
+    "Ginseng",
+    "Zeposia",
+    "Simvastatin",
+    "Fingolimod"
+  ],
+  "Kisqali": [
+    "Fulvestrant",
+    "Trastuzumab",
+    "KS24.22 cells",
+    "Enzalutamide",
+    "Paclitaxel"
+  ],
+  "Leqvio": [
+    "PF-04950615 (RN316)",
+    "AK102",
+    "ARO-ANG3",
+    "sterile normal saline (0.9% NaCl)",
+    "BR1017-1"
+  ],
+  "Pluvicto": [
+    "Enzalutamide",
+    "Prednisone",
+    "Docetaxel",
+    "Cabazitaxel",
+    "Prednisolone"
+  ],
+  "Cosentyx": [
+    "Secukinumab",
+    "Methotrexate",
+    "Apremilast",
+    "Risankizumab",
+    "Ustekinumab"
+  ],
+  "Entresto": [
+    "CK-1827452",
+    "Nesiritide",
+    "Clopidogrel first",
+    "Ticagrelor first",
+    "Muscle Contraction with Metabolite Solution Administration"
+  ],
+  "Fabhalta": [
+    "MY008211A tablets",
+    "eculizumab",
+    "HSK39297 tablets",
+    "Pegcetacoplan",
+    "Ravulizumab"
+  ],
+  "Vyndaqel": [
+    "Tafamidis",
+    "Fx-1006A",
+    "NNC6019-0001",
+    "Placebo (NNC6019-0001)",
+    "tafamidis"
+  ],
+  "Padcev": [
+    "Nivolumab",
+    "Cisplatin",
+    "Gemcitabine",
+    "Carboplatin",
+    "Pembrolizumab"
+  ],
+  "Abrysvo": [
+    "MEDI-524 (Numax-TM)",
+    "IVX-241",
+    "RSVPreF3 OA investigational vaccine",
+    "IVX-121",
+    "EDP-938"
+  ],
+  "Ibrance": [
+    "Fulvestrant",
+    "Trastuzumab",
+    "KS24.22 cells",
+    "Enzalutamide",
+    "Paclitaxel"
+  ],
+  "Eliquis": [
+    "Aspirin",
+    "Warfarin",
+    "Rivaroxaban",
+    "Anticoagulation Therapy",
+    "Apixaban"
+  ],
+  "Litfulo": [
+    "Minoxidil",
+    "stem cells",
+    "platelet rich plasma",
+    "VDPHL01 QD",
+    "VDPHL01 BID"
+  ],
+  "Jakafi": [
+    "Ruxolitinib",
+    "Cyclophosphamide",
+    "cyclophosphamide",
+    "Mycophenolate Mofetil",
+    "busulfan"
+  ],
+  "Opzelura": [
+    "tacrolimus ointment",
+    "ATP mixed probiotics",
+    "Placebo ointment",
+    "DRM02",
+    "Elidel"
+  ],
+  "Monjuvi": [
+    "Rituximab",
+    "rituximab",
+    "Cyclophosphamide",
+    "Dexamethasone",
+    "Prednisone"
+  ],
+  "Niktimvo": [
+    "Alteplase",
+    "Itraconazole 65 MG",
+    "itraconazole",
+    "Hydroxychloroquine",
+    "vincristine"
+  ],
+  "Pemazyre": [
+    "Nivolumab",
+    "Capecitabine",
+    "Lenvatinib",
+    "cyclophosphamide",
+    "Entinostat"
+  ]
+}

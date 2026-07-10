@@ -38,8 +38,19 @@ from strategy import feed as feed_mod  # noqa: E402
 from strategy import campaign_store  # noqa: E402
 from strategy import brand_memory  # noqa: E402
 from strategy import blob_store  # noqa: E402  (serves real label images to the Claims Library)
+from strategy import bootstrap  # noqa: E402  (first-boot seeding of an empty data disk)
 
 app = FastAPI(title="Omni OS Brand Engagement Planning Agent")
+
+
+@app.on_event("startup")
+def _seed_on_boot() -> None:
+    """Seed an empty DATA_DIR (fresh persistent disk) with the committed KB + content
+    library. Idempotent and non-blocking; a persistent disk makes this run only once."""
+    try:
+        print(f"[startup] bootstrap: {bootstrap.run(background=True)}")
+    except Exception as e:  # noqa: BLE001 -- startup must never fail on seeding
+        print(f"[startup] bootstrap skipped ({e})")
 
 
 def _msg(role: str, text: str, extra: dict | None = None) -> dict:

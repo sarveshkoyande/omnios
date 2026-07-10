@@ -10,8 +10,9 @@ import sys
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
 from rules import CHANNEL_TOUCHPOINTS, PERSONA_MULTIPLIERS, STAGE_BY_KEY, STAGES  # noqa: E402
+from paths import data_path  # noqa: E402
 
-DB_PATH = pathlib.Path(__file__).resolve().parent.parent / "data" / "omni_kb.db"
+DB_PATH = data_path("omni_kb.db")
 
 
 def _compute_channel_mix(stage_key: str, persona: str) -> dict[str, float]:
