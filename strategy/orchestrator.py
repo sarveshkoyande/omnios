@@ -66,6 +66,15 @@ def _run(agent_id: str, say: str):
     return {"type": "agent", "id": agent_id, "status": "running", "say": say}
 
 
+def _say(agent_id: str, text: str, to: str = ""):
+    """A short conversational aside from one teammate, optionally addressed to another.
+
+    These interleave with the main turns so the run reads as a team talking through the
+    problem rather than a linear relay. Every line is grounded in what was actually just
+    computed -- never filler."""
+    return {"type": "banter", "id": agent_id, "to": to, "text": text}
+
+
 def run_agents(brand: str, therapy_area: str, lifecycle_key: str, budget: float = 0, maturity_notes: str = "",
                indication: str = ""):
     """Generator yielding orchestration events. The named teammates work as a group --
@@ -99,6 +108,17 @@ def run_agents(brand: str, therapy_area: str, lifecycle_key: str, budget: float 
                inferred["rationale"],
                f"{b_n} real documents on {brand}, {t_n} on {therapy_area} (FDA labels, ClinicalTrials.gov, PubMed, DailyMed, Google Trends)",
            ] + (competitors or ["ClinicalTrials.gov returned no distinct competing interventions"])}}
+
+    # --- the team reacts to what Maya found ---
+    if competitors:
+        yield _say("strategy", f"{len(competitors)} live competitor(s) in {therapy_area} — that makes this a "
+                               f"share-of-voice fight, not a category build. I'll run the SWOT against them.", to="intel")
+        yield _say("intel", f"Agreed. {competitors[0]} is the one to watch — it shows up across the trial data.", to="strategy")
+    else:
+        yield _say("strategy", f"No distinct competitors in the trial data — so we're building the category in "
+                               f"{therapy_area}, not defending share. That changes the messaging job.", to="intel")
+    yield _say("activation", f"Noting the **{inferred['lifecycle_label']}** stage — it'll drive how I weight the "
+                             f"channel mix later.", to="intel")
 
     # 2. Strategy & Positioning -- segmentation/journey/BAM/PP-NPP/micro-journeys/CX-maturity + SWOT + positioning
     yield _run("strategy", "Mapping the journey stage and BAM-chart belief shift, splitting channels, running the SWOT, and drafting positioning…")
@@ -143,6 +163,12 @@ def run_agents(brand: str, therapy_area: str, lifecycle_key: str, budget: float 
     )
     yield {"type": "agent", "id": "strategy", "status": "done", "summary": strat_summary, "detail": {"bullets": strat_bullets}}
 
+    # --- the team reacts to Sam's belief shift ---
+    yield _say("inspiration", f"“{m['current_belief']}” → “{m['desired_belief']}” is a creative brief in one line. "
+                              f"Let me find award-winning work that pulled off the same belief change.", to="strategy")
+    yield _say("strategy", f"Lead with {m['messaging_type'].lower()} — and CX maturity reads "
+                           f"**{cx_maturity['level']}**, so don't over-engineer the orchestration.", to="activation")
+
     # 3. Creative Inspiration -- real award-winning pharma campaigns as precedent
     yield _run("inspiration", f"Searching real award-winning pharma campaigns for {therapy_area} creative inspiration…")
     precedents = find_precedent_campaigns(therapy_area, brand, limit=3)
@@ -162,6 +188,18 @@ def run_agents(brand: str, therapy_area: str, lifecycle_key: str, budget: float 
     insp_bullets += [f"🏆 {a['title']} — {a['award']} ({a['festival']} {a['year']}): {a['why_awarded'][:120]}…"
                      for a in award_campaigns[:2]]
     yield {"type": "agent", "id": "inspiration", "status": "done", "summary": insp_summary, "detail": {"bullets": insp_bullets}}
+
+    # --- the team reacts to Chloe's creative finds ---
+    if award_campaigns:
+        top_award = award_campaigns[0]
+        yield _say("inspiration", f"The strongest reference is **{top_award['title']}** "
+                                  f"({top_award['festival']} {top_award['year']}) — it won by making a hard "
+                                  f"conversation easy to have.", to="activation")
+        yield _say("activation", "Then the mix has to fund one hero asset, not spread thin across every channel. "
+                                 "I'll protect budget for it.", to="inspiration")
+    else:
+        yield _say("activation", "No close creative precedent — so the channel plan carries more of the load. "
+                                 "I'll lean on sequencing rather than a single hero idea.", to="inspiration")
 
     # 4. Activation Planning -- channel mix/budget + measurement/KPI + channel selection + execution plan
     yield _run("activation", "Modelling the channel mix, splitting the budget, building the KPI scorecard, and drafting the execution work plan…")
@@ -206,6 +244,19 @@ def run_agents(brand: str, therapy_area: str, lifecycle_key: str, budget: float 
                            f"reusable modules, {lib_counts.get('assets',0)} DAM assets mapped into Phase 2/3")
     yield {"type": "agent", "id": "activation", "status": "done", "summary": act_summary, "detail": {"bullets": act_bullets}}
 
+    # --- the team converges before Cooper writes it up ---
+    if top:
+        yield _say("compose", f"So the spine is **{top[0][0]}** at {top[0][1]}%. I'll build the message flow around "
+                              f"that and let the rest reinforce it.", to="activation")
+    if content_library.get("found") and lib_counts.get("approved_claims"):
+        yield _say("compose", f"I've got **{lib_counts['approved_claims']}** MLR-approved claims with references — "
+                              f"they go straight into the message flow and the content audit.", to="strategy")
+        yield _say("strategy", "Good — every claim in the plan should trace to a source. Nothing unsubstantiated "
+                               "goes in front of an HCP.", to="compose")
+    else:
+        yield _say("compose", "No approved claims library for this brand yet, so the message flow ships as a "
+                              "template for the brand team to fill.", to="strategy")
+
     # 5. Compose -- fills the toolkit questionnaires, collects every 'needs alignment'
     # item into the open-question groups the chat agent asks after the run, and renders
     # the plan as the toolkit-replica document (plan_document.py).
@@ -226,8 +277,12 @@ def run_agents(brand: str, therapy_area: str, lifecycle_key: str, budget: float 
     yield {"type": "plan", "html": plan_html, "markdown": plan_markdown}
     yield {"type": "result", "result": result}
     yield {"type": "narration", "text": (
-        f"Done — the team has finished. Your brand engagement plan for **{brand}** in **{therapy_area}** is on the right. "
-        "Download it as Markdown, or tell me what to adjust (persona, competitors, budget) and I'll send the agents back in."
+        f"Done — the team has finished. Your brand engagement plan for **{brand}** in **{therapy_area}** is on the right, "
+        "and **Stage 1 · Planning & Strategy** is complete.\n\n"
+        "The next three stages of this project are now unlocked in the stepper above the plan: "
+        "**Engagement Orchestration** (triggers, next-best-channel, cadence), **Campaign Operations** "
+        "(parallel execution tracks per channel), and **Reporting & Insights** (the measurement scorecard).\n\n"
+        "Download the plan as Markdown, or tell me what to adjust (persona, competitors, budget) and I'll send the agents back in."
     )}
     yield {"type": "done"}
 
