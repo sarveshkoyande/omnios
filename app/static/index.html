@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Omni OS — Campaign Planning Agent</title>
+<title>Omni OS — Brand Engagement Planning Agent</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0">
 <style>
@@ -563,6 +563,62 @@
   .tk-raci-r { background: #DFF2E1; color: #1B7A34; } .tk-raci-a { background: #FFE6EF; color: var(--tk-magenta); }
   .tk-raci-c { background: #E4F3FC; color: #0B6FA8; } .tk-raci-i { background: #F1F1F1; color: #666; }
 
+  /* Content library — claims/references/components that fill Phase 2 & 3 */
+  .tk-lib-block { margin-top: 14px; border-top: 2px dashed var(--line); padding-top: 12px; }
+  .tk-lib-h { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--indegene-navy); margin: 0 0 3px; }
+  .tk-lib-h .material-symbols-outlined { font-size: 18px; color: var(--green); }
+  .tk-lib-sub { font-size: 11.5px; color: var(--muted); margin: 0 0 9px; }
+  .tk-lib-grid, .tk-cf-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 9px; }
+  .tk-lib-col, .tk-cf-col { background: rgba(11,61,145,0.03); border: 1px solid var(--line); border-radius: 9px; padding: 8px; }
+  .tk-lib-col-head, .tk-cf-head { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .3px;
+    color: var(--indegene-navy); margin-bottom: 7px; display: flex; align-items: center; gap: 5px; }
+  .tk-claim { background: #fff; border: 1px solid var(--line); border-left: 3px solid var(--tk-cyan); border-radius: 6px;
+    padding: 6px 8px; margin-bottom: 6px; }
+  .tk-claim-txt { font-size: 11.5px; line-height: 1.35; color: #1a2330; }
+  .tk-claim-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin-top: 5px; }
+  .tk-claim-none { color: var(--muted); font-size: 11px; border-left-color: #ccc; }
+  .tk-claim-badge { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .3px;
+    padding: 1px 6px; border-radius: 999px; }
+  .tk-claim-approved { background: #DFF2E1; color: #1B7A34; } .tk-claim-approved { border-left-color: var(--green); }
+  .tk-claim.tk-claim-approved, .tk-claim:has(.tk-claim-approved) { border-left-color: var(--green); }
+  .tk-claim:has(.tk-claim-review) { border-left-color: var(--amber); }
+  .tk-claim-review { background: #FFF3E0; color: var(--amber); }
+  .tk-claim-draft { background: #EEF0F3; color: #667; }
+  .tk-claim-mat { font-size: 9.5px; font-family: ui-monospace, monospace; color: #667; background: #f4f6f9;
+    padding: 1px 5px; border-radius: 4px; }
+  .tk-ref-chip { display: inline-flex; align-items: center; gap: 2px; font-size: 9.5px; font-weight: 600;
+    color: #0B6FA8; background: #E4F3FC; padding: 1px 6px; border-radius: 999px; text-decoration: none; }
+  .tk-ref-chip .material-symbols-outlined { font-size: 12px; }
+  .tk-lib-empty { font-size: 12px; color: var(--muted); background: #fff8e6; border: 1px solid #f0e0a8;
+    border-radius: 8px; padding: 9px 11px; margin-top: 12px; }
+  .tk-cf-head .tk-cf-count { margin-left: auto; background: var(--indegene-navy); color: #fff; font-size: 10px;
+    border-radius: 999px; padding: 0 7px; }
+  .tk-cf-asset { display: flex; align-items: center; gap: 6px; background: #fff; border: 1px solid var(--line);
+    border-radius: 6px; padding: 5px 7px; margin-bottom: 5px; }
+  .tk-cf-fmt { font-size: 9px; font-weight: 700; text-transform: uppercase; color: #fff; background: var(--tk-cyan);
+    padding: 1px 5px; border-radius: 4px; }
+  .tk-cf-title { font-size: 11px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tk-cf-badge { font-size: 9px; color: var(--muted); }
+
+  /* Award-winning campaigns (precedent section) */
+  .aw-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 11px; margin-top: 8px; }
+  .aw-card { background: #fff; border: 1px solid var(--line); border-radius: 11px; padding: 11px 12px; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+  .aw-top { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 6px; }
+  .aw-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; color: #fff;
+    padding: 2px 8px; border-radius: 999px; }
+  .aw-badge .material-symbols-outlined { font-size: 13px; }
+  .aw-grand { background: linear-gradient(90deg,#B8860B,#E6B325); } .aw-gold { background: #C79200; }
+  .aw-silver { background: #8A8D93; } .aw-bronze { background: #A6702E; } .aw-finalist { background: #5A6B8C; }
+  .aw-match { font-size: 9.5px; font-weight: 600; color: var(--indegene-navy); background: rgba(11,61,145,.08);
+    padding: 1px 7px; border-radius: 999px; }
+  .aw-title { font-size: 13px; font-weight: 700; color: var(--indegene-navy); line-height: 1.25; }
+  .aw-meta { font-size: 10.5px; color: var(--muted); margin: 2px 0 7px; }
+  .aw-row { display: grid; grid-template-columns: 62px 1fr; gap: 7px; font-size: 11px; line-height: 1.35; margin-bottom: 5px; }
+  .aw-row .aw-k { font-weight: 700; color: var(--faint); text-transform: uppercase; font-size: 9px; letter-spacing: .3px; padding-top: 1px; }
+  .aw-srcs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+  .aw-src { display: inline-flex; align-items: center; gap: 2px; font-size: 9.5px; color: #0B6FA8; text-decoration: none; }
+  .aw-src .material-symbols-outlined { font-size: 12px; }
+
   /* collapsed-by-default agent/turn detail bullets */
   .agent-detail > summary, .turn-detail-wrap > summary { cursor: pointer; font-size: 10.5px; font-weight: 600;
     color: var(--indegene-navy); list-style: none; margin-top: 5px; user-select: none; }
@@ -618,7 +674,7 @@
     <div class="home-scroll">
       <div class="home-hero">
         <h1>Brand Command Center</h1>
-        <p>Live performance read across your client portfolio, grounded in indexed public evidence. Pick a brand to start a campaign plan.</p>
+        <p>Live performance read across your client portfolio, grounded in indexed public evidence. Pick a brand to start a brand engagement plan.</p>
         <div class="home-stats" id="home-stats"></div>
       </div>
       <div id="home-brands"></div>
@@ -676,7 +732,7 @@
           </div>
         </div>
         <div class="card" id="plan-card" style="display:none">
-          <h4><span class="material-symbols-outlined">description</span> Campaign Plan</h4>
+          <h4><span class="material-symbols-outlined">description</span> Brand Engagement Plan</h4>
           <div class="plan-actions">
             <button class="primary" id="download-plan"><span class="material-symbols-outlined">download</span> Download .md</button>
             <button id="copy-plan"><span class="material-symbols-outlined">content_copy</span> Copy</button>
@@ -704,14 +760,15 @@ const state = {
 const AGENT_COLORS = { intel:"#1768D1", strategy:"#5A32E0", inspiration:"#A6720A", activation:"#12866F", compose:"#3454C4" };
 const AGENT_ICONS = { intel:"travel_explore", strategy:"track_changes", inspiration:"emoji_events", activation:"payments", compose:"description" };
 // Named teammates with profile pictures -- source of truth for the human name (first
-// name, sharing its first letter with the role), role, photo avatar, and a monogram
-// fallback (initials + gradient) if the photo can't load. Mirrors orchestrator.py.
+// name, sharing its first letter with the role), role, and a simple self-contained
+// placeholder avatar: a gradient circle with the agent's initials (no external photos --
+// they were blocked/offline; these render everywhere with zero network). Mirrors orchestrator.py.
 const AGENT_PEOPLE = {
-  intel:       { name:"Maya",   role:"Market & Competitive Intelligence", initials:"Ma", c1:"#1768D1", c2:"#4AA6F2", photo:"https://randomuser.me/api/portraits/women/68.jpg" },
-  strategy:    { name:"Sam",    role:"Strategy & Positioning",            initials:"Sa", c1:"#5A32E0", c2:"#9B6BFF", photo:"https://randomuser.me/api/portraits/men/52.jpg" },
-  inspiration: { name:"Chloe",  role:"Creative Inspiration",              initials:"Ch", c1:"#C77700", c2:"#F2A93B", photo:"https://randomuser.me/api/portraits/women/44.jpg" },
-  activation:  { name:"Arjun",  role:"Activation Planning",               initials:"Ar", c1:"#12866F", c2:"#37B89A", photo:"https://randomuser.me/api/portraits/men/75.jpg" },
-  compose:     { name:"Cooper", role:"Campaign Plan Composer",            initials:"Co", c1:"#3454C4", c2:"#6C8BF0", photo:"https://randomuser.me/api/portraits/men/13.jpg" },
+  intel:       { name:"Maya",   role:"Market & Competitive Intelligence", initials:"Ma", c1:"#1768D1", c2:"#4AA6F2" },
+  strategy:    { name:"Sam",    role:"Strategy & Positioning",            initials:"Sa", c1:"#5A32E0", c2:"#9B6BFF" },
+  inspiration: { name:"Chloe",  role:"Creative Inspiration",              initials:"Ch", c1:"#C77700", c2:"#F2A93B" },
+  activation:  { name:"Arjun",  role:"Activation Planning",               initials:"Ar", c1:"#12866F", c2:"#37B89A" },
+  compose:     { name:"Cooper", role:"Brand Engagement Plan Composer",    initials:"Co", c1:"#3454C4", c2:"#6C8BF0" },
 };
 let agentMeta = {};
 let _avatarSeq = 0;
@@ -1086,7 +1143,7 @@ function renderAgentsDoneFromResult(result) {
         `**${kpi.leading_indicators.length}** leading / **${kpi.lagging_indicators.length}** lagging / **${kpi.operational_kpis.length}** operational KPIs set.`,
       [...Object.entries(budgetAlloc).sort((a,b)=>b[1].pct-a[1].pct).map(([ch,v])=>`${ch}: ${v.pct}%` + (v.amount ? ` · $${Number(v.amount).toLocaleString()}` : "")),
        ...kpi.leading_indicators.slice(0,3)]],
-    ["compose", "Campaign plan assembled — all four toolkit phases rendered on the right.",
+    ["compose", "Brand engagement plan assembled — all four toolkit phases rendered on the right.",
       ["Full toolkit-replica plan on the right — sections collapsed, click to expand"]],
   ];
   const ids = roster.map(r => r[0]);
@@ -1153,7 +1210,7 @@ function downloadPlan() {
   const blob = new Blob([state.planMarkdown], { type: "text/markdown" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  const safe = (state.projectName || "campaign-plan").replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+  const safe = (state.projectName || "brand-engagement-plan").replace(/[^a-z0-9]+/gi, "-").toLowerCase();
   a.href = url; a.download = safe + ".md"; a.click();
   URL.revokeObjectURL(url);
 }

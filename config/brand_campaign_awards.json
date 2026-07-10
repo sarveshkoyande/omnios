@@ -1,0 +1,88 @@
+{
+  "note": "Award-winning pharma marketing campaigns relevant to the flagship roster (clients Bayer/Ipsen/Genmab/Novartis/Pfizer/Incyte, their brands and therapy areas), captured from festival results and trade press (Cannes Lions Health/Pharma, Clio Health, PM360 Pharma Choice/Trailblazer, MM+M, Fierce Pharma Marketing). For each: why it won, the core message, and a description of the hero creative/imagery. Roster linkage is by brand, therapy_area or client. This is an editorial research capture for creative-inspiration use, grounded in cited public sources -- validate before external reuse; hero images are described, not redistributed (source pages hold the assets).",
+  "as_of": "2026-07",
+  "awards": [
+    {
+      "id": "novartis-relax-your-tight-end",
+      "title": "Relax Your Tight End (\"Relax, It's a Blood Test\")",
+      "client": "Novartis", "brand": "", "therapy_area": "prostate cancer",
+      "roster_link": "therapy_area", "roster_link_note": "Prostate cancer is the roster therapy area for Pluvicto and (with Bayer) Nubeqa — direct disease-state adjacency for their HCP/patient engagement.",
+      "festival": "Cannes Lions", "award": "Pharma Grand Prix", "tier": "Grand Prix", "year": 2026,
+      "agency": "Fallon, Minneapolis",
+      "why_awarded": "Took a stigmatized private-health topic (prostate cancer screening) and turned it into mainstream Super Bowl entertainment, destigmatizing testing at massive reach. The jury rewarded the cultural bravery and craft of converting a screening-avoidance taboo into a broadly shareable, memorable idea.",
+      "key_message": "Prostate cancer screening starts with a simple blood test — not the invasive procedure men fear. 'Relax your tight end' plays on the NFL position and the literal nudge to stop clenching; 1 in 8 men will be diagnosed in their lifetime, so relax and get the blood test.",
+      "creative_summary": "60-second Super Bowl LX (Feb 8, 2026) spot: current and former NFL tight ends (George Kittle, Colby Parkinson, Rob Gronkowski, Greg Olsen, Tony Gonzalez, Delanie Walker, Vernon Davis) plus survivor/coach Bruce Arians shown 'relaxing' — floating in a pool, doing yoga, hair being brushed, painting a portrait of Arians — set to Enya's 'Only Time'. Unbranded disease-awareness, humor-led destigmatization.",
+      "images_description": "Hero imagery: NFL tight ends in full uniform in absurdly relaxed poses (pool float, yoga mat, spa); portrait-painting vignette of Bruce Arians; on-screen line 'Relax, it's a blood test'.",
+      "source_urls": [
+        "https://www.fiercepharma.com/marketing/novartis-relax-your-tight-end-cancer-campaign-wins-cannes-lions-pharma-grand-prix",
+        "https://www.mmm-online.com/news/novartis-relax-your-tight-end-wins-pharma-grand-prix-at-cannes-lions/",
+        "https://www.novartis.com/us-en/news/media-releases/nfl-greats-and-novartis-tackle-prostate-cancer-myths-super-bowl-lx-relax-its-blood-test",
+        "https://www.adsoftheworld.com/campaigns/relax-your-tight-end"
+      ]
+    },
+    {
+      "id": "novartis-cosentyx-dermatology",
+      "title": "Cosentyx Dermatology Marketing Strategy",
+      "client": "Novartis", "brand": "Cosentyx", "therapy_area": "immune-mediated inflammatory disease",
+      "roster_link": "brand", "roster_link_note": "Cosentyx is a roster brand (Novartis IL-17A franchise).",
+      "festival": "PM360 Trailblazer Awards", "award": "Trailblazer finalist", "tier": "Finalist", "year": 2024,
+      "agency": "Neon (IPG Health) and Rise & Run (IPG Health)",
+      "why_awarded": "Recognized for a data-driven dermatology marketing strategy defending and extending an established IL-17A brand across multiple indications — a model for mature-brand omnichannel lifecycle management.",
+      "key_message": "Sustained IL-17A leadership and speed-of-response messaging across plaque psoriasis, psoriatic arthritis, axial spondyloarthritis and hidradenitis suppurativa.",
+      "creative_summary": "Integrated HCP + patient omnichannel dermatology program spanning multiple indications; agency-led strategy and creative for a mature multi-indication franchise.",
+      "images_description": "Branded Cosentyx dermatology creative across HCP and DTC channels (specific hero assets held on agency/award pages).",
+      "source_urls": [
+        "https://pm360online.com/pm360-past-award-winners/",
+        "https://www.eversanaintouch.com/blog/media_posts/2024-pm360-pharma-choice-awards/"
+      ]
+    },
+    {
+      "id": "bayer-mirena-seeing-red",
+      "title": "Mirena \"Seeing Red\"",
+      "client": "Bayer", "brand": "", "therapy_area": "women's health (contraception)",
+      "roster_link": "client", "roster_link_note": "Bayer is a roster client; Mirena sits in Bayer's women's-health portfolio (adjacent to the roster's Lynkuet menopause franchise as a women's-health engagement exemplar).",
+      "festival": "PM360 Trailblazer Awards / MM+M Awards", "award": "Trailblazer finalist; MM+M 2024 shortlist", "tier": "Finalist", "year": 2024,
+      "agency": "Rise & Run (IPG Health)",
+      "why_awarded": "Recognized for a bold, category-challenging direct-to-consumer creative that broke women's-health advertising conventions to drive candid conversation.",
+      "key_message": "Destigmatize and normalize an open conversation about menstruation and contraceptive choice — a confident, unapologetic DTC voice.",
+      "creative_summary": "DTC campaign using a striking 'red' visual language to confront period taboos and prompt provider conversations about the Mirena IUD.",
+      "images_description": "Bold red-forward art direction across DTC video and OOH (hero assets on the award/agency pages).",
+      "source_urls": [
+        "https://www.mmm-online.com/home/channel/mmm-unveils-its-2024-awards-shortlist/",
+        "https://pm360online.com/pm360-past-award-winners/"
+      ]
+    },
+    {
+      "id": "cannes-2025-pharma-silver-cohort",
+      "title": "Cannes Lions 2025 Pharma Lions — roster-client medaling cohort",
+      "client": "Bayer", "brand": "", "therapy_area": "",
+      "roster_link": "client", "roster_link_note": "At Cannes Lions 2025, roster clients Bayer and Novartis medaled (Bayer silver; Novartis US bronze + Argentina bronze), alongside Takeda, Lilly and Biogen silvers — useful proof these clients compete for and win creative honors.",
+      "festival": "Cannes Lions", "award": "Silver / Bronze (multiple)", "tier": "Silver", "year": 2025,
+      "agency": "various",
+      "why_awarded": "Industry context: the 2025 Pharma Lions saw record drugmaker participation; Bayer took a silver and Novartis took two bronzes, evidence roster clients are active, awarded creators (even in a year the top Grand Prix went to Viatris' 'Make Love Last').",
+      "key_message": "(Cohort/context entry — multiple campaigns; see sources for individual pieces.)",
+      "creative_summary": "Multiple award-winning executions from roster clients and peers; recorded here as competitive/creative-benchmark context for the roster.",
+      "images_description": "Varies by campaign (see Cannes Lions winners gallery).",
+      "source_urls": [
+        "https://www.fiercepharma.com/no-top-grand-prix-winner-again-for-pharma-at-cannes-lions-health-but-record-number-awards-anyway",
+        "https://www.contagious.com/en/article/news-and-views/cannes-lions-2025-pharma-winners-371882a66cc84d218139a5e9f25fd6a3"
+      ]
+    },
+    {
+      "id": "clio-health-2025-context",
+      "title": "Clio Health 2025 — therapy-area creative benchmarks",
+      "client": "", "brand": "", "therapy_area": "",
+      "roster_link": "industry", "roster_link_note": "Not a roster brand, but the year's most-awarded health creative (IPG Health/Area 23 Agency of the Year; Klick independent agency of the year) sets the creative bar the roster's agencies compete against.",
+      "festival": "Clio Health", "award": "Grand Clio (multiple)", "tier": "Grand", "year": 2025,
+      "agency": "Area 23 (IPG Health); Klick Health; VML",
+      "why_awarded": "Benchmark context: Area 23 swept Agency of the Year with data-driven and craft-led health work ('In Transit', 'Magnetic Stories'); useful as a creative-quality reference when briefing roster campaigns.",
+      "key_message": "(Context/benchmark entry — see sources for individual Grand Clio campaigns.)",
+      "creative_summary": "Award-of-the-year health campaigns emphasizing creative use of data and craft; a reference set for raising roster creative ambition.",
+      "images_description": "Varies by campaign (see Clio Health winners gallery).",
+      "source_urls": [
+        "https://www.mmm-online.com/news/see-who-won-at-the-2025-clio-health-awards/",
+        "https://clios.com/health/"
+      ]
+    }
+  ]
+}

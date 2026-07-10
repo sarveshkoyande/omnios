@@ -1,4 +1,12 @@
 {
+  "clients": [
+    "Bayer",
+    "Ipsen",
+    "Genmab",
+    "Novartis",
+    "Pfizer",
+    "Incyte"
+  ],
   "drugs": [
     "Abrysvo",
     "Bylvay",
@@ -68,7 +76,20 @@
     "respiratory syncytial virus",
     "transthyretin amyloid cardiomyopathy",
     "urothelial cancer",
-    "wet age-related macular degeneration"
+    "wet age-related macular degeneration",
+    "retinal disease (ophthalmology)",
+    "solid tumor oncology",
+    "movement disorders & aesthetics",
+    "B-cell lymphoma",
+    "immune-mediated inflammatory disease",
+    "complement-mediated diseases",
+    "ATTR amyloidosis",
+    "myeloproliferative neoplasms & GVHD",
+    "medical dermatology (topical)",
+    "FGFR-driven cancers",
+    "hypercholesterolemia / cardiovascular",
+    "menopausal vasomotor symptoms",
+    "chronic graft-versus-host disease"
   ],
-  "note": "Edit freely -- these seed the scrapers below. Drug names come from the public Ipsen/BioMarin product lines referenced in the vault; therapy areas are their public indications. Add your own brands/indications to broaden the knowledge base."
+  "note": "Edit freely -- these seed the scrapers and ground the chat LLM. 'clients' are the six flagship pharma clients whose brands populate the dashboard (config/client_brands.json is the authoritative brand->therapy-area->indication roster). 'drugs' includes every roster brand plus some legacy seeds; 'therapy_areas' covers both indication-level terms (for scraping) and the broader dashboard therapy-area labels. Add your own brands/indications to broaden the knowledge base."
 }

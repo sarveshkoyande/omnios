@@ -281,6 +281,38 @@ CREATE TABLE IF NOT EXISTS brand_market_intel (
 );
 CREATE INDEX IF NOT EXISTS ix_market_intel_stage ON brand_market_intel(lifecycle_stage);
 
+-- ------------------------------------------------------------------ award campaigns --
+
+-- Award-winning marketing campaigns relevant to the roster (loaded from
+-- config/brand_campaign_awards.json by strategy/awards_store.py). Captures why a campaign
+-- won, its core message, and a description of the hero creative -- creative-inspiration
+-- reference for the Brand Engagement Plan's precedent section. Linked to the roster by
+-- brand, therapy_area or client. List-valued source_urls stored as JSON text.
+CREATE TABLE IF NOT EXISTS campaign_award (
+    id                INTEGER PRIMARY KEY,
+    award_id          TEXT NOT NULL UNIQUE,       -- stable slug from the JSON
+    title             TEXT NOT NULL,
+    client            TEXT,
+    brand             TEXT,
+    therapy_area      TEXT,
+    roster_link       TEXT,                        -- brand | therapy_area | client | industry
+    roster_link_note  TEXT,
+    festival          TEXT,
+    award             TEXT,
+    tier              TEXT,                         -- Grand Prix | Grand | Gold | Silver | Bronze | Finalist
+    year              INTEGER,
+    agency            TEXT,
+    why_awarded       TEXT,
+    key_message       TEXT,
+    creative_summary  TEXT,
+    images_description TEXT,
+    source_urls_json  TEXT,
+    updated_at        TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_award_ta    ON campaign_award(therapy_area);
+CREATE INDEX IF NOT EXISTS ix_award_brand ON campaign_award(brand);
+CREATE INDEX IF NOT EXISTS ix_award_client ON campaign_award(client);
+
 -- ------------------------------------------------------------------ convenience view --
 
 -- Unsubstantiated approved claims (an approved claim with no linked reference) — the MLR

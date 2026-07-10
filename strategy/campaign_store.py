@@ -255,6 +255,95 @@ def library_stats() -> dict:
         conn.close()
 
 
+def content_library_for(brand: str, indication: str = "") -> dict:
+    """The reusable content library for a brand (optionally narrowed to an indication):
+    claims (with substantiating references), reusable modules, and DAM assets. This is what
+    the Brand Engagement Plan's Phase-2/3 sections render -- real claims/references/components
+    extracted from the library, not placeholders. Brand-level claims (indication_id NULL) are
+    always included; indication-specific claims are included when they match `indication`.
+    Returns empty lists when the brand isn't in the library yet (plan then falls back to its
+    template)."""
+    init_db()
+    conn = _conn()
+    try:
+        brow = conn.execute("SELECT id FROM brand WHERE name=?", (brand,)).fetchone()
+        if not brow:
+            return {"brand": brand, "indication": indication, "found": False,
+                    "claims": [], "modules": [], "assets": [], "counts": {}}
+        bid = brow["id"]
+        iid = None
+        if indication:
+            irow = conn.execute("SELECT id FROM indication WHERE brand_id=? AND label=?", (bid, indication)).fetchone()
+            iid = irow["id"] if irow else None
+
+        # Claims: brand-level (NULL indication) + the selected indication's claims.
+        if iid is not None:
+            claim_rows = conn.execute(
+                "SELECT * FROM claim WHERE brand_id=? AND (indication_id IS NULL OR indication_id=?) "
+                "ORDER BY CASE claim_status WHEN 'approved' THEN 0 WHEN 'in_review' THEN 1 ELSE 2 END, id",
+                (bid, iid)).fetchall()
+        else:
+            claim_rows = conn.execute(
+                "SELECT * FROM claim WHERE brand_id=? "
+                "ORDER BY CASE claim_status WHEN 'approved' THEN 0 WHEN 'in_review' THEN 1 ELSE 2 END, id",
+                (bid,)).fetchall()
+        claims = []
+        for c in claim_rows:
+            refs = conn.execute(
+                "SELECT rs.source_type, rs.citation, rs.url, rs.external_id, cr.locator "
+                "FROM claim_reference cr JOIN ref_source rs ON rs.id=cr.ref_id WHERE cr.claim_id=?",
+                (c["id"],)).fetchall()
+            claims.append({
+                "id": c["id"], "text": c["text"], "claim_type": c["claim_type"],
+                "status": c["claim_status"], "material_number": c["material_number"],
+                "references": [dict(r) for r in refs],
+            })
+
+        # Modules (brand-level + indication) with their claim texts.
+        if iid is not None:
+            mod_rows = conn.execute(
+                "SELECT * FROM content_module WHERE brand_id=? AND (indication_id IS NULL OR indication_id=?) ORDER BY id",
+                (bid, iid)).fetchall()
+        else:
+            mod_rows = conn.execute("SELECT * FROM content_module WHERE brand_id=? ORDER BY id", (bid,)).fetchall()
+        modules = []
+        for m in mod_rows:
+            mc = conn.execute(
+                "SELECT c.text FROM module_claim mc JOIN claim c ON c.id=mc.claim_id WHERE mc.module_id=?",
+                (m["id"],)).fetchall()
+            modules.append({"id": m["id"], "name": m["name"], "module_type": m["module_type"],
+                            "status": m["status"], "material_number": m["material_number"],
+                            "business_rules": m["business_rules"], "claims": [r["text"] for r in mc]})
+
+        # DAM assets (indication-scoped when an indication is given, else all for the brand).
+        if iid is not None:
+            asset_rows = conn.execute(
+                "SELECT * FROM content_asset WHERE brand_id=? AND (indication_id IS NULL OR indication_id=?) ORDER BY id",
+                (bid, iid)).fetchall()
+        else:
+            asset_rows = conn.execute("SELECT * FROM content_asset WHERE brand_id=? ORDER BY id", (bid,)).fetchall()
+        assets = []
+        for a in asset_rows:
+            mods = conn.execute(
+                "SELECT cm.name FROM asset_module am JOIN content_module cm ON cm.id=am.module_id WHERE am.asset_id=?",
+                (a["id"],)).fetchall()
+            assets.append({"id": a["id"], "title": a["title"], "file_name": a["file_name"],
+                           "asset_format": a["asset_format"], "branded": bool(a["branded"]),
+                           "target_group": a["target_group"], "description": a["description"],
+                           "url": a["url"], "id_code": a["id_code"], "blob_key": a["blob_key"],
+                           "modules": [r["name"] for r in mods]})
+
+        return {
+            "brand": brand, "indication": indication, "found": True,
+            "claims": claims, "modules": modules, "assets": assets,
+            "counts": {"claims": len(claims), "approved_claims": sum(1 for c in claims if c["status"] == "approved"),
+                       "modules": len(modules), "assets": len(assets),
+                       "references": len({r["external_id"] or r["citation"] for c in claims for r in c["references"]})},
+        }
+    finally:
+        conn.close()
+
+
 def campaign_counts_by_brand() -> dict[str, int]:
     init_db()
     conn = _conn()

@@ -38,7 +38,7 @@ from strategy import feed as feed_mod  # noqa: E402
 from strategy import campaign_store  # noqa: E402
 from strategy import brand_memory  # noqa: E402
 
-app = FastAPI(title="Omni OS Campaign Planning Agent")
+app = FastAPI(title="Omni OS Brand Engagement Planning Agent")
 
 
 def _msg(role: str, text: str, extra: dict | None = None) -> dict:
