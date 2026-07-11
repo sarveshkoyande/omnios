@@ -33,7 +33,6 @@ from strategy.conversation import (new_state, opening_message, interpret_message
                                    get_llm_status, ask_clarify_group, clarify_payload)
 from strategy import orchestrator  # noqa: E402
 from strategy.orchestrator import run_agents  # noqa: E402
-from strategy.plan_document import compose_plan  # noqa: E402  (re-renders the plan after a persona-driven adjustment)
 from strategy.document_intake import extract_text  # noqa: E402
 from strategy import dashboard as dashboard_mod  # noqa: E402
 from strategy import feed as feed_mod  # noqa: E402
@@ -43,6 +42,7 @@ from strategy import blob_store  # noqa: E402  (serves real label images to the 
 from strategy import bootstrap  # noqa: E402  (first-boot seeding of an empty data disk)
 from strategy import personas as personas_mod  # noqa: E402  (synthetic persona layer)
 from strategy import persona_review as persona_review_mod  # noqa: E402
+from strategy import plan_export  # noqa: E402  (Word/PDF export of the composed plan)
 
 app = FastAPI(title="Omni OS Brand Engagement Planning Agent")
 
@@ -62,6 +62,27 @@ def _msg(role: str, text: str, extra: dict | None = None) -> dict:
     if extra:
         m.update(extra)
     return m
+
+
+def _safe_filename(name: str) -> str:
+    import re as _re
+    return _re.sub(r"[^a-z0-9]+", "-", (name or "brand-engagement-plan").lower()).strip("-") or "brand-engagement-plan"
+
+
+def _freeze_project_state(state: dict) -> None:
+    """'Close updates': lock the plan against further automatic adjustment (persona apply /
+    per-section clarify updates), and force-close any clarify Q&A still in progress -- every
+    remaining group is treated as answered so it can never resurface, even on a future full
+    rerun of the agents."""
+    state["plan_frozen"] = True
+    groups = state.get("open_questions") or []
+    idx = state.get("clarify_idx", 0)
+    if idx < len(groups):
+        resolved = set(state.get("clarify_resolved_ids") or [])
+        resolved.update(g["id"] for g in groups[idx:])
+        state["clarify_resolved_ids"] = sorted(resolved)
+    state["clarify_idx"] = len(groups)
+    state["awaiting_clarify"] = None
 
 
 @app.get("/api/home")
@@ -177,6 +198,8 @@ def api_persona_apply(req: PersonaApplyRequest):
     if not proj:
         raise HTTPException(404, "project not found")
     state = proj["state"]
+    if state.get("plan_frozen"):
+        raise HTTPException(400, "updates are closed for this plan -- it's locked in")
     ctx = state.get("_plan_ctx")
     if not ctx:
         raise HTTPException(400, "this plan was generated before persona adjustments were "
@@ -194,8 +217,7 @@ def api_persona_apply(req: PersonaApplyRequest):
         b: {"pct": pct, "amount": round(total_budget * pct / 100, 2) if total_budget else None}
         for b, pct in adj["new_mix"].items()
     }
-    result = orchestrator._assemble_result(ctx)
-    plan_md, plan_html = compose_plan(ctx)
+    result, plan_md, plan_html = orchestrator.recompose_plan(ctx)
 
     log_entry = {"at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "persona_ids": ids,
                  "persona_names": [p["name"] for p in chosen], "changes": adj["changes"]}
@@ -203,6 +225,20 @@ def api_persona_apply(req: PersonaApplyRequest):
     state["_plan_ctx"] = ctx
     pstore.save_project(req.project_id, state=state, result=result, plan_markdown=plan_md, plan_html=plan_html)
     return {"changes": adj["changes"], "new_mix": adj["new_mix"], "plan_html": plan_html, "plan_markdown": plan_md}
+
+
+@app.post("/api/projects/{pid}/close-updates")
+def api_close_updates(pid: str):
+    """Lock the plan against further automatic adjustment (persona apply / per-section
+    clarify updates) and force-close any clarify Q&A still in progress. Same effect as
+    typing 'close updates' in chat -- exposed as a button too."""
+    proj = pstore.get_project(pid)
+    if not proj:
+        raise HTTPException(404, "project not found")
+    state = proj["state"]
+    _freeze_project_state(state)
+    pstore.save_project(pid, state=state)
+    return {"ok": True, "plan_frozen": True}
 
 
 # ------------------------------------------------------------------ #
@@ -244,6 +280,29 @@ def api_delete_project(pid: str):
     return {"ok": True}
 
 
+@app.get("/api/projects/{pid}/export.docx")
+def api_export_docx(pid: str):
+    proj = pstore.get_project(pid)
+    if not proj or not proj.get("plan_markdown"):
+        raise HTTPException(404, "no plan to export yet")
+    data = plan_export.markdown_to_docx(proj["plan_markdown"], proj["name"])
+    filename = _safe_filename(proj["name"]) + ".docx"
+    return Response(content=data,
+                    media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    headers={"Content-Disposition": f'attachment; filename="{filename}"'})
+
+
+@app.get("/api/projects/{pid}/export.pdf")
+def api_export_pdf(pid: str):
+    proj = pstore.get_project(pid)
+    if not proj or not proj.get("plan_markdown"):
+        raise HTTPException(404, "no plan to export yet")
+    data = plan_export.markdown_to_pdf(proj["plan_markdown"], proj["name"])
+    filename = _safe_filename(proj["name"]) + ".pdf"
+    return Response(content=data, media_type="application/pdf",
+                    headers={"Content-Disposition": f'attachment; filename="{filename}"'})
+
+
 @app.post("/api/chat")
 def api_chat(req: ChatRequest):
     proj = pstore.get_project(req.project_id)
@@ -255,10 +314,14 @@ def api_chat(req: ChatRequest):
 
     # Snapshot whether the post-plan clarify Q&A was in progress BEFORE this turn, so we can
     # tell the client the exact turn it finishes on -- that's the moment the synthetic-persona
-    # offer should appear (never before the brand team's open questions are captured).
+    # offer should appear (never before the brand team's open questions are captured). Also
+    # snapshot which group ids were already resolved, and an id->title lookup, so we can tell
+    # the client exactly which section(s) this turn just folded into the plan.
     prev_groups = state.get("open_questions") or []
     prev_idx = state.get("clarify_idx", 0)
     was_clarifying = bool(prev_groups) and prev_idx < len(prev_groups)
+    prev_resolved = set(state.get("clarify_resolved_ids") or [])
+    id_to_title = {g["id"]: g["title"] for g in prev_groups}
 
     state, reply, action = interpret_message(req.message, state)
     clarify = clarify_payload(state)  # non-None only while the post-plan clarify Q&A is active
@@ -269,15 +332,39 @@ def api_chat(req: ChatRequest):
     now_clarifying = bool(now_groups) and now_idx < len(now_groups)
     clarify_just_completed = was_clarifying and not now_clarifying
 
+    # 'update_plan': fold this clarify answer (or skip / skip-all) into the plan immediately --
+    # no waiting for the whole Q&A to finish and no manual 'regenerate'. Recomposes from the
+    # run's snapshotted ctx (never re-runs the agents); a project created before ctx snapshots
+    # existed just skips this silently (plan_updated stays False).
+    plan_updated = False
+    plan_html = plan_markdown = None
+    updated_sections: list[str] = []
+    result_for_save = None
+    if action == "update_plan":
+        newly_resolved = set(state.get("clarify_resolved_ids") or []) - prev_resolved
+        updated_sections = [id_to_title.get(gid, gid) for gid in newly_resolved]
+        ctx = state.get("_plan_ctx")
+        if ctx:
+            ctx = orchestrator.refresh_after_clarify(
+                ctx, state["slots"].get("maturity_notes", ""), set(state.get("clarify_resolved_ids") or []))
+            result_for_save, plan_markdown, plan_html = orchestrator.recompose_plan(ctx)
+            state["_plan_ctx"] = ctx
+            plan_updated = True
+    elif action == "freeze":
+        _freeze_project_state(state)
+
     # Auto-name the project once brand + therapy area are known.
     name = proj["name"]
     slots = state["slots"]
     if name in ("Untitled plan", "New plan") and slots["brand"] and slots["therapy_area"]:
         name = f"{slots['brand']} · {slots.get('indication') or slots['therapy_area']}"
 
-    pstore.save_project(req.project_id, name=name, state=state, messages=messages)
+    pstore.save_project(req.project_id, name=name, state=state, messages=messages,
+                        result=result_for_save, plan_markdown=plan_markdown, plan_html=plan_html)
     return {"reply": reply, "slots": slots, "phase": state["phase"], "action": action, "name": name,
-            "llm_status": get_llm_status(), "clarify": clarify, "clarify_just_completed": clarify_just_completed}
+            "llm_status": get_llm_status(), "clarify": clarify, "clarify_just_completed": clarify_just_completed,
+            "plan_updated": plan_updated, "plan_html": plan_html, "plan_markdown": plan_markdown,
+            "updated_sections": updated_sections, "plan_frozen": bool(state.get("plan_frozen"))}
 
 
 @app.post("/api/upload")
@@ -345,8 +432,11 @@ def api_run_stream(project_id: str):
                 if ev["type"] == "done" and result and result.get("open_questions"):
                     # Seed the post-plan clarify phase: everything the toolkit templates
                     # flagged as 'needs alignment' becomes a grouped Q&A the agent leads
-                    # in chat -- streamed before 'done' so it appears live.
-                    state["open_questions"] = result["open_questions"]
+                    # in chat -- streamed before 'done' so it appears live. Groups the user
+                    # already answered in an earlier clarify session on this project (by the
+                    # same stable group id) are never reseeded, even on a fresh full rerun.
+                    already_resolved = set(state.get("clarify_resolved_ids") or [])
+                    state["open_questions"] = [g for g in result["open_questions"] if g["id"] not in already_resolved]
                     state["clarify_idx"] = 0
                     first_ask = ask_clarify_group(state)
                     payload = clarify_payload(state)

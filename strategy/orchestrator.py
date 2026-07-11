@@ -386,3 +386,36 @@ def _assemble_result(ctx: dict) -> dict:
     }
 
 
+def recompose_plan(ctx: dict) -> tuple[dict, str, str]:
+    """Re-render the plan from a (possibly patched) ctx snapshot, without re-running any
+    agent. Used both by the persona 'apply feedback to plan' action (which patches
+    budget_allocation) and by refresh_after_clarify() below (which patches cx_maturity/
+    open_questions) -- any future ctx-patching action should reuse this rather than calling
+    _assemble_result/compose_plan directly, so the two always stay in sync."""
+    result = _assemble_result(ctx)
+    plan_markdown, plan_html = compose_plan(ctx)
+    return result, plan_markdown, plan_html
+
+
+def refresh_after_clarify(ctx: dict, maturity_notes: str, resolved_group_ids: set[str]) -> dict:
+    """Re-derive cx_maturity and the plan's own open_questions list from the latest
+    maturity_notes (which grows as the user answers the post-plan clarify Q&A), then drop any
+    group the user has already been asked about in THIS conversation -- keyed by the same
+    stable group ids open_questions.build_open_questions() always uses ('objectives',
+    'segment', 'database', ...).
+
+    This is deliberately id-based rather than content-based: the feasibility checklist's
+    auto-answer logic is a simple keyword scan (bam.has_maturity_signal) and will often still
+    read a specific free-text answer as 'not yet captured'. Re-asking a question the user
+    already answered -- just because the engine couldn't structurally parse the answer -- is
+    the wrong trade; once a group has been asked, it is never asked again for this project.
+    """
+    ctx = dict(ctx)  # shallow copy -- callers keep their own reference to the original
+    ctx["maturity_notes"] = maturity_notes
+    new_cx_maturity = assess_cx_maturity(maturity_notes, ctx["strategy"]["channel_mix_pct"])
+    raw_open = build_open_questions(new_cx_maturity["feasibility_checklist"], ctx["cx_questionnaire"], ctx["tcg"])
+    ctx["cx_maturity"] = new_cx_maturity
+    ctx["open_questions"] = [g for g in raw_open if g["id"] not in resolved_group_ids]
+    return ctx
+
+
