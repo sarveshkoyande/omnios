@@ -226,6 +226,13 @@
     backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); }
   .card h4 { margin: 0 0 10px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--faint); display: flex; align-items: center; gap: 8px; }
   .card h4 .material-symbols-outlined { font-size: 17px; color: var(--indegene-navy); }
+  /* Brief / Agent team auto-collapse once the plan exists (they matter most while the brief is
+     being captured; the plan document is what matters after) -- click the header to reopen. */
+  .card h4.collapsible { cursor: pointer; user-select: none; }
+  .card h4.collapsible .card-chevron { margin-left: auto; color: var(--faint); font-size: 18px; }
+  .card.collapsed { margin-bottom: 10px; }
+  .card.collapsed h4 { margin-bottom: 0; }
+  .card.collapsed > *:not(h4) { display: none; }
   .brief-row { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
   .brief-row:last-child { border-bottom: none; }
   .brief-row .k { color: var(--muted); flex: 0 0 auto; }
@@ -1210,13 +1217,15 @@
         <div class="stage-pane show" id="stage-1">
           <div class="rr-grid">
             <div class="card" id="brief-card">
-              <h4><span class="material-symbols-outlined">assignment</span> Brief</h4>
+              <h4 class="collapsible" id="brief-card-head"><span class="material-symbols-outlined">assignment</span> Brief
+                <span class="material-symbols-outlined card-chevron" id="brief-chevron">expand_less</span></h4>
               <div id="brief-body">
                 <div class="muted-card">The brief fills in here as you talk to the agent.</div>
               </div>
             </div>
             <div class="card" id="agents-card">
-              <h4><span class="material-symbols-outlined">smart_toy</span> Agent team</h4>
+              <h4 class="collapsible" id="agents-card-head"><span class="material-symbols-outlined">smart_toy</span> Agent team
+                <span class="material-symbols-outlined card-chevron" id="agents-chevron">expand_less</span></h4>
               <div id="agents-body"><div class="muted-card">The agent team appears here and works in real time once the brief is complete.</div></div>
             </div>
           </div>
@@ -1415,8 +1424,8 @@ async function openProject(id) {
   if (proj.result) { renderAgentsDoneFromResult(proj.result); }
   else { $("agents-body").innerHTML = `<div class="muted-card">Agents appear here and work in real time once the brief is complete.</div>`; }
 
-  if (proj.plan_html) { showPlan(proj.plan_html, proj.plan_markdown); }
-  else { $("plan-card").style.display = "none"; }
+  if (proj.plan_html) { showPlan(proj.plan_html, proj.plan_markdown); collapseBriefAndAgents(); }
+  else { $("plan-card").style.display = "none"; expandBriefAndAgents(); }
 
   renderStepper();
   setStage(1);
@@ -1481,16 +1490,17 @@ async function sendMessage() {
     removeTyping();
     state.slots = data.slots;
     if (data.name && data.name !== state.projectName) { state.projectName = data.name; $("chat-title").textContent = data.name; }
-    addMessage("agent", data.reply, false, { clarify: data.clarify }); scrollChat();
     updateLlmStatus(data.llm_status, true);
     renderBrief();
     // Each clarify answer folds straight into the plan -- refresh the pane in place and show
-    // a small confirmation card (mirrors the persona apply-feedback card) naming the section.
+    // a small confirmation card (mirrors the persona apply-feedback card) naming the section,
+    // BEFORE the next question card, so the sequence reads "here's what changed" -> "here's
+    // what's next" rather than the other way around.
     if (data.plan_updated && data.plan_html) {
       showPlan(data.plan_html, data.plan_markdown);
       $("messages").appendChild(planUpdateCard(data.updated_sections || []));
-      scrollChat();
     }
+    addMessage("agent", data.reply, false, { clarify: data.clarify }); scrollChat();
     if (data.action === "freeze" || data.plan_frozen) { setPlanFrozenUI(true); }
     await loadProjects();
     if (data.action === "run") { startRun(); }
@@ -1541,6 +1551,7 @@ function startRun() {
   // reset workspace
   $("plan-card").style.display = "none";
   $("agents-body").innerHTML = "";
+  expandBriefAndAgents();   // the agent team is about to actively work -- show it live again
   state.personaReviews = null; state.personaOfferShown = false;  // a fresh run invalidates old persona reviews
   state.busy = true; $("send").disabled = true;
   const es = new EventSource("/api/run-stream?project_id=" + encodeURIComponent(state.projectId));
@@ -1839,7 +1850,7 @@ function handleRunEvent(ev) {
     case "narration": enqueueChat({ kind: "fn", run: () => { addMessage("agent", ev.text); scrollChat(); } }); break;
     case "banter": enqueueChat({ kind: "banter", id: ev.id, to: ev.to, text: ev.text }); break;
     case "clarify": enqueueChat({ kind: "fn", run: () => { addMessage("agent", ev.text, false, { clarify: ev.clarify }); scrollChat(); } }); break;
-    case "plan": showPlan(ev.html, ev.markdown); break;
+    case "plan": showPlan(ev.html, ev.markdown); collapseBriefAndAgents(); break;
     case "result": state.result = ev.result; renderStepper(); break;
     case "error": enqueueChat({ kind: "fn", run: () => addMessage("agent", "⚠ " + ev.message) }); break;
   }
@@ -2038,6 +2049,26 @@ function renderBrief() {
     html += `<div class="brief-row"><span class="k">Competitors</span>${chips(inf.competitors)}</div>`;
   }
   $("brief-body").innerHTML = html;
+}
+
+// ---------- Brief / Agent team collapse (auto-collapsed once the plan exists) ----------
+function setCardCollapsed(cardId, chevronId, collapsed) {
+  const card = $(cardId), chevron = $(chevronId);
+  if (!card) return;
+  card.classList.toggle("collapsed", collapsed);
+  if (chevron) chevron.textContent = collapsed ? "expand_more" : "expand_less";
+}
+function toggleCardCollapse(cardId, chevronId) {
+  const card = $(cardId);
+  setCardCollapsed(cardId, chevronId, !card.classList.contains("collapsed"));
+}
+function collapseBriefAndAgents() {
+  setCardCollapsed("brief-card", "brief-chevron", true);
+  setCardCollapsed("agents-card", "agents-chevron", true);
+}
+function expandBriefAndAgents() {
+  setCardCollapsed("brief-card", "brief-chevron", false);
+  setCardCollapsed("agents-card", "agents-chevron", false);
 }
 
 // ---------- plan ----------
@@ -2784,6 +2815,8 @@ $("download-docx").onclick = () => downloadExport("docx");
 $("download-pdf").onclick = () => downloadExport("pdf");
 $("copy-plan").onclick = copyPlan;
 $("close-updates-btn").onclick = closeUpdates;
+$("brief-card-head").onclick = () => toggleCardCollapse("brief-card", "brief-chevron");
+$("agents-card-head").onclick = () => toggleCardCollapse("agents-card", "agents-chevron");
 $("nav-home").onclick = showHome;
 $("nav-workspace").onclick = showWorkspace;
 $("nav-library").onclick = showLibrary;
