@@ -395,12 +395,23 @@
   .composer .mic .material-symbols-outlined { font-size: 20px; }
 
   /* ---- plan ---- */
-  .plan-actions { display: flex; gap: 8px; margin-bottom: 12px; }
+  .plan-actions { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
   .plan-actions button { display: flex; align-items: center; justify-content: center; gap: 6px; flex: 1;
-    background: rgba(255,255,255,0.5); border: 1px solid var(--line); color: var(--text); border-radius: 8px; padding: 8px; cursor: pointer; font-size: 12.5px; font-weight: 600; }
+    min-width: 96px; background: rgba(255,255,255,0.5); border: 1px solid var(--line); color: var(--text);
+    border-radius: 8px; padding: 8px; cursor: pointer; font-size: 12.5px; font-weight: 600; }
   .plan-actions button .material-symbols-outlined { font-size: 17px; }
-  .plan-actions button:hover { background: rgba(255,255,255,0.8); }
+  /* :not(.primary) so this generic hover never overrides the primary button's own background --
+     that bug made the primary (navy bg / white text) button's text invisible on hover, since
+     the near-white hover background here has higher specificity than .primary's navy. */
+  .plan-actions button:not(.primary):hover { background: rgba(255,255,255,0.8); }
   .plan-actions .primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .plan-actions .primary:hover { filter: brightness(1.12); }
+  .plan-actions .danger-ghost { color: var(--muted); }
+  .plan-actions .danger-ghost:hover { background: rgba(217,75,75,0.08); color: #a83232; border-color: rgba(217,75,75,0.35); }
+  .plan-frozen-badge { display: flex; align-items: center; justify-content: center; gap: 6px; flex: 1;
+    min-width: 96px; background: rgba(11,61,145,0.07); border: 1px dashed var(--line); color: var(--indegene-navy);
+    border-radius: 8px; padding: 8px; font-size: 12px; font-weight: 600; }
+  .plan-frozen-badge .material-symbols-outlined { font-size: 16px; }
   .plan-doc-body { font-size: 12.5px; line-height: 1.55; }
   .plan-doc-body h1 { font-size: 16px; margin: 0 0 4px; }
   .plan-doc-body h2 { font-size: 13.5px; margin: 16px 0 6px; padding-top: 10px; border-top: 1px solid var(--line); color: var(--indegene-navy); }
@@ -1211,9 +1222,12 @@
           </div>
           <div class="card" id="plan-card" style="display:none">
             <h4><span class="material-symbols-outlined">description</span> Brand Engagement Plan</h4>
-            <div class="plan-actions">
+            <div class="plan-actions" id="plan-actions">
               <button class="primary" id="download-plan"><span class="material-symbols-outlined">download</span> Download .md</button>
+              <button id="download-docx"><span class="material-symbols-outlined">description</span> Word</button>
+              <button id="download-pdf"><span class="material-symbols-outlined">picture_as_pdf</span> PDF</button>
               <button id="copy-plan"><span class="material-symbols-outlined">content_copy</span> Copy</button>
+              <button class="danger-ghost" id="close-updates-btn"><span class="material-symbols-outlined">lock</span> Close updates</button>
             </div>
             <div class="plan-doc-body" id="plan-body"></div>
           </div>
@@ -1237,6 +1251,7 @@ const state = {
   stage: 1,            // active workflow stage (1-4)
   es: null,
   busy: false,
+  planFrozen: false,   // 'close updates' locks the plan against further auto-adjustment
 };
 
 // The 4-stage project workflow. Stage 1 is the existing chat-driven plan; stages 2-4 are
@@ -1367,6 +1382,7 @@ async function openProject(id) {
   state.result = proj.result || null;
   state.personaReviews = (proj.state && proj.state.persona_reviews) || null;
   state.personaOfferShown = false;
+  setPlanFrozenUI(!!(proj.state && proj.state.plan_frozen));
   state.stage = 1;
 
   $("empty-state").style.display = "none";
@@ -1468,11 +1484,19 @@ async function sendMessage() {
     addMessage("agent", data.reply, false, { clarify: data.clarify }); scrollChat();
     updateLlmStatus(data.llm_status, true);
     renderBrief();
+    // Each clarify answer folds straight into the plan -- refresh the pane in place and show
+    // a small confirmation card (mirrors the persona apply-feedback card) naming the section.
+    if (data.plan_updated && data.plan_html) {
+      showPlan(data.plan_html, data.plan_markdown);
+      $("messages").appendChild(planUpdateCard(data.updated_sections || []));
+      scrollChat();
+    }
+    if (data.action === "freeze" || data.plan_frozen) { setPlanFrozenUI(true); }
     await loadProjects();
     if (data.action === "run") { startRun(); }
     // This is the exact turn on which the brand team's open questions were just finished --
     // the right moment to offer synthetic-persona review (never before, per product intent).
-    else if (data.clarify_just_completed) { renderOrOfferPersonas(); }
+    else if (data.clarify_just_completed && !state.planFrozen) { renderOrOfferPersonas(); }
   } catch (e) {
     removeTyping(); addMessage("agent", "⚠ Something went wrong reaching the agent. Try again.");
   } finally {
@@ -1566,7 +1590,7 @@ function clarifyDone(projState) {
 function renderOrOfferPersonas() {
   if (!state.result) return;
   if (state.personaReviews && state.personaReviews.length) { renderPersonaReviews(state.personaReviews); return; }
-  if (state.personaOfferShown) return;
+  if (state.personaOfferShown || state.planFrozen) return;   // no new offers once updates are closed
   offerPersonas();
 }
 async function offerPersonas() {
@@ -1621,7 +1645,7 @@ async function runPersonaReview(ids, offerEl, btn) {
 }
 function renderPersonaReviews(reviews) {
   reviews.forEach(r => $("messages").appendChild(personaReviewEl(r)));
-  $("messages").appendChild(personaApplyBar(reviews.map(r => r.persona_id)));
+  if (!state.planFrozen) $("messages").appendChild(personaApplyBar(reviews.map(r => r.persona_id)));
   scrollChat();
 }
 function personaReviewEl(r) {
@@ -1647,6 +1671,20 @@ function personaReviewEl(r) {
     + `</div></div>`;
   m.querySelector(".pv-info-btn").addEventListener("click", () => openPersonaModal(r.persona_id));
   return m;
+}
+// ---------- plan-update confirmation card (clarify auto-update) ----------
+function planUpdateCard(sections) {
+  const div = document.createElement("div");
+  div.className = "msg agent";
+  const list = sections.length
+    ? `<ul>${sections.map(s => `<li>${renderInline(s)}</li>`).join("")}</ul>`
+    : `<p style="margin:4px 0 0;font-size:12.5px;color:var(--muted)">Folded into the plan.</p>`;
+  div.innerHTML = `<div class="avatar">${iconSpan("auto_fix_high")}</div><div class="bubble"><div class="pv-offer">`
+    + `<b>Plan updated</b>`
+    + `<p style="margin-bottom:4px">Your answer was folded straight in — no need to ask again. The plan on the right now reflects:</p>`
+    + list
+    + `</div></div>`;
+  return div;
 }
 function personaApplyBar(ids) {
   const div = document.createElement("div");
@@ -2024,6 +2062,44 @@ function downloadPlan() {
   const safe = (state.projectName || "brand-engagement-plan").replace(/[^a-z0-9]+/gi, "-").toLowerCase();
   a.href = url; a.download = safe + ".md"; a.click();
   URL.revokeObjectURL(url);
+}
+function downloadExport(kind) {
+  if (!state.projectId || !state.planMarkdown) return;
+  window.open("/api/projects/" + encodeURIComponent(state.projectId) + "/export." + kind, "_blank");
+}
+
+// ---------- close updates (freeze the plan against further auto-adjustment) ----------
+function setPlanFrozenUI(frozen) {
+  state.planFrozen = !!frozen;
+  const btn = $("close-updates-btn");
+  const existingBadge = document.getElementById("plan-frozen-badge");
+  if (frozen) {
+    if (btn) btn.remove();
+    if (!existingBadge) {
+      const badge = document.createElement("span");
+      badge.className = "plan-frozen-badge"; badge.id = "plan-frozen-badge";
+      badge.innerHTML = `${iconSpan("lock")} Updates closed`;
+      $("plan-actions").appendChild(badge);
+    }
+  } else {
+    if (existingBadge) existingBadge.remove();
+    if (!btn && $("plan-actions")) {
+      const b = document.createElement("button");
+      b.className = "danger-ghost"; b.id = "close-updates-btn";
+      b.innerHTML = `${iconSpan("lock")} Close updates`;
+      b.onclick = closeUpdates;
+      $("plan-actions").appendChild(b);
+    }
+  }
+}
+async function closeUpdates() {
+  if (!state.projectId) return;
+  try {
+    await fetch("/api/projects/" + encodeURIComponent(state.projectId) + "/close-updates", { method: "POST" });
+    setPlanFrozenUI(true);
+    addMessage("agent", "🔒 Updates closed — this plan is locked in. I won't auto-adjust it further.");
+    scrollChat();
+  } catch (e) { /* best-effort */ }
 }
 async function copyPlan() {
   if (!state.planMarkdown) return;
@@ -2704,7 +2780,10 @@ $("start-project").onclick = newProject;
 $("intake-go").onclick = submitIntake;
 $("intake-skip").onclick = () => { $("intake-card").style.display = "none"; $("input").focus(); };
 $("download-plan").onclick = downloadPlan;
+$("download-docx").onclick = () => downloadExport("docx");
+$("download-pdf").onclick = () => downloadExport("pdf");
 $("copy-plan").onclick = copyPlan;
+$("close-updates-btn").onclick = closeUpdates;
 $("nav-home").onclick = showHome;
 $("nav-workspace").onclick = showWorkspace;
 $("nav-library").onclick = showLibrary;

@@ -206,7 +206,11 @@ def new_state() -> dict:
         "open_questions": [],   # toolkit 'needs alignment' groups, seeded after each run
         "clarify_idx": 0,
         "clarify_answers": {},
+        "clarify_resolved_ids": [],   # group ids ever asked in THIS project -- never reseeded, even
+                                       # after a later regeneration whose feasibility scoring still
+                                       # can't structurally auto-answer the underlying question
         "awaiting_clarify": None,
+        "plan_frozen": False,   # set by 'close updates' -- stops further auto-adjustment of the plan
         "recall_offered": False,   # whether we've already checked/offered remembered brand details
         "recalled_memory": None,   # the remembered slots, held until the recall_confirm reply arrives
     }
@@ -365,6 +369,23 @@ def interpret_message(message: str, state: dict) -> tuple[dict, str, str]:
             state.get("clarify_idx", 0) < len(state["open_questions"]):
         return _interpret_clarify(message, state)
 
+    # Once the plan exists (and there's no active clarify turn to answer), handle a couple of
+    # fixed control phrases before falling through to the LLM/rules dialog below -- which
+    # assumes slots are still being collected. 'regenerate' used to fall through to the rules
+    # path's final 'all slots filled -> kick off a run' branch and silently rerun the full
+    # agent pipeline, reseeding the clarify Q&A with the same still-unresolved questions (the
+    # feasibility checklist can't always structurally parse a free-text answer). That's no
+    # longer needed: every clarify answer is folded into the plan the moment it's given.
+    if state.get("phase") == "done":
+        low = message.strip().lower().strip(".!?")
+        if any(p in low for p in _CLOSE_UPDATES_PHRASES):
+            return state, ("Locking the plan in — no further automatic updates from here. "
+                           "You can still ask me questions about it any time."), "freeze"
+        if "regenerate" in low:
+            return state, ("Already up to date — every answer you've given me is already folded into "
+                           "the plan on the right. Say **close updates** to lock it in, or tell me what "
+                           "you'd like to change and I'll factor it in."), "ask"
+
     # The always-on 'reason for this campaign' answer is captured deterministically for both
     # engines (the rules path records it and then proceeds straight to the run).
     if state.get("awaiting") == "reason":
@@ -469,21 +490,35 @@ def ask_clarify_group(state: dict) -> str | None:
 
 
 _SKIP_ALL = ["skip all", "stop asking", "leave them", "skip the rest", "no more questions", "that's all", "thats all"]
+_CLOSE_UPDATES_PHRASES = ["close updates", "close the updates", "lock the plan", "lock it in", "finalize the plan",
+                          "finalise the plan", "freeze the plan", "stop updating"]
+
+
+def _mark_resolved(state: dict, *group_ids: str) -> None:
+    resolved = set(state.get("clarify_resolved_ids") or [])
+    resolved.update(group_ids)
+    state["clarify_resolved_ids"] = sorted(resolved)
 
 
 def _interpret_clarify(message: str, state: dict) -> tuple[dict, str, str]:
     """Post-plan phase: record the user's answers to the toolkit's open-question groups
-    verbatim (they also feed feasibility auto-answers on regeneration via maturity_notes),
-    then offer to send the agents back in."""
+    verbatim (they also feed feasibility auto-answers via maturity_notes), then signal the
+    server to fold each answer into the plan immediately -- action='update_plan' on every
+    turn here, not just at the end, so the plan updates section-by-section as the user
+    answers rather than waiting for a manual 'regenerate'. Every group answered (or skipped)
+    is recorded in clarify_resolved_ids so it is never asked again for this project, even if
+    a later full regeneration still can't structurally auto-answer the underlying checklist
+    item from free text."""
     groups = state["open_questions"]
     idx = state.get("clarify_idx", 0)
     low = message.strip().lower().strip(".!?")
 
     if any(s in low for s in _SKIP_ALL):
+        _mark_resolved(state, *(g["id"] for g in groups[idx:]))
         state["clarify_idx"] = len(groups)
         state["awaiting_clarify"] = None
-        return state, ("No problem — the remaining items stay highlighted as **Needs alignment** in the plan. "
-                       "Say *regenerate* any time to send the agents back in with what you've told me."), "ask"
+        return state, ("No problem — the remaining items stay highlighted as **Needs alignment** in the plan, "
+                       "and I won't ask about them again. Say **close updates** any time to lock the plan in."), "update_plan"
 
     if low in ("skip", "pass", "next", "later"):
         state["clarify_answers"] = state.get("clarify_answers", {})
@@ -497,18 +532,19 @@ def _interpret_clarify(message: str, state: dict) -> tuple[dict, str, str]:
         slots["maturity_notes"] = ((slots.get("maturity_notes", "") + " " + message).strip())[-2000:]
         _extract(message, state)
 
+    _mark_resolved(state, groups[idx]["id"])
     state["clarify_idx"] = idx + 1
     nxt = ask_clarify_group(state)
     if nxt:
-        return state, "Captured — that goes into the plan. " + nxt, "ask"
+        return state, "Captured — folding that into the plan now. " + nxt, "update_plan"
 
     state["awaiting_clarify"] = None
     answered = sum(1 for v in state.get("clarify_answers", {}).values() if v != "(skipped)")
     return state, (
-        f"That's everything — **{answered}** of {len(groups)} open-question groups answered. "
-        "Say **regenerate** and I'll send the agents back in to fold your answers into the plan "
-        "(the feasibility checklist and open-question flags will update)."
-    ), "ask"
+        f"That's everything — **{answered}** of {len(groups)} open-question groups answered, and I've "
+        "folded each one into the plan as you went. It's fully up to date on the right. Keep chatting "
+        "any time to refine it further, or say **close updates** to lock it in."
+    ), "update_plan"
 
 
 _REUSE_PHRASES = ["same", "no change", "unchanged", "reuse", "keep it", "keep the same", "as before", "identical", "still the same", "still holds"]
