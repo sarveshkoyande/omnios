@@ -1308,22 +1308,22 @@ const WORKFLOW_STAGES = [
 // Five broad-mandate agents (consolidated from the earlier ten narrow ones).
 const AGENT_COLORS = { intel:"#1768D1", strategy:"#5A32E0", inspiration:"#A6720A", activation:"#12866F", compose:"#3454C4" };
 const AGENT_ICONS = { intel:"travel_explore", strategy:"track_changes", inspiration:"emoji_events", activation:"payments", compose:"description" };
-// Named teammates with profile pictures -- source of truth for the human name (first
-// name, sharing its first letter with the role), role, and a portrait avatar. `photo` is
-// the user-supplied portrait; if it fails to load (offline, or the host blocks hotlinking)
-// avatarHtml's onerror drops the <img> and the gradient-initials monogram behind it shows
-// through -- so the UI never renders a broken image. Mirrors orchestrator.py.
+// Named teammates with an avatar -- source of truth for the display name and avatar image.
+// `photo` is user-supplied (now animated GIFs); if it fails to load (offline, or the host
+// blocks hotlinking) avatarHtml's onerror drops the <img> and the gradient-initials
+// monogram behind it shows through -- so the UI never renders a broken image. Mirrors
+// orchestrator.py.
 const AGENT_PEOPLE = {
   intel:       { name:"Market & Competitive Intelligence Agent", role:"", initials:"MC", c1:"#1768D1", c2:"#4AA6F2",
-                 photo:"https://i.pinimg.com/736x/84/67/07/846707b49d0ee0924c31dde35e14cb8c.jpg" },
+                 photo:"https://i.pinimg.com/originals/c0/a3/e3/c0a3e37b580ba77aca2e8315a4fd3e29.gif" },
   strategy:    { name:"Strategy & Positioning Agent",            role:"", initials:"SP", c1:"#5A32E0", c2:"#9B6BFF",
-                 photo:"https://i.pinimg.com/736x/98/15/22/981522e80927e19a5641b7265b266085.jpg" },
+                 photo:"https://i.pinimg.com/originals/1c/13/f3/1c13f3fe7a6bba370007aea254e195e3.gif" },
   inspiration: { name:"Creative Inspiration Agent",               role:"", initials:"CI", c1:"#C77700", c2:"#F2A93B",
-                 photo:"https://i.pinimg.com/736x/09/fa/2a/09fa2ae07bed26e6962bad898de6dad8.jpg" },
+                 photo:"https://i.pinimg.com/originals/32/a1/b4/32a1b439615cac53173b352c6049f1af.gif" },
   activation:  { name:"Activation Planning Agent",                role:"", initials:"AP", c1:"#12866F", c2:"#37B89A",
-                 photo:"https://i.pinimg.com/736x/ae/e5/dc/aee5dc0bd16a86991299c7862577d901.jpg" },
+                 photo:"https://i.pinimg.com/originals/06/b4/88/06b4888d345bd74ff235a46aa5166362.gif" },
   compose:     { name:"Cooper / Engagement Planner",              role:"", initials:"Co", c1:"#3454C4", c2:"#6C8BF0",
-                 photo:"https://i.pinimg.com/736x/4a/d9/1d/4ad91d1959d7eb2524fe52187973ea12.jpg" },
+                 photo:"https://i.pinimg.com/originals/ff/13/a8/ff13a8ac4c8225723b47587d4adb093e.gif" },
 };
 let agentMeta = {};
 let _avatarSeq = 0;
