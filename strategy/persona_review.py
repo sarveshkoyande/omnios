@@ -78,6 +78,48 @@ def bucket_affinity(persona: dict) -> dict:
     return {b: max(-1.0, min(1.0, v)) for b, v in aff.items()}
 
 
+def suggest_rebalance(personas: list[dict], current_mix: dict, alpha: float = 0.4) -> dict:
+    """Nudge the channel mix toward what the given personas actually respond to, for the
+    'apply feedback to plan' action. Blends the current allocation with an affinity-weighted
+    target -- alpha caps how far it moves in one step (0.4 = a real but bounded nudge, not a
+    rebuild), then renormalizes to 100%. Deterministic and explainable: every change names the
+    persona(s) whose preference drove it.
+    """
+    if not personas:
+        return {"new_mix": dict(current_mix), "changes": []}
+    avg_aff = {b: sum(bucket_affinity(p)[b] for p in personas) / len(personas) for b in BUCKETS}
+    # Map affinity [-1,1] -> non-negative desirability [0,2] so it can drive a normalized target share.
+    desirability = {b: max(0.0, avg_aff[b] + 1.0) for b in BUCKETS}
+    total_des = sum(desirability.values()) or 1.0
+    target = {b: 100.0 * desirability[b] / total_des for b in BUCKETS}
+    blended = {b: (1 - alpha) * current_mix.get(b, 0.0) + alpha * target[b] for b in BUCKETS}
+    total_blend = sum(blended.values()) or 1.0
+    scaled = {b: blended[b] * 100.0 / total_blend for b in BUCKETS}
+    rounded = {b: int(round(v)) for b, v in scaled.items()}
+    diff = 100 - sum(rounded.values())
+    if diff:
+        top = max(rounded, key=lambda b: rounded[b])
+        rounded[top] += diff
+
+    changes = []
+    for b in BUCKETS:
+        delta = rounded[b] - int(round(current_mix.get(b, 0.0)))
+        if abs(delta) >= 1:
+            if delta > 0:
+                names = [p["name"] for p in personas if bucket_affinity(p)[b] >= 0.5]
+            else:
+                names = [p["name"] for p in personas if bucket_affinity(p)[b] <= -0.5]
+            who = f" (per {', '.join(names[:2])})" if names else ""
+            direction = "Increase" if delta > 0 else "Reduce"
+            changes.append({
+                "bucket": b, "from_pct": int(round(current_mix.get(b, 0.0))), "to_pct": rounded[b],
+                "delta": delta,
+                "note": f"{direction} {b} {abs(delta)} pt{'s' if abs(delta) != 1 else ''}{who}",
+            })
+    changes.sort(key=lambda c: -abs(c["delta"]))
+    return {"new_mix": rounded, "changes": changes}
+
+
 def _plan_mix(result: dict) -> dict:
     """Plan channel allocation as {bucket: pct}. Allocation keys are already the six buckets;
     anything unexpected is re-bucketed defensively."""

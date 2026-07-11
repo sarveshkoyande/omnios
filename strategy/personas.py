@@ -1,14 +1,16 @@
 """Synthetic persona layer -- loads config/synthetic_personas.json and matches personas to a
 generated plan.
 
-A persona is a named, fictional individual embodying one behaviour-based audience segment
-(config/audience_segments.json) for a specific specialty / therapy area. The point is to let a
-Brand Engagement Plan be pressure-tested "in character" by the people it is trying to reach:
-persona_review.py scores the plan against each persona's channel preferences and decision
-drivers and returns honest, voiced feedback.
+A persona is a named, fictional HCP embodying one behaviour-based audience segment
+(config/audience_segments.json) for a specific specialty / therapy area, deliberately
+diverse across age, gender, ethnicity/background and specialty. The point is to let a Brand
+Engagement Plan be pressure-tested "in character" by the range of people it is trying to
+reach: persona_review.py scores the plan against each persona's channel preferences and
+decision drivers and returns honest, voiced feedback.
 
 This module is just the catalogue + matching:
-  * load() / get(id)          -- the persona records
+  * load() / get(id)          -- the persona records (get() returns the FULL record, used
+                                  both by the review engine and by the info-card endpoint)
   * match_to_plan(...)        -- rank personas by relevance to a plan's therapy area + specialty
   * card(persona)             -- the trimmed record the picker UI shows
 """

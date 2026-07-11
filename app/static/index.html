@@ -192,6 +192,33 @@
   .pv-cpill { font-size: 10.5px; border-radius: 6px; padding: 2px 7px; border: 1px solid var(--line); color: var(--muted); }
   .pv-cpill.love { background: rgba(23,166,115,.12); border-color: rgba(23,166,115,.4); color: #12724f; }
   .pv-cpill.waste { background: rgba(217,75,75,.10); border-color: rgba(217,75,75,.35); color: #a83232; }
+  .pv-info-btn { flex: 0 0 auto; margin-left: auto; background: transparent; border: none; color: var(--faint);
+    cursor: pointer; display: flex; align-items: center; border-radius: 50%; width: 26px; height: 26px; justify-content: center; }
+  .pv-info-btn:hover { background: rgba(11,61,145,0.08); color: var(--indegene-navy); }
+  .pv-info-btn .material-symbols-outlined { font-size: 18px; }
+
+  /* Persona profile modal */
+  .pm-card { background: #fff; border-radius: 16px; max-width: 560px; width: 92vw; max-height: 86vh; overflow-y: auto;
+    padding: 22px 24px 24px; }
+  .pm-head { display: flex; gap: 14px; align-items: center; margin-bottom: 4px; }
+  .pm-ava { flex: 0 0 54px; width: 54px; height: 54px; border-radius: 50%; display: inline-flex; align-items: center;
+    justify-content: center; font-size: 18px; font-weight: 700; color: #fff; background: linear-gradient(135deg,#1768D1,#4AA6F2); }
+  .pm-head h2 { margin: 0; font-size: 18px; color: var(--text); }
+  .pm-head .pm-sub { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+  .pm-tagline { font-style: italic; color: var(--indegene-navy); font-size: 13px; margin: 10px 0 12px; }
+  .pm-facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
+  .pm-fact { background: var(--glass-strong); border: 1px solid var(--line); border-radius: 9px; padding: 7px 9px; }
+  .pm-fact b { display: block; font-size: 13px; color: var(--text); }
+  .pm-fact span { font-size: 10px; text-transform: uppercase; letter-spacing: .03em; color: var(--faint); }
+  .pm-bio { font-size: 12.5px; color: var(--text); line-height: 1.6; margin: 0 0 14px; }
+  .pm-quote { border-left: 3px solid var(--accent); padding: 4px 0 4px 12px; font-style: italic; color: var(--text);
+    font-size: 12.5px; margin: 0 0 14px; }
+  .pm-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .pm-cols > div { background: var(--glass-strong); border: 1px solid var(--line); border-radius: 9px; padding: 9px 11px; }
+  .pm-cols b { font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; color: var(--faint); display: block; margin-bottom: 5px; }
+  .pm-cols ul { margin: 0; padding-left: 15px; } .pm-cols li { font-size: 12px; line-height: 1.45; margin-bottom: 3px; }
+  .pm-chanrow { display: flex; justify-content: space-between; font-size: 12px; padding: 3px 0; }
+  .pm-chanrow b { color: var(--text); font-weight: 600; }
 
   /* ---- right rail ---- */
   .rail-right .rr-scroll { overflow-y: auto; padding: 14px; flex: 1; }
@@ -1109,6 +1136,11 @@
       <span class="material-symbols-outlined">close</span></button>
     <figure><img id="lb-img" alt=""><figcaption id="lb-cap"></figcaption></figure></div>
 
+  <!-- persona profile modal -->
+  <div id="persona-modal" class="lightbox"><button class="lb-close" id="pm-close">
+      <span class="material-symbols-outlined">close</span></button>
+    <div class="pm-card" id="pm-card"></div></div>
+
   <div class="app">
     <!-- LEFT: projects -->
     <aside class="rail-left">
@@ -1372,8 +1404,9 @@ async function openProject(id) {
 
   renderStepper();
   setStage(1);
-  // On a finished plan, re-show any saved persona reviews (or offer to run them).
-  if (state.result) renderOrOfferPersonas();
+  // On a finished plan, re-show any saved persona reviews, or offer to run them -- but only
+  // once the brand team's open questions (if any) have all been captured.
+  if (state.result && clarifyDone(proj.state)) renderOrOfferPersonas();
   await loadProjects();
 }
 
@@ -1437,6 +1470,9 @@ async function sendMessage() {
     renderBrief();
     await loadProjects();
     if (data.action === "run") { startRun(); }
+    // This is the exact turn on which the brand team's open questions were just finished --
+    // the right moment to offer synthetic-persona review (never before, per product intent).
+    else if (data.clarify_just_completed) { renderOrOfferPersonas(); }
   } catch (e) {
     removeTyping(); addMessage("agent", "⚠ Something went wrong reaching the agent. Try again.");
   } finally {
@@ -1507,7 +1543,10 @@ function startRun() {
 }
 function finishRun() {
   state.busy = false; $("send").disabled = false; renderStepper(); loadProjects();
-  if (state.result) renderOrOfferPersonas();
+  // Only offer personas immediately when there's nothing to clarify first -- otherwise the
+  // offer waits for the 'clarify_just_completed' signal from /api/chat (see sendMessage()).
+  const hasOpenQs = state.result && Array.isArray(state.result.open_questions) && state.result.open_questions.length > 0;
+  if (state.result && !hasOpenQs) renderOrOfferPersonas();
 }
 
 // ---------- synthetic persona review ----------
@@ -1515,6 +1554,14 @@ const PV_SENTIMENT_COL = { enthusiastic: "var(--green)", interested: "var(--acce
 function pvInitials(name) {
   const parts = (name || "").replace(/^(Dr\.|Prof\.|Mr\.|Ms\.|Mrs\.)\s*/, "").trim().split(/\s+/);
   return (((parts[0] || "")[0] || "") + ((parts[parts.length - 1] || "")[0] || "")).toUpperCase();
+}
+// True once the plan's open questions (if any) have all been answered/skipped -- read from
+// the server-side dialog state persisted on the project (open_questions + clarify_idx),
+// which survives a reload, unlike anything tracked only in client memory.
+function clarifyDone(projState) {
+  const groups = (projState && projState.open_questions) || [];
+  if (!groups.length) return true;
+  return (projState.clarify_idx || 0) >= groups.length;
 }
 function renderOrOfferPersonas() {
   if (!state.result) return;
@@ -1527,40 +1574,36 @@ async function offerPersonas() {
     const res = await fetch("/api/personas?project_id=" + encodeURIComponent(state.projectId));
     const data = await res.json();
     const matched = data.matched || [], others = data.others || [];
-    if (!matched.length && !others.length) return;
+    const all = [...matched, ...others];
+    if (!all.length) return;
     state.personaOfferShown = true;
-    const pick = (p, checked) => `<label class="pv-chip"><input type="checkbox" value="${p.id}" ${checked ? "checked" : ""}>`
-      + `<span class="pv-ava ${p.audience_type === "HCP" ? "" : "pt"}">${pvInitials(p.name)}</span>`
-      + `<span class="pv-meta"><b>${p.name}</b><span>${p.who} · ${p.segment_name}${checked ? ' <span class="pv-tag">match</span>' : ""}</span></span></label>`;
-    const othersHtml = others.length
-      ? `<span class="pv-more" id="pv-more">+ ${others.length} other personas</span><div class="pv-others" style="display:none">${others.map(p => pick(p, false)).join("")}</div>`
-      : "";
+    const matchedIds = new Set(matched.map(p => p.id));
+    const pick = (p) => `<label class="pv-chip"><input type="checkbox" value="${p.id}" ${matchedIds.has(p.id) ? "checked" : ""}>`
+      + `<span class="pv-ava">${pvInitials(p.name)}</span>`
+      + `<span class="pv-meta"><b>${p.name}</b><span>${p.who} · ${p.age ? p.age + " · " : ""}${p.segment_name}${matchedIds.has(p.id) ? ' <span class="pv-tag">match</span>' : ""}</span></span>`
+      + `<button type="button" class="pv-info-btn" data-pid="${p.id}" title="View full persona profile">${iconSpan("info")}</button></label>`;
     const m = document.createElement("div");
-    m.className = "msg agent"; m.id = "persona-offer";
+    m.className = "msg agent";
     m.innerHTML = `<div class="avatar">${iconSpan("groups")}</div><div class="bubble"><div class="pv-offer">`
       + `<b>Pressure-test this plan with synthetic personas?</b>`
-      + `<p>I can run the plan past people from your target audience — they'll react honestly and tell you what's missing and what would make them engage. Pick who should review it:</p>`
-      + `<div class="pv-pick">${matched.map(p => pick(p, true)).join("") || '<span class="pv-sub">No exact audience match — see other personas below.</span>'}</div>`
-      + othersHtml
-      + `<div class="pv-actions"><button class="pv-run" id="pv-run">Run persona review</button><button class="pv-skip" id="pv-skip">Not now</button></div>`
+      + `<p>I can run the plan past prescribers from your target audience — they'll react honestly and tell you what's missing and what would make them engage. The ones matching this plan's specialty are pre-selected; pick (or deselect) who should review it:</p>`
+      + `<div class="pv-pick">${all.map(pick).join("")}</div>`
+      + `<div class="pv-actions"><button class="pv-run pv-run-btn">Run persona review</button><button class="pv-skip pv-skip-btn">Not now</button></div>`
       + `</div></div>`;
     $("messages").appendChild(m); scrollChat();
-    const more = $("pv-more");
-    if (more) more.onclick = () => {
-      const o = m.querySelector(".pv-others");
-      const hidden = o.style.display === "none";
-      o.style.display = hidden ? "flex" : "none";
-      more.textContent = hidden ? "– hide other personas" : `+ ${others.length} other personas`;
-    };
-    $("pv-run").onclick = () => {
+    m.querySelectorAll(".pv-info-btn").forEach(btn => btn.addEventListener("click", (e) => {
+      e.preventDefault(); e.stopPropagation(); openPersonaModal(btn.dataset.pid);
+    }));
+    const runBtn = m.querySelector(".pv-run-btn");
+    runBtn.onclick = () => {
       const ids = [...m.querySelectorAll("input:checked")].map(i => i.value);
-      if (ids.length) runPersonaReview(ids, m);
+      if (ids.length) runPersonaReview(ids, m, runBtn);
     };
-    $("pv-skip").onclick = () => m.remove();
+    m.querySelector(".pv-skip-btn").onclick = () => m.remove();
   } catch (e) { /* offer is best-effort */ }
 }
-async function runPersonaReview(ids, offerEl) {
-  const btn = $("pv-run"); if (btn) { btn.disabled = true; btn.textContent = `Running… asking ${ids.length} persona${ids.length > 1 ? "s" : ""}`; }
+async function runPersonaReview(ids, offerEl, btn) {
+  if (btn) { btn.disabled = true; btn.textContent = `Running… asking ${ids.length} persona${ids.length > 1 ? "s" : ""}`; }
   addMessage("user", `Run the plan past ${ids.length} persona${ids.length > 1 ? "s" : ""}.`); scrollChat();
   addTyping();
   try {
@@ -1578,6 +1621,7 @@ async function runPersonaReview(ids, offerEl) {
 }
 function renderPersonaReviews(reviews) {
   reviews.forEach(r => $("messages").appendChild(personaReviewEl(r)));
+  $("messages").appendChild(personaApplyBar(reviews.map(r => r.persona_id)));
   scrollChat();
 }
 function personaReviewEl(r) {
@@ -1589,9 +1633,10 @@ function personaReviewEl(r) {
     const cls = c.reaction === "love it" ? "love" : (c.reaction === "wasted on me" ? "waste" : "fine");
     return `<span class="pv-cpill ${cls}" title="${c.reaction}">${c.bucket} ${c.pct}%</span>`;
   }).join("");
-  m.innerHTML = `<div class="avatar pv-ava ${r.audience_type === "HCP" ? "" : "pt"}" style="width:36px;height:36px;flex:0 0 36px;font-size:12px">${pvInitials(r.persona_name)}</div>`
+  m.innerHTML = `<div class="avatar pv-ava" style="width:36px;height:36px;flex:0 0 36px;font-size:12px">${pvInitials(r.persona_name)}</div>`
     + `<div class="bubble"><div class="pv-review" style="border-left-color:${col}">`
     + `<div class="pv-head"><b>${r.persona_name}</b> <span class="pv-sub">${r.who} · ${r.segment_name}</span>`
+    + `<button type="button" class="pv-info-btn" data-pid="${r.persona_id}" title="View full persona profile">${iconSpan("info")}</button>`
     + `<span class="pv-score pv-${r.sentiment}">${r.engagement_likelihood}% likely to engage</span></div>`
     + (r.quote ? `<div class="pv-verdict">“${renderInline(r.quote)}”</div>` : "")
     + `<p class="pv-narr">${renderInline(r.narrative)}</p>`
@@ -1600,7 +1645,80 @@ function personaReviewEl(r) {
     + `<div><b>To win me over</b>${list(r.asks)}</div></div>`
     + (chans ? `<div class="pv-channels">${chans}</div>` : "")
     + `</div></div>`;
+  m.querySelector(".pv-info-btn").addEventListener("click", () => openPersonaModal(r.persona_id));
   return m;
+}
+function personaApplyBar(ids) {
+  const div = document.createElement("div");
+  div.className = "msg agent";
+  div.innerHTML = `<div class="avatar">${iconSpan("auto_fix_high")}</div><div class="bubble"><div class="pv-offer">`
+    + `<b>Adjust the plan based on this feedback?</b>`
+    + `<p>I can automatically rebalance the channel mix toward what these personas actually respond to, and refresh the plan document on the right — a bounded nudge, not a rebuild, and every change names the persona whose preference drove it.</p>`
+    + `<div class="pv-actions"><button class="pv-run pv-apply-btn">Apply feedback to plan</button></div>`
+    + `</div></div>`;
+  const btn = div.querySelector(".pv-apply-btn");
+  btn.onclick = () => applyPersonaFeedback(ids, btn);
+  return div;
+}
+async function applyPersonaFeedback(ids, btn) {
+  btn.disabled = true; btn.textContent = "Adjusting plan…";
+  try {
+    const res = await fetch("/api/persona-apply", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ project_id: state.projectId, persona_ids: ids }) });
+    if (!res.ok) throw new Error("apply failed");
+    const data = await res.json();
+    btn.textContent = "Applied ✓";
+    const changes = data.changes || [];
+    const lines = changes.length
+      ? changes.map(c => `• ${c.note} (${c.from_pct}% → ${c.to_pct}%)`).join("\n")
+      : "No material change was needed — the mix already fits this audience.";
+    addMessage("agent", `**Plan updated.** ${changes.length} channel${changes.length === 1 ? "" : "s"} rebalanced:\n${lines}`);
+    scrollChat();
+    if (data.plan_html) showPlan(data.plan_html, data.plan_markdown);
+    await loadProjects();
+  } catch (e) {
+    btn.disabled = false; btn.textContent = "Apply feedback to plan";
+    addMessage("agent", "⚠ Couldn't adjust the plan automatically. Try again.");
+  }
+}
+
+// ---------- persona profile modal ----------
+async function openPersonaModal(pid) {
+  try {
+    const res = await fetch("/api/personas/" + encodeURIComponent(pid));
+    if (!res.ok) return;
+    const p = await res.json();
+    $("pm-card").innerHTML = personaModalHtml(p);
+    $("persona-modal").classList.add("show");
+  } catch (e) { /* best-effort */ }
+}
+function closePersonaModal() { $("persona-modal").classList.remove("show"); }
+function personaModalHtml(p) {
+  const ch = p.channels || {}, rx = p.prescribing || {}, dg = p.digital || {};
+  const chips = (arr, cls) => (arr || []).map(x => `<span class="pv-cpill ${cls}">${renderInline(x)}</span>`).join(" ");
+  return `<div class="pm-head"><span class="pm-ava">${pvInitials(p.name)}</span>`
+    + `<div><h2>${renderInline(p.name)}</h2><div class="pm-sub">${renderInline(p.specialty || "")} · ${p.age || "—"} · ${renderInline(p.gender || "")} · ${renderInline(p.ethnicity || "")}</div>`
+    + `<div class="pm-sub">${renderInline(p.location || "")} · ${p.years_in_practice ? p.years_in_practice + " yrs in practice" : ""}</div></div></div>`
+    + `<p class="pm-tagline">${renderInline(p.tagline || "")}</p>`
+    + `<div class="pm-facts">`
+    + `<div class="pm-fact"><b>${rx.monthly_trx ?? "—"}</b><span>Monthly TRx</span></div>`
+    + `<div class="pm-fact"><b>${rx.monthly_nrx ?? "—"}</b><span>Monthly NRx</span></div>`
+    + `<div class="pm-fact"><b>${dg.affinity || "—"}</b><span>Digital affinity (${dg.affinity_score ?? "—"})</span></div>`
+    + `</div>`
+    + `<p class="pm-bio">${renderInline(p.bio || "")}</p>`
+    + (p.voice_sample ? `<div class="pm-quote">“${renderInline(p.voice_sample)}”</div>` : "")
+    + `<div class="pm-cols">`
+    + `<div><b>Prefers</b>${chips(ch.preferred, "love")}</div>`
+    + `<div><b>Avoids</b>${chips(ch.avoided, "waste")}</div>`
+    + `</div>`
+    + `<div class="pm-cols">`
+    + `<div><b>Decision drivers</b><ul>${(p.decision_drivers || []).map(x => `<li>${renderInline(x)}</li>`).join("")}</ul></div>`
+    + `<div><b>Frustrations</b><ul>${(p.frustrations || []).map(x => `<li>${renderInline(x)}</li>`).join("")}</ul></div>`
+    + `</div>`
+    + `<div class="pm-chanrow"><span>In-person stance</span><b>${renderInline(ch.f2f_stance || "—")}</b></div>`
+    + `<div class="pm-chanrow"><span>Email stance</span><b>${renderInline(ch.email_stance || "—")}</b></div>`
+    + `<div class="pm-chanrow"><span>Adoption curve</span><b>${renderInline(rx.adoption_curve || "—")}</b></div>`
+    + `<div class="pm-chanrow"><span>Rep access</span><b>${renderInline(dg.rep_access || "—")}</b></div>`;
 }
 
 // ---- inter-agent banter (short back-and-forth so the team feels alive, not a relay) ----
@@ -2592,7 +2710,9 @@ $("nav-workspace").onclick = showWorkspace;
 $("nav-library").onclick = showLibrary;
 $("lb-close").onclick = closeLightbox;
 $("lightbox").onclick = (e) => { if (e.target.id === "lightbox") closeLightbox(); };
-document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeLightbox(); });
+$("pm-close").onclick = closePersonaModal;
+$("persona-modal").onclick = (e) => { if (e.target.id === "persona-modal") closePersonaModal(); };
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") { closeLightbox(); closePersonaModal(); } });
 $("lib-search").addEventListener("input", (e) => {
   libState.q = e.target.value.trim();
   if (!libState.brand) renderLibraryIndex();
