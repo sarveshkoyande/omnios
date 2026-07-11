@@ -40,20 +40,21 @@ import benchmarks  # noqa: E402  (industry baselines Maya and Arjun fill plan se
 from execution_plan import build_execution_work_plan, build_execution_raci  # noqa: E402
 from test_measure_learn import build_test_measure_learn  # noqa: E402
 
-# Each agent is a named teammate with a role. First name only, chosen to share its first
-# letter with what the agent does (Maya=Market, Sam=Strategy, Chloe=Creative, Arjun=
-# Activation, Cooper=Campaign compose). The UI shows a photo avatar; `initials` seeds the
-# monogram fallback. They work as a team, not a relay: summaries avoid "handing over".
+# Each agent is named by its function, not a persona -- the UI shows a photo avatar (purely
+# decorative) with `initials` as the monogram fallback if it fails to load. The last agent
+# (compose) is the one exception: it keeps "Cooper" as the plan's named engagement planner,
+# since it's the agent that speaks in first person as the plan's author. They work as a
+# team, not a relay: summaries avoid "handing over".
 AGENT_ROSTER = [
-    {"id": "intel", "name": "Maya", "role": "Market & Competitive Intelligence",
-     "initials": "Ma", "icon": "travel_explore"},
-    {"id": "strategy", "name": "Sam", "role": "Strategy & Positioning",
-     "initials": "Sa", "icon": "track_changes"},
-    {"id": "inspiration", "name": "Chloe", "role": "Creative Inspiration",
-     "initials": "Ch", "icon": "emoji_events"},
-    {"id": "activation", "name": "Arjun", "role": "Activation Planning",
-     "initials": "Ar", "icon": "payments"},
-    {"id": "compose", "name": "Cooper", "role": "Brand Engagement Plan Composer",
+    {"id": "intel", "name": "Market & Competitive Intelligence Agent", "role": "",
+     "initials": "MC", "icon": "travel_explore"},
+    {"id": "strategy", "name": "Strategy & Positioning Agent", "role": "",
+     "initials": "SP", "icon": "track_changes"},
+    {"id": "inspiration", "name": "Creative Inspiration Agent", "role": "",
+     "initials": "CI", "icon": "emoji_events"},
+    {"id": "activation", "name": "Activation Planning Agent", "role": "",
+     "initials": "AP", "icon": "payments"},
+    {"id": "compose", "name": "Cooper / Engagement Planner", "role": "",
      "initials": "Co", "icon": "description"},
 ]
 
@@ -150,7 +151,7 @@ def run_agents(brand: str, therapy_area: str, lifecycle_key: str, budget: float 
     segment_profile = build_segment_profile(inferred["persona"], inferred["stage_key"])
     # Maya's benchmark answers fill the TCG rows the captured state cannot (t2/t7/t10).
     tcg = build_tcg_template(inferred["persona"], segment_profile, strategy, bam,
-                             agent_answers=ctx["audience_profile"]["answers"], agent_name="Maya")
+                             agent_answers=ctx["audience_profile"]["answers"], agent_name="Market & Competitive Intelligence")
     message_flow = build_message_flow(inferred["stage_key"], strategy["kb_grounding"])
     ctx["tcg"] = tcg
     ctx["bam"] = bam
@@ -246,7 +247,7 @@ def run_agents(brand: str, therapy_area: str, lifecycle_key: str, budget: float 
         if _t:
             _row["what_good_looks_like"] = _t["what_good_looks_like"]
             _row["agent_recommended"] = True
-            _row["agent_name"] = "Arjun"
+            _row["agent_name"] = "Activation Planning"
     # Pull the brand's real content library (claims + references + modules + DAM assets) so the
     # plan's "Select messages/channels" and "Create" phases render actual content, not placeholders.
     content_library = campaign_store.content_library_for(brand, indication)

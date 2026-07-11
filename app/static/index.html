@@ -69,14 +69,26 @@
   /* ---- 3-pane layout ---- */
   /* Hidden until showWorkspace() sets an inline display:flex. Home is the landing view, and
      if this defaulted to flex both views painted at once on first load. */
-  .app { flex: 1; display: none; min-height: 0; }
-  /* Three-pane split: left 15% / center 40% / right 45% of the viewport. Left and right
-     are pinned by percentage; the center flexes to fill the remaining 40%. */
-  .rail-left { flex: 0 0 15%; min-width: 150px; border-right: 1px solid var(--line);
-    background: var(--glass); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+  .app { flex: 1; display: none; min-height: 0; position: relative; }
+  /* Left rail (Plans) is now a hidden-by-default slide-out drawer, not a fixed column --
+     center takes a fixed 35vw and the plan/workspace pane gets the rest. Absolutely
+     positioned against .app (not the viewport) so it starts below the topbar, not over it. */
+  .rail-left { position: absolute; top: 0; bottom: 0; left: 0; width: 280px; z-index: 40;
+    transform: translateX(-100%); transition: transform .22s ease;
+    border-right: 1px solid var(--line); box-shadow: 6px 0 24px rgba(8,14,26,.18);
+    background: var(--glass-strong); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
     display: flex; flex-direction: column; min-height: 0; }
-  .center { flex: 1 1 auto; display: flex; flex-direction: column; min-width: 300px; min-height: 0; }
-  .rail-right { flex: 0 0 45%; min-width: 460px; border-left: 1px solid var(--line);
+  .rail-left.show { transform: translateX(0); }
+  .rail-backdrop { position: absolute; inset: 0; z-index: 39; background: rgba(8,14,26,.32);
+    opacity: 0; pointer-events: none; transition: opacity .18s ease; }
+  .rail-backdrop.show { opacity: 1; pointer-events: auto; }
+  .plans-toggle { display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; flex: 0 0 auto;
+    margin: 10px 0 0 14px; background: var(--glass-strong); border: 1px solid var(--line); color: var(--muted);
+    border-radius: 8px; padding: 6px 10px; font-size: 12px; font-weight: 600; cursor: pointer; }
+  .plans-toggle:hover { color: var(--indegene-navy); border-color: var(--accent); }
+  .plans-toggle .material-symbols-outlined { font-size: 16px; }
+  .center { flex: 0 0 35vw; display: flex; flex-direction: column; min-width: 300px; min-height: 0; }
+  .rail-right { flex: 1 1 auto; min-width: 380px; border-left: 1px solid var(--line);
     background: var(--glass); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
     display: flex; flex-direction: column; min-height: 0; container-type: inline-size; }
 
@@ -676,7 +688,7 @@
   .tk-raci-r { background: #DFF2E1; color: #1B7A34; } .tk-raci-a { background: #FFE6EF; color: var(--tk-magenta); }
   .tk-raci-c { background: #E4F3FC; color: #0B6FA8; } .tk-raci-i { background: #F1F1F1; color: #666; }
 
-  /* Agent-recommended fields — filled by Maya/Arjun from researched industry benchmarks.
+  /* Agent-recommended fields — filled by the intelligence/activation agents from researched industry benchmarks.
      Deliberately a DIFFERENT colour from the amber "Needs alignment" chip: violet means the
      field IS answered (by a benchmark recommendation); amber means nobody has answered it. */
   .plan-agent-chip { display: inline-flex; align-items: center; gap: 3px; font-size: 9px; font-weight: 700;
@@ -1165,8 +1177,9 @@
     <div class="pm-card" id="pm-card"></div></div>
 
   <div class="app">
-    <!-- LEFT: projects -->
-    <aside class="rail-left">
+    <!-- LEFT: projects -- hidden by default; slides in as a drawer over the workspace -->
+    <div class="rail-backdrop" id="rail-backdrop"></div>
+    <aside class="rail-left" id="rail-left">
       <div class="rail-head">
         <h3>Plans</h3>
         <button class="btn-new" id="new-plan"><span class="material-symbols-outlined">add</span> New</button>
@@ -1177,6 +1190,7 @@
 
     <!-- CENTER: chat -->
     <main class="center" id="center">
+      <button class="plans-toggle" id="plans-toggle" title="Open your saved plans"><span class="material-symbols-outlined">menu</span> Plans</button>
       <div class="empty-state" id="empty-state">
         <div class="big"><span class="material-symbols-outlined">hub</span></div>
         <div><strong>No plan open.</strong><br>Start a new plan and just tell the agent what you're working on —<br>which brand, which therapy area, where it is in its lifecycle.</div>
@@ -1300,15 +1314,15 @@ const AGENT_ICONS = { intel:"travel_explore", strategy:"track_changes", inspirat
 // avatarHtml's onerror drops the <img> and the gradient-initials monogram behind it shows
 // through -- so the UI never renders a broken image. Mirrors orchestrator.py.
 const AGENT_PEOPLE = {
-  intel:       { name:"Maya",   role:"Market & Competitive Intelligence", initials:"Ma", c1:"#1768D1", c2:"#4AA6F2",
+  intel:       { name:"Market & Competitive Intelligence Agent", role:"", initials:"MC", c1:"#1768D1", c2:"#4AA6F2",
                  photo:"https://i.pinimg.com/736x/84/67/07/846707b49d0ee0924c31dde35e14cb8c.jpg" },
-  strategy:    { name:"Sam",    role:"Strategy & Positioning",            initials:"Sa", c1:"#5A32E0", c2:"#9B6BFF",
+  strategy:    { name:"Strategy & Positioning Agent",            role:"", initials:"SP", c1:"#5A32E0", c2:"#9B6BFF",
                  photo:"https://i.pinimg.com/736x/98/15/22/981522e80927e19a5641b7265b266085.jpg" },
-  inspiration: { name:"Chloe",  role:"Creative Inspiration",              initials:"Ch", c1:"#C77700", c2:"#F2A93B",
+  inspiration: { name:"Creative Inspiration Agent",               role:"", initials:"CI", c1:"#C77700", c2:"#F2A93B",
                  photo:"https://i.pinimg.com/736x/09/fa/2a/09fa2ae07bed26e6962bad898de6dad8.jpg" },
-  activation:  { name:"Arjun",  role:"Activation Planning",               initials:"Ar", c1:"#12866F", c2:"#37B89A",
+  activation:  { name:"Activation Planning Agent",                role:"", initials:"AP", c1:"#12866F", c2:"#37B89A",
                  photo:"https://i.pinimg.com/736x/ae/e5/dc/aee5dc0bd16a86991299c7862577d901.jpg" },
-  compose:     { name:"Cooper", role:"Brand Engagement Plan Composer",    initials:"Co", c1:"#3454C4", c2:"#6C8BF0",
+  compose:     { name:"Cooper / Engagement Planner",              role:"", initials:"Co", c1:"#3454C4", c2:"#6C8BF0",
                  photo:"https://i.pinimg.com/736x/4a/d9/1d/4ad91d1959d7eb2524fe52187973ea12.jpg" },
 };
 let agentMeta = {};
@@ -1318,6 +1332,9 @@ const $ = (id) => document.getElementById(id);
 function iconSpan(name) { return `<span class="material-symbols-outlined">${name}</span>`; }
 function agentName(id) { return (AGENT_PEOPLE[id] || {}).name || (agentMeta[id] || {}).name || id; }
 function agentRole(id) { return (AGENT_PEOPLE[id] || {}).role || (agentMeta[id] || {}).role || ""; }
+// Agents are now named by their function (e.g. "Strategy & Positioning Agent"), so role is
+// usually blank -- this omits the dangling " — " separator a bare role-less name would leave.
+function agentTooltip(id) { const r = agentRole(id); return r ? `${agentName(id)} — ${r}` : agentName(id); }
 function monogramSvg(id, size) {
   const p = AGENT_PEOPLE[id] || { initials: "?", c1: "#1768D1", c2: "#4AA6F2" };
   const gid = "agAv" + id + (_avatarSeq++);
@@ -1383,7 +1400,13 @@ function submitIntake() {
   sendMessage();   // routes through the same /api/chat extraction seam as a typed message
 }
 
+// ---------- Plans drawer (left rail, hidden by default) ----------
+function openPlansDrawer() { $("rail-left").classList.add("show"); $("rail-backdrop").classList.add("show"); }
+function closePlansDrawer() { $("rail-left").classList.remove("show"); $("rail-backdrop").classList.remove("show"); }
+function togglePlansDrawer() { $("rail-left").classList.contains("show") ? closePlansDrawer() : openPlansDrawer(); }
+
 async function newProject() {
+  closePlansDrawer();
   showWorkspace();
   const res = await fetch("/api/projects", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({name:"Untitled plan"}) });
   const proj = await res.json();
@@ -1393,6 +1416,7 @@ async function newProject() {
 }
 
 async function openProject(id) {
+  closePlansDrawer();
   showWorkspace();
   if (state.es) { state.es.close(); state.es = null; }
   const res = await fetch("/api/projects/" + id);
@@ -1915,7 +1939,7 @@ function initAgents(agents) {
   agents.forEach(a => { agentMeta[a.id] = { name: a.name, role: a.role, icon: a.icon || AGENT_ICONS[a.id] || "smart_toy" }; });
   const body = $("agents-body");
   const team = agents.map(a => `
-    <div class="team-member st-standby" id="team-${a.id}" title="${agentName(a.id)} — ${agentRole(a.id)}">
+    <div class="team-member st-standby" id="team-${a.id}" title="${agentTooltip(a.id)}">
       <span class="tm-ava">${avatarHtml(a.id, 46)}<i class="tm-dot"></i></span>
       <span class="tm-name">${agentName(a.id)}</span>
     </div>`).join("");
@@ -1944,7 +1968,7 @@ function updateAgent(ev) {
   const tm = $("team-" + ev.id);
   if (ev.status === "running") {
     if (tm) tm.className = "team-member st-working";
-    setTeamCaption(`<strong>${agentName(ev.id)}</strong> is working on ${agentRole(ev.id).toLowerCase()}…`);
+    setTeamCaption(`<strong>${agentName(ev.id)}</strong> is working…`);
     if (el) {
       el.className = "agent-card st-running-card";
       const dot = el.querySelector(".agent-status"); dot.className = "agent-status st-running";
@@ -2013,7 +2037,7 @@ function renderAgentsDoneFromResult(result) {
   const ids = roster.map(r => r[0]);
   const body = $("agents-body");
   const team = ids.map(id => `
-    <div class="team-member st-done" id="team-${id}" title="${agentName(id)} — ${agentRole(id)}">
+    <div class="team-member st-done" id="team-${id}" title="${agentTooltip(id)}">
       <span class="tm-ava">${avatarHtml(id, 46)}<i class="tm-dot"></i></span>
       <span class="tm-name">${agentName(id)}</span>
     </div>`).join("");
@@ -2944,7 +2968,9 @@ $("lb-close").onclick = closeLightbox;
 $("lightbox").onclick = (e) => { if (e.target.id === "lightbox") closeLightbox(); };
 $("pm-close").onclick = closePersonaModal;
 $("persona-modal").onclick = (e) => { if (e.target.id === "persona-modal") closePersonaModal(); };
-document.addEventListener("keydown", (e) => { if (e.key === "Escape") { closeLightbox(); closePersonaModal(); } });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") { closeLightbox(); closePersonaModal(); closePlansDrawer(); } });
+$("plans-toggle").onclick = togglePlansDrawer;
+$("rail-backdrop").onclick = closePlansDrawer;
 $("lib-search").addEventListener("input", (e) => {
   libState.q = e.target.value.trim();
   if (!libState.brand) renderLibraryIndex();

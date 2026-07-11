@@ -599,7 +599,7 @@ def _render_benchmarks(audience: dict, engagement: dict) -> str:
             ] if v is not None)
         out += (
             "<div class='bm-block'><h3 class='plan-sec-sub'>" + _icon("groups") +
-            f"Audience sizing &amp; access {_agent_chip(audience.get('agent_name', 'Maya'))}</h3>"
+            f"Audience sizing &amp; access {_agent_chip(audience.get('agent_name', 'Market & Competitive Intelligence'))}</h3>"
             f"<div class='bm-headline'>{_md_bold(audience['headline'])} {_conf_pill(audience['confidence'])}</div>"
             "<div class='bm-cols'>"
             f"<div><h4>Addressable US universe</h4><table class='plan-table'>"
@@ -627,7 +627,7 @@ def _render_benchmarks(audience: dict, engagement: dict) -> str:
                            for k, v in gov.items() if k not in ("confidence", "source_ids"))
         out += (
             "<div class='bm-block'><h3 class='plan-sec-sub'>" + _icon("speed") +
-            f"Engagement targets vs industry baseline {_agent_chip(engagement.get('agent_name', 'Arjun'))}</h3>"
+            f"Engagement targets vs industry baseline {_agent_chip(engagement.get('agent_name', 'Activation Planning'))}</h3>"
             f"<div class='bm-headline'>{_esc(engagement['headline'])} {_conf_pill(engagement['confidence'])}</div>"
             "<table class='plan-table'><tr><th>Channel</th><th>Share</th><th>Persona affinity</th>"
             "<th>Primary KPI</th><th>Industry baseline</th><th>Target band</th></tr>" + rows + "</table>"
@@ -696,14 +696,14 @@ def _render_tml(tml: dict) -> str:
     n_agent = 0
     for r in tml["rows"]:
         agent = r.get("agent_recommended")
-        good = (_agent_chip(r.get("agent_name") or "Arjun") + f"<div class='plan-agent-val'>{_esc(r['what_good_looks_like'])}</div>"
+        good = (_agent_chip(r.get("agent_name") or "Activation Planning") + f"<div class='plan-agent-val'>{_esc(r['what_good_looks_like'])}</div>"
                 if agent else _esc(r["what_good_looks_like"]))
         if agent:
             n_agent += 1
         cells = [_esc(r["test"]), _esc(r["objective"]), _esc(r["channels"]), _esc(r["measure"]), _esc(r["definition"]),
                  _esc(r["frequency"]), _esc(r["data_source"]), good, _esc(r["what_we_will_learn"])]
         body += (f"<tr{' class=plan-agent-row' if agent else ''}>" + "".join(f"<td>{c}</td>" for c in cells) + "</tr>")
-    legend = (f"<p class='plan-agent-legend'>{_agent_chip('Arjun')} — target band set from researched industry "
+    legend = (f"<p class='plan-agent-legend'>{_agent_chip('Activation Planning')} — target band set from researched industry "
               f"baselines (see §24), scaled by the lifecycle stage.</p>") if n_agent else ""
     return (f"<div class='tk-scroll'><table class='tk-qtable tk-tml'>{head}{body}</table></div>" + legend
             + f"<p class='plan-caveat'>{_esc(tml['caveat'])}</p>")
@@ -1174,12 +1174,12 @@ def compose_plan(ctx: dict) -> tuple[str, str]:
     if audience or engagement:
         md.append("## 24. Audience & engagement benchmarks (agent-recommended)\n")
         if audience.get("audience_size", {}).get("total"):
-            md.append(f"**Audience (Maya):** {audience['headline']} — confidence: {audience['confidence']}.\n")
+            md.append(f"**Audience (Market & Competitive Intelligence Agent):** {audience['headline']} — confidence: {audience['confidence']}.\n")
             for r in audience["audience_size"]["specialties"]:
                 md.append(f"- {r['specialty']}: ~{r['count']:,} ({r['confidence']})")
             md.append("")
         if engagement.get("channels"):
-            md.append(f"**Engagement targets (Arjun):** {engagement['headline']}\n")
+            md.append(f"**Engagement targets (Activation Planning Agent):** {engagement['headline']}\n")
             md.append("| Channel | Share | Affinity | Primary KPI | Industry baseline | Target band |")
             md.append("|---|---|---|---|---|---|")
             for r in engagement["channels"]:
@@ -1193,7 +1193,7 @@ def compose_plan(ctx: dict) -> tuple[str, str]:
         n_rec = tcg.get("agent_answered_count", 0) + sum(1 for r in ctx["test_measure_learn"]["rows"]
                                                           if r.get("agent_recommended"))
         h.append(_det_open(24, "Audience & engagement benchmarks", "auto_awesome")
-                 + f"<p>Maya and Arjun filled <strong>{n_rec}</strong> plan field(s) from these researched industry "
+                 + f"<p>The Market &amp; Competitive Intelligence and Activation Planning agents filled <strong>{n_rec}</strong> plan field(s) from these researched industry "
                    f"baselines. Agent-recommended values are highlighted like this: {_agent_chip('Agent')} — they are "
                    f"defensible starting points, not brand forecasts.</p>"
                  + _render_benchmarks(audience, engagement) + _DET_CLOSE)
