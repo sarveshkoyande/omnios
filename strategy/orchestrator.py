@@ -82,11 +82,18 @@ def _say(agent_id: str, text: str, to: str = ""):
     return {"type": "banter", "id": agent_id, "to": to, "text": text}
 
 
+# The interactive build reveals the plan phase by phase: the run itself only ever reveals
+# Phase 1 (Align) + the always-on base/supporting sections; the later phases unlock as the
+# user answers each phase's clarify questions in chat (see open_questions.revealed_phases_for).
+_RUN_REVEAL = {"align"}
+
+
 def _plan_partial(ctx: dict, done: set, fresh: str):
     """A progressive render of the plan document: sections owned by completed agents are
     real, the rest are owner-labelled placeholders. The UI swaps the plan pane in place, so
-    the document visibly fills in as each agent finishes."""
-    md, html_out, n_done, n_total = compose_plan_partial(ctx, done, fresh)
+    the document visibly fills in as each agent finishes. Gated to the Align phase so the
+    plan stitches together one toolkit phase at a time."""
+    md, html_out, n_done, n_total = compose_plan_partial(ctx, done, fresh, revealed_phases=_RUN_REVEAL)
     return {"type": "plan", "html": html_out, "markdown": md, "partial": True,
             "sections_done": n_done, "sections_total": n_total, "fresh_agent": fresh}
 
@@ -274,6 +281,10 @@ def run_agents(brand: str, therapy_area: str, lifecycle_key: str, budget: float 
     award_campaigns = awards_store.awards_for(brand=brand, therapy_area=therapy_area, limit=4)
     ctx["award_campaigns"] = award_campaigns
     content_library = campaign_store.content_library_for(brand, indication)
+    # Fictional kit brands (e.g. Oncomyra) have no scraped KB -- source the Create-phase
+    # content library from the brand kit's own claims + creative components instead.
+    if not content_library.get("found") and kit:
+        content_library = brand_kit_mod.content_library_from_kit(kit, indication)
     ctx["content_library"] = content_library
     done_agents.add("inspiration")
     matched_any = any(p["matched"] for p in precedents)
@@ -383,12 +394,16 @@ def run_agents(brand: str, therapy_area: str, lifecycle_key: str, budget: float 
     ctx["open_questions"] = open_qs
     n_open = sum(len(g["questions"]) for g in open_qs)
     result = _assemble_result(ctx)
-    plan_markdown, plan_html, n_done_f, n_total_f = compose_plan_partial(ctx, None, "final")
+    # Reveal only Phase 1 (Align) now; Select/Create/Deploy stay locked until the user
+    # clarifies each phase in chat, so the document builds up one toolkit phase at a time.
+    plan_markdown, plan_html, n_done_f, n_total_f = compose_plan_partial(ctx, None, "final", revealed_phases=_RUN_REVEAL)
+    align_open = sum(len(g["questions"]) for g in open_qs if g.get("phase") == "align")
     yield {"type": "agent", "id": "planner", "status": "done", "final": True,
-           "summary": (f"Brand engagement plan complete — all **{n_total_f}** sections are live on the right. "
-                       f"**{n_open}** questions need brand-team alignment; I'll ask you them in chat."),
-           "detail": {"bullets": [f"Executive summary and open questions synthesized from the whole team's output",
-                                  f"{n_open} 'needs alignment' items highlighted across {len(open_qs)} question groups"]}}
+           "summary": (f"Phase 1 · **Align on customer understanding & CX objectives** is drafted and live on the right. "
+                       f"Let's lock it together — I have {align_open} question(s) on it, then Phase 2 (messages & "
+                       f"channels) unlocks. We'll build the plan one phase at a time."),
+           "detail": {"bullets": [f"Align phase sections drafted; Select, Create and Deploy are locked until we align on this one",
+                                  f"{n_open} 'needs alignment' items across {len(open_qs)} groups, sequenced by toolkit phase"]}}
     yield {"type": "plan", "html": plan_html, "markdown": plan_markdown, "partial": False,
            "sections_done": n_done_f, "sections_total": n_total_f, "fresh_agent": "final"}
     # ctx is included so the server can snapshot it for the persona 'apply feedback to plan'
@@ -396,12 +411,11 @@ def run_agents(brand: str, therapy_area: str, lifecycle_key: str, budget: float 
     # server strips it before forwarding the event to the client, so it never hits the wire.
     yield {"type": "result", "result": result, "ctx": ctx}
     yield {"type": "narration", "text": (
-        f"Done — the team has finished. Your brand engagement plan for **{brand}** in **{therapy_area}** is on the right, "
-        "and **Stage 1 · Planning & Strategy** is complete.\n\n"
-        "The next three stages of this project are now unlocked in the stepper above the plan: "
-        "**Engagement Orchestration** (triggers, next-best-channel, cadence), **Campaign Operations** "
-        "(parallel execution tracks per channel), and **Reporting & Insights** (the measurement scorecard).\n\n"
-        "Download the plan as Markdown, or tell me what to adjust (persona, competitors, budget) and I'll send the agents back in."
+        f"**Phase 1 · Align** is drafted for **{brand}** in **{therapy_area}** — you can see it on the right. "
+        "The other three toolkit phases (Select → Create → Deploy) are shown locked beneath it and unlock one at a "
+        "time as we align on each phase, so you watch the plan get stitched together section by section.\n\n"
+        "Answer the Align questions I'm about to ask and I'll fold each into the plan live; once Align is set, "
+        "**Select relevant messages & channels** unlocks next."
     )}
     yield {"type": "done"}
 
@@ -461,14 +475,18 @@ def _assemble_result(ctx: dict) -> dict:
     }
 
 
-def recompose_plan(ctx: dict) -> tuple[dict, str, str]:
+def recompose_plan(ctx: dict, revealed_phases: set | None = None) -> tuple[dict, str, str]:
     """Re-render the plan from a (possibly patched) ctx snapshot, without re-running any
     agent. Used both by the persona 'apply feedback to plan' action (which patches
     budget_allocation) and by refresh_after_clarify() below (which patches cx_maturity/
     open_questions) -- any future ctx-patching action should reuse this rather than calling
-    _assemble_result/compose_plan directly, so the two always stay in sync."""
+    _assemble_result/compose_plan directly, so the two always stay in sync.
+
+    revealed_phases gates the interactive phase-by-phase build: None reveals every toolkit
+    phase (persona-apply, exports); the clarify flow passes the set unlocked so far so the
+    plan reveals a phase at a time as the user answers each phase's questions."""
     result = _assemble_result(ctx)
-    plan_markdown, plan_html = compose_plan(ctx)
+    plan_markdown, plan_html = compose_plan(ctx, revealed_phases=revealed_phases)
     return result, plan_markdown, plan_html
 
 

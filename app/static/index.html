@@ -451,6 +451,16 @@
   .plan-pending-bar { position: absolute; inset: 0; pointer-events: none;
     background: linear-gradient(100deg, transparent 30%, rgba(0,174,239,0.10) 50%, transparent 70%);
     background-size: 200% 100%; animation: shimmer 2.2s linear infinite; }
+  /* Phase-gated interactive build: sections of a not-yet-unlocked toolkit phase. */
+  .plan-sec.sec-locked { opacity: .6; }
+  .plan-sec.sec-locked .plan-sec-head h2 { color: var(--faint); }
+  .plan-sec.sec-locked .plan-sec-head { cursor: default; }
+  .plan-locked-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 9.5px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .04em; color: #8a6d3b; background: rgba(240,176,0,0.10);
+    border: 1px solid rgba(240,176,0,0.35); border-radius: 999px; padding: 2px 9px; white-space: nowrap; }
+  .plan-locked-chip .material-symbols-outlined { font-size: 12px; }
+  .tk-phase-banner.tk-locked { filter: grayscale(.55) opacity(.72); }
+  .tk-phase-lock { font-size: 14px; margin-left: 8px; vertical-align: -2px; }
   .plan-sec.sec-fresh { animation: freshGlow 2.6s ease-out; }
   .plan-sec.sec-fresh > summary .plan-sec-head h2, .plan-sec.sec-fresh > summary h2 { color: var(--indegene-navy); }
   @keyframes freshGlow {
@@ -777,6 +787,11 @@
   .tk-chsel .tk-ch { font-weight: 600; }
   .tk-chsel td.tk-t0, .tk-chsel td.tk-t1, .tk-chsel td.tk-t2 { color: #fff; font-weight: 700; opacity: 1; }
   .tk-audit th, .tk-audit td { min-width: 90px; }
+  .tk-audit td:first-child, .tk-audit th:first-child { min-width: 68px; width: 68px; text-align: center; }
+  .tk-asset-thumb { display: inline-block; line-height: 0; }
+  .tk-asset-thumb img { width: 56px; height: 40px; object-fit: cover; border-radius: 4px;
+    border: 1px solid var(--line); box-shadow: 0 1px 3px rgba(11,61,145,0.12); transition: transform .15s ease; }
+  .tk-asset-thumb:hover img { transform: scale(1.06); border-color: var(--indegene-cyan, #00AEEF); }
   .tk-raci { text-align: center; font-weight: 700; }
   .tk-raci-r { background: #DFF2E1; color: #1B7A34; } .tk-raci-a { background: #FFE6EF; color: var(--tk-magenta); }
   .tk-raci-c { background: #E4F3FC; color: #0B6FA8; } .tk-raci-i { background: #F1F1F1; color: #666; }

@@ -114,9 +114,11 @@ def _det_open(num: int, title: str, icon: str, phase: str = "", start_open: bool
 _DET_CLOSE = "</div></details>"
 
 
-def _phase_banner(phase: str, label: str, phase_no: int) -> str:
-    return (f"<div class='tk-phase-banner tk-{phase}'><span class='tk-phase-no'>Phase {phase_no}</span>"
-            f"{_esc(label)}</div>")
+def _phase_banner(phase: str, label: str, phase_no: int, locked: bool = False) -> str:
+    lock = f"<span class='tk-phase-lock material-symbols-outlined'>lock</span>" if locked else ""
+    cls = f"tk-phase-banner tk-{phase}" + (" tk-locked" if locked else "")
+    return (f"<div class='{cls}'><span class='tk-phase-no'>Phase {phase_no}</span>"
+            f"{_esc(label)}{lock}</div>")
 
 
 def _home_navigator(has_brand_kit: bool = False) -> str:
@@ -439,8 +441,19 @@ def _render_channel_selection(chsel: dict) -> str:
             f"<p class='plan-caveat'>{_esc(chsel['caveat'])}</p>")
 
 
-_CONTENT_AUDIT_COLS = ["File Name", "Asset Title", "Target Group", "Branded/Unbranded", "Asset format",
+_CONTENT_AUDIT_COLS = ["Preview", "File Name", "Asset Title", "Target Group", "Branded/Unbranded", "Asset format",
                        "Key Messages", "Description", "Where to find it: URL", "ID_code"]
+
+
+def _asset_thumb(a: dict) -> str:
+    """A small clickable thumbnail cell for a content-library asset, or an em-dash when the
+    asset has no resolvable image (e.g. the ISI placeholder)."""
+    img = a.get("image_url") or a.get("url") or ""
+    if img and img.startswith(("/static/", "http://", "https://")):
+        title = _esc(a.get("title") or a.get("file_name") or "asset")
+        return (f"<a class='tk-asset-thumb' href='{_esc(img)}' target='_blank' rel='noopener' title='{title}'>"
+                f"<img src='{_esc(img)}' alt='{title}' loading='lazy'></a>")
+    return "—"
 
 
 def _render_content_audit(mf: dict, persona: str, micro_journeys: dict,
@@ -454,10 +467,12 @@ def _render_content_audit(mf: dict, persona: str, micro_journeys: dict,
             key_msgs = ", ".join(m for m in a.get("modules", []) if "claim block" in m.lower()) \
                 or ", ".join(a.get("modules", [])[:2]) or "—"
             branded = "Branded" if a.get("branded") else "Unbranded"
-            url = a.get("url") or (f"blob:{a['blob_key'][:12]}…" if a.get("blob_key") else "—")
-            cells = [_esc(a.get("file_name") or "—"), _esc(a.get("title") or "—"), _esc(a.get("target_group") or persona),
-                     _esc(branded), _esc(a.get("asset_format") or "—"), _esc(key_msgs),
-                     _esc(a.get("description") or "—"), _esc(url), _esc(a.get("id_code") or "—")]
+            raw_url = a.get("url") or (f"blob:{a['blob_key'][:12]}…" if a.get("blob_key") else "")
+            url = (f"<a href='{_esc(raw_url)}' target='_blank' rel='noopener'>{_esc(raw_url)}</a>"
+                   if raw_url.startswith(("/static/", "http")) else _esc(raw_url or "—"))
+            cells = [_asset_thumb(a), _esc(a.get("file_name") or "—"), _esc(a.get("title") or "—"),
+                     _esc(a.get("target_group") or persona), _esc(branded), _esc(a.get("asset_format") or "—"),
+                     _esc(key_msgs), _esc(a.get("description") or "—"), url, _esc(a.get("id_code") or "—")]
             body += "<tr>" + "".join(f"<td>{c}</td>" for c in cells) + "</tr>"
         counts = lib.get("counts", {})
         intro = (f"<p>Content inventory for this brand/indication — <strong>{counts.get('assets', len(assets))}</strong> "
@@ -470,7 +485,7 @@ def _render_content_audit(mf: dict, persona: str, micro_journeys: dict,
     journeys = micro_journeys["journeys"]
     for i, km in enumerate(mf["key_messages"]):
         fmt = journeys[i % len(journeys)]["primary_touchpoint"] if journeys else "—"
-        cells = [_NEEDS_CHIP, _NEEDS_CHIP, _esc(persona), _NEEDS_CHIP, _esc(fmt),
+        cells = ["—", _NEEDS_CHIP, _NEEDS_CHIP, _esc(persona), _NEEDS_CHIP, _esc(fmt),
                  _esc(km["topic"]), _esc(km["supporting_messages"][0]), _NEEDS_CHIP, _NEEDS_CHIP]
         body += "<tr class='plan-open-row'>" + "".join(f"<td>{c}</td>" for c in cells) + "</tr>"
     return ("<p>No content library is indexed for this brand yet, so this audit ships as the toolkit's template with "
@@ -1468,6 +1483,18 @@ _SECTION_TABLE = [
 ]
 
 
+# Toolkit phase order + the chat step that unlocks each, used for the locked placeholders
+# in the phase-gated interactive build.
+_PHASE_ORDER = ["align", "select", "create", "deploy"]
+_PHASE_NO = {"align": 1, "select": 2, "create": 3, "deploy": 4}
+_PHASE_UNLOCK = {
+    "align": "customer understanding & CX objectives",
+    "select": "the messages & channels",
+    "create": "the omnichannel CX design",
+    "deploy": "campaign deployment",
+}
+
+
 def _placeholder(num, title, icon, owner, md, h):
     agent = _OWNER_LABEL.get(owner, "team")
     md.append(f"## {num}. {title}\n\n_Pending — the {agent} is working on this section._\n")
@@ -1480,12 +1507,33 @@ def _placeholder(num, title, icon, owner, md, h):
              f"{_esc(agent)} finishes its research.</div></div></details>")
 
 
-def _compose(ctx: dict, done_agents: set | None = None, fresh_agent: str = ""):
+def _locked_placeholder(num, title, icon, phase, md, h):
+    """A section belonging to a not-yet-revealed toolkit phase: shown as a locked stub so the
+    user sees the roadmap, with the chat step that unlocks it."""
+    no = _PHASE_NO.get(phase, "")
+    unlock = _PHASE_UNLOCK.get(phase, "the previous phase")
+    hint = f"Unlocks once we align on {unlock} in the chat — Phase {no}." if no else "Unlocks later."
+    md.append(f"## {num}. {title}\n\n_Locked — {hint}_\n")
+    h.append(f"<details class='plan-sec sec-locked' id='sec-{num}'>"
+             f"<summary class='plan-sec-head'>{_icon(icon)}<h2>{num}. {_esc(title)}</h2>"
+             f"<span class='plan-locked-chip'>{_icon('lock')}Phase {no}</span>"
+             f"<span class='plan-sec-chev material-symbols-outlined'>expand_more</span></summary>"
+             f"<div class='plan-sec-body'><div class='plan-pending-body'>"
+             f"<span class='plan-pending-bar'></span>{_esc(hint)}</div></div></details>")
+
+
+def _compose(ctx: dict, done_agents: set | None = None, fresh_agent: str = "",
+             revealed_phases: set | None = None):
     """Render the plan document. done_agents=None -> the full document (legacy behavior,
     used for the final render and every recompose). A set of agent ids -> a PARTIAL
     document: sections owned by a completed agent (whose data is present) render for real;
     everything else renders as an owner-labelled pending placeholder. fresh_agent marks
-    that agent's sections as just-completed (auto-open + .sec-fresh highlight)."""
+    that agent's sections as just-completed (auto-open + .sec-fresh highlight).
+
+    revealed_phases gates the interactive phase-by-phase build: None -> every toolkit phase
+    is revealed (legacy/full). A set of phase ids ({"align",...}) -> only those phases render;
+    sections of an un-revealed phase show a locked stub. Base/supporting sections (phase="")
+    are always revealed."""
     full = done_agents is None
     brand, ta = ctx["brand"], ctx["therapy_area"]
     inferred = ctx.get("inferred") or {}
@@ -1522,13 +1570,17 @@ def _compose(ctx: dict, done_agents: set | None = None, fresh_agent: str = ""):
     h.append(f"<div class='plan-badges'>{badges}</div>")
     h.append(_home_navigator(has_brand_kit=bool(ctx.get("brand_kit"))))
 
+    def _revealed(phase):
+        return revealed_phases is None or phase == "" or phase in revealed_phases
+
     n_total = n_done = 0
     for entry in _SECTION_TABLE:
         kind = entry[0]
         if kind == "banner":
             _, phase, label, no = entry
-            h.append(_phase_banner(phase, label, no))
-            md.append(f"---\n\n# Phase {no} · {label}\n")
+            locked = not _revealed(phase)
+            h.append(_phase_banner(phase, label, no, locked=locked))
+            md.append(f"---\n\n# Phase {no} · {label}{' (locked)' if locked else ''}\n")
             continue
         if kind == "banner_support":
             h.append("<div class='tk-phase-banner tk-support'>Supporting analysis</div>")
@@ -1536,6 +1588,9 @@ def _compose(ctx: dict, done_agents: set | None = None, fresh_agent: str = ""):
             continue
         _, num, title, icon, phase, owner, ready, fn, skip = entry
         if skip(ctx, full):
+            continue
+        if not _revealed(phase):
+            _locked_placeholder(num, title, icon, phase, md, h)
             continue
         n_total += 1
         renders = ready(ctx) and (full or (owner != "final" and owner in done_agents))
@@ -1548,12 +1603,14 @@ def _compose(ctx: dict, done_agents: set | None = None, fresh_agent: str = ""):
     return "\n".join(md), "".join(h), n_done, n_total
 
 
-def compose_plan(ctx: dict) -> tuple[str, str]:
-    """Full document (legacy entrypoint -- persona-apply, clarify auto-update, exports)."""
-    md, html_out, _, _ = _compose(ctx)
+def compose_plan(ctx: dict, revealed_phases: set | None = None) -> tuple[str, str]:
+    """Full document (legacy entrypoint -- persona-apply, clarify auto-update, exports).
+    Pass revealed_phases to gate the interactive phase-by-phase build."""
+    md, html_out, _, _ = _compose(ctx, revealed_phases=revealed_phases)
     return md, html_out
 
 
-def compose_plan_partial(ctx: dict, done_agents: set | None, fresh_agent: str = ""):
+def compose_plan_partial(ctx: dict, done_agents: set | None, fresh_agent: str = "",
+                         revealed_phases: set | None = None):
     """Progressive render for the live run. Returns (md, html, sections_done, sections_total)."""
-    return _compose(ctx, done_agents, fresh_agent)
+    return _compose(ctx, done_agents, fresh_agent, revealed_phases=revealed_phases)

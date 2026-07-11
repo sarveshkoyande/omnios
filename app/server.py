@@ -33,6 +33,7 @@ from strategy.conversation import (new_state, opening_message, interpret_message
                                    get_llm_status, ask_clarify_group, clarify_payload)
 from strategy import orchestrator  # noqa: E402
 from strategy.orchestrator import run_agents  # noqa: E402
+from strategy import open_questions as open_questions_mod  # noqa: E402  (phase-gated reveal)
 from strategy.document_intake import extract_text  # noqa: E402
 from strategy import dashboard as dashboard_mod  # noqa: E402
 from strategy import feed as feed_mod  # noqa: E402
@@ -238,8 +239,15 @@ def api_close_updates(pid: str):
         raise HTTPException(404, "project not found")
     state = proj["state"]
     _freeze_project_state(state)
-    pstore.save_project(pid, state=state)
-    return {"ok": True, "plan_frozen": True}
+    # Reveal every remaining toolkit phase on lock-in so nothing stays gated.
+    ctx = state.get("_plan_ctx")
+    plan_html = plan_markdown = result_for_save = None
+    if ctx:
+        state["revealed_phases"] = list(open_questions_mod.PHASE_ORDER)
+        result_for_save, plan_markdown, plan_html = orchestrator.recompose_plan(ctx)
+    pstore.save_project(pid, state=state, result=result_for_save,
+                        plan_markdown=plan_markdown, plan_html=plan_html)
+    return {"ok": True, "plan_frozen": True, "plan_html": plan_html, "plan_markdown": plan_markdown}
 
 
 # ------------------------------------------------------------------ #
@@ -379,11 +387,22 @@ def api_chat(req: ChatRequest):
         if ctx:
             ctx = orchestrator.refresh_after_clarify(
                 ctx, state["slots"].get("maturity_notes", ""), set(state.get("clarify_resolved_ids") or []))
-            result_for_save, plan_markdown, plan_html = orchestrator.recompose_plan(ctx)
+            # Reveal the plan up to whatever toolkit phase the clarify cursor has reached, so
+            # answering a phase's questions unlocks the next phase's sections in place.
+            revealed = open_questions_mod.revealed_phases_for(now_groups, now_idx)
+            state["revealed_phases"] = sorted(revealed)
+            result_for_save, plan_markdown, plan_html = orchestrator.recompose_plan(ctx, revealed_phases=revealed)
             state["_plan_ctx"] = ctx
             plan_updated = True
     elif action == "freeze":
         _freeze_project_state(state)
+        # Locking the plan in reveals every remaining phase -- the user is done building,
+        # so nothing stays locked once the document is finalized.
+        ctx = state.get("_plan_ctx")
+        if ctx:
+            state["revealed_phases"] = list(open_questions_mod.PHASE_ORDER)
+            result_for_save, plan_markdown, plan_html = orchestrator.recompose_plan(ctx)
+            plan_updated = True
 
     # Auto-name the project once brand + therapy area are known.
     name = proj["name"]
@@ -470,6 +489,10 @@ def api_run_stream(project_id: str):
                     already_resolved = set(state.get("clarify_resolved_ids") or [])
                     state["open_questions"] = [g for g in result["open_questions"] if g["id"] not in already_resolved]
                     state["clarify_idx"] = 0
+                    # The run reveals only Phase 1 (Align); later phases unlock as the user
+                    # answers each phase's clarify questions.
+                    state["revealed_phases"] = sorted(
+                        open_questions_mod.revealed_phases_for(state["open_questions"], 0))
                     first_ask = ask_clarify_group(state)
                     payload = clarify_payload(state)
                     if first_ask:
