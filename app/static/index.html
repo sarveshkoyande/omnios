@@ -259,7 +259,7 @@
   .agent-ico .material-symbols-outlined { font-size: 18px; }
   .agent-body { flex: 1; min-width: 0; }
   .agent-top { display: flex; align-items: center; gap: 8px; }
-  .agent-name { font-size: 13px; font-weight: 600; }
+  .agent-name { font-size: 13px; font-weight: 600; color: var(--c, var(--text)); }
   .agent-status { margin-left: auto; width: 8px; height: 8px; border-radius: 50%; flex: 0 0 auto; }
   .agent-status.st-queued { background: rgba(11,61,145,0.22); }
   .agent-status.st-running { background: var(--amber); box-shadow: 0 0 0 0 rgba(199,119,0,0.5); animation: pulse 1.4s infinite; }
@@ -288,7 +288,7 @@
   .tm-ava .ag-avatar { transition: filter .3s ease, opacity .3s ease, box-shadow .3s ease; box-shadow: 0 0 0 2px var(--glass-strong, #fff); }
   .tm-dot { position: absolute; right: 0; bottom: 0; width: 11px; height: 11px; border-radius: 50%;
     border: 2px solid var(--glass-strong, #fff); background: #c3c8d0; transition: background .3s ease; }
-  .tm-name { font-size: 11px; color: var(--muted); font-weight: 600; white-space: nowrap; }
+  .tm-name { font-size: 11px; color: var(--c, var(--muted)); font-weight: 600; white-space: nowrap; }
   .team-member.st-standby .ag-avatar { filter: grayscale(1); opacity: 0.6; }
   .team-member.st-working { transform: translateY(-3px); }
   .team-member.st-working .ag-avatar { box-shadow: 0 0 0 3px var(--amber); }
@@ -1396,26 +1396,28 @@ const WORKFLOW_STAGES = [
     blurb:"Measurement scorecard, channel performance framework and insights." },
 ];
 
-// Darker, higher-contrast palette for a light background (the dark-theme originals
-// were tuned as pastel-on-black and read as low-contrast text on white/glass).
+// Per-agent theme colors matched to the Indegene digital-studio character art each agent
+// wears (sampled from the PNGs, honoring the requested labels): planner=Blue, intel=Pink,
+// strategy=Green, inspiration=Orange, activation=Purple. c1 is the deep shade used for
+// name text / banter accents; c2 the light end of the monogram gradient.
 // Five broad-mandate agents; the Engagement Planner opens AND closes the run.
-const AGENT_COLORS = { planner:"#3454C4", intel:"#1768D1", strategy:"#5A32E0", inspiration:"#A6720A", activation:"#12866F" };
+const AGENT_COLORS = { planner:"#0277BD", intel:"#C7107E", strategy:"#00796B", inspiration:"#E65100", activation:"#5E35B1" };
 const AGENT_ICONS = { planner:"description", intel:"travel_explore", strategy:"track_changes", inspiration:"emoji_events", activation:"payments" };
-// Named teammates with an avatar -- source of truth for the display name and the (original
-// static portrait) avatar image. If a photo fails to load (offline, or the host blocks
+// Named teammates with an avatar -- source of truth for the display name, theme colors and
+// the character avatar image. If a photo fails to load (offline, or the host blocks
 // hotlinking) avatarHtml's onerror drops the <img> and the gradient-initials monogram
 // behind it shows through -- so the UI never renders a broken image. Mirrors orchestrator.py.
 const AGENT_PEOPLE = {
-  planner:     { name:"Engagement Planner Agent",                 role:"", initials:"EP", c1:"#3454C4", c2:"#6C8BF0",
-                 photo:"https://i.pinimg.com/736x/4a/d9/1d/4ad91d1959d7eb2524fe52187973ea12.jpg" },
-  intel:       { name:"Market & Competitive Intelligence Agent", role:"", initials:"MC", c1:"#1768D1", c2:"#4AA6F2",
-                 photo:"https://i.pinimg.com/736x/84/67/07/846707b49d0ee0924c31dde35e14cb8c.jpg" },
-  strategy:    { name:"Strategy & Positioning Agent",            role:"", initials:"SP", c1:"#5A32E0", c2:"#9B6BFF",
-                 photo:"https://i.pinimg.com/736x/98/15/22/981522e80927e19a5641b7265b266085.jpg" },
-  inspiration: { name:"Creative Inspiration Agent",               role:"", initials:"CI", c1:"#C77700", c2:"#F2A93B",
-                 photo:"https://i.pinimg.com/736x/09/fa/2a/09fa2ae07bed26e6962bad898de6dad8.jpg" },
-  activation:  { name:"Activation Planning Agent",                role:"", initials:"AP", c1:"#12866F", c2:"#37B89A",
-                 photo:"https://i.pinimg.com/736x/ae/e5/dc/aee5dc0bd16a86991299c7862577d901.jpg" },
+  planner:     { name:"Engagement Planner Agent",                 role:"", initials:"EP", c1:"#0277BD", c2:"#29B6F6",
+                 photo:"https://digital-studio.indegene.com/public/characters/Agent1.png" },
+  intel:       { name:"Market & Competitive Intelligence Agent", role:"", initials:"MC", c1:"#C7107E", c2:"#F06EBB",
+                 photo:"https://digital-studio.indegene.com/public/characters/Agent2.png" },
+  strategy:    { name:"Strategy & Positioning Agent",            role:"", initials:"SP", c1:"#00796B", c2:"#26D0B8",
+                 photo:"https://digital-studio.indegene.com/public/characters/Agent3.png" },
+  inspiration: { name:"Creative Inspiration Agent",               role:"", initials:"CI", c1:"#E65100", c2:"#FFB300",
+                 photo:"https://digital-studio.indegene.com/public/characters/Agent4.png" },
+  activation:  { name:"Activation Planning Agent",                role:"", initials:"AP", c1:"#5E35B1", c2:"#9575CD",
+                 photo:"https://digital-studio.indegene.com/public/characters/Agent5.png" },
 };
 let agentMeta = {};
 let _avatarSeq = 0;
@@ -2065,7 +2067,7 @@ function initAgents(agents) {
   agents.forEach(a => { agentMeta[a.id] = { name: a.name, role: a.role, icon: a.icon || AGENT_ICONS[a.id] || "smart_toy" }; });
   const body = $("agents-body");
   const team = agents.map(a => `
-    <div class="team-member st-standby" id="team-${a.id}" title="${agentTooltip(a.id)}">
+    <div class="team-member st-standby" id="team-${a.id}" title="${agentTooltip(a.id)}" style="--c:${(AGENT_PEOPLE[a.id]||{}).c1||''}">
       <span class="tm-ava">${avatarHtml(a.id, 46)}<i class="tm-dot"></i></span>
       <span class="tm-name">${agentName(a.id)}</span>
     </div>`).join("");
@@ -2077,6 +2079,7 @@ function initAgents(agents) {
   agents.forEach(a => {
     const el = document.createElement("div");
     el.className = "agent-card st-standby"; el.id = "agent-" + a.id;
+    el.style.setProperty("--c", (AGENT_PEOPLE[a.id]||{}).c1||"");
     el.innerHTML = `${avatarHtml(a.id, 38)}
       <div class="agent-body">
         <div class="agent-top"><span class="agent-name">${agentName(a.id)}</span>
@@ -2172,7 +2175,7 @@ function renderAgentsDoneFromResult(result) {
   const ids = roster.map(r => r[0]);
   const body = $("agents-body");
   const team = ids.map(id => `
-    <div class="team-member st-done" id="team-${id}" title="${agentTooltip(id)}">
+    <div class="team-member st-done" id="team-${id}" title="${agentTooltip(id)}" style="--c:${(AGENT_PEOPLE[id]||{}).c1||''}">
       <span class="tm-ava">${avatarHtml(id, 46)}<i class="tm-dot"></i></span>
       <span class="tm-name">${agentName(id)}</span>
     </div>`).join("");
@@ -2183,6 +2186,7 @@ function renderAgentsDoneFromResult(result) {
   const cards = $("agent-cards");
   roster.forEach(([id, summary, bullets]) => {
     const el = document.createElement("div"); el.className = "agent-card st-done-card";
+    el.style.setProperty("--c", (AGENT_PEOPLE[id]||{}).c1||"");
     const detailHtml = bullets && bullets.length ? `<details class="agent-detail"><summary>${bullets.length} detail${bullets.length > 1 ? "s" : ""}</summary><ul>${bullets.map(b => `<li>${renderInline(b)}</li>`).join("")}</ul></details>` : "";
     el.innerHTML = `${avatarHtml(id, 38)}<div class="agent-body">
       <div class="agent-top"><span class="agent-name">${agentName(id)}</span>
