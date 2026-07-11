@@ -31,7 +31,9 @@ from competitive.swot import build_swot  # noqa: E402
 from strategy import projects as pstore  # noqa: E402
 from strategy.conversation import (new_state, opening_message, interpret_message, llm_enabled,  # noqa: E402
                                    get_llm_status, ask_clarify_group, clarify_payload)
+from strategy import orchestrator  # noqa: E402
 from strategy.orchestrator import run_agents  # noqa: E402
+from strategy.plan_document import compose_plan  # noqa: E402  (re-renders the plan after a persona-driven adjustment)
 from strategy.document_intake import extract_text  # noqa: E402
 from strategy import dashboard as dashboard_mod  # noqa: E402
 from strategy import feed as feed_mod  # noqa: E402
@@ -124,6 +126,16 @@ def api_personas(project_id: str = ""):
     return personas_mod.match_to_plan(therapy_area, indication)
 
 
+@app.get("/api/personas/{persona_id}")
+def api_persona_detail(persona_id: str):
+    """Full persona record (demographics, prescribing, channels, decision drivers, voice) --
+    powers the picker's 'info' card."""
+    p = personas_mod.get(persona_id)
+    if not p:
+        raise HTTPException(404, f"no persona '{persona_id}'")
+    return p
+
+
 class PersonaReviewRequest(BaseModel):
     project_id: str
     persona_ids: list[str]
@@ -148,6 +160,49 @@ def api_persona_review(req: PersonaReviewRequest):
     state["persona_reviews"] = reviews
     pstore.save_project(req.project_id, state=state)
     return {"reviews": reviews}
+
+
+class PersonaApplyRequest(BaseModel):
+    project_id: str
+    persona_ids: list[str] = []   # empty -> use every persona from the last review batch
+
+
+@app.post("/api/persona-apply")
+def api_persona_apply(req: PersonaApplyRequest):
+    """Automatically rebalance the plan's channel mix toward what the selected personas
+    actually respond to, and re-render the plan document. Reuses the exact same compose_plan
+    call the original run made -- run-stream snapshots the run's full ctx (server-side only,
+    never sent to the client) precisely so this can happen without re-running the agents."""
+    proj = pstore.get_project(req.project_id)
+    if not proj:
+        raise HTTPException(404, "project not found")
+    state = proj["state"]
+    ctx = state.get("_plan_ctx")
+    if not ctx:
+        raise HTTPException(400, "this plan was generated before persona adjustments were "
+                                  "supported -- regenerate the plan to enable this")
+    reviews = state.get("persona_reviews") or []
+    ids = req.persona_ids or [r["persona_id"] for r in reviews]
+    chosen = [p for p in (personas_mod.get(pid) for pid in ids) if p]
+    if not chosen:
+        raise HTTPException(400, "no valid personas to apply")
+
+    current_mix = persona_review_mod._plan_mix(proj["result"])
+    adj = persona_review_mod.suggest_rebalance(chosen, current_mix)
+    total_budget = ctx.get("budget") or 0
+    ctx["budget_allocation"] = {
+        b: {"pct": pct, "amount": round(total_budget * pct / 100, 2) if total_budget else None}
+        for b, pct in adj["new_mix"].items()
+    }
+    result = orchestrator._assemble_result(ctx)
+    plan_md, plan_html = compose_plan(ctx)
+
+    log_entry = {"at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "persona_ids": ids,
+                 "persona_names": [p["name"] for p in chosen], "changes": adj["changes"]}
+    state.setdefault("persona_adjustments", []).append(log_entry)
+    state["_plan_ctx"] = ctx
+    pstore.save_project(req.project_id, state=state, result=result, plan_markdown=plan_md, plan_html=plan_html)
+    return {"changes": adj["changes"], "new_mix": adj["new_mix"], "plan_html": plan_html, "plan_markdown": plan_md}
 
 
 # ------------------------------------------------------------------ #
@@ -198,9 +253,21 @@ def api_chat(req: ChatRequest):
     state = proj["state"]
     messages.append(_msg("user", req.message))
 
+    # Snapshot whether the post-plan clarify Q&A was in progress BEFORE this turn, so we can
+    # tell the client the exact turn it finishes on -- that's the moment the synthetic-persona
+    # offer should appear (never before the brand team's open questions are captured).
+    prev_groups = state.get("open_questions") or []
+    prev_idx = state.get("clarify_idx", 0)
+    was_clarifying = bool(prev_groups) and prev_idx < len(prev_groups)
+
     state, reply, action = interpret_message(req.message, state)
     clarify = clarify_payload(state)  # non-None only while the post-plan clarify Q&A is active
     messages.append(_msg("agent", reply, {"kind": "clarify", "clarify": clarify} if clarify else None))
+
+    now_groups = state.get("open_questions") or []
+    now_idx = state.get("clarify_idx", 0)
+    now_clarifying = bool(now_groups) and now_idx < len(now_groups)
+    clarify_just_completed = was_clarifying and not now_clarifying
 
     # Auto-name the project once brand + therapy area are known.
     name = proj["name"]
@@ -210,7 +277,7 @@ def api_chat(req: ChatRequest):
 
     pstore.save_project(req.project_id, name=name, state=state, messages=messages)
     return {"reply": reply, "slots": slots, "phase": state["phase"], "action": action, "name": name,
-            "llm_status": get_llm_status(), "clarify": clarify}
+            "llm_status": get_llm_status(), "clarify": clarify, "clarify_just_completed": clarify_just_completed}
 
 
 @app.post("/api/upload")
@@ -261,6 +328,7 @@ def api_run_stream(project_id: str):
         messages = proj["messages"]
         state = proj["state"]
         result = None
+        ctx_snapshot = None
         plan_md = plan_html = None
         try:
             for ev in run_agents(slots["brand"], slots["therapy_area"], slots["lifecycle_key"], slots["budget"],
@@ -271,6 +339,9 @@ def api_run_stream(project_id: str):
                     plan_md, plan_html = ev["markdown"], ev["html"]
                 elif ev["type"] == "result":
                     result = ev["result"]
+                    # Captured for the persona 'apply feedback to plan' action (needs to
+                    # re-run compose_plan later) -- popped so it never reaches the client.
+                    ctx_snapshot = ev.pop("ctx", None)
                 if ev["type"] == "done" and result and result.get("open_questions"):
                     # Seed the post-plan clarify phase: everything the toolkit templates
                     # flagged as 'needs alignment' becomes a grouped Q&A the agent leads
@@ -287,6 +358,8 @@ def api_run_stream(project_id: str):
             yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
         finally:
             state["phase"] = "done"
+            if ctx_snapshot is not None:
+                state["_plan_ctx"] = ctx_snapshot
             pstore.save_project(project_id, state=state, messages=messages,
                                 result=result, plan_markdown=plan_md, plan_html=plan_html)
             # Persist the generated plan into the campaign & content data model (best-effort;

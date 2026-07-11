@@ -317,7 +317,10 @@ def run_agents(brand: str, therapy_area: str, lifecycle_key: str, budget: float 
                                   f"{n_open} 'needs alignment' items highlighted across "
                                   f"{len(open_qs)} question groups"]}}
     yield {"type": "plan", "html": plan_html, "markdown": plan_markdown}
-    yield {"type": "result", "result": result}
+    # ctx is included so the server can snapshot it for the persona 'apply feedback to plan'
+    # action (which needs to re-run compose_plan with a patched budget mix later) -- the
+    # server strips it before forwarding the event to the client, so it never hits the wire.
+    yield {"type": "result", "result": result, "ctx": ctx}
     yield {"type": "narration", "text": (
         f"Done — the team has finished. Your brand engagement plan for **{brand}** in **{therapy_area}** is on the right, "
         "and **Stage 1 · Planning & Strategy** is complete.\n\n"
