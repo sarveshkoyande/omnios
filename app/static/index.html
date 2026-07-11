@@ -419,6 +419,11 @@
     min-width: 96px; background: rgba(11,61,145,0.07); border: 1px dashed var(--line); color: var(--indegene-navy);
     border-radius: 8px; padding: 8px; font-size: 12px; font-weight: 600; }
   .plan-frozen-badge .material-symbols-outlined { font-size: 16px; }
+  .plan-edit-hint { flex-basis: 100%; font-size: 11.5px; color: var(--muted); padding: 2px 2px 0; }
+  /* Inline plan editing -- each editable block reads as its own "text box" on hover/focus. */
+  .plan-doc-body [contenteditable="true"] { cursor: text; border-radius: 4px; transition: background .12s, outline .12s; outline: 1px dashed transparent; outline-offset: 2px; }
+  .plan-doc-body [contenteditable="true"]:hover { outline-color: rgba(11,61,145,0.35); background: rgba(11,61,145,0.03); }
+  .plan-doc-body [contenteditable="true"]:focus { outline: 2px solid var(--accent); background: #fff; }
   .plan-doc-body { font-size: 12.5px; line-height: 1.55; }
   .plan-doc-body h1 { font-size: 16px; margin: 0 0 4px; }
   .plan-doc-body h2 { font-size: 13.5px; margin: 16px 0 6px; padding-top: 10px; border-top: 1px solid var(--line); color: var(--indegene-navy); }
@@ -1236,7 +1241,13 @@
               <button id="download-docx"><span class="material-symbols-outlined">description</span> Word</button>
               <button id="download-pdf"><span class="material-symbols-outlined">picture_as_pdf</span> PDF</button>
               <button id="copy-plan"><span class="material-symbols-outlined">content_copy</span> Copy</button>
+              <button id="edit-plan-btn"><span class="material-symbols-outlined">edit</span> Edit plan</button>
               <button class="danger-ghost" id="close-updates-btn"><span class="material-symbols-outlined">lock</span> Close updates</button>
+            </div>
+            <div class="plan-actions" id="plan-edit-actions" style="display:none">
+              <button class="primary" id="save-plan-btn"><span class="material-symbols-outlined">save</span> Save changes</button>
+              <button id="cancel-plan-edit-btn"><span class="material-symbols-outlined">close</span> Cancel</button>
+              <span class="plan-edit-hint">Click any text to edit it — headings, paragraphs, list items and simple table cells.</span>
             </div>
             <div class="plan-doc-body" id="plan-body"></div>
           </div>
@@ -1256,6 +1267,8 @@ const state = {
   slots: { brand:"", therapy_area:"", lifecycle_key:"", budget:0 },
   inferred: { persona:"", stage_label:"", lifecycle_label:"", competitors:[] },
   planMarkdown: null,
+  planHtml: null,
+  planEditing: false,  // true while the user is editing plan text in place
   result: null,        // full orchestrator result (drives workflow stages 2-4)
   stage: 1,            // active workflow stage (1-4)
   es: null,
@@ -1697,6 +1710,20 @@ function planUpdateCard(sections) {
     + `</div></div>`;
   return div;
 }
+// ---------- plan-update confirmation card (persona apply-feedback) ----------
+function personaApplyResultCard(changes) {
+  const div = document.createElement("div");
+  div.className = "msg agent";
+  const list = changes.length
+    ? `<ul>${changes.map(c => `<li><b>${renderInline(c.note)}</b> — ${c.from_pct}% → ${c.to_pct}%</li>`).join("")}</ul>`
+    : `<p style="margin:4px 0 0;font-size:12.5px;color:var(--muted)">No material change was needed — the mix already fits this audience.</p>`;
+  div.innerHTML = `<div class="avatar">${iconSpan("auto_fix_high")}</div><div class="bubble"><div class="pv-offer">`
+    + `<b>Plan updated from persona feedback</b>`
+    + `<p style="margin-bottom:4px">${changes.length} channel${changes.length === 1 ? "" : "s"} rebalanced on the plan to the right:</p>`
+    + list
+    + `</div></div>`;
+  return div;
+}
 function personaApplyBar(ids) {
   const div = document.createElement("div");
   div.className = "msg agent";
@@ -1718,12 +1745,9 @@ async function applyPersonaFeedback(ids, btn) {
     const data = await res.json();
     btn.textContent = "Applied ✓";
     const changes = data.changes || [];
-    const lines = changes.length
-      ? changes.map(c => `• ${c.note} (${c.from_pct}% → ${c.to_pct}%)`).join("\n")
-      : "No material change was needed — the mix already fits this audience.";
-    addMessage("agent", `**Plan updated.** ${changes.length} channel${changes.length === 1 ? "" : "s"} rebalanced:\n${lines}`);
-    scrollChat();
     if (data.plan_html) showPlan(data.plan_html, data.plan_markdown);
+    $("messages").appendChild(personaApplyResultCard(changes));
+    scrollChat();
     await loadProjects();
   } catch (e) {
     btn.disabled = false; btn.textContent = "Apply feedback to plan";
@@ -2073,7 +2097,9 @@ function expandBriefAndAgents() {
 
 // ---------- plan ----------
 function showPlan(html, markdown) {
+  if (state.planEditing) return;   // never clobber an in-progress edit; see savePlanEdits()/exitPlanEditMode()
   state.planMarkdown = markdown || state.planMarkdown;
+  state.planHtml = html || state.planHtml;
   $("plan-body").innerHTML = html;
   $("plan-card").style.display = "block";
   // Plan sections are <details> collapsed by default -- navigator/TOC links must open
@@ -2084,6 +2110,97 @@ function showPlan(html, markdown) {
       if (t && t.tagName === "DETAILS") t.open = true;
     });
   });
+}
+// ---------- inline plan editing ----------
+function setPlanEditUI(editing) {
+  $("plan-actions").style.display = editing ? "none" : "flex";
+  $("plan-edit-actions").style.display = editing ? "flex" : "none";
+}
+function isRiskyCell(cell) {
+  // Skip contenteditable on cells holding a widget (Gantt bar, budget bar, nested table/list)
+  // rather than plain text -- editing the text would risk mangling that markup.
+  return [...cell.children].some(c => ["DIV", "TABLE", "UL", "OL", "BUTTON", "SVG"].includes(c.tagName));
+}
+function enterPlanEditMode() {
+  const body = $("plan-body");
+  body.querySelectorAll("details").forEach(d => { d.open = true; });
+  body.querySelectorAll("p, li, h1, h2, h3, h4, figcaption").forEach(el => el.setAttribute("contenteditable", "true"));
+  body.querySelectorAll("td, th").forEach(cell => { if (!isRiskyCell(cell)) cell.setAttribute("contenteditable", "true"); });
+  state.planEditing = true;
+  setPlanEditUI(true);
+}
+function exitPlanEditMode() {
+  $("plan-body").querySelectorAll('[contenteditable="true"]').forEach(el => el.removeAttribute("contenteditable"));
+  state.planEditing = false;
+  setPlanEditUI(false);
+}
+function cancelPlanEdits() {
+  exitPlanEditMode();
+  $("plan-body").innerHTML = state.planHtml || "";   // revert to the last saved version
+}
+// Best-effort DOM -> the same GitHub-flavored markdown shape strategy/plan_export.py parses
+// (headings, paragraphs, '- ' bullets, '| a | b |' tables), so edited content still exports
+// cleanly to Word/the markdown-fallback PDF. Runs client-side -- no server HTML parser needed.
+function domInlineText(el) {
+  let out = "";
+  el.childNodes.forEach(n => {
+    if (n.nodeType === 3) { out += n.textContent; return; }
+    if (n.nodeType !== 1) return;
+    const tag = n.tagName, inner = domInlineText(n);
+    if (tag === "STRONG" || tag === "B") out += `**${inner}**`;
+    else if (tag === "EM" || tag === "I") out += `*${inner}*`;
+    else if (tag === "BR") out += " ";
+    else out += inner;   // spans/icons/links -- keep the text, drop the wrapper
+  });
+  return out.replace(/\s+/g, " ").trim();
+}
+function domToMarkdown(root) {
+  const lines = [];
+  function walk(node) {
+    node.childNodes.forEach(child => {
+      if (child.nodeType !== 1) return;
+      const tag = child.tagName;
+      if (/^H[1-4]$/.test(tag)) { lines.push("#".repeat(Number(tag[1])) + " " + domInlineText(child), ""); }
+      else if (tag === "P") { const t = domInlineText(child); if (t) lines.push(t, ""); }
+      else if (tag === "UL" || tag === "OL") {
+        child.querySelectorAll(":scope > li").forEach(li => lines.push("- " + domInlineText(li)));
+        lines.push("");
+      } else if (tag === "TABLE") {
+        const rows = [...child.querySelectorAll("tr")].map(tr => [...tr.children].map(c => domInlineText(c) || " "));
+        if (rows.length) {
+          lines.push("| " + rows[0].join(" | ") + " |", "|" + rows[0].map(() => "---").join("|") + "|");
+          rows.slice(1).forEach(r => lines.push("| " + r.join(" | ") + " |"));
+          lines.push("");
+        }
+      } else if (tag === "HR") { lines.push("---", ""); }
+      else { walk(child); }   // divs/sections/details -- recurse to find nested text blocks
+    });
+  }
+  walk(root);
+  return lines.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+}
+async function savePlanEdits() {
+  const btn = $("save-plan-btn");
+  btn.disabled = true; btn.textContent = "Saving…";
+  const clone = $("plan-body").cloneNode(true);
+  clone.querySelectorAll("[contenteditable]").forEach(el => el.removeAttribute("contenteditable"));
+  const html = clone.innerHTML;
+  const markdown = domToMarkdown(clone);
+  try {
+    const res = await fetch("/api/projects/" + encodeURIComponent(state.projectId) + "/plan-content", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ html, markdown }),
+    });
+    if (!res.ok) throw new Error("save failed");
+    exitPlanEditMode();   // clears state.planEditing first, so showPlan() below doesn't no-op
+    showPlan(html, markdown);
+    addMessage("agent", "✏️ Your edits to the plan have been saved.");
+    scrollChat();
+    await loadProjects();
+  } catch (e) {
+    btn.disabled = false; btn.textContent = "Save changes";
+    addMessage("agent", "⚠ Couldn't save your edits. Try again.");
+  }
 }
 function downloadPlan() {
   if (!state.planMarkdown) return;
@@ -2817,6 +2934,9 @@ $("copy-plan").onclick = copyPlan;
 $("close-updates-btn").onclick = closeUpdates;
 $("brief-card-head").onclick = () => toggleCardCollapse("brief-card", "brief-chevron");
 $("agents-card-head").onclick = () => toggleCardCollapse("agents-card", "agents-chevron");
+$("edit-plan-btn").onclick = enterPlanEditMode;
+$("save-plan-btn").onclick = savePlanEdits;
+$("cancel-plan-edit-btn").onclick = cancelPlanEdits;
 $("nav-home").onclick = showHome;
 $("nav-workspace").onclick = showWorkspace;
 $("nav-library").onclick = showLibrary;

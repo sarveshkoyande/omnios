@@ -43,6 +43,7 @@ from strategy import bootstrap  # noqa: E402  (first-boot seeding of an empty da
 from strategy import personas as personas_mod  # noqa: E402  (synthetic persona layer)
 from strategy import persona_review as persona_review_mod  # noqa: E402
 from strategy import plan_export  # noqa: E402  (Word/PDF export of the composed plan)
+from strategy import plan_pdf  # noqa: E402  (pixel-faithful PDF via headless Chromium)
 
 app = FastAPI(title="Omni OS Brand Engagement Planning Agent")
 
@@ -280,6 +281,27 @@ def api_delete_project(pid: str):
     return {"ok": True}
 
 
+class PlanContentRequest(BaseModel):
+    html: str
+    markdown: str
+
+
+@app.post("/api/projects/{pid}/plan-content")
+def api_save_plan_content(pid: str, req: PlanContentRequest):
+    """Persist a manual edit made in the plan panel (each heading/paragraph/list item/simple
+    table cell is directly editable in the UI). The client derives `markdown` from the same
+    edited DOM client-side, so Word/PDF exports reflect the edit too. Note: a later clarify
+    auto-update or persona 'apply feedback' recomposes the plan from the run's snapshotted
+    state and will overwrite a manual edit -- there's no merge between the two."""
+    proj = pstore.get_project(pid)
+    if not proj:
+        raise HTTPException(404, "project not found")
+    if not req.html.strip():
+        raise HTTPException(400, "empty plan content")
+    pstore.save_project(pid, plan_markdown=req.markdown, plan_html=req.html)
+    return {"ok": True}
+
+
 @app.get("/api/projects/{pid}/export.docx")
 def api_export_docx(pid: str):
     proj = pstore.get_project(pid)
@@ -297,7 +319,17 @@ def api_export_pdf(pid: str):
     proj = pstore.get_project(pid)
     if not proj or not proj.get("plan_markdown"):
         raise HTTPException(404, "no plan to export yet")
-    data = plan_export.markdown_to_pdf(proj["plan_markdown"], proj["name"])
+    # Prefer the pixel-faithful renderer (real HTML + the app's own CSS via headless
+    # Chromium) so the PDF actually looks like the plan; fall back to the plain
+    # reportlab-from-markdown renderer if Chromium isn't installed on this host, so the
+    # export still works (with lower fidelity) rather than failing outright.
+    try:
+        if not proj.get("plan_html"):
+            raise ValueError("no plan_html on this project")
+        data = plan_pdf.render_plan_pdf(proj["plan_html"], proj["name"])
+    except Exception as e:  # noqa: BLE001
+        print(f"[export.pdf] Chromium renderer unavailable, using markdown fallback ({e})")
+        data = plan_export.markdown_to_pdf(proj["plan_markdown"], proj["name"])
     filename = _safe_filename(proj["name"]) + ".pdf"
     return Response(content=data, media_type="application/pdf",
                     headers={"Content-Disposition": f'attachment; filename="{filename}"'})

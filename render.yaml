@@ -6,7 +6,13 @@ services:
     # free plan, and a web service's own filesystem is ephemeral (wiped on every deploy and
     # restart). Without this, all SQLite data + blobs under DATA_DIR are lost each deploy.
     plan: starter
-    buildCommand: pip install -r requirements.txt
+    # `playwright install --with-deps chromium` downloads a real Chromium (~150MB) plus its
+    # system libraries (via apt) -- needed so "Download PDF" renders the plan with the app's
+    # actual CSS instead of a plain reportlab approximation. Adds real build time and image
+    # size; if this ever becomes a problem, export.pdf falls back automatically to the
+    # markdown-based renderer when Chromium isn't available, so removing this line degrades
+    # PDF fidelity rather than breaking the export.
+    buildCommand: pip install -r requirements.txt && python -m playwright install --with-deps chromium
     startCommand: uvicorn app.server:app --host 0.0.0.0 --port $PORT
     # Durable storage for every SQLite DB (projects/campaigns/brand memory) and the blob
     # store. paths.py routes all data access under OMNI_DATA_DIR; bootstrap.py seeds this
