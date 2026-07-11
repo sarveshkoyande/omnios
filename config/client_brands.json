@@ -105,6 +105,11 @@
       {"brand": "Pemazyre", "generic": "pemigatinib", "therapy_area": "FGFR-driven cancers", "lifecycle_key": "mature",
        "indications": ["Cholangiocarcinoma with FGFR2 fusion/rearrangement", "Myeloid/lymphoid neoplasms with FGFR1 rearrangement"],
        "stage_rationale": "Niche precision-oncology asset with steady, capped population."}
+    ],
+    "Ligead Sciences": [
+      {"brand": "Nuvexa", "generic": "bictegravir/emtricitabine/tenofovir alafenamide", "therapy_area": "HIV-1", "lifecycle_key": "growth",
+       "indications": ["HIV-1 treatment-naive adults and pediatric patients ≥25 kg", "Virologically suppressed switch (stable regimen, no resistance history)", "HIV-1 with documented M184V or M184I substitution"],
+       "stage_rationale": "Fictional demo brand from the Nuvexa brand intelligence hub (commongoods.netlify.app): 31.2% TRx share (+2.1 pp YoY), FY2025 Power of Complete™ platform, LAI competitive pressure from Cabenuva."}
     ]
   }
 }

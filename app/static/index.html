@@ -432,6 +432,99 @@
     border-radius: 8px; padding: 8px; font-size: 12px; font-weight: 600; }
   .plan-frozen-badge .material-symbols-outlined { font-size: 16px; }
   .plan-edit-hint { flex-basis: 100%; font-size: 11.5px; color: var(--muted); padding: 2px 2px 0; }
+
+  /* ---- progressive plan build: pending / fresh sections + live progress chip ---- */
+  .plan-progress-chip { display: inline-flex; align-items: center; gap: 5px; margin-left: auto;
+    font-size: 10.5px; font-weight: 700; color: var(--indegene-navy); background: var(--accent-soft);
+    border-radius: 999px; padding: 3px 10px; text-transform: none; letter-spacing: 0; }
+  .plan-progress-chip .material-symbols-outlined { font-size: 14px; animation: spin 1.6s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .plan-sec.sec-pending { opacity: .72; }
+  .plan-sec.sec-pending .plan-sec-head h2 { color: var(--faint); }
+  .plan-pending-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 9.5px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .04em; color: var(--muted); background: rgba(11,61,145,0.07);
+    border: 1px dashed var(--line); border-radius: 999px; padding: 2px 9px; white-space: nowrap; }
+  .plan-pending-chip .material-symbols-outlined { font-size: 12px; animation: pulseOp 1.6s ease-in-out infinite; }
+  @keyframes pulseOp { 0%,100% { opacity: .45; } 50% { opacity: 1; } }
+  .plan-pending-body { position: relative; font-size: 12px; color: var(--faint); font-style: italic;
+    padding: 10px 12px; border: 1px dashed var(--line); border-radius: 9px; overflow: hidden; }
+  .plan-pending-bar { position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(100deg, transparent 30%, rgba(0,174,239,0.10) 50%, transparent 70%);
+    background-size: 200% 100%; animation: shimmer 2.2s linear infinite; }
+  .plan-sec.sec-fresh { animation: freshGlow 2.6s ease-out; }
+  .plan-sec.sec-fresh > summary .plan-sec-head h2, .plan-sec.sec-fresh > summary h2 { color: var(--indegene-navy); }
+  @keyframes freshGlow {
+    0% { box-shadow: 0 0 0 3px rgba(0,174,239,0.55); background: rgba(0,174,239,0.10); }
+    100% { box-shadow: 0 0 0 0 rgba(0,174,239,0); background: transparent; }
+  }
+
+  /* ---- brand intelligence kit (Brand foundation, concepts shelf, guardrails, signals) ---- */
+  .bk-src-chip { display: inline-flex; align-items: center; font-size: 9px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .04em; color: #fff; background: linear-gradient(90deg,#1A1F6E,#3454C4); border-radius: 999px;
+    padding: 2px 8px; margin-left: 6px; vertical-align: 2px; }
+  .bk-core { background: linear-gradient(120deg,#1A1F6E,#2A2F8E); color: #fff; border-radius: 12px; padding: 16px 18px; margin: 4px 0 12px; }
+  .bk-tagline { font-size: 19px; font-weight: 800; letter-spacing: .01em; }
+  .bk-claim { font-size: 13px; opacity: .92; margin-top: 3px; }
+  .bk-company { font-size: 10.5px; opacity: .66; margin-top: 8px; }
+  .bk-pillars { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 9px; margin-bottom: 12px; }
+  .bk-pillar { border: 1px solid var(--line); border-left: 3px solid #F07055; border-radius: 9px; padding: 9px 11px; background: var(--glass-strong); }
+  .bk-pillar-name { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; color: #F07055; }
+  .bk-pillar-claim { font-size: 12.5px; font-weight: 600; color: var(--text); margin: 3px 0; }
+  .bk-pillar-evid { font-size: 10.5px; color: var(--muted); line-height: 1.4; }
+  .bk-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin-bottom: 8px; }
+  .bk-stat { text-align: center; border: 1px solid var(--line); border-radius: 9px; padding: 9px 6px; background: var(--glass-strong); }
+  .bk-stat-v { font-size: 17px; font-weight: 800; color: #1A1F6E; }
+  .bk-stat-k { font-size: 10px; color: var(--muted); margin-top: 2px; }
+  .bk-stat-s { font-size: 9px; color: var(--faint); text-transform: uppercase; letter-spacing: .03em; margin-top: 3px; }
+  .bk-label { font-size: 11.5px; color: var(--muted); line-height: 1.55; border-left: 3px solid var(--line); padding-left: 10px; }
+  .bk-tones { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 10px; }
+  .bk-tone { font-size: 11px; font-weight: 600; color: #1A1F6E; background: rgba(26,31,110,0.08); border-radius: 999px; padding: 4px 11px; }
+  .bk-ccs { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 10px; }
+  .bk-cc { flex: 1; min-width: 88px; text-align: center; border: 1px solid var(--line); border-radius: 9px; padding: 8px 4px; background: var(--glass-strong); }
+  .bk-cc-v { font-size: 14px; font-weight: 800; color: var(--text); }
+  .bk-cc-k { font-size: 9.5px; color: var(--faint); text-transform: uppercase; letter-spacing: .03em; margin-top: 2px; }
+  .bk-cc-hero { border-color: #3EC9A7; background: rgba(62,201,167,0.10); }
+  .bk-cc-hero .bk-cc-v { color: #0d8a6a; }
+  .bk-comps { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; margin-bottom: 10px; }
+  .bk-comp { border: 1px solid var(--line); border-radius: 9px; padding: 9px 11px; background: var(--glass-strong); }
+  .bk-comp-threat { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; color: #a83232; }
+  .bk-comp-name { font-size: 13px; font-weight: 700; color: var(--text); margin: 2px 0; }
+  .bk-comp-d { font-size: 10.5px; color: var(--muted); line-height: 1.45; }
+  .bk-sigs { display: flex; flex-direction: column; gap: 7px; margin-bottom: 10px; }
+  .bk-sig { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--line); border-radius: 9px; padding: 8px 10px; background: var(--glass-strong); }
+  .bk-sig-kind { flex: 0 0 auto; font-size: 8.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em;
+    border-radius: 5px; padding: 3px 7px; margin-top: 2px; }
+  .bk-sev-high { background: rgba(217,75,75,.13); color: #a83232; }
+  .bk-sev-medium { background: rgba(199,119,0,.13); color: #8a5500; }
+  .bk-sev-low { background: rgba(11,61,145,.10); color: var(--indegene-navy); }
+  .bk-sig-h { font-size: 12px; font-weight: 600; color: var(--text); }
+  .bk-sig-d { font-size: 10.5px; color: var(--muted); line-height: 1.45; margin-top: 2px; }
+  .bk-con-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 9px; margin-bottom: 10px; }
+  .bk-con-card { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; background: var(--glass-strong); }
+  .bk-con-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+  .bk-con-id { font-size: 9px; font-family: ui-monospace, monospace; color: var(--faint); }
+  .bk-con-status { font-size: 8.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; border-radius: 5px; padding: 2px 7px; }
+  .bk-con-active { background: rgba(62,201,167,.16); color: #0d8a6a; }
+  .bk-con-legacy { background: rgba(107,114,128,.14); color: #555; }
+  .bk-con-emerging { background: rgba(240,112,85,.15); color: #c04a2f; }
+  .bk-con-name { font-size: 13px; font-weight: 700; color: #1A1F6E; }
+  .bk-con-desc { font-size: 11px; color: var(--muted); line-height: 1.5; margin: 4px 0 6px; }
+  .bk-con-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+  .bk-con-tag { font-size: 9px; color: var(--faint); border: 1px solid var(--line); border-radius: 999px; padding: 1px 7px; }
+  .bk-guard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  @container (max-width: 560px) { .bk-guard-grid { grid-template-columns: 1fr; } }
+  .bk-guard-col { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--glass-strong); }
+  .bk-guard-head { font-size: 11px; font-weight: 800; letter-spacing: .05em; padding: 8px 12px; color: #fff; }
+  .bk-guard-dos .bk-guard-head { background: #17A673; }
+  .bk-guard-donts .bk-guard-head { background: #D6455B; }
+  .bk-guard-cat { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; color: var(--faint);
+    padding: 7px 12px 2px; }
+  .bk-guard-item { font-size: 11px; color: var(--text); line-height: 1.5; padding: 3px 12px 3px 12px; }
+  .bk-swatches { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 8px; }
+  .bk-swatch { display: flex; gap: 8px; align-items: center; font-size: 10.5px; color: var(--muted); }
+  .bk-swatch i { width: 26px; height: 26px; border-radius: 7px; border: 1px solid var(--line); display: inline-block; }
+  .bk-swatch strong { display: block; font-size: 11px; color: var(--text); }
+  .bk-swatch span { display: block; font-size: 9.5px; }
   /* Inline plan editing -- each editable block reads as its own "text box" on hover/focus. */
   .plan-doc-body [contenteditable="true"] { cursor: text; border-radius: 4px; transition: background .12s, outline .12s; outline: 1px dashed transparent; outline-offset: 2px; }
   .plan-doc-body [contenteditable="true"]:hover { outline-color: rgba(11,61,145,0.35); background: rgba(11,61,145,0.03); }
@@ -1305,25 +1398,24 @@ const WORKFLOW_STAGES = [
 
 // Darker, higher-contrast palette for a light background (the dark-theme originals
 // were tuned as pastel-on-black and read as low-contrast text on white/glass).
-// Five broad-mandate agents (consolidated from the earlier ten narrow ones).
-const AGENT_COLORS = { intel:"#1768D1", strategy:"#5A32E0", inspiration:"#A6720A", activation:"#12866F", compose:"#3454C4" };
-const AGENT_ICONS = { intel:"travel_explore", strategy:"track_changes", inspiration:"emoji_events", activation:"payments", compose:"description" };
-// Named teammates with an avatar -- source of truth for the display name and avatar image.
-// `photo` is user-supplied (now animated GIFs); if it fails to load (offline, or the host
-// blocks hotlinking) avatarHtml's onerror drops the <img> and the gradient-initials
-// monogram behind it shows through -- so the UI never renders a broken image. Mirrors
-// orchestrator.py.
+// Five broad-mandate agents; the Engagement Planner opens AND closes the run.
+const AGENT_COLORS = { planner:"#3454C4", intel:"#1768D1", strategy:"#5A32E0", inspiration:"#A6720A", activation:"#12866F" };
+const AGENT_ICONS = { planner:"description", intel:"travel_explore", strategy:"track_changes", inspiration:"emoji_events", activation:"payments" };
+// Named teammates with an avatar -- source of truth for the display name and the (original
+// static portrait) avatar image. If a photo fails to load (offline, or the host blocks
+// hotlinking) avatarHtml's onerror drops the <img> and the gradient-initials monogram
+// behind it shows through -- so the UI never renders a broken image. Mirrors orchestrator.py.
 const AGENT_PEOPLE = {
+  planner:     { name:"Engagement Planner Agent",                 role:"", initials:"EP", c1:"#3454C4", c2:"#6C8BF0",
+                 photo:"https://i.pinimg.com/736x/4a/d9/1d/4ad91d1959d7eb2524fe52187973ea12.jpg" },
   intel:       { name:"Market & Competitive Intelligence Agent", role:"", initials:"MC", c1:"#1768D1", c2:"#4AA6F2",
-                 photo:"https://i.pinimg.com/originals/c0/a3/e3/c0a3e37b580ba77aca2e8315a4fd3e29.gif" },
+                 photo:"https://i.pinimg.com/736x/84/67/07/846707b49d0ee0924c31dde35e14cb8c.jpg" },
   strategy:    { name:"Strategy & Positioning Agent",            role:"", initials:"SP", c1:"#5A32E0", c2:"#9B6BFF",
-                 photo:"https://i.pinimg.com/originals/1c/13/f3/1c13f3fe7a6bba370007aea254e195e3.gif" },
+                 photo:"https://i.pinimg.com/736x/98/15/22/981522e80927e19a5641b7265b266085.jpg" },
   inspiration: { name:"Creative Inspiration Agent",               role:"", initials:"CI", c1:"#C77700", c2:"#F2A93B",
-                 photo:"https://i.pinimg.com/originals/32/a1/b4/32a1b439615cac53173b352c6049f1af.gif" },
+                 photo:"https://i.pinimg.com/736x/09/fa/2a/09fa2ae07bed26e6962bad898de6dad8.jpg" },
   activation:  { name:"Activation Planning Agent",                role:"", initials:"AP", c1:"#12866F", c2:"#37B89A",
-                 photo:"https://i.pinimg.com/originals/06/b4/88/06b4888d345bd74ff235a46aa5166362.gif" },
-  compose:     { name:"Cooper / Engagement Planner",              role:"", initials:"Co", c1:"#3454C4", c2:"#6C8BF0",
-                 photo:"https://i.pinimg.com/originals/ff/13/a8/ff13a8ac4c8225723b47587d4adb093e.gif" },
+                 photo:"https://i.pinimg.com/736x/ae/e5/dc/aee5dc0bd16a86991299c7862577d901.jpg" },
 };
 let agentMeta = {};
 let _avatarSeq = 0;
@@ -1461,6 +1553,7 @@ async function openProject(id) {
   if (proj.result) { renderAgentsDoneFromResult(proj.result); }
   else { $("agents-body").innerHTML = `<div class="muted-card">Agents appear here and work in real time once the brief is complete.</div>`; }
 
+  planProgressChip(null);   // never carry a live-run progress chip into a reopened project
   if (proj.plan_html) { showPlan(proj.plan_html, proj.plan_markdown); collapseBriefAndAgents(); }
   else { $("plan-card").style.display = "none"; expandBriefAndAgents(); }
 
@@ -1588,6 +1681,7 @@ function startRun() {
   // reset workspace
   $("plan-card").style.display = "none";
   $("agents-body").innerHTML = "";
+  planProgressChip(null);
   expandBriefAndAgents();   // the agent team is about to actively work -- show it live again
   state.personaReviews = null; state.personaOfferShown = false;  // a fresh run invalidates old persona reviews
   state.busy = true; $("send").disabled = true;
@@ -1831,13 +1925,13 @@ function postAgentBanter(id, toId, text) {
 
 // ---- paced chat renderer -------------------------------------------------------------
 // The server streams banter back-to-back, which dumps every aside at once. Chat renders go
-// through a FIFO queue instead: each banter line shows a typing indicator, pauses 5-7s,
-// then appears. Agent turns/narration are queued too (with no pause) so nothing overtakes a
-// pending aside and the conversation stays in stream order. Right-rail status updates are
-// NOT queued -- they reflect what the backend is really doing right now.
-// Pause scales with how much there is to read: a short aside lands near 2s, a long one
-// near 4s -- roughly the time it takes to type/read it, rather than a flat wait.
-const BANTER_MIN_MS = 2000, BANTER_MAX_MS = 4000, BANTER_MS_PER_CHAR = 16, BANTER_RUSH_MS = 1000;
+// through a FIFO queue instead: each banter line shows a typing indicator, pauses, then
+// appears. Agent turns/narration/plan renders are queued too (with no pause) so nothing
+// overtakes a pending aside and the conversation stays in stream order. Right-rail status
+// updates are NOT queued -- they reflect what the backend is really doing right now.
+// Pause scales with how much there is to read: a short aside lands near 7s, a long one
+// near 10s -- deliberately unhurried so the team reads as conversing, not streaming.
+const BANTER_MIN_MS = 7000, BANTER_MAX_MS = 10000, BANTER_MS_PER_CHAR = 30, BANTER_RUSH_MS = 2500;
 const chatQueue = [];
 let chatDraining = false, pendingFinish = false;
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
@@ -1855,7 +1949,7 @@ async function drainChat() {
       const typing = addBanterTyping(item.id);
       // Backpressure: if asides have piled up behind a slow drain, speed through them
       // rather than let the chat fall behind the agents' real work.
-      const wait = chatQueue.length > 4 ? BANTER_RUSH_MS : banterDelay(item.text);
+      const wait = chatQueue.length > 5 ? BANTER_RUSH_MS : banterDelay(item.text);
       await sleep(wait);
       if (typing) typing.remove();
       postAgentBanter(item.id, item.to, item.text);
@@ -1898,17 +1992,49 @@ function handleRunEvent(ev) {
     case "narration": enqueueChat({ kind: "fn", run: () => { addMessage("agent", ev.text); scrollChat(); } }); break;
     case "banter": enqueueChat({ kind: "banter", id: ev.id, to: ev.to, text: ev.text }); break;
     case "clarify": enqueueChat({ kind: "fn", run: () => { addMessage("agent", ev.text, false, { clarify: ev.clarify }); scrollChat(); } }); break;
-    case "plan": showPlan(ev.html, ev.markdown); collapseBriefAndAgents(); break;
+    // Plan renders are QUEUED so each section fills in right as its agent's summary lands
+    // in the chat -- the document and the conversation stay in step.
+    case "plan": enqueueChat({ kind: "fn", run: () => applyPlanEvent(ev) }); break;
     case "result": state.result = ev.result; renderStepper(); break;
     case "error": enqueueChat({ kind: "fn", run: () => addMessage("agent", "⚠ " + ev.message) }); break;
   }
 }
 
+// Applies a streamed plan render (partial = the document filling in; final = complete).
+function applyPlanEvent(ev) {
+  showPlan(ev.html, ev.markdown);
+  if (ev.partial) {
+    planProgressChip(ev.sections_done, ev.sections_total);
+    // Bring the just-completed sections into view inside the plan pane.
+    const fresh = $("plan-body").querySelector(".sec-fresh");
+    if (fresh) fresh.scrollIntoView({ behavior: "smooth", block: "start" });
+  } else {
+    planProgressChip(null);
+    collapseBriefAndAgents();
+  }
+}
+// A live "12/26 sections" chip on the plan card header while the document is filling in.
+function planProgressChip(done, total) {
+  let chip = $("plan-progress-chip");
+  if (done == null) { if (chip) chip.remove(); return; }
+  if (!chip) {
+    chip = document.createElement("span");
+    chip.id = "plan-progress-chip"; chip.className = "plan-progress-chip";
+    const head = $("plan-card").querySelector("h4");
+    if (head) head.appendChild(chip);
+  }
+  chip.innerHTML = `${iconSpan("progress_activity")} ${done}/${total} sections live`;
+}
+
 // ---- in-chat teammate contributions (a team collaborating, not a relay) ----
+// Turn bubbles get a sequence-unique id: the Engagement Planner takes TWO turns (open +
+// finalize), and a shared id would make the finalize summary land on the opening bubble.
+const _turnSeq = {};
 function postAgentTurnStart(id, say) {
   const p = AGENT_PEOPLE[id] || { c1: "#1768D1" };
+  _turnSeq[id] = (_turnSeq[id] || 0) + 1;
   const m = document.createElement("div");
-  m.className = "msg agent turn"; m.id = "turn-" + id;
+  m.className = "msg agent turn"; m.id = "turn-" + id + "-" + _turnSeq[id];
   m.style.setProperty("--c", p.c1);
   m.innerHTML = `<div class="avatar avatar-person">${avatarHtml(id, 34)}</div>
     <div class="bubble turn-bubble">
@@ -1919,7 +2045,7 @@ function postAgentTurnStart(id, say) {
   $("messages").appendChild(m); scrollChat();
 }
 function completeAgentTurn(id, summary, detail) {
-  const m = $("turn-" + id); if (!m) return;
+  const m = $("turn-" + id + "-" + (_turnSeq[id] || 1)); if (!m) return;
   const work = m.querySelector(".turn-work"); if (work) work.remove();
   const res = document.createElement("div"); res.className = "turn-result";
   res.innerHTML = renderInline(summary || "Done");
@@ -1978,7 +2104,9 @@ function updateAgent(ev) {
     }
   } else if (ev.status === "done") {
     if (tm) tm.className = "team-member st-done";
-    if (ev.id === "compose") setTeamCaption("Your team has finished — the plan is on the right.");
+    // Only the planner's FINAL turn (it opens and closes the run) ends the team story.
+    if (ev.final) setTeamCaption("Your team has finished — the plan is on the right.");
+    else setTeamCaption(`<strong>${agentName(ev.id)}</strong> finished — its plan sections just filled in on the right.`);
     if (el) {
       el.className = "agent-card st-done-card";
       const dot = el.querySelector(".agent-status"); dot.className = "agent-status st-done";
@@ -2012,27 +2140,34 @@ function renderAgentsDoneFromResult(result) {
   const kpi = result.stage_7_kpi || {leading_indicators:[],lagging_indicators:[],operational_kpis:[]};
   const topCh = Object.entries(result.stage_2_4_strategy.channel_mix_pct || {}).sort((a,b)=>b[1]-a[1]).slice(0,2);
 
+  const kit = result.brand_kit || {};
+  const hasKit = !!(kit && kit.tagline);
   const roster = [
+    ["planner",
+      "Framed the plan structure, locked the brief and governance" + (hasKit ? ` — grounded in the **${kit.tagline}** brand intelligence kit —` : "") +
+        " then closed the loop with the executive summary and open questions.",
+      ["Opened the run by scaffolding all four toolkit phases; finalized the document once the team finished",
+       ...(hasKit ? [`Brand kit: ${kit.source_label || "brand hub"} — “${kit.core_claim || ""}”`] : [])]],
     ["intel",
       `${result.inferred_inputs.lifecycle_label} → targeting **${result.inferred_inputs.persona}** HCPs. Indexed **${bDocs + tDocs}** live documents. ` +
-        (comps.length ? `Found **${comps.length}** competitor(s): ${comps.join(", ")}.` : "No distinct competitors found."),
+        (comps.length ? `Found **${comps.length}** competitor(s): ${comps.join(", ")}.` : "No distinct competitors found.") +
+        (swot ? " SWOT run against the set." : ""),
       [result.inferred_inputs.lifecycle_rationale, `${bDocs} docs on brand, ${tDocs} on therapy area`, ...(comps.length ? comps : ["No distinct competing interventions found"])]],
     ["strategy",
-      `Journey stage **${result.stage_2_4_strategy.inputs.stage}**. ` + (swot ? "SWOT run against the competitive set. " : "SWOT skipped (no competitors). ") + "Positioning drafted.",
+      `Journey stage **${result.stage_2_4_strategy.inputs.stage}**. ` + (hasKit ? "Message pool grounded in the brand's own claims. " : "") + "Positioning drafted.",
       [bam.a_to_b_shift ? `A→B shift: ${bam.a_to_b_shift}` : null,
        bam.key_message_topics ? `Key messages: ${bam.key_message_topics.join(", ")}` : null,
        cx.level ? `CX maturity: ${cx.level} — ${cx.rationale}` : null,
        pos.positioning_statement ? `Positioning: ${pos.positioning_statement}` : null].filter(Boolean)],
     ["inspiration",
-      `Found **${precedents.length}** precedent campaign(s)` + (precedents.length ? (matchedAny ? " matched to this therapy area." : " (no therapy match — most recent shown).") : "."),
+      `Found **${precedents.length}** precedent campaign(s)` + (precedents.length ? (matchedAny ? " matched to this therapy area." : " (no therapy match — most recent shown).") : ".") +
+        (hasKit && (kit.concepts || []).length ? ` The brand's own shelf holds **${kit.concepts.length}** concepts.` : ""),
       precedents.length ? precedents.map(p => `"${p.title}" — ${p.tier} in ${p.category} (${p.agency_sponsor}), ${p.program} ${p.year}`) : ["No award-winning campaigns indexed yet"]],
     ["activation",
       (topCh.length ? `Emphasis on **${topCh.map(([k,v])=>`${k} ${v}%`).join(", ")}**. ` : "") +
         `**${kpi.leading_indicators.length}** leading / **${kpi.lagging_indicators.length}** lagging / **${kpi.operational_kpis.length}** operational KPIs set.`,
       [...Object.entries(budgetAlloc).sort((a,b)=>b[1].pct-a[1].pct).map(([ch,v])=>`${ch}: ${v.pct}%` + (v.amount ? ` · $${Number(v.amount).toLocaleString()}` : "")),
        ...kpi.leading_indicators.slice(0,3)]],
-    ["compose", "Brand engagement plan assembled — all four toolkit phases rendered on the right.",
-      ["Full toolkit-replica plan on the right — sections collapsed, click to expand"]],
   ];
   const ids = roster.map(r => r[0]);
   const body = $("agents-body");

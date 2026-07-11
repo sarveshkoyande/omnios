@@ -1,0 +1,174 @@
+{
+  "note": "Brand intelligence kits captured from a brand's own intelligence hub. When a plan is generated for a brand with a kit, the agents ground the plan in this REAL brand content -- story, message hierarchy, claims, guardrails, concepts, personas, live market signals -- instead of synthesizing placeholders. Content below was captured verbatim from the Nuvexa brand hub (https://commongoods.netlify.app/) on 2026-07-11. Nuvexa/Ligead Sciences is a fictional demo brand.",
+  "kits": {
+    "Nuvexa": {
+      "source_url": "https://commongoods.netlify.app/",
+      "source_label": "Nuvexa® brand intelligence hub (Common Goods)",
+      "company": "Ligead Sciences",
+      "generic": "bictegravir/emtricitabine/tenofovir alafenamide (BIC/FTC/TAF)",
+      "therapy_area": "HIV-1",
+      "fiscal_frame": "FY2025",
+      "tagline": "Power of Complete™",
+      "core_claim": "The complete solution for every HIV-1 patient.",
+      "message_hierarchy": [
+        {"pillar": "Durability", "claim": "82% VS at 240 weeks with zero treatment-emergent resistance",
+         "evidence": "Studies 1489/1490 240-week pooled: 82% HIV-1 RNA <50 c/mL · zero treatment-emergent resistance across all studies (5yr)"},
+        {"pillar": "Versatility", "claim": "Naive · Switch · M184V/I — one STR for all patients",
+         "evidence": "Study 1844: ≥97% VS on switch · Study 4030: active against M184V/I (FDA Feb 2024, NEJM publication Q3 2025)"},
+        {"pillar": "Access", "claim": "49/50 state ADAP coverage, OptumRx Tier 2 Preferred, $0 co-pay",
+         "evidence": "Ligead Advancing Access®: $0 co-pay commercially insured · ADAP 49/50 states · FRM network in all 50 states · 340B / Ryan White Part B"}
+      ],
+      "approved_indication": "Nuvexa® (bictegravir 50 mg / emtricitabine 200 mg / tenofovir alafenamide 25 mg) is indicated as a complete regimen for the treatment of HIV-1 infection in adults and pediatric patients weighing at least 25 kg who have no antiretroviral treatment history or to replace the current antiretroviral regimen in those who are virologically stable (HIV-1 RNA <50 copies/mL) on a stable antiretroviral regimen with no history of treatment failure and no known substitutions associated with resistance to the individual components. Also indicated in HIV-1 infected adults with documented M184V or M184I substitution.",
+      "safety_reference": "Warnings: New onset or worsening renal impairment (monitor CrCl, serum phosphorus); Lactic acidosis / severe hepatomegaly; Immune reconstitution syndrome. Adverse Reactions (>5%): Diarrhoea, nausea, headache, fatigue. Interactions: Strong inducers of UGT1A1/CYP3A may decrease bictegravir concentrations. Refer to full prescribing information.",
+      "clinical_data": [
+        {"study": "Study 1489/1490", "stat": "82%", "context": "VS at 240wk · Naive"},
+        {"study": "All Studies", "stat": "0%", "context": "Resistance 5yr"},
+        {"study": "Study 1844", "stat": "≥97%", "context": "VS on switch"},
+        {"study": "Study 4030", "stat": "M184V/I", "context": "Active · FDA '24"},
+        {"study": "BRAAVE 2025", "stat": "RWE", "context": "N=1,847 · VS parity in Black adults"}
+      ],
+      "tone_pillars": ["Precise & Evidence-Led", "Partner-Oriented", "Confident, Not Aggressive", "Patient-Centred"],
+      "guardrails": {
+        "dos": [
+          {"category": "Copy & messaging", "text": "Always anchor claims to the specific study name (e.g. \"Studies 1489/1490\") — not generic \"data\""},
+          {"category": "Copy & messaging", "text": "Attribute every statistic: VS rate, resistance rate, duration"},
+          {"category": "Copy & messaging", "text": "Use \"Nuvexa®\" with ® on first mention in any piece — headline and body"},
+          {"category": "Copy & messaging", "text": "Capitalise \"Power of Complete™\" with ™ every use"},
+          {"category": "Visual", "text": "Use the coral mark on white or navy backgrounds only"},
+          {"category": "Visual", "text": "Maintain minimum clear space of 1× mark width on all sides"},
+          {"category": "Regulatory", "text": "Include fair balance / Important Safety Information on all promotional materials"},
+          {"category": "Regulatory", "text": "Submit all new materials through MLR before distribution"},
+          {"category": "Tone", "text": "Write in a confident, evidence-led register — let data create urgency"},
+          {"category": "Tone", "text": "Position HCP as expert partner, not passive recipient"},
+          {"category": "Access", "text": "Always include Ligead Advancing Access® reference when discussing co-pay or coverage"},
+          {"category": "Access", "text": "Connect access messaging to real patient impact, not just programme mechanics"}
+        ],
+        "donts": [
+          {"category": "Copy & messaging", "text": "Do not use \"cure,\" \"eliminate,\" or \"best-in-class\" without direct head-to-head citation"},
+          {"category": "Copy & messaging", "text": "Do not reference competitor brand names in promotional materials"},
+          {"category": "Copy & messaging", "text": "Do not use ® in body copy — first mention in headlines only"},
+          {"category": "Copy & messaging", "text": "Do not use patient testimonials without MLR approval and fair balance"},
+          {"category": "Visual", "text": "Do not recolour the logo mark or wordmark"},
+          {"category": "Visual", "text": "Do not stretch, distort, or apply drop shadows to the logo"},
+          {"category": "Regulatory", "text": "Do not distribute any materials before MLR clearance"},
+          {"category": "Regulatory", "text": "Do not omit fair balance — even in digital/social abbreviated formats"},
+          {"category": "Clinical claims", "text": "Do not round or approximate clinical data figures"},
+          {"category": "Clinical claims", "text": "Do not extrapolate from study populations to unapproved populations"},
+          {"category": "Access", "text": "Do not guarantee coverage or reimbursement to any HCP or patient"},
+          {"category": "Access", "text": "Do not use ADAP/Ryan White figures without current-year verification"}
+        ]
+      },
+      "concepts": [
+        {"id": "CON-001", "status": "Active", "name": "Power of Complete™", "tags": ["Campaign", "Omnichannel"],
+         "description": "FY2025 master campaign platform. One message, every channel, every patient type — clinical durability, access, and versatility woven into a single brand promise."},
+        {"id": "CON-002", "status": "Active", "name": "The Mutation Advantage™", "tags": ["Indication", "MSL / Medical"],
+         "description": "When your patient has M184V/I, most STRs give up. Nuvexa® doesn't. FDA-approved, Study 4030-backed activation for the HCPs who still have patients with mutations on their charts."},
+        {"id": "CON-003", "status": "Active", "name": "BRAAVE™ — Equal Outcomes", "tags": ["Health Equity", "Medical / Community"],
+         "description": "Real-world proof that Nuvexa® works as well for Black adults as it does in clinical trials. Community-first storytelling, RWE backbone. Because equal treatment should produce equal results."},
+        {"id": "CON-004", "status": "Active", "name": "Built to Last™", "tags": ["Campaign", "MSL / KOL"],
+         "description": "Five years. Zero resistance. The conversation that opens doors with the HCPs who've been burned before. Long-term durability isn't a promise — it's a track record."},
+        {"id": "CON-005", "status": "Active", "name": "Stay Simple™", "tags": ["Retention", "HCP / Patient"],
+         "description": "A monthly injection sounds like freedom — until you factor in the FQHC schedule, the cold chain, the admin. One pill a day, on your terms, with nothing to prove. That's freedom."},
+        {"id": "CON-006", "status": "Active", "name": "The Smarter Foundation™", "tags": ["Campaign", "HCP / DTC"],
+         "description": "Your patients are worrying about their bones and kidneys. Give their HCPs something to say. TAF-based regimen, renal and bone safety data, no compromise on suppression."},
+        {"id": "CON-007", "status": "Active", "name": "Ligead Advancing Access®", "tags": ["Access", "Patient / HCP / Payer"],
+         "description": "The access infrastructure behind the brand. $0 co-pay, 49-state ADAP coverage, FRM network. The programme that means a prescription actually gets filled."},
+        {"id": "CON-008", "status": "Legacy", "name": "Complete Confidence", "tags": ["Campaign", "HCP"],
+         "description": "Legacy HCP education platform (FY2022–2023). Superseded by Power of Complete™. Materials in sunset — Q2 2025 distribution end date."},
+        {"id": "CON-009", "status": "Legacy", "name": "Own the STR", "tags": ["Campaign", "HCP / Sales"],
+         "description": "Legacy category-leadership concept (FY2021). First-mover STR positioning, pre-Power of Complete™ era. Archived."},
+        {"id": "CON-010", "status": "Emerging", "name": "The Connected Journey™", "tags": ["Digital", "Patient / Digital"],
+         "description": "Emerging. Every digital touchpoint a patient hits — from diagnosis search to refill reminder — mapped, owned, and optimised. Piloting in 3 DMAs, full rollout Q4."},
+        {"id": "CON-011", "status": "Active", "name": "Evidence On Demand™", "tags": ["Digital", "HCP / Digital"],
+         "description": "NuvexaHCP.com reimagined as a live intelligence platform. M184V/I traffic +280% post-CROI. Q3 refresh converting intent into action — detail requests, MSL scheduling, rep follow-up."},
+        {"id": "CON-012", "status": "Emerging", "name": "Signal to Story™", "tags": ["AI / Digital", "MSL"],
+         "description": "Emerging. Real-time MSL briefing auto-generated from market signals and persona appetite scores minutes before an HCP interaction. The brief that writes itself."}
+      ],
+      "message_pool": [
+        "Power of Complete™ — the complete solution for every HIV-1 patient",
+        "82% VS at 240 weeks · zero treatment-emergent resistance (Studies 1489/1490)",
+        "One STR for naive, switch and M184V/I patients (Study 1844 · Study 4030)",
+        "49/50 state ADAP · OptumRx Tier 2 Preferred · $0 co-pay (Ligead Advancing Access®)",
+        "TAF-based foundation — renal and bone safety data, no compromise on suppression",
+        "Equal outcomes: BRAAVE RWE confirms VS parity in Black adults (N=1,847)"
+      ],
+      "personas": {
+        "hcp": [
+          {"name": "The Seasoned Specialist & Data Maven", "who": "ID/HIV Specialist · 15+ Years Experience", "tier": "Tier 1",
+           "voice": "Zero emergent resistance at five years isn't a claim — it's a mandate."},
+          {"name": "The Pragmatic PCP & Guideline Follower", "who": "General Internist / Family Medicine · HIV Panel 20–50 Patients", "tier": "Tier 2",
+           "voice": "If guidelines recommend it and my patients can get it covered, I'm writing it."},
+          {"name": "The Adherence Ally & Patient Educator", "who": "Nurse Practitioner / PA · HIV Clinic or Community Health Center", "tier": "Tier 2",
+           "voice": "The best regimen is the one my patient will actually take every day."},
+          {"name": "The Experienced Pragmatist", "who": "Infectious Disease Specialist · Pre-HAART Era Experience", "tier": "Tier 1",
+           "voice": "I've seen resistance develop in patients we thought were doing fine. Durability matters."}
+        ],
+        "patient": [
+          {"name": "The Newly Diagnosed / Naive Start", "who": "ART-naive adult · Recent HIV-1 diagnosis", "target": "First-Line Initiation",
+           "voice": "I just want to know this is going to work and I won't have to keep changing."},
+          {"name": "The Regimen Optimizer", "who": "Virologically suppressed on older TDF-based regimen · Switch candidate", "target": "Suppressed Switch",
+           "voice": "My doctor says I'm suppressed, but I read about bone density issues with my current medication."},
+          {"name": "The M184V/I Carrier", "who": "Virologically suppressed with documented M184V/I mutation", "target": "M184V/I Indication",
+           "voice": "My doctor told me I have a mutation but I'm still suppressed. I don't fully understand what that means."},
+          {"name": "The Pill-Fatigued LAI Considerer", "who": "Virologically suppressed · Oral fatigue · Evaluating Cabenuva", "target": "Retention / Counter-LAI",
+           "voice": "I hate taking a pill every single day. My friend switched to shots — I'm thinking about it."}
+        ],
+        "payer": [
+          {"name": "National Commercial PBM", "who": "ESI/Cigna · Caremark/Aetna · OptumRx — 47M covered lives", "priority": "Tier 2 Preferred Lock-in",
+           "voice": "Clinical differentiation matters, but so does total cost of care and net price."},
+          {"name": "State Medicaid Program", "who": "FFS & Managed Medicaid · Step-therapy risk states", "priority": "PA Override / Preferred Status",
+           "voice": "We need to control costs but our HIV patients require stable access to proven regimens."},
+          {"name": "ADAP / Ryan White Program Director", "who": "AIDS Drug Assistance Program · 49/50 States · Ryan White Part B", "priority": "Wyoming Final State",
+           "voice": "Our patients depend on this formulary. Continuity of access is non-negotiable."}
+        ]
+      },
+      "market_signals": [
+        {"kind": "Competitive intel", "severity": "HIGH", "headline": "Cabenuva LAI TRx share reaches 8.4% — ViiV targeting FQHCs",
+         "detail": "ViiV expanding Cabenuva admin infrastructure to FQHCs. New DTC \"pill-free life\" campaign active across 12 major DMAs. LAI projected 12% by end FY25."},
+        {"kind": "Payer signal", "severity": "MEDIUM", "headline": "OptumRx 2025 formulary confirmed: Nuvexa® Tier 2 Preferred — 47M lives",
+         "detail": "Open season negotiations complete. ESI/Cigna and Caremark/Aetna pending Q3."},
+        {"kind": "Clinical data", "severity": "HIGH", "headline": "CROI 2025: 5yr pooled data confirms 82% VS, 0% resistance — MSL dispatch active",
+         "detail": "Poster P-1847: Studies 1489/1490 240-week pooled: 82% HIV-1 RNA <50 c/mL. Zero treatment-emergent resistance. MSL Tier 1 outreach initiated."},
+        {"kind": "Behavioral signal", "severity": "MEDIUM", "headline": "Doceree: Resistance content engagement +34% WoW among ID Specialists",
+         "detail": "Digital platform detecting elevated resistance/durability content consumption in Tier 1 ID specialists, correlated with Cabenuva competitive activity."},
+        {"kind": "Payer signal", "severity": "MEDIUM", "headline": "Mississippi ADAP adds Nuvexa® — now 49/50 states ADAP formulary covered",
+         "detail": "Wyoming ADAP: final state — FRM engagement in progress."},
+        {"kind": "Competitive intel", "severity": "MEDIUM", "headline": "Dovato DTC: \"Less drug\" messaging active — TAF-concerned patient segment at risk",
+         "detail": "ViiV \"Less is More\" DTC for Dovato (DTG/3TC) targeting TAF-concerned patients. Counter-positioning required: TAF renal/bone safety data."},
+        {"kind": "Clinical data", "severity": "HIGH", "headline": "Study 4030 NEJM publication confirmed — M184V/I HCP awareness push needed",
+         "detail": "NEJM accepted Study 4030 manuscript. Publication window July 2025. Current HCP awareness <50% target. MSL campaign activating."},
+        {"kind": "Behavioral signal", "severity": "MEDIUM", "headline": "NuvexaHCP.com: M184V/I page traffic +280% post-CROI — conversion gap",
+         "detail": "2,847 unique HCP visits in 48h post-CROI. Bounce rate 67% — content depth insufficient. 312 PCPs requested detail aid via rep widget."},
+        {"kind": "Payer signal", "severity": "HIGH", "headline": "Medicaid step-therapy alert: 3 states adding INSTI PA — FRM escalation",
+         "detail": "Arkansas, Louisiana, Kansas Medicaid adding PA for INSTI class effective Q3 2025. ~2,300 affected patients. FRM rapid response protocol activated."},
+        {"kind": "Behavioral signal", "severity": "MEDIUM", "headline": "Epocrates: PCP naive NBRx intent score 7.1 — below 8.0 Q1 target",
+         "detail": "Pragmatic PCP naive intent 7.1/10, below 8.0 target. Barriers: formulary uncertainty (42%), LAI patient requests (31%)."},
+        {"kind": "Clinical data", "severity": "MEDIUM", "headline": "BRAAVE 2025: RWE in Black adults confirms VS parity — IDWeek submission",
+         "detail": "RWE (N=1,847 Black adults): VS rates comparable to clinical trial data. IDWeek 2025 abstract submitted."},
+        {"kind": "Competitive intel", "severity": "LOW", "headline": "Islatravir-lenacapavir Ph3 enrollment complete — Merck threat horizon FY27",
+         "detail": "Merck IMPOWER trial fully enrolled. Data readout Q4 2026. Threat horizon FY27. Pipeline monitoring activated."}
+      ],
+      "competitors": [
+        {"name": "Cabenuva", "threat": "LAI THREAT · HIGH", "detail": "CAB+RPV LAI · 8.4% TRx · ViiV targeting FQHCs · DTC \"pill-free life\" active 12 DMAs"},
+        {"name": "Dovato", "threat": "DUAL THERAPY · MEDIUM", "detail": "DTG/3TC · \"Less drug\" DTC active · TAF-concerned patient segment at risk"},
+        {"name": "Triumeq", "threat": "OLDER STR · LOW", "detail": "DTG/ABC/3TC · Switch opportunity · Durability data gap vs Nuvexa®"},
+        {"name": "Islatravir+LEN", "threat": "PIPELINE · HORIZON FY27", "detail": "Merck IMPOWER Ph3 enrolled · Data Q4 2026 · Threat horizon FY27"}
+      ],
+      "care_continuum": {
+        "plwh": 1200000, "diagnosed_pct": 87, "linked_to_care_pct": 79, "retained_pct": 66,
+        "on_art_pct": 63, "virally_suppressed_pct": 57,
+        "nuvexa_trx_share_pct": 31.2, "nuvexa_trx_trend": "+2.1 pp YoY",
+        "cabenuva_lai_share_pct": 8.4, "cabenuva_trend": "+1.8 pp (threat)",
+        "covered_lives_t2": "47M (OptumRx confirmed)"
+      },
+      "identity": {
+        "palette": [
+          {"hex": "#1A1F6E", "name": "Nuvexa Navy", "use": "Primary · Headlines · Sidebar"},
+          {"hex": "#F07055", "name": "Nuvexa Coral", "use": "CTA · Accent · Active states"},
+          {"hex": "#3EC9A7", "name": "Nuvexa Teal", "use": "Clinical · Success · Live indicators"}
+        ],
+        "typography": "Manrope (display, 400–800) · Inter (body & UI, 300–600)"
+      }
+    }
+  }
+}

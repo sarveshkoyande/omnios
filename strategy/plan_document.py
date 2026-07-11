@@ -102,9 +102,9 @@ _LEVEL_TO_TIER_CLASS = {"Simple": "tk-t0", "Medium": "tk-t1", "Complex": "tk-t2"
 
 
 def _det_open(num: int, title: str, icon: str, phase: str = "", start_open: bool = False,
-              open_count: int = 0) -> str:
+              open_count: int = 0, extra_cls: str = "") -> str:
     chip = f"<span class='plan-open-chip'>{open_count} need alignment</span>" if open_count else ""
-    cls = f"plan-sec{' tk-sec-' + phase if phase else ''}"
+    cls = f"plan-sec{' tk-sec-' + phase if phase else ''}{' ' + extra_cls if extra_cls else ''}"
     return (f"<details class='{cls}' id='sec-{num}'{' open' if start_open else ''}>"
             f"<summary class='plan-sec-head'>{_icon(icon)}<h2>{num}. {_esc(title)}</h2>{chip}"
             f"<span class='plan-sec-chev material-symbols-outlined'>expand_more</span></summary>"
@@ -119,7 +119,7 @@ def _phase_banner(phase: str, label: str, phase_no: int) -> str:
             f"{_esc(label)}</div>")
 
 
-def _home_navigator() -> str:
+def _home_navigator(has_brand_kit: bool = False) -> str:
     cols = []
     for phase, label, items in _PHASES:
         pills = "".join(
@@ -128,7 +128,10 @@ def _home_navigator() -> str:
             for i, (num, title) in enumerate(items)
         )
         cols.append(f"<div class='tk-col'><div class='tk-ribbon tk-{phase}'>{_esc(label)}</div>{pills}</div>")
-    chips = "".join(f"<a href='#sec-{n}'>{_icon(ic)}{_esc(t)}</a>" for n, ic, t in _SUPPORTING)
+    supporting = list(_SUPPORTING)
+    if has_brand_kit:
+        supporting.append((25, "workspace_premium", "Brand foundation"))
+    chips = "".join(f"<a href='#sec-{n}'>{_icon(ic)}{_esc(t)}</a>" for n, ic, t in supporting)
     return ("<div class='tk-home'>" + "".join(cols) + "</div>"
             f"<nav class='plan-toc'><a href='#sec-1'>{_icon('insights')}Executive summary</a>"
             f"<a href='#sec-2'>{_icon('help')}Open questions</a>"
@@ -710,58 +713,167 @@ def _render_tml(tml: dict) -> str:
 
 
 # --------------------------------------------------------------------------- #
-# Main composer
+# Brand-kit renderers (real brand content captured from the brand's own
+# intelligence hub -- see config/brand_kits.json / strategy/brand_kit.py)
 # --------------------------------------------------------------------------- #
 
-def compose_plan(ctx: dict) -> tuple[str, str]:
-    brand, ta = ctx["brand"], ctx["therapy_area"]
-    inferred = ctx["inferred"]
-    strat = ctx["strategy"]
-    m = strat["messaging_architecture"]
-    sp = strat["stage_profile"]
-    pos = ctx["positioning"]
-    swot = ctx["swot"]
-    kpi = ctx["kpi"]
-    budget_alloc = ctx["budget_allocation"]
-    bam = ctx["bam"]
-    cx_maturity = ctx["cx_maturity"]
-    feas = cx_maturity["feasibility_checklist"]
-    precedents = ctx["precedents"]
-    profile = ctx["segment_profile"]
-    tcg = ctx["tcg"]
-    cq = ctx["cx_questionnaire"]
-    mf = ctx["message_flow"]
-    chsel = ctx["channel_selection"]
-    open_groups = ctx.get("open_questions", [])
-    indication = ctx.get("indication", "")
-    ts = time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime())
+_CONCEPT_STATUS_CLASS = {"Active": "bk-con-active", "Legacy": "bk-con-legacy", "Emerging": "bk-con-emerging"}
+
+
+def _render_brand_concepts(kit: dict) -> str:
+    concepts = kit.get("concepts", [])
+    if not concepts:
+        return ""
+    cards = ""
+    for c in concepts:
+        scls = _CONCEPT_STATUS_CLASS.get(c.get("status", ""), "bk-con-legacy")
+        tags = "".join(f"<span class='bk-con-tag'>{_esc(t)}</span>" for t in c.get("tags", []))
+        cards += (f"<div class='bk-con-card'><div class='bk-con-top'>"
+                  f"<span class='bk-con-id'>{_esc(c.get('id', ''))}</span>"
+                  f"<span class='bk-con-status {scls}'>{_esc(c.get('status', ''))}</span></div>"
+                  f"<div class='bk-con-name'>{_esc(c.get('name', ''))}</div>"
+                  f"<div class='bk-con-desc'>{_esc(c.get('description', ''))}</div>"
+                  f"<div class='bk-con-tags'>{tags}</div></div>")
+    return ("<h3 class='plan-sec-sub'>" + _icon("lightbulb") + "The brand's own concept shelf "
+            f"<span class='bk-src-chip'>{_esc(kit.get('source_label', 'brand hub'))}</span></h3>"
+            "<p class='tk-lib-sub'>Active, legacy and emerging marketing concepts captured from the brand's "
+            "intelligence hub — the creative platforms this campaign can extend rather than reinvent.</p>"
+            f"<div class='bk-con-grid'>{cards}</div>")
+
+
+def _render_guardrails(kit: dict) -> str:
+    g = kit.get("guardrails") or {}
+    if not (g.get("dos") or g.get("donts")):
+        return ""
+    def _col(items, cls, head):
+        rows = ""
+        last_cat = None
+        for it in items:
+            if it["category"] != last_cat:
+                rows += f"<div class='bk-guard-cat'>{_esc(it['category'])}</div>"
+                last_cat = it["category"]
+            rows += f"<div class='bk-guard-item'>{_esc(it['text'])}</div>"
+        return f"<div class='bk-guard-col {cls}'><div class='bk-guard-head'>{head}</div>{rows}</div>"
+    return ("<h3 class='plan-sec-sub'>" + _icon("shield") + "Brand guardrails "
+            f"<span class='bk-src-chip'>{_esc(kit.get('source_label', 'brand hub'))}</span></h3>"
+            "<p class='tk-lib-sub'>The brand's own dos &amp; don'ts — every asset this plan produces must "
+            "clear these before MLR sees it.</p>"
+            "<div class='bk-guard-grid'>"
+            + _col(g.get("dos", []), "bk-guard-dos", "✓ DOS")
+            + _col(g.get("donts", []), "bk-guard-donts", "✕ DON'TS")
+            + "</div>")
+
+
+def _render_brand_foundation(kit: dict) -> str:
+    out = ""
+    # Message hierarchy: core claim + proof pillars
+    hier = kit.get("message_hierarchy", [])
+    pillars = "".join(
+        f"<div class='bk-pillar'><div class='bk-pillar-name'>{_esc(p['pillar'])}</div>"
+        f"<div class='bk-pillar-claim'>{_esc(p['claim'])}</div>"
+        f"<div class='bk-pillar-evid'>{_esc(p['evidence'])}</div></div>" for p in hier)
+    out += (f"<div class='bk-core'><div class='bk-tagline'>{_esc(kit.get('tagline', ''))}</div>"
+            f"<div class='bk-claim'>{_esc(kit.get('core_claim', ''))}</div>"
+            f"<div class='bk-company'>{_esc(kit.get('generic', ''))} · {_esc(kit.get('company', ''))} · "
+            f"{_esc(kit.get('fiscal_frame', ''))}</div></div>"
+            f"<div class='bk-pillars'>{pillars}</div>")
+    # Clinical stat cards
+    stats = "".join(
+        f"<div class='bk-stat'><div class='bk-stat-v'>{_esc(s['stat'])}</div>"
+        f"<div class='bk-stat-k'>{_esc(s['context'])}</div><div class='bk-stat-s'>{_esc(s['study'])}</div></div>"
+        for s in kit.get("clinical_data", []))
+    if stats:
+        out += ("<h3 class='plan-sec-sub'>" + _icon("science") + "Clinical data summary</h3>"
+                f"<div class='bk-stats'>{stats}</div>")
+    # Approved indication + safety
+    if kit.get("approved_indication"):
+        out += ("<h3 class='plan-sec-sub'>" + _icon("gavel") + "Approved indication (label)</h3>"
+                f"<p class='bk-label'>{_esc(kit['approved_indication'])}</p>")
+    if kit.get("safety_reference"):
+        out += f"<p class='plan-caveat'><strong>Key safety reference:</strong> {_esc(kit['safety_reference'])}</p>"
+    # Tone pillars
+    tones = "".join(f"<span class='bk-tone'>{_esc(t)}</span>" for t in kit.get("tone_pillars", []))
+    if tones:
+        out += "<h3 class='plan-sec-sub'>" + _icon("record_voice_over") + f"Tone of voice</h3><div class='bk-tones'>{tones}</div>"
+    # Care continuum + share
+    cc = kit.get("care_continuum") or {}
+    if cc:
+        funnel = "".join(
+            f"<div class='bk-cc'><div class='bk-cc-v'>{v}</div><div class='bk-cc-k'>{k}</div></div>"
+            for k, v in [("PLWH", f"{cc.get('plwh', 0):,}"), ("Diagnosed", f"{cc.get('diagnosed_pct')}%"),
+                         ("Linked to care", f"{cc.get('linked_to_care_pct')}%"), ("Retained", f"{cc.get('retained_pct')}%"),
+                         ("On ART", f"{cc.get('on_art_pct')}%"), ("Virally suppressed", f"{cc.get('virally_suppressed_pct')}%")]
+            if v not in ("None%", "0"))
+        share = ""
+        if cc.get("nuvexa_trx_share_pct") is not None:
+            share = (f"<div class='bk-cc bk-cc-hero'><div class='bk-cc-v'>{cc['nuvexa_trx_share_pct']}%</div>"
+                     f"<div class='bk-cc-k'>Brand TRx share · {_esc(cc.get('nuvexa_trx_trend', ''))}</div></div>")
+        out += ("<h3 class='plan-sec-sub'>" + _icon("monitoring") + "Care continuum & share</h3>"
+                f"<div class='bk-ccs'>{funnel}{share}</div>")
+    # Competitive threat cards
+    comps = kit.get("competitors", [])
+    if comps:
+        cards = "".join(
+            f"<div class='bk-comp'><div class='bk-comp-threat'>{_esc(c['threat'])}</div>"
+            f"<div class='bk-comp-name'>{_esc(c['name'])}</div><div class='bk-comp-d'>{_esc(c['detail'])}</div></div>"
+            for c in comps)
+        out += ("<h3 class='plan-sec-sub'>" + _icon("swords") + "Competitive landscape (brand hub read)</h3>"
+                f"<div class='bk-comps'>{cards}</div>")
+    # Live market signals
+    signals = kit.get("market_signals", [])
+    if signals:
+        rows = "".join(
+            f"<div class='bk-sig'><span class='bk-sig-kind bk-sev-{_esc(s.get('severity', 'MEDIUM')).lower()}'>"
+            f"{_esc(s['kind'])}</span><div><div class='bk-sig-h'>{_esc(s['headline'])}</div>"
+            f"<div class='bk-sig-d'>{_esc(s['detail'])}</div></div></div>" for s in signals[:8])
+        out += ("<h3 class='plan-sec-sub'>" + _icon("sensors") + "Live market signals</h3>"
+                f"<div class='bk-sigs'>{rows}</div>")
+    # Identity palette
+    ident = kit.get("identity") or {}
+    if ident.get("palette"):
+        sw = "".join(
+            f"<div class='bk-swatch'><i style='background:{_esc(p['hex'])}'></i>"
+            f"<div><strong>{_esc(p['name'])}</strong><span>{_esc(p['hex'])} · {_esc(p['use'])}</span></div></div>"
+            for p in ident["palette"])
+        out += ("<h3 class='plan-sec-sub'>" + _icon("palette") + "Brand identity</h3>"
+                f"<div class='bk-swatches'>{sw}</div>"
+                + (f"<p class='plan-caveat'>Typography: {_esc(ident.get('typography', ''))}</p>" if ident.get("typography") else ""))
+    src = kit.get("source_url")
+    if src:
+        out += (f"<p class='plan-caveat'>Captured verbatim from the brand intelligence hub: "
+                f"<a href='{_esc(src)}' target='_blank'>{_esc(src)}</a></p>")
+    return out
+
+
+# --------------------------------------------------------------------------- #
+# Section functions -- each renders ONE numbered section into (md, h).
+# Signature: fn(ctx, md, h, R) where R.det(...) is _det_open with freshness applied.
+# Every function derives its own locals from ctx (defensively where the data may
+# belong to an agent that has not run yet), so any section can render the moment
+# its owner completes -- this is what lets the plan fill in progressively.
+# --------------------------------------------------------------------------- #
+
+class _R:
+    """Per-section render options: R.fresh marks the section as just-completed (auto-open
+    + highlight) on the partial render where its owning agent finished."""
+
+    def __init__(self, fresh: bool = False):
+        self.fresh = fresh
+
+    def det(self, num, title, icon, phase="", start_open=False, open_count=0):
+        return _det_open(num, title, icon, phase=phase, start_open=start_open or self.fresh,
+                         open_count=open_count, extra_cls="sec-fresh" if self.fresh else "")
+
+
+def _sec_exec(ctx, md, h, R):
     exec_sum = _exec_summary(ctx)
-    stage_label = strat["inputs"]["stage"]
-
-    md: list[str] = []
-    h: list[str] = []
-
-    # ---- Title + badges + home navigator -------------------------------------- #
-    md.append(f"# Brand Engagement Plan — {brand} · {ta}\n")
-    md.append(f"*Lifecycle stage:* {inferred['lifecycle_label']}  |  *Generated:* {ts}\n")
-    h.append(f"<h1>Brand Engagement Plan</h1><p class='plan-sub'>{_esc(brand)} · {_esc(ta)} — "
-             f"{_esc(inferred['lifecycle_label'])} · generated {ts}</p>")
-    h.append("<div class='plan-badges'>"
-             + _badge("science", brand) + _badge("biotech", ta)
-             + (_badge("vaccines", indication) if indication else "")
-             + _badge("trending_up", inferred["lifecycle_label"])
-             + _badge("groups", inferred["persona"]) + _badge("route", stage_label)
-             + _badge("military_tech", f"{cx_maturity['level']} CX maturity")
-             + (_badge("swords", f"{len(ctx['competitors'])} competitor(s)") if ctx["competitors"] else "")
-             + "</div>")
-    h.append(_home_navigator())
-
-    # ---- 1. Executive summary (open) ------------------------------------------ #
     md.append("## 1. Executive summary\n\n" + exec_sum + "\n")
-    h.append(_det_open(1, "Executive summary", "insights", start_open=True)
+    h.append(R.det(1, "Executive summary", "insights", start_open=True)
              + f"<div class='plan-hero'>{_icon('auto_awesome')}<p>{exec_sum}</p></div>" + _DET_CLOSE)
 
-    # ---- 2. Open questions (open, highlighted) --------------------------------- #
+
+def _sec_openq(ctx, md, h, R):
+    open_groups = ctx.get("open_questions", [])
     n_open = sum(len(g["questions"]) for g in open_groups)
     md.append("## 2. Open questions — needs brand-team alignment\n")
     for g in open_groups:
@@ -769,22 +881,34 @@ def compose_plan(ctx: dict) -> tuple[str, str]:
         for q in g["questions"]:
             md.append(f"- {q}")
         md.append("")
-    h.append(_det_open(2, "Open questions — needs brand-team alignment", "help", start_open=True,
-                       open_count=n_open)
+    h.append(R.det(2, "Open questions — needs brand-team alignment", "help", start_open=True,
+                   open_count=n_open)
              + _render_open_questions(open_groups) + _DET_CLOSE)
 
-    # ---- 3. Brief --------------------------------------------------------------- #
+
+def _sec_brief(ctx, md, h, R):
+    brand, ta = ctx["brand"], ctx["therapy_area"]
+    inferred = ctx.get("inferred") or {}
+    indication = ctx.get("indication", "")
+    competitors = ctx.get("competitors") or []
+    stage_label = ((ctx.get("strategy") or {}).get("inputs") or {}).get("stage", "—")
+    kit = ctx.get("brand_kit")
     md.append("## 3. Brief\n")
     md.append(f"- **Brand:** {brand}\n- **Therapy area:** {ta}\n"
               + (f"- **Indication:** {indication}\n" if indication else "")
-              + f"- **Lifecycle:** {inferred['lifecycle_label']}\n"
-              f"- **Priority persona:** {inferred['persona']}\n- **Journey stage:** {stage_label}\n"
-              f"- **Competitive set:** {', '.join(ctx['competitors']) or '—'}\n")
+              + f"- **Lifecycle:** {inferred.get('lifecycle_label', '—')}\n"
+              f"- **Priority persona:** {inferred.get('persona', '—')}\n- **Journey stage:** {stage_label}\n"
+              f"- **Competitive set:** {', '.join(competitors) or '—'}\n")
     brief_rows = [("Brand", brand), ("Therapy area", ta)]
     if indication:
         brief_rows.append(("Indication", indication))
-    brief_rows += [("Lifecycle", inferred["lifecycle_label"]), ("Priority persona", inferred["persona"]),
-                   ("Journey stage", stage_label), ("Competitive set", ", ".join(ctx["competitors"]) or "—")]
+    brief_rows += [("Lifecycle", inferred.get("lifecycle_label", "—")),
+                   ("Priority persona", inferred.get("persona", "—")),
+                   ("Journey stage", stage_label), ("Competitive set", ", ".join(competitors) or "—")]
+    if kit:
+        brief_rows += [("Brand platform", f"{kit.get('tagline', '')} — {kit.get('core_claim', '')}"),
+                       ("Company", kit.get("company", ""))]
+        md.append(f"- **Brand platform:** {kit.get('tagline', '')} — {kit.get('core_claim', '')}")
     # User-supplied brief fields captured by the fill-in-the-blanks intake (only those given).
     _ub = ctx.get("brief") or {}
     for _lbl, _key in (("Campaign", "campaign_name"), ("Molecule", "molecule"), ("Audience", "audience"),
@@ -796,38 +920,40 @@ def compose_plan(ctx: dict) -> tuple[str, str]:
         if _v and _v != "(not specified)":
             brief_rows.append((_lbl, _v))
             md.append(f"- **{_lbl}:** {_v}")
-    h.append(_det_open(3, "Brief", "assignment")
+    h.append(R.det(3, "Brief", "assignment")
              + "<table class='plan-kv'>"
              + "".join(f"<tr><th>{k}</th><td>{_esc(v)}</td></tr>" for k, v in brief_rows)
              + "</table>" + _DET_CLOSE)
 
-    # =========================== PHASE 1 · ALIGN ================================ #
-    h.append(_phase_banner("align", "Align on customer understanding and CX objectives", 1))
-    md.append("---\n\n# Phase 1 · Align on customer understanding and CX objectives\n")
 
-    # 4. Target Customer Group Template
+def _sec_tcg(ctx, md, h, R):
+    tcg, profile = ctx["tcg"], ctx["segment_profile"]
     md.append("## 4. Target Customer Group Template (Sheet 3)\n")
     md.append("| # | Question | Response |")
     md.append("|---|---|---|")
     for i, r in enumerate(tcg["rows"], start=1):
         md.append(f"| {i} | {r['text']} | {r['answer']} |")
     md.append("")
-    h.append(_det_open(4, "Target Customer Group Template", _PHASE_ICONS["align"], phase="align",
-                       open_count=len(tcg["open_questions"]))
+    h.append(R.det(4, "Target Customer Group Template", _PHASE_ICONS["align"], phase="align",
+                   open_count=len(tcg["open_questions"]))
              + _render_tcg(tcg, profile) + _DET_CLOSE)
 
-    # 5. CX Planning Questionnaire
+
+def _sec_cq(ctx, md, h, R):
+    cq = ctx["cx_questionnaire"]
     md.append("## 5. CX Planning Questionnaire (Sheet 4)\n")
     md.append("| # | Question | Response |")
     md.append("|---|---|---|")
     for i, r in enumerate(cq["rows"], start=1):
         md.append(f"| {i} | {r['text']} | {r['answer']} |")
     md.append("")
-    h.append(_det_open(5, "CX Planning Questionnaire", _PHASE_ICONS["align"], phase="align",
-                       open_count=len(cq["open_questions"]))
+    h.append(R.det(5, "CX Planning Questionnaire", _PHASE_ICONS["align"], phase="align",
+                   open_count=len(cq["open_questions"]))
              + _render_questionnaire(cq, cq["one_idea"]) + _DET_CLOSE)
 
-    # 6. Omnichannel CX Feasibility Analysis
+
+def _sec_feas(ctx, md, h, R):
+    feas = ctx["cx_maturity"]["feasibility_checklist"]
     md.append("## 6. Omnichannel CX Feasibility Analysis (Sheet 5)\n")
     md.append(f"**Overall read: {feas['overall_level']} Omnichannel CX** "
               f"({feas['auto_answered_count']}/{feas['total_questions']} auto-answered)\n")
@@ -837,15 +963,16 @@ def compose_plan(ctx: dict) -> tuple[str, str]:
         md.append(f"| {i} | {q['text']} | {q['category']} | {q['answer']} |")
     md.append("")
     feas_open = sum(1 for q in feas["questions"] if not q["auto_answered"])
-    h.append(_det_open(6, "Omnichannel CX Feasibility Analysis", _PHASE_ICONS["align"], phase="align",
-                       open_count=feas_open)
+    h.append(R.det(6, "Omnichannel CX Feasibility Analysis", _PHASE_ICONS["align"], phase="align",
+                   open_count=feas_open)
              + _render_feasibility(feas) + _DET_CLOSE)
 
-    # =========================== PHASE 2 · SELECT =============================== #
-    h.append(_phase_banner("select", "Select relevant messages and channels", 2))
-    md.append("---\n\n# Phase 2 · Select relevant messages and channels\n")
 
-    # 7. Message Flow Template
+def _sec_mft(ctx, md, h, R):
+    mf, strat = ctx["message_flow"], ctx["strategy"]
+    inferred = ctx["inferred"]
+    sp = strat["stage_profile"]
+    stage_label = strat["inputs"]["stage"]
     md.append("## 7. Message Flow Template (Sheet 6)\n")
     md.append(f"- **Segment name:** {inferred['persona']}\n- **Campaign objective:** {sp['engagement_goal']}\n"
               f"- **Leverage point:** {stage_label}\n")
@@ -854,26 +981,27 @@ def compose_plan(ctx: dict) -> tuple[str, str]:
     for km in mf["key_messages"]:
         md.append(f"- **{km['topic']}** — " + "; ".join(km["supporting_messages"]))
     md.append("")
-    h.append(_det_open(7, "Message Flow Template", _PHASE_ICONS["select"], phase="select")
+    h.append(R.det(7, "Message Flow Template", _PHASE_ICONS["select"], phase="select")
              + _render_message_flow_template(mf, inferred["persona"], stage_label, sp["engagement_goal"],
                                              ctx.get("content_library"))
              + _DET_CLOSE)
 
-    # 8. Channel Selection Template
+
+def _sec_chsel(ctx, md, h, R):
+    chsel = ctx["channel_selection"]
     md.append("## 8. Channel Selection Template (Sheet 7)\n")
     md.append("| Channel | Purpose | Availability | Preference/affinity | Brand priority |")
     md.append("|---|---|---|---|---|")
     for r in chsel["channels"]:
         md.append(f"| {r['channel']} | {', '.join(r['purpose'])} | {r['availability']} | {r['preference_affinity']} | {r['brand_priority']} |")
     md.append("")
-    h.append(_det_open(8, "Channel Selection Template", _PHASE_ICONS["select"], phase="select")
+    h.append(R.det(8, "Channel Selection Template", _PHASE_ICONS["select"], phase="select")
              + _render_channel_selection(chsel) + _DET_CLOSE)
 
-    # =========================== PHASE 3 · CREATE =============================== #
-    h.append(_phase_banner("create", "Create omnichannel CX", 3))
-    md.append("---\n\n# Phase 3 · Create omnichannel CX\n")
 
-    # 9. Map Existing Content
+def _sec_audit(ctx, md, h, R):
+    mf = ctx["message_flow"]
+    inferred = ctx["inferred"]
     lib = ctx.get("content_library") or {}
     lib_assets = lib.get("assets", []) if lib.get("found") else []
     md.append("## 9. Map Existing Content & Identify (Sheet 8)\n")
@@ -890,12 +1018,13 @@ def compose_plan(ctx: dict) -> tuple[str, str]:
     else:
         md.append("_No content library is indexed — the audit ships as the toolkit template with one seeded row per key "
                   "message; the brand team's content inventory fills the rest._\n")
-    h.append(_det_open(9, "Map Existing Content & Identify", _PHASE_ICONS["create"], phase="create",
-                       open_count=0 if lib_assets else len(mf["key_messages"]))
+    h.append(R.det(9, "Map Existing Content & Identify", _PHASE_ICONS["create"], phase="create",
+                   open_count=0 if lib_assets else len(mf["key_messages"]))
              + _render_content_audit(mf, inferred["persona"], ctx["micro_journeys"], ctx.get("content_library"))
              + _DET_CLOSE)
 
-    # 10. Design Channel Flow
+
+def _sec_chflow(ctx, md, h, R):
     md.append("## 10. Design Channel Flow\n")
     for j in ctx["micro_journeys"]["journeys"]:
         md.append(f"- **{j['name']}** — trigger: {j['trigger']}; primary touchpoint: {j['primary_touchpoint']}; {j['content_readiness']}")
@@ -904,10 +1033,12 @@ def compose_plan(ctx: dict) -> tuple[str, str]:
     for r in ctx["pp_npp"]:
         md.append(f"| {r['channel']} | {r['pct']}% | {r['bucket']} |")
     md.append("")
-    h.append(_det_open(10, "Design Channel Flow", _PHASE_ICONS["create"], phase="create")
+    h.append(R.det(10, "Design Channel Flow", _PHASE_ICONS["create"], phase="create")
              + _render_channel_flow(ctx["micro_journeys"], ctx["pp_npp"], ctx.get("content_library")) + _DET_CLOSE)
 
-    # 11. Design Message Flow
+
+def _sec_dmf(ctx, md, h, R):
+    mf = ctx["message_flow"]
     md.append("## 11. Design Message Flow (Sheet 9)\n")
     for i, km in enumerate(mf["key_messages"], start=1):
         md.append(f"**Impact {i} — {km['topic']}**")
@@ -917,25 +1048,23 @@ def compose_plan(ctx: dict) -> tuple[str, str]:
     for s in mf["non_opener_branch"]["campaign_summary"]:
         md.append(f"- {s}")
     md.append("")
-    h.append(_det_open(11, "Design Message Flow", _PHASE_ICONS["create"], phase="create")
+    h.append(R.det(11, "Design Message Flow", _PHASE_ICONS["create"], phase="create")
              + _render_design_message_flow(mf) + _DET_CLOSE)
 
-    # 12. Metrics to Track CX Success
-    tk = kpi["toolkit_measures"]
+
+def _sec_metrics(ctx, md, h, R):
+    tk = ctx["kpi"]["toolkit_measures"]
     md.append("## 12. Metrics to Track CX Success (Sheet 10)\n")
     for bucket, items in [("Optin", tk["optin"]), ("Non-optin", tk["non_optin"])]:
         md.append(f"**{bucket}**")
         for m2 in items:
             md.append(f"- **{m2['objective']}:** {m2['measure']}")
         md.append("")
-    h.append(_det_open(12, "Metrics to Track CX Success", _PHASE_ICONS["create"], phase="create")
+    h.append(R.det(12, "Metrics to Track CX Success", _PHASE_ICONS["create"], phase="create")
              + _render_metrics_pyramid(tk) + _DET_CLOSE)
 
-    # =========================== PHASE 4 · DEPLOY =============================== #
-    h.append(_phase_banner("deploy", "Deploy campaign", 4))
-    md.append("---\n\n# Phase 4 · Deploy campaign\n")
 
-    # 13. CX Execution Work Plan (+ RACI)
+def _sec_workplan(ctx, md, h, R):
     exec_plan, exec_raci = ctx["execution_plan"], ctx["execution_raci"]
     md.append("## 13. CX Execution Work Plan (Sheets 12 & 14)\n")
     md.append(f"*{exec_plan['mlr_delay_note']}*\n")
@@ -949,10 +1078,11 @@ def compose_plan(ctx: dict) -> tuple[str, str]:
     for row in exec_raci["rows"]:
         md.append(f"| {row['stakeholder']} | " + " | ".join(row["assignments"][w] for w in exec_raci["workstreams"]) + " |")
     md.append("")
-    h.append(_det_open(13, "CX Execution Work Plan", _PHASE_ICONS["deploy"], phase="deploy", open_count=1)
+    h.append(R.det(13, "CX Execution Work Plan", _PHASE_ICONS["deploy"], phase="deploy", open_count=1)
              + _render_work_plan(exec_plan, exec_raci) + _DET_CLOSE)
 
-    # 14. Develop Closed Loop Model (Test-Measure-Learn)
+
+def _sec_tml(ctx, md, h, R):
     tml = ctx["test_measure_learn"]
     md.append("## 14. Develop Closed Loop Model — Test-Measure-Learn (Sheets 11 & 13)\n")
     md.append("| Test | Objective | Channels | Measure | What good looks like | What we'll learn |")
@@ -960,16 +1090,14 @@ def compose_plan(ctx: dict) -> tuple[str, str]:
     for r in tml["rows"]:
         md.append(f"| {r['test']} | {r['objective']} | {r['channels']} | {r['measure']} | {r['what_good_looks_like']} | {r['what_we_will_learn']} |")
     md.append("")
-    h.append(_det_open(14, "Develop Closed Loop Model", _PHASE_ICONS["deploy"], phase="deploy")
+    h.append(R.det(14, "Develop Closed Loop Model", _PHASE_ICONS["deploy"], phase="deploy")
              + _render_tml(tml) + _DET_CLOSE)
 
-    # =========================== SUPPORTING ANALYSIS ============================ #
-    h.append("<div class='tk-phase-banner tk-support'>Supporting analysis</div>")
-    md.append("---\n\n# Supporting analysis\n")
 
-    # 15. Market & landscape
+def _sec_market(ctx, md, h, R):
+    brand, ta = ctx["brand"], ctx["therapy_area"]
     md.append("## 15. Market & landscape\n")
-    h.append(_det_open(15, "Market & landscape", "travel_explore"))
+    h.append(R.det(15, "Market & landscape", "travel_explore"))
     src_labels = {"clinicaltrials": "ClinicalTrials.gov", "pubmed": "PubMed", "openfda": "openFDA",
                   "dailymed": "DailyMed", "google_trends": "Google Trends"}
     for scope, label in [("brand", brand), ("therapy_area", ta)]:
@@ -987,11 +1115,27 @@ def compose_plan(ctx: dict) -> tuple[str, str]:
             md.append("- (no documents indexed)")
             h.append("<div class='plan-empty'>No documents indexed.</div>")
         md.append("")
+    # Live signals from the brand's own intelligence hub, when a kit exists.
+    kit = ctx.get("brand_kit")
+    if kit and kit.get("market_signals"):
+        md.append("**Live brand-hub signals**\n")
+        for s in kit["market_signals"][:6]:
+            md.append(f"- [{s['kind']} · {s['severity']}] {s['headline']}")
+        md.append("")
+        rows = "".join(
+            f"<div class='bk-sig'><span class='bk-sig-kind bk-sev-{_esc(s.get('severity', 'MEDIUM')).lower()}'>"
+            f"{_esc(s['kind'])}</span><div><div class='bk-sig-h'>{_esc(s['headline'])}</div>"
+            f"<div class='bk-sig-d'>{_esc(s['detail'])}</div></div></div>" for s in kit["market_signals"][:6])
+        h.append("<h3 class='plan-sec-sub'>" + _icon("sensors") + "Live brand-hub signals "
+                 f"<span class='bk-src-chip'>{_esc(kit.get('source_label', 'brand hub'))}</span></h3>"
+                 f"<div class='bk-sigs'>{rows}</div>")
     h.append(_DET_CLOSE)
 
-    # 16. Competitive analysis
+
+def _sec_swot(ctx, md, h, R):
+    swot = ctx["swot"]
     md.append("## 16. Competitive analysis\n")
-    h.append(_det_open(16, "Competitive analysis", "balance"))
+    h.append(R.det(16, "Competitive analysis", "balance"))
     if swot:
         quadrants = [("strengths", "Strengths", "s-strength", "trending_up"),
                      ("weaknesses", "Weaknesses", "s-weak", "trending_down"),
@@ -1028,7 +1172,9 @@ def compose_plan(ctx: dict) -> tuple[str, str]:
         h.append("<p class='plan-empty'>No distinct competitors found in public trial data — competitive analysis skipped.</p>")
     h.append(_DET_CLOSE)
 
-    # 17. Positioning
+
+def _sec_pos(ctx, md, h, R):
+    pos = ctx["positioning"]
     md.append("## 17. Positioning\n")
     md.append(f"> {pos['positioning_statement']}\n")
     md.append("**Alternative messaging angles**")
@@ -1038,14 +1184,18 @@ def compose_plan(ctx: dict) -> tuple[str, str]:
     for a in pos["target_audience_notes"]:
         md.append(f"- {a}")
     md.append("")
-    h.append(_det_open(17, "Positioning", "track_changes")
+    h.append(R.det(17, "Positioning", "track_changes")
              + f"<blockquote class='plan-statement'>{_esc(pos['positioning_statement'])}</blockquote>"
              "<h3 class='plan-sec-sub'>Alternative messaging angles</h3><ul>"
              + "".join(f"<li>{_esc(a)}</li>" for a in pos["alternative_angles"]) + "</ul>"
              "<h3 class='plan-sec-sub'>Target audience notes</h3><ul>"
              + "".join(f"<li>{_esc(a)}</li>" for a in pos["target_audience_notes"]) + "</ul>" + _DET_CLOSE)
 
-    # 18. Journey & messaging (BAM)
+
+def _sec_bam(ctx, md, h, R):
+    strat, bam = ctx["strategy"], ctx["bam"]
+    m = strat["messaging_architecture"]
+    sp = strat["stage_profile"]
     md.append("## 18. Journey & messaging (BAM)\n")
     md.append(f"- **Mental state:** {sp['mental_state']}\n- **Core barrier:** {sp['core_barrier']}\n"
               f"- **Engagement goal:** {sp['engagement_goal']}\n- **Promotion signal:** {sp['promotion_signal']}\n")
@@ -1057,7 +1207,7 @@ def compose_plan(ctx: dict) -> tuple[str, str]:
     for ch, tps in strat["recommended_touchpoints"].items():
         md.append(f"- {ch}: {', '.join(tps)}")
     md.append("")
-    h.append(_det_open(18, "Journey & messaging (BAM)", "route")
+    h.append(R.det(18, "Journey & messaging (BAM)", "route")
              + "<table class='plan-kv'>"
              + "".join(f"<tr><th>{k}</th><td>{_esc(v)}</td></tr>" for k, v in [
                  ("Mental state", sp["mental_state"]), ("Core barrier", sp["core_barrier"]),
@@ -1072,9 +1222,20 @@ def compose_plan(ctx: dict) -> tuple[str, str]:
                        for ch, tps in strat["recommended_touchpoints"].items())
              + "</ul>" + _DET_CLOSE)
 
-    # 19. Precedent campaigns
+
+def _sec_precedents(ctx, md, h, R):
+    precedents = ctx["precedents"]
+    kit = ctx.get("brand_kit")
     md.append("## 19. Precedent campaigns (inspiration)\n")
-    h.append(_det_open(19, "Precedent campaigns (inspiration)", "emoji_events"))
+    h.append(R.det(19, "Precedent campaigns (inspiration)", "emoji_events"))
+    # The brand's own concept shelf comes first -- extending an existing platform beats
+    # inventing a new one.
+    if kit and kit.get("concepts"):
+        md.append("**The brand's own concept shelf** (from the brand intelligence hub)\n")
+        for c in kit["concepts"]:
+            md.append(f"- **{c['name']}** [{c['status']}] — {c['description']}")
+        md.append("")
+        h.append(_render_brand_concepts(kit))
     if precedents:
         note = ("" if any(p["matched"] for p in precedents) else
                 "_No award-winning campaign in the archive matched this therapy area — showing the most recent winners instead._\n")
@@ -1099,7 +1260,6 @@ def compose_plan(ctx: dict) -> tuple[str, str]:
     else:
         md.append("_No award-winning campaigns indexed yet — run scrapers/awards.py to seed the archive._\n")
         h.append("<p class='plan-empty'>No award-winning campaigns indexed yet.</p>")
-    # Curated, festival-grounded award campaigns matched to this brand/therapy area/client.
     awards = ctx.get("award_campaigns") or []
     if awards:
         md.append("\n**Award-winning campaigns to learn from** (why they won · the message · the creative)\n")
@@ -1110,11 +1270,14 @@ def compose_plan(ctx: dict) -> tuple[str, str]:
         h.append(_render_award_campaigns(awards))
     h.append(_DET_CLOSE)
 
-    # 20. Channel mix & budget
+
+def _sec_budget(ctx, md, h, R):
+    budget_alloc = ctx["budget_allocation"]
+    strat = ctx.get("strategy") or {}
     md.append("## 20. Channel mix & budget\n")
     md.append("| Channel | Share | Budget |")
     md.append("|---|---|---|")
-    h.append(_det_open(20, "Channel mix & budget", "payments"))
+    h.append(R.det(20, "Channel mix & budget", "payments"))
     bars = ""
     for ch, v in sorted(budget_alloc.items(), key=lambda kv: -kv[1]["pct"]):
         amt = f"${int(v['amount']):,}" if v["amount"] else "—"
@@ -1123,13 +1286,16 @@ def compose_plan(ctx: dict) -> tuple[str, str]:
                  f"<div class='plan-bar-label'>{_esc(ch)}</div>"
                  f"<div class='plan-bar-track'><div class='plan-bar-fill' style='width:{v['pct']}%'></div></div>"
                  f"<div class='plan-bar-val'>{v['pct']}% · {amt}</div></div>")
-    md.append(f"\n*{strat['caveat']}*\n")
-    h.append(bars + f"<p class='plan-caveat'>{_esc(strat['caveat'])}</p>" + _DET_CLOSE)
+    caveat = strat.get("caveat", "")
+    md.append(f"\n*{caveat}*\n")
+    h.append(bars + f"<p class='plan-caveat'>{_esc(caveat)}</p>" + _DET_CLOSE)
 
-    # 21. KPI framework
+
+def _sec_kpi(ctx, md, h, R):
+    kpi = ctx["kpi"]
     md.append("## 21. KPI framework\n")
     kpi_icons = {"Leading indicators": "trending_up", "Lagging indicators": "flag", "Operational KPIs": "settings"}
-    h.append(_det_open(21, "KPI framework", "query_stats"))
+    h.append(R.det(21, "KPI framework", "query_stats"))
     for title, items in [("Leading indicators", kpi["leading_indicators"]),
                          ("Lagging indicators", kpi["lagging_indicators"]),
                          ("Operational KPIs", kpi["operational_kpis"])]:
@@ -1142,7 +1308,9 @@ def compose_plan(ctx: dict) -> tuple[str, str]:
     md.append(f"*Review cadence:* {kpi['cadence_note']}\n")
     h.append(f"<p class='plan-caveat'>Review cadence: {_esc(kpi['cadence_note'])}</p>" + _DET_CLOSE)
 
-    # 22. Risk & governance
+
+def _sec_risk(ctx, md, h, R):
+    kit = ctx.get("brand_kit")
     md.append("## 22. Risk & governance\n")
     md.append("**Standard risk checklist**")
     for r in STANDARD_RISKS:
@@ -1151,51 +1319,241 @@ def compose_plan(ctx: dict) -> tuple[str, str]:
     for k, v in GOVERNANCE_CADENCE.items():
         md.append(f"- **{k}:** {v}")
     md.append("")
-    h.append(_det_open(22, "Risk & governance", "gpp_maybe")
+    guard_html = ""
+    if kit:
+        guard_html = _render_guardrails(kit)
+        g = kit.get("guardrails") or {}
+        if g.get("dos") or g.get("donts"):
+            md.append("**Brand guardrails (from the brand intelligence hub)**")
+            for it in g.get("dos", []):
+                md.append(f"- ✓ [{it['category']}] {it['text']}")
+            for it in g.get("donts", []):
+                md.append(f"- ✕ [{it['category']}] {it['text']}")
+            md.append("")
+    h.append(R.det(22, "Risk & governance", "gpp_maybe")
              + "<h3 class='plan-sec-sub'>Standard risk checklist</h3><ul>"
              + "".join(f"<li>{_esc(r)}</li>" for r in STANDARD_RISKS) + "</ul>"
              "<h3 class='plan-sec-sub'>Governance cadence</h3><ul>"
              + "".join(f"<li><strong>{_esc(k)}:</strong> {_esc(v)}</li>" for k, v in GOVERNANCE_CADENCE.items())
-             + "</ul>" + _DET_CLOSE)
+             + "</ul>" + guard_html + _DET_CLOSE)
 
-    # 23. Caveats
+
+def _sec_caveats(ctx, md, h, R):
     caveat = ("This plan is generated from public/licensed data proxies and a rules-based framework. Channel-mix "
               "percentages are an illustrative starting allocation (not measured MMx output); SWOT/positioning derive "
               "from public-data proxies; persona and competitors were auto-inferred. Toolkit templates are rendered "
               "with every unanswerable cell flagged 'Needs alignment' rather than guessed. Treat as a first draft "
               "for brand-team and MLR review, not a final approved plan.")
     md.append("## 23. Caveats & data provenance\n\n" + caveat + "\n")
-    h.append(_det_open(23, "Caveats & data provenance", "fact_check")
+    h.append(R.det(23, "Caveats & data provenance", "fact_check")
              + f"<p class='plan-caveat'>{_esc(caveat)}</p>" + _DET_CLOSE)
 
-    # 24. Audience & engagement benchmarks (the researched baselines the agents filled from)
+
+def _sec_benchmarks(ctx, md, h, R):
     audience = ctx.get("audience_profile") or {}
     engagement = ctx.get("engagement_baseline") or {}
-    if audience or engagement:
-        md.append("## 24. Audience & engagement benchmarks (agent-recommended)\n")
-        if audience.get("audience_size", {}).get("total"):
-            md.append(f"**Audience (Market & Competitive Intelligence Agent):** {audience['headline']} — confidence: {audience['confidence']}.\n")
-            for r in audience["audience_size"]["specialties"]:
-                md.append(f"- {r['specialty']}: ~{r['count']:,} ({r['confidence']})")
-            md.append("")
-        if engagement.get("channels"):
-            md.append(f"**Engagement targets (Activation Planning Agent):** {engagement['headline']}\n")
-            md.append("| Channel | Share | Affinity | Primary KPI | Industry baseline | Target band |")
-            md.append("|---|---|---|---|---|---|")
-            for r in engagement["channels"]:
-                band = (f"{r['target_low_pct']}–{r['target_high_pct']}%" if r.get("target_low_pct") is not None
-                        else "brand-measured")
-                base = f"{r['baseline_pct']}%" if r.get("baseline_pct") is not None else "—"
-                md.append(f"| {r['channel']} | {r['share_pct']}% | {r.get('affinity') or '—'}/5 | "
-                          f"{r.get('kpi') or '—'} | {base} | {band} |")
-            md.append("")
-        md.append(f"*{audience.get('caveat') or engagement.get('caveat', '')}*\n")
-        n_rec = tcg.get("agent_answered_count", 0) + sum(1 for r in ctx["test_measure_learn"]["rows"]
-                                                          if r.get("agent_recommended"))
-        h.append(_det_open(24, "Audience & engagement benchmarks", "auto_awesome")
-                 + f"<p>The Market &amp; Competitive Intelligence and Activation Planning agents filled <strong>{n_rec}</strong> plan field(s) from these researched industry "
-                   f"baselines. Agent-recommended values are highlighted like this: {_agent_chip('Agent')} — they are "
-                   f"defensible starting points, not brand forecasts.</p>"
-                 + _render_benchmarks(audience, engagement) + _DET_CLOSE)
+    tcg = ctx.get("tcg") or {}
+    tml_rows = (ctx.get("test_measure_learn") or {}).get("rows", [])
+    md.append("## 24. Audience & engagement benchmarks (agent-recommended)\n")
+    if audience.get("audience_size", {}).get("total"):
+        md.append(f"**Audience (Market & Competitive Intelligence Agent):** {audience['headline']} — confidence: {audience['confidence']}.\n")
+        for r in audience["audience_size"]["specialties"]:
+            md.append(f"- {r['specialty']}: ~{r['count']:,} ({r['confidence']})")
+        md.append("")
+    if engagement.get("channels"):
+        md.append(f"**Engagement targets (Activation Planning Agent):** {engagement['headline']}\n")
+        md.append("| Channel | Share | Affinity | Primary KPI | Industry baseline | Target band |")
+        md.append("|---|---|---|---|---|---|")
+        for r in engagement["channels"]:
+            band = (f"{r['target_low_pct']}–{r['target_high_pct']}%" if r.get("target_low_pct") is not None
+                    else "brand-measured")
+            base = f"{r['baseline_pct']}%" if r.get("baseline_pct") is not None else "—"
+            md.append(f"| {r['channel']} | {r['share_pct']}% | {r.get('affinity') or '—'}/5 | "
+                      f"{r.get('kpi') or '—'} | {base} | {band} |")
+        md.append("")
+    md.append(f"*{audience.get('caveat') or engagement.get('caveat', '')}*\n")
+    n_rec = tcg.get("agent_answered_count", 0) + sum(1 for r in tml_rows if r.get("agent_recommended"))
+    h.append(R.det(24, "Audience & engagement benchmarks", "auto_awesome")
+             + f"<p>The Market &amp; Competitive Intelligence and Activation Planning agents filled <strong>{n_rec}</strong> plan field(s) from these researched industry "
+               f"baselines. Agent-recommended values are highlighted like this: {_agent_chip('Agent')} — they are "
+               f"defensible starting points, not brand forecasts.</p>"
+             + _render_benchmarks(audience, engagement) + _DET_CLOSE)
 
-    return "\n".join(md), "".join(h)
+
+def _sec_brand_foundation(ctx, md, h, R):
+    kit = ctx["brand_kit"]
+    md.append("## 25. Brand foundation (brand intelligence hub)\n")
+    md.append(f"**{kit.get('tagline', '')}** — {kit.get('core_claim', '')}\n")
+    for p in kit.get("message_hierarchy", []):
+        md.append(f"- **{p['pillar']}:** {p['claim']} _({p['evidence']})_")
+    md.append(f"\n**Approved indication:** {kit.get('approved_indication', '')}\n")
+    md.append(f"**Tone of voice:** {' · '.join(kit.get('tone_pillars', []))}\n")
+    md.append(f"_Captured from {kit.get('source_url', '')}_\n")
+    h.append(R.det(25, "Brand foundation (brand intelligence hub)", "workspace_premium")
+             + _render_brand_foundation(kit) + _DET_CLOSE)
+
+
+# --------------------------------------------------------------------------- #
+# Section registry + composer driver
+# --------------------------------------------------------------------------- #
+
+_OWNER_LABEL = {
+    "planner": "Engagement Planner Agent",
+    "intel": "Market & Competitive Intelligence Agent",
+    "strategy": "Strategy & Positioning Agent",
+    "inspiration": "Creative Inspiration Agent",
+    "activation": "Activation Planning Agent",
+    "final": "Engagement Planner Agent",
+}
+
+_never = lambda c, full: False  # noqa: E731
+
+# (kind, num, title, icon, phase, owner, ready(ctx), fn, skip(ctx, full))
+# Order = document order. `owner` is the agent whose completion fills the section
+# (owner 'final' = the Engagement Planner's closing pass, rendered only on the full
+# compose). `ready` guards on the ctx keys the section actually reads, so a section
+# renders the moment its data exists and shows an owner-labelled placeholder before.
+_SECTION_TABLE = [
+    ("sec", 1, "Executive summary", "insights", "", "final", lambda c: True, _sec_exec, _never),
+    ("sec", 2, "Open questions — needs brand-team alignment", "help", "", "final",
+     lambda c: True, _sec_openq, _never),
+    ("sec", 3, "Brief", "assignment", "", "planner", lambda c: "inferred" in c, _sec_brief, _never),
+    ("banner", "align", "Align on customer understanding and CX objectives", 1),
+    ("sec", 4, "Target Customer Group Template", _PHASE_ICONS["align"], "align", "strategy",
+     lambda c: "tcg" in c and "segment_profile" in c, _sec_tcg, _never),
+    ("sec", 5, "CX Planning Questionnaire", _PHASE_ICONS["align"], "align", "final",
+     lambda c: "cx_questionnaire" in c, _sec_cq, _never),
+    ("sec", 6, "Omnichannel CX Feasibility Analysis", _PHASE_ICONS["align"], "align", "strategy",
+     lambda c: "cx_maturity" in c, _sec_feas, _never),
+    ("banner", "select", "Select relevant messages and channels", 2),
+    ("sec", 7, "Message Flow Template", _PHASE_ICONS["select"], "select", "strategy",
+     lambda c: "message_flow" in c and "strategy" in c, _sec_mft, _never),
+    ("sec", 8, "Channel Selection Template", _PHASE_ICONS["select"], "select", "activation",
+     lambda c: "channel_selection" in c, _sec_chsel, _never),
+    ("banner", "create", "Create omnichannel CX", 3),
+    ("sec", 9, "Map Existing Content & Identify", _PHASE_ICONS["create"], "create", "inspiration",
+     lambda c: "content_library" in c and "message_flow" in c and "micro_journeys" in c, _sec_audit, _never),
+    ("sec", 10, "Design Channel Flow", _PHASE_ICONS["create"], "create", "inspiration",
+     lambda c: "micro_journeys" in c and "pp_npp" in c, _sec_chflow, _never),
+    ("sec", 11, "Design Message Flow", _PHASE_ICONS["create"], "create", "inspiration",
+     lambda c: "message_flow" in c, _sec_dmf, _never),
+    ("sec", 12, "Metrics to Track CX Success", _PHASE_ICONS["create"], "create", "activation",
+     lambda c: "kpi" in c, _sec_metrics, _never),
+    ("banner", "deploy", "Deploy campaign", 4),
+    ("sec", 13, "CX Execution Work Plan", _PHASE_ICONS["deploy"], "deploy", "activation",
+     lambda c: "execution_plan" in c and "execution_raci" in c, _sec_workplan, _never),
+    ("sec", 14, "Develop Closed Loop Model", _PHASE_ICONS["deploy"], "deploy", "activation",
+     lambda c: "test_measure_learn" in c, _sec_tml, _never),
+    ("banner_support",),
+    ("sec", 15, "Market & landscape", "travel_explore", "", "intel", lambda c: "market" in c, _sec_market, _never),
+    ("sec", 16, "Competitive analysis", "balance", "", "intel", lambda c: "swot" in c, _sec_swot, _never),
+    ("sec", 17, "Positioning", "track_changes", "", "strategy", lambda c: "positioning" in c, _sec_pos, _never),
+    ("sec", 18, "Journey & messaging (BAM)", "route", "", "strategy",
+     lambda c: "bam" in c and "strategy" in c, _sec_bam, _never),
+    ("sec", 19, "Precedent campaigns (inspiration)", "emoji_events", "", "inspiration",
+     lambda c: "precedents" in c, _sec_precedents, _never),
+    ("sec", 20, "Channel mix & budget", "payments", "", "activation",
+     lambda c: "budget_allocation" in c, _sec_budget, _never),
+    ("sec", 21, "KPI framework", "query_stats", "", "activation", lambda c: "kpi" in c, _sec_kpi, _never),
+    ("sec", 22, "Risk & governance", "gpp_maybe", "", "planner", lambda c: True, _sec_risk, _never),
+    ("sec", 23, "Caveats & data provenance", "fact_check", "", "planner", lambda c: True, _sec_caveats, _never),
+    # §24 keeps its legacy full-render behavior: omitted entirely when no benchmark data exists.
+    ("sec", 24, "Audience & engagement benchmarks", "auto_awesome", "", "activation",
+     lambda c: "engagement_baseline" in c or "audience_profile" in c, _sec_benchmarks,
+     lambda c, full: full and not ("engagement_baseline" in c or "audience_profile" in c)),
+    # §25 exists only for brands with a captured intelligence kit (never a placeholder otherwise).
+    ("sec", 25, "Brand foundation (brand intelligence hub)", "workspace_premium", "", "planner",
+     lambda c: bool(c.get("brand_kit")), _sec_brand_foundation,
+     lambda c, full: not c.get("brand_kit")),
+]
+
+
+def _placeholder(num, title, icon, owner, md, h):
+    agent = _OWNER_LABEL.get(owner, "team")
+    md.append(f"## {num}. {title}\n\n_Pending — the {agent} is working on this section._\n")
+    h.append(f"<details class='plan-sec sec-pending' id='sec-{num}'>"
+             f"<summary class='plan-sec-head'>{_icon(icon)}<h2>{num}. {_esc(title)}</h2>"
+             f"<span class='plan-pending-chip'>{_icon('hourglass_top')}{_esc(agent)}</span>"
+             f"<span class='plan-sec-chev material-symbols-outlined'>expand_more</span></summary>"
+             f"<div class='plan-sec-body'><div class='plan-pending-body'>"
+             f"<span class='plan-pending-bar'></span>This section fills in automatically when the "
+             f"{_esc(agent)} finishes its research.</div></div></details>")
+
+
+def _compose(ctx: dict, done_agents: set | None = None, fresh_agent: str = ""):
+    """Render the plan document. done_agents=None -> the full document (legacy behavior,
+    used for the final render and every recompose). A set of agent ids -> a PARTIAL
+    document: sections owned by a completed agent (whose data is present) render for real;
+    everything else renders as an owner-labelled pending placeholder. fresh_agent marks
+    that agent's sections as just-completed (auto-open + .sec-fresh highlight)."""
+    full = done_agents is None
+    brand, ta = ctx["brand"], ctx["therapy_area"]
+    inferred = ctx.get("inferred") or {}
+    strat = ctx.get("strategy") or {}
+    cx_maturity = ctx.get("cx_maturity") or {}
+    indication = ctx.get("indication", "")
+    competitors = ctx.get("competitors") or []
+    ts = time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime())
+    stage_label = (strat.get("inputs") or {}).get("stage", "")
+
+    md: list[str] = []
+    h: list[str] = []
+
+    # ---- Title + badges + home navigator (structural; badges accrete as data lands) ----
+    md.append(f"# Brand Engagement Plan — {brand} · {ta}\n")
+    md.append(f"*Lifecycle stage:* {inferred.get('lifecycle_label', '—')}  |  *Generated:* {ts}\n")
+    h.append(f"<h1>Brand Engagement Plan</h1><p class='plan-sub'>{_esc(brand)} · {_esc(ta)} — "
+             f"{_esc(inferred.get('lifecycle_label', ''))} · generated {ts}</p>")
+    badges = _badge("science", brand) + _badge("biotech", ta)
+    if indication:
+        badges += _badge("vaccines", indication)
+    if inferred.get("lifecycle_label"):
+        badges += _badge("trending_up", inferred["lifecycle_label"])
+    if inferred.get("persona"):
+        badges += _badge("groups", inferred["persona"])
+    if stage_label:
+        badges += _badge("route", stage_label)
+    if cx_maturity.get("level"):
+        badges += _badge("military_tech", f"{cx_maturity['level']} CX maturity")
+    if competitors:
+        badges += _badge("swords", f"{len(competitors)} competitor(s)")
+    if ctx.get("brand_kit"):
+        badges += _badge("workspace_premium", (ctx["brand_kit"].get("tagline") or "Brand kit"))
+    h.append(f"<div class='plan-badges'>{badges}</div>")
+    h.append(_home_navigator(has_brand_kit=bool(ctx.get("brand_kit"))))
+
+    n_total = n_done = 0
+    for entry in _SECTION_TABLE:
+        kind = entry[0]
+        if kind == "banner":
+            _, phase, label, no = entry
+            h.append(_phase_banner(phase, label, no))
+            md.append(f"---\n\n# Phase {no} · {label}\n")
+            continue
+        if kind == "banner_support":
+            h.append("<div class='tk-phase-banner tk-support'>Supporting analysis</div>")
+            md.append("---\n\n# Supporting analysis\n")
+            continue
+        _, num, title, icon, phase, owner, ready, fn, skip = entry
+        if skip(ctx, full):
+            continue
+        n_total += 1
+        renders = ready(ctx) and (full or (owner != "final" and owner in done_agents))
+        if renders:
+            n_done += 1
+            fn(ctx, md, h, _R(fresh=(owner == fresh_agent)))
+        else:
+            _placeholder(num, title, icon, owner, md, h)
+
+    return "\n".join(md), "".join(h), n_done, n_total
+
+
+def compose_plan(ctx: dict) -> tuple[str, str]:
+    """Full document (legacy entrypoint -- persona-apply, clarify auto-update, exports)."""
+    md, html_out, _, _ = _compose(ctx)
+    return md, html_out
+
+
+def compose_plan_partial(ctx: dict, done_agents: set | None, fresh_agent: str = ""):
+    """Progressive render for the live run. Returns (md, html, sections_done, sections_total)."""
+    return _compose(ctx, done_agents, fresh_agent)
