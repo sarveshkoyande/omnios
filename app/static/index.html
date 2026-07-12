@@ -32,6 +32,10 @@
     /* Header + brand gradient: blue -> purple through Indegene's own hues. */
     --header-gradient: linear-gradient(120deg, var(--indegene-navy) 0%, var(--indegene-indigo) 45%,
       var(--indegene-purple) 80%, var(--indegene-violet) 100%);
+    /* Same family, scaled down for small controls (buttons/pills/CTAs) -- every primary
+       action across the platform shares this one gradient. */
+    --btn-gradient: linear-gradient(135deg, var(--indegene-navy) 0%, #2F55B8 50%, var(--indegene-purple) 100%);
+    --btn-gradient-hover: linear-gradient(135deg, #14479E 0%, #3D63C9 50%, var(--indegene-violet) 100%);
 
     /* Skeuomorphic depth tokens -- soft ambient shadow + a hairline glass highlight along the
        top edge, so glass surfaces read as physically raised rather than flat translucent
@@ -121,13 +125,16 @@
      ordinary alpha compositing blends them into a soft violet, reading as the two "interacting".
      Sits at z-index 0 behind every chat surface, which all keep their glass backgrounds so the
      wash reads through as ambient colour rather than fighting message legibility. */
-  .chat-blur-bg { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
-  .chat-blur-bg .blob { position: absolute; border-radius: 50%; filter: blur(78px); will-change: transform; }
+  /* Kept deliberately very faint -- a near-white wash with just a hint of colour, not a
+     visible tinted background -- so the chat column reads as bright/white with the blobs as
+     a barely-there ambient touch rather than a colour cast over the conversation. */
+  .chat-blur-bg { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; background: #fff; }
+  .chat-blur-bg .blob { position: absolute; border-radius: 50%; filter: blur(90px); will-change: transform; }
   .chat-blur-bg .blob-blue { top: -16%; left: -18%; width: 60vw; max-width: 640px; aspect-ratio: 1;
-    background: radial-gradient(circle at 38% 38%, rgba(0,174,239,0.50), rgba(11,61,145,0.22) 55%, transparent 78%);
+    background: radial-gradient(circle at 38% 38%, rgba(0,174,239,0.15), rgba(11,61,145,0.06) 55%, transparent 78%);
     animation: blobDriftBlue 24s ease-in-out infinite; }
   .chat-blur-bg .blob-pink { bottom: -20%; right: -16%; width: 56vw; max-width: 600px; aspect-ratio: 1;
-    background: radial-gradient(circle at 62% 62%, rgba(230,0,126,0.42), rgba(122,47,208,0.20) 55%, transparent 78%);
+    background: radial-gradient(circle at 62% 62%, rgba(230,0,126,0.13), rgba(122,47,208,0.06) 55%, transparent 78%);
     animation: blobDriftPink 20s ease-in-out infinite; }
   @keyframes blobDriftBlue {
     0%   { transform: translate(0,0) scale(1); }
@@ -162,11 +169,11 @@
   /* Raised, tactile "button" chrome: gloss gradient + inset top highlight + outer contact
      shadow, lifts on hover, presses in on click -- the skeuomorphic half of the language. */
   .btn-new { display: inline-flex; align-items: center; justify-content: center; gap: 5px;
-    background: linear-gradient(160deg, #1450C4, var(--accent) 70%); color: #fff; border: none;
+    background: var(--btn-gradient); color: #fff; border: none;
     border-radius: 8px; padding: 7px 12px; font-weight: 600; cursor: pointer; font-size: 13px;
-    box-shadow: var(--shadow-raised-sm); transition: transform .12s ease, box-shadow .12s ease, filter .12s ease; }
+    box-shadow: var(--shadow-raised-sm); transition: transform .12s ease, box-shadow .12s ease, background .12s ease; }
   .btn-new .material-symbols-outlined { font-size: 16px; }
-  .btn-new:hover { filter: brightness(1.08); transform: translateY(-1px); box-shadow: var(--shadow-raised); }
+  .btn-new:hover { background: var(--btn-gradient-hover); transform: translateY(-1px); box-shadow: var(--shadow-raised); }
   .btn-new:active { transform: translateY(0); box-shadow: var(--shadow-pressed); }
   .project-list { overflow-y: auto; padding: 4px 8px 12px; flex: 1; }
   .project { padding: 9px 10px; border-radius: 8px; cursor: pointer; margin-bottom: 3px; border: 1px solid transparent; transition: background .15s ease, box-shadow .15s ease; }
@@ -195,7 +202,7 @@
     background: var(--glass-strong); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
     box-shadow: var(--shadow-raised-sm); }
   .msg.agent .bubble { border: 1px solid var(--line); border-top-left-radius: 4px; }
-  .msg.user .bubble { background: linear-gradient(160deg, #1450C4, var(--accent) 75%); color: #fff; border-top-right-radius: 4px; }
+  .msg.user .bubble { background: var(--btn-gradient); color: #fff; border-top-right-radius: 4px; }
   .msg.narration .bubble { background: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; border: 1px dashed var(--line); color: var(--muted); font-size: 13px; }
   .bubble strong { color: inherit; }
   .msg.agent .bubble strong { color: var(--indegene-navy); }
@@ -212,10 +219,10 @@
   .composer .box:focus-within { border-color: rgba(0,174,239,0.5); box-shadow: var(--shadow-raised), 0 0 0 3px rgba(0,174,239,0.14); }
   .composer textarea { flex: 1; resize: none; border: none; background: transparent; color: var(--text); font: inherit; outline: none; max-height: 120px; line-height: 1.4; padding: 4px 0; }
   .composer .send { display: flex; align-items: center; justify-content: center;
-    background: linear-gradient(160deg, #1450C4, var(--accent) 70%); color: #fff; border: none; border-radius: 9px;
+    background: var(--btn-gradient); color: #fff; border: none; border-radius: 9px;
     width: 36px; height: 36px; cursor: pointer; flex: 0 0 auto; box-shadow: var(--shadow-raised-sm);
-    transition: transform .12s ease, box-shadow .12s ease, filter .12s ease; }
-  .composer .send:hover:not(:disabled) { filter: brightness(1.08); transform: translateY(-1px); }
+    transition: transform .12s ease, box-shadow .12s ease, background .12s ease; }
+  .composer .send:hover:not(:disabled) { background: var(--btn-gradient-hover); transform: translateY(-1px); }
   .composer .send:active:not(:disabled) { transform: translateY(0); box-shadow: var(--shadow-pressed); }
   .composer .send:disabled { background: rgba(11,61,145,0.18); color: var(--faint); cursor: not-allowed; box-shadow: none; }
   .composer .attach { display: flex; align-items: center; justify-content: center; background: transparent; color: var(--muted); border: none; border-radius: 9px; width: 32px; height: 32px; cursor: pointer; flex: 0 0 auto; margin-bottom: 2px; }
@@ -241,10 +248,10 @@
     cursor: pointer; padding: 6px 8px; border-radius: 8px; }
   .intake-skip:hover { background: rgba(11,61,145,0.06); color: var(--indegene-navy); }
   .intake-go { display: inline-flex; align-items: center; gap: 6px;
-    background: linear-gradient(160deg, #1450C4, var(--accent) 70%); color: #fff; border: none;
+    background: var(--btn-gradient); color: #fff; border: none;
     border-radius: 10px; padding: 9px 16px; font: inherit; font-weight: 600; font-size: 13px; cursor: pointer;
-    box-shadow: var(--shadow-raised-sm); transition: transform .12s ease, box-shadow .12s ease, filter .12s ease; }
-  .intake-go:hover { filter: brightness(1.08); transform: translateY(-1px); box-shadow: var(--shadow-raised); }
+    box-shadow: var(--shadow-raised-sm); transition: transform .12s ease, box-shadow .12s ease, background .12s ease; }
+  .intake-go:hover { background: var(--btn-gradient-hover); transform: translateY(-1px); box-shadow: var(--shadow-raised); }
   .intake-go:active { transform: translateY(0); box-shadow: var(--shadow-pressed); }
   .intake-go .material-symbols-outlined { font-size: 18px; }
 
@@ -263,7 +270,9 @@
   .pv-tag { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--indegene-navy); background: rgba(11,61,145,0.09); border-radius: 5px; padding: 1px 5px; }
   .pv-more { display: inline-block; margin: 8px 0 2px; font-size: 12px; color: var(--accent); cursor: pointer; }
   .pv-actions { display: flex; gap: 8px; margin-top: 11px; align-items: center; }
-  .pv-run { background: var(--accent); color: #fff; border: none; border-radius: 9px; padding: 8px 14px; font: inherit; font-weight: 600; font-size: 12.5px; cursor: pointer; }
+  .pv-run { background: var(--btn-gradient); color: #fff; border: none; border-radius: 9px; padding: 8px 14px; font: inherit; font-weight: 600; font-size: 12.5px; cursor: pointer;
+    box-shadow: var(--shadow-raised-sm); transition: transform .12s ease, box-shadow .12s ease, background .12s ease; }
+  .pv-run:hover:not(:disabled) { background: var(--btn-gradient-hover); transform: translateY(-1px); }
   .pv-run:disabled { opacity: .6; cursor: default; }
   .pv-skip { background: transparent; border: none; color: var(--muted); font: inherit; font-size: 12px; cursor: pointer; }
   .pv-review { border-left: 3px solid var(--line); padding-left: 12px; }
@@ -396,11 +405,16 @@
 
   /* ================= Home screen: ticker + brand dashboard ================= */
   .topnav { display: inline-flex; gap: 4px; margin-left: 16px; }
+  /* Sits on the dark blue->purple header gradient now -- light text at rest, a frosted glass
+     chip on hover, and a solid white pill (dark text) when active so the current view is
+     unmistakable against the gradient. */
   .topnav-btn { display: inline-flex; align-items: center; gap: 5px; background: transparent; border: 1px solid transparent;
-    color: var(--muted); border-radius: 8px; padding: 5px 11px; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+    color: rgba(255,255,255,0.82); border-radius: 8px; padding: 5px 11px; font-size: 12.5px; font-weight: 600; cursor: pointer;
+    transition: background .15s ease, color .15s ease, border-color .15s ease; }
   .topnav-btn .material-symbols-outlined { font-size: 16px; }
-  .topnav-btn:hover { background: rgba(11,61,145,0.06); }
-  .topnav-btn.active { background: rgba(11,61,145,0.10); color: var(--indegene-navy); border-color: var(--line); }
+  .topnav-btn:hover { background: rgba(255,255,255,0.16); color: #fff; border-color: rgba(255,255,255,0.22); }
+  .topnav-btn.active { background: #fff; color: var(--indegene-navy); border-color: rgba(255,255,255,0.6);
+    box-shadow: var(--shadow-raised-sm); }
 
   #home-view { flex: 1; min-height: 0; display: none; flex-direction: column; overflow: hidden; }
   #home-view.show { display: flex; }
@@ -461,9 +475,9 @@
   .bc-metric b { color: var(--text); }
   .bc-metric .material-symbols-outlined { font-size: 13px; color: var(--indegene-navy); }
   .brand-card .bc-plan { margin-top: 2px; display: flex; align-items: center; justify-content: center; gap: 6px;
-    background: var(--accent); border: none; color: #fff; border-radius: 9px; padding: 7px; cursor: pointer;
-    font-size: 12px; font-weight: 600; }
-  .brand-card .bc-plan:hover { filter: brightness(1.07); }
+    background: var(--btn-gradient); border: none; color: #fff; border-radius: 9px; padding: 7px; cursor: pointer;
+    font-size: 12px; font-weight: 600; box-shadow: var(--shadow-raised-sm); transition: background .12s ease, transform .12s ease; }
+  .brand-card .bc-plan:hover { background: var(--btn-gradient-hover); transform: translateY(-1px); }
   .brand-card .bc-plan .material-symbols-outlined { font-size: 15px; }
 
   /* ================= Clarify question card + progress ================= */
@@ -506,7 +520,8 @@
      that bug made the primary (navy bg / white text) button's text invisible on hover, since
      the near-white hover background here has higher specificity than .primary's navy. */
   .plan-actions button:not(.primary):hover { background: rgba(255,255,255,0.8); }
-  .plan-actions .primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .plan-actions .primary { background: var(--btn-gradient); border-color: var(--indegene-purple); color: #fff; }
+  .plan-actions .primary:hover { background: var(--btn-gradient-hover); }
   .plan-actions .primary:hover { filter: brightness(1.12); }
   .plan-actions .danger-ghost { color: var(--muted); }
   .plan-actions .danger-ghost:hover { background: rgba(217,75,75,0.08); color: #a83232; border-color: rgba(217,75,75,0.35); }
@@ -1005,10 +1020,10 @@
   /* ================= Home: start-project CTA + portfolio insights ================= */
   .home-cta { margin: 4px 0 18px; }
   .start-project-btn { width: 100%; display: flex; align-items: center; gap: 13px; cursor: pointer;
-    background: linear-gradient(100deg, var(--indegene-navy), #1768D1 60%, #00AEEF);
+    background: var(--header-gradient);
     color: #fff; border: none; border-radius: 14px; padding: 15px 18px; text-align: left;
-    box-shadow: 0 4px 14px rgba(11,61,145,.25); transition: transform .18s ease, box-shadow .18s ease; }
-  .start-project-btn:hover { transform: translateY(-2px); box-shadow: 0 7px 20px rgba(11,61,145,.32); }
+    box-shadow: 0 4px 14px rgba(58,46,158,.32), var(--sheen-top); transition: transform .18s ease, box-shadow .18s ease; }
+  .start-project-btn:hover { transform: translateY(-2px); box-shadow: 0 7px 20px rgba(58,46,158,.4), var(--sheen-top); }
   .start-project-btn > .material-symbols-outlined { font-size: 26px; }
   .spb-text { display: flex; flex-direction: column; flex: 1; min-width: 0; }
   .spb-text b { font-size: 15px; letter-spacing: .01em; }
@@ -3248,18 +3263,20 @@ function updateLlmStatus(status, configured) {
   if (!pill) return;
   if (!status) status = { engine: "rules", ok: null, detail: "" };
 
+  // Pill sits on the dark blue->purple header gradient -- these must stay light/legible
+  // against a dark background, not the navy/muted tones meant for the old light topbar.
   let icon, label;
   if (status.engine === "azure-foundry" && status.ok) {
     icon = "auto_awesome"; label = "chat: Claude (Foundry)";
-    pill.style.color = "var(--green)";
-    pill.style.borderColor = "rgba(23,166,115,0.4)";
+    pill.style.color = "#7CF5C4";
+    pill.style.borderColor = "rgba(124,245,196,0.55)";
   } else if (status.ok === false) {
     icon = "warning"; label = "chat: rules (fallback)";
-    pill.style.color = "var(--amber)";
-    pill.style.borderColor = "rgba(199,119,0,0.4)";
+    pill.style.color = "#FFD166";
+    pill.style.borderColor = "rgba(255,209,102,0.55)";
   } else {
     icon = "radio_button_unchecked"; label = "chat: rules";
-    pill.style.color = "var(--muted)";
+    pill.style.color = "rgba(255,255,255,0.9)";
     pill.style.borderColor = "";
   }
   pill.innerHTML = `${iconSpan(icon)} ${label}`;
