@@ -33,6 +33,7 @@ from strategy.conversation import (new_state, opening_message, interpret_message
                                    get_llm_status, ask_clarify_group, clarify_payload)
 from strategy import orchestrator  # noqa: E402
 from strategy.orchestrator import run_agents  # noqa: E402
+from strategy import open_questions as open_questions_mod  # noqa: E402  (phase-gated reveal)
 from strategy.document_intake import extract_text  # noqa: E402
 from strategy import dashboard as dashboard_mod  # noqa: E402
 from strategy import feed as feed_mod  # noqa: E402
@@ -43,6 +44,7 @@ from strategy import bootstrap  # noqa: E402  (first-boot seeding of an empty da
 from strategy import personas as personas_mod  # noqa: E402  (synthetic persona layer)
 from strategy import persona_review as persona_review_mod  # noqa: E402
 from strategy import plan_export  # noqa: E402  (Word/PDF export of the composed plan)
+from strategy import plan_pdf  # noqa: E402  (pixel-faithful PDF via headless Chromium)
 
 app = FastAPI(title="Omni OS Brand Engagement Planning Agent")
 
@@ -237,8 +239,15 @@ def api_close_updates(pid: str):
         raise HTTPException(404, "project not found")
     state = proj["state"]
     _freeze_project_state(state)
-    pstore.save_project(pid, state=state)
-    return {"ok": True, "plan_frozen": True}
+    # Reveal every remaining toolkit phase on lock-in so nothing stays gated.
+    ctx = state.get("_plan_ctx")
+    plan_html = plan_markdown = result_for_save = None
+    if ctx:
+        state["revealed_phases"] = list(open_questions_mod.PHASE_ORDER)
+        result_for_save, plan_markdown, plan_html = orchestrator.recompose_plan(ctx)
+    pstore.save_project(pid, state=state, result=result_for_save,
+                        plan_markdown=plan_markdown, plan_html=plan_html)
+    return {"ok": True, "plan_frozen": True, "plan_html": plan_html, "plan_markdown": plan_markdown}
 
 
 # ------------------------------------------------------------------ #
@@ -280,6 +289,27 @@ def api_delete_project(pid: str):
     return {"ok": True}
 
 
+class PlanContentRequest(BaseModel):
+    html: str
+    markdown: str
+
+
+@app.post("/api/projects/{pid}/plan-content")
+def api_save_plan_content(pid: str, req: PlanContentRequest):
+    """Persist a manual edit made in the plan panel (each heading/paragraph/list item/simple
+    table cell is directly editable in the UI). The client derives `markdown` from the same
+    edited DOM client-side, so Word/PDF exports reflect the edit too. Note: a later clarify
+    auto-update or persona 'apply feedback' recomposes the plan from the run's snapshotted
+    state and will overwrite a manual edit -- there's no merge between the two."""
+    proj = pstore.get_project(pid)
+    if not proj:
+        raise HTTPException(404, "project not found")
+    if not req.html.strip():
+        raise HTTPException(400, "empty plan content")
+    pstore.save_project(pid, plan_markdown=req.markdown, plan_html=req.html)
+    return {"ok": True}
+
+
 @app.get("/api/projects/{pid}/export.docx")
 def api_export_docx(pid: str):
     proj = pstore.get_project(pid)
@@ -297,7 +327,17 @@ def api_export_pdf(pid: str):
     proj = pstore.get_project(pid)
     if not proj or not proj.get("plan_markdown"):
         raise HTTPException(404, "no plan to export yet")
-    data = plan_export.markdown_to_pdf(proj["plan_markdown"], proj["name"])
+    # Prefer the pixel-faithful renderer (real HTML + the app's own CSS via headless
+    # Chromium) so the PDF actually looks like the plan; fall back to the plain
+    # reportlab-from-markdown renderer if Chromium isn't installed on this host, so the
+    # export still works (with lower fidelity) rather than failing outright.
+    try:
+        if not proj.get("plan_html"):
+            raise ValueError("no plan_html on this project")
+        data = plan_pdf.render_plan_pdf(proj["plan_html"], proj["name"])
+    except Exception as e:  # noqa: BLE001
+        print(f"[export.pdf] Chromium renderer unavailable, using markdown fallback ({e})")
+        data = plan_export.markdown_to_pdf(proj["plan_markdown"], proj["name"])
     filename = _safe_filename(proj["name"]) + ".pdf"
     return Response(content=data, media_type="application/pdf",
                     headers={"Content-Disposition": f'attachment; filename="{filename}"'})
@@ -325,12 +365,33 @@ def api_chat(req: ChatRequest):
 
     state, reply, action = interpret_message(req.message, state)
     clarify = clarify_payload(state)  # non-None only while the post-plan clarify Q&A is active
-    messages.append(_msg("agent", reply, {"kind": "clarify", "clarify": clarify} if clarify else None))
 
     now_groups = state.get("open_questions") or []
     now_idx = state.get("clarify_idx", 0)
     now_clarifying = bool(now_groups) and now_idx < len(now_groups)
     clarify_just_completed = was_clarifying and not now_clarifying
+
+    # When the user signs off a phase's questions, the NEXT toolkit phase's agents start next
+    # (the front-end triggers /api/run-stream?phase=<next_phase>). Announce the hand-off in the
+    # reply instead of the generic per-phase "that's everything" close. next_phase=None means
+    # Deploy (the last phase) was just signed off, so the whole build is complete.
+    next_phase = None
+    if clarify_just_completed and not state.get("plan_frozen"):
+        cur_phase = state.get("current_phase")
+        if cur_phase in orchestrator.PHASE_ORDER:
+            i = orchestrator.PHASE_ORDER.index(cur_phase)
+            if i + 1 < len(orchestrator.PHASE_ORDER):
+                next_phase = orchestrator.PHASE_ORDER[i + 1]
+            if next_phase:
+                reply = (f"✅ **Phase {orchestrator.PHASE_NO[cur_phase]} · {orchestrator.PHASE_LABELS[cur_phase]}** "
+                         f"is signed off and folded into the plan. Bringing the agents in for **Phase "
+                         f"{orchestrator.PHASE_NO[next_phase]} · {orchestrator.PHASE_LABELS[next_phase]}** now…")
+            else:
+                reply = ("✅ **Phase 4 · Deploy the campaign** is signed off. That completes all four toolkit phases — "
+                         "the plan is fully built and every section is live on the right. Pressure-test it with "
+                         "synthetic personas next, or say **close updates** to lock it in.")
+
+    messages.append(_msg("agent", reply, {"kind": "clarify", "clarify": clarify} if clarify else None))
 
     # 'update_plan': fold this clarify answer (or skip / skip-all) into the plan immediately --
     # no waiting for the whole Q&A to finish and no manual 'regenerate'. Recomposes from the
@@ -347,11 +408,23 @@ def api_chat(req: ChatRequest):
         if ctx:
             ctx = orchestrator.refresh_after_clarify(
                 ctx, state["slots"].get("maturity_notes", ""), set(state.get("clarify_resolved_ids") or []))
-            result_for_save, plan_markdown, plan_html = orchestrator.recompose_plan(ctx)
+            # The plan is revealed up to the phase currently being validated -- driven by the
+            # phased run, not the clarify cursor (each run seeds only its own phase's questions).
+            cur_phase = state.get("current_phase", "align")
+            revealed = orchestrator._phase_reveal(cur_phase)
+            state["revealed_phases"] = sorted(revealed)
+            result_for_save, plan_markdown, plan_html = orchestrator.recompose_plan(ctx, revealed_phases=revealed)
             state["_plan_ctx"] = ctx
             plan_updated = True
     elif action == "freeze":
         _freeze_project_state(state)
+        # Locking the plan in reveals every remaining phase -- the user is done building,
+        # so nothing stays locked once the document is finalized.
+        ctx = state.get("_plan_ctx")
+        if ctx:
+            state["revealed_phases"] = list(open_questions_mod.PHASE_ORDER)
+            result_for_save, plan_markdown, plan_html = orchestrator.recompose_plan(ctx)
+            plan_updated = True
 
     # Auto-name the project once brand + therapy area are known.
     name = proj["name"]
@@ -363,6 +436,7 @@ def api_chat(req: ChatRequest):
                         result=result_for_save, plan_markdown=plan_markdown, plan_html=plan_html)
     return {"reply": reply, "slots": slots, "phase": state["phase"], "action": action, "name": name,
             "llm_status": get_llm_status(), "clarify": clarify, "clarify_just_completed": clarify_just_completed,
+            "next_phase": next_phase,
             "plan_updated": plan_updated, "plan_html": plan_html, "plan_markdown": plan_markdown,
             "updated_sections": updated_sections, "plan_frozen": bool(state.get("plan_frozen"))}
 
@@ -405,11 +479,13 @@ async def api_upload(project_id: str = Form(...), file: UploadFile = File(...)):
 
 
 @app.get("/api/run-stream")
-def api_run_stream(project_id: str):
+def api_run_stream(project_id: str, phase: str = "align"):
     proj = pstore.get_project(project_id)
     if not proj:
         raise HTTPException(404, "project not found")
     slots = proj["state"]["slots"]
+    if phase not in orchestrator.PHASE_ORDER:
+        phase = "align"
 
     def event_gen():
         messages = proj["messages"]
@@ -418,26 +494,41 @@ def api_run_stream(project_id: str):
         ctx_snapshot = None
         plan_md = plan_html = None
         try:
-            for ev in run_agents(slots["brand"], slots["therapy_area"], slots["lifecycle_key"], slots["budget"],
-                                 slots.get("maturity_notes", ""), slots.get("indication", ""), brief=slots):
+            # Show the team the INSTANT the phase starts -- before the (possibly 30-60s, on
+            # Align, of live network calls) compute below -- so the client never sits on a
+            # silent stream with nothing rendered. compute_plan_ctx runs every agent's work for
+            # every phase once, up front, on Align; later phases replay the same ctx as theater.
+            for ev in orchestrator.phase_open(phase):
+                if ev["type"] == "narration":
+                    messages.append(_msg("agent", ev["text"]))
+                yield f"data: {json.dumps(ev)}\n\n"
+
+            if phase == "align" or not state.get("_plan_ctx"):
+                ctx = orchestrator.compute_plan_ctx(
+                    slots["brand"], slots["therapy_area"], slots["lifecycle_key"], slots["budget"],
+                    slots.get("maturity_notes", ""), slots.get("indication", ""), brief=slots)
+            else:
+                ctx = state["_plan_ctx"]
+
+            for ev in orchestrator.run_phase(phase, ctx, opened=True):
                 if ev["type"] == "narration":
                     messages.append(_msg("agent", ev["text"]))
                 elif ev["type"] == "plan":
                     plan_md, plan_html = ev["markdown"], ev["html"]
                 elif ev["type"] == "result":
                     result = ev["result"]
-                    # Captured for the persona 'apply feedback to plan' action (needs to
-                    # re-run compose_plan later) -- popped so it never reaches the client.
-                    ctx_snapshot = ev.pop("ctx", None)
-                if ev["type"] == "done" and result and result.get("open_questions"):
-                    # Seed the post-plan clarify phase: everything the toolkit templates
-                    # flagged as 'needs alignment' becomes a grouped Q&A the agent leads
-                    # in chat -- streamed before 'done' so it appears live. Groups the user
-                    # already answered in an earlier clarify session on this project (by the
-                    # same stable group id) are never reseeded, even on a fresh full rerun.
+                    ctx_snapshot = ev.pop("ctx", None)  # server-only; stripped before the wire
+                if ev["type"] == "done":
+                    # Human gate: seed ONLY this phase's validation questions and ask the first,
+                    # then the stream ends -- the next phase's agents don't start until the user
+                    # signs off in chat (see the /api/chat 'next_phase' advance).
                     already_resolved = set(state.get("clarify_resolved_ids") or [])
-                    state["open_questions"] = [g for g in result["open_questions"] if g["id"] not in already_resolved]
+                    phase_groups = [g for g in (result or {}).get("open_questions", [])
+                                    if g.get("phase") == phase and g["id"] not in already_resolved]
+                    state["open_questions"] = phase_groups
                     state["clarify_idx"] = 0
+                    state["current_phase"] = phase
+                    state["revealed_phases"] = sorted(orchestrator._phase_reveal(phase))
                     first_ask = ask_clarify_group(state)
                     payload = clarify_payload(state)
                     if first_ask:
@@ -452,9 +543,10 @@ def api_run_stream(project_id: str):
                 state["_plan_ctx"] = ctx_snapshot
             pstore.save_project(project_id, state=state, messages=messages,
                                 result=result, plan_markdown=plan_md, plan_html=plan_html)
-            # Persist the generated plan into the campaign & content data model (best-effort;
-            # never let a persistence error break the streamed response).
-            if result:
+            # Persist the completed plan into the campaign & content data model only on the
+            # final phase (Deploy) -- earlier phases are partial. Best-effort; never let a
+            # persistence error break the streamed response.
+            if result and phase == orchestrator.PHASE_ORDER[-1]:
                 try:
                     campaign_store.persist_campaign_from_result(result, slots, plan_md or "", project_id)
                 except Exception as e:  # noqa: BLE001

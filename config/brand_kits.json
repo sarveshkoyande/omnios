@@ -1,0 +1,164 @@
+{
+  "note": "Brand intelligence kits. Oncomyra (talrenimab) / PharmaOne is a FICTIONAL sample brand; all content is captured verbatim/adapted from the provided Oncomyra Brand Plan & Modular Content Ecosystem document (2026-07-12) and the accompanying creative assets. This is an illustrative planning sample -- NOT approved content, not for external/promotional use. Per the source: material internal contradictions exist (dosing 2.5mg/kg q2w vs 4.8mg/kg q3w; CYP/DDI status) -- no dosing or drug-interaction statement is usable until resolved against the PI. When a plan runs for a brand with a kit, the agents ground the plan in this real brand content instead of synthesizing placeholders.",
+  "kits": {
+    "Oncomyra": {
+      "source_label": "Oncomyra Brand Plan & Modular Content Ecosystem",
+      "source_note": "Illustrative sample -- not approved content, not for external use. Requires PI/ISI/MLR before any asset advances.",
+      "company": "PharmaOne",
+      "generic": "talrenimab -- a first-in-class* anti-FGFR2 antibody-drug conjugate (ADC) (*source-stated, High MLR risk)",
+      "therapy_area": "cholangiocarcinoma",
+      "indication": "Previously treated FGFR2 fusion-positive unresectable/metastatic cholangiocarcinoma",
+      "fiscal_frame": "Launch / early launch",
+      "tagline": "Proven precision, made practical.",
+      "core_claim": "Identify FGFR2, act on the evidence, manage with confidence.",
+      "positioning_statement": "For oncologists treating previously treated FGFR2 fusion-positive advanced cholangiocarcinoma, Oncomyra is an FGFR2-directed antibody-drug conjugate that delivered a significant overall-survival benefit vs chemotherapy in CLARITY-01 -- supported by fusion-partner-agnostic response and defined management pathways for real-world, comorbid patients.",
+      "message_hierarchy": [
+        {"pillar": "Patient identification", "claim": "Test every advanced iCCA patient for FGFR2 fusions -- at diagnosis",
+         "evidence": "FGFR2 fusions occur in ~10-16% of intrahepatic cholangiocarcinoma and act as oncogenic drivers; RNA-based NGS preferred; a negative liquid biopsy needs reflex tissue testing (REF-01, REF-02)"},
+        {"pillar": "Efficacy (CLARITY-01)", "claim": "Significant overall survival vs chemotherapy in FGFR2 fusion-positive cholangiocarcinoma",
+         "evidence": "mOS 12.8 vs 9.1 mo (HR 0.72; 95% CI 0.54-0.96; P=0.008); mPFS 6.4 vs 3.2 mo (HR 0.58; P<0.001) by BICR; ORR 38.7% vs 14.2% vs FOLFOX (REF-01). Open-label design; always with fair balance"},
+        {"pillar": "Mechanism / rationale", "claim": "An FGFR2-directed ADC -- targets FGFR2 from the outside in",
+         "evidence": "Binds the extracellular FGFR2 domain, internalizes, and releases a microtubule-disrupting payload -- a mechanism hypothesized to be less dependent on the kinase pocket that drives TKI resistance (REF-01, REF-02)"},
+        {"pillar": "Safety manageability", "claim": "A known, monitorable profile with defined management",
+         "evidence": "Hyperphosphatemia (on-target class effect) and ocular events managed per algorithm; baseline eye exam + OCT; phosphate monitoring, diet and binders (REF-03). Never present efficacy without balance"}
+      ],
+      "approved_indication": "ILLUSTRATIVE / NOT APPROVED. Studied population: adults with previously treated (>=1 prior line of gemcitabine-based therapy), unresectable locally advanced or metastatic cholangiocarcinoma harboring an FGFR2 fusion or rearrangement (REF-01, REF-03). First-line combination use is INVESTIGATIONAL only. No approved label, ISI, or PI exists in the source set.",
+      "safety_reference": "Key signals: hyperphosphatemia (on-target/class), ocular events (dry eye; rarely CSR/RPED), cytopenias, stomatitis, fluid retention/peripheral edema, hepatic monitoring. Fair balance + full ISI mandatory on all promotional materials. Precise AE incidences and all dosing/drug-interaction statements are BLOCKED until source conflicts are resolved against the final PI (see guardrails).",
+      "clinical_data": [
+        {"study": "CLARITY-01", "stat": "12.8 vs 9.1", "context": "Median OS, months (HR 0.72; P=0.008)"},
+        {"study": "CLARITY-01", "stat": "6.4 vs 3.2", "context": "Median PFS, months (BICR; P<0.001)"},
+        {"study": "CLARITY-01", "stat": "38.7% vs 14.2%", "context": "Confirmed ORR (P<0.001)"},
+        {"study": "Biomarker", "stat": "P=0.82", "context": "Response consistent across FGFR2 fusion partners"},
+        {"study": "Real-world (N=487)", "stat": "11.2 mo", "context": "mOS in older/sicker RWE population (descriptive)"}
+      ],
+      "tone_pillars": ["Precise & Evidence-Led", "Partner-Oriented (HCP as expert peer)", "Confident, Not Aggressive", "Patient-Centred"],
+      "voice_do": ["Identify", "test", "FGFR2 fusion-positive", "overall survival (with fair balance)", "manage", "monitor", "proactive", "defined algorithm", "consistent across fusion partners", "real-world"],
+      "voice_dont": ["cure", "eliminate", "breakthrough", "game-changing", "best-in-class", "miracle", "guaranteed", "safe (unqualified)", "superior (beyond FOLFOX)", "standard of care (promotional)"],
+      "guardrails": {
+        "dos": [
+          {"category": "Testing", "text": "Lead the market on 'test at diagnosis' for FGFR2 fusions (unbranded / disease-education territory)"},
+          {"category": "Efficacy", "text": "Anchor the branded story in CLARITY-01 OS -- always cite HR + 95% CI + P and the 2L+ FGFR2-positive population"},
+          {"category": "Fair balance", "text": "Co-present prominent safety (hyperphosphatemia, ocular, cytopenias, fluid retention) with every efficacy claim, plus full ISI"},
+          {"category": "Mechanism", "text": "Present MOA differentiation mechanistically only; keep resistance rationale conditional ('may / hypothesized')"},
+          {"category": "Manageability", "text": "Turn the safety profile into a manageability proof point via monitoring algorithms and special-population guidance"},
+          {"category": "Substantiation", "text": "Trace every claim to a reference ID + location; attribute every statistic (VS rate, resistance rate, duration)"}
+        ],
+        "donts": [
+          {"category": "Superlatives", "text": "No 'best', 'breakthrough', 'game-changing', 'first-in-class' or 'standard of care' without regulatory substantiation"},
+          {"category": "Indication", "text": "No first-line / combination promotion -- it is investigational and medical-only"},
+          {"category": "Comparison", "text": "No superiority vs other FGFR inhibitors -- no head-to-head data exists; only the studied vs-FOLFOX comparison is supported"},
+          {"category": "Survival", "text": "No survival/cure overpromising; no extrapolation of CLARITY-01 figures to individual patients"},
+          {"category": "Safety", "text": "No safety minimization; never present efficacy without balance; never use an unqualified 'well-tolerated'"},
+          {"category": "Dosing / DDI", "text": "Do NOT publish any dosing, schedule, or drug-interaction statement until the source conflicts are resolved against the PI (blocking gate)"},
+          {"category": "Patient", "text": "No patient-facing promotional claims until PI/ISI + regulatory framework exist (patient content is gated)"}
+        ]
+      },
+      "concepts": [
+        {"id": "CON-EFF", "status": "Active", "name": "Proven in Phase III. Practical in practice.", "tags": ["Campaign", "HCP"],
+         "description": "Master efficacy platform: pairs the CLARITY-01 overall-survival result with the manageability story so 'proven' and 'practical' travel together. Always with fair balance and full ISI. (Requires MLR.)"},
+        {"id": "CON-TEST", "status": "Active", "name": "If it's advanced iCCA, test for FGFR2 -- at diagnosis", "tags": ["Disease education", "HCP / Pathologist"],
+         "description": "Largely unbranded testing-education platform. Drives universal, RNA-based NGS profiling at diagnosis; a positive liquid biopsy can initiate therapy, a negative one needs reflex tissue testing so eligible patients aren't missed."},
+        {"id": "CON-MOA", "status": "Active", "name": "Targeting FGFR2 from the outside in", "tags": ["Mechanism", "MSL / Medical"],
+         "description": "Differentiates the ADC mechanism vs kinase-pocket TKIs; resistance rationale kept conditional. Mechanistic, never a comparative-efficacy claim."},
+        {"id": "CON-MANAGE", "status": "Active", "name": "Known profile. Defined management.", "tags": ["Safety", "HCP"],
+         "description": "Converts the safety profile from barrier to manageability: hyperphosphatemia and ocular monitoring algorithms, special-population guidance, treatment continuity."},
+        {"id": "CON-FUSION", "status": "Active", "name": "One fusion detected -- regardless of partner", "tags": ["Patient ID", "HCP / Pathologist"],
+         "description": "De-risks patient selection: response was consistent across major FGFR2 fusion partners (P=0.82), so if a fusion is found the patient may be a candidate regardless of the partner gene."},
+        {"id": "CON-SUPPORT", "status": "Active", "name": "You are not alone", "tags": ["Patient support", "Patient / Caregiver"],
+         "description": "Patient/caregiver support platform (gated on PI/ISI/reg input). Disease-education and support-resource scaffolding only; no product claims, no outcome language until approved."},
+        {"id": "CON-1L", "status": "Emerging", "name": "First-line combination (FUSION-01)", "tags": ["Investigational", "Medical only"],
+         "description": "talrenimab + gemcitabine/cisplatin, Phase Ib/II -- ORR 62.3% vs 41.2%, PFS 9.8 vs 6.4 mo; OS immature; Phase III FUSION-02 planned. MEDICAL-ONLY, investigational -- never promotional."}
+      ],
+      "message_pool": [
+        "Proven precision, made practical -- identify FGFR2, act on the evidence, manage with confidence",
+        "Significant OS vs chemotherapy in CLARITY-01 (12.8 vs 9.1 mo; HR 0.72; 95% CI 0.54-0.96; P=0.008)",
+        "If it's advanced iCCA, test for FGFR2 fusions -- at diagnosis (RNA-based NGS preferred)",
+        "An FGFR2-directed ADC: binds extracellular FGFR2, delivers a cytotoxic payload inside the cell",
+        "Response consistent across major FGFR2 fusion partners (P=0.82) -- regardless of the partner gene",
+        "Known, monitorable safety: hyperphosphatemia and ocular events managed per defined algorithm"
+      ],
+      "claims": [
+        {"id": "CL-EFF-01", "text": "In CLARITY-01, Oncomyra significantly prolonged median OS vs FOLFOX (12.8 vs 9.1 months; HR 0.72; 95% CI 0.54-0.96; P=0.008)", "category": "Efficacy (OS)", "status": "draft", "risk": "High", "class": "Promotional", "references": ["REF-01"], "fair_balance": "Required -- prominent", "note": "Always cite HR+CI+P; 2L+ FGFR2+ population; open-label design"},
+        {"id": "CL-EFF-02", "text": "Median PFS was 6.4 vs 3.2 months (HR 0.58; 95% CI 0.44-0.76; P<0.001) by blinded independent central review", "category": "Efficacy (PFS)", "status": "draft", "risk": "High", "class": "Promotional", "references": ["REF-01"], "fair_balance": "Required", "note": "BICR strengthens PFS"},
+        {"id": "CL-EFF-03", "text": "Confirmed ORR was 38.7% vs 14.2% (P<0.001)", "category": "Efficacy (ORR)", "status": "draft", "risk": "High", "class": "Promotional", "references": ["REF-01"], "fair_balance": "Required", "note": "Open-label -- note assessment method"},
+        {"id": "CL-EFF-05", "text": "Response was consistent across major FGFR2 fusion partners (BICC1 41.2%, PPHLN1 38.5%, AHCYL1 35.7%, Other 36.9%; P=0.82)", "category": "Efficacy (subgroup)", "status": "draft", "risk": "Medium", "class": "Promotional / Medical", "references": ["REF-02"], "fair_balance": "Required", "note": "Supports 'fusion detected -> candidate regardless of partner'"},
+        {"id": "CL-MOA-01", "text": "Oncomyra (talrenimab) is an anti-FGFR2 ADC that binds the extracellular FGFR2 domain, internalizes, and releases a microtubule-disrupting cytotoxic payload", "category": "Mechanism of action", "status": "draft", "risk": "Medium", "class": "Promotional / Medical", "references": ["REF-01", "REF-02"], "fair_balance": "Std ISI if branded", "note": "Mechanistic only"},
+        {"id": "CL-MOA-02", "text": "This ADC mechanism may be less dependent on the ATP-binding kinase pocket that drives TKI resistance", "category": "MOA / rationale", "status": "in_review", "risk": "High", "class": "Medical-leaning", "references": ["REF-01"], "fair_balance": "If branded, ISI", "note": "Hypothesis-level -- keep conditional ('may / hypothesized'); do NOT state as proven resistance superiority"},
+        {"id": "CL-PID-01", "text": "All patients with unresectable/metastatic iCCA should undergo molecular profiling for FGFR2 fusions at diagnosis", "category": "Patient identification", "status": "approved", "risk": "Low", "class": "Disease education", "references": ["REF-02"], "fair_balance": "N/A (unbranded)", "note": "Ideal unbranded testing driver"},
+        {"id": "CL-PID-02", "text": "RNA-based NGS is preferred over DNA-only NGS for detecting FGFR2 fusions with large intronic breakpoints", "category": "Patient identification", "status": "approved", "risk": "Low", "class": "Disease education / Medical", "references": ["REF-02"], "fair_balance": "N/A", "note": "Don't mandate a named commercial assay beyond source"},
+        {"id": "CL-PID-03", "text": "A positive liquid biopsy is sufficient to initiate therapy; a negative result requires reflex tissue testing (do not rule out therapy on liquid-negative alone)", "category": "Patient identification", "status": "approved", "risk": "Medium", "class": "Disease education / Medical", "references": ["REF-02"], "fair_balance": "N/A", "note": "Critical safety-of-access nuance"},
+        {"id": "CL-DIS-01", "text": "FGFR2 fusions/rearrangements occur in ~10-16% of intrahepatic cholangiocarcinoma and act as oncogenic drivers", "category": "Disease burden", "status": "approved", "risk": "Low", "class": "Disease education", "references": ["REF-01", "REF-05"], "fair_balance": "N/A (unbranded)", "note": "Frames the unmet need; keep unbranded"},
+        {"id": "CL-SAF-01", "text": "Hyperphosphatemia is an on-target class effect of FGFR inhibition and was among the most common AEs; manage with monitoring, low-phosphate diet, and phosphate binders", "category": "Safety", "status": "draft", "risk": "High", "class": "Promotional / Medical", "references": ["REF-03", "REF-01"], "fair_balance": "Core balance", "note": "Incidence CONFLICT (42% vs 58%) -- use PI figure only; omit incidence until then"},
+        {"id": "CL-SAF-02", "text": "Ocular events (dry eye; rarely CSR/RPED) can occur; baseline ophthalmologic exam + OCT and prompt referral for visual symptoms are recommended", "category": "Safety", "status": "draft", "risk": "High", "class": "Promotional / Medical", "references": ["REF-03"], "fair_balance": "Core balance", "note": "Incidence varies by source -- use PI figure"},
+        {"id": "CL-SAF-03", "text": "Cytopenias (neutropenia, anemia, thrombocytopenia) and stomatitis can occur; monitor and manage per algorithm", "category": "Safety", "status": "draft", "risk": "Medium", "class": "Promotional / Medical", "references": ["REF-01", "REF-03"], "fair_balance": "Core balance", "note": "Higher with combination -- do not use combination rates in 2L+ promo"},
+        {"id": "CL-USE-01", "text": "Proactive phosphate monitoring and defined dose-modification algorithms support treatment continuity", "category": "Practical use", "status": "draft", "risk": "Medium", "class": "Promotional / Medical", "references": ["REF-03"], "fair_balance": "Std", "note": "Present algorithm STRUCTURE, not a specific schedule, until dosing resolved"},
+        {"id": "CL-SPEC-01", "text": "Renal: full dose if eGFR >=30; reduced starting dose if eGFR 15-29; not recommended if eGFR <15; efficacy maintained across renal function", "category": "Special population (renal)", "status": "draft", "risk": "High", "class": "Medical / Promotional", "references": ["REF-06"], "fair_balance": "Core balance", "note": "Numeric doses conflict-gated; watch hyperphosphatemia/fluid"},
+        {"id": "CL-SPEC-02", "text": "Hepatic: no adjustment for mild impairment; reduced starting dose for moderate; not recommended for severe; optimize biliary drainage first", "category": "Special population (hepatic)", "status": "draft", "risk": "High", "class": "Medical / Promotional", "references": ["REF-08"], "fair_balance": "Core balance", "note": "Moderate HI ~34% higher free-payload AUC; numeric doses conflict-gated"},
+        {"id": "CL-SPEC-03", "text": "Cardiovascular: pre-existing CVD is not a contraindication; main risk is volume overload; negligible QTc effect; no signal of direct myocardial toxicity", "category": "Special population (CV)", "status": "draft", "risk": "Medium", "class": "Medical / Promotional", "references": ["REF-07"], "fair_balance": "Core balance", "note": "DDI/CYP conflict with REF-03 -- do not make DDI claims until resolved"},
+        {"id": "CL-RWE-01", "text": "In real-world use (N=487), median OS was 11.2 months, PFS 5.8 months, ORR 34.1% -- consistent with trial, in an older/sicker population", "category": "Real-world evidence", "status": "draft", "risk": "Medium", "class": "Medical", "references": ["REF-04"], "fair_balance": "Descriptive", "note": "Retrospective; no superiority/causal claims; promo use limited"},
+        {"id": "CL-COMMIT-01", "text": "Oncomyra is supported by testing-education, monitoring tools, and management resources", "category": "Brand commitment", "status": "draft", "risk": "Low", "class": "Promotional", "references": [], "fair_balance": "N/A", "note": "Illustrative placeholder -- requires confirmation these programs exist"}
+      ],
+      "references": [
+        {"id": "REF-01", "title": "Oncomyra (talrenimab) CLARITY-01 Phase III", "type": "Pivotal RCT", "key_data": "mOS 12.8 vs 9.1; HR 0.72; PFS 6.4 vs 3.2; ORR 38.7% vs 14.2%", "promo_eligible": true, "note": "Open-label; internal dose/AE conflicts with other docs"},
+        {"id": "REF-02", "title": "Predictive Value of FGFR2 Fusion Status -- Biomarker Study", "type": "Substudy / diagnostic", "key_data": "14.8% prevalence; ORR consistent across partners (P=0.82); NGS-PCR concordance 96.2%", "promo_eligible": true, "note": "Testing behavior; publication metadata unavailable"},
+        {"id": "REF-03", "title": "Clinical Management of Adverse Events -- Talrenimab", "type": "Management guide", "key_data": "Hyperphosphatemia & ocular algorithms; dose ladder", "promo_eligible": true, "note": "Dose & CYP conflicts; AE incidences differ from REF-01"},
+        {"id": "REF-04", "title": "Real-World Outcomes with Talrenimab -- Retrospective", "type": "RWE cohort", "key_data": "N=487; mOS 11.2; ORR 34.1%; ECOG>=2 mOS 7.4", "promo_eligible": false, "note": "Retrospective; descriptive only"},
+        {"id": "REF-05", "title": "Talrenimab + Gemcitabine/Cisplatin First-Line -- FUSION-01", "type": "Phase Ib/II", "key_data": "ORR 62.3% vs 41.2%; PFS 9.8 vs 6.4; HR 0.61", "promo_eligible": false, "note": "MEDICAL-ONLY; investigational; OS immature"},
+        {"id": "REF-06", "title": "Safety in Chronic Kidney Disease: Focused Analysis", "type": "Pooled safety", "key_data": "eGFR-based dosing; hyperphosphatemia higher in CKD", "promo_eligible": true, "note": "Small Stage 4 n; pooled/retrospective"},
+        {"id": "REF-07", "title": "Cardiovascular Safety in Pre-Existing CVD", "type": "Pooled safety", "key_data": "CV-TEAE 24.3% vs 11.5%; QTcF +3.2 ms; not a CYP substrate", "promo_eligible": true, "note": "CYP claim conflicts with REF-03; retrospective"},
+        {"id": "REF-08", "title": "Safety in Hepatic Impairment: Dosing & Management", "type": "Pooled + PK", "key_data": "Moderate HI -> free-payload AUC +34%; dose-reduce moderate; avoid severe", "promo_eligible": true, "note": "Small moderate-HI n; pooled"}
+      ],
+      "components": [
+        {"id": "MC-BN-HERO", "title": "Science. Precision. Purpose. -- HCP hero banner", "type": "banner", "audience": "HCP", "channel": "Web / paid", "status": "For review", "image": "oncomyra-hcp-hero-science-precision-purpose.png", "claim_links": ["CL-MOA-01"], "description": "Purple molecular hero: 'Science. Precision. Purpose. Focused on advancing care in FGFR2 fusion-positive mUC.' Three pillars -- Targeted Approach, Meaningful Responses, Manageable Safety. CTA 'Explore Clinical Data'. Investigational disclaimer + PI callout.", "branded": true},
+        {"id": "MC-BN-DNA", "title": "Precision biology. Focused on what matters. -- website hero", "type": "webpage", "audience": "HCP", "channel": "Web", "status": "For review", "image": "oncomyra-web-precision-biology.png", "claim_links": ["CL-MOA-01", "CL-DIS-01"], "description": "Light website hero with DNA helix motif: 'Precision biology. Focused on what matters.' Four nav tiles -- About FGFR2 Fusions, Clinical Evidence, Safety Profile, Resources. Investigational disclaimer.", "branded": true},
+        {"id": "MC-BN-DARK", "title": "Advancing care through precision and purpose -- dark HCP hero", "type": "banner", "audience": "HCP", "channel": "Web / paid", "status": "For review", "image": "oncomyra-hcp-hero-dark-advancing-care.png", "claim_links": ["CL-MOA-01"], "description": "Dark navy hero, glowing tumor-cell motif, 'For HCPs' tag: 'Advancing care through precision and purpose.' Pillars -- Precision Focused, Science Led, Patient Centered.", "branded": true},
+        {"id": "MC-BN-SCILED", "title": "Science-led. Patient-focused. -- HCP data banner", "type": "banner", "audience": "HCP", "channel": "Web / email", "status": "For review", "image": "oncomyra-hcp-science-led-patient-focused.png", "claim_links": ["CL-EFF-01"], "description": "DNA-helix banner, 'NEW CLINICAL DATA': 'Science-led. Patient-focused.' Pillars -- Targeted Approach, Meaningful Responses, Manageable Safety. Abbreviation footnotes + investigational disclaimer. CTA 'View Full Results'.", "branded": true},
+        {"id": "MC-BN-IMPACT", "title": "Precision science. Purposeful impact. -- HCP hero", "type": "banner", "audience": "HCP", "channel": "Web / paid", "status": "For review", "image": "oncomyra-hcp-precision-science-purposeful-impact.png", "claim_links": ["CL-MOA-01"], "description": "Lavender hero with tumor + DNA motif: 'Precision science. Purposeful impact.' Four pillars -- Precision Biology, FGFR2 Focused, Patient Impact, Science-led Development. CTA 'Explore Clinical Data'.", "branded": true},
+        {"id": "MC-EM-DATA", "title": "New data. Deeper insight. -- HCP email", "type": "email", "audience": "HCP", "channel": "Email", "status": "For review", "image": "oncomyra-email-new-data-deeper-insight.png", "claim_links": ["CL-EFF-01", "CL-SAF-01"], "description": "HCP clinical-data-update email: 'New data. Deeper insight.' Key highlights -- Targeted approach, Clinical activity, Manageable safety. Signed 'The Oncomyra Medical Team'. Persistent ISI block + boxed-warning callout + unsubscribe/privacy footer.", "branded": true},
+        {"id": "MC-PDF-COVER", "title": "Investigational talrenimab in FGFR2 fusion-positive metastatic cholangiocarcinoma -- PDF cover", "type": "detail_aid", "audience": "HCP", "channel": "PDF / leave-behind", "status": "For review", "image": "oncomyra-pdf-cover-investigational-talrenimab.png", "claim_links": ["CL-MOA-01", "CL-EFF-01"], "description": "Leave-behind cover: 'Investigational talrenimab in FGFR2 Fusion-Positive Metastatic Cholangiocarcinoma -- Science. Precision. Impact.' Icons -- Targeted Mechanism, Clinical Evidence, Patient Impact, Ongoing Innovation. Investigational + PI disclaimer.", "branded": true},
+        {"id": "MC-OBJ-DIFF", "title": "Objection handler: 'How is this different from other FGFR-targeted approaches?'", "type": "detail_aid", "audience": "Field", "channel": "Field", "status": "For review", "image": "oncomyra-objection-handler-differentiation.png", "claim_links": ["CL-MOA-01", "CL-MOA-02"], "description": "Teal field objection-handler card. Possible response: talrenimab is a selective FGFR2 inhibitor with a differentiated binding profile. Key support points -- selective FGFR2 targeting, designed to inhibit oncogenic signaling, data from ongoing studies. 'Always refer to the full Prescribing Information.'", "branded": true},
+        {"id": "MC-TT-SNAP", "title": "Talk track snapshot -- field", "type": "detail_aid", "audience": "Field", "channel": "Field", "status": "For review", "image": "oncomyra-talk-track-snapshot.png", "claim_links": ["CL-MOA-01", "CL-EFF-01", "CL-SAF-01"], "description": "Field talk-track card (For HCP use only, not for promotional use): Opening (investigational, selectively inhibits FGFR2), Unmet Need (limited targeted options), Evidence (encouraging anti-tumor activity, manageable safety), Safety (consistent with prior data), Close (happy to share more).", "branded": true},
+        {"id": "MC-PT-BROCHURE", "title": "You are not alone -- patient/caregiver brochure", "type": "social", "audience": "Patient / Caregiver", "channel": "Patient support", "status": "Gated", "image": "oncomyra-patient-brochure-you-are-not-alone.png", "claim_links": [], "description": "Three-panel patient/caregiver support brochure: 'You are not alone -- support and resources for patients and caregivers.' Sections -- Understanding Your Treatment, Support Along the Way, Help for Caregivers; website, toll-free line, email. Investigational disclaimer. GATED: patient content requires PI/ISI + regulatory input before use.", "branded": true},
+        {"id": "MC-PT-BANNER", "title": "Support through every step -- patient banner", "type": "banner", "audience": "Patient / Caregiver", "channel": "Web", "status": "Gated", "image": "oncomyra-patient-banner-support-through-every-step.png", "claim_links": [], "description": "Patient/caregiver banner: 'Support through every step -- resources and care information for patients and caregivers affected by cholangiocarcinoma.' Treatment Information, Caregiver Resources, Support Services. GATED pending PI/ISI/reg.", "branded": true},
+        {"id": "MC-BRAND-SYS", "title": "Oncomyra brand identity system", "type": "internal", "audience": "Internal", "channel": "Internal", "status": "Reference", "image": "oncomyra-brand-identity-system.png", "claim_links": [], "description": "Brand identity sheet: logo + clear-space, colour palette (Deep Purple #4B2E83, Violet #7B4ACB, Teal #009D9A, Lavender #E9E6F7, Slate Gray #6B7280), typography (Poppins Bold headings, Inter Regular body), icon set (Targeted Approach, Patient Centered, Manageable Safety, Meaningful Impact, Clinical Progress), brand elements + imagery style (Science-led, Precision, Innovation, Humanity, Connection). Tagline: 'Science. Precision. Purpose.'", "branded": true},
+        {"id": "MC-ISI01", "title": "Important Safety Information placeholder", "type": "webpage", "audience": "HCP", "channel": "All", "status": "Placeholder", "image": "", "claim_links": ["CL-SAF-01", "CL-SAF-02", "CL-SAF-03"], "description": "[ISI to be populated from the approved PI -- contraindications, warnings (hyperphosphatemia, ocular, hepatic, embryo-fetal as applicable), common AEs, monitoring.] CANNOT ship without approved ISI.", "branded": true}
+      ],
+      "personas": {
+        "hcp": [
+          {"name": "The Precision Specialist (GI / medical oncologist)", "who": "Treats advanced iCCA; decides at/after progression on gemcitabine-based therapy", "tier": "Primary",
+           "voice": "Show me the CLARITY-01 data and how I identify and manage the right patient -- not just start a drug."},
+          {"name": "The Molecular Pathologist", "who": "Runs NGS profiling; gatekeeper of FGFR2 fusion detection", "tier": "Primary",
+           "voice": "RNA-based NGS matters for these fusions -- and a liquid-negative shouldn't rule a patient out."},
+          {"name": "The MSL-engaged Academic", "who": "Mechanistically-minded; wants design, limitations, investigational context", "tier": "Secondary",
+           "voice": "It's open-label -- walk me through the BICR PFS and the fusion-partner analysis."}
+        ],
+        "patient": [
+          {"name": "The Newly Diagnosed iCCA Patient", "who": "Recently diagnosed advanced cholangiocarcinoma; overwhelmed", "target": "Understand testing & next steps",
+           "voice": "Has my tumor been tested for genetic changes like FGFR2? What happens next?"},
+          {"name": "The Caregiver / Care Partner", "who": "Managing appointments, logistics and support", "target": "Practical support",
+           "voice": "I need clear, practical help -- and to be part of the conversation."}
+        ],
+        "payer": [
+          {"name": "Market Access / Payer", "who": "Formulary and coverage decision-maker", "target": "Clinical value (no economic data in source)",
+           "voice": "Show me the source-supported clinical value -- the access/economic case isn't built yet."}
+        ]
+      },
+      "competitors": [
+        {"name": "Pemigatinib", "threat": "FGFR TKI -- context only", "detail": "Prior FGFR TKI; kinase-pocket inhibitor limited by acquired resistance and off-target toxicity. No head-to-head data -- mechanistic/contextual framing only."},
+        {"name": "Infigratinib", "threat": "FGFR TKI -- context only", "detail": "Prior FGFR TKI referenced contextually. No comparative efficacy/safety claim is supported."},
+        {"name": "Futibatinib (TAS-120)", "threat": "FGFR TKI -- context only", "detail": "Irreversible FGFR inhibitor referenced contextually; no head-to-head vs talrenimab exists."}
+      ],
+      "care_continuum": {},
+      "identity": {
+        "palette": [
+          {"hex": "#4B2E83", "name": "Deep Purple", "use": "Primary -- headlines / structure"},
+          {"hex": "#7B4ACB", "name": "Violet", "use": "Accent"},
+          {"hex": "#009D9A", "name": "Teal", "use": "CTA / active / clinical"},
+          {"hex": "#E9E6F7", "name": "Lavender", "use": "Surface / background tint"},
+          {"hex": "#6B7280", "name": "Slate Gray", "use": "Body text / captions"}
+        ],
+        "typography": "Poppins Bold (headings) + Inter Regular (body)"
+      }
+    }
+  }
+}

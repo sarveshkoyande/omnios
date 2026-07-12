@@ -133,7 +133,7 @@ def maya_audience_profile(brand: str, therapy_area: str, persona: str) -> dict:
            f"to their patients. Earn the interaction with relevance; do not assume field access.")
 
     return {
-        "agent": "intel", "agent_name": "Maya", "confidence": size["confidence"],
+        "agent": "intel", "agent_name": "Market & Competitive Intelligence", "confidence": size["confidence"],
         "audience_size": size, "rep_access": access, "digital_affinity": aff,
         "answers": {"t2": t2, "t7": t7, "t10": t10},
         "headline": (f"≈{total_str} addressable US HCPs · "
@@ -245,7 +245,7 @@ def arjun_engagement_baseline(lifecycle_key: str, persona: str, channel_mix_pct:
             "what_good_looks_like": t.get("what_good_looks_like", "—"),
         })
     return {
-        "agent": "activation", "agent_name": "Arjun", "confidence": "derived",
+        "agent": "activation", "agent_name": "Activation Planning", "confidence": "derived",
         "lifecycle_key": lifecycle_key, "emphasis": life.get("emphasis", ""),
         "priority_kpis": life.get("priority_kpis", []),
         "channels": rows,
