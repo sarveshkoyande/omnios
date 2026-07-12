@@ -494,9 +494,15 @@ def api_run_stream(project_id: str, phase: str = "align"):
         ctx_snapshot = None
         plan_md = plan_html = None
         try:
-            # The heavy computation happens once, on the first phase (Align); later phases
-            # replay the already-computed ctx as visible agent theater. This is what makes the
-            # plan build one phase at a time, gated by the human sign-off between phases.
+            # Show the team the INSTANT the phase starts -- before the (possibly 30-60s, on
+            # Align, of live network calls) compute below -- so the client never sits on a
+            # silent stream with nothing rendered. compute_plan_ctx runs every agent's work for
+            # every phase once, up front, on Align; later phases replay the same ctx as theater.
+            for ev in orchestrator.phase_open(phase):
+                if ev["type"] == "narration":
+                    messages.append(_msg("agent", ev["text"]))
+                yield f"data: {json.dumps(ev)}\n\n"
+
             if phase == "align" or not state.get("_plan_ctx"):
                 ctx = orchestrator.compute_plan_ctx(
                     slots["brand"], slots["therapy_area"], slots["lifecycle_key"], slots["budget"],
@@ -504,7 +510,7 @@ def api_run_stream(project_id: str, phase: str = "align"):
             else:
                 ctx = state["_plan_ctx"]
 
-            for ev in orchestrator.run_phase(phase, ctx):
+            for ev in orchestrator.run_phase(phase, ctx, opened=True):
                 if ev["type"] == "narration":
                     messages.append(_msg("agent", ev["text"]))
                 elif ev["type"] == "plan":

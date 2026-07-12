@@ -1416,15 +1416,15 @@ const WORKFLOW_STAGES = [
 // strategy=Green, inspiration=Orange, activation=Purple. c1 is the deep shade used for
 // name text / banter accents; c2 the light end of the monogram gradient.
 // Five broad-mandate agents; the Engagement Planner opens AND closes the run.
-const AGENT_COLORS = { planner:"#1560D0", intel:"#D42630", strategy:"#1B9E5E", inspiration:"#E5610A", activation:"#6A2FD0" };
+const AGENT_COLORS = { planner:"#6A2FD0", intel:"#D42630", strategy:"#1B9E5E", inspiration:"#E5610A", activation:"#6A2FD0" };
 const AGENT_ICONS = { planner:"description", intel:"travel_explore", strategy:"track_changes", inspiration:"emoji_events", activation:"payments" };
 // Named teammates with an avatar -- source of truth for the display name, theme colors and
 // the character avatar image. If a photo fails to load (offline, or the host blocks
 // hotlinking) avatarHtml's onerror drops the <img> and the gradient-initials monogram
 // behind it shows through -- so the UI never renders a broken image. Mirrors orchestrator.py.
 const AGENT_PEOPLE = {
-  planner:     { name:"Engagement Planner Agent",                 role:"", initials:"EP", c1:"#1E6FE8", c2:"#4DA6FF",
-                 photo:"/static/agent_avatars/agent-1-blue.png" },
+  planner:     { name:"Engagement Plan Composer",                 role:"", initials:"EP", c1:"#7B3FE4", c2:"#A277F0",
+                 photo:"/static/agent_avatars/agent-5-purple.png" },
   intel:       { name:"Market & Competitive Intelligence Agent", role:"", initials:"MC", c1:"#E5323C", c2:"#FF6B72",
                  photo:"/static/agent_avatars/agent-2-red.png" },
   strategy:    { name:"Strategy & Positioning Agent",            role:"", initials:"SP", c1:"#22B36B", c2:"#57DD97",
@@ -1724,6 +1724,7 @@ function startRun(phase) {
     handleRunEvent(ev);
     if (ev.type === "done") {
       closedCleanly = true; es.close(); state.es = null;
+      state.lastPhaseDone = !!ev.last_phase;
       // The stream is finished, but paced asides may still be animating -- let the chat
       // queue drain before re-enabling input, so the last exchange isn't cut off.
       if (chatDraining || chatQueue.length) pendingFinish = true; else finishRun();
@@ -1740,6 +1741,11 @@ function startRun(phase) {
 }
 function finishRun() {
   state.busy = false; $("send").disabled = false; renderStepper(); loadProjects();
+  // Each individual phase's run only shows the 2-3 agents who worked THAT step (so the team
+  // panel reads as "these agents are on this step now"). Once the whole four-phase build is
+  // done, replace it with the full 5-agent roster and each one's cumulative summary -- so the
+  // finished plan credits the whole team, not just whoever happened to work the last phase.
+  if (state.lastPhaseDone && state.result) { renderAgentsDoneFromResult(state.result); }
   // Only offer personas immediately when there's nothing to clarify first -- otherwise the
   // offer waits for the 'clarify_just_completed' signal from /api/chat (see sendMessage()).
   const hasOpenQs = state.result && Array.isArray(state.result.open_questions) && state.result.open_questions.length > 0;

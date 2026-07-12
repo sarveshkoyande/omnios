@@ -1413,12 +1413,12 @@ def _sec_brand_foundation(ctx, md, h, R):
 # --------------------------------------------------------------------------- #
 
 _OWNER_LABEL = {
-    "planner": "Engagement Planner Agent",
+    "planner": "Engagement Plan Composer",
     "intel": "Market & Competitive Intelligence Agent",
     "strategy": "Strategy & Positioning Agent",
     "inspiration": "Creative Inspiration Agent",
     "activation": "Activation Planning Agent",
-    "final": "Engagement Planner Agent",
+    "final": "Engagement Plan Composer",
 }
 
 _never = lambda c, full: False  # noqa: E731

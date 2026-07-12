@@ -43,15 +43,15 @@ import brand_kit as brand_kit_mod  # noqa: E402  (a brand's own captured intelli
 from execution_plan import build_execution_work_plan, build_execution_raci  # noqa: E402
 from test_measure_learn import build_test_measure_learn  # noqa: E402
 
-# Each agent is named by its function. The Engagement Planner Agent is the one exception
-# with a human name in its title (Cooper's successor): it opens the run by framing the
-# document structure and closes it by writing the executive summary -- the plan's author.
+# Each agent is named by its function. The Engagement Plan Composer (formerly "Cooper") is
+# the plan's author: it opens the run by framing the document structure and closes it by
+# writing the executive summary.
 # Pipeline order == the order sections fill into the live document: planner scaffolds,
 # then intel -> strategy -> inspiration -> activation each complete their own sections,
 # then the planner returns to finalize. The UI shows a photo avatar (purely decorative)
 # with `initials` as the monogram fallback if it fails to load.
 AGENT_ROSTER = [
-    {"id": "planner", "name": "Engagement Planner Agent", "role": "",
+    {"id": "planner", "name": "Engagement Plan Composer", "role": "",
      "initials": "EP", "icon": "description"},
     {"id": "intel", "name": "Market & Competitive Intelligence Agent", "role": "",
      "initials": "MC", "icon": "travel_explore"},
@@ -666,18 +666,30 @@ def _phase_banter(phase: str, ctx: dict):
                                  "we measure and learn.", to="planner")
 
 
-def run_phase(phase: str, ctx: dict):
-    """Stream one toolkit phase's visible agent work over an already-computed ctx, revealing
-    the plan up to this phase. Ends WITHOUT the human gate -- the server seeds this phase's
-    validation questions and asks them, then the run stops until the user signs off."""
-    reveal = _phase_reveal(phase)
+def phase_open(phase: str):
+    """Immediate visual feedback the instant a phase starts -- team roster + narration --
+    yielded BEFORE the (possibly slow, on Align: 30-60s of live network calls) compute_plan_ctx
+    call. The server yields this first so the team panel populates right away instead of
+    sitting on a silent EventSource for the whole compute; run_phase() below then skips
+    re-yielding it via opened=True."""
     agents = PHASE_AGENTS[phase]
-    done: set = set(PHASE_ORDER)  # for owner-gating we treat all agents as available; phase gating hides the rest
-    # Show just this phase's agents "coming together" for this step.
     yield {"type": "agents_init", "agents": [a for a in AGENT_ROSTER if a["id"] in agents],
            "phase": phase, "phase_no": PHASE_NO[phase], "phase_label": PHASE_LABELS[phase]}
     yield {"type": "narration",
            "text": f"**Phase {PHASE_NO[phase]} · {PHASE_LABELS[phase]}** — {len(agents)} agents are on this step now."}
+
+
+def run_phase(phase: str, ctx: dict, opened: bool = False):
+    """Stream one toolkit phase's visible agent work over an already-computed ctx, revealing
+    the plan up to this phase. Ends WITHOUT the human gate -- the server seeds this phase's
+    validation questions and asks them, then the run stops until the user signs off.
+    opened=True means the caller already streamed phase_open()'s events (used by the server
+    to show the team immediately, before the ctx compute that must happen in between)."""
+    reveal = _phase_reveal(phase)
+    agents = PHASE_AGENTS[phase]
+    done: set = set(PHASE_ORDER)  # for owner-gating we treat all agents as available; phase gating hides the rest
+    if not opened:
+        yield from phase_open(phase)
     yield from _phase_banter(phase, ctx)
     done_agents: set = set()
     for aid in agents:
