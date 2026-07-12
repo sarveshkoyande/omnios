@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import pathlib
 import sys
+import time
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
@@ -115,6 +116,11 @@ def _say(agent_id: str, text: str, to: str = ""):
 # Phase 1 (Align) + the always-on base/supporting sections; the later phases unlock as the
 # user answers each phase's clarify questions in chat (see open_questions.revealed_phases_for).
 _RUN_REVEAL = {"align"}
+
+# How long an agent's card holds the "running" state before flipping to "done" -- ctx is fully
+# precomputed by the time run_phase() starts, so this is a deliberate pause (not real compute
+# time) that gives the shimmer/working animation somewhere to actually be seen.
+AGENT_TURN_PACING_SEC = 1.6
 
 
 def _plan_partial(ctx: dict, done: set, fresh: str, revealed: set | None = None):
@@ -666,6 +672,62 @@ def _phase_banter(phase: str, ctx: dict):
                                  "we measure and learn.", to="planner")
 
 
+# Grounded aside exchanged between two teammates as one hands off to the next within a phase --
+# the "team talking through the problem" texture from the original single-pass run_agents(),
+# reused here per consecutive pair of agents inside a phase (not just once at phase open).
+def _handoff_banter(phase: str, from_id: str, to_id: str, ctx: dict):
+    kit = ctx.get("brand_kit")
+    comps = ctx.get("competitors") or []
+    inferred = ctx["inferred"]
+
+    if phase == "align" and from_id == "planner" and to_id == "intel":
+        if kit:
+            yield _say("planner", f"Structure's up. And we're not starting cold — the hub gives us "
+                                  f"“{kit.get('core_claim', '')}” with a three-pillar message hierarchy already MLR-framed.", to="intel")
+        else:
+            yield _say("planner", "Structure's up — every section is tagged with who owns it. Market read comes first.", to="intel")
+        yield _say("intel", "On it. Lifecycle says " + inferred["lifecycle_label"].lower() +
+                            " — I'll pull the live landscape and hunt competitors in the trial data.", to="planner")
+
+    elif phase == "align" and from_id == "intel" and to_id == "strategy":
+        if comps:
+            yield _say("strategy", f"{len(comps)} live competitor(s) in {ctx['therapy_area']} — that makes this a "
+                                   f"share-of-voice fight, not a category build. The SWOT gives me my positioning openings.", to="intel")
+            yield _say("intel", f"Agreed. {comps[0]} is the one to watch — it shows up across the data.", to="strategy")
+        else:
+            yield _say("strategy", f"No distinct competitors in the trial data — so we're building the category in "
+                                   f"{ctx['therapy_area']}, not defending share. That changes the messaging job.", to="intel")
+
+    elif phase == "select" and from_id == "strategy" and to_id == "inspiration":
+        m = ctx["strategy"]["messaging_architecture"]
+        yield _say("inspiration", f"“{m['current_belief']}” → “{m['desired_belief']}” is a creative brief in one line. "
+                                  f"Let me find award-winning work that pulled off the same belief change.", to="strategy")
+        yield _say("strategy", f"Lead with {m['messaging_type'].lower()}.", to="inspiration")
+
+    elif phase == "select" and from_id == "inspiration" and to_id == "activation":
+        active = brand_kit_mod.active_concepts(kit) if kit else []
+        if active:
+            yield _say("inspiration", f"The brand already has a platform on the shelf: **{active[0]['name']}**. "
+                                      f"We extend it, we don't reinvent it.", to="activation")
+            yield _say("activation", "Then the mix funds the platform's hero moments, not a new campaign build.", to="inspiration")
+        else:
+            yield _say("activation", "No close creative precedent — so the channel plan carries more of the load. "
+                                     "I'll lean on sequencing rather than a single hero idea.", to="inspiration")
+
+    elif phase == "create" and from_id == "inspiration" and to_id == "activation":
+        lib = ctx.get("content_library") or {}
+        if lib.get("found") and lib.get("counts", {}).get("claims"):
+            yield _say("inspiration", f"The content audit is mapped — **{lib['counts'].get('claims', 0)}** claims, "
+                                      f"**{lib['counts'].get('assets', 0)}** assets wired to the flow.", to="activation")
+        yield _say("activation", "Good — I'll set the metrics against what's actually available to ship.", to="inspiration")
+
+    elif phase == "deploy" and from_id == "activation" and to_id == "planner":
+        ep = ctx.get("execution_plan") or {}
+        if ep.get("total_weeks"):
+            yield _say("activation", f"Work plan's a {ep['total_weeks']}-week build with RACI attached.", to="planner")
+        yield _say("planner", "Then I'll close the loop — executive summary, and whatever still needs your sign-off.", to="activation")
+
+
 def phase_open(phase: str):
     """Immediate visual feedback the instant a phase starts -- team roster + narration --
     yielded BEFORE the (possibly slow, on Align: 30-60s of live network calls) compute_plan_ctx
@@ -692,10 +754,19 @@ def run_phase(phase: str, ctx: dict, opened: bool = False):
         yield from phase_open(phase)
     yield from _phase_banter(phase, ctx)
     done_agents: set = set()
-    for aid in agents:
-        yield from _agent_phase_turn(aid, phase, ctx)
+    for i, aid in enumerate(agents):
+        # Every agent's turn is computed from an already-populated ctx (no real work happens
+        # here), so without a deliberate pause the 'running' -> 'done' events fire back to back
+        # and the working/shimmer animation never has time to actually show. AGENT_TURN_PACING_SEC
+        # holds the 'running' state on screen for real, the way live network calls used to.
+        turn = _agent_phase_turn(aid, phase, ctx)
+        yield next(turn)  # the 'running' event
+        time.sleep(AGENT_TURN_PACING_SEC)
+        yield from turn   # the 'done' event
         done_agents.add(aid)
         yield _plan_partial(ctx, done | done_agents, aid, revealed=reveal)
+        if i + 1 < len(agents):
+            yield from _handoff_banter(phase, aid, agents[i + 1], ctx)
     # Final render for this phase (partial=False only on the last phase).
     result = _assemble_result(ctx)
     md, html_out, n_done, n_total = compose_plan_partial(ctx, None, "", revealed_phases=reveal)

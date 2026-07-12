@@ -123,18 +123,18 @@
   /* Two very soft, very large colour blobs (Indegene pink + cyan-blue) drift from opposite
      corners on independent, differently-timed loops so their paths cross -- where they overlap,
      ordinary alpha compositing blends them into a soft violet, reading as the two "interacting".
-     Sits at z-index 0 behind every chat surface, which all keep their glass backgrounds so the
-     wash reads through as ambient colour rather than fighting message legibility. */
-  /* Kept deliberately very faint -- a near-white wash with just a hint of colour, not a
-     visible tinted background -- so the chat column reads as bright/white with the blobs as
-     a barely-there ambient touch rather than a colour cast over the conversation. */
-  .chat-blur-bg { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; background: #fff; }
+     Sits at z-index 0 behind every chat surface. This is the backdrop glassmorphism actually
+     needs: a flat/near-white base defeats backdrop-filter blur entirely (nothing to refract) --
+     no background fill here on purpose, so the body's own soft gradient wash shows through as
+     a static base layer and the blobs add a genuinely visible (if gentle) moving colour on top,
+     for the glass chat surfaces to blur/refract live. */
+  .chat-blur-bg { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
   .chat-blur-bg .blob { position: absolute; border-radius: 50%; filter: blur(90px); will-change: transform; }
   .chat-blur-bg .blob-blue { top: -16%; left: -18%; width: 60vw; max-width: 640px; aspect-ratio: 1;
-    background: radial-gradient(circle at 38% 38%, rgba(0,174,239,0.15), rgba(11,61,145,0.06) 55%, transparent 78%);
+    background: radial-gradient(circle at 38% 38%, rgba(0,174,239,0.32), rgba(11,61,145,0.14) 55%, transparent 78%);
     animation: blobDriftBlue 24s ease-in-out infinite; }
   .chat-blur-bg .blob-pink { bottom: -20%; right: -16%; width: 56vw; max-width: 600px; aspect-ratio: 1;
-    background: radial-gradient(circle at 62% 62%, rgba(230,0,126,0.13), rgba(122,47,208,0.06) 55%, transparent 78%);
+    background: radial-gradient(circle at 62% 62%, rgba(230,0,126,0.26), rgba(122,47,208,0.12) 55%, transparent 78%);
     animation: blobDriftPink 20s ease-in-out infinite; }
   @keyframes blobDriftBlue {
     0%   { transform: translate(0,0) scale(1); }
