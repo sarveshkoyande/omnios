@@ -193,11 +193,13 @@
   .chat-head .desc { font-size: 12px; color: var(--muted); margin-top: 2px; }
   .messages { flex: 1; overflow-y: auto; padding: 26px 18px 14px; }
   .msg { display: flex; gap: 12px; margin-bottom: 26px; max-width: 760px; }
-  .msg .avatar { flex: 0 0 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; margin-top: 2px; }
+  .msg .avatar { flex: 0 0 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; margin-top: 2px; overflow: hidden; box-shadow: var(--shadow-raised-sm); }
   .msg .avatar .material-symbols-outlined { font-size: 16px; }
+  .msg .avatar img { width: 100%; height: 100%; object-fit: cover; }
   .msg.agent .avatar { background: var(--accent-soft); color: var(--indegene-navy); border: 1px solid rgba(0,174,239,0.4); }
   .msg.user { flex-direction: row-reverse; margin-left: auto; }
-  .msg.user .avatar { background: rgba(11,61,145,0.10); color: var(--indegene-navy); }
+  .msg.user .avatar { background: rgba(11,61,145,0.10); color: var(--indegene-navy); border: 1px solid var(--line); }
   .bubble { border-radius: 12px; padding: 10px 14px; line-height: 1.5;
     background: var(--glass-strong); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
     box-shadow: var(--shadow-raised-sm); }
@@ -1538,6 +1540,13 @@ let _avatarSeq = 0;
 
 const $ = (id) => document.getElementById(id);
 function iconSpan(name) { return `<span class="material-symbols-outlined">${name}</span>`; }
+// Chat-bubble avatar images: the user's placeholder headshot and the orchestrator/agent's
+// animated icon (used for the plain-text agent turns, typing indicator, and clarify cards --
+// not the 5 named agents' own photos in the team panel, which come from AGENT_PEOPLE).
+const USER_AVATAR_IMG = "https://img.magnific.com/premium-photo/confident-young-professional-man-smiling-with-arms-crossed_53876-1263914.jpg?semt=ais_hybrid&w=740&q=80";
+const ORCHESTRATOR_AVATAR_IMG = "https://i.pinimg.com/originals/32/a1/b4/32a1b439615cac53173b352c6049f1af.gif";
+function orchestratorAvatarHtml() { return `<img src="${ORCHESTRATOR_AVATAR_IMG}" alt="" loading="lazy">`; }
+function userAvatarHtml() { return `<img src="${USER_AVATAR_IMG}" alt="" loading="lazy">`; }
 function agentName(id) { return (AGENT_PEOPLE[id] || {}).name || (agentMeta[id] || {}).name || id; }
 function agentRole(id) { return (AGENT_PEOPLE[id] || {}).role || (agentMeta[id] || {}).role || ""; }
 // Agents are now named by their function (e.g. "Strategy & Positioning Agent"), so role is
@@ -1693,7 +1702,7 @@ function addMessage(role, text, isNarration, opts) {
   if (role === "agent" && opts.clarify) {
     const m = document.createElement("div");
     m.className = "msg agent clarify-msg";
-    m.innerHTML = `<div class="avatar">${iconSpan("hub")}</div><div class="bubble">${clarifyCardHtml(opts.clarify)}</div>`;
+    m.innerHTML = `<div class="avatar">${orchestratorAvatarHtml()}</div><div class="bubble">${clarifyCardHtml(opts.clarify)}</div>`;
     $("messages").appendChild(m);
     return m;
   }
@@ -1705,17 +1714,17 @@ function addMessage(role, text, isNarration, opts) {
       if (text.startsWith(prefix)) { prefixIcon = icon; bodyText = text.slice(prefix.length); break; }
     }
   }
-  const avatarHtml = role === "agent" ? iconSpan("hub") : "Y";
+  const avHtml = role === "agent" ? orchestratorAvatarHtml() : userAvatarHtml();
   const prefixClass = "bubble-prefix-ico" + (prefixIcon === "warning" ? " warn" : "");
   const prefixHtml = prefixIcon ? `<span class="material-symbols-outlined ${prefixClass}">${prefixIcon}</span> ` : "";
-  m.innerHTML = `<div class="avatar">${avatarHtml}</div><div class="bubble">${prefixHtml}${renderInline(bodyText)}</div>`;
+  m.innerHTML = `<div class="avatar">${avHtml}</div><div class="bubble">${prefixHtml}${renderInline(bodyText)}</div>`;
   $("messages").appendChild(m);
   return m;
 }
 function addTyping() {
   const m = document.createElement("div");
   m.className = "msg agent"; m.id = "typing-indicator";
-  m.innerHTML = `<div class="avatar">${iconSpan("hub")}</div><div class="bubble"><span class="typing"><span></span><span></span><span></span></span></div>`;
+  m.innerHTML = `<div class="avatar">${orchestratorAvatarHtml()}</div><div class="bubble"><span class="typing"><span></span><span></span><span></span></span></div>`;
   $("messages").appendChild(m); scrollChat();
 }
 function removeTyping() { const t = $("typing-indicator"); if (t) t.remove(); }
