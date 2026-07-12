@@ -17,7 +17,7 @@
     --indegene-purple: #6A2FD0;
     --indegene-violet: #8A4FE8;
 
-    --bg-base: #EEF3FA;
+    --bg-base: #F7FAFF;
     --text: #1B2436; --muted: #5B6478; --faint: #8891A3;
     --accent: var(--indegene-navy);
     --accent-dim: rgba(11,61,145,0.10);
@@ -25,9 +25,12 @@
     --line: rgba(11,61,145,0.12);
     --green: #17A673; --amber: #C77700; --red: #D6455B;
 
-    --glass: rgba(255,255,255,0.58);
-    --glass-strong: rgba(255,255,255,0.76);
-    --glass-blur: blur(16px) saturate(160%);
+    /* Lower opacity + stronger blur/saturate than before -- true glassmorphism reads through
+       the backdrop rather than muting it into pale mush. The blur itself keeps text legible by
+       smoothing whatever colour sits behind into a soft wash, so less-opaque glass still works. */
+    --glass: rgba(255,255,255,0.42);
+    --glass-strong: rgba(255,255,255,0.60);
+    --glass-blur: blur(22px) saturate(190%);
 
     /* Header + brand gradient: blue -> purple through Indegene's own hues. */
     --header-gradient: linear-gradient(120deg, var(--indegene-navy) 0%, var(--indegene-indigo) 45%,
@@ -54,12 +57,14 @@
     font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
     color: var(--text); font-size: 14px;
     display: flex; flex-direction: column; overflow: hidden;
-    /* Subtle multi-hue wash so the glass panels have something to refract -- flat
-       white/black defeats glassmorphism entirely (per the skill's core requirement). */
+    /* Multi-hue wash so the glass panels have something to refract -- flat white/black
+       defeats glassmorphism entirely (per the skill's core requirement). Kept lighter/tighter
+       than a full-bleed tint (smaller, more concentrated spots) so the overall canvas still
+       reads bright, while the glass panels sitting over the spots pop with real colour. */
     background:
-      radial-gradient(1100px 650px at 6% -12%, rgba(0,174,239,0.20), transparent 60%),
-      radial-gradient(1000px 700px at 96% -6%, rgba(230,0,126,0.14), transparent 55%),
-      radial-gradient(1300px 900px at 46% 118%, rgba(11,61,145,0.14), transparent 60%),
+      radial-gradient(900px 550px at 4% -14%, rgba(0,174,239,0.22), transparent 55%),
+      radial-gradient(800px 600px at 98% -8%, rgba(230,0,126,0.16), transparent 50%),
+      radial-gradient(1100px 800px at 48% 122%, rgba(106,47,208,0.16), transparent 55%),
       var(--bg-base);
     background-attachment: fixed;
   }
@@ -131,10 +136,10 @@
   .chat-blur-bg { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
   .chat-blur-bg .blob { position: absolute; border-radius: 50%; filter: blur(90px); will-change: transform; }
   .chat-blur-bg .blob-blue { top: -16%; left: -18%; width: 60vw; max-width: 640px; aspect-ratio: 1;
-    background: radial-gradient(circle at 38% 38%, rgba(0,174,239,0.32), rgba(11,61,145,0.14) 55%, transparent 78%);
+    background: radial-gradient(circle at 38% 38%, rgba(0,174,239,0.42), rgba(11,61,145,0.18) 55%, transparent 78%);
     animation: blobDriftBlue 24s ease-in-out infinite; }
   .chat-blur-bg .blob-pink { bottom: -20%; right: -16%; width: 56vw; max-width: 600px; aspect-ratio: 1;
-    background: radial-gradient(circle at 62% 62%, rgba(230,0,126,0.26), rgba(122,47,208,0.12) 55%, transparent 78%);
+    background: radial-gradient(circle at 62% 62%, rgba(230,0,126,0.34), rgba(122,47,208,0.16) 55%, transparent 78%);
     animation: blobDriftPink 20s ease-in-out infinite; }
   @keyframes blobDriftBlue {
     0%   { transform: translate(0,0) scale(1); }
