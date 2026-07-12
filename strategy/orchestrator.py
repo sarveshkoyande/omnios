@@ -64,6 +64,35 @@ AGENT_ROSTER = [
 ]
 
 
+# ---------------------------------------------------------------------------
+# Phase-by-phase interactive build. The plan is assembled ONE toolkit phase at a
+# time: a small subset of agents visibly work that phase's sections, then the run
+# STOPS for the human to validate/sign off (the phase's clarify questions) before
+# the next phase's agents begin. The server drives one run_phase() stream per phase,
+# advancing only when the user approves -- so the document is co-authored segment by
+# segment with a human gate between each, never dumped as one finished artifact.
+PHASE_ORDER = ["align", "select", "create", "deploy"]
+PHASE_NO = {"align": 1, "select": 2, "create": 3, "deploy": 4}
+PHASE_LABELS = {
+    "align": "Align on customer understanding & CX objectives",
+    "select": "Select relevant messages & channels",
+    "create": "Create the omnichannel CX",
+    "deploy": "Deploy the campaign",
+}
+# Which agents visibly work each phase (2-3 per step: "a couple of agents come together").
+PHASE_AGENTS = {
+    "align": ["planner", "intel", "strategy"],
+    "select": ["strategy", "inspiration", "activation"],
+    "create": ["inspiration", "activation"],
+    "deploy": ["activation", "planner"],
+}
+
+
+def _phase_reveal(phase: str) -> set:
+    """Every toolkit phase revealed once `phase` is reached (Align..phase inclusive)."""
+    return set(PHASE_ORDER[: PHASE_ORDER.index(phase) + 1])
+
+
 def _kb_count(section: dict) -> int:
     return sum(len(v) for v in section.values()) if section else 0
 
@@ -88,12 +117,13 @@ def _say(agent_id: str, text: str, to: str = ""):
 _RUN_REVEAL = {"align"}
 
 
-def _plan_partial(ctx: dict, done: set, fresh: str):
+def _plan_partial(ctx: dict, done: set, fresh: str, revealed: set | None = None):
     """A progressive render of the plan document: sections owned by completed agents are
     real, the rest are owner-labelled placeholders. The UI swaps the plan pane in place, so
-    the document visibly fills in as each agent finishes. Gated to the Align phase so the
-    plan stitches together one toolkit phase at a time."""
-    md, html_out, n_done, n_total = compose_plan_partial(ctx, done, fresh, revealed_phases=_RUN_REVEAL)
+    the document visibly fills in as each agent finishes. `revealed` gates which toolkit
+    phases are shown (defaults to Align only, for the legacy single-shot run)."""
+    md, html_out, n_done, n_total = compose_plan_partial(
+        ctx, done, fresh, revealed_phases=(revealed if revealed is not None else _RUN_REVEAL))
     return {"type": "plan", "html": html_out, "markdown": md, "partial": True,
             "sections_done": n_done, "sections_total": n_total, "fresh_agent": fresh}
 
@@ -280,11 +310,12 @@ def run_agents(brand: str, therapy_area: str, lifecycle_key: str, budget: float 
     ctx["precedents"] = precedents
     award_campaigns = awards_store.awards_for(brand=brand, therapy_area=therapy_area, limit=4)
     ctx["award_campaigns"] = award_campaigns
-    content_library = campaign_store.content_library_for(brand, indication)
-    # Fictional kit brands (e.g. Oncomyra) have no scraped KB -- source the Create-phase
-    # content library from the brand kit's own claims + creative components instead.
-    if not content_library.get("found") and kit:
+    # A kit brand's authored content library (claims + components WITH images) wins over any
+    # lossy echo persisted from a prior run; non-kit brands use the scraped/persisted library.
+    if kit and kit.get("components"):
         content_library = brand_kit_mod.content_library_from_kit(kit, indication)
+    else:
+        content_library = campaign_store.content_library_for(brand, indication)
     ctx["content_library"] = content_library
     done_agents.add("inspiration")
     matched_any = any(p["matched"] for p in precedents)
@@ -418,6 +449,249 @@ def run_agents(brand: str, therapy_area: str, lifecycle_key: str, budget: float 
         "**Select relevant messages & channels** unlocks next."
     )}
     yield {"type": "done"}
+
+
+def compute_plan_ctx(brand: str, therapy_area: str, lifecycle_key: str, budget: float = 0,
+                     maturity_notes: str = "", indication: str = "", brief: dict | None = None) -> dict:
+    """Run every agent's deterministic computation ONCE and return the fully-populated ctx
+    (plus cx_questionnaire + open_questions). No streaming, no theater -- the phased run
+    (run_phase) plays the visible agent work per phase from this pre-computed ctx, so the
+    heavy work happens on the first phase and later phases are instant."""
+    ctx: dict = {"brand": brand, "therapy_area": therapy_area, "lifecycle_key": lifecycle_key, "budget": budget,
+                 "maturity_notes": maturity_notes, "indication": indication, "brief": brief or {}}
+    inferred = infer_persona_and_stage(lifecycle_key)
+    ctx["inferred"] = inferred
+    kit = brand_kit_mod.kit_for(brand)
+    ctx["brand_kit"] = kit
+
+    # -- Market & Competitive Intelligence --
+    ctx["market"] = market_landscape(brand, therapy_area)
+    if kit and kit.get("competitors"):
+        competitors = [c["name"] for c in kit["competitors"]][:4]
+    else:
+        competitors = discover_competitors(therapy_area, brand, limit=5)
+    ctx["competitors"] = competitors
+    ctx["swot"] = build_swot(brand, competitors, therapy_area, refresh=True) if competitors else None
+    ctx["audience_profile"] = benchmarks.maya_audience_profile(brand, therapy_area, inferred["persona"])
+
+    # -- Strategy & Positioning --
+    strategy = generate_strategy(brand, therapy_area, inferred["persona"], inferred["stage_key"])
+    ctx["strategy"] = strategy
+    bam = build_bam_chart(inferred["stage_key"])
+    micro_journeys = build_micro_journeys(inferred["stage_key"], strategy["recommended_touchpoints"])
+    cx_maturity = assess_cx_maturity(maturity_notes, strategy["channel_mix_pct"])
+    segment_profile = build_segment_profile(inferred["persona"], inferred["stage_key"])
+    tcg = build_tcg_template(inferred["persona"], segment_profile, strategy, bam,
+                             agent_answers=ctx["audience_profile"]["answers"], agent_name="Market & Competitive Intelligence")
+    message_flow = build_message_flow(inferred["stage_key"], strategy["kb_grounding"])
+    if kit:
+        if kit.get("message_pool"):
+            message_flow["brand_plan_key_message_pool"] = list(kit["message_pool"])
+        for km in message_flow["key_messages"]:
+            claim = brand_kit_mod.claim_for_topic(kit, km["topic"])
+            if claim and claim not in km["supporting_messages"]:
+                km["supporting_messages"] = [claim] + list(km["supporting_messages"])[:2]
+        message_flow["caveat"] = (message_flow.get("caveat", "") + " Key-message pool and lead supporting claims "
+                                  f"sourced verbatim from the {kit.get('source_label', 'brand intelligence hub')}.")
+    ctx["bam"] = bam
+    ctx["pp_npp"] = classify_pp_npp(strategy["channel_mix_pct"])
+    ctx["micro_journeys"] = micro_journeys
+    ctx["cx_maturity"] = cx_maturity
+    ctx["segment_profile"] = segment_profile
+    ctx["tcg"] = tcg
+    ctx["message_flow"] = message_flow
+    ctx["positioning"] = build_positioning_statement(brand, therapy_area, inferred["persona"],
+                                                      inferred["stage_key"], competitors)
+
+    # -- Creative Inspiration --
+    ctx["precedents"] = find_precedent_campaigns(therapy_area, brand, limit=3)
+    ctx["award_campaigns"] = awards_store.awards_for(brand=brand, therapy_area=therapy_area, limit=4)
+    # A kit brand's authored content library (claims + creative components WITH images) is the
+    # source of truth -- it wins over any lossy echo persisted into campaign_store from a prior
+    # run. Non-kit brands use the scraped/persisted library as before.
+    if kit and kit.get("components"):
+        content_library = brand_kit_mod.content_library_from_kit(kit, indication)
+    else:
+        content_library = campaign_store.content_library_for(brand, indication)
+    ctx["content_library"] = content_library
+
+    # -- Activation Planning --
+    channel_mix = strategy["channel_mix_pct"]
+    ctx["budget_allocation"] = {ch: {"pct": pct, "amount": round(budget * pct / 100, 2) if budget else None}
+                                for ch, pct in channel_mix.items()}
+    kpi = build_kpi_framework(inferred["stage_key"], channel_mix)
+    ctx["kpi"] = kpi
+    ctx["channel_selection"] = build_channel_selection(channel_mix, strategy["recommended_touchpoints"], inferred["persona"])
+    ctx["execution_plan"] = build_execution_work_plan(micro_journeys)
+    ctx["execution_raci"] = build_execution_raci()
+    test_measure_learn = build_test_measure_learn(inferred["stage_key"], kpi["leading_indicators"])
+    engagement_baseline = benchmarks.arjun_engagement_baseline(lifecycle_key, inferred["persona"], channel_mix)
+    ctx["engagement_baseline"] = engagement_baseline
+    for _row in test_measure_learn.get("rows", []):
+        _t = benchmarks.measure_target(_row.get("measure", ""), _row.get("channels", ""), lifecycle_key)
+        if _t:
+            _row["what_good_looks_like"] = _t["what_good_looks_like"]
+            _row["agent_recommended"] = True
+            _row["agent_name"] = "Activation Planning"
+    ctx["test_measure_learn"] = test_measure_learn
+
+    # -- Engagement Planner close (questionnaire + open questions) --
+    ctx["cx_questionnaire"] = build_cx_questionnaire(brand, inferred["persona"], strategy, ctx["bam"], kpi)
+    ctx["open_questions"] = build_open_questions(cx_maturity["feasibility_checklist"], ctx["cx_questionnaire"], ctx["tcg"])
+    return ctx
+
+
+# What each agent says while working / what it reports on finishing, per phase. Grounded in ctx.
+def _agent_phase_turn(aid: str, phase: str, ctx: dict):
+    """Yield the visible work of one agent for one phase: a 'running' line, then a 'done'
+    summary + bullets. Pure theater over the already-computed ctx."""
+    inferred = ctx["inferred"]
+    brand, ta = ctx["brand"], ctx["therapy_area"]
+    kit = ctx.get("brand_kit")
+
+    if phase == "align" and aid == "planner":
+        yield _run("planner", f"Framing the plan for {brand} — locking the brief, governance and the customer-"
+                              f"understanding sections, and loading the brand intelligence kit…")
+        s = "Brief, governance and the Align sections are framed."
+        b = [inferred["rationale"]]
+        if kit:
+            s += f" Grounded in the brand's own hub — “{kit.get('core_claim', '')}”."
+            b.append(f"Brand kit: {kit.get('source_label', '')}")
+        return (yield {"type": "agent", "id": "planner", "status": "done", "summary": s, "detail": {"bullets": b}})
+
+    if phase == "align" and aid == "intel":
+        comps = ctx.get("competitors") or []
+        ap = ctx.get("audience_profile") or {}
+        yield _run("intel", f"Sizing the {ta} landscape, hunting competitors, and profiling the target customers…")
+        s = (f"{inferred['lifecycle_label']} → targeting **{inferred['persona']}**. "
+             + (f"**{len(comps)}** competitor(s): {', '.join(comps)}." if comps else "No distinct competitors found."))
+        if ap.get("audience_size", {}).get("total"):
+            s += f" Audience: **{ap['headline']}**."
+        b = ([inferred["rationale"]] + (comps or ["No competing interventions in trial data"])
+             + ([f"Audience benchmark: {ap['headline']}"] if ap.get("audience_size", {}).get("total") else []))
+        return (yield {"type": "agent", "id": "intel", "status": "done", "summary": s, "detail": {"bullets": b}})
+
+    if phase == "align" and aid == "strategy":
+        bam = ctx["bam"]; cxm = ctx["cx_maturity"]; pos = ctx["positioning"]
+        yield _run("strategy", "Mapping the journey stage and BAM belief-shift, scoring CX feasibility, and drafting "
+                               "the target-customer-group profile and positioning…")
+        s = (f"Belief shift **{bam['a_to_b_shift']}**. CX maturity **{cxm['level']}**. Positioning drafted.")
+        b = [f"A→B shift: {bam['a_to_b_shift']}",
+             f"CX maturity: {cxm['level']} — {cxm['rationale']}",
+             f"Positioning: {pos['positioning_statement']}"]
+        return (yield {"type": "agent", "id": "strategy", "status": "done", "summary": s, "detail": {"bullets": b}})
+
+    if phase == "select" and aid == "strategy":
+        mf = ctx["message_flow"]
+        yield _run("strategy", "Selecting the four key messages and building the message flow with its non-opener branch…")
+        kms = [k["topic"] for k in mf["key_messages"]]
+        s = f"Message flow built — leading with **{', '.join(kms[:2])}**" + (" and more." if len(kms) > 2 else ".")
+        b = [f"Key messages: {', '.join(kms)}"]
+        if kit and mf.get("brand_plan_key_message_pool"):
+            b.append(f"Pool sourced from the brand hub: “{mf['brand_plan_key_message_pool'][0]}”")
+        return (yield {"type": "agent", "id": "strategy", "status": "done", "summary": s, "detail": {"bullets": b}})
+
+    if phase == "select" and aid == "inspiration":
+        prec = ctx.get("precedents") or []
+        yield _run("inspiration", f"Pulling award-winning {ta} precedents and the brand's concept shelf…")
+        s = f"Found **{len(prec)}** precedent campaign(s) to steer the creative."
+        b = [f"“{p['title']}” — {p['tier']} ({p['program']} {p['year']})" for p in prec] or ["No indexed precedents"]
+        if kit and kit.get("concepts"):
+            b.append(f"Brand concept shelf: {len(kit['concepts'])} concepts")
+        return (yield {"type": "agent", "id": "inspiration", "status": "done", "summary": s, "detail": {"bullets": b}})
+
+    if phase == "select" and aid == "activation":
+        cs = ctx.get("channel_selection") or {}
+        ba = ctx.get("budget_allocation") or {}
+        top = sorted(((k, v["pct"]) for k, v in ba.items()), key=lambda kv: -kv[1])[:2]
+        yield _run("activation", "Scoring channels on purpose, availability and preference, and splitting the budget…")
+        s = "Channel selection scored and budget split — emphasis on **" + ", ".join(f"{k} {v}%" for k, v in top) + "**."
+        b = [f"{k}: {v['pct']}%" + (f" · ${int(v['amount']):,}" if v.get("amount") else "")
+             for k, v in sorted(ba.items(), key=lambda kv: -kv[1]["pct"])[:4]]
+        return (yield {"type": "agent", "id": "activation", "status": "done", "summary": s, "detail": {"bullets": b}})
+
+    if phase == "create" and aid == "inspiration":
+        lib = ctx.get("content_library") or {}
+        cnt = lib.get("counts", {})
+        yield _run("inspiration", "Mapping existing content to the message flow, designing the channel and message flows…")
+        s = ("Mapped the content audit and designed the channel + message flows."
+             + (f" **{cnt.get('assets', 0)}** brand assets, **{cnt.get('claims', 0)}** claims wired in." if lib.get("found") else ""))
+        b = [f"{cnt.get('assets', 0)} existing assets ({cnt.get('approved_claims', 0)} MLR-approved claims)"] if lib.get("found") \
+            else ["No content library indexed — audit ships as the toolkit template"]
+        return (yield {"type": "agent", "id": "inspiration", "status": "done", "summary": s, "detail": {"bullets": b}})
+
+    if phase == "create" and aid == "activation":
+        kpi = ctx["kpi"]
+        yield _run("activation", "Defining the CX success metrics (opt-in / non-opt-in) for the experience…")
+        s = f"Metrics set — **{len(kpi['leading_indicators'])}** leading indicators to track CX success."
+        b = kpi["leading_indicators"][:3]
+        return (yield {"type": "agent", "id": "activation", "status": "done", "summary": s, "detail": {"bullets": b}})
+
+    if phase == "deploy" and aid == "activation":
+        ep = ctx["execution_plan"]; kpi = ctx["kpi"]
+        yield _run("activation", "Laying out the execution work plan, RACI and the closed-loop test-measure-learn model…")
+        s = f"**{ep['total_weeks']}-week** execution work plan + RACI and the closed-loop model drafted."
+        b = [ep["mlr_delay_note"],
+             f"{len(kpi['leading_indicators'])} leading / {len(kpi['lagging_indicators'])} lagging KPIs"]
+        return (yield {"type": "agent", "id": "activation", "status": "done", "summary": s, "detail": {"bullets": b}})
+
+    if phase == "deploy" and aid == "planner":
+        oq = ctx.get("open_questions") or []
+        n_open = sum(len(g["questions"]) for g in oq)
+        yield _run("planner", "Writing the executive summary and closing the loop on the full plan…")
+        s = f"Executive summary written — the plan is complete across all four phases. **{n_open}** items still need your sign-off."
+        b = ["Executive summary synthesized from the whole team's output",
+             f"{n_open} 'needs alignment' items across {len(oq)} groups"]
+        return (yield {"type": "agent", "id": "planner", "status": "done", "final": True, "summary": s, "detail": {"bullets": b}})
+
+    # Fallback (shouldn't happen): a bare done.
+    yield {"type": "agent", "id": aid, "status": "done", "summary": "", "detail": {"bullets": []}}
+
+
+# Short banter exchange to open each phase (grounded, optional).
+def _phase_banter(phase: str, ctx: dict):
+    inferred = ctx["inferred"]
+    if phase == "align":
+        yield _say("planner", "Let's build this the right way — Align first. Customer understanding and CX "
+                              "objectives before anything else.", to="intel")
+    elif phase == "select":
+        mf = ctx["message_flow"]
+        yield _say("strategy", f"Align's signed off. Now we choose what to say and where — leading with "
+                               f"{mf['key_messages'][0]['topic'].lower()}.", to="activation")
+    elif phase == "create":
+        yield _say("inspiration", "Messages and channels are locked. Now we build the actual experience — content, "
+                                  "journeys, the flows.", to="activation")
+    elif phase == "deploy":
+        yield _say("activation", "The CX is designed. Last step — how it ships: the work plan, ownership, and how "
+                                 "we measure and learn.", to="planner")
+
+
+def run_phase(phase: str, ctx: dict):
+    """Stream one toolkit phase's visible agent work over an already-computed ctx, revealing
+    the plan up to this phase. Ends WITHOUT the human gate -- the server seeds this phase's
+    validation questions and asks them, then the run stops until the user signs off."""
+    reveal = _phase_reveal(phase)
+    agents = PHASE_AGENTS[phase]
+    done: set = set(PHASE_ORDER)  # for owner-gating we treat all agents as available; phase gating hides the rest
+    # Show just this phase's agents "coming together" for this step.
+    yield {"type": "agents_init", "agents": [a for a in AGENT_ROSTER if a["id"] in agents],
+           "phase": phase, "phase_no": PHASE_NO[phase], "phase_label": PHASE_LABELS[phase]}
+    yield {"type": "narration",
+           "text": f"**Phase {PHASE_NO[phase]} · {PHASE_LABELS[phase]}** — {len(agents)} agents are on this step now."}
+    yield from _phase_banter(phase, ctx)
+    done_agents: set = set()
+    for aid in agents:
+        yield from _agent_phase_turn(aid, phase, ctx)
+        done_agents.add(aid)
+        yield _plan_partial(ctx, done | done_agents, aid, revealed=reveal)
+    # Final render for this phase (partial=False only on the last phase).
+    result = _assemble_result(ctx)
+    md, html_out, n_done, n_total = compose_plan_partial(ctx, None, "", revealed_phases=reveal)
+    yield {"type": "plan", "html": html_out, "markdown": md, "partial": (phase != "deploy"),
+           "sections_done": n_done, "sections_total": n_total, "fresh_agent": ""}
+    yield {"type": "result", "result": result, "ctx": ctx}
+    yield {"type": "done", "phase": phase, "phase_no": PHASE_NO[phase],
+           "last_phase": (phase == PHASE_ORDER[-1])}
 
 
 def _assemble_result(ctx: dict) -> dict:

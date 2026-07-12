@@ -1416,23 +1416,23 @@ const WORKFLOW_STAGES = [
 // strategy=Green, inspiration=Orange, activation=Purple. c1 is the deep shade used for
 // name text / banter accents; c2 the light end of the monogram gradient.
 // Five broad-mandate agents; the Engagement Planner opens AND closes the run.
-const AGENT_COLORS = { planner:"#0277BD", intel:"#C7107E", strategy:"#00796B", inspiration:"#E65100", activation:"#5E35B1" };
+const AGENT_COLORS = { planner:"#1560D0", intel:"#D42630", strategy:"#1B9E5E", inspiration:"#E5610A", activation:"#6A2FD0" };
 const AGENT_ICONS = { planner:"description", intel:"travel_explore", strategy:"track_changes", inspiration:"emoji_events", activation:"payments" };
 // Named teammates with an avatar -- source of truth for the display name, theme colors and
 // the character avatar image. If a photo fails to load (offline, or the host blocks
 // hotlinking) avatarHtml's onerror drops the <img> and the gradient-initials monogram
 // behind it shows through -- so the UI never renders a broken image. Mirrors orchestrator.py.
 const AGENT_PEOPLE = {
-  planner:     { name:"Engagement Planner Agent",                 role:"", initials:"EP", c1:"#0277BD", c2:"#29B6F6",
-                 photo:"https://digital-studio.indegene.com/public/characters/Agent1.png" },
-  intel:       { name:"Market & Competitive Intelligence Agent", role:"", initials:"MC", c1:"#C7107E", c2:"#F06EBB",
-                 photo:"https://digital-studio.indegene.com/public/characters/Agent2.png" },
-  strategy:    { name:"Strategy & Positioning Agent",            role:"", initials:"SP", c1:"#00796B", c2:"#26D0B8",
-                 photo:"https://digital-studio.indegene.com/public/characters/Agent3.png" },
-  inspiration: { name:"Creative Inspiration Agent",               role:"", initials:"CI", c1:"#E65100", c2:"#FFB300",
-                 photo:"https://digital-studio.indegene.com/public/characters/Agent4.png" },
-  activation:  { name:"Activation Planning Agent",                role:"", initials:"AP", c1:"#5E35B1", c2:"#9575CD",
-                 photo:"https://digital-studio.indegene.com/public/characters/Agent5.png" },
+  planner:     { name:"Engagement Planner Agent",                 role:"", initials:"EP", c1:"#1E6FE8", c2:"#4DA6FF",
+                 photo:"/static/agent_avatars/agent-1-blue.png" },
+  intel:       { name:"Market & Competitive Intelligence Agent", role:"", initials:"MC", c1:"#E5323C", c2:"#FF6B72",
+                 photo:"/static/agent_avatars/agent-2-red.png" },
+  strategy:    { name:"Strategy & Positioning Agent",            role:"", initials:"SP", c1:"#22B36B", c2:"#57DD97",
+                 photo:"/static/agent_avatars/agent-3-green.png" },
+  inspiration: { name:"Creative Inspiration Agent",               role:"", initials:"CI", c1:"#F5730A", c2:"#FFA333",
+                 photo:"/static/agent_avatars/agent-4-orange.png" },
+  activation:  { name:"Activation Planning Agent",                role:"", initials:"AP", c1:"#7B3FE4", c2:"#A277F0",
+                 photo:"/static/agent_avatars/agent-5-purple.png" },
 };
 let agentMeta = {};
 let _avatarSeq = 0;
@@ -1650,10 +1650,14 @@ async function sendMessage() {
     addMessage("agent", data.reply, false, { clarify: data.clarify }); scrollChat();
     if (data.action === "freeze" || data.plan_frozen) { setPlanFrozenUI(true); }
     await loadProjects();
-    if (data.action === "run") { startRun(); }
-    // This is the exact turn on which the brand team's open questions were just finished --
-    // the right moment to offer synthetic-persona review (never before, per product intent).
-    else if (data.clarify_just_completed && !state.planFrozen) { renderOrOfferPersonas(); }
+    if (data.action === "run") { startRun("align"); }
+    // Signed off on this phase's questions: if there's a next toolkit phase, its agents start
+    // now (the plan keeps building segment by segment). Only after the final phase (Deploy) is
+    // signed off do we offer synthetic-persona review.
+    else if (data.clarify_just_completed && !state.planFrozen) {
+      if (data.next_phase) { startRun(data.next_phase); }
+      else { renderOrOfferPersonas(); }
+    }
   } catch (e) {
     removeTyping(); addMessage("agent", "⚠ Something went wrong reaching the agent. Try again.");
   } finally {
@@ -1694,15 +1698,25 @@ async function uploadFile(file) {
 }
 
 // ---------- run (SSE) ----------
-function startRun() {
-  // reset workspace
-  $("plan-card").style.display = "none";
+// The plan is built ONE toolkit phase at a time. Each startRun(phase) streams just that
+// phase's agents building their sections; the run then stops at a human sign-off gate. When
+// the user approves that phase's questions in chat, /api/chat returns next_phase and we call
+// startRun(next_phase) -- so the document is co-authored segment by segment, not all at once.
+function startRun(phase) {
+  phase = phase || "align";
+  state.runPhase = phase;
+  if (phase === "align") {
+    // First phase: reset the workspace and invalidate any prior persona reviews.
+    $("plan-card").style.display = "none";
+    state.personaReviews = null; state.personaOfferShown = false;
+  }
+  // Fresh set of agents "come together" for this step; the plan pane persists and grows.
   $("agents-body").innerHTML = "";
   planProgressChip(null);
-  expandBriefAndAgents();   // the agent team is about to actively work -- show it live again
-  state.personaReviews = null; state.personaOfferShown = false;  // a fresh run invalidates old persona reviews
+  expandBriefAndAgents();
   state.busy = true; $("send").disabled = true;
-  const es = new EventSource("/api/run-stream?project_id=" + encodeURIComponent(state.projectId));
+  const es = new EventSource("/api/run-stream?project_id=" + encodeURIComponent(state.projectId)
+    + "&phase=" + encodeURIComponent(phase));
   state.es = es;
   let closedCleanly = false;
   es.onmessage = (evt) => {
