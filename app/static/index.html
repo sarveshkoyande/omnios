@@ -136,23 +136,23 @@
   .chat-blur-bg { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
   .chat-blur-bg .blob { position: absolute; border-radius: 50%; filter: blur(90px); will-change: transform; }
   .chat-blur-bg .blob-blue { top: -16%; left: -18%; width: 60vw; max-width: 640px; aspect-ratio: 1;
-    background: radial-gradient(circle at 38% 38%, rgba(0,174,239,0.42), rgba(11,61,145,0.18) 55%, transparent 78%);
-    animation: blobDriftBlue 24s ease-in-out infinite; }
+    background: radial-gradient(circle at 38% 38%, rgba(0,174,239,0.16), rgba(11,61,145,0.07) 55%, transparent 78%);
+    animation: blobDriftBlue 15s ease-in-out infinite; }
   .chat-blur-bg .blob-pink { bottom: -20%; right: -16%; width: 56vw; max-width: 600px; aspect-ratio: 1;
-    background: radial-gradient(circle at 62% 62%, rgba(230,0,126,0.34), rgba(122,47,208,0.16) 55%, transparent 78%);
-    animation: blobDriftPink 20s ease-in-out infinite; }
+    background: radial-gradient(circle at 62% 62%, rgba(230,0,126,0.13), rgba(122,47,208,0.06) 55%, transparent 78%);
+    animation: blobDriftPink 13s ease-in-out infinite; }
   @keyframes blobDriftBlue {
     0%   { transform: translate(0,0) scale(1); }
-    25%  { transform: translate(16vw, 12vh) scale(1.14); }
-    52%  { transform: translate(6vw, 30vh) scale(0.92); }
-    78%  { transform: translate(-8vw, 14vh) scale(1.05); }
+    25%  { transform: translate(20vw, 16vh) scale(1.18); }
+    52%  { transform: translate(8vw, 36vh) scale(0.88); }
+    78%  { transform: translate(-12vw, 18vh) scale(1.08); }
     100% { transform: translate(0,0) scale(1); }
   }
   @keyframes blobDriftPink {
     0%   { transform: translate(0,0) scale(1); }
-    30%  { transform: translate(-14vw, -16vh) scale(1.12); }
-    58%  { transform: translate(-4vw, -32vh) scale(0.9); }
-    82%  { transform: translate(10vw, -10vh) scale(1.08); }
+    30%  { transform: translate(-18vw, -20vh) scale(1.16); }
+    58%  { transform: translate(-6vw, -38vh) scale(0.86); }
+    82%  { transform: translate(14vw, -13vh) scale(1.1); }
     100% { transform: translate(0,0) scale(1); }
   }
   @media (prefers-reduced-motion: reduce) {
@@ -248,7 +248,7 @@
   .intake-head span { display: block; font-size: 12px; color: var(--muted); line-height: 1.45; margin-top: 2px; }
   .intake-text { width: 100%; box-sizing: border-box; resize: vertical; min-height: 150px; border: 1px solid var(--line);
     border-radius: 10px; padding: 11px 12px; font: inherit; font-size: 13px; line-height: 1.65; color: var(--text);
-    background: #fff; outline: none; }
+    background: rgba(255,255,255,0.55); outline: none; }
   .intake-text:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(11,61,145,0.10); }
   .intake-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; gap: 10px; }
   .intake-skip { background: transparent; border: none; color: var(--muted); font: inherit; font-size: 12px;
@@ -307,8 +307,9 @@
   .pv-info-btn .material-symbols-outlined { font-size: 18px; }
 
   /* Persona profile modal */
-  .pm-card { background: #fff; border-radius: 16px; max-width: 560px; width: 92vw; max-height: 86vh; overflow-y: auto;
-    padding: 22px 24px 24px; }
+  .pm-card { background: var(--glass-strong); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--line); border-radius: 16px; max-width: 560px; width: 92vw; max-height: 86vh; overflow-y: auto;
+    padding: 22px 24px 24px; box-shadow: var(--shadow-raised), 0 30px 70px -20px rgba(11,61,145,0.35); }
   .pm-head { display: flex; gap: 14px; align-items: center; margin-bottom: 4px; }
   .pm-ava { flex: 0 0 54px; width: 54px; height: 54px; border-radius: 50%; display: inline-flex; align-items: center;
     justify-content: center; font-size: 18px; font-weight: 700; color: #fff; background: linear-gradient(135deg,#1768D1,#4AA6F2); }
@@ -520,8 +521,9 @@
   /* ---- plan ---- */
   .plan-actions { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
   .plan-actions button { display: flex; align-items: center; justify-content: center; gap: 6px; flex: 1;
-    min-width: 96px; background: rgba(255,255,255,0.5); border: 1px solid var(--line); color: var(--text);
-    border-radius: 8px; padding: 8px; cursor: pointer; font-size: 12.5px; font-weight: 600; }
+    min-width: 96px; background: var(--glass-strong); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--line); color: var(--text);
+    border-radius: 8px; padding: 8px; cursor: pointer; font-size: 12.5px; font-weight: 600; box-shadow: var(--shadow-raised-sm); }
   .plan-actions button .material-symbols-outlined { font-size: 17px; }
   /* :not(.primary) so this generic hover never overrides the primary button's own background --
      that bug made the primary (navy bg / white text) button's text invisible on hover, since
@@ -678,7 +680,8 @@
 
   /* ---- plan doc: collapsible section cards (<details>, closed by default) ---- */
   .plan-sec { scroll-margin-top: 44px; margin: 6px 0; border: 1px solid var(--line); border-radius: 10px;
-    background: rgba(255,255,255,0.4); }
+    background: var(--glass); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+    box-shadow: var(--shadow-raised-sm); }
   .plan-sec > summary.plan-sec-head { display: flex; align-items: center; gap: 9px; margin: 0;
     padding: 9px 12px; cursor: pointer; list-style: none; user-select: none; }
   .plan-sec > summary.plan-sec-head::-webkit-details-marker { display: none; }
@@ -721,7 +724,8 @@
   @container (max-width: 500px) { .plan-swot-grid { grid-template-columns: 1fr; } }
 
   .plan-precedent-card { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin: 6px 0;
-    background: rgba(255,255,255,0.45); }
+    background: var(--glass-strong); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+    box-shadow: var(--shadow-raised-sm); }
   .plan-precedent-card .pc-title { font-weight: 700; font-size: 12.5px; margin-bottom: 4px;
     display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
   .plan-precedent-card .pc-meta { font-size: 11px; color: var(--muted); }
@@ -976,7 +980,8 @@
 
   /* Award-winning campaigns (precedent section) */
   .aw-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 11px; margin-top: 8px; }
-  .aw-card { background: #fff; border: 1px solid var(--line); border-radius: 11px; padding: 11px 12px; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+  .aw-card { background: var(--glass-strong); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--line); border-radius: 11px; padding: 11px 12px; box-shadow: var(--shadow-raised-sm); }
   .aw-top { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 6px; }
   .aw-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; color: #fff;
     padding: 2px 8px; border-radius: 999px; }
@@ -1041,7 +1046,8 @@
   .home-section-head .material-symbols-outlined { font-size: 17px; }
 
   .pi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 13px; }
-  .pi-card { background: var(--glass-strong, #fff); border: 1px solid var(--line); border-radius: 14px; padding: 14px 15px; }
+  .pi-card { background: var(--glass-strong, #fff); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--line); border-radius: 14px; padding: 14px 15px; box-shadow: var(--shadow-raised-sm); }
   .pi-card h3 { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--indegene-navy); margin: 0 0 11px; }
   .pi-card h3 .material-symbols-outlined { font-size: 17px; }
   .pi-note { font-size: 10.5px; color: var(--faint); margin: 9px 0 0; line-height: 1.4; }
@@ -1072,7 +1078,7 @@
 
   /* ================= 4-stage workflow stepper + stage panes ================= */
   .wf-stepper { display: none; align-items: center; gap: 2px; padding: 10px 12px; border-bottom: 1px solid var(--line);
-    background: rgba(255,255,255,.5); overflow-x: auto; }
+    background: var(--glass-strong); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); overflow-x: auto; }
   .wf-stepper.show { display: flex; }
   .wf-step { display: flex; align-items: center; gap: 8px; background: none; border: 1px solid transparent;
     border-radius: 10px; padding: 6px 10px; cursor: pointer; white-space: nowrap; transition: background .2s, border-color .2s; }
@@ -1129,7 +1135,8 @@
 
   /* ---- Stage 3: operations swimlanes (parallel tracks by channel) ---- */
   .ops-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-bottom: 14px; }
-  .ops-lane { background: var(--glass-strong, #fff); border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
+  .ops-lane { background: var(--glass-strong, #fff); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--line); border-radius: 12px; padding: 12px; box-shadow: var(--shadow-raised-sm); }
   .ops-lane-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
   .ops-lane-ico { width: 28px; height: 28px; border-radius: 8px; background: rgba(11,61,145,.08);
     color: var(--indegene-navy); display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
@@ -1199,7 +1206,8 @@
   .lib-scroll { flex: 1; overflow-y: auto; padding: 22px 26px 40px; }
   .lib-toolbar { display: flex; justify-content: flex-end; margin: 6px 0 14px; }
   .lib-search { display: flex; align-items: center; gap: 7px; background: var(--glass-strong,#fff);
-    border: 1px solid var(--line); border-radius: 10px; padding: 7px 12px; min-width: 300px; }
+    backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--line); border-radius: 10px; padding: 7px 12px; min-width: 300px; box-shadow: var(--shadow-raised-sm); }
   .lib-search .material-symbols-outlined { font-size: 18px; color: var(--faint); }
   .lib-search input { border: none; outline: none; background: none; font: inherit; font-size: 12.5px; flex: 1; }
   .lib-card { cursor: pointer; transition: transform .16s ease, box-shadow .16s ease; }
@@ -1251,8 +1259,9 @@
   .lib-chip.on { background: var(--indegene-navy); color: #fff; border-color: var(--indegene-navy); }
   .lib-chip.on span { background: rgba(255,255,255,.22); }
 
-  .claim-card { background: var(--glass-strong,#fff); border: 1px solid var(--line); border-left: 3px solid #ccc;
-    border-radius: 10px; padding: 12px 14px; margin-bottom: 9px; }
+  .claim-card { background: var(--glass-strong,#fff); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--line); border-left: 3px solid #ccc;
+    border-radius: 10px; padding: 12px 14px; margin-bottom: 9px; box-shadow: var(--shadow-raised-sm); }
   .claim-card.st-approved { border-left-color: var(--green); }
   .claim-card.st-in_review { border-left-color: var(--amber); }
   .claim-card.st-draft { border-left-color: #b9bfc7; }
@@ -1280,7 +1289,8 @@
   .claim-expiry .material-symbols-outlined { font-size: 13px; }
 
   .lib-modules { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 10px; }
-  .mod-card { background: var(--glass-strong,#fff); border: 1px solid var(--line); border-radius: 10px; padding: 11px 13px; }
+  .mod-card { background: var(--glass-strong,#fff); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--line); border-radius: 10px; padding: 11px 13px; box-shadow: var(--shadow-raised-sm); }
   .mod-top { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 6px; }
   .mod-type { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .3px;
     background: rgba(11,61,145,.09); color: var(--indegene-navy); padding: 2px 8px; border-radius: 999px; }
@@ -1323,6 +1333,16 @@
   @keyframes blink { 0%, 60%, 100% { opacity: 0.3; } 30% { opacity: 1; } }
   @keyframes shimmer { 0% { background-position: 100% 0; } 100% { background-position: 0 0; } }
   ::-webkit-scrollbar { width: 9px; height: 9px; } ::-webkit-scrollbar-thumb { background: rgba(11,61,145,0.22); border-radius: 5px; } ::-webkit-scrollbar-track { background: transparent; }
+
+  /* Glass surfaces stay readable/opaque for users who need reduced transparency or higher
+     contrast -- everything on the glass tokens (cards, bubbles, composer, modals, rails) inherits
+     this automatically since they're all driven off --glass/--glass-strong/--glass-blur. */
+  @media (prefers-reduced-transparency: reduce) {
+    :root { --glass: rgba(255,255,255,0.92); --glass-strong: rgba(255,255,255,0.96); --glass-blur: none; }
+  }
+  @media (prefers-contrast: more) {
+    :root { --line: rgba(11,61,145,0.32); --glass: rgba(255,255,255,0.90); --glass-strong: rgba(255,255,255,0.95); }
+  }
 </style>
 </head>
 <body>
