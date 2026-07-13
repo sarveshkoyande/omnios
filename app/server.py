@@ -649,4 +649,11 @@ def root():
     return FileResponse(APP_DIR / "static" / "index.html")
 
 
+@app.get("/v2")
+def root_v2():
+    """New React + MUI front-end (phased migration; built by frontend/ via Vite
+    into static/v2). The legacy UI stays at / until every view is ported."""
+    return FileResponse(APP_DIR / "static" / "v2" / "index.html")
+
+
 app.mount("/static", StaticFiles(directory=APP_DIR / "static"), name="static")
