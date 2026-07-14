@@ -3,17 +3,21 @@ import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
 import { styled } from "@mui/material/styles";
-import { tokens, shade, insetShadow, focusRing } from "../theme/tokens";
+import { tokens, glass, glassFallback, indigoTint, gradientBrand, focusRing } from "../theme/tokens";
 
+/** Tier-0 content well: near-opaque white so typed text stays fully legible. */
 const Well = styled("div")(({ theme }) => ({
   display: "flex",
-  gap: theme.spacing(2),
+  gap: theme.spacing(1.5),
   alignItems: "flex-end",
-  padding: theme.spacing(2, 2, 2, 3),
+  padding: theme.spacing(1.25, 1.25, 1.25, 2.5),
   borderRadius: tokens.radius.md,
-  background: tokens.color.surface,
-  border: `1px solid ${shade(0.22)}`,
-  boxShadow: insetShadow,
+  background: glassFallback,
+  border: `1px solid ${indigoTint(0.18)}`,
+  boxShadow: glass.shadow,
+  "@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)))": {
+    background: glass.content,
+  },
   "&:focus-within": { ...focusRing, outlineOffset: 0, borderColor: tokens.color.primary },
 }));
 
@@ -27,16 +31,26 @@ const TextArea = styled("textarea")(({ theme }) => ({
   fontSize: tokens.fontSize.md,
   color: tokens.color.text,
   maxHeight: 120,
-  padding: theme.spacing(1, 0),
+  padding: theme.spacing(1.5, 0),
   fontFamily: tokens.font.primary,
+  "&::placeholder": { color: tokens.color.inkSoft },
 }));
 
+const IconBtn = styled(IconButton)({
+  color: tokens.color.inkSoft,
+  "&:hover": { background: indigoTint(0.08), color: tokens.color.primary },
+});
+
 const SendKey = styled(IconButton)({
-  background: tokens.color.primary,
-  color: tokens.color.text,
-  "&:hover": { background: tokens.color.primary, filter: "brightness(1.08)" },
-  "&:active": { boxShadow: `inset 0 2px 4px ${shade(0.35)}` },
-  "&.Mui-disabled": { background: shade(0.12), color: shade(0.45) },
+  background: gradientBrand,
+  color: "#fff",
+  borderRadius: tokens.radius.sm,
+  width: 38,
+  height: 38,
+  boxShadow: "0 3px 10px rgba(79,70,229,0.32)",
+  "&:hover": { background: gradientBrand, filter: "brightness(1.08)" },
+  "&:active": { transform: "translateY(1px)" },
+  "&.Mui-disabled": { background: indigoTint(0.14), color: "rgba(30,27,51,0.35)", boxShadow: "none" },
 });
 
 export function Composer({
@@ -61,14 +75,14 @@ export function Composer({
   return (
     <Box>
       <Well>
-        <IconButton
+        <IconBtn
           size="small"
           disabled={disabled}
           onClick={() => fileRef.current?.click()}
           title="Upload a document (e.g. a brand plan) — the agent reads it for the brief"
         >
           <span className="material-symbols-outlined" style={{ fontSize: 20 }}>attach_file</span>
-        </IconButton>
+        </IconBtn>
         <input
           ref={fileRef}
           type="file"
@@ -93,6 +107,9 @@ export function Composer({
             }
           }}
         />
+        <IconBtn size="small" disabled={disabled} title="Voice input" aria-label="Voice input">
+          <span className="material-symbols-outlined" style={{ fontSize: 20 }}>mic</span>
+        </IconBtn>
         <SendKey disabled={disabled || !value.trim()} onClick={submit} aria-label="Send message">
           <span className="material-symbols-outlined" style={{ fontSize: 20 }}>send</span>
         </SendKey>

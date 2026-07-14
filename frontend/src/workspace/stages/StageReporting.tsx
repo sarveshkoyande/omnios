@@ -4,7 +4,7 @@ import { styled } from "@mui/material/styles";
 import { ConsolePanel } from "../../components/ConsolePanel";
 import { PlanTable } from "./PlanTable";
 import { StageHead } from "./StageHead";
-import { shade, tokens } from "../../theme/tokens";
+import { indigoTint, tokens } from "../../theme/tokens";
 import type { PlanResult } from "../types";
 
 const LANE_ICON: Record<string, string> = {
@@ -18,16 +18,17 @@ const LANE_ICON: Record<string, string> = {
 
 const ScoreTile = styled(Box)<{ tint?: string }>(({ theme, tint }) => ({
   textAlign: "center",
-  borderRadius: 10,
+  borderRadius: tokens.radius.md,
   padding: theme.spacing(2, 1),
-  background: tint ?? shade(0.03),
+  background: tint ?? indigoTint(0.07),
 }));
 
 const KpiCol = styled(Box)<{ accent: string }>(({ theme, accent }) => ({
   borderLeft: `3px solid ${accent}`,
-  borderRadius: 8,
-  border: `1px solid ${shade(0.14)}`,
+  borderRadius: tokens.radius.sm,
+  border: `1px solid ${indigoTint(0.12)}`,
   padding: theme.spacing(2),
+  background: "rgba(255,255,255,0.4)",
 }));
 
 export function StageReporting({ result }: { result: PlanResult | null }) {

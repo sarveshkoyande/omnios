@@ -9,7 +9,7 @@ import type { LightboxImage } from "./Lightbox";
 import { ModuleCard, AssetRow } from "./ModuleAndAssetCards";
 import { CLAIM_TYPE_LABEL } from "./types";
 import type { LibraryDetail } from "./types";
-import { shade, panelShadow, tokens } from "../theme/tokens";
+import { glass, glassFallback, indigoTint, tokens } from "../theme/tokens";
 
 const Section = styled("section")(({ theme }) => ({ marginBottom: theme.spacing(8) }));
 const SectionHead = styled(Typography)(({ theme }) => ({
@@ -23,20 +23,20 @@ const CountChip = styled(Chip)({ marginLeft: 8 });
 
 const GalleryTile = styled("figure")(({ theme }) => ({
   margin: 0,
-  background: tokens.color.surface,
-  border: `1px solid ${shade(0.14)}`,
-  borderRadius: 10,
+  background: glassFallback,
+  border: `1px solid ${indigoTint(0.14)}`,
+  borderRadius: tokens.radius.md,
   overflow: "hidden",
   cursor: "zoom-in",
-  boxShadow: panelShadow,
+  boxShadow: glass.shadow,
   transition: "transform 160ms ease, box-shadow 160ms ease",
-  "&:hover": { transform: "translateY(-2px)" },
-  "& img": { display: "block", width: "100%", height: 120, objectFit: "contain", background: "#fbfcfd", padding: theme.spacing(1.5) },
+  "&:hover": { transform: "translateY(-2px)", boxShadow: glass.shadowElevated },
+  "& img": { display: "block", width: "100%", height: 120, objectFit: "contain", background: "#fff", padding: theme.spacing(1.5) },
   "& figcaption": {
-    fontSize: 9.5,
-    color: shade(0.55),
+    fontSize: 10.5,
+    color: tokens.color.inkSoft,
     padding: theme.spacing(1, 1.5),
-    borderTop: `1px solid ${shade(0.14)}`,
+    borderTop: `1px solid ${indigoTint(0.1)}`,
     overflow: "hidden",
     textOverflow: "ellipsis",
     whiteSpace: "nowrap",
@@ -44,7 +44,8 @@ const GalleryTile = styled("figure")(({ theme }) => ({
 }));
 
 const FilterChip = styled(Chip)<{ on: boolean }>(({ on }) => ({
-  ...(on && { background: tokens.color.text, color: tokens.color.surface }),
+  cursor: "pointer",
+  ...(on && { background: tokens.color.primary, color: "#fff", borderColor: "transparent" }),
 }));
 
 export function LibraryDetailView({

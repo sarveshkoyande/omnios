@@ -9,7 +9,7 @@ import { styled } from "@mui/material/styles";
 import { AgentBubble } from "../ChatBubble";
 import { PersonaAvatar } from "./PersonaAvatar";
 import type { PersonaOffer, PersonaSummary } from "../types";
-import { shade, insetShadow } from "../../theme/tokens";
+import { indigoTint } from "../../theme/tokens";
 
 const Row = styled("label")<{ checked: boolean }>(({ theme, checked }) => ({
   display: "flex",
@@ -17,11 +17,10 @@ const Row = styled("label")<{ checked: boolean }>(({ theme, checked }) => ({
   gap: theme.spacing(2),
   padding: theme.spacing(1.5, 2),
   borderRadius: 10,
-  border: `1px solid ${shade(0.16)}`,
+  border: `1px solid ${checked ? indigoTint(0.3) : indigoTint(0.12)}`,
   marginBottom: theme.spacing(1),
   cursor: "pointer",
-  background: checked ? shade(0.04) : "transparent",
-  boxShadow: checked ? insetShadow : "none",
+  background: checked ? indigoTint(0.08) : "rgba(255,255,255,0.4)",
 }));
 
 export function PersonaOfferCard({

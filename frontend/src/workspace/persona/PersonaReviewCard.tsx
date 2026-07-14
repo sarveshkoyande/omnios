@@ -7,14 +7,14 @@ import { AgentBubble } from "../ChatBubble";
 import { PersonaAvatar } from "./PersonaAvatar";
 import { SENTIMENT_COLOR } from "./personaUtils";
 import type { PersonaReview } from "../types";
-import { shade } from "../../theme/tokens";
+import { indigoTint, tokens } from "../../theme/tokens";
 
 const ColHead = styled(Typography)({
   fontSize: 10,
   fontWeight: 700,
   textTransform: "uppercase",
   letterSpacing: "0.06em",
-  color: shade(0.55),
+  color: tokens.color.primary,
   marginBottom: 4,
 });
 
@@ -65,15 +65,15 @@ export function PersonaReviewCard({
         <Typography variant="body2" sx={{ color: "text.secondary", mb: 1.5 }}>{review.narrative}</Typography>
 
         <Box sx={{ display: "grid", gridTemplateColumns: "1fr", gap: 1 }}>
-          <Box sx={{ background: shade(0.03), border: `1px solid ${shade(0.14)}`, borderRadius: "9px", p: 1.25 }}>
+          <Box sx={{ background: "rgba(255,255,255,0.45)", border: `1px solid ${indigoTint(0.12)}`, borderRadius: "9px", p: 1.25 }}>
             <ColHead>What resonates</ColHead>
             {list(review.resonates)}
           </Box>
-          <Box sx={{ background: shade(0.03), border: `1px solid ${shade(0.14)}`, borderRadius: "9px", p: 1.25 }}>
+          <Box sx={{ background: "rgba(255,255,255,0.45)", border: `1px solid ${indigoTint(0.12)}`, borderRadius: "9px", p: 1.25 }}>
             <ColHead>What's missing</ColHead>
             {list(review.gaps)}
           </Box>
-          <Box sx={{ background: shade(0.03), border: `1px solid ${shade(0.14)}`, borderRadius: "9px", p: 1.25 }}>
+          <Box sx={{ background: "rgba(255,255,255,0.45)", border: `1px solid ${indigoTint(0.12)}`, borderRadius: "9px", p: 1.25 }}>
             <ColHead>To win me over</ColHead>
             {list(review.asks)}
           </Box>

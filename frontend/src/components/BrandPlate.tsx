@@ -1,39 +1,18 @@
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
+import LinearProgress from "@mui/material/LinearProgress";
 import Typography from "@mui/material/Typography";
-import { styled } from "@mui/material/styles";
 import { ConsolePanel } from "./ConsolePanel";
-import { GaugeMeter } from "./GaugeMeter";
-import { tokens, shade, light } from "../theme/tokens";
+import { PillChip } from "../glass/primitives";
+import { tokens } from "../theme/tokens";
 import type { Brand } from "../api";
 
 /**
- * BrandPlate — an engraved brass nameplate mounted on a console panel: display-
- * face brand name, mono generic beneath, lifecycle as an enamel pin badge, the
- * momentum score as an analog gauge, and metrics as stamped tags.
+ * BrandPlate — a Tier-A glass card per portfolio brand: brand name, generic,
+ * lifecycle chip, an "Activity" momentum bar (0–100, printed value so the read
+ * never depends on the bar alone), metric pills, and a gradient plan CTA.
  */
-const Nameplate = styled("div")(({ theme }) => ({
-  padding: theme.spacing(2, 3),
-  borderRadius: tokens.radius.sm,
-  border: `1px solid ${shade(0.2)}`,
-  background: `linear-gradient(180deg, ${light(0.7)}, ${shade(0.06)}), ${tokens.color.surface}`,
-  boxShadow: `inset 0 1px 0 ${light(0.9)}, 0 1px 2px ${shade(0.12)}`,
-}));
-
-const StampedTag = styled("span")(({ theme }) => ({
-  display: "inline-flex",
-  alignItems: "center",
-  gap: theme.spacing(1),
-  padding: theme.spacing(1, 2),
-  fontFamily: tokens.font.mono,
-  fontSize: tokens.fontSize.xs,
-  color: shade(0.7),
-  border: `1px solid ${shade(0.2)}`,
-  borderRadius: tokens.radius.sm,
-  boxShadow: `inset 0 1px 2px ${shade(0.1)}, 0 1px 0 ${light(0.9)}`,
-}));
-
 const LIFECYCLE_COLOR: Record<Brand["lifecycle_key"], "primary" | "success" | "secondary" | "warning"> = {
   launch: "primary",
   growth: "success",
@@ -42,17 +21,16 @@ const LIFECYCLE_COLOR: Record<Brand["lifecycle_key"], "primary" | "success" | "s
 };
 
 export function BrandPlate({ brand, onPlan }: { brand: Brand; onPlan: (name: string) => void }) {
+  const momentum = Math.max(0, Math.min(100, brand.momentum));
   return (
     <ConsolePanel sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 2 }}>
-        <Nameplate sx={{ flex: 1, minWidth: 0 }}>
-          <Typography variant="h2" component="h3" sx={{ fontSize: tokens.fontSize.lg, lineHeight: 1.2 }}>
+        <Box sx={{ minWidth: 0 }}>
+          <Typography variant="h3" sx={{ fontSize: tokens.fontSize.xl, lineHeight: 1.2 }}>
             {brand.brand}
           </Typography>
-          <Typography sx={{ fontFamily: tokens.font.mono, fontSize: tokens.fontSize.xs, color: "text.secondary" }}>
-            {brand.generic}
-          </Typography>
-        </Nameplate>
+          <Typography sx={{ fontSize: tokens.fontSize.sm, color: "text.secondary" }}>{brand.generic}</Typography>
+        </Box>
         <Chip size="small" color={LIFECYCLE_COLOR[brand.lifecycle_key]} label={brand.lifecycle_label} />
       </Box>
 
@@ -60,14 +38,23 @@ export function BrandPlate({ brand, onPlan }: { brand: Brand; onPlan: (name: str
         {brand.therapy_area} · {brand.indications.length} indication{brand.indications.length === 1 ? "" : "s"}
       </Typography>
 
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 3, flexWrap: "wrap" }}>
-        <GaugeMeter value={brand.momentum} label="Activity" />
-        <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-          <StampedTag>{brand.trials_recruiting}/{brand.trials_total} trials</StampedTag>
-          <StampedTag>{brand.pubmed} papers</StampedTag>
-          <StampedTag>{brand.competitor_count} rivals</StampedTag>
-          {brand.campaigns ? <StampedTag>{brand.campaigns} plans</StampedTag> : null}
+      <Box>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", mb: 0.75 }}>
+          <Typography sx={{ fontSize: tokens.fontSize.xs, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "text.secondary" }}>
+            Activity
+          </Typography>
+          <Typography sx={{ fontSize: tokens.fontSize.sm, fontWeight: 700, color: "primary.main", fontVariantNumeric: "tabular-nums" }}>
+            {momentum}/100
+          </Typography>
         </Box>
+        <LinearProgress variant="determinate" value={momentum} aria-label={`Activity ${momentum} of 100`} />
+      </Box>
+
+      <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+        <PillChip label={`${brand.trials_recruiting}/${brand.trials_total} trials`} />
+        <PillChip label={`${brand.pubmed} papers`} />
+        <PillChip label={`${brand.competitor_count} rivals`} />
+        {brand.campaigns ? <PillChip label={`${brand.campaigns} plans`} /> : null}
       </Box>
 
       <Button variant="contained" color="primary" onClick={() => onPlan(brand.brand)}>

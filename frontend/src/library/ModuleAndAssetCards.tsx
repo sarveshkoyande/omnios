@@ -3,7 +3,7 @@ import Chip from "@mui/material/Chip";
 import Link from "@mui/material/Link";
 import Typography from "@mui/material/Typography";
 import { ConsolePanel } from "../components/ConsolePanel";
-import { shade, tokens } from "../theme/tokens";
+import { glass, indigoTint, tokens } from "../theme/tokens";
 import type { ContentAsset, ContentModule } from "./types";
 
 export function ModuleCard({ module: m }: { module: ContentModule }) {
@@ -36,8 +36,8 @@ export function ModuleCard({ module: m }: { module: ContentModule }) {
 
 export function AssetRow({ asset }: { asset: ContentAsset }) {
   return (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, background: tokens.color.surface, border: `1px solid ${shade(0.14)}`, borderRadius: 2, p: 1.5 }}>
-      <Chip size="small" label={asset.asset_format} sx={{ background: tokens.color.secondary, color: tokens.color.text, fontWeight: 700 }} />
+    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, background: glass.content, border: `1px solid ${indigoTint(0.12)}`, borderRadius: 2, p: 1.5 }}>
+      <Chip size="small" label={asset.asset_format} sx={{ background: tokens.color.secondary, color: "#fff", fontWeight: 700 }} />
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <Typography sx={{ fontWeight: 700, fontSize: 12 }}>{asset.title}</Typography>
         {asset.description && (

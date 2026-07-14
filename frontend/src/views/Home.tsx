@@ -7,10 +7,9 @@ import { fetchHome, type HomePayload } from "../api";
 import { BrandPlate } from "../components/BrandPlate";
 import { ConsolePanel } from "../components/ConsolePanel";
 import { StatOdometer } from "../components/StatOdometer";
-import { StatesShowcase } from "../components/StatesShowcase";
 import { TactileButton, KeycapSublabel } from "../components/TactileButton";
 import { TickerStrip } from "../components/TickerStrip";
-import { tokens, shade, light, insetShadow, enamelFace } from "../theme/tokens";
+import { tokens, indigoTint } from "../theme/tokens";
 
 const LIFE_META: Record<string, { label: string; color: string }> = {
   launch: { label: "Launch", color: tokens.color.primary },
@@ -19,14 +18,13 @@ const LIFE_META: Record<string, { label: string; color: string }> = {
   loe: { label: "Loss of exclusivity", color: tokens.color.warning },
 };
 
-/** Recessed channel holding enamel lifecycle segments. */
+/** Segmented lifecycle-mix bar on a translucent track. */
 const MixGroove = styled("div")({
   display: "flex",
-  height: 16,
-  borderRadius: tokens.radius.sm,
+  height: 14,
+  borderRadius: tokens.radius.pill,
   overflow: "hidden",
-  background: shade(0.12),
-  boxShadow: insetShadow,
+  background: indigoTint(0.1),
 });
 
 export function Home({
@@ -100,8 +98,8 @@ export function Home({
                     title={`${meta.label}: ${mix[k]}`}
                     sx={{
                       width: `${((mix[k] ?? 0) / (allBrands.length || 1)) * 100}%`,
-                      background: enamelFace(meta.color),
-                      borderRight: `1px solid ${shade(0.3)}`,
+                      background: meta.color,
+                      borderRight: `2px solid rgba(255,255,255,0.7)`,
                     }}
                   />
                 ))}
@@ -113,9 +111,7 @@ export function Home({
                   <Typography key={k} variant="caption" sx={{ display: "inline-flex", alignItems: "center", gap: 1 }}>
                     <Box component="i" sx={{
                       width: 10, height: 10, borderRadius: "50%",
-                      background: enamelFace(meta.color),
-                      border: `1px solid ${shade(0.3)}`,
-                      boxShadow: `inset 0 1px 0 ${light(0.5)}`,
+                      background: meta.color,
                     }} />
                     {meta.label} <b>{mix[k]}</b>
                   </Typography>
@@ -128,7 +124,7 @@ export function Home({
               <Box sx={{ flex: 1 }}>
                 <LinearProgress variant="determinate" value={approvedPct} color="success" />
               </Box>
-              <Typography sx={{ fontFamily: tokens.font.mono, fontWeight: 700 }}>{approvedPct}%</Typography>
+              <Typography sx={{ fontWeight: 700, color: "primary.main" }}>{approvedPct}%</Typography>
             </Box>
             <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 1 }}>
               MLR-approved claims: {lib.approved_claims ?? 0} / {lib.claims ?? 0} · Assets: {lib.content_assets ?? 0} ·
@@ -152,8 +148,6 @@ export function Home({
             </Box>
           </Box>
         ))}
-
-        <StatesShowcase />
       </Box>
     </>
   );

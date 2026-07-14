@@ -5,7 +5,7 @@ import { styled } from "@mui/material/styles";
 import { PlanTable } from "./PlanTable";
 import { StageHead } from "./StageHead";
 import { ConsolePanel } from "../../components/ConsolePanel";
-import { shade, tokens } from "../../theme/tokens";
+import { glass, indigoTint, shade, tokens } from "../../theme/tokens";
 import type { PlanResult } from "../types";
 
 const BeliefShift = styled(Box)(({ theme }) => ({
@@ -25,20 +25,21 @@ const BeliefPill = styled("span")<{ tone: "a" | "b" }>(({ tone }) => ({
 }));
 
 const JourneyCard = styled(Box)(({ theme }) => ({
-  border: `1px solid ${shade(0.14)}`,
-  borderRadius: 10,
+  border: `1px solid ${indigoTint(0.12)}`,
+  borderRadius: tokens.radius.md,
   padding: theme.spacing(2.5),
   marginBottom: theme.spacing(2),
+  background: "rgba(255,255,255,0.4)",
 }));
 
 const FlowNode = styled(Box)<{ accent: string }>(({ theme, accent }) => ({
   display: "flex",
   gap: theme.spacing(1),
   alignItems: "flex-start",
-  background: tokens.color.surface,
-  border: `1px solid ${shade(0.14)}`,
+  background: glass.content,
+  border: `1px solid ${indigoTint(0.12)}`,
   borderLeft: `3px solid ${accent}`,
-  borderRadius: 8,
+  borderRadius: tokens.radius.sm,
   padding: theme.spacing(1.5, 2),
   flex: "1 1 0",
   minWidth: 130,

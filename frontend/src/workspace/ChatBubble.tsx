@@ -1,84 +1,86 @@
 import { styled } from "@mui/material/styles";
-import { tokens, shade, light, panelShadow, insetShadow } from "../theme/tokens";
+import { tokens, glass, glassFallback, indigoTint, gradientBrand } from "../theme/tokens";
 
-/**
- * AgentBubble — a paper memo slip pinned to the desk: card stock, slight
- * rotation-free "pinned" corner accent, torn-off left edge via a dashed groove.
- */
+const glassSupports = "@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)))";
+
+/** AgentBubble — a Tier-A milk-glass panel with a small indigo accent dot. */
 export const AgentBubble = styled("div")(({ theme }) => ({
   position: "relative",
   maxWidth: 640,
-  padding: theme.spacing(3, 4),
-  borderTopLeftRadius: 2,
+  padding: theme.spacing(2.5, 3.5),
+  borderTopLeftRadius: 4,
   borderRadius: tokens.radius.md,
-  background: `${tokens.color.surface}`,
-  border: `1px solid ${shade(0.16)}`,
-  boxShadow: panelShadow,
-  fontSize: tokens.fontSize.sm,
+  background: glassFallback,
+  border: glass.border,
+  boxShadow: glass.shadow,
+  color: tokens.color.text,
+  fontSize: tokens.fontSize.md,
   lineHeight: 1.6,
+  [glassSupports]: { background: glass.panel, backdropFilter: glass.blur, WebkitBackdropFilter: glass.blur },
   "&::before": {
-    // Binder-pin accent, top-left.
     content: '""',
     position: "absolute",
     top: -4,
-    left: 14,
+    left: 16,
     width: 8,
     height: 8,
     borderRadius: "50%",
-    background: `radial-gradient(circle at 35% 30%, ${light(0.9)}, ${tokens.color.primary} 60%, ${shade(0.3)})`,
-    boxShadow: `0 1px 2px ${shade(0.3)}`,
+    background: gradientBrand,
+    boxShadow: "0 1px 3px rgba(79,70,229,0.4)",
   },
 }));
 
-/** UserBubble — a stamped enamel ticket stub, right-aligned. */
+/** UserBubble — brand-gradient, white text, right-aligned. */
 export const UserBubble = styled("div")(({ theme }) => ({
   maxWidth: 640,
   marginLeft: "auto",
-  padding: theme.spacing(3, 4),
-  borderTopRightRadius: 2,
+  padding: theme.spacing(2.5, 3.5),
+  borderTopRightRadius: 4,
   borderRadius: tokens.radius.md,
-  background: `linear-gradient(180deg, ${light(0.22)}, ${light(0)} 45%), ${tokens.color.primary}`,
-  color: tokens.color.text,
-  boxShadow: panelShadow,
-  fontSize: tokens.fontSize.sm,
+  background: gradientBrand,
+  color: "#fff",
+  boxShadow: "0 6px 20px rgba(79,70,229,0.28)",
+  fontSize: tokens.fontSize.md,
   lineHeight: 1.6,
 }));
 
-/** NarrationLine — a dashed-rule aside, no plate: quieter voice for scene-setting text. */
+/** NarrationLine — quiet dashed aside for scene-setting text. */
 export const NarrationLine = styled("div")(({ theme }) => ({
   maxWidth: 640,
   padding: theme.spacing(2, 0),
-  borderTop: `1px dashed ${shade(0.2)}`,
-  borderBottom: `1px dashed ${shade(0.2)}`,
-  color: shade(0.62),
+  borderTop: `1px dashed ${indigoTint(0.2)}`,
+  borderBottom: `1px dashed ${indigoTint(0.2)}`,
+  color: tokens.color.inkSoft,
   fontStyle: "italic",
-  fontSize: tokens.fontSize.sm,
+  fontSize: tokens.fontSize.md,
 }));
 
-/** TurnBubble — a teammate's sticky note: colored accent tab matching their portrait ring. */
+/** TurnBubble — a teammate's turn: glass panel with an accent left edge. */
 export const TurnBubble = styled("div")<{ accent: string }>(({ theme, accent }) => ({
   position: "relative",
   maxWidth: 640,
-  padding: theme.spacing(3, 4),
+  padding: theme.spacing(2.5, 3.5),
   borderRadius: tokens.radius.md,
-  background: tokens.color.surface,
-  border: `1px solid ${shade(0.16)}`,
+  background: glassFallback,
+  border: glass.border,
   borderLeft: `4px solid ${accent}`,
-  boxShadow: panelShadow,
-  fontSize: tokens.fontSize.sm,
+  boxShadow: glass.shadow,
+  color: tokens.color.text,
+  fontSize: tokens.fontSize.md,
   lineHeight: 1.6,
+  [glassSupports]: { background: glass.panel, backdropFilter: glass.blur, WebkitBackdropFilter: glass.blur },
 }));
 
-/** BanterBubble — a quiet side-remark: recessed, smaller, indented under the main turn. */
+/** BanterBubble — a recessed translucent side-remark, indented. */
 export const BanterBubble = styled("div")<{ accent: string }>(({ theme, accent }) => ({
   maxWidth: 460,
   marginLeft: theme.spacing(9),
   padding: theme.spacing(1.5, 3),
-  borderRadius: 999,
-  background: shade(0.05),
-  boxShadow: insetShadow,
-  fontSize: tokens.fontSize.xs,
-  color: shade(0.7),
+  borderRadius: tokens.radius.pill,
+  background: "rgba(255,255,255,0.45)",
+  border: `1px solid ${indigoTint(0.1)}`,
+  fontSize: tokens.fontSize.sm,
+  color: tokens.color.inkSoft,
   "& b": { color: accent },
 }));
 
@@ -86,12 +88,13 @@ export const ClarifyBadge = styled("span")({
   display: "inline-flex",
   alignItems: "center",
   gap: 4,
-  fontFamily: tokens.font.mono,
   fontSize: tokens.fontSize.xs,
   fontWeight: 700,
-  color: tokens.color.text,
-  background: `linear-gradient(180deg, ${light(0.5)}, ${light(0)}), ${tokens.color.secondary}`,
-  border: `1px solid ${shade(0.3)}`,
-  borderRadius: 999,
-  padding: "2px 10px",
+  letterSpacing: "0.04em",
+  textTransform: "uppercase",
+  color: tokens.color.primary,
+  background: indigoTint(0.1),
+  border: glass.borderTint,
+  borderRadius: tokens.radius.pill,
+  padding: "3px 11px",
 });

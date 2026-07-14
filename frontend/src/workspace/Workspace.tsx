@@ -17,7 +17,7 @@ import { StageReporting } from "./stages/StageReporting";
 import { WorkflowStepper } from "./stages/WorkflowStepper";
 import { useWorkspace } from "./useWorkspace";
 import { ConsolePanel } from "../components/ConsolePanel";
-import { tokens, shade } from "../theme/tokens";
+import { tokens, indigoTint } from "../theme/tokens";
 
 const EmptyState = styled(Box)(({ theme }) => ({
   flex: 1,
@@ -26,7 +26,7 @@ const EmptyState = styled(Box)(({ theme }) => ({
   alignItems: "center",
   justifyContent: "center",
   gap: theme.spacing(3),
-  color: shade(0.55),
+  color: tokens.color.inkSoft,
   textAlign: "center",
   padding: theme.spacing(10),
 }));
@@ -71,7 +71,7 @@ export function Workspace({ prefillBrand }: { prefillBrand?: string | null }) {
         onNewProject={() => { ws.newProject(); setDrawerOpen(false); }}
       />
 
-      <Box component="main" sx={{ flex: "0 0 42%", minWidth: 320, display: "flex", flexDirection: "column", borderRight: `1px solid ${shade(0.14)}`, position: "relative" }}>
+      <Box component="main" sx={{ flex: "0 0 42%", minWidth: 320, display: "flex", flexDirection: "column", borderRight: `1px solid ${indigoTint(0.1)}`, position: "relative" }}>
         <Button
           size="small"
           variant="outlined"
@@ -96,8 +96,8 @@ export function Workspace({ prefillBrand }: { prefillBrand?: string | null }) {
           </EmptyState>
         ) : (
           <>
-            <Box sx={{ p: 3, pb: 2, borderBottom: `1px solid ${shade(0.14)}` }}>
-              <Typography variant="h3" sx={{ fontSize: tokens.fontSize.lg }}>{ws.projectName}</Typography>
+            <Box sx={{ p: 3, pb: 2, borderBottom: `1px solid ${indigoTint(0.1)}` }}>
+              <Typography variant="h3" sx={{ fontSize: tokens.fontSize.xl }}>{ws.projectName}</Typography>
               <Typography variant="caption" sx={{ color: "text.secondary" }}>
                 The agent captures your brief in conversation, then runs its research agents on the right.
               </Typography>
@@ -125,13 +125,13 @@ export function Workspace({ prefillBrand }: { prefillBrand?: string | null }) {
         {ws.projectId && (
           <>
             <WorkflowStepper stage={ws.stage} unlocked={!!ws.result} onSelect={ws.setStage} />
-            <Box sx={{ flex: 1, overflowY: "auto", p: 3 }}>
+            <Box sx={{ flex: 1, overflowY: "auto", p: 3, pt: 1 }}>
               {ws.stage === 1 && (
                 <>
-                  <ConsolePanel title="Brief" sx={{ mb: 3 }}>
+                  <ConsolePanel title="Brief" icon="assignment" collapsible sx={{ mb: 3 }}>
                     <BriefCard slots={ws.slots} inferred={ws.inferred} />
                   </ConsolePanel>
-                  <ConsolePanel title="Agent team">
+                  <ConsolePanel title="Agent team" icon="smart_toy" collapsible>
                     <AgentTeamPanel agents={ws.agents} caption={ws.teamCaption} />
                   </ConsolePanel>
                   {ws.planHtml && (

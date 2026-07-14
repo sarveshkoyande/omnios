@@ -4,7 +4,7 @@ import { keyframes } from "@emotion/react";
 import { styled } from "@mui/material/styles";
 import { AgentAvatar } from "./Avatar";
 import { AGENT_PEOPLE } from "./types";
-import { tokens, shade, light, insetShadow } from "../theme/tokens";
+import { tokens, shade, indigoTint } from "../theme/tokens";
 
 export interface AgentEntry {
   id: string;
@@ -79,7 +79,7 @@ const TeamCaption = styled(Typography)(({ theme }) => ({
   textAlign: "center",
   marginTop: theme.spacing(3),
   paddingTop: theme.spacing(2),
-  borderTop: `1px dashed ${shade(0.18)}`,
+  borderTop: `1px dashed ${indigoTint(0.18)}`,
   minHeight: 20,
   "& b": { color: tokens.color.text },
 }));
@@ -91,10 +91,9 @@ const AgentCard = styled("div")<{ status: AgentEntry["status"] }>(({ theme, stat
   padding: theme.spacing(2.5),
   marginBottom: theme.spacing(1),
   borderRadius: tokens.radius.sm,
-  borderBottom: `1px solid ${shade(0.12)}`,
+  borderBottom: `1px solid ${indigoTint(0.1)}`,
   opacity: status === "standby" ? 0.55 : 1,
-  background: status === "running" ? `linear-gradient(90deg, ${light(0.4)}, ${shade(0.02)})` : "transparent",
-  boxShadow: status === "running" ? `inset 0 1px 2px ${shade(0.08)}` : "none",
+  background: status === "running" ? indigoTint(0.07) : "transparent",
 }));
 
 function StatusDot({ status }: { status: AgentEntry["status"] }) {
@@ -102,7 +101,7 @@ function StatusDot({ status }: { status: AgentEntry["status"] }) {
   return (
     <Box
       component="span"
-      sx={{ width: 8, height: 8, borderRadius: "50%", background: color, flex: "0 0 auto", ml: "auto", boxShadow: insetShadow }}
+      sx={{ width: 8, height: 8, borderRadius: "50%", background: color, flex: "0 0 auto", ml: "auto" }}
     />
   );
 }
@@ -119,12 +118,11 @@ export function AgentTeamPanel({ agents, caption }: { agents: AgentEntry[]; capt
     <Box>
       <Box
         sx={{
-          background: shade(0.03),
-          border: `1px solid ${shade(0.14)}`,
+          background: indigoTint(0.05),
+          border: `1px solid ${indigoTint(0.12)}`,
           borderRadius: tokens.radius.md,
           p: 3,
           mb: 3,
-          boxShadow: `inset 0 1px 0 ${light(0.6)}`,
         }}
       >
         <Box sx={{ display: "flex", gap: 1.5, justifyContent: "space-between" }}>

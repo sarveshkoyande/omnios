@@ -5,7 +5,7 @@ import Typography from "@mui/material/Typography";
 import { styled } from "@mui/material/styles";
 import { CLAIM_SRC_LABEL, CLAIM_TYPE_LABEL } from "./types";
 import type { Claim } from "./types";
-import { shade, panelShadow, tokens } from "../theme/tokens";
+import { glass, indigoTint, shade, tokens } from "../theme/tokens";
 
 const STATUS_COLOR: Record<string, string> = {
   approved: tokens.color.success,
@@ -14,13 +14,13 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 const Card = styled("article")<{ status: string }>(({ theme, status }) => ({
-  background: tokens.color.surface,
-  border: `1px solid ${shade(0.14)}`,
+  background: glass.content,
+  border: `1px solid ${indigoTint(0.12)}`,
   borderLeft: `3px solid ${STATUS_COLOR[status] ?? shade(0.3)}`,
-  borderRadius: 10,
+  borderRadius: tokens.radius.md,
   padding: theme.spacing(3),
   marginBottom: theme.spacing(2),
-  boxShadow: panelShadow,
+  boxShadow: glass.shadow,
 }));
 
 export function ClaimCard({ claim }: { claim: Claim }) {

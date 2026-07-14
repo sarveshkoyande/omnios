@@ -8,11 +8,11 @@ import { styled } from "@mui/material/styles";
 import { fetchPersonaDetail } from "../../api";
 import type { PersonaDetail } from "../types";
 import { personaInitials } from "./personaUtils";
-import { shade, panelShadow } from "../../theme/tokens";
+import { indigoTint } from "../../theme/tokens";
 
 const Fact = styled(Box)(({ theme }) => ({
-  background: shade(0.03),
-  border: `1px solid ${shade(0.14)}`,
+  background: "rgba(255,255,255,0.5)",
+  border: `1px solid ${indigoTint(0.12)}`,
   borderRadius: 9,
   padding: theme.spacing(1.25, 1.5),
   textAlign: "center",
@@ -37,7 +37,7 @@ export function PersonaProfileModal({ personaId, onClose }: { personaId: string 
   }, [personaId]);
 
   return (
-    <Dialog open={!!personaId} onClose={onClose} maxWidth="sm" fullWidth slotProps={{ paper: { sx: { boxShadow: panelShadow } } }}>
+    <Dialog open={!!personaId} onClose={onClose} maxWidth="sm" fullWidth>
       {detail && (
         <Box sx={{ p: 4, position: "relative" }}>
           <IconButton onClick={onClose} sx={{ position: "absolute", top: 12, right: 12 }} aria-label="Close">
@@ -49,7 +49,7 @@ export function PersonaProfileModal({ personaId, onClose }: { personaId: string 
                 width: 54, height: 54, borderRadius: "50%", flex: "0 0 auto",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 fontSize: 18, fontWeight: 700, color: "#fff",
-                background: "linear-gradient(135deg,#1768D1,#4AA6F2)",
+                background: "linear-gradient(135deg,#4F46E5,#7C3AED)",
               }}
             >
               {personaInitials(detail.name)}

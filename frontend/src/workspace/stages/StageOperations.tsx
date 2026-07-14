@@ -5,7 +5,7 @@ import Typography from "@mui/material/Typography";
 import { ConsolePanel } from "../../components/ConsolePanel";
 import { PlanTable } from "./PlanTable";
 import { StageHead } from "./StageHead";
-import { shade, tokens } from "../../theme/tokens";
+import { indigoTint, shade, tokens } from "../../theme/tokens";
 import type { PlanResult } from "../types";
 
 const LANE_ICON: Record<string, string> = {
@@ -69,7 +69,7 @@ export function StageOperations({ result }: { result: PlanResult | null }) {
           return (
             <ConsolePanel key={ch} sx={{ minWidth: 0 }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1.5 }}>
-                <Box sx={{ width: 28, height: 28, borderRadius: 2, background: shade(0.06), display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Box sx={{ width: 28, height: 28, borderRadius: 2, background: indigoTint(0.1), display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <span className="material-symbols-outlined" style={{ fontSize: 17, color: tokens.color.primary }}>{LANE_ICON[ch] ?? "donut_small"}</span>
                 </Box>
                 <Box sx={{ flex: 1, minWidth: 0 }}>

@@ -1,14 +1,12 @@
 import { keyframes } from "@emotion/react";
 import { styled } from "@mui/material/styles";
-import { tokens, shade, light } from "../theme/tokens";
+import { tokens, glass, glassFallback, indigoTint } from "../theme/tokens";
 import type { FeedItem } from "../api";
 
 /**
- * TickerStrip — airport split-flap departure board: a dark machined strip with
- * mono type, riveted frame, and event tags as illuminated indicators. Marquee
- * motion is killed globally by the prefers-reduced-motion baseline override.
- * Contrast on the dark strip: surface text 17.9:1; warning tag 5.6:1;
- * success LED 5.4:1 — all AA.
+ * TickerStrip — a translucent frosted rail of live market events. Ink text on
+ * glass (AA), indigo event tags, a green LED for live-provenance items. Marquee
+ * motion is paused on hover/focus and killed by the reduced-motion baseline.
  */
 const scroll = keyframes`
   from { transform: translateX(0); }
@@ -18,10 +16,13 @@ const scroll = keyframes`
 const Board = styled("div")({
   overflow: "hidden",
   whiteSpace: "nowrap",
-  background: `linear-gradient(180deg, ${shade(0.98)}, ${tokens.color.text} 30%, ${shade(0.92)})`,
-  borderTop: `1px solid ${shade(0.7)}`,
-  borderBottom: `1px solid ${shade(0.7)}`,
-  boxShadow: `inset 0 3px 8px rgba(0,0,0,0.5), inset 0 -1px 0 ${light(0.1)}, 0 1px 0 ${light(0.9)}`,
+  background: glassFallback,
+  borderBottom: `1px solid ${indigoTint(0.12)}`,
+  "@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)))": {
+    background: glass.panel,
+    backdropFilter: glass.blurLight,
+    WebkitBackdropFilter: glass.blurLight,
+  },
   "&:hover > div, &:focus-within > div": { animationPlayState: "paused" },
 });
 
@@ -35,17 +36,17 @@ const Item = styled("span")(({ theme }) => ({
   display: "inline-flex",
   alignItems: "center",
   gap: theme.spacing(2),
-  padding: theme.spacing(2, 6),
-  color: tokens.color.surface,
-  fontFamily: tokens.font.mono,
-  fontSize: tokens.fontSize.xs,
-  borderRight: `1px solid ${light(0.14)}`,
+  padding: theme.spacing(1.5, 6),
+  color: tokens.color.text,
+  fontSize: tokens.fontSize.sm,
+  borderRight: `1px solid ${indigoTint(0.1)}`,
 }));
 
 const Tag = styled("b")({
-  color: tokens.color.secondary,
+  color: tokens.color.primary,
   letterSpacing: "0.06em",
   textTransform: "uppercase",
+  fontSize: tokens.fontSize.xs,
 });
 
 const Led = styled("i")({
@@ -53,7 +54,7 @@ const Led = styled("i")({
   height: 7,
   borderRadius: "50%",
   background: tokens.color.success,
-  boxShadow: `0 0 4px ${tokens.color.success}`,
+  boxShadow: `0 0 5px ${tokens.color.success}`,
 });
 
 const TAG: Record<string, string> = {
@@ -74,7 +75,6 @@ export function TickerStrip({ feed }: { feed: FeedItem[] }) {
     ));
   return (
     <Board role="marquee" aria-label="Market events ticker">
-      {/* Sequence duplicated so the -50% loop is seamless. */}
       <Track>{sequence("a")}{sequence("b")}</Track>
     </Board>
   );

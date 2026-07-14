@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { fetchLibraryBrand, fetchLibraryIndex } from "../api";
+import TextField from "@mui/material/TextField";
 import { StatOdometer } from "../components/StatOdometer";
-import { InsetTextField } from "../components/InsetTextField";
 import { LibraryBrandCard } from "./LibraryBrandCard";
 import { LibraryDetailView } from "./LibraryDetailView";
 import { Lightbox } from "./Lightbox";
@@ -85,7 +85,7 @@ export function Library() {
         ) : null}
       </Box>
 
-      <InsetTextField
+      <TextField
         placeholder="Search brands, generics or therapy areas…"
         value={query}
         onChange={(e) => setQuery(e.target.value)}

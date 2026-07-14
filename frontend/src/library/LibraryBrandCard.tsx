@@ -20,8 +20,8 @@ export function LibraryBrandCard({ brand, onOpen }: { brand: LibraryBrandSummary
     <ConsolePanel sx={{ display: "flex", flexDirection: "column", gap: 2, cursor: "pointer" }} onClick={() => onOpen(brand.brand)}>
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 2 }}>
         <Box>
-          <Typography variant="h3" sx={{ fontSize: tokens.fontSize.lg }}>{brand.brand}</Typography>
-          <Typography sx={{ fontFamily: tokens.font.mono, fontSize: tokens.fontSize.xs, color: "text.secondary" }}>
+          <Typography variant="h3" sx={{ fontSize: tokens.fontSize.xl }}>{brand.brand}</Typography>
+          <Typography sx={{ fontSize: tokens.fontSize.sm, color: "text.secondary" }}>
             {brand.generic_name}
           </Typography>
         </Box>

@@ -5,7 +5,7 @@ import Drawer from "@mui/material/Drawer";
 import Typography from "@mui/material/Typography";
 import { styled } from "@mui/material/styles";
 import type { ProjectSummary } from "./types";
-import { tokens, shade, insetShadow } from "../theme/tokens";
+import { tokens, indigoTint } from "../theme/tokens";
 
 /**
  * PlansDrawer — the metaphor is literal: MUI's Drawer already reads as a
@@ -22,10 +22,9 @@ const PlanRow = styled("button")<{ active?: boolean }>(({ theme, active }) => ({
   padding: theme.spacing(2, 2.5),
   borderRadius: tokens.radius.sm,
   marginBottom: 4,
-  background: active ? shade(0.08) : "transparent",
-  boxShadow: active ? insetShadow : "none",
-  "&:hover": { background: shade(0.05) },
-  "&:focus-visible": { outline: `2px solid ${tokens.color.text}`, outlineOffset: -2 },
+  background: active ? indigoTint(0.1) : "transparent",
+  "&:hover": { background: indigoTint(0.06) },
+  "&:focus-visible": { outline: `2px solid ${tokens.color.primary}`, outlineOffset: -2 },
 }));
 
 export function PlansDrawer({
@@ -65,7 +64,7 @@ export function PlansDrawer({
             </PlanRow>
           ))}
         </Box>
-        <Typography variant="caption" sx={{ color: "text.secondary", pt: 2, borderTop: `1px solid ${shade(0.14)}` }}>
+        <Typography variant="caption" sx={{ color: "text.secondary", pt: 2, borderTop: `1px solid ${indigoTint(0.12)}` }}>
           Each plan is a saved conversation + campaign document.
         </Typography>
       </Box>

@@ -1,95 +1,80 @@
 /**
- * Design tokens — verbatim from the skeumorphism skill's Style Foundations.
- * Every other value in the design system must derive from these (alpha tints of
- * `text` for shade, alpha tints of `surface` for highlight), never ad-hoc hex.
+ * Design tokens — "light liquid glass" (DESIGN_BRIEF.md, single source of truth).
+ * Every value in the design system derives from these; no raw hex/rgba in
+ * components. The reference screen (Workspace) is the visual contract.
  */
 export const tokens = {
   color: {
-    primary: "#FA3C00",
-    secondary: "#F08321",
-    success: "#16A34A",
+    // Brand
+    primary: "#4F46E5", // brand indigo — app bar gradient start, primary actions
+    secondary: "#7C3AED", // brand violet — app bar gradient end
+    magenta: "#E935C1", // logo mark / rare highlight only — never UI chrome
+    // Ink
+    text: "#1E1B33", // primary text, dark indigo-slate (never pure black)
+    inkSoft: "#55517A", // secondary text, helper copy
+    // Status
+    success: "#22C55E", // "agents online" dot
     warning: "#D97706",
     danger: "#DC2626",
+    // Atmosphere
     surface: "#FFFFFF",
-    text: "#111827",
+    bgBase: "#E9EAFB", // pale periwinkle page base
+    bgMist1: "#C9CFF8", // soft blue-violet mist blob
+    bgMist2: "#E3D9FA", // soft lavender mist blob
   },
-  /** Type scale 12/14/16/20/24/32 */
-  fontSize: { xs: 12, sm: 14, md: 16, lg: 20, xl: 24, xxl: 32 },
+  /** Type scale 12/13/14/16/20/24/32 */
+  fontSize: { xs: 12, sm: 13, md: 14, lg: 16, xl: 20, xxl: 24, display: 32 },
   font: {
-    primary: "'Roboto', 'Segoe UI', Arial, sans-serif",
-    display: "'Germania One', 'Roboto', sans-serif",
-    mono: "'JetBrains Mono', ui-monospace, monospace",
+    primary: `"Segoe UI", "Inter", system-ui, "Roboto", sans-serif`,
+    // kept for not-yet-migrated skeuo screens; unused on glass surfaces
+    display: `"Segoe UI", "Inter", system-ui, sans-serif`,
+    mono: "ui-monospace, 'JetBrains Mono', monospace",
   },
   /** Spacing scale 4/8/12/16/24/32 — theme.spacing(1|2|3|4|6|8) */
   spacingUnit: 4,
-  radius: { sm: 4, md: 8 },
+  radius: { sm: 8, md: 14, lg: 20, pill: 999 },
 } as const;
 
-/** Shade: text token at an alpha — used for every border, shadow and neutral tint. */
-export const shade = (alpha: number) => `rgba(17, 24, 39, ${alpha})`;
-/** Highlight: surface token at an alpha — used for every bevel/sheen highlight. */
+/** Shade: ink token at an alpha — neutral tints, dividers, soft shadows. */
+export const shade = (alpha: number) => `rgba(30, 27, 51, ${alpha})`;
+/** Highlight: surface (white) token at an alpha — glass edges/sheen. */
 export const light = (alpha: number) => `rgba(255, 255, 255, ${alpha})`;
+/** Indigo tint at an alpha — brand-tinted borders/shadows. */
+export const indigoTint = (alpha: number) => `rgba(79, 70, 229, ${alpha})`;
 
-/* ---- Material recipes (lighting, not palette: gradients/shadows built from the
-   two tokens above so the "physical" look introduces no new colors). ---- */
+/* ------------------------------------------------------------------ *
+ * GLASS RECIPES — the four core elements: transparency, blur, border,
+ * layered shadow. Tiers per the brief's glass hierarchy.
+ * ------------------------------------------------------------------ */
 
-/** Top-lit enamel/keycap face over any base color. */
-export const enamelFace = (base: string) =>
-  `linear-gradient(180deg, ${light(0.28)} 0%, ${light(0)} 42%, ${shade(0.08)} 100%), ${base}`;
+export const glass = {
+  /** Tier A — panels (pane containers, section/stepper cards, chat bubbles). */
+  panel: "rgba(255, 255, 255, 0.55)",
+  /** Tier B — emphasis (active stage, hovered/selected). */
+  panelStrong: "rgba(255, 255, 255, 0.72)",
+  /** Tier 0 — content surfaces (inputs, tables, long-form reading). */
+  content: "rgba(255, 255, 255, 0.92)",
+  blur: "blur(24px)",
+  blurLight: "blur(12px)",
+  border: "1px solid rgba(255, 255, 255, 0.65)",
+  borderTint: "1px solid rgba(79, 70, 229, 0.12)",
+  shadow: "0 8px 32px rgba(79, 70, 229, 0.10)",
+  shadowElevated: "0 16px 48px rgba(79, 70, 229, 0.18)",
+} as const;
 
-/** Raised edge: machined hard edge + ambient falloff. */
-export const raisedShadow = [
-  `0 2px 0 ${shade(0.28)}`,
-  `0 3px 6px ${shade(0.22)}`,
-  `inset 0 1px 0 ${light(0.65)}`,
-].join(", ");
+/** Solid fallback for @supports / prefers-reduced-transparency. */
+export const glassFallback = "rgba(255, 255, 255, 0.9)";
 
-export const raisedShadowHover = [
-  `0 3px 0 ${shade(0.28)}`,
-  `0 6px 12px ${shade(0.26)}`,
-  `inset 0 1px 0 ${light(0.7)}`,
-].join(", ");
+export const gradientBrand = `linear-gradient(90deg, ${tokens.color.primary}, ${tokens.color.secondary})`;
+export const gradientBrandVertical = `linear-gradient(180deg, ${tokens.color.primary}, ${tokens.color.secondary})`;
 
-/** Pressed: travel consumed, light now falls inside the key. */
-export const pressedShadow = [
-  `0 0 0 ${shade(0.28)}`,
-  `inset 0 2px 4px ${shade(0.35)}`,
-  `inset 0 -1px 0 ${light(0.4)}`,
-].join(", ");
-
-/** Milled input well / recessed tray. */
-export const insetShadow = [
-  `inset 0 2px 4px ${shade(0.18)}`,
-  `inset 0 1px 2px ${shade(0.12)}`,
-  `inset 0 -1px 0 ${light(0.9)}`,
-].join(", ");
-
-/** Card-stock panel sitting on the desk. */
-export const panelShadow = [
-  `0 1px 2px ${shade(0.1)}`,
-  `0 4px 10px ${shade(0.12)}`,
-  `inset 0 1px 0 ${light(0.9)}`,
-].join(", ");
-
-/** Embossed groove divider (dark line over light line). */
-export const grooveBorder = `1px solid ${shade(0.16)}`;
-export const grooveHighlight = `1px solid ${light(0.9)}`;
-
-/** Paper-grain texture: tiny SVG noise, 2.5% opacity — felt, not seen. */
-export const paperGrain =
-  `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E")`;
-
-/** Brushed-metal header strip (vertical grain via 1px banding of the two tokens). */
-export const brushedMetal =
-  `repeating-linear-gradient(90deg, ${shade(0.05)} 0px, ${light(0.35)} 1px, ${shade(0.02)} 2px), ` +
-  `linear-gradient(180deg, ${light(0.65)}, ${shade(0.1)}), #FFFFFF`;
-
-/** Focus ring — WCAG 2.2 AA: always visible, 2px, offset so it reads on any fill. */
+/** Focus ring — WCAG 2.2 AA: always visible, 2px brand indigo, offset. */
 export const focusRing = {
-  outline: `2px solid ${tokens.color.text}`,
+  outline: `2px solid ${tokens.color.primary}`,
   outlineOffset: "2px",
 } as const;
-export const focusRingOnDark = {
+/** Focus ring on the saturated app bar (indigo would vanish) — white instead. */
+export const focusRingOnBrand = {
   outline: `2px solid ${tokens.color.surface}`,
   outlineOffset: "2px",
 } as const;
