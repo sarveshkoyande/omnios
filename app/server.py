@@ -646,14 +646,22 @@ def post_kpi_framework(req: KpiRequest):
 
 @app.get("/")
 def root():
-    return FileResponse(APP_DIR / "static" / "index.html")
+    """New React + MUI front-end (built by frontend/ via Vite into static/v2) is now the
+    default landing experience -- migration complete enough to promote it off /v2."""
+    return FileResponse(APP_DIR / "static" / "v2" / "index.html")
 
 
 @app.get("/v2")
 def root_v2():
-    """New React + MUI front-end (phased migration; built by frontend/ via Vite
-    into static/v2). The legacy UI stays at / until every view is ported."""
+    """Kept as an alias to / so any existing /v2 links/bookmarks keep working."""
     return FileResponse(APP_DIR / "static" / "v2" / "index.html")
+
+
+@app.get("/legacy")
+def root_legacy():
+    """Old static/JS front-end, kept reachable (not deleted) in case of rollback or reference
+    during the migration."""
+    return FileResponse(APP_DIR / "static" / "index.html")
 
 
 app.mount("/static", StaticFiles(directory=APP_DIR / "static"), name="static")
