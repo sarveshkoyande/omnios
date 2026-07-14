@@ -28,11 +28,38 @@ needs the short-root workaround below.
 """
 from __future__ import annotations
 
+import asyncio
 import os
+import pathlib
 import sys
+import threading
 from functools import lru_cache
 
 from strategy.paths import DATA_DIR, ensure_data_dir
+
+_REPO_DIR = pathlib.Path(__file__).resolve().parent.parent
+
+# cognee's graph store (Ladybug) takes an EXCLUSIVE per-connection file lock, so two overlapping
+# recalls in the same process collide with "Could not set lock" (OS error 33). This process-wide
+# lock serialises graph access so concurrent plan runs queue instead of failing.
+_GRAPH_LOCK = threading.Lock()
+
+
+def _load_dotenv() -> None:
+    """Load omni-data-hub/.env into os.environ (real env vars win).
+
+    memory_cognee is used standalone (ingestion scripts, back-end recall) where
+    conversation_llm's loader hasn't run, so the Foundry API key would otherwise be
+    absent and cognee's LLM connection check fails with LLMAPIKeyNotSetError."""
+    env_path = _REPO_DIR / ".env"
+    if not env_path.exists():
+        return
+    for line in env_path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
 
 
 def _foundry_llm_env() -> dict[str, str]:
@@ -69,6 +96,7 @@ def configure() -> None:
     variables that are not already set, so an operator's own cognee env config (e.g. in
     production) always wins.
     """
+    _load_dotenv()
     data_root, system_root = _storage_roots()
     env_defaults = {
         **_foundry_llm_env(),
@@ -77,18 +105,44 @@ def configure() -> None:
         "EMBEDDING_DIMENSIONS": "384",
         "DATA_ROOT_DIRECTORY": data_root,
         "SYSTEM_ROOT_DIRECTORY": system_root,
+        # cognee 1.3 turns these on by default; the app uses a single local, single-user
+        # graph, so disable multi-tenant access control (else search needs a user context)
+        # and session caching (keeps recall() deterministic across processes).
+        "ENABLE_BACKEND_ACCESS_CONTROL": "false",
+        "CACHING": "false",
     }
     for key, value in env_defaults.items():
         os.environ.setdefault(key, value)
 
 
+async def _graph_op_with_retry(op):
+    """Run a graph coroutine factory under the process-wide lock, retrying briefly on the
+    transient exclusive-lock error (OS error 33) so an ingest or recall that overlaps another
+    (or a just-released connection) waits and succeeds instead of failing outright. Returns the
+    op's result."""
+    with _GRAPH_LOCK:
+        last_exc: Exception | None = None
+        for attempt in range(4):
+            try:
+                return await op()
+            except Exception as exc:  # noqa: BLE001
+                if "lock" not in str(exc).lower() and "error: 33" not in str(exc).lower():
+                    raise
+                last_exc = exc
+                await asyncio.sleep(0.75 * (attempt + 1))
+        raise last_exc  # type: ignore[misc]
+
+
 async def remember(text: str) -> None:
-    """Ingest a piece of text into the memory graph."""
+    """Ingest a piece of text into the memory graph (add + cognify), serialised + lock-retried."""
     configure()
     import cognee
 
-    await cognee.add(text)
-    await cognee.cognify()
+    async def _op():
+        await cognee.add(text)
+        await cognee.cognify()
+
+    await _graph_op_with_retry(_op)
 
 
 async def recall(query: str) -> list[str]:
@@ -99,10 +153,27 @@ async def recall(query: str) -> list[str]:
     configure()
     import cognee
 
-    results = await cognee.search(query_text=query)
+    # Serialise graph access and retry briefly on the transient exclusive-lock error, so a plan
+    # run whose recall overlaps another (or a just-released ingestion) waits and succeeds rather
+    # than losing its grounding. A persistent holder (e.g. a crashed process that never released
+    # the lock) still surfaces after the retries, and the caller degrades to "no grounding".
+    results = await _graph_op_with_retry(lambda: cognee.search(query_text=query))
+    # cognee's search return shape has changed across versions: 1.3.0 yields a list of plain
+    # strings; older builds yielded dicts carrying a "search_result" list. Handle both so a
+    # cognee upgrade/downgrade doesn't silently return nothing.
     out: list[str] = []
-    for row in results:
-        out.extend(row.get("search_result") or [])
+    for row in results or []:
+        if isinstance(row, str):
+            if row.strip():
+                out.append(row)
+        elif isinstance(row, dict):
+            sr = row.get("search_result")
+            if isinstance(sr, list):
+                out.extend(s for s in sr if isinstance(s, str) and s.strip())
+            elif isinstance(sr, str) and sr.strip():
+                out.append(sr)
+        elif row is not None:
+            out.append(str(row))
     return out
 
 

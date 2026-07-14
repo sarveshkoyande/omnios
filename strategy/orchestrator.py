@@ -43,6 +43,46 @@ import benchmarks  # noqa: E402  (industry baselines the intel/activation agents
 import brand_kit as brand_kit_mod  # noqa: E402  (a brand's own captured intelligence hub)
 from execution_plan import build_execution_work_plan, build_execution_raci  # noqa: E402
 from test_measure_learn import build_test_measure_learn  # noqa: E402
+import process_knowledge  # noqa: E402  (grounds each agent's section in the ingested Omni OS process docs)
+import external_evidence  # noqa: E402  (live public-source datapoints agents cite to back decisions)
+
+
+# Which documented-process topic each agent consults for its section(s). Drives both the
+# grounding callouts rendered in the plan (via ctx["process_grounding"]) and the visible
+# "consulting the process knowledge" line in each agent's streamed turn.
+_AGENT_TOPICS = {
+    "planner": ["intake_context", "risk_governance"],
+    "intel": ["market_landscape", "segmentation_targeting"],
+    "strategy": ["journey_messaging", "competitive_positioning"],
+    "inspiration": ["creative_content"],
+    "activation": ["channel_budget", "measurement_kpi"],
+}
+
+
+def _grounding_bullet(ctx: dict, topic: str) -> str | None:
+    """A short 'grounded in the firm's own process' bullet for an agent's streamed turn, or
+    None when the knowledge layer had nothing for this topic."""
+    g = (ctx.get("process_grounding") or {}).get(topic)
+    if not g:
+        return None
+    txt = g["guidance"].replace("\n", " ").strip()
+    if len(txt) > 180:
+        txt = txt[:179].rstrip() + "…"
+    return f"📖 Omni OS process — {txt}"
+
+
+def _agent_grounding_bullets(ctx: dict, agent_id: str) -> list[str]:
+    out = []
+    for topic in _AGENT_TOPICS.get(agent_id, []):
+        b = _grounding_bullet(ctx, topic)
+        if b:
+            out.append(b)
+    # The intel agent owns the market read, so it's the one that cites the live external
+    # datapoints pulled to back it.
+    if agent_id == "intel":
+        for d in (ctx.get("external_evidence") or [])[:3]:
+            out.append(f"🔎 {d['label']}: {d['value']} — {d['source']} (as of {d['as_of']})")
+    return out
 
 # Each agent is named by its function. The Engagement Plan Composer (formerly "Cooper") is
 # the plan's author: it opens the run by framing the document structure and closes it by
@@ -158,6 +198,11 @@ def run_agents(brand: str, therapy_area: str, lifecycle_key: str, budget: float 
     yield {"type": "inferred", "persona": inferred["persona"], "lifecycle_label": inferred["lifecycle_label"]}
     kit = brand_kit_mod.kit_for(brand)
     ctx["brand_kit"] = kit
+    # Recall the firm's documented process for every agent's remit up front (one concurrent
+    # batch), so each agent's section can render its Omni OS grounding. {} => renders as before.
+    ctx["process_grounding"] = process_knowledge.ground_all(brand, therapy_area)
+    # Live external datapoints (public sources only) the agents cite to back decisions.
+    ctx["external_evidence"] = external_evidence.datapoints(therapy_area, brand)
     done_agents.add("planner")
     _, _, n_done0, n_total0 = compose_plan_partial(ctx, done_agents, "")
     planner_summary = (f"Plan structure framed — **{n_total0}** sections scaffolded across the four toolkit phases. "
@@ -171,6 +216,7 @@ def run_agents(brand: str, therapy_area: str, lifecycle_key: str, budget: float 
         planner_bullets += [f"Brand kit: {kit.get('source_label', '')} — core claim “{kit.get('core_claim', '')}”",
                             f"{len((kit.get('guardrails') or {}).get('dos', []))} brand dos / "
                             f"{len((kit.get('guardrails') or {}).get('donts', []))} don'ts folded into Risk & governance"]
+    planner_bullets += _agent_grounding_bullets(ctx, "planner")
     yield {"type": "agent", "id": "planner", "status": "done", "summary": planner_summary,
            "detail": {"bullets": planner_bullets}}
     yield _plan_partial(ctx, done_agents, "planner")
@@ -230,6 +276,7 @@ def run_agents(brand: str, therapy_area: str, lifecycle_key: str, budget: float 
     if audience_profile["audience_size"]["total"]:
         intel_bullets.append(f"Audience benchmark ({audience_profile['confidence']}): {audience_profile['headline']}")
         intel_bullets.append("I filled 3 Target-Customer-Group rows from industry benchmarks — flagged as agent-recommended in the plan.")
+    intel_bullets += _agent_grounding_bullets(ctx, "intel")
     yield {"type": "agent", "id": "intel", "status": "done", "summary": intel_summary,
            "detail": {"bullets": intel_bullets}}
     yield _plan_partial(ctx, done_agents, "intel")
@@ -301,6 +348,7 @@ def run_agents(brand: str, therapy_area: str, lifecycle_key: str, budget: float 
         + ("Message pool grounded in the brand's own claims. " if kit else "")
         + "Positioning drafted."
     )
+    strat_bullets += _agent_grounding_bullets(ctx, "strategy")
     yield {"type": "agent", "id": "strategy", "status": "done", "summary": strat_summary, "detail": {"bullets": strat_bullets}}
     yield _plan_partial(ctx, done_agents, "strategy")
 
@@ -344,6 +392,7 @@ def run_agents(brand: str, therapy_area: str, lifecycle_key: str, budget: float 
                      for a in award_campaigns[:2]]
     if kit and kit.get("concepts"):
         insp_bullets += [f"💡 {c['name']} [{c['status']}] — {c['description'][:110]}…" for c in kit["concepts"][:3]]
+    insp_bullets += _agent_grounding_bullets(ctx, "inspiration")
     yield {"type": "agent", "id": "inspiration", "status": "done", "summary": insp_summary, "detail": {"bullets": insp_bullets}}
     yield _plan_partial(ctx, done_agents, "inspiration")
 
@@ -408,6 +457,7 @@ def run_agents(brand: str, therapy_area: str, lifecycle_key: str, budget: float 
                       for r in engagement_baseline["channels"][:3] if r.get("target_low_pct") is not None]
                    + kpi["leading_indicators"][:2]
                    + [execution_plan["mlr_delay_note"]])
+    act_bullets += _agent_grounding_bullets(ctx, "activation")
     yield {"type": "agent", "id": "activation", "status": "done", "summary": act_summary, "detail": {"bullets": act_bullets}}
     yield _plan_partial(ctx, done_agents, "activation")
 
@@ -469,6 +519,12 @@ def compute_plan_ctx(brand: str, therapy_area: str, lifecycle_key: str, budget: 
     ctx["inferred"] = inferred
     kit = brand_kit_mod.kit_for(brand)
     ctx["brand_kit"] = kit
+    # Ground every agent's section in the firm's own documented process (Omni OS docs ingested
+    # into cognee). One concurrent batch; returns {} if the knowledge layer is unavailable, in
+    # which case the plan renders exactly as before.
+    ctx["process_grounding"] = process_knowledge.ground_all(brand, therapy_area)
+    # Live external datapoints (public sources only) the agents cite to back decisions.
+    ctx["external_evidence"] = external_evidence.datapoints(therapy_area, brand)
 
     # -- Market & Competitive Intelligence --
     ctx["market"] = market_landscape(brand, therapy_area)
@@ -762,7 +818,15 @@ def run_phase(phase: str, ctx: dict, opened: bool = False):
         turn = _agent_phase_turn(aid, phase, ctx)
         yield next(turn)  # the 'running' event
         time.sleep(AGENT_TURN_PACING_SEC)
-        yield from turn   # the 'done' event
+        # Stream the 'done' event, folding in this agent's Omni OS process-grounding bullets so
+        # the phased run visibly shows each agent consulting the firm's documented process.
+        for ev in turn:
+            if ev.get("status") == "done":
+                gb = _agent_grounding_bullets(ctx, aid)
+                if gb:
+                    detail = ev.setdefault("detail", {})
+                    detail["bullets"] = list(detail.get("bullets") or []) + gb
+            yield ev
         done_agents.add(aid)
         yield _plan_partial(ctx, done | done_agents, aid, revealed=reveal)
         if i + 1 < len(agents):

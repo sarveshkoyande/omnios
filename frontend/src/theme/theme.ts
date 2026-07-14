@@ -81,6 +81,19 @@ export const theme = createTheme({
           minHeight: "100vh",
         },
         "::selection": { background: indigoTint(0.22), color: tokens.color.text },
+        // Thin, rounded, glass-tinted scrollbars (replaces the chunky native
+        // scrollbar with arrow buttons).
+        "*": { scrollbarWidth: "thin", scrollbarColor: `${indigoTint(0.35)} transparent` },
+        "*::-webkit-scrollbar": { width: 12, height: 12 },
+        "*::-webkit-scrollbar-track": { background: "transparent" },
+        "*::-webkit-scrollbar-thumb": {
+          background: indigoTint(0.3),
+          borderRadius: 999,
+          border: "3px solid transparent",
+          backgroundClip: "content-box",
+        },
+        "*::-webkit-scrollbar-thumb:hover": { background: indigoTint(0.5), backgroundClip: "content-box" },
+        "*::-webkit-scrollbar-corner": { background: "transparent" },
         ".material-symbols-outlined": {
           fontFamily: "'Material Symbols Outlined'",
           fontWeight: "normal",
@@ -128,10 +141,19 @@ export const theme = createTheme({
       styleOverrides: {
         root: {
           // THE one saturated moment: solid brand gradient, white content.
-          background: gradientBrand,
           color: "#FFFFFF",
           borderBottom: "none",
           boxShadow: "0 2px 12px rgba(79,70,229,0.28)",
+          // The AppBar root also carries .MuiPaper-root, so the global Paper
+          // glass (its @supports rule AND the reduced-transparency !important
+          // rule) would otherwise repaint it translucent white and wipe the
+          // gradient. Win decisively with a compound selector + !important.
+          "&.MuiPaper-root": {
+            backgroundColor: "transparent !important",
+            backgroundImage: `${gradientBrand} !important`,
+            backdropFilter: "none !important",
+            WebkitBackdropFilter: "none !important",
+          },
         },
       },
     },

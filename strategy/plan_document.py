@@ -114,6 +114,64 @@ def _det_open(num: int, title: str, icon: str, phase: str = "", start_open: bool
 _DET_CLOSE = "</div></details>"
 
 
+def _grounding_html(ctx: dict, topic: str) -> str:
+    """A violet 'grounded in the firm's own process knowledge' callout for a section, rendered
+    from what the agent recalled from the Omni OS graph for `topic`. Empty string when the
+    knowledge layer returned nothing (grounding is additive — its absence changes nothing).
+    Styles are inlined so the callout renders correctly even in exported/standalone HTML."""
+    g = (ctx.get("process_grounding") or {}).get(topic)
+    if not g:
+        return ""
+    return (
+        "<div class='plan-grounding' style='margin:.5rem 0 .9rem;padding:.6rem .85rem;"
+        "border-left:3px solid #7c3aed;background:rgba(124,58,237,.06);border-radius:6px;font-size:.9em'>"
+        "<div style='display:flex;align-items:center;gap:.35rem;font-weight:600;color:#7c3aed;"
+        f"margin-bottom:.3rem'>{_icon('menu_book')}<span>Grounded in {_esc(g['source'])}</span></div>"
+        f"<div style='opacity:.88'>{_esc(g['guidance'])}</div></div>"
+    )
+
+
+def _grounding_md(ctx: dict, topic: str) -> str:
+    """Markdown twin of _grounding_html for the plan's markdown export."""
+    g = (ctx.get("process_grounding") or {}).get(topic)
+    if not g:
+        return ""
+    return f"\n> 📖 **Grounded in {g['source']}:** {g['guidance']}\n"
+
+
+def _external_evidence_html(ctx: dict) -> str:
+    """A 'backed by live external data' strip — the citeable public-source datapoints the intel
+    agent pulled to substantiate the market read. Empty when nothing resolved."""
+    dps = ctx.get("external_evidence") or []
+    if not dps:
+        return ""
+    cards = "".join(
+        "<div class='plan-evi-card' style='flex:1 1 180px;min-width:180px;padding:.55rem .7rem;"
+        "border:1px solid rgba(20,150,120,.35);border-radius:8px;background:rgba(20,150,120,.06)'>"
+        f"<div style='font-size:1.25em;font-weight:700;color:#0f766e'>{_esc(str(d['value']))}</div>"
+        f"<div style='font-weight:600;font-size:.85em'>{_esc(d['label'])}</div>"
+        f"<div style='opacity:.8;font-size:.82em;margin:.2rem 0'>{_esc(d['detail'])}</div>"
+        f"<a href='{_esc(d['url'])}' target='_blank' style='font-size:.78em'>{_esc(d['source'])} · as of {_esc(d['as_of'])}</a>"
+        "</div>"
+        for d in dps
+    )
+    return ("<h3 class='plan-sec-sub'>" + _icon("verified") + "External evidence (live public sources)</h3>"
+            "<p class='plan-caveat'>Datapoints pulled on demand to back this plan's read — structured public "
+            "sources only, not open-web content.</p>"
+            f"<div class='plan-evi' style='display:flex;flex-wrap:wrap;gap:.6rem;margin:.4rem 0 .8rem'>{cards}</div>")
+
+
+def _external_evidence_md(ctx: dict) -> str:
+    dps = ctx.get("external_evidence") or []
+    if not dps:
+        return ""
+    lines = ["\n**External evidence (live public sources)**\n"]
+    for d in dps:
+        lines.append(f"- **{d['label']}: {d['value']}** — {d['detail']} ([{d['source']}]({d['url']}), as of {d['as_of']})")
+    lines.append("")
+    return "\n".join(lines)
+
+
 def _phase_banner(phase: str, label: str, phase_no: int, locked: bool = False) -> str:
     lock = f"<span class='tk-phase-lock material-symbols-outlined'>lock</span>" if locked else ""
     cls = f"tk-phase-banner tk-{phase}" + (" tk-locked" if locked else "")
@@ -909,6 +967,7 @@ def _sec_brief(ctx, md, h, R):
     stage_label = ((ctx.get("strategy") or {}).get("inputs") or {}).get("stage", "—")
     kit = ctx.get("brand_kit")
     md.append("## 3. Brief\n")
+    md.append(_grounding_md(ctx, "intake_context"))
     md.append(f"- **Brand:** {brand}\n- **Therapy area:** {ta}\n"
               + (f"- **Indication:** {indication}\n" if indication else "")
               + f"- **Lifecycle:** {inferred.get('lifecycle_label', '—')}\n"
@@ -936,6 +995,7 @@ def _sec_brief(ctx, md, h, R):
             brief_rows.append((_lbl, _v))
             md.append(f"- **{_lbl}:** {_v}")
     h.append(R.det(3, "Brief", "assignment")
+             + _grounding_html(ctx, "intake_context")
              + "<table class='plan-kv'>"
              + "".join(f"<tr><th>{k}</th><td>{_esc(v)}</td></tr>" for k, v in brief_rows)
              + "</table>" + _DET_CLOSE)
@@ -944,6 +1004,7 @@ def _sec_brief(ctx, md, h, R):
 def _sec_tcg(ctx, md, h, R):
     tcg, profile = ctx["tcg"], ctx["segment_profile"]
     md.append("## 4. Target Customer Group Template (Sheet 3)\n")
+    md.append(_grounding_md(ctx, "segmentation_targeting"))
     md.append("| # | Question | Response |")
     md.append("|---|---|---|")
     for i, r in enumerate(tcg["rows"], start=1):
@@ -951,6 +1012,7 @@ def _sec_tcg(ctx, md, h, R):
     md.append("")
     h.append(R.det(4, "Target Customer Group Template", _PHASE_ICONS["align"], phase="align",
                    open_count=len(tcg["open_questions"]))
+             + _grounding_html(ctx, "segmentation_targeting")
              + _render_tcg(tcg, profile) + _DET_CLOSE)
 
 
@@ -1112,7 +1174,11 @@ def _sec_tml(ctx, md, h, R):
 def _sec_market(ctx, md, h, R):
     brand, ta = ctx["brand"], ctx["therapy_area"]
     md.append("## 15. Market & landscape\n")
+    md.append(_grounding_md(ctx, "market_landscape"))
+    md.append(_external_evidence_md(ctx))
     h.append(R.det(15, "Market & landscape", "travel_explore"))
+    h.append(_grounding_html(ctx, "market_landscape"))
+    h.append(_external_evidence_html(ctx))
     src_labels = {"clinicaltrials": "ClinicalTrials.gov", "pubmed": "PubMed", "openfda": "openFDA",
                   "dailymed": "DailyMed", "google_trends": "Google Trends"}
     for scope, label in [("brand", brand), ("therapy_area", ta)]:
@@ -1191,6 +1257,7 @@ def _sec_swot(ctx, md, h, R):
 def _sec_pos(ctx, md, h, R):
     pos = ctx["positioning"]
     md.append("## 17. Positioning\n")
+    md.append(_grounding_md(ctx, "competitive_positioning"))
     md.append(f"> {pos['positioning_statement']}\n")
     md.append("**Alternative messaging angles**")
     for a in pos["alternative_angles"]:
@@ -1200,6 +1267,7 @@ def _sec_pos(ctx, md, h, R):
         md.append(f"- {a}")
     md.append("")
     h.append(R.det(17, "Positioning", "track_changes")
+             + _grounding_html(ctx, "competitive_positioning")
              + f"<blockquote class='plan-statement'>{_esc(pos['positioning_statement'])}</blockquote>"
              "<h3 class='plan-sec-sub'>Alternative messaging angles</h3><ul>"
              + "".join(f"<li>{_esc(a)}</li>" for a in pos["alternative_angles"]) + "</ul>"
@@ -1212,6 +1280,7 @@ def _sec_bam(ctx, md, h, R):
     m = strat["messaging_architecture"]
     sp = strat["stage_profile"]
     md.append("## 18. Journey & messaging (BAM)\n")
+    md.append(_grounding_md(ctx, "journey_messaging"))
     md.append(f"- **Mental state:** {sp['mental_state']}\n- **Core barrier:** {sp['core_barrier']}\n"
               f"- **Engagement goal:** {sp['engagement_goal']}\n- **Promotion signal:** {sp['promotion_signal']}\n")
     md.append(f"**A→B shift:** {bam['a_to_b_shift']}\n")
@@ -1223,6 +1292,7 @@ def _sec_bam(ctx, md, h, R):
         md.append(f"- {ch}: {', '.join(tps)}")
     md.append("")
     h.append(R.det(18, "Journey & messaging (BAM)", "route")
+             + _grounding_html(ctx, "journey_messaging")
              + "<table class='plan-kv'>"
              + "".join(f"<tr><th>{k}</th><td>{_esc(v)}</td></tr>" for k, v in [
                  ("Mental state", sp["mental_state"]), ("Core barrier", sp["core_barrier"]),
@@ -1242,7 +1312,9 @@ def _sec_precedents(ctx, md, h, R):
     precedents = ctx["precedents"]
     kit = ctx.get("brand_kit")
     md.append("## 19. Precedent campaigns (inspiration)\n")
+    md.append(_grounding_md(ctx, "creative_content"))
     h.append(R.det(19, "Precedent campaigns (inspiration)", "emoji_events"))
+    h.append(_grounding_html(ctx, "creative_content"))
     # The brand's own concept shelf comes first -- extending an existing platform beats
     # inventing a new one.
     if kit and kit.get("concepts"):
@@ -1290,9 +1362,11 @@ def _sec_budget(ctx, md, h, R):
     budget_alloc = ctx["budget_allocation"]
     strat = ctx.get("strategy") or {}
     md.append("## 20. Channel mix & budget\n")
+    md.append(_grounding_md(ctx, "channel_budget"))
     md.append("| Channel | Share | Budget |")
     md.append("|---|---|---|")
     h.append(R.det(20, "Channel mix & budget", "payments"))
+    h.append(_grounding_html(ctx, "channel_budget"))
     bars = ""
     for ch, v in sorted(budget_alloc.items(), key=lambda kv: -kv[1]["pct"]):
         amt = f"${int(v['amount']):,}" if v["amount"] else "—"
@@ -1309,8 +1383,10 @@ def _sec_budget(ctx, md, h, R):
 def _sec_kpi(ctx, md, h, R):
     kpi = ctx["kpi"]
     md.append("## 21. KPI framework\n")
+    md.append(_grounding_md(ctx, "measurement_kpi"))
     kpi_icons = {"Leading indicators": "trending_up", "Lagging indicators": "flag", "Operational KPIs": "settings"}
     h.append(R.det(21, "KPI framework", "query_stats"))
+    h.append(_grounding_html(ctx, "measurement_kpi"))
     for title, items in [("Leading indicators", kpi["leading_indicators"]),
                          ("Lagging indicators", kpi["lagging_indicators"]),
                          ("Operational KPIs", kpi["operational_kpis"])]:
@@ -1327,6 +1403,7 @@ def _sec_kpi(ctx, md, h, R):
 def _sec_risk(ctx, md, h, R):
     kit = ctx.get("brand_kit")
     md.append("## 22. Risk & governance\n")
+    md.append(_grounding_md(ctx, "risk_governance"))
     md.append("**Standard risk checklist**")
     for r in STANDARD_RISKS:
         md.append(f"- {r}")
@@ -1346,6 +1423,7 @@ def _sec_risk(ctx, md, h, R):
                 md.append(f"- ✕ [{it['category']}] {it['text']}")
             md.append("")
     h.append(R.det(22, "Risk & governance", "gpp_maybe")
+             + _grounding_html(ctx, "risk_governance")
              + "<h3 class='plan-sec-sub'>Standard risk checklist</h3><ul>"
              + "".join(f"<li>{_esc(r)}</li>" for r in STANDARD_RISKS) + "</ul>"
              "<h3 class='plan-sec-sub'>Governance cadence</h3><ul>"
