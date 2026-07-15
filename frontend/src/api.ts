@@ -53,6 +53,7 @@ export async function fetchHome(): Promise<HomePayload> {
 }
 
 import type {
+  CampaignSetup,
   ChatResponse,
   PersonaApplyChange,
   PersonaDetail,
@@ -60,6 +61,7 @@ import type {
   PersonaReview,
   ProjectDetail,
   ProjectSummary,
+  RaciRow,
 } from "./workspace/types";
 
 export async function listProjects(): Promise<ProjectSummary[]> {
@@ -152,6 +154,34 @@ export async function savePlanContent(projectId: string, html: string, markdown:
     body: JSON.stringify({ html, markdown }),
   });
   if (!res.ok) throw new Error(`POST plan-content -> ${res.status}`);
+}
+
+export async function getSetup(projectId: string): Promise<CampaignSetup> {
+  const res = await fetch(`/api/projects/${encodeURIComponent(projectId)}/setup`);
+  if (!res.ok) throw new Error(`GET setup -> ${res.status}`);
+  return res.json();
+}
+
+export async function saveSetup(projectId: string, setup: CampaignSetup): Promise<CampaignSetup> {
+  const res = await fetch(`/api/projects/${encodeURIComponent(projectId)}/setup`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(setup),
+  });
+  if (!res.ok) throw new Error(`PUT setup -> ${res.status}`);
+  return res.json();
+}
+
+export async function generateRaci(projectId: string): Promise<{ raci: RaciRow[] }> {
+  const res = await fetch(`/api/projects/${encodeURIComponent(projectId)}/setup/raci`, { method: "POST" });
+  if (!res.ok) throw new Error(`POST setup/raci -> ${res.status}`);
+  return res.json();
+}
+
+export async function generateBrd(projectId: string): Promise<{ markdown: string; generated_at: string }> {
+  const res = await fetch(`/api/projects/${encodeURIComponent(projectId)}/setup/brd`, { method: "POST" });
+  if (!res.ok) throw new Error(`POST setup/brd -> ${res.status}`);
+  return res.json();
 }
 
 export async function closeUpdates(projectId: string): Promise<void> {

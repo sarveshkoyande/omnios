@@ -150,7 +150,7 @@ export function Workspace({ prefillBrand }: { prefillBrand?: string | null }) {
                   )}
                 </>
               )}
-              {ws.stage === 2 && <StageOrchestration result={ws.result} />}
+              {ws.stage === 2 && <StageOrchestration result={ws.result} projectId={ws.projectId} />}
               {ws.stage === 3 && <StageOperations result={ws.result} />}
               {ws.stage === 4 && <StageReporting result={ws.result} />}
             </Box>

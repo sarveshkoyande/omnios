@@ -5,7 +5,7 @@ import { tokens, glass, glassFallback, indigoTint } from "../../theme/tokens";
 
 export const WORKFLOW_STAGES = [
   { id: 1, name: "Planning & Strategy", icon: "strategy", blurb: "Brief, multi-agent research and the Brand Engagement Plan." },
-  { id: 2, name: "Engagement Orchestration", icon: "account_tree", blurb: "Turn the plan into an orchestrated journey: triggers, next-best-channel and cadence." },
+  { id: 2, name: "Campaign Setup & Orchestration", icon: "account_tree", blurb: "Stand up delivery: Jira, stakeholder register, vendors, timeline, resourcing, RACI and BRD." },
   { id: 3, name: "Campaign Operations", icon: "dashboard", blurb: "Execute in parallel tracks by channel — assets, MLR status and tactics per lane." },
   { id: 4, name: "Reporting & Insights", icon: "insights", blurb: "Measurement scorecard, channel performance framework and insights." },
 ] as const;

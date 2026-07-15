@@ -30,7 +30,8 @@ CREATE TABLE IF NOT EXISTS projects (
     messages_json TEXT NOT NULL,
     result_json TEXT,
     plan_markdown TEXT,
-    plan_html TEXT
+    plan_html TEXT,
+    setup_json TEXT
 );
 """
 
@@ -40,6 +41,10 @@ def _conn() -> sqlite3.Connection:
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     conn.executescript(SCHEMA)
+    cols = {r["name"] for r in conn.execute("PRAGMA table_info(projects)").fetchall()}
+    if "setup_json" not in cols:
+        conn.execute("ALTER TABLE projects ADD COLUMN setup_json TEXT")
+        conn.commit()
     return conn
 
 
@@ -77,6 +82,7 @@ def get_project(pid: str) -> dict | None:
         "result": json.loads(row["result_json"]) if row["result_json"] else None,
         "plan_markdown": row["plan_markdown"],
         "plan_html": row["plan_html"],
+        "setup": json.loads(row["setup_json"]) if row["setup_json"] else None,
     }
 
 
@@ -96,6 +102,7 @@ def save_project(
     result: dict | None = None,
     plan_markdown: str | None = None,
     plan_html: str | None = None,
+    setup: dict | None = None,
 ) -> dict | None:
     proj = get_project(pid)
     if not proj:
@@ -106,15 +113,18 @@ def save_project(
     result = result if result is not None else proj["result"]
     plan_markdown = plan_markdown if plan_markdown is not None else proj["plan_markdown"]
     plan_html = plan_html if plan_html is not None else proj["plan_html"]
+    setup = setup if setup is not None else proj["setup"]
 
     conn = _conn()
     conn.execute(
         """UPDATE projects SET name=?, updated_at=?, phase=?, state_json=?, messages_json=?,
-           result_json=?, plan_markdown=?, plan_html=? WHERE id=?""",
+           result_json=?, plan_markdown=?, plan_html=?, setup_json=? WHERE id=?""",
         (
             name, _now(), state["phase"], json.dumps(state), json.dumps(messages),
             json.dumps(result) if result is not None else None,
-            plan_markdown, plan_html, pid,
+            plan_markdown, plan_html,
+            json.dumps(setup) if setup is not None else None,
+            pid,
         ),
     )
     conn.commit()

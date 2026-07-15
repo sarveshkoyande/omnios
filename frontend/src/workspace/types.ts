@@ -22,6 +22,65 @@ export interface Slots {
   [k: string]: unknown;
 }
 
+export interface Stakeholder {
+  id: string;
+  name: string;
+  role: string;
+  team: string;
+  email?: string;
+}
+
+export interface Vendor {
+  id: string;
+  name: string;
+  type: string;
+  contact?: string;
+  status?: string;
+}
+
+export interface Confirmation {
+  id: string;
+  team: string;
+  item: string;
+  status: string;
+  notes?: string;
+}
+
+export interface TimelineActivity {
+  id: string;
+  activity: string;
+  start?: string;
+  end?: string;
+  duration_days?: number;
+  status?: string;
+  raci?: Record<string, "R" | "A" | "C" | "I" | undefined>;
+}
+
+export interface ResourcePlanRow {
+  id: string;
+  role: string;
+  stakeholder_id?: string;
+  stakeholder_name?: string;
+  allocation_pct?: number;
+  notes?: string;
+}
+
+export interface RaciRow {
+  activity: string;
+  assignments: { stakeholder_id: string; name: string; letter: string }[];
+}
+
+export interface CampaignSetup {
+  jira: { space_key: string; project_id: string; board_url?: string };
+  stakeholders: Stakeholder[];
+  vendors: Vendor[];
+  confirmations: Confirmation[];
+  timeline: TimelineActivity[];
+  resources: ResourcePlanRow[];
+  raci: RaciRow[];
+  brd: { markdown: string; generated_at: string } | null;
+}
+
 export interface ClarifyPayload {
   text: string;
   group_index: number;

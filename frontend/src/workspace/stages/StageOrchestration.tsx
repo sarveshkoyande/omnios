@@ -1,167 +1,319 @@
+import { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
+import IconButton from "@mui/material/IconButton";
+import MenuItem from "@mui/material/MenuItem";
+import Select from "@mui/material/Select";
+import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
-import { styled } from "@mui/material/styles";
+import { generateBrd, generateRaci, getSetup, saveSetup } from "../../api";
 import { PlanTable } from "./PlanTable";
 import { StageHead } from "./StageHead";
 import { ConsolePanel } from "../../components/ConsolePanel";
-import { glass, indigoTint, shade, tokens } from "../../theme/tokens";
-import type { PlanResult } from "../types";
+import type { CampaignSetup, Confirmation, PlanResult, ResourcePlanRow, Stakeholder, TimelineActivity, Vendor } from "../types";
 
-const BeliefShift = styled(Box)(({ theme }) => ({
-  display: "flex",
-  alignItems: "center",
-  gap: theme.spacing(2),
-  flexWrap: "wrap",
-  marginTop: theme.spacing(1),
-}));
+let uid = 0;
+const nextId = () => `s${Date.now()}_${++uid}`;
 
-const BeliefPill = styled("span")<{ tone: "a" | "b" }>(({ tone }) => ({
-  padding: "5px 12px",
-  borderRadius: 8,
-  fontSize: 12,
-  background: tone === "a" ? "#FDEAEA" : "#E3F6EC",
-  color: tone === "a" ? "#9C3232" : "#1B7A34",
-}));
+const emptySetup = (): CampaignSetup => ({
+  jira: { space_key: "", project_id: "", board_url: "" },
+  stakeholders: [],
+  vendors: [],
+  confirmations: [],
+  timeline: [],
+  resources: [],
+  raci: [],
+  brd: null,
+});
 
-const JourneyCard = styled(Box)(({ theme }) => ({
-  border: `1px solid ${indigoTint(0.12)}`,
-  borderRadius: tokens.radius.md,
-  padding: theme.spacing(2.5),
-  marginBottom: theme.spacing(2),
-  background: "rgba(255,255,255,0.4)",
-}));
+const RACI_LETTERS = ["R", "A", "C", "I"] as const;
 
-const FlowNode = styled(Box)<{ accent: string }>(({ theme, accent }) => ({
-  display: "flex",
-  gap: theme.spacing(1),
-  alignItems: "flex-start",
-  background: glass.content,
-  border: `1px solid ${indigoTint(0.12)}`,
-  borderLeft: `3px solid ${accent}`,
-  borderRadius: tokens.radius.sm,
-  padding: theme.spacing(1.5, 2),
-  flex: "1 1 0",
-  minWidth: 130,
-}));
+export function StageOrchestration({ result, projectId }: { result: PlanResult | null; projectId: string | null }) {
+  const [setup, setSetup] = useState<CampaignSetup>(emptySetup());
+  const [loaded, setLoaded] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [generating, setGenerating] = useState<"raci" | "brd" | null>(null);
 
-const PRIO_COLOR: Record<string, "success" | "secondary" | "default"> = { High: "success", Medium: "secondary", Low: "default" };
+  useEffect(() => {
+    if (!projectId) return;
+    setLoaded(false);
+    getSetup(projectId).then((s) => { setSetup({ ...emptySetup(), ...s }); setLoaded(true); });
+  }, [projectId]);
 
-export function StageOrchestration({ result }: { result: PlanResult | null }) {
   if (!result) {
-    return <ConsolePanel><Typography sx={{ color: "text.secondary", fontStyle: "italic" }}>Complete Stage 1 to orchestrate engagement.</Typography></ConsolePanel>;
+    return <ConsolePanel><Typography sx={{ color: "text.secondary", fontStyle: "italic" }}>Complete Stage 1 to begin campaign delivery setup.</Typography></ConsolePanel>;
   }
-  const mj = result.stage_2_4_micro_journeys ?? { journeys: [] };
-  const bam = result.stage_2_4_bam_chart ?? {};
-  const m = result.stage_2_4_strategy?.messaging_architecture ?? {};
-  const mf = result.stage_2_4_message_flow ?? { key_messages: [] };
-  const ppnpp = result.stage_2_4_pp_npp ?? [];
-  const chsel = result.stage_5_channel_selection?.channels ?? [];
+  if (!projectId || !loaded) {
+    return <ConsolePanel><Typography sx={{ color: "text.secondary", fontStyle: "italic" }}>Loading setup…</Typography></ConsolePanel>;
+  }
 
-  const prioRank: Record<string, number> = { High: 0, Medium: 1, Low: 2 };
-  const nbc = [...chsel].sort((a, b) => (prioRank[a.brand_priority ?? ""] ?? 3) - (prioRank[b.brand_priority ?? ""] ?? 3));
+  const keyMessages = result.stage_2_4_message_flow?.key_messages ?? [];
+  const channels = result.stage_5_channel_selection?.channels ?? [];
+
+  const persist = async (next: CampaignSetup) => {
+    setSetup(next);
+    setSaving(true);
+    try {
+      await saveSetup(projectId, next);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const addStakeholder = () => persist({ ...setup, stakeholders: [...setup.stakeholders, { id: nextId(), name: "", role: "", team: "", email: "" }] });
+  const updateStakeholder = (id: string, patch: Partial<Stakeholder>) =>
+    persist({ ...setup, stakeholders: setup.stakeholders.map((s) => (s.id === id ? { ...s, ...patch } : s)) });
+  const removeStakeholder = (id: string) => persist({ ...setup, stakeholders: setup.stakeholders.filter((s) => s.id !== id) });
+
+  const addVendor = () => persist({ ...setup, vendors: [...setup.vendors, { id: nextId(), name: "", type: "", contact: "", status: "Identified" }] });
+  const updateVendor = (id: string, patch: Partial<Vendor>) =>
+    persist({ ...setup, vendors: setup.vendors.map((v) => (v.id === id ? { ...v, ...patch } : v)) });
+  const removeVendor = (id: string) => persist({ ...setup, vendors: setup.vendors.filter((v) => v.id !== id) });
+
+  const addConfirmation = () => persist({ ...setup, confirmations: [...setup.confirmations, { id: nextId(), team: "Marketing", item: "", status: "Pending", notes: "" }] });
+  const updateConfirmation = (id: string, patch: Partial<Confirmation>) =>
+    persist({ ...setup, confirmations: setup.confirmations.map((c) => (c.id === id ? { ...c, ...patch } : c)) });
+  const removeConfirmation = (id: string) => persist({ ...setup, confirmations: setup.confirmations.filter((c) => c.id !== id) });
+
+  const addActivity = () => persist({ ...setup, timeline: [...setup.timeline, { id: nextId(), activity: "", start: "", end: "", duration_days: undefined, status: "Not started", raci: {} }] });
+  const updateActivity = (id: string, patch: Partial<TimelineActivity>) =>
+    persist({ ...setup, timeline: setup.timeline.map((a) => (a.id === id ? { ...a, ...patch } : a)) });
+  const removeActivity = (id: string) => persist({ ...setup, timeline: setup.timeline.filter((a) => a.id !== id) });
+  const setActivityRaci = (activityId: string, stakeholderId: string, letter: string) =>
+    persist({
+      ...setup,
+      timeline: setup.timeline.map((a) =>
+        a.id === activityId ? { ...a, raci: { ...(a.raci ?? {}), [stakeholderId]: letter === "" ? undefined : (letter as "R" | "A" | "C" | "I") } } : a,
+      ),
+    });
+
+  const addResource = () => persist({ ...setup, resources: [...setup.resources, { id: nextId(), role: "", stakeholder_id: undefined, stakeholder_name: "", allocation_pct: undefined, notes: "" }] });
+  const updateResource = (id: string, patch: Partial<ResourcePlanRow>) =>
+    persist({ ...setup, resources: setup.resources.map((r) => (r.id === id ? { ...r, ...patch } : r)) });
+  const removeResource = (id: string) => persist({ ...setup, resources: setup.resources.filter((r) => r.id !== id) });
+
+  const onGenerateRaci = async () => {
+    setGenerating("raci");
+    try {
+      const { raci } = await generateRaci(projectId);
+      setSetup((s) => ({ ...s, raci }));
+    } finally {
+      setGenerating(null);
+    }
+  };
+
+  const onGenerateBrd = async () => {
+    setGenerating("brd");
+    try {
+      const brd = await generateBrd(projectId);
+      setSetup((s) => ({ ...s, brd }));
+    } finally {
+      setGenerating(null);
+    }
+  };
 
   return (
     <Box>
       <StageHead
         icon="account_tree"
-        title="Engagement Orchestration"
-        blurb="The plan becomes an orchestrated program: what triggers an engagement, which channel answers it, and in what order the message ladder unfolds."
+        title="Campaign Setup & Orchestration"
+        blurb="Stand up delivery of the plan: Jira space, stakeholder register and vendors, reconfirm key messages/channels/asset availability with marketing and medical, estimate the timeline, plan resourcing, then generate the RACI and BRD before moving to Campaign Operations."
       />
 
-      <ConsolePanel sx={{ mb: 3 }}>
-        <Typography variant="overline">Orchestration objective — belief shift</Typography>
-        <BeliefShift>
-          <BeliefPill tone="a">{m.current_belief || "—"}</BeliefPill>
-          <span className="material-symbols-outlined">east</span>
-          <BeliefPill tone="b">{m.desired_belief || "—"}</BeliefPill>
-        </BeliefShift>
-        {bam.a_to_b_shift && <Typography variant="body2" sx={{ color: "text.secondary", mt: 1.5 }}>{bam.a_to_b_shift}</Typography>}
+      <ConsolePanel title="Carried over from Brand Plan & Strategy" sx={{ mb: 3 }}>
+        <Typography variant="overline">Key messages to reconfirm</Typography>
+        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 0.5, mb: 1.5 }}>
+          {keyMessages.length ? keyMessages.map((km, i) => <Chip key={i} size="small" label={km.topic} />) : <Typography variant="body2" sx={{ color: "text.secondary", fontStyle: "italic" }}>None captured.</Typography>}
+        </Box>
+        <Typography variant="overline">Channels to reconfirm</Typography>
+        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 0.5 }}>
+          {channels.length ? channels.map((c, i) => <Chip key={i} size="small" color="secondary" label={c.channel} />) : <Typography variant="body2" sx={{ color: "text.secondary", fontStyle: "italic" }}>None captured.</Typography>}
+        </Box>
       </ConsolePanel>
 
-      <ConsolePanel title="Journey orchestration" sx={{ mb: 3 }}>
-        {mj.journeys.length ? (
-          mj.journeys.map((j, i) => (
-            <JourneyCard key={i}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1.5 }}>
-                <Box sx={{ width: 20, height: 20, borderRadius: "50%", background: "primary.main", color: tokens.color.text, fontSize: 11, display: "flex", alignItems: "center", justifyContent: "center", bgcolor: "primary.main" }}>{i + 1}</Box>
-                <Typography sx={{ fontWeight: 700 }}>{j.name}</Typography>
-              </Box>
-              <Box sx={{ display: "flex", gap: 1, alignItems: "stretch", flexWrap: "wrap" }}>
-                <FlowNode accent={tokens.color.warning}>
-                  <span className="material-symbols-outlined" style={{ fontSize: 16 }}>bolt</span>
-                  <Box><Typography variant="overline" sx={{ display: "block" }}>Trigger</Typography><Typography variant="body2">{j.trigger}</Typography></Box>
-                </FlowNode>
-                <FlowNode accent={tokens.color.primary}>
-                  <span className="material-symbols-outlined" style={{ fontSize: 16 }}>send</span>
-                  <Box><Typography variant="overline" sx={{ display: "block" }}>Channel</Typography><Typography variant="body2">{j.primary_touchpoint}</Typography></Box>
-                </FlowNode>
-                <FlowNode accent={tokens.color.success}>
-                  <span className="material-symbols-outlined" style={{ fontSize: 16 }}>inventory_2</span>
-                  <Box><Typography variant="overline" sx={{ display: "block" }}>Content</Typography><Typography variant="body2">{j.content_readiness}</Typography></Box>
-                </FlowNode>
-              </Box>
-            </JourneyCard>
-          ))
-        ) : (
-          <Typography sx={{ color: "text.secondary", fontStyle: "italic" }}>No micro-journeys generated.</Typography>
-        )}
-        {mj.interim_check && <Typography variant="caption" sx={{ color: "text.secondary", fontStyle: "italic", display: "block", mt: 1 }}>Governance: {mj.interim_check}</Typography>}
+      <ConsolePanel title="Jira space" sx={{ mb: 3 }}>
+        <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+          <TextField size="small" label="Space key" value={setup.jira.space_key} onChange={(e) => persist({ ...setup, jira: { ...setup.jira, space_key: e.target.value } })} />
+          <TextField size="small" label="Project ID" value={setup.jira.project_id} onChange={(e) => persist({ ...setup, jira: { ...setup.jira, project_id: e.target.value } })} />
+          <TextField size="small" label="Board URL" sx={{ minWidth: 260 }} value={setup.jira.board_url ?? ""} onChange={(e) => persist({ ...setup, jira: { ...setup.jira, board_url: e.target.value } })} />
+        </Box>
       </ConsolePanel>
 
-      <ConsolePanel title="Next-best-channel ranking" sx={{ mb: 3 }}>
-        <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1 }}>
-          Ranked by brand priority — the orchestration engine's channel-selection order.
-        </Typography>
+      <ConsolePanel title="Stakeholder register" sx={{ mb: 3 }}>
         <PlanTable>
-          <thead><tr><th>#</th><th>Channel</th><th>Priority</th><th>Availability</th><th>Affinity</th></tr></thead>
+          <thead><tr><th>Name</th><th>Role</th><th>Team</th><th>Email</th><th /></tr></thead>
           <tbody>
-            {nbc.map((c, i) => (
-              <tr key={i}>
-                <td>{i + 1}</td>
-                <td><b>{c.channel}</b></td>
-                <td>{c.brand_priority && <Chip size="small" color={PRIO_COLOR[c.brand_priority] ?? "default"} label={c.brand_priority} />}</td>
-                <td>{c.availability ?? "—"}</td>
-                <td>{c.preference_affinity ?? "—"}</td>
+            {setup.stakeholders.map((s) => (
+              <tr key={s.id}>
+                <td><TextField size="small" variant="standard" value={s.name} onChange={(e) => updateStakeholder(s.id, { name: e.target.value })} /></td>
+                <td><TextField size="small" variant="standard" value={s.role} onChange={(e) => updateStakeholder(s.id, { role: e.target.value })} /></td>
+                <td><TextField size="small" variant="standard" value={s.team} onChange={(e) => updateStakeholder(s.id, { team: e.target.value })} /></td>
+                <td><TextField size="small" variant="standard" value={s.email ?? ""} onChange={(e) => updateStakeholder(s.id, { email: e.target.value })} /></td>
+                <td><IconButton size="small" onClick={() => removeStakeholder(s.id)}><span className="material-symbols-outlined" style={{ fontSize: 16 }}>close</span></IconButton></td>
               </tr>
             ))}
           </tbody>
         </PlanTable>
+        <Button size="small" sx={{ mt: 1 }} onClick={addStakeholder}>+ Add stakeholder</Button>
       </ConsolePanel>
 
-      <ConsolePanel title="Message ladder (sequencing)" sx={{ mb: 3 }}>
-        {mf.key_messages.length ? (
-          mf.key_messages.map((km, i) => (
-            <Box key={i} sx={{ display: "flex", gap: 1.5, py: 1, borderBottom: i < mf.key_messages.length - 1 ? `1px dashed ${shade(0.14)}` : "none" }}>
-              <Box sx={{ width: 20, height: 20, borderRadius: "50%", bgcolor: "primary.main", fontSize: 11, display: "flex", alignItems: "center", justifyContent: "center", flex: "0 0 auto" }}>{i + 1}</Box>
-              <Box>
-                <Typography sx={{ fontWeight: 700, fontSize: 13 }}>{km.topic}</Typography>
-                <Typography variant="caption" sx={{ color: "text.secondary" }}>{km.supporting_messages.slice(0, 2).join(" · ")}</Typography>
-              </Box>
-            </Box>
-          ))
-        ) : (
-          <Typography sx={{ color: "text.secondary", fontStyle: "italic" }}>No key messages.</Typography>
-        )}
-      </ConsolePanel>
-
-      <ConsolePanel title="Personal vs non-personal split & cadence">
+      <ConsolePanel title="Vendor details" sx={{ mb: 3 }}>
         <PlanTable>
-          <thead><tr><th>Channel</th><th>Share</th><th>PP / NPP</th></tr></thead>
+          <thead><tr><th>Vendor</th><th>Type</th><th>Contact</th><th>Status</th><th /></tr></thead>
           <tbody>
-            {ppnpp.map((p, i) => (
-              <tr key={i}>
-                <td>{p.channel}</td>
-                <td>{p.pct}%</td>
-                <td><Chip size="small" color={p.bucket === "PP" ? "secondary" : "primary"} label={p.bucket} /></td>
+            {setup.vendors.map((v) => (
+              <tr key={v.id}>
+                <td><TextField size="small" variant="standard" value={v.name} onChange={(e) => updateVendor(v.id, { name: e.target.value })} /></td>
+                <td><TextField size="small" variant="standard" value={v.type} onChange={(e) => updateVendor(v.id, { type: e.target.value })} /></td>
+                <td><TextField size="small" variant="standard" value={v.contact ?? ""} onChange={(e) => updateVendor(v.id, { contact: e.target.value })} /></td>
+                <td><TextField size="small" variant="standard" value={v.status ?? ""} onChange={(e) => updateVendor(v.id, { status: e.target.value })} /></td>
+                <td><IconButton size="small" onClick={() => removeVendor(v.id)}><span className="material-symbols-outlined" style={{ fontSize: 16 }}>close</span></IconButton></td>
               </tr>
             ))}
           </tbody>
         </PlanTable>
-        <Typography variant="caption" sx={{ color: "text.secondary", fontStyle: "italic", display: "block", mt: 1 }}>
-          Cadence guardrail: respect channel-level frequency caps and suppression; a rep touch and a digital touch
-          in the same week counts as one engagement for frequency purposes.
-        </Typography>
+        <Button size="small" sx={{ mt: 1 }} onClick={addVendor}>+ Add vendor</Button>
+      </ConsolePanel>
+
+      <ConsolePanel title="Stakeholder reconfirmation — marketing & medical asset availability" sx={{ mb: 3 }}>
+        <PlanTable>
+          <thead><tr><th>Team</th><th>Item</th><th>Status</th><th>Notes</th><th /></tr></thead>
+          <tbody>
+            {setup.confirmations.map((c) => (
+              <tr key={c.id}>
+                <td>
+                  <Select size="small" variant="standard" value={c.team} onChange={(e) => updateConfirmation(c.id, { team: e.target.value })}>
+                    <MenuItem value="Marketing">Marketing</MenuItem>
+                    <MenuItem value="Medical">Medical</MenuItem>
+                    <MenuItem value="Legal/Regulatory">Legal/Regulatory</MenuItem>
+                    <MenuItem value="Other">Other</MenuItem>
+                  </Select>
+                </td>
+                <td><TextField size="small" variant="standard" value={c.item} onChange={(e) => updateConfirmation(c.id, { item: e.target.value })} /></td>
+                <td>
+                  <Select size="small" variant="standard" value={c.status} onChange={(e) => updateConfirmation(c.id, { status: e.target.value })}>
+                    <MenuItem value="Pending">Pending</MenuItem>
+                    <MenuItem value="Confirmed">Confirmed</MenuItem>
+                    <MenuItem value="Blocked">Blocked</MenuItem>
+                  </Select>
+                </td>
+                <td><TextField size="small" variant="standard" value={c.notes ?? ""} onChange={(e) => updateConfirmation(c.id, { notes: e.target.value })} /></td>
+                <td><IconButton size="small" onClick={() => removeConfirmation(c.id)}><span className="material-symbols-outlined" style={{ fontSize: 16 }}>close</span></IconButton></td>
+              </tr>
+            ))}
+          </tbody>
+        </PlanTable>
+        <Button size="small" sx={{ mt: 1 }} onClick={addConfirmation}>+ Add reconfirmation item</Button>
+      </ConsolePanel>
+
+      <ConsolePanel title="Timeline estimation & RACI assignment" sx={{ mb: 3 }}>
+        <PlanTable>
+          <thead>
+            <tr>
+              <th>Activity</th><th>Start</th><th>End</th><th>Duration (days)</th><th>Status</th>
+              {setup.stakeholders.map((s) => <th key={s.id}>{s.name || "—"}</th>)}
+              <th />
+            </tr>
+          </thead>
+          <tbody>
+            {setup.timeline.map((a) => (
+              <tr key={a.id}>
+                <td><TextField size="small" variant="standard" value={a.activity} onChange={(e) => updateActivity(a.id, { activity: e.target.value })} /></td>
+                <td><TextField size="small" variant="standard" type="date" value={a.start ?? ""} onChange={(e) => updateActivity(a.id, { start: e.target.value })} /></td>
+                <td><TextField size="small" variant="standard" type="date" value={a.end ?? ""} onChange={(e) => updateActivity(a.id, { end: e.target.value })} /></td>
+                <td><TextField size="small" variant="standard" type="number" value={a.duration_days ?? ""} onChange={(e) => updateActivity(a.id, { duration_days: e.target.value ? Number(e.target.value) : undefined })} sx={{ width: 70 }} /></td>
+                <td><TextField size="small" variant="standard" value={a.status ?? ""} onChange={(e) => updateActivity(a.id, { status: e.target.value })} /></td>
+                {setup.stakeholders.map((s) => (
+                  <td key={s.id}>
+                    <Select size="small" variant="standard" value={a.raci?.[s.id] ?? ""} onChange={(e) => setActivityRaci(a.id, s.id, e.target.value)} sx={{ minWidth: 50 }}>
+                      <MenuItem value="">—</MenuItem>
+                      {RACI_LETTERS.map((l) => <MenuItem key={l} value={l}>{l}</MenuItem>)}
+                    </Select>
+                  </td>
+                ))}
+                <td><IconButton size="small" onClick={() => removeActivity(a.id)}><span className="material-symbols-outlined" style={{ fontSize: 16 }}>close</span></IconButton></td>
+              </tr>
+            ))}
+          </tbody>
+        </PlanTable>
+        <Button size="small" sx={{ mt: 1 }} onClick={addActivity}>+ Add activity</Button>
+      </ConsolePanel>
+
+      <ConsolePanel title="Resource plan" sx={{ mb: 3 }}>
+        <PlanTable>
+          <thead><tr><th>Role</th><th>Assigned to</th><th>Allocation %</th><th>Notes</th><th /></tr></thead>
+          <tbody>
+            {setup.resources.map((r) => (
+              <tr key={r.id}>
+                <td><TextField size="small" variant="standard" value={r.role} onChange={(e) => updateResource(r.id, { role: e.target.value })} /></td>
+                <td>
+                  <Select size="small" variant="standard" value={r.stakeholder_id ?? ""} onChange={(e) => {
+                    const sid = e.target.value as string;
+                    const found = setup.stakeholders.find((s) => s.id === sid);
+                    updateResource(r.id, { stakeholder_id: sid || undefined, stakeholder_name: found?.name ?? "" });
+                  }} sx={{ minWidth: 140 }}>
+                    <MenuItem value="">—</MenuItem>
+                    {setup.stakeholders.map((s) => <MenuItem key={s.id} value={s.id}>{s.name || "(unnamed)"}</MenuItem>)}
+                  </Select>
+                </td>
+                <td><TextField size="small" variant="standard" type="number" value={r.allocation_pct ?? ""} onChange={(e) => updateResource(r.id, { allocation_pct: e.target.value ? Number(e.target.value) : undefined })} sx={{ width: 70 }} /></td>
+                <td><TextField size="small" variant="standard" value={r.notes ?? ""} onChange={(e) => updateResource(r.id, { notes: e.target.value })} /></td>
+                <td><IconButton size="small" onClick={() => removeResource(r.id)}><span className="material-symbols-outlined" style={{ fontSize: 16 }}>close</span></IconButton></td>
+              </tr>
+            ))}
+          </tbody>
+        </PlanTable>
+        <Button size="small" sx={{ mt: 1 }} onClick={addResource}>+ Add resource</Button>
+      </ConsolePanel>
+
+      <ConsolePanel title="RACI" sx={{ mb: 3 }}>
+        <Button size="small" variant="outlined" onClick={onGenerateRaci} disabled={generating === "raci"} sx={{ mb: 2 }}>
+          {generating === "raci" ? "Generating…" : "Generate RACI from timeline"}
+        </Button>
+        {setup.raci.length ? (
+          <PlanTable>
+            <thead><tr><th>Activity</th><th>Responsible</th><th>Accountable</th><th>Consulted</th><th>Informed</th></tr></thead>
+            <tbody>
+              {setup.raci.map((row, i) => {
+                const byLetter: Record<string, string[]> = { R: [], A: [], C: [], I: [] };
+                row.assignments.forEach((a) => byLetter[a.letter]?.push(a.name));
+                return (
+                  <tr key={i}>
+                    <td>{row.activity}</td>
+                    <td>{byLetter.R.join(", ") || "—"}</td>
+                    <td>{byLetter.A.join(", ") || "—"}</td>
+                    <td>{byLetter.C.join(", ") || "—"}</td>
+                    <td>{byLetter.I.join(", ") || "—"}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </PlanTable>
+        ) : (
+          <Typography sx={{ color: "text.secondary", fontStyle: "italic" }}>Not generated yet — add timeline activities and RACI letters per stakeholder above, then generate.</Typography>
+        )}
+      </ConsolePanel>
+
+      <ConsolePanel title="Business Requirements Document (BRD)">
+        <Box sx={{ display: "flex", gap: 1.5, alignItems: "center", mb: 2 }}>
+          <Button size="small" variant="contained" onClick={onGenerateBrd} disabled={generating === "brd"}>
+            {generating === "brd" ? "Generating…" : "Generate BRD"}
+          </Button>
+          {setup.brd && (
+            <Button size="small" component="a" href={`/api/projects/${projectId}/export-brd.docx`} target="_blank" rel="noreferrer">
+              Download .docx
+            </Button>
+          )}
+          {saving && <Typography variant="caption" sx={{ color: "text.secondary" }}>Saving…</Typography>}
+        </Box>
+        {setup.brd ? (
+          <Box component="pre" sx={{ whiteSpace: "pre-wrap", fontFamily: "inherit", fontSize: 13, maxHeight: 400, overflowY: "auto", m: 0 }}>
+            {setup.brd.markdown}
+          </Box>
+        ) : (
+          <Typography sx={{ color: "text.secondary", fontStyle: "italic" }}>Not generated yet.</Typography>
+        )}
       </ConsolePanel>
     </Box>
   );

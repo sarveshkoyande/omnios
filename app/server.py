@@ -45,6 +45,7 @@ from strategy import personas as personas_mod  # noqa: E402  (synthetic persona 
 from strategy import persona_review as persona_review_mod  # noqa: E402
 from strategy import plan_export  # noqa: E402  (Word/PDF export of the composed plan)
 from strategy import plan_pdf  # noqa: E402  (pixel-faithful PDF via headless Chromium)
+from strategy import campaign_setup  # noqa: E402  (Stage 2 campaign-delivery orchestration setup)
 
 app = FastAPI(title="Omni OS Brand Engagement Planning Agent")
 
@@ -308,6 +309,73 @@ def api_save_plan_content(pid: str, req: PlanContentRequest):
         raise HTTPException(400, "empty plan content")
     pstore.save_project(pid, plan_markdown=req.markdown, plan_html=req.html)
     return {"ok": True}
+
+
+class SetupPayload(BaseModel):
+    jira: dict = {}
+    stakeholders: list[dict] = []
+    vendors: list[dict] = []
+    confirmations: list[dict] = []
+    timeline: list[dict] = []
+    resources: list[dict] = []
+
+
+@app.get("/api/projects/{pid}/setup")
+def api_get_setup(pid: str):
+    proj = pstore.get_project(pid)
+    if not proj:
+        raise HTTPException(404, "project not found")
+    return proj.get("setup") or campaign_setup.default_setup()
+
+
+@app.put("/api/projects/{pid}/setup")
+def api_save_setup(pid: str, req: SetupPayload):
+    proj = pstore.get_project(pid)
+    if not proj:
+        raise HTTPException(404, "project not found")
+    setup = proj.get("setup") or campaign_setup.default_setup()
+    setup.update(req.model_dump())
+    pstore.save_project(pid, setup=setup)
+    return setup
+
+
+@app.post("/api/projects/{pid}/setup/raci")
+def api_generate_raci(pid: str):
+    proj = pstore.get_project(pid)
+    if not proj:
+        raise HTTPException(404, "project not found")
+    setup = proj.get("setup") or campaign_setup.default_setup()
+    raci = campaign_setup.build_raci(setup)
+    setup["raci"] = raci
+    pstore.save_project(pid, setup=setup)
+    return {"raci": raci}
+
+
+@app.post("/api/projects/{pid}/setup/brd")
+def api_generate_brd(pid: str):
+    proj = pstore.get_project(pid)
+    if not proj:
+        raise HTTPException(404, "project not found")
+    setup = proj.get("setup") or campaign_setup.default_setup()
+    if not setup.get("raci"):
+        setup["raci"] = campaign_setup.build_raci(setup)
+    markdown = campaign_setup.build_brd(proj.get("result"), setup, proj["name"])
+    setup["brd"] = {"markdown": markdown, "generated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+    pstore.save_project(pid, setup=setup)
+    return setup["brd"]
+
+
+@app.get("/api/projects/{pid}/export-brd.docx")
+def api_export_brd_docx(pid: str):
+    proj = pstore.get_project(pid)
+    setup = proj.get("setup") if proj else None
+    if not proj or not setup or not setup.get("brd", {}).get("markdown"):
+        raise HTTPException(404, "no BRD generated yet")
+    data = plan_export.markdown_to_docx(setup["brd"]["markdown"], proj["name"] + " BRD")
+    filename = _safe_filename(proj["name"]) + "-BRD.docx"
+    return Response(content=data,
+                    media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    headers={"Content-Disposition": f'attachment; filename="{filename}"'})
 
 
 @app.get("/api/projects/{pid}/export.docx")
