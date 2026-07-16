@@ -83,6 +83,10 @@ def run(background: bool = True) -> dict:
     empty, in a background thread by default so the web server binds immediately."""
     ensure_data_dir()
     out = {"data_dir": str(DATA_DIR), "kb_copied": seed_kb(), "library": "present"}
+
+    import hcp_360
+    out["hcp_360"] = hcp_360.load_hcp_360()
+
     if not library_is_empty():
         return out
 
