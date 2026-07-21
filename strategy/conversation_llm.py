@@ -1,17 +1,23 @@
 """LLM-backed implementation of the conversation seam.
 
-Talks to Claude through **Microsoft Foundry (Azure AI)**. Auth is a plain API key
-(preferred) or Azure AD (`DefaultAzureCredential`) as a fallback. Same return contract as
-the rules engine: `interpret_message_llm(message, state) -> (state, reply, action)` with
-action 'ask' | 'run'. Any failure here is caught by conversation.py, which falls back to
-the rules-based path and records why in `get_llm_status()` -- so a missing/expired
-credential never breaks chat, it just shows up as a fallback in the UI.
+Three-tier fallback, cheapest/most-preferred first:
+  1. Gemini, via `litellm` (GEMINI_API_KEY or GOOGLE_API_KEY env var) -- lets a dev use their
+     own Gemini key instead of needing the team's Azure credential.
+  2. Claude through **Microsoft Foundry (Azure AI)** -- the original path, auth via a plain
+     API key (preferred) or Azure AD (`DefaultAzureCredential`) as a fallback.
+  3. Neither configured -> conversation.py falls back to the deterministic rules engine.
 
-Credentials are read from a local `.env` file (`omni-data-hub/.env`, gitignored) FIRST,
-falling back to real process environment variables. This is deliberate: shell environment
-variables set via `$env:` or `setx` in one terminal do not reach a server process started
-from a different shell/process tree (e.g. a fresh automation-tool shell) -- a `.env` file
-is the one mechanism that reliably reaches the app no matter which shell launches it.
+Same return contract as the rules engine regardless of provider:
+`interpret_message_llm(message, state) -> (state, reply, action)` with action 'ask' | 'run'.
+Any failure here is caught by conversation.py, which falls back to the rules-based path and
+records why in `get_llm_status()` -- so a missing/expired credential never breaks chat, it
+just shows up as a fallback in the UI.
+
+Credentials are read from a local `.env` file (gitignored) FIRST, falling back to real
+process environment variables. This is deliberate: shell environment variables set via
+`$env:` or `setx` in one terminal do not reach a server process started from a different
+shell/process tree (e.g. a fresh automation-tool shell) -- a `.env` file is the one
+mechanism that reliably reaches the app no matter which shell launches it.
 """
 from __future__ import annotations
 
@@ -45,6 +51,15 @@ def _load_dotenv() -> None:
 _load_dotenv()
 
 
+# --- Gemini config (tier 1) ---------------------------------------------------------------
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini/gemini-2.0-flash")
+
+
+def _gemini_key() -> str | None:
+    return os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+
+
+# --- Azure Foundry config (tier 2) ---------------------------------------------------------
 # The AnthropicFoundry client builds the correctly-versioned endpoint itself from just the
 # Azure resource name (`resource=`) -- it resolves to https://<resource>.services.ai.azure.com/anthropic/.
 # Passing a hand-built `base_url` (e.g. an Azure AI Foundry *project* endpoint like
@@ -104,10 +119,10 @@ before or after it:
 {{"brand": string, "therapy_area": string, "lifecycle_key": "launch"|"growth"|"mature"|"loe"|"",
 "budget": number, "budget_asked": boolean, "maturity_notes": string, "ready": boolean, "reply": string}}"""
 
-_client = None  # lazily built + cached; cleared on construction failure so a later retry can succeed
+_client = None  # lazily built + cached Foundry client; cleared on construction failure so a later retry can succeed
 
 
-def _get_client():
+def _get_foundry_client():
     """Build (and cache) the AnthropicFoundry client.
 
     Prefers a plain API key (AZURE_AI_FOUNDRY_API_KEY) -- no azure-identity or Azure AD
@@ -140,14 +155,7 @@ def _get_client():
         raise
 
 
-def llm_available() -> bool:
-    """True when the SDK is importable, an endpoint is configured, and *some* credential
-    (API key or Azure Identity) is present to attempt with.
-
-    This does NOT guarantee the credential actually authenticates -- that's only known at
-    call time (bad key, expired token, no `az login`). Real success/failure of the last
-    attempt is reported by conversation.get_llm_status().
-    """
+def _foundry_configured() -> bool:
     if not (ENDPOINT or RESOURCE):
         return False
     try:
@@ -163,8 +171,62 @@ def llm_available() -> bool:
         return False
 
 
+def active_provider() -> str | None:
+    """Which provider a call to interpret_message_llm() would use right now, in priority
+    order, or None if nothing is configured (conversation.py then uses the rules engine)."""
+    if _gemini_key():
+        return "gemini"
+    if _foundry_configured():
+        return "azure-foundry"
+    return None
+
+
+def llm_available() -> bool:
+    """True when *some* provider (Gemini key, or Azure Foundry key/identity) is configured
+    to attempt with. This does NOT guarantee the credential actually authenticates -- that's
+    only known at call time (bad key, expired token, no `az login`). Real success/failure of
+    the last attempt is reported by conversation.get_llm_status()."""
+    return active_provider() is not None
+
+
+def _parse_json_reply(text: str) -> dict:
+    text = text.strip()
+    if text.startswith("```"):
+        text = text.strip("`")
+        text = text[4:] if text.lower().startswith("json") else text
+    return json.loads(text.strip())
+
+
+def _call_gemini(payload: dict) -> str:
+    import litellm
+    resp = litellm.completion(
+        model=GEMINI_MODEL,
+        api_key=_gemini_key(),
+        max_tokens=700,
+        messages=[
+            {"role": "system", "content": _SYSTEM},
+            {"role": "user", "content": json.dumps(payload)},
+        ],
+    )
+    return resp.choices[0].message.content
+
+
+def _call_foundry(payload: dict) -> str:
+    client = _get_foundry_client()
+    # NOTE: output_config.format (native structured outputs) is not enabled on every Azure AI
+    # Foundry workspace -- it 400s there with "structured_outputs not supported in your
+    # workspace." Falling back to plain-JSON-in-the-system-prompt works everywhere, at the
+    # cost of needing to defensively strip markdown fences the model may still wrap it in.
+    resp = client.messages.create(
+        model=MODEL,
+        max_tokens=700,
+        system=_SYSTEM,
+        messages=[{"role": "user", "content": json.dumps(payload)}],
+    )
+    return next(b.text for b in resp.content if b.type == "text")
+
+
 def interpret_message_llm(message: str, state: dict) -> tuple[dict, str, str]:
-    client = _get_client()
     slots = state["slots"]
     payload = {
         "known_so_far": {
@@ -178,22 +240,14 @@ def interpret_message_llm(message: str, state: dict) -> tuple[dict, str, str]:
         "user_message": message,
     }
 
-    # NOTE: output_config.format (native structured outputs) is not enabled on every Azure AI
-    # Foundry workspace -- it 400s there with "structured_outputs not supported in your
-    # workspace." Falling back to plain-JSON-in-the-system-prompt works everywhere, at the
-    # cost of needing to defensively strip markdown fences the model may still wrap it in.
-    resp = client.messages.create(
-        model=MODEL,
-        max_tokens=700,
-        system=_SYSTEM,
-        messages=[{"role": "user", "content": json.dumps(payload)}],
-    )
-    text = next(b.text for b in resp.content if b.type == "text")
-    text = text.strip()
-    if text.startswith("```"):
-        text = text.strip("`")
-        text = text[4:] if text.lower().startswith("json") else text
-    data = json.loads(text.strip())
+    provider = active_provider()
+    if provider == "gemini":
+        raw_text = _call_gemini(payload)
+    elif provider == "azure-foundry":
+        raw_text = _call_foundry(payload)
+    else:
+        raise RuntimeError("no LLM provider configured")
+    data = _parse_json_reply(raw_text)
 
     # Merge results into state (never blank out an already-captured slot).
     if data.get("brand"):

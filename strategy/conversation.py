@@ -627,16 +627,18 @@ def interpret_message(message: str, state: dict) -> tuple[dict, str, str]:
         import pathlib as _pathlib
         import sys as _sys
         _sys.path.insert(0, str(_pathlib.Path(__file__).resolve().parent))
-        from conversation_llm import llm_available, interpret_message_llm
+        from conversation_llm import llm_available, interpret_message_llm, active_provider
         if llm_available():
+            provider = active_provider()
+            provider_label = {"gemini": "Gemini", "azure-foundry": "Claude (via Microsoft Foundry)"}.get(provider, provider)
             try:
                 state, reply, action = interpret_message_llm(message, state)
-                _set_status("azure-foundry", True, "Claude (via Microsoft Foundry) answered this turn.")
+                _set_status(provider, True, f"{provider_label} answered this turn.")
                 return _reason_gate(state, reply, action)  # ask 'why this campaign' before any run
             except Exception as e:  # noqa: BLE001 -- fall back to rules on any LLM/auth failure
                 short = str(e).strip().splitlines()[0][:200]
-                detail = f"Claude call failed ({short}); used the rule-based fallback for this turn."
-                print(f"[conversation] Claude call failed, using rules ({e})")
+                detail = f"{provider_label} call failed ({short}); used the rule-based fallback for this turn."
+                print(f"[conversation] {provider_label} call failed, using rules ({e})")
                 _set_status("rules", False, detail)
                 return _interpret_message_rules(message, state)
         else:
