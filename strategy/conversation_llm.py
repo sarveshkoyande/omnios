@@ -52,7 +52,7 @@ _load_dotenv()
 
 
 # --- Gemini config (tier 1) ---------------------------------------------------------------
-GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini/gemini-2.0-flash")
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini/gemini-2.5-flash")
 
 
 def _gemini_key() -> str | None:
