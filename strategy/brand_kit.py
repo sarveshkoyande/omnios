@@ -74,7 +74,7 @@ def claim_for_topic(kit: dict, topic: str) -> str | None:
                 if _pillar_match(pillar_kws, h.get("pillar", "")):
                     return f"{h['claim']} ({h['evidence']})"
     if kit.get("core_claim"):
-        return f"{kit['core_claim']} — {kit.get('tagline', '')}".strip(" —")
+        return f"{kit['core_claim']}: {kit.get('tagline', '')}".strip(": ")
     return None
 
 

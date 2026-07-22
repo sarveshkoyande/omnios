@@ -57,6 +57,7 @@ export function StageReporting({ result }: { result: PlanResult | null }) {
         icon="insights"
         title="Reporting & Insights"
         blurb="The closed-loop scorecard: which KPIs prove the plan worked, how each channel is measured, and what to learn next."
+        agent="reporting"
       />
 
       <ConsolePanel sx={{ mb: 3 }}>
@@ -71,9 +72,9 @@ export function StageReporting({ result }: { result: PlanResult | null }) {
 
       <ConsolePanel title="Insights & read-outs" sx={{ mb: 3 }}>
         <Box component="ul" sx={{ m: 0, pl: 2.5, fontSize: 13, lineHeight: 1.7 }}>
-          <li>Lifecycle posture: <b>{inf.lifecycle_label || "—"}</b> — measurement should weight {measurementFocus}.</li>
-          <li>Priority audience <b>{inf.persona || "—"}</b> at the <b>{inf.stage_label || "—"}</b> journey stage — read leading indicators at the segment level, not just campaign level.</li>
-          <li>{lib.counts?.approved_claims ?? 0} MLR-approved claims are live; unsubstantiated claims block reporting credibility — keep the claims-to-reference graph clean before scaling spend.</li>
+          <li>Lifecycle posture: <b>{inf.lifecycle_label || "N/A"}</b>. Measurement should weight {measurementFocus}.</li>
+          <li>Priority audience <b>{inf.persona || "N/A"}</b> at the <b>{inf.stage_label || "N/A"}</b> journey stage. Read leading indicators at the segment level, not just campaign level.</li>
+          <li>{lib.counts?.approved_claims ?? 0} MLR-approved claims are live; unsubstantiated claims block reporting credibility. Keep the claims-to-reference graph clean before scaling spend.</li>
           <li>No live performance data is connected yet. The scorecard below is the <b>measurement plan</b> (what to track and what good looks like), not observed results.</li>
         </Box>
       </ConsolePanel>
@@ -110,14 +111,14 @@ export function StageReporting({ result }: { result: PlanResult | null }) {
               <tr key={ch}>
                 <td><span className="material-symbols-outlined" style={{ fontSize: 14, verticalAlign: "-3px", marginRight: 4 }}>{LANE_ICON[ch] ?? "donut_small"}</span>{ch}</td>
                 <td>{v.pct}%</td>
-                <td>{leads[i % (leads.length || 1)] ?? "—"}</td>
+                <td>{leads[i % (leads.length || 1)] ?? "N/A"}</td>
                 <td><Typography component="span" sx={{ fontSize: 10, color: "warning.dark", background: "#FEF3C7", px: 1, borderRadius: 999 }}>Baseline needed</Typography></td>
               </tr>
             ))}
           </tbody>
         </PlanTable>
         <Typography variant="caption" sx={{ color: "text.secondary", fontStyle: "italic", display: "block", mt: 1 }}>
-          Targets require a baseline from the first in-market period — no observed data is connected.
+          Targets require a baseline from the first in-market period. No observed data is connected.
         </Typography>
       </ConsolePanel>
 

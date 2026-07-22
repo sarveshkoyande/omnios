@@ -24,7 +24,8 @@ CT_STUDIES = "https://clinicaltrials.gov/api/v2/studies"
 PUBMED_ESEARCH = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
 OPENFDA_LABEL = "https://api.fda.gov/drug/label.json"
 
-_TIMEOUT = 20
+_TIMEOUT = 6  # best-effort, never load-bearing (see module docstring) -- fail fast rather than
+              # stalling the whole pipeline; up to 4 of these run sequentially before Align shows.
 _CACHE: dict[str, list[dict]] = {}
 
 

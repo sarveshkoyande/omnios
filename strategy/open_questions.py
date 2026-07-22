@@ -39,7 +39,7 @@ def build_open_questions(feasibility: dict, cx_questionnaire: dict, tcg: dict) -
         {"id": "select_checkpoint", "phase": "select", "title": "Message & channel guardrails",
          "source": "Message Flow + Channel Selection (Sheets 6-7)",
          "questions": ["Before I lock the message flow and channel plan: is there any channel you must "
-                       "include or exclude, and any key message you must lead with — or cannot use yet?"]},
+                       "include or exclude, and any key message you must lead with, or cannot use yet?"]},
         # ---- Phase 3 · Create omnichannel CX ----
         {"id": "create_checkpoint", "phase": "create", "title": "Omnichannel CX build priorities",
          "source": "Map content + Design flows (Sheets 8-9)",
@@ -57,7 +57,7 @@ def build_open_questions(feasibility: dict, cx_questionnaire: dict, tcg: dict) -
         # ---- Phase 4 · Deploy campaign ----
         {"id": "raci", "phase": "deploy", "title": "RACI ownership",
          "source": "Campaign execution RACI (Sheet 14)",
-         "questions": ["The RACI matrix in the plan is an illustrative seed — which stakeholders actually own "
+         "questions": ["The RACI matrix in the plan is an illustrative seed: which stakeholders actually own "
                        "(Accountable) and execute (Responsible) each workstream on your side?"]},
     ]
     return [g for g in groups if g["questions"]]

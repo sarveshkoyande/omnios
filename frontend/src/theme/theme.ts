@@ -1,98 +1,67 @@
 import { createTheme } from "@mui/material/styles";
-import {
-  tokens,
-  shade,
-  light,
-  indigoTint,
-  glass,
-  glassFallback,
-  gradientBrand,
-  focusRing,
-} from "./tokens";
+import { tokens, focusRing } from "./tokens";
 
-/**
- * Theme layer (createTheme({ components })) — the "all instances" scope per the
- * material-ui-styling skill. The light-liquid-glass look of every AppBar, Paper,
- * Button, Chip, TextField, Dialog etc. lives here so views never restyle them
- * locally. Design contract: DESIGN_BRIEF.md.
- *
- * Hard rules encoded here:
- *  - The AppBar is the ONE fully-saturated element (brand gradient, white text).
- *  - Everything else is glass, white, or ink. Primary buttons are the only other
- *    saturated element (brand gradient, white text).
- *  - Every glass surface pairs backdrop-filter with -webkit-, and degrades to a
- *    solid via @supports and the two a11y media queries in CssBaseline.
- *  - Focus is a 2px indigo outline, offset, never removed (white on the app bar).
- */
-
-/** Tier-A glass, expressed as emotion style object with a solid fallback. */
-const glassTierA = {
-  background: glassFallback,
-  border: glass.border,
-  boxShadow: glass.shadow,
-  backgroundImage: "none",
-  "@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)))": {
-    background: glass.panel,
-    backdropFilter: glass.blur,
-    WebkitBackdropFilter: glass.blur,
-  },
-} as const;
+const SEMANTIC: Record<string, { solid: string; soft: string; ink: string }> = {
+  success: { solid: tokens.color.success, soft: tokens.color.successSoft, ink: tokens.color.successInk },
+  warning: { solid: tokens.color.warning, soft: tokens.color.warningSoft, ink: tokens.color.warningInk },
+  error: { solid: tokens.color.error, soft: tokens.color.errorSoft, ink: tokens.color.error },
+  info: { solid: tokens.color.info, soft: tokens.color.infoSoft, ink: tokens.color.infoInk },
+  secondary: { solid: tokens.color.secondary, soft: tokens.color.emerald100, ink: tokens.color.secondaryDark },
+};
 
 export const theme = createTheme({
   palette: {
     mode: "light",
-    primary: { main: tokens.color.primary, contrastText: "#FFFFFF" },
-    secondary: { main: tokens.color.secondary, contrastText: "#FFFFFF" },
-    success: { main: tokens.color.success, contrastText: "#FFFFFF" },
-    warning: { main: tokens.color.warning, contrastText: tokens.color.text },
-    error: { main: tokens.color.danger, contrastText: "#FFFFFF" },
-    background: { default: tokens.color.bgBase, paper: glass.panel },
-    text: { primary: tokens.color.text, secondary: tokens.color.inkSoft },
-    divider: indigoTint(0.12),
+    primary: { main: tokens.color.primary, dark: tokens.color.primaryDark, contrastText: "#FFFFFF" },
+    secondary: { main: tokens.color.secondary, dark: tokens.color.secondaryDark, contrastText: "#FFFFFF" },
+    success: { main: tokens.color.success, light: tokens.color.emerald100, dark: tokens.color.secondaryDark, contrastText: "#FFFFFF" },
+    warning: { main: tokens.color.warning, dark: tokens.color.warningDark, contrastText: "#FFFFFF" },
+    error: { main: tokens.color.error, contrastText: "#FFFFFF" },
+    info: { main: tokens.color.info, contrastText: "#FFFFFF" },
+    background: { default: tokens.color.canvas, paper: tokens.color.surface },
+    text: { primary: tokens.color.text, secondary: tokens.color.inkSecondary },
+    divider: tokens.color.outline,
   },
   typography: {
     fontFamily: tokens.font.primary,
-    h1: { fontSize: tokens.fontSize.display, fontWeight: 700, letterSpacing: "-0.01em", color: tokens.color.text },
+    h1: { fontSize: tokens.fontSize.display, fontWeight: 800, letterSpacing: "-0.01em", color: tokens.color.text },
     h2: { fontSize: tokens.fontSize.xxl, fontWeight: 700, color: tokens.color.text },
-    h3: { fontSize: tokens.fontSize.xl, fontWeight: 700, color: tokens.color.text },
-    subtitle1: { fontSize: tokens.fontSize.lg, fontWeight: 600 },
-    body1: { fontSize: tokens.fontSize.md },
-    body2: { fontSize: tokens.fontSize.sm },
-    caption: { fontSize: tokens.fontSize.xs, color: tokens.color.inkSoft },
+    h3: { fontSize: tokens.fontSize.lg, fontWeight: 700, color: tokens.color.text },
+    button: { fontSize: tokens.fontSize.sm, fontWeight: 700, textTransform: "none" },
+    body1: { fontSize: tokens.fontSize.md, color: tokens.color.text },
+    body2: { fontSize: tokens.fontSize.sm, color: tokens.color.inkSecondary },
+    caption: { fontSize: tokens.fontSize.xs, color: tokens.color.inkSecondary },
     overline: {
-      // Section labels: small caps, +0.08em, brand indigo.
       fontFamily: tokens.font.primary,
       fontSize: tokens.fontSize.xs,
       fontWeight: 700,
-      letterSpacing: "0.08em",
+      letterSpacing: "0.6px",
       textTransform: "uppercase",
       color: tokens.color.primary,
       lineHeight: 1.4,
     },
-    button: { fontSize: tokens.fontSize.sm, fontWeight: 600, textTransform: "none" },
   },
-  spacing: tokens.spacingUnit, // spacing(1|2|3|4|6|8) = 4/8/12/16/24/32
-  shape: { borderRadius: tokens.radius.md },
+  shape: { borderRadius: tokens.radius.sm },
   components: {
     MuiCssBaseline: {
       styleOverrides: {
         body: {
-          backgroundColor: tokens.color.bgBase,
+          backgroundColor: tokens.color.canvas,
           minHeight: "100vh",
+          overflowWrap: "break-word",
         },
-        "::selection": { background: indigoTint(0.22), color: tokens.color.text },
-        // Thin, rounded, glass-tinted scrollbars (replaces the chunky native
-        // scrollbar with arrow buttons).
-        "*": { scrollbarWidth: "thin", scrollbarColor: `${indigoTint(0.35)} transparent` },
+        "h1, h2, h3, h4, h5, h6, p, li, td, th": { overflowWrap: "break-word" },
+        "::selection": { background: tokens.color.primaryContainer, color: tokens.color.text },
+        "*": { scrollbarWidth: "thin", scrollbarColor: `${tokens.color.outlineStrong} transparent` },
         "*::-webkit-scrollbar": { width: 12, height: 12 },
         "*::-webkit-scrollbar-track": { background: "transparent" },
         "*::-webkit-scrollbar-thumb": {
-          background: indigoTint(0.3),
+          background: tokens.color.outline,
           borderRadius: 999,
           border: "3px solid transparent",
           backgroundClip: "content-box",
         },
-        "*::-webkit-scrollbar-thumb:hover": { background: indigoTint(0.5), backgroundClip: "content-box" },
+        "*::-webkit-scrollbar-thumb:hover": { background: tokens.color.outlineStrong, backgroundClip: "content-box" },
         "*::-webkit-scrollbar-corner": { background: "transparent" },
         ".material-symbols-outlined": {
           fontFamily: "'Material Symbols Outlined'",
@@ -110,22 +79,6 @@ export const theme = createTheme({
           verticalAlign: "middle",
           fontVariationSettings: "'FILL' 0, 'wght' 450, 'GRAD' 0, 'opsz' 24",
         },
-        // Accessibility: collapse glass to solid, kill blur everywhere.
-        "@media (prefers-reduced-transparency: reduce)": {
-          "*, *::before, *::after": {
-            backdropFilter: "none !important",
-            WebkitBackdropFilter: "none !important",
-          },
-          ".glass-surface": {
-            background: `${glassFallback} !important`,
-          },
-        },
-        "@media (prefers-contrast: more)": {
-          ".glass-surface": {
-            background: "rgba(255,255,255,0.9) !important",
-            borderColor: `${shade(0.35)} !important`,
-          },
-        },
         "@media (prefers-reduced-motion: reduce)": {
           "*, *::before, *::after": {
             animationDuration: "0.01ms !important",
@@ -135,155 +88,149 @@ export const theme = createTheme({
         },
       },
     },
-
     MuiAppBar: {
       defaultProps: { elevation: 0 },
       styleOverrides: {
         root: {
-          // THE one saturated moment: solid brand gradient, white content.
+          backgroundColor: tokens.color.primary,
           color: "#FFFFFF",
-          borderBottom: "none",
-          boxShadow: "0 2px 12px rgba(79,70,229,0.28)",
-          // The AppBar root also carries .MuiPaper-root, so the global Paper
-          // glass (its @supports rule AND the reduced-transparency !important
-          // rule) would otherwise repaint it translucent white and wipe the
-          // gradient. Win decisively with a compound selector + !important.
+          border: "none",
+          backgroundImage: "none",
+          boxShadow: "none",
+          borderRadius: 0,
+          // AppBar's root DOM node also carries .MuiPaper-root (AppBar wraps
+          // Paper internally), and that rule is registered after this one --
+          // same-specificity same-property CSS is decided by source order, so
+          // MuiPaper's `border: 1px solid outline` was winning and painting a
+          // stray light line across the top of the gradient bar. Win it back
+          // explicitly rather than relying on declaration order.
           "&.MuiPaper-root": {
-            backgroundColor: "transparent !important",
-            backgroundImage: `${gradientBrand} !important`,
-            backdropFilter: "none !important",
-            WebkitBackdropFilter: "none !important",
+            border: "none !important",
+            borderRadius: "0 !important",
           },
         },
       },
     },
-
     MuiPaper: {
-      defaultProps: { elevation: 0, className: "glass-surface" },
+      defaultProps: { elevation: 0 },
       styleOverrides: {
         root: {
-          ...glassTierA,
+          backgroundColor: tokens.color.surface,
+          backgroundImage: "none",
+          border: `1px solid ${tokens.color.outline}`,
           borderRadius: tokens.radius.md,
           color: tokens.color.text,
+          boxShadow: "none",
         },
       },
     },
-
     MuiButton: {
       defaultProps: { disableRipple: true, disableElevation: true },
       styleOverrides: {
         root: {
-          borderRadius: tokens.radius.md,
-          fontWeight: 600,
-          transition: "transform 120ms ease, box-shadow 120ms ease, filter 120ms ease, background 120ms ease",
+          borderRadius: tokens.radius.sm,
+          fontWeight: 700,
+          textTransform: "none",
+          transition: "background-color 120ms ease, color 120ms ease, border-color 120ms ease, transform 120ms ease",
           "&.Mui-focusVisible": focusRing,
         },
-        // Primary action: brand gradient, white text (the only other saturated element).
-        contained: {
-          background: gradientBrand,
-          color: "#FFFFFF",
-          border: "none",
-          boxShadow: "0 4px 14px rgba(79,70,229,0.30)",
-          "&:hover": { filter: "brightness(1.06)", boxShadow: "0 6px 18px rgba(79,70,229,0.36)", transform: "translateY(-1px)" },
-          "&:active": { transform: "translateY(1px)", filter: "brightness(0.98)" },
-          "&.Mui-disabled": { background: shade(0.12), color: shade(0.4), boxShadow: "none" },
+        contained: ({ ownerState }) => {
+          const s = ownerState.color ? SEMANTIC[ownerState.color] : undefined;
+          const fill = s ? s.solid : tokens.color.primary;
+          const textColor = "#FFFFFF";
+          return {
+            backgroundColor: fill,
+            color: textColor,
+            border: "none",
+            boxShadow: "none",
+            "&:hover": { backgroundColor: s ? s.ink : tokens.color.primaryDark, transform: "translateY(-1px)" },
+            "&:active": { transform: "translateY(1px)" },
+            "&.Mui-disabled": { backgroundColor: tokens.color.outline, color: tokens.color.inkSecondary, boxShadow: "none" },
+          };
         },
-        // "Outlined" is repurposed as a translucent glass pill — never grey.
         outlined: {
-          ...glassTierA,
-          color: tokens.color.text,
-          borderRadius: tokens.radius.pill,
-          "&:hover": { background: glass.panelStrong, borderColor: light(0.8) },
-          "&.Mui-disabled": { background: shade(0.06), color: shade(0.4), borderColor: shade(0.1) },
+          backgroundColor: tokens.color.surface,
+          border: `1px solid ${tokens.color.outlineStrong}`,
+          color: tokens.color.primary,
+          boxShadow: "none",
+          "&:hover": { backgroundColor: tokens.color.primaryContainer, borderColor: tokens.color.primary },
         },
-        // Secondary: plain ink text link ("Skip — I'll just chat").
         text: {
-          color: tokens.color.text,
+          color: tokens.color.primary,
           boxShadow: "none",
-          "&:hover": { background: indigoTint(0.06), boxShadow: "none" },
-          "&:active": { background: indigoTint(0.1) },
+          "&:hover": { backgroundColor: tokens.color.primaryContainer },
         },
       },
     },
-
-    MuiDivider: {
-      styleOverrides: {
-        root: { borderColor: indigoTint(0.12) },
-      },
-    },
-
+    MuiDivider: { styleOverrides: { root: { borderColor: tokens.color.outline } } },
     MuiChip: {
-      defaultProps: { className: "glass-surface" },
       styleOverrides: {
-        root: {
-          ...glassTierA,
-          borderRadius: tokens.radius.pill,
-          fontSize: tokens.fontSize.xs,
-          fontWeight: 600,
-          color: tokens.color.text,
-          boxShadow: "none",
+        root: ({ ownerState }) => {
+          const s = ownerState.color ? SEMANTIC[ownerState.color] : undefined;
+          return {
+            borderRadius: tokens.radius.sm,
+            backgroundColor: s ? s.soft : tokens.color.surface,
+            border: s ? "none" : `1px solid ${tokens.color.outline}`,
+            color: s ? s.ink : tokens.color.inkSecondary,
+            fontWeight: 700,
+            boxShadow: "none",
+            ".MuiChip-label": { px: 1 },
+          };
         },
-        colorPrimary: { color: tokens.color.primary },
       },
     },
-
     MuiOutlinedInput: {
+      defaultProps: { size: "small" },
       styleOverrides: {
         root: {
-          // Tier 0 — content surface: near-opaque white, hairline, readable.
-          background: glass.content,
-          borderRadius: tokens.radius.md,
-          "& .MuiOutlinedInput-notchedOutline": { borderColor: indigoTint(0.2) },
-          "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: indigoTint(0.35) },
+          backgroundColor: tokens.color.surface,
+          borderRadius: tokens.radius.sm,
+          "& .MuiOutlinedInput-notchedOutline": { borderColor: tokens.color.outlineStrong },
+          "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: tokens.color.primary },
           "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: tokens.color.primary, borderWidth: 2 },
           "&.Mui-focused": focusRing,
-          "&.Mui-disabled": { background: shade(0.04) },
-          "&.Mui-error .MuiOutlinedInput-notchedOutline": { borderColor: tokens.color.danger },
+          "&.Mui-disabled": { backgroundColor: tokens.color.canvas },
+          "&.Mui-error .MuiOutlinedInput-notchedOutline": { borderColor: tokens.color.error },
         },
       },
     },
-
     MuiLinearProgress: {
       styleOverrides: {
-        root: { height: 8, borderRadius: tokens.radius.pill, background: indigoTint(0.12) },
-        bar: { borderRadius: tokens.radius.pill, background: gradientBrand },
+        root: { height: 8, borderRadius: tokens.radius.pill, backgroundColor: tokens.color.primaryContainer },
+        bar: ({ ownerState }) => {
+          const s = ownerState.color ? SEMANTIC[ownerState.color] : undefined;
+          return { borderRadius: tokens.radius.pill, backgroundColor: s ? s.solid : tokens.color.emerald500 };
+        },
       },
     },
-
     MuiDrawer: {
-      styleOverrides: {
-        paper: { ...glassTierA, borderRadius: 0 },
-      },
+      styleOverrides: { paper: { borderRadius: 0, backgroundColor: tokens.color.surface, border: `1px solid ${tokens.color.outline}` } },
     },
-
     MuiDialog: {
-      styleOverrides: {
-        paper: {
-          background: glass.panelStrong,
-          border: glass.border,
-          boxShadow: glass.shadowElevated,
-          borderRadius: tokens.radius.lg,
-          "@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)))": {
-            backdropFilter: glass.blur,
-            WebkitBackdropFilter: glass.blur,
-          },
-        },
-      },
+      styleOverrides: { paper: { borderRadius: tokens.radius.lg, backgroundColor: tokens.color.surface, boxShadow: `0 8px 24px rgba(16,24,40,0.18)`, border: "none" } },
     },
-    MuiBackdrop: {
-      styleOverrides: {
-        root: {
-          backgroundColor: "rgba(30,27,51,0.32)",
-          backdropFilter: "blur(4px)",
-          WebkitBackdropFilter: "blur(4px)",
-        },
-      },
-    },
-
-    MuiLink: {
-      styleOverrides: {
-        root: { color: tokens.color.primary, "&:focus-visible": focusRing },
-      },
-    },
+    MuiBackdrop: { styleOverrides: { root: { backgroundColor: "rgba(16,24,40,0.5)" } } },
+    MuiLink: { styleOverrides: { root: { color: tokens.color.primary, "&:focus-visible": focusRing } } },
   },
 });
+
+declare module "@mui/material/styles" {
+  interface Palette {
+    emerald: Record<50 | 100 | 200 | 400 | 500 | 600 | 700 | 800 | 900, string>;
+  }
+  interface PaletteOptions {
+    emerald?: Record<number, string>;
+  }
+}
+
+(theme.palette as typeof theme.palette & { emerald: Record<number, string> }).emerald = {
+  50: tokens.color.emerald50,
+  100: tokens.color.emerald100,
+  200: tokens.color.emerald200,
+  400: tokens.color.emerald400,
+  500: tokens.color.emerald500,
+  600: tokens.color.emerald600,
+  700: tokens.color.emerald700,
+  800: tokens.color.emerald800,
+  900: tokens.color.emerald900,
+};

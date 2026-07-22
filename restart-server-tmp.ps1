@@ -1,0 +1,21 @@
+$port = 8731
+
+# 1. Kill the entire uvicorn family — parent launcher AND workers —
+#    by matching the command line, not a remembered PID
+Get-CimInstance Win32_Process |
+  Where-Object { $_.CommandLine -match 'uvicorn' -and $_.CommandLine -match 'app\.server:app' } |
+  ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
+
+# 2. Wait until the port is genuinely free (handles slow teardown)
+while (Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue) {
+  Start-Sleep -Milliseconds 300
+}
+
+# 3. Relaunch (from this script's own directory)
+Set-Location $PSScriptRoot
+Start-Process python -ArgumentList "-m uvicorn app.server:app --host 127.0.0.1 --port $port --reload" -NoNewWindow
+
+# 4. Block until the server is actually accepting connections
+do { Start-Sleep -Seconds 1 }
+until ((Test-NetConnection 127.0.0.1 -Port $port -WarningAction SilentlyContinue).TcpTestSucceeded)
+Write-Host "Server ready on $port"

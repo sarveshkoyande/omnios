@@ -1,17 +1,17 @@
 {
-  "note": "Industry baseline benchmarks for pharma omnichannel engagement (researched 2026-07). Two agents consume this: Maya (Market & Competitive Intelligence) sizes the audience and reads its access/digital posture; Arjun (Activation Planning) sets channel engagement targets and KPI baselines. Every figure carries a `confidence` tag: 'cited' = taken from a named public source listed in `sources`; 'approximate' = a well-established directional industry figure not tied to one source in this capture (validate before external use); 'derived' = computed by us from cited inputs. Rates are directional industry baselines, NOT brand-specific forecasts — a brand's own historical data always supersedes these.",
+  "note": "Industry baseline benchmarks for pharma omnichannel engagement (researched 2026-07). Two agents consume this: Maya (Market & Competitive Intelligence) sizes the audience and reads its access/digital posture; Arjun (Activation Planning) sets channel engagement targets and KPI baselines. Every figure carries a `confidence` tag: 'cited' = taken from a named public source listed in `sources`; 'approximate' = a well-established directional industry figure not tied to one source in this capture (validate before external use); 'derived' = computed by us from cited inputs. Rates are directional industry baselines, NOT brand-specific forecasts: a brand's own historical data always supersedes these.",
   "as_of": "2026-07",
 
   "channel_tactics": {
     "email_hcp_broadcast": {
-      "label": "HCP email — broadcast/newsletter",
+      "label": "HCP email: broadcast/newsletter",
       "channel_bucket": "Owned digital",
       "open_rate_pct": 5.0, "ctr_pct": 2.25, "confidence": "cited",
-      "note": "Traditional (non-triggered) pharma HCP email opens sit near 5%; the pharma brand-email CTR benchmark is ~2.25%. Far below the general healthcare email vertical — do not benchmark pharma HCP broadcast against generic healthcare email.",
+      "note": "Traditional (non-triggered) pharma HCP email opens sit near 5%; the pharma brand-email CTR benchmark is ~2.25%. Far below the general healthcare email vertical. Do not benchmark pharma HCP broadcast against generic healthcare email.",
       "source_ids": ["pharma_mkting_email", "phamax_benchmarks", "mobile_locker"]
     },
     "email_hcp_triggered": {
-      "label": "HCP email — triggered / behaviour-based",
+      "label": "HCP email: triggered / behaviour-based",
       "channel_bucket": "Owned digital",
       "open_rate_pct": 18.26, "click_to_open_pct": 3.43, "ctr_pct": 3.0, "confidence": "cited",
       "note": "Triggered campaigns materially outperform broadcast (18.26% open vs ~5%). The single highest-leverage email change is moving from broadcast to behaviour-triggered.",
@@ -21,11 +21,11 @@
       "label": "Healthcare vertical email (context only)",
       "channel_bucket": "Owned digital",
       "open_rate_pct": 34.65, "ctr_pct": 2.8, "confidence": "cited",
-      "note": "Medical/dental/healthcare marketing email benchmark. CONTEXT ONLY — a much broader audience than HCP-targeted pharma promotion; using it as a pharma HCP target sets an unreachable bar.",
+      "note": "Medical/dental/healthcare marketing email benchmark. CONTEXT ONLY: a much broader audience than HCP-targeted pharma promotion; using it as a pharma HCP target sets an unreachable bar.",
       "source_ids": ["nine_clouds", "iqvia_email"]
     },
     "email_hcp_targeted_range": {
-      "label": "HCP-targeted pharma email — CTR working range",
+      "label": "HCP-targeted pharma email: CTR working range",
       "channel_bucket": "Owned digital",
       "ctr_low_pct": 2.5, "ctr_high_pct": 3.5, "confidence": "cited",
       "note": "Typical working CTR band for well-targeted HCP pharma email.",
@@ -35,7 +35,7 @@
       "label": "HCP webinar / webcast",
       "channel_bucket": "Events",
       "attendance_rate_pct": 50.0, "on_demand_preference_pct": 55.0, "confidence": "cited",
-      "note": "Pharma leads all industries on webinar attendance (~50% of registrants attend). 55% of HCP attendees prefer on-demand over live — always fund the replay.",
+      "note": "Pharma leads all industries on webinar attendance (~50% of registrants attend). 55% of HCP attendees prefer on-demand over live. Always fund the replay.",
       "source_ids": ["phamax_benchmarks", "amp27"]
     },
     "programmatic_display_hcp": {
@@ -56,14 +56,14 @@
       "label": "Paid search (HCP-targeted)",
       "channel_bucket": "Reach",
       "ctr_pct": 6.88, "confidence": "cited",
-      "note": "Search intent converts far above display — HCP-targeted search CTR ~6.88%. Highest-intent, lowest-reach channel.",
+      "note": "Search intent converts far above display: HCP-targeted search CTR ~6.88%. Highest-intent, lowest-reach channel.",
       "source_ids": ["focus_digital"]
     },
     "field_rep_detail": {
       "label": "Field rep detailing",
       "channel_bucket": "Field",
       "hcp_access_rate_pct": 45.0, "confidence": "cited",
-      "note": "See hcp_access block — access is the binding constraint on this channel, not creative quality.",
+      "note": "See hcp_access block: access is the binding constraint on this channel, not creative quality.",
       "source_ids": ["pharmaphorum_access", "zs_oncology", "prescriberpoint"]
     },
     "patient_support_program": {
@@ -92,7 +92,7 @@
     "no_rep_contact_6mo_pct": 39.0,
     "restrict_to_3_or_fewer_companies_pct": 50.0,
     "confidence": "cited",
-    "note": "Only ~45% of HCPs globally are accessible to biopharma (down from ~60% eighteen months prior); fewer than 35% of US physicians are rep-accessible; ~39% had no rep contact in the last six months. Half of HCPs restrict engagement to three or fewer companies. Access — not message quality — is the first constraint on any Field-heavy plan.",
+    "note": "Only ~45% of HCPs globally are accessible to biopharma (down from ~60% eighteen months prior); fewer than 35% of US physicians are rep-accessible; ~39% had no rep contact in the last six months. Half of HCPs restrict engagement to three or fewer companies. Access, not message quality, is the first constraint on any Field-heavy plan.",
     "by_specialty": {
       "medical oncology": { "fully_accessible_pct": 32.0, "meet_3_or_fewer_companies_pct": 55.0, "confidence": "cited" },
       "psychiatry":       { "meet_1_company_only_pct": 30.0, "confidence": "cited" }
@@ -112,7 +112,7 @@
   },
 
   "hcp_universe_us": {
-    "_note": "US practising-physician counts used to size a target audience. 'cited' entries are traceable to the named source; 'approximate' entries are well-established directional figures — validate against AMA/AAMC/IQVIA before external use.",
+    "_note": "US practising-physician counts used to size a target audience. 'cited' entries are traceable to the named source; 'approximate' entries are well-established directional figures. Validate against AMA/AAMC/IQVIA before external use.",
     "all_active_physicians": { "count": 1032365, "confidence": "cited", "source_ids": ["aamc_dashboard"] },
     "direct_patient_care":   { "count": 866460,  "confidence": "cited", "source_ids": ["aamc_dashboard"] },
     "primary care":          { "count": 543523,  "confidence": "cited", "source_ids": ["statista_pcp"] },
@@ -181,7 +181,7 @@
   },
 
   "lifecycle_kpi_targets": {
-    "_note": "Target bands applied to the channel baselines above. 'index' multiplies the baseline; the resulting band is what 'good' looks like for that lifecycle stage. Derived, directional — replace with the brand's own historical performance as soon as one in-market period exists.",
+    "_note": "Target bands applied to the channel baselines above. 'index' multiplies the baseline; the resulting band is what 'good' looks like for that lifecycle stage. Derived, directional. Replace with the brand's own historical performance as soon as one in-market period exists.",
     "_confidence": "derived",
     "launch": { "index": 1.15, "emphasis": "Reach and awareness; first-prescription conversion",
       "priority_kpis": ["Reach against target list", "Email open rate", "Webinar attendance", "New-to-brand prescriptions (NBRx)"] },
@@ -203,8 +203,8 @@
   },
 
   "governance": {
-    "frequency_capping": "Coordinate frequency ACROSS channels, not within them — an HCP hit on Doximity, Medscape, Epocrates and email in one day has been contacted four times, not once. Unified frequency management prevents saturation and fatigue.",
-    "trigger_followup": "Layer email onto HCPs who engaged elsewhere — a follow-up within ~48 hours of another-channel engagement is the highest-yield trigger.",
+    "frequency_capping": "Coordinate frequency ACROSS channels, not within them: an HCP hit on Doximity, Medscape, Epocrates and email in one day has been contacted four times, not once. Unified frequency management prevents saturation and fatigue.",
+    "trigger_followup": "Layer email onto HCPs who engaged elsewhere: a follow-up within ~48 hours of another-channel engagement is the highest-yield trigger.",
     "measurement_shift": "Open rate and CTR remain diagnostic, not success criteria; 2025+ practice ties engagement to prescribing behaviour and adherence outcomes.",
     "confidence": "cited",
     "source_ids": ["pulsepoint", "improvado", "pharma_mkting_email"]

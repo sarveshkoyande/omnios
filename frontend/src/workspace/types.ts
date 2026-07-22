@@ -1,4 +1,5 @@
 /** Contracts for the existing FastAPI project/chat/run-stream endpoints (server.py). */
+import type { WorkflowDocument } from "./stages/operations/flowbuilder/schema/document";
 
 export interface Slots {
   brand: string;
@@ -22,6 +23,13 @@ export interface Slots {
   [k: string]: unknown;
 }
 
+/** One brief field pulled from an uploaded brand plan, ready to show back to the user. */
+export interface BriefExtractItem {
+  key: string;
+  label: string;
+  value: string;
+}
+
 export interface ClarifyPayload {
   text: string;
   group_index: number;
@@ -40,6 +48,18 @@ export interface ProjectSummary {
   id: string;
   name: string;
   phase: "collecting" | "running" | "done" | string;
+  // Enriched digest from strategy/projects.py::list_projects (optional for back-compat
+  // with any caller/mocks that predate the enrichment).
+  created_at?: string;
+  updated_at?: string;
+  brand?: string;
+  therapy_area?: string;
+  campaign_name?: string;
+  lifecycle_key?: string;
+  objective?: string;
+  has_result?: boolean;
+  /** Furthest workspace stage the plan sits in (strategy/projects.py::_plan_stage). */
+  stage?: "planning" | "orchestration" | "operations" | "reporting";
 }
 
 export interface ProjectDetail {
@@ -52,12 +72,275 @@ export interface ProjectDetail {
     open_questions?: { id: string; title: string; phase: string }[];
     clarify_idx?: number;
     persona_reviews?: PersonaReview[] | null;
+    revealed_phases?: string[];
+    current_phase?: string;
   };
   messages: ChatMessage[];
   plan_markdown: string | null;
   plan_html: string | null;
   result: PlanResult | null;
+  campaign_plan_layout: WorkflowDocument | null;
+  orchestration_tasks: OrchestrationTask[] | null;
 }
+
+/** Structured SLA record (orchestration_sla.resolve) carried under `sla_meta`. */
+export interface SlaMeta {
+  activity_type: string;
+  complexity: string;
+  baseline_days: number;
+  target_days: number;
+  days_saved: number;
+  definition_of_done: string;
+  gating_input?: string | null;
+  sla_label: string;
+}
+
+/** Governed multi-dimensional tags (orchestration_taxonomy.TAG_DIMENSIONS). */
+export interface ActivityTags {
+  team?: string | null;
+  channel?: string | null;
+  asset_type?: string | null;
+  phase?: string | null;
+  compliance_tier?: string | null;
+  automation_class?: string | null;
+  risk?: string | null;
+}
+
+export type GateKind = "MLR" | "CONSENT" | "ISI" | "AFU" | "AE_MIR";
+
+export interface OrchestrationTask {
+  id: string;
+  category: string;
+  title: string;
+  channel?: string | null;
+  done: boolean;
+  team: string;
+  sla?: string | null;
+  assigned_to?: string | null;
+  source?: string | null;
+  // --- Engagement Orchestration activity model (added M1; optional for back-compat) ---
+  activity_type?: string;
+  phase?: string;
+  automation_class?: string;
+  compliance_tier?: string;
+  gate?: GateKind | null;
+  risk?: string;
+  definition_of_done?: string;
+  gating_input?: string | null;
+  sla_meta?: SlaMeta;
+  tags?: ActivityTags;
+  // --- schedule fields, populated on the timeline (not persisted on the task) ---
+  planned_start?: string;
+  planned_due?: string;
+  slack_days?: number;
+  is_critical?: boolean;
+}
+
+/** Response of POST /api/projects/{pid}/orchestration-schedule (orchestration_schedule.build_schedule). */
+export interface OrchestrationSchedule {
+  mode: "backward" | "forward";
+  go_live: string;
+  infeasible: boolean;
+  infeasible_note?: string | null;
+  activities: OrchestrationTask[];
+  bands: {
+    phase: string;
+    start: string;
+    end: string;
+    duration_days: number;
+    baseline_duration_days: number;
+    is_post_launch: boolean;
+  }[];
+  critical_path_ids: string[];
+  elapsed: {
+    pre_launch_days: number;
+    pre_launch_days_baseline: number;
+    days_saved: number;
+    reduction_pct: number;
+    reference_baseline_simple_campaign_days: number;
+    reference_target_days: number;
+  };
+  effort: {
+    baseline_days_total: number;
+    target_days_total: number;
+    days_saved_total: number;
+    reduction_pct: number;
+    note: string;
+  };
+}
+
+/** Internal activity <-> downstream record link (orchestration_store.external_binding). */
+export interface ExternalBinding {
+  project_id: string;
+  activity_id: string;
+  system: string;
+  external_id?: string | null;
+  external_url?: string | null;
+  last_synced_hash?: string | null;
+  sync_state: string;
+  updated_at: string;
+}
+
+export interface PushResultRow {
+  activity_id: string;
+  title?: string;
+  system: string;
+  action: "created" | "updated" | "skipped" | "unconfigured" | "error";
+  external_id?: string;
+  external_url?: string;
+  board?: string;
+  detail?: string;
+}
+
+export interface PushResponse {
+  results: PushResultRow[];
+  counts: Record<string, number>;
+  bindings: ExternalBinding[];
+}
+
+export interface BindingsResponse {
+  bindings: ExternalBinding[];
+  routing: { default_system?: string; routes?: Record<string, { system: string; board: string }> };
+}
+
+export interface SyncAppliedChange {
+  activity_id: string;
+  title?: string;
+  field: string;
+  value: unknown;
+  system: string;
+}
+export interface SyncConflict {
+  activity_id: string;
+  title?: string;
+  field: string;
+  internal?: string;
+  external?: string;
+  resolution: string;
+}
+export interface SyncEvent {
+  id: number;
+  activity_id?: string;
+  system?: string;
+  direction: string;
+  field?: string;
+  old_value?: string;
+  new_value?: string;
+  result: string;
+  created_at: string;
+}
+export interface SyncResponse {
+  applied: SyncAppliedChange[];
+  conflicts: SyncConflict[];
+  changed: boolean;
+  events: SyncEvent[];
+}
+
+export interface Notification {
+  project_id: string;
+  dedupe_key: string;
+  activity_id?: string;
+  trigger: string;
+  severity: "urgent" | "high" | "warning" | "info";
+  channel: string;
+  recipient: string;
+  title: string;
+  body: string;
+  gate?: string | null;
+  fire_count: number;
+  escalated: number;
+  acked: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface NudgeRunResponse {
+  created: { dedupe_key: string; trigger: string; severity: string; escalated: boolean }[];
+  escalated: { dedupe_key: string }[];
+  open: Notification[];
+}
+
+export interface NotificationsResponse {
+  notifications: Notification[];
+  policy: { lead_time_days?: number; escalate_after_fires?: number; escalation_recipient?: string };
+}
+
+/** High-level journey map projected from the campaign-ops flow (strategy/campaign_artifacts.py::_journey). */
+export interface JourneyMap {
+  summary?: string;
+  duration_days?: number;
+  entry?: string[];
+  send?: { label: string; detail: string; day: number };
+  gate?: { label: string; day?: number };
+  yes_path?: string;
+  no_path?: { label: string; channel: string; day?: number }[];
+  closure?: { label: string; detail: string; day?: number };
+  decision_logic?: { condition: string; outcome: string }[];
+  operational_rules?: string[];
+}
+
+/** Campaign Strategy + Brief payload (strategy/campaign_artifacts.py). */
+export interface CampaignArtifactsPayload {
+  strategy: {
+    title: string;
+    brand: string;
+    generated_at: string;
+    source_summary?: StrategicSourceSummary;
+    note: string;
+    records: import("./studio/studioTypes").DecisionRecord[];
+  };
+  brief: {
+    title: string;
+    version: string;
+    generated_at: string;
+    header: { brand: string; therapy_area: string; lifecycle: string; owner: string };
+    source_summary?: StrategicSourceSummary;
+    purpose: { program_context: string; trigger_logic: string[]; summary: string };
+    objective: { pillar: string; statement: string; leading_indicators: string[] };
+    audience: {
+      segment: string;
+      eligibility_rules: string[];
+      segments: { name: string; profile: string; volume: number | null; volume_note: string | null; key_characteristics: string[] }[];
+      consent_note: string;
+    };
+    comms_strategy: {
+      belief_shift: string;
+      message_ladder: string[];
+      message_detail: { topic: string; supporting: string[] }[];
+      tone_guardrails: string[];
+      core_claim: string;
+    };
+    deliverables: { asset: string; variants: string; notes: string }[];
+    channel_journey: { anchor: string; mix: { channel: string; pct: number }[]; cadence_note: string; journey: JourneyMap };
+    measurement_plan: { kpis: string[]; link_matrix_note: string; test_design: string };
+    scope_review: { ladder: string; rounds_note: string; change_control: string };
+    risk_register: { risk: string; severity: string; mitigation: string }[];
+    assumptions: string[];
+    timeline: { window: string; note: string };
+    approvals: { role: string; name: string }[];
+    traceability: { brief_section: string; stage_id: string; stage_name: string; framework: string }[];
+  };
+}
+
+export interface StrategicSourceSummary {
+  basis: string;
+  source_name: string;
+  has_strategic_source: boolean;
+  captured_fields: { label: string; value: string }[];
+  csfs: string[];
+  positioning: string;
+  evidence: string[];
+  guardrails: string[];
+}
+
+/** Fixed team roster + display order -- kept in sync with strategy/orchestration_tasks.py. */
+export const ORCHESTRATION_TEAMS = [
+  "Web team",
+  "Content & derivative assets team",
+  "Campaign operations team",
+  "Data & data cloud team",
+  "Reporting & insights team",
+] as const;
 
 export interface ChannelSelectionRow {
   channel: string;
@@ -92,6 +375,61 @@ export interface TmlRow {
   what_good_looks_like: string;
 }
 
+/** Stage 3 — Campaign Operations: the synthesized journey diagram + planning summary. */
+export interface CampaignSegment {
+  key: string;
+  name: string;
+  profile: string;
+  key_characteristics: string[];
+  volume: number | null;
+  volume_note?: string | null;
+}
+
+export type CampaignFlowNodeType = "send" | "wait" | "decision" | "exit" | "followup" | "closure";
+
+export interface CampaignFlowNode {
+  id: string;
+  type: CampaignFlowNodeType;
+  position: { x: number; y: number };
+  data: {
+    label: string;
+    day?: number;
+    segment_key?: string;
+    channel?: string;
+    detail?: string;
+    content_ref?: { label: string; ready: boolean; branded?: boolean };
+  };
+}
+
+export interface CampaignFlowEdge {
+  id: string;
+  source: string;
+  target: string;
+  label?: string;
+}
+
+export interface CampaignFlow {
+  nodes: CampaignFlowNode[];
+  edges: CampaignFlowEdge[];
+}
+
+export interface CampaignPlan {
+  overview: {
+    objective: string;
+    duration_days: number;
+    max_communications: number;
+    primary_channel: string;
+    secondary_automation: string;
+  };
+  segments: CampaignSegment[];
+  entry_criteria: string[];
+  flow: CampaignFlow;
+  decision_logic_summary: { condition: string; outcome: string }[];
+  operational_rules: string[];
+  kpis: PlanResult["stage_7_kpi"];
+  summary: string;
+}
+
 export interface PlanResult {
   inferred_inputs: {
     persona: string;
@@ -115,6 +453,7 @@ export interface PlanResult {
   stage_2_4_pp_npp?: { channel: string; pct: number; bucket: string }[];
   stage_5_channel_selection?: { channels: ChannelSelectionRow[] };
   stage_5_budget?: { allocation: Record<string, BudgetAllocationRow> };
+  stage_3_campaign_plan?: CampaignPlan;
   stage_9_execution_plan?: { bands: ExecutionBand[]; mlr_delay_note?: string };
   stage_7_kpi?: {
     leading_indicators: string[];
@@ -162,14 +501,29 @@ export interface PersonaReview {
   channel_reactions?: { bucket: string; pct: number; reaction: string }[];
 }
 
-/** Agent identity — mirrors AGENT_PEOPLE in the legacy index.html / orchestrator.py. */
-export const AGENT_PEOPLE: Record<string, { name: string; c1: string; c2: string; initials: string; photo: string }> = {
-  planner: { name: "Engagement Plan Composer", initials: "EP", c1: "#7B3FE4", c2: "#A277F0", photo: "/static/agent_avatars/agent-5-purple.png" },
-  intel: { name: "Market & Competitive Intelligence Agent", initials: "MC", c1: "#E5323C", c2: "#FF6B72", photo: "/static/agent_avatars/agent-2-red.png" },
-  strategy: { name: "Strategy & Positioning Agent", initials: "SP", c1: "#22B36B", c2: "#57DD97", photo: "/static/agent_avatars/agent-3-green.png" },
-  inspiration: { name: "Creative Inspiration Agent", initials: "CI", c1: "#F5730A", c2: "#FFA333", photo: "/static/agent_avatars/agent-4-orange.png" },
-  activation: { name: "Activation Planning Agent", initials: "AP", c1: "#7B3FE4", c2: "#A277F0", photo: "/static/agent_avatars/agent-5-purple.png" },
-};
+/**
+ * Agent identity — one agent per workflow stage, not one per internal work-step.
+ * Each stage's agent still does its work as several internal steps server-side
+ * (Planning & Strategy: market intel, positioning, creative inspiration, activation
+ * planning, plan composition) but presents as a single conversational identity — no
+ * per-step avatars, no agents shown conversing with each other as peers. Backend
+ * events that still tag individual work-steps (studio_run.py's AGENT_ROSTER ids) are
+ * normalized down to the owning stage's persona in useWorkspace.ts before they ever
+ * reach state, so every consumer here only ever sees one of these four ids.
+ */
+export interface AgentPersona { id: string; name: string; initials: string; c1: string; c2: string; photo: string }
+
+export const STAGE_AGENTS = {
+  planning: { id: "planning", name: "Campaign Planning & Strategy Agent", initials: "PS", c1: "#1768D1", c2: "#4AA6F2", photo: "/static/agent_avatars/agent-1-blue.png" },
+  orchestration: { id: "orchestration", name: "Engagement Orchestration Agent", initials: "EO", c1: "#22B36B", c2: "#57DD97", photo: "/static/agent_avatars/agent-3-green.png" },
+  operations: { id: "operations", name: "Campaign Operations Agent", initials: "CO", c1: "#D1341C", c2: "#F2694A", photo: "/static/agent_avatars/agent-2-red.png" },
+  reporting: { id: "reporting", name: "Reporting & Insights Agent", initials: "RI", c1: "#F5730A", c2: "#FFA333", photo: "/static/agent_avatars/agent-4-orange.png" },
+} as const satisfies Record<string, AgentPersona>;
+
+export type StageAgentId = keyof typeof STAGE_AGENTS;
+
+/** Keyed lookup for AgentAvatar / ChatMessages, which only ever address agents by id. */
+export const AGENT_PEOPLE: Record<string, AgentPersona> = STAGE_AGENTS;
 
 export type RunEvent =
   | { type: "agents_init"; agents: { id: string; name: string; role?: string }[] }
@@ -181,7 +535,7 @@ export type RunEvent =
   | { type: "plan"; html: string; markdown: string; partial: boolean; sections_done?: number; sections_total?: number }
   | { type: "result"; result: PlanResult }
   | { type: "error"; message: string }
-  | { type: "done"; last_phase?: boolean };
+  | { type: "done"; last_phase?: boolean; revealed_phases?: string[] };
 
 export interface PersonaSummary {
   id: string;

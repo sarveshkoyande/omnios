@@ -19,7 +19,7 @@
       "years_in_practice": 12,
       "tagline": "The efficient digital native who will not take a rep meeting",
       "bio": "High-throughput community oncologist who runs an evidence-first practice. Reviews new data herself the week it drops, keeps her own comparison notes, and treats her inbox as her primary channel. Reps almost never get past the front desk; she'd rather have a link than a lunch.",
-      "prescribing": {"monthly_trx": 74, "monthly_nrx": 13, "trx_trend": "growing", "decile": 8, "patient_volume": "high", "adoption_curve": "early adopter", "brand_stance": "open but unconvinced — needs to see head-to-head relevance to her patient mix"},
+      "prescribing": {"monthly_trx": 74, "monthly_nrx": 13, "trx_trend": "growing", "decile": 8, "patient_volume": "high", "adoption_curve": "early adopter", "brand_stance": "open but unconvinced: needs to see head-to-head relevance to her patient mix"},
       "digital": {"affinity": "High-digital", "affinity_score": 90, "email_open": "high (opens permissioned, relevant email same-day)", "rep_access": "very low", "devices": ["mobile", "desktop"]},
       "channels": {
         "preferred": ["Permissioned email", "On-demand webinars / video", "Medical web + HCP portals", "Search / programmatic to credible content"],
@@ -33,8 +33,8 @@
       "frustrations": ["Reps who can't answer a data question", "Being re-contacted across five channels with the same message", "Fluffy, claims-first messaging with no numbers"],
       "decision_drivers": ["Head-to-head efficacy vs standard of care", "Safety/tolerability in real-world use", "Ease of access / prior-auth support"],
       "tone": "Direct, time-pressured, data-driven, a little impatient",
-      "voice_sample": "Make it quick and make it relevant to my patients, or I'm closing the tab. Don't send a rep — send me the data.",
-      "what_earns_engagement": ["A concise, personalized email with the head-to-head data and a one-click link to the evidence", "An on-demand webinar she can watch at 6am", "Frequency discipline — one coordinated message, not five"]
+      "voice_sample": "Make it quick and make it relevant to my patients, or I'm closing the tab. Don't send a rep. Send me the data.",
+      "what_earns_engagement": ["A concise, personalized email with the head-to-head data and a one-click link to the evidence", "An on-demand webinar she can watch at 6am", "Frequency discipline: one coordinated message, not five"]
     },
     {
       "id": "marcus-bell-cards",
@@ -53,7 +53,7 @@
       "tagline": "The relationship-led prescriber who decides over a face-to-face conversation",
       "bio": "Respected community cardiologist with a loyal referral base. Forms his decisions through trusted rep relationships and peer conversations, not portals. He'll adopt when a rep he trusts walks him through the evidence and a colleague vouches for it.",
       "prescribing": {"monthly_trx": 310, "monthly_nrx": 34, "trx_trend": "steady", "decile": 7, "patient_volume": "high", "adoption_curve": "early majority", "brand_stance": "cautiously loyal to what works; will switch on trusted, in-person evidence"},
-      "digital": {"affinity": "F2F", "affinity_score": 34, "email_open": "low (skims, rarely clicks)", "rep_access": "high — welcomes scheduled reps", "devices": ["desktop (staff-managed)"]},
+      "digital": {"affinity": "F2F", "affinity_score": 34, "email_open": "low (skims, rarely clicks)", "rep_access": "high: welcomes scheduled reps", "devices": ["desktop (staff-managed)"]},
       "channels": {
         "preferred": ["In-person rep detailing", "Peer / KOL speaker programs", "Live phone or virtual detail", "Printed leave-behinds"],
         "tolerated": ["A short email recap after a rep visit"],
@@ -67,7 +67,7 @@
       "decision_drivers": ["A trusted rep + KOL endorsement", "Guideline alignment", "Long track record"],
       "tone": "Warm, experienced, a bit traditional, values loyalty",
       "voice_sample": "I don't live in my inbox. Sit down with me, show me the data, and tell me which of my patients this is for.",
-      "what_earns_engagement": ["A well-prepared rep with modular, MLR-approved leave-behinds", "A peer speaker program with a cardiologist he respects", "A light email recap that reinforces — never replaces — the visit"]
+      "what_earns_engagement": ["A well-prepared rep with modular, MLR-approved leave-behinds", "A peer speaker program with a cardiologist he respects", "A light email recap that reinforces, never replaces, the visit"]
     },
     {
       "id": "priya-nair-rheum",
@@ -84,7 +84,7 @@
       "age": 46,
       "years_in_practice": 17,
       "tagline": "The coordinated omnichannel prescriber who wants a mix, not a channel",
-      "bio": "Busy rheumatologist who rarely sees reps in person anymore but actively opens email, attends webinars and joins virtual details. She wants a joined-up experience — she notices, and dislikes, when the same message chases her across five channels.",
+      "bio": "Busy rheumatologist who rarely sees reps in person anymore but actively opens email, attends webinars and joins virtual details. She wants a joined-up experience. She notices, and dislikes, when the same message chases her across five channels.",
       "prescribing": {"monthly_trx": 128, "monthly_nrx": 19, "trx_trend": "growing", "decile": 7, "patient_volume": "medium-high", "adoption_curve": "early majority", "brand_stance": "pragmatic switcher when the journey is coherent and access is smooth"},
       "digital": {"affinity": "Digital", "affinity_score": 76, "email_open": "medium-high", "rep_access": "low-medium (mostly virtual)", "devices": ["mobile", "desktop", "tablet"]},
       "channels": {
@@ -99,7 +99,7 @@
       "frustrations": ["The same asset everywhere", "Channels that contradict each other", "Irrelevant timing"],
       "decision_drivers": ["Coherent evidence story across touchpoints", "Access / onboarding support", "Peer webinar proof"],
       "tone": "Measured, organized, quietly demanding of quality",
-      "voice_sample": "Give me one clear story across email, webinar and a virtual detail — sequenced, not shouted five times.",
+      "voice_sample": "Give me one clear story across email, webinar and a virtual detail; sequenced, not shouted five times.",
       "what_earns_engagement": ["A sequenced trigger → reinforce → convert journey with one message architecture", "A strong lunchtime webinar", "Signals-based next-best-channel instead of blasting every channel"]
     },
     {
@@ -117,9 +117,9 @@
       "age": 61,
       "years_in_practice": 32,
       "tagline": "The guideline-shaping thought leader who is allergic to promotion",
-      "bio": "Publishes, sits on guideline committees and speaks at ASH/ASCO. He engages with the full primary dataset and mechanism, through medical affairs — not commercial. Promotional messaging in a scientific context is an instant turn-off and a compliance red flag to him.",
+      "bio": "Publishes, sits on guideline committees and speaks at ASH/ASCO. He engages with the full primary dataset and mechanism, through medical affairs, not commercial. Promotional messaging in a scientific context is an instant turn-off and a compliance red flag to him.",
       "prescribing": {"monthly_trx": 46, "monthly_nrx": 11, "trx_trend": "growing", "decile": 9, "patient_volume": "medium (complex/referral)", "adoption_curve": "innovator", "brand_stance": "evidence-led; influences hundreds of downstream prescribers"},
-      "digital": {"affinity": "High-digital", "affinity_score": 82, "email_open": "medium (scientific sources only)", "rep_access": "medical affairs only — no commercial reps", "devices": ["desktop", "tablet"]},
+      "digital": {"affinity": "High-digital", "affinity_score": 82, "email_open": "medium (scientific sources only)", "rep_access": "medical affairs only: no commercial reps", "devices": ["desktop", "tablet"]},
       "channels": {
         "preferred": ["Congress / scientific meetings", "MSL / medical affairs (non-promotional)", "Publications / data platforms", "Advisory boards & peer webinars"],
         "tolerated": ["Peer-reviewed data emails from medical, clearly non-promotional"],
@@ -150,7 +150,7 @@
       "age": 49,
       "years_in_practice": 21,
       "tagline": "The time-poor generalist who needs the answer in ten seconds, in workflow",
-      "bio": "Sees 25+ patients a day. She will use something the moment it's fast, clear and lives where she already works — the EHR and her phone. Anything that adds a step or a login loses her before lunch.",
+      "bio": "Sees 25+ patients a day. She will use something the moment it's fast, clear and lives where she already works: the EHR and her phone. Anything that adds a step or a login loses her before lunch.",
       "prescribing": {"monthly_trx": 540, "monthly_nrx": 58, "trx_trend": "steady", "decile": 6, "patient_volume": "very high", "adoption_curve": "late majority", "brand_stance": "will start the right patient if selection is obvious and access is frictionless"},
       "digital": {"affinity": "Digital", "affinity_score": 68, "email_open": "medium (short only)", "rep_access": "low (brief virtual/rep touch)", "devices": ["mobile", "EHR desktop"]},
       "channels": {
@@ -165,7 +165,7 @@
       "frustrations": ["Dense material", "Prior-auth friction", "Anything that slows her clinic down"],
       "decision_drivers": ["Simple patient identification", "Copay / access ease", "Guideline-simple positioning"],
       "tone": "Warm but rushed, practical, no patience for fluff",
-      "voice_sample": "I have ninety seconds. Tell me which patient, what dose, and how they afford it — inside my EHR, ideally.",
+      "voice_sample": "I have ninety seconds. Tell me which patient, what dose, and how they afford it, inside my EHR, ideally.",
       "what_earns_engagement": ["A point-of-care / EHR nudge with clear patient selection", "A short email with a copay card and a one-page patient handout", "Zero added workflow steps"]
     },
     {
@@ -199,7 +199,7 @@
       "decision_drivers": ["Long-term outcomes / RWE", "Guideline endorsement", "Respected-peer adoption"],
       "tone": "Reserved, exacting, quietly resistant to marketing",
       "voice_sample": "Show me the five-year outcomes and where it sits in the guidelines. I'm not switching my patients for a launch splash.",
-      "what_earns_engagement": ["Evidence-first content leading with durability, safety and guideline status", "Peer proof and real-world evidence", "A patient, multi-touch nurture — not a hard push"]
+      "what_earns_engagement": ["Evidence-first content leading with durability, safety and guideline status", "Peer proof and real-world evidence", "A patient, multi-touch nurture, not a hard push"]
     },
     {
       "id": "hannah-kim-derm",
@@ -249,7 +249,7 @@
       "age": 44,
       "years_in_practice": 15,
       "tagline": "The pragmatic hybrid prescriber balancing a heavy MS clinic with limited free time",
-      "bio": "Runs a busy MS clinic and increasingly manages his CME and rep contact virtually. He'll do an in-person visit for something genuinely new, but defaults to webinars and email for anything incremental — and gets irritated when the same pitch shows up in three formats in one week.",
+      "bio": "Runs a busy MS clinic and increasingly manages his CME and rep contact virtually. He'll do an in-person visit for something genuinely new, but defaults to webinars and email for anything incremental, and gets irritated when the same pitch shows up in three formats in one week.",
       "prescribing": {"monthly_trx": 84, "monthly_nrx": 14, "trx_trend": "growing", "decile": 7, "patient_volume": "medium-high", "adoption_curve": "early majority", "brand_stance": "engaged and switch-willing when the evidence and journey are coherent"},
       "digital": {"affinity": "Digital", "affinity_score": 71, "email_open": "medium-high", "rep_access": "low-medium (mostly virtual, occasional in-person)", "devices": ["desktop", "mobile"]},
       "channels": {
@@ -264,7 +264,7 @@
       "frustrations": ["The same message recycled across channels", "Unscheduled interruptions", "Generic content not specific to MS subtypes"],
       "decision_drivers": ["Coherent, sequenced evidence story", "Practical patient-selection guidance", "Access support for his patients"],
       "tone": "Calm, efficient, mildly impatient with repetition",
-      "voice_sample": "I'll give you a webinar slot or a well-timed email — just don't send me the same message three ways in one week.",
+      "voice_sample": "I'll give you a webinar slot or a well-timed email. Just don't send me the same message three ways in one week.",
       "what_earns_engagement": ["A sequenced, non-repetitive journey across webinar, email and virtual detail", "Content specific to his MS patient subtypes", "Respect for his limited, scheduled time"]
     },
     {
@@ -322,7 +322,7 @@
         "preferred": ["EHR / point-of-care messaging", "Short email", "Mobile-friendly web", "Brief rep or virtual touch"],
         "tolerated": ["A short in-person visit between OR blocks if it's tightly scheduled"],
         "avoided": ["Long-form academic content", "Multi-step access processes", "Anything that adds workflow"],
-        "f2f_stance": "Brief, tightly scheduled visits only — no open-ended meetings",
+        "f2f_stance": "Brief, tightly scheduled visits only: no open-ended meetings",
         "email_stance": "Opens short, scannable email between cases; ignores dense content",
         "best_moment": "Early morning before OR; brief clinic gaps"
       },
@@ -330,7 +330,7 @@
       "frustrations": ["Content that buries the answer", "Prior-auth friction", "Anything that slows his day down"],
       "decision_drivers": ["Simple, fast patient identification", "Access / affordability ease", "Practical staging and sequencing guidance"],
       "tone": "Brisk, practical, results-oriented, no patience for fluff",
-      "voice_sample": "I'm between cases. Give me the patient profile, the next step, and the access support — in one screen.",
+      "voice_sample": "I'm between cases. Give me the patient profile, the next step, and the access support, in one screen.",
       "what_earns_engagement": ["A point-of-care nudge with clear patient-selection criteria", "A short email with a one-page staging/sequencing guide and access support", "Zero added workflow steps"]
     }
   ]

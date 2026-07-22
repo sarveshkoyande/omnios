@@ -1,0 +1,134 @@
+{
+  "as_of": "2026-07-19",
+  "policy": "Official public HCP and patient brand websites only. Respect robots.txt. Store text captures, metadata, URLs, and short extracted messaging records; do not copy or redistribute creative assets.",
+  "sites": [
+    {
+      "brand": "Keytruda",
+      "generic": "pembrolizumab",
+      "company": "Merck & Co.",
+      "therapy_area": "oncology",
+      "audience": "hcp",
+      "url": "https://www.keytrudahcp.com/"
+    },
+    {
+      "brand": "Keytruda",
+      "generic": "pembrolizumab",
+      "company": "Merck & Co.",
+      "therapy_area": "oncology",
+      "audience": "patient",
+      "url": "https://www.keytruda.com/"
+    },
+    {
+      "brand": "Opdivo",
+      "generic": "nivolumab",
+      "company": "Bristol Myers Squibb",
+      "therapy_area": "oncology",
+      "audience": "hcp",
+      "url": "https://www.opdivohcp.com/"
+    },
+    {
+      "brand": "Opdivo",
+      "generic": "nivolumab",
+      "company": "Bristol Myers Squibb",
+      "therapy_area": "oncology",
+      "audience": "patient",
+      "url": "https://www.opdivo.com/"
+    },
+    {
+      "brand": "Tagrisso",
+      "generic": "osimertinib",
+      "company": "AstraZeneca plc",
+      "therapy_area": "lung cancer",
+      "audience": "hcp",
+      "url": "https://www.tagrissohcp.com/"
+    },
+    {
+      "brand": "Tagrisso",
+      "generic": "osimertinib",
+      "company": "AstraZeneca plc",
+      "therapy_area": "lung cancer",
+      "audience": "patient",
+      "url": "https://www.tagrisso.com/"
+    },
+    {
+      "brand": "Enhertu",
+      "generic": "fam-trastuzumab deruxtecan-nxki",
+      "company": "Daiichi Sankyo",
+      "therapy_area": "breast cancer",
+      "audience": "hcp",
+      "url": "https://www.enhertuhcp.com/en"
+    },
+    {
+      "brand": "Enhertu",
+      "generic": "fam-trastuzumab deruxtecan-nxki",
+      "company": "Daiichi Sankyo",
+      "therapy_area": "breast cancer",
+      "audience": "patient",
+      "url": "https://www.enhertu.com/"
+    },
+    {
+      "brand": "Darzalex",
+      "generic": "daratumumab",
+      "company": "Johnson & Johnson",
+      "therapy_area": "multiple myeloma",
+      "audience": "hcp",
+      "url": "https://www.darzalexhcp.com/"
+    },
+    {
+      "brand": "Darzalex",
+      "generic": "daratumumab",
+      "company": "Johnson & Johnson",
+      "therapy_area": "multiple myeloma",
+      "audience": "patient",
+      "url": "https://www.darzalex.com/"
+    },
+    {
+      "brand": "Carvykti",
+      "generic": "ciltacabtagene autoleucel",
+      "company": "Johnson & Johnson",
+      "therapy_area": "multiple myeloma",
+      "audience": "hcp",
+      "url": "https://www.carvyktihcp.com/"
+    },
+    {
+      "brand": "Carvykti",
+      "generic": "ciltacabtagene autoleucel",
+      "company": "Johnson & Johnson",
+      "therapy_area": "multiple myeloma",
+      "audience": "patient",
+      "url": "https://www.carvykti.com/"
+    },
+    {
+      "brand": "Erleada",
+      "generic": "apalutamide",
+      "company": "Johnson & Johnson",
+      "therapy_area": "prostate cancer",
+      "audience": "hcp",
+      "url": "https://www.erleadahcp.com/"
+    },
+    {
+      "brand": "Erleada",
+      "generic": "apalutamide",
+      "company": "Johnson & Johnson",
+      "therapy_area": "prostate cancer",
+      "audience": "patient",
+      "url": "https://www.erleada.com/"
+    },
+    {
+      "brand": "Imbruvica",
+      "generic": "ibrutinib",
+      "company": "AbbVie",
+      "therapy_area": "hematology oncology",
+      "audience": "hcp",
+      "url": "https://www.imbruvicahcp.com/"
+    },
+    {
+      "brand": "Imbruvica",
+      "generic": "ibrutinib",
+      "company": "AbbVie",
+      "therapy_area": "hematology oncology",
+      "audience": "patient",
+      "url": "https://www.imbruvica.com/"
+    }
+  ]
+}

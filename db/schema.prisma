@@ -1,0 +1,477 @@
+// Prisma schema for the Omni Data Hub campaign/content data model.
+// This is a Postgres-oriented design aligned to db/campaign_content_schema.sql.
+// The runtime schema in SQLite remains the current source of truth; this file is the
+// canonical Prisma representation for future Postgres migrations and ORM use.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ClaimType {
+  efficacy
+  safety
+  rtb
+  isi
+  fair_balance
+  moa
+  access
+  other
+}
+
+enum ClaimStatus {
+  draft
+  in_review
+  approved
+  expired
+  retired
+}
+
+enum CampaignStatus {
+  draft
+  in_review
+  approved
+  live
+  closed
+}
+
+enum ReviewAction {
+  submitted
+  approved
+  rejected
+  expired
+  withdrawn
+}
+
+enum LifecycleKey {
+  launch
+  growth
+  mature
+  loe
+}
+
+enum HcpChannelPreferenceType {
+  PREFERRED
+  TOLERATED
+  AVOIDED
+}
+
+model Client {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+
+  brands Brand[]
+}
+
+model Brand {
+  id           Int           @id @default(autoincrement())
+  clientId     Int?
+  name         String        @unique
+  genericName  String?
+  therapyArea  String?
+  lifecycleKey LifecycleKey?
+
+  client       Client?       @relation(fields: [clientId], references: [id])
+  indications  Indication[]
+  claims       Claim[]
+  modules      ContentModule[]
+  assets       ContentAsset[]
+  campaigns    Campaign[]
+  marketIntel  BrandMarketIntel[]
+}
+
+model Indication {
+  id      Int    @id @default(autoincrement())
+  brandId Int
+  label   String
+
+  brand   Brand   @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  claims  Claim[]
+  modules ContentModule[]
+  assets  ContentAsset[]
+  campaigns Campaign[]
+
+  @@unique([brandId, label])
+}
+
+model TaxonomyTerm {
+  id        Int          @id @default(autoincrement())
+  dimension String
+  term      String
+
+  entityTags EntityTag[]
+
+  @@unique([dimension, term])
+  @@index([dimension])
+}
+
+model Blob {
+  blobKey      String   @id
+  mimeType     String?
+  byteSize     Int?
+  originalName String?
+  storageUri   String
+  createdAt    DateTime @default(now())
+
+  refSources   RefSource[]
+  contentModules ContentModule[]
+  contentAssets ContentAsset[]
+  campaignVersions CampaignVersion[]
+}
+
+model RefSource {
+  id          Int      @id @default(autoincrement())
+  sourceType  String
+  citation    String
+  url         String?
+  externalId  String?
+  annotation  String?
+  blobKey     String?
+  createdAt   DateTime @default(now())
+
+  blob        Blob?    @relation(fields: [blobKey], references: [blobKey])
+  claimLinks  ClaimReference[]
+
+  @@unique([sourceType, externalId])
+  @@index([sourceType])
+}
+
+model Claim {
+  id              Int          @id @default(autoincrement())
+  brandId         Int?
+  indicationId    Int?
+  text            String       @db.Text
+  claimType       ClaimType    @default(efficacy)
+  claimStatus     ClaimStatus  @default(draft)
+  materialNumber  String?      @unique
+  mlrCode         String?
+  approvedAt      DateTime?
+  expiresAt       DateTime?
+  createdAt       DateTime     @default(now())
+
+  brand           Brand?       @relation(fields: [brandId], references: [id])
+  indication      Indication?  @relation(fields: [indicationId], references: [id])
+  references      ClaimReference[]
+  modules         ModuleClaim[]
+  campaignMessages CampaignMessage[]
+
+  @@index([brandId])
+  @@index([claimStatus])
+}
+
+model ClaimReference {
+  claimId   Int
+  refId     Int
+  locator   String?
+
+  claim     Claim      @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  refSource RefSource  @relation(fields: [refId], references: [id], onDelete: Cascade)
+
+  @@id([claimId, refId])
+}
+
+model ContentModule {
+  id             Int       @id @default(autoincrement())
+  brandId        Int?
+  indicationId   Int?
+  name           String
+  moduleType     String    @default("text")
+  status         String    @default("draft")
+  materialNumber String?   @unique
+  businessRules  String?   @db.Text
+  blobKey        String?
+  createdAt      DateTime  @default(now())
+
+  brand          Brand?    @relation(fields: [brandId], references: [id])
+  indication     Indication? @relation(fields: [indicationId], references: [id])
+  blob           Blob?     @relation(fields: [blobKey], references: [blobKey])
+  claims         ModuleClaim[]
+  assets         AssetModule[]
+
+  @@index([brandId])
+  @@index([status])
+}
+
+model ModuleClaim {
+  moduleId Int
+  claimId  Int
+
+  module   ContentModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  claim    Claim         @relation(fields: [claimId], references: [id], onDelete: Cascade)
+
+  @@id([moduleId, claimId])
+}
+
+model ContentAsset {
+  id            Int       @id @default(autoincrement())
+  brandId       Int?
+  indicationId  Int?
+  fileName      String?
+  title         String?
+  assetFormat   String?
+  branded       Boolean?
+  targetGroup   String?
+  description   String?   @db.Text
+  url           String?
+  idCode        String?
+  blobKey       String?
+  createdAt     DateTime  @default(now())
+
+  brand         Brand?    @relation(fields: [brandId], references: [id])
+  indication    Indication? @relation(fields: [indicationId], references: [id])
+  blob          Blob?     @relation(fields: [blobKey], references: [blobKey])
+  modules       AssetModule[]
+
+  @@index([brandId])
+}
+
+model AssetModule {
+  assetId   Int
+  moduleId  Int
+
+  asset     ContentAsset   @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  module    ContentModule  @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@id([assetId, moduleId])
+}
+
+model EntityTag {
+  entityKind String
+  entityId   Int
+  termId     Int
+
+  taxonomyTerm TaxonomyTerm @relation(fields: [termId], references: [id], onDelete: Cascade)
+
+  @@id([entityKind, entityId, termId])
+  @@index([entityKind, entityId])
+}
+
+model Campaign {
+  id            Int      @id @default(autoincrement())
+  projectId     String?
+  brandId       Int?
+  indicationId  Int?
+  name          String
+  lifecycleKey  LifecycleKey?
+  persona       String?
+  journeyStage  String?
+  cxMaturity    String?
+  objective     String?  @db.Text
+  totalBudget   Float?
+  status        CampaignStatus @default(draft)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  brand         Brand?   @relation(fields: [brandId], references: [id])
+  indication    Indication? @relation(fields: [indicationId], references: [id])
+  versions      CampaignVersion[]
+  segments      CampaignSegment[]
+  messages      CampaignMessage[]
+  channels      CampaignChannel[]
+  kpis          CampaignKpi[]
+
+  @@index([brandId])
+}
+
+model CampaignVersion {
+  id             Int      @id @default(autoincrement())
+  campaignId     Int
+  versionNo      Int
+  planBlobKey    String?
+  resultBlobKey  String?
+  createdAt      DateTime @default(now())
+
+  campaign       Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  planBlob       Blob?    @relation(fields: [planBlobKey], references: [blobKey])
+  resultBlob     Blob?    @relation(fields: [resultBlobKey], references: [blobKey])
+
+  @@unique([campaignId, versionNo])
+}
+
+model CampaignSegment {
+  id           Int      @id @default(autoincrement())
+  campaignId   Int
+  persona      String?
+  abcdJson     Json?    @db.JsonB
+  ladderJson   Json?    @db.JsonB
+  digitalJson  Json?    @db.JsonB
+
+  campaign     Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+}
+
+model CampaignMessage {
+  id         Int      @id @default(autoincrement())
+  campaignId Int
+  topic      String
+  ord        Int?
+  claimId    Int?
+
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  claim      Claim?    @relation(fields: [claimId], references: [id])
+}
+
+model CampaignChannel {
+  id            Int      @id @default(autoincrement())
+  campaignId    Int
+  channel       String
+  sharePct      Float?
+  budgetAmount  Float?
+  ppNpp         String?
+
+  campaign      Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+}
+
+model CampaignKpi {
+  id         Int      @id @default(autoincrement())
+  campaignId Int
+  kpiType    String?
+  metric     String
+
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+}
+
+model ReviewRecord {
+  id          Int         @id @default(autoincrement())
+  entityKind  String
+  entityId    Int
+  action      ReviewAction
+  reviewer    String?
+  decisionAt  DateTime    @default(now())
+  notes       String?     @db.Text
+
+  @@index([entityKind, entityId])
+}
+
+model BrandMarketIntel {
+  id              Int      @id @default(autoincrement())
+  brandId         Int?
+  brandName       String   @unique
+  lifecycleStage  LifecycleKey
+  stageConfidence String?
+  momentum        String?
+  evidenceJson    Json?    @db.JsonB
+  catalystsJson   Json?    @db.JsonB
+  competitorsJson Json?    @db.JsonB
+  loeHorizon      String?
+  whitespace      String?
+  campaignPosture String?
+  asOf            DateTime?
+  updatedAt       DateTime @updatedAt
+
+  brand           Brand?   @relation(fields: [brandId], references: [id])
+
+  @@index([lifecycleStage])
+}
+
+model CampaignAward {
+  id                Int      @id @default(autoincrement())
+  awardId           String   @unique
+  title             String
+  client            String?
+  brand             String?
+  therapyArea       String?
+  rosterLink        String?
+  rosterLinkNote    String?
+  festival          String?
+  award             String?
+  tier              String?
+  year              Int?
+  agency            String?
+  whyAwarded        String?  @db.Text
+  keyMessage        String?  @db.Text
+  creativeSummary   String?  @db.Text
+  imagesDescription String?  @db.Text
+  sourceUrlsJson    Json?    @db.JsonB
+  updatedAt         DateTime @updatedAt
+
+  @@index([therapyArea])
+  @@index([brand])
+  @@index([client])
+}
+
+// Synthetic HCPPersona extension for the synthetic_personas.json library.
+model SyntheticHcpPersona {
+  id              String   @id
+  name            String
+  audienceType    String
+  gender          String?
+  ethnicity       String?
+  segmentKey      String?
+  segmentName     String?
+  specialty       String?
+  condition       String?
+  therapyAreas    Json?    @db.JsonB
+  location        String?
+  setting         String?
+  age             Int?
+  yearsInPractice Int?
+  tagline         String?
+  bio             String?  @db.Text
+  tone            String?
+  voiceSample     String?  @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  prescribing     SyntheticHcpPrescribing?
+  digitalProfile  SyntheticHcpDigitalProfile?
+  channelPrefs    SyntheticHcpChannelPreference[]
+  personaTags     SyntheticHcpPersonaTag[]
+}
+
+model SyntheticHcpPrescribing {
+  id             Int      @id @default(autoincrement())
+  personaId      String   @unique
+  monthlyTrx     Int?
+  monthlyNrx     Int?
+  trxTrend       String?
+  decile         Int?
+  patientVolume  String?
+  adoptionCurve  String?
+  brandStance    String?
+
+  persona        SyntheticHcpPersona @relation(fields: [personaId], references: [id], onDelete: Cascade)
+}
+
+model SyntheticHcpDigitalProfile {
+  id            Int      @id @default(autoincrement())
+  personaId     String   @unique
+  affinity      String?
+  affinityScore Int?
+  emailOpen     String?
+  repAccess     String?
+  devices       Json?    @db.JsonB
+
+  persona       SyntheticHcpPersona @relation(fields: [personaId], references: [id], onDelete: Cascade)
+}
+
+model SyntheticHcpChannelPreference {
+  id              Int                        @id @default(autoincrement())
+  personaId       String
+  preferenceType  HcpChannelPreferenceType
+  channel         String
+  note            String?
+
+  persona         SyntheticHcpPersona @relation(fields: [personaId], references: [id], onDelete: Cascade)
+
+  @@unique([personaId, preferenceType, channel])
+  @@index([personaId])
+}
+
+model SyntheticHcpPersonaTag {
+  id        Int      @id @default(autoincrement())
+  personaId String
+  tagType   String
+  value     String
+
+  persona   SyntheticHcpPersona @relation(fields: [personaId], references: [id], onDelete: Cascade)
+
+  @@index([personaId, tagType])
+}
+
+// NOTE:
+// The SQL convenience view `v_unsubstantiated_claims` is not expressible as a Prisma model.
+// It should be created via a Postgres migration SQL file after the Prisma migration is applied.

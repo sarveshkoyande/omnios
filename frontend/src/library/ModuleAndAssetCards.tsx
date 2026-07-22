@@ -13,7 +13,9 @@ export function ModuleCard({ module: m }: { module: ContentModule }) {
         <Chip size="small" variant="outlined" label={m.module_type.replace("_", " ")} />
         <Chip size="small" label={m.status.replace("_", " ")} />
         {m.material_number && (
-          <Typography sx={{ fontFamily: tokens.font.mono, fontSize: 10, color: "text.secondary" }}>{m.material_number}</Typography>
+          <Typography sx={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.02em", fontVariantNumeric: "tabular-nums", color: "text.secondary" }}>
+            {m.material_number}
+          </Typography>
         )}
       </Box>
       <Typography sx={{ fontWeight: 700, fontSize: 13 }}>{m.name}</Typography>
@@ -47,7 +49,11 @@ export function AssetRow({ asset }: { asset: ContentAsset }) {
         )}
       </Box>
       <Chip size="small" variant="outlined" label={asset.branded ? "Branded" : "Unbranded"} />
-      {asset.id_code && <Typography sx={{ fontFamily: tokens.font.mono, fontSize: 10, color: "text.secondary" }}>{asset.id_code}</Typography>}
+      {asset.id_code && (
+        <Typography sx={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.02em", fontVariantNumeric: "tabular-nums", color: "text.secondary" }}>
+          {asset.id_code}
+        </Typography>
+      )}
       {asset.blob_key && (
         <Link href={`/api/blob/${asset.blob_key}`} target="_blank" rel="noreferrer" sx={{ fontSize: 11, fontWeight: 700 }}>
           Open

@@ -1,22 +1,22 @@
-"""Ingest the Obsidian "Omni OS" process/methodology docs into the cognee knowledge layer.
+"""Ingest the Obsidian "SME Knowledge" process/methodology docs into the cognee knowledge layer.
 
 This is the loader that populates the graph memory `memory_cognee.recall()` reads from, so
 every agent stage in the planning pipeline can ground its section in the firm's own documented
 process (the value chain, the four-phase toolkit, the BAM/CX methodology, the engagement
-benchmarks, the data model, client brand intelligence, ...) instead of only the deterministic
-defaults baked into code.
+benchmarks, client brand intelligence, real client uploads, ...) instead of only the
+deterministic defaults baked into code.
 
-Source of truth is the Obsidian vault that sits ONE level above this repo -- the "Omni OS — *.md"
-notes in `<vault>/`. Those are the curated process write-ups. Deliberately excluded:
-  * kb_full.md          -- an image-carrying *duplicate* of the master doc (its own header says
-                           "don't edit it directly"); ingesting it would double-weight that content.
-  * index.md / log.md   -- navigation/scaffolding, not process knowledge.
-The glob ("Omni OS *.md") already excludes those three by name; this is just why.
+Source of truth is the vault's curated SME Knowledge set (ONE level above this repo, then into
+that subfolder) -- deliberately separated from the rest of the Obsidian vault (product/tool docs,
+app-version notes, navigation scaffolding like index.md/log.md/kb_full.md) so agent grounding
+never mixes in non-SME content. This loader only ingests the curated allowlist in that set;
+legacy notes in the folder are ignored.
 
-The master doc ("Omni OS — Omnichannel Activation & Campaign Transformation.md", ~730KB) is the
-long-form founding-session write-up. It is a large share of total ingest cost (each ~1K-token
-chunk is one Foundry entity-extraction call), so `--exclude-master` is offered for a fast, cheap
-pass over just the methodology/playbook/benchmark notes.
+The current curated pack is the `brainV2` set: `OMNICHANNEL-PRIMER.md`, `00-index-and-governance.md`,
+`04-planning-method-S0-S11.md`, `05-segmentation-and-targeting.md`, `06-message-and-behavior-science.md`,
+`07-channel-playbook.md`, `08-content-supply-chain-and-MLR-ops.md`, `09-measurement-and-attribution.md`,
+and `13-campaign-brief-and-journey-BRD-anatomy.md`. `--exclude-master` is retained for compatibility
+and simply skips the primer in this curated pack.
 
 Usage (from omni-data-hub/):
     python -m strategy.ingest_process_knowledge --dry-run        # estimate chunks/cost, ingest nothing
@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import os
 import pathlib
 import sys
 import time
@@ -38,8 +39,18 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 
 import memory_cognee  # noqa: E402
 
-VAULT_DIR = pathlib.Path(__file__).resolve().parent.parent.parent  # <vault>/Omnichannel Activation
-MASTER_DOC = "Omni OS — Omnichannel Activation & Campaign Transformation.md"
+VAULT_DIR = pathlib.Path(__file__).resolve().parent.parent.parent / "SME Knowledge"  # <vault>/SME Knowledge
+CURATED_DOCS = [
+    "OMNICHANNEL-PRIMER.md",
+    "00-index-and-governance.md",
+    "04-planning-method-S0-S11.md",
+    "05-segmentation-and-targeting.md",
+    "06-message-and-behavior-science.md",
+    "07-channel-playbook.md",
+    "08-content-supply-chain-and-MLR-ops.md",
+    "09-measurement-and-attribution.md",
+    "13-campaign-brief-and-journey-BRD-anatomy.md",
+]
 
 # Probes run after ingestion to prove the graph answers real process questions (not just that
 # text went in). Each should be answerable ONLY from the ingested docs.
@@ -52,12 +63,15 @@ VERIFY_QUERIES = [
 
 
 def discover_docs(exclude_master: bool = False) -> list[pathlib.Path]:
-    """Every curated 'Omni OS *.md' process note in the vault, largest last (so the run's
-    heaviest doc is visibly the final step, and --exclude-master simply drops it)."""
-    docs = sorted(VAULT_DIR.glob("Omni OS *.md"), key=lambda p: p.stat().st_size)
+    """Curated allowlist in the vault's `SME Knowledge/` folder, sorted largest-last.
+
+    Legacy notes in the folder are intentionally ignored so grounding stays on the new
+    SME brain pack. `--exclude-master` is kept for compatibility and skips the primer
+    when requested."""
+    allow = [VAULT_DIR / name for name in CURATED_DOCS if (VAULT_DIR / name).exists()]
     if exclude_master:
-        docs = [p for p in docs if p.name != MASTER_DOC]
-    return docs
+        allow = [p for p in allow if p.name != "OMNICHANNEL-PRIMER.md"]
+    return sorted(allow, key=lambda p: p.stat().st_size)
 
 
 def _doc_payload(path: pathlib.Path) -> str:

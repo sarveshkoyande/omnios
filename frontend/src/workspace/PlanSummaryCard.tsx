@@ -68,7 +68,7 @@ export function PlanSummaryCard({
               Cancel
             </Button>
             <Typography variant="caption" sx={{ color: "text.secondary" }}>
-              Click any text to edit it — headings, paragraphs, list items and simple table cells.
+              Click any text to edit it: headings, paragraphs, list items and simple table cells.
             </Typography>
           </>
         ) : (

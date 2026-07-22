@@ -10,7 +10,7 @@ up front, per that doc's own design note).
 """
 from __future__ import annotations
 
-NOT_CAPTURED = "Not yet captured — confirm with brand team"
+NOT_CAPTURED = "Not yet captured: confirm with brand team"
 
 # Each question: id, category, text, and its 3 real answer-tier options
 # (index 0 = Simple, 1 = Medium, 2 = Complex), transcribed verbatim from Sheet 5.

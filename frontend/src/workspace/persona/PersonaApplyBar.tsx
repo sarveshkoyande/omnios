@@ -12,7 +12,7 @@ export function PersonaApplyBar({ onApply }: { onApply: () => Promise<void> }) {
       <Typography sx={{ fontWeight: 700, mb: 0.5 }}>Adjust the plan based on this feedback?</Typography>
       <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
         I can automatically rebalance the channel mix toward what these personas actually respond to, and
-        refresh the plan document — a bounded nudge, not a rebuild, and every change names the persona
+        refresh the plan document. A bounded nudge, not a rebuild, and every change names the persona
         whose preference drove it.
       </Typography>
       <Button
@@ -42,14 +42,14 @@ export function PersonaApplyResultCard({ changes }: { changes: PersonaApplyChang
           <Box component="ul" sx={{ m: 0, pl: 2 }}>
             {changes.map((c, i) => (
               <li key={i}>
-                <b>{c.note}</b> — {c.from_pct}% → {c.to_pct}%
+                <b>{c.note}</b>: {c.from_pct}% to {c.to_pct}%
               </li>
             ))}
           </Box>
         </>
       ) : (
         <Typography variant="caption" sx={{ color: "text.secondary" }}>
-          No material change was needed — the mix already fits this audience.
+          No material change was needed. The mix already fits this audience.
         </Typography>
       )}
     </AgentBubble>

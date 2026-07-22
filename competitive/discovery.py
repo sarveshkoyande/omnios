@@ -19,7 +19,7 @@ def discover_competitors(therapy_area: str, exclude_brand: str, limit: int = 5, 
         resp = requests.get(
             CT_BASE_URL,
             params={"query.cond": therapy_area, "pageSize": page_size},
-            timeout=30,
+            timeout=8,  # best-effort (falls back to []) -- fail fast, this runs before Align shows
         )
         resp.raise_for_status()
         studies = resp.json().get("studies", [])

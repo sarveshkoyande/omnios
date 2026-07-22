@@ -1,0 +1,12 @@
+{
+  "_note": "Engagement Orchestration downstream routing: which system + board/sheet/project each team's activities are pushed to. `system` must match a registered connector id (stub | monday | smartsheet | jira). Admin-editable. Defaults route everything to the in-memory `stub` connector until real credentials + boards are supplied (PRD 6.5 F5.3).",
+  "default_system": "stub",
+  "routes": {
+    "Web team":                          { "system": "stub", "board": "Web — build board" },
+    "Content & derivative assets team":  { "system": "stub", "board": "Content & MLR board" },
+    "Campaign operations team":          { "system": "stub", "board": "Campaign ops board" },
+    "Data & data cloud team":            { "system": "stub", "board": "Audience & data board" },
+    "Reporting & insights team":         { "system": "stub", "board": "Measurement board" },
+    "MLR / Regulatory / Medical":        { "system": "stub", "board": "MLR review queue" }
+  }
+}

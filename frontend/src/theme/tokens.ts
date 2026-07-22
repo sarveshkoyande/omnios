@@ -1,79 +1,93 @@
 /**
- * Design tokens — "light liquid glass" (DESIGN_BRIEF.md, single source of truth).
- * Every value in the design system derives from these; no raw hex/rgba in
- * components. The reference screen (Workspace) is the visual contract.
+ * Design tokens — high-contrast Material language for OmniOS.
+ * Every runtime color is sourced from this token object so the app can be
+ * audited and re-skinned in one place.
  */
 export const tokens = {
   color: {
-    // Brand
-    primary: "#4F46E5", // brand indigo — app bar gradient start, primary actions
-    secondary: "#7C3AED", // brand violet — app bar gradient end
-    magenta: "#E935C1", // logo mark / rare highlight only — never UI chrome
-    // Ink
-    text: "#1E1B33", // primary text, dark indigo-slate (never pure black)
-    inkSoft: "#55517A", // secondary text, helper copy
-    // Status
-    success: "#22C55E", // "agents online" dot
-    warning: "#D97706",
-    danger: "#DC2626",
-    // Atmosphere
+    primary: "#034EA2",
+    primaryDark: "#023B7A",
+    secondary: "#047857",
+    secondaryDark: "#065F46",
+    warning: "#C2410C",
+    warningDark: "#9A3412",
+    error: "#B42318",
+    errorSoft: "#FEE4E2",
+    ink: "#101828",
+    inkSecondary: "#475467",
     surface: "#FFFFFF",
-    bgBase: "#E9EAFB", // pale periwinkle page base
-    bgMist1: "#C9CFF8", // soft blue-violet mist blob
-    bgMist2: "#E3D9FA", // soft lavender mist blob
+    canvas: "#F4F6F8",
+    outline: "#D0D7DE",
+    outlineStrong: "#8C959F",
+    primaryContainer: "#E3EDFA",
+    onPrimaryContainer: "#012F63",
+    emerald50: "#ECFDF5",
+    emerald100: "#D1FAE5",
+    emerald200: "#A7F3D0",
+    emerald400: "#34D399",
+    emerald500: "#10B981",
+    emerald600: "#059669",
+    emerald700: "#047857",
+    emerald800: "#065F46",
+    emerald900: "#064E3B",
+    orangeContainer: "#FFEDD5",
+    success: "#047857",
+    successSoft: "#D1FAE5",
+    successInk: "#047857",
+    warningSoft: "#FFEDD5",
+    warningInk: "#9A3412",
+    info: "#034EA2",
+    infoSoft: "#E3EDFA",
+    infoInk: "#012F63",
+    danger: "#B42318",
+    dangerSoft: "#FEE4E2",
+    dangerInk: "#B42318",
+    text: "#101828",
+    inkSoft: "#475467",
+    inkFaint: "#475467",
+    border: "#D0D7DE",
+    borderStrong: "#8C959F",
+    input: "#D0D7DE",
+    ring: "#034EA2",
+    accentSurface: "#E3EDFA",
+    accentSurfaceText: "#012F63",
+    bgBase: "#F4F6F8",
+    bgBaseChat: "#F4F6F8",
   },
-  /** Type scale 12/13/14/16/20/24/32 */
-  fontSize: { xs: 12, sm: 13, md: 14, lg: 16, xl: 20, xxl: 24, display: 32 },
+  fontSize: { xs: 13, sm: 14, md: 15, lg: 17, xl: 20, xxl: 24, display: 28 },
   font: {
-    primary: `"Segoe UI", "Inter", system-ui, "Roboto", sans-serif`,
-    // kept for not-yet-migrated skeuo screens; unused on glass surfaces
-    display: `"Segoe UI", "Inter", system-ui, sans-serif`,
-    mono: "ui-monospace, 'JetBrains Mono', monospace",
+    primary: `'Nunito Sans', 'Segoe UI', system-ui, sans-serif`,
   },
-  /** Spacing scale 4/8/12/16/24/32 — theme.spacing(1|2|3|4|6|8) */
   spacingUnit: 4,
-  radius: { sm: 8, md: 14, lg: 20, pill: 999 },
+  radius: { sm: 4, md: 8, lg: 12, pill: 999 },
 } as const;
 
-/** Shade: ink token at an alpha — neutral tints, dividers, soft shadows. */
-export const shade = (alpha: number) => `rgba(30, 27, 51, ${alpha})`;
-/** Highlight: surface (white) token at an alpha — glass edges/sheen. */
+export const shade = (alpha: number) => `rgba(16, 24, 40, ${alpha})`;
 export const light = (alpha: number) => `rgba(255, 255, 255, ${alpha})`;
-/** Indigo tint at an alpha — brand-tinted borders/shadows. */
-export const indigoTint = (alpha: number) => `rgba(79, 70, 229, ${alpha})`;
-
-/* ------------------------------------------------------------------ *
- * GLASS RECIPES — the four core elements: transparency, blur, border,
- * layered shadow. Tiers per the brief's glass hierarchy.
- * ------------------------------------------------------------------ */
+export const indigoTint = (alpha: number) => `rgba(3, 78, 162, ${alpha})`;
+export const violetTint = (alpha: number) => `rgba(4, 120, 87, ${alpha})`;
 
 export const glass = {
-  /** Tier A — panels (pane containers, section/stepper cards, chat bubbles). */
-  panel: "rgba(255, 255, 255, 0.55)",
-  /** Tier B — emphasis (active stage, hovered/selected). */
-  panelStrong: "rgba(255, 255, 255, 0.72)",
-  /** Tier 0 — content surfaces (inputs, tables, long-form reading). */
-  content: "rgba(255, 255, 255, 0.92)",
-  blur: "blur(24px)",
-  blurLight: "blur(12px)",
-  border: "1px solid rgba(255, 255, 255, 0.65)",
-  borderTint: "1px solid rgba(79, 70, 229, 0.12)",
-  shadow: "0 8px 32px rgba(79, 70, 229, 0.10)",
-  shadowElevated: "0 16px 48px rgba(79, 70, 229, 0.18)",
+  panel: tokens.color.surface,
+  panelStrong: tokens.color.primaryContainer,
+  content: tokens.color.surface,
+  blur: "none",
+  blurLight: "none",
+  border: `1px solid ${tokens.color.outline}`,
+  borderTint: `1px solid ${tokens.color.primary}`,
+  shadow: "none",
+  shadowElevated: `0 8px 24px rgba(16,24,40,0.18)`,
 } as const;
 
-/** Solid fallback for @supports / prefers-reduced-transparency. */
-export const glassFallback = "rgba(255, 255, 255, 0.9)";
+export const glassFallback = tokens.color.surface;
+export const gradientBrand = tokens.color.primary;
+export const gradientBrandVertical = tokens.color.primary;
 
-export const gradientBrand = `linear-gradient(90deg, ${tokens.color.primary}, ${tokens.color.secondary})`;
-export const gradientBrandVertical = `linear-gradient(180deg, ${tokens.color.primary}, ${tokens.color.secondary})`;
-
-/** Focus ring — WCAG 2.2 AA: always visible, 2px brand indigo, offset. */
 export const focusRing = {
   outline: `2px solid ${tokens.color.primary}`,
   outlineOffset: "2px",
 } as const;
-/** Focus ring on the saturated app bar (indigo would vanish) — white instead. */
+
 export const focusRingOnBrand = {
   outline: `2px solid ${tokens.color.surface}`,
   outlineOffset: "2px",

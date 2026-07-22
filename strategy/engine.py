@@ -59,7 +59,8 @@ def _kb_grounding(search_term: str, limit: int = 5) -> dict[str, list[dict]]:
     return result
 
 
-def generate_strategy(brand: str, therapy_area: str, persona: str, stage_key: str) -> dict:
+def generate_strategy(brand: str, therapy_area: str, persona: str, stage_key: str,
+                      brief_grounding: dict[str, dict] | None = None) -> dict:
     stage = STAGE_BY_KEY.get(stage_key)
     if stage is None:
         raise ValueError(f"Unknown stage key: {stage_key}")
@@ -94,6 +95,7 @@ def generate_strategy(brand: str, therapy_area: str, persona: str, stage_key: st
             "brand": kb_brand,
             "therapy_area": kb_therapy,
         },
+        "brief_grounding": brief_grounding or {},
         "caveat": "Channel-mix percentages are an illustrative starting allocation synthesized from the stage/persona framework, not measured MMx output -- replace with real spend/response data as it becomes available.",
     }
 

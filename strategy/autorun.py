@@ -18,6 +18,7 @@ from positioning import build_positioning_statement  # noqa: E402
 from kpi import build_kpi_framework  # noqa: E402
 from competitive.discovery import discover_competitors  # noqa: E402
 from competitive.swot import build_swot  # noqa: E402
+import process_knowledge  # noqa: E402
 
 STANDARD_RISKS = [
     "Regulatory/MLR delay pushes campaign launch past planned window",
@@ -46,7 +47,8 @@ def run_full_analysis(brand: str, therapy_area: str, lifecycle_key: str, budget:
 
     discovered_competitors = discover_competitors(therapy_area, brand, limit=5)
 
-    strategy = generate_strategy(brand, therapy_area, persona, stage_key)
+    brief_grounding = process_knowledge.brief_grounding(brand, therapy_area)
+    strategy = generate_strategy(brand, therapy_area, persona, stage_key, brief_grounding)
 
     swot_result = build_swot(brand, discovered_competitors, therapy_area, refresh=True) if discovered_competitors else None
 

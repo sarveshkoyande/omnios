@@ -14,7 +14,7 @@ MAX_CHARS = 8000  # keep the extracted text within a sane size for one chat/LLM 
 _SUPPORTED = {"pdf", "docx", "txt", "md"}
 
 
-def extract_text(filename: str, content: bytes) -> str:
+def extract_text(filename: str, content: bytes, max_chars: int = MAX_CHARS) -> str:
     ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
     if ext not in _SUPPORTED:
         raise ValueError(f"Unsupported file type: .{ext or 'unknown'} (supported: .pdf, .docx, .txt, .md)")
@@ -27,8 +27,8 @@ def extract_text(filename: str, content: bytes) -> str:
         text = content.decode("utf-8", errors="ignore")
 
     text = text.strip()
-    if len(text) > MAX_CHARS:
-        text = text[:MAX_CHARS] + "\n\n[...truncated...]"
+    if len(text) > max_chars:
+        text = text[:max_chars] + "\n\n[...truncated...]"
     return text
 
 

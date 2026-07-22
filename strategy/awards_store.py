@@ -140,4 +140,4 @@ if __name__ == "__main__":
     print(load_awards())
     print("Novartis / prostate cancer matches:")
     for a in awards_for(brand="", therapy_area="prostate cancer", client="Novartis"):
-        print(f"  [{a['match']}] {a['title']} — {a['award']} ({a['festival']} {a['year']})")
+        print(f"  [{a['match']}] {a['title']}: {a['award']} ({a['festival']} {a['year']})")
