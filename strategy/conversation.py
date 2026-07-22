@@ -634,6 +634,7 @@ def interpret_message(message: str, state: dict) -> tuple[dict, str, str]:
             try:
                 state, reply, action = interpret_message_llm(message, state)
                 _set_status(provider, True, f"{provider_label} answered this turn.")
+                print(f"[conversation] {provider_label} answered this turn.")
                 return _reason_gate(state, reply, action)  # ask 'why this campaign' before any run
             except Exception as e:  # noqa: BLE001 -- fall back to rules on any LLM/auth failure
                 short = str(e).strip().splitlines()[0][:200]
