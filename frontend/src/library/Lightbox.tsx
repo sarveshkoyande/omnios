@@ -37,7 +37,7 @@ export function Lightbox({ image, onClose }: { image: LightboxImage | null; onCl
             {image.caption}
             {image.sourceUrl && (
               <>
-                {" — "}
+                {" · "}
                 <Link href={image.sourceUrl} target="_blank" rel="noreferrer" sx={{ color: "#9fd8ff" }}>
                   view on DailyMed
                 </Link>

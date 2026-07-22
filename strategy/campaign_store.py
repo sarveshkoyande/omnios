@@ -19,6 +19,7 @@ import time
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import blob_store  # noqa: E402
+import brand_kit  # noqa: E402
 from paths import data_path  # noqa: E402
 
 DB_PATH = data_path("campaigns.db")
@@ -380,6 +381,16 @@ def library_brands() -> dict:
             b["references"] = conn.execute(
                 "SELECT COUNT(DISTINCT cr.ref_id) FROM claim_reference cr JOIN claim c2 ON c2.id=cr.claim_id "
                 "WHERE c2.brand_id=?", (b["id"],)).fetchone()[0]
+            # Kit brands: the authored components (with real images) replace the DB's counts,
+            # same "kit wins" rule as brand_library_detail().
+            kit = brand_kit.kit_for(b["brand"])
+            if kit and kit.get("components"):
+                kit_lib = brand_kit.content_library_from_kit(kit)
+                b["claims"] = len(kit_lib["claims"])
+                b["approved"] = kit_lib["counts"]["approved_claims"]
+                b["assets"] = len(kit_lib["assets"])
+                b["images"] = sum(1 for a in kit_lib["assets"] if a.get("image_url"))
+                b["references"] = kit_lib["counts"]["references"]
         stats = library_stats()
         return {"brands": brands, "totals": stats}
     finally:
@@ -433,18 +444,29 @@ def brand_library_detail(brand: str) -> dict:
                     "url": a["url"], "id_code": a["id_code"], "blob_key": a["blob_key"]}
             (images if a["asset_format"] == "image" else assets).append(item)
 
+        # A brand-kit's authored claims + creative components (with real image URLs) are the
+        # source of truth for a kit brand -- they win over whatever lossy echo a prior plan
+        # run persisted here (same "kit wins" rule brand_kit_mod applies for the live plan;
+        # see orchestrator.py). Non-kit brands are untouched.
+        kit = brand_kit.kit_for(brand)
+        if kit and kit.get("components"):
+            kit_lib = brand_kit.content_library_from_kit(kit, indications[0] if indications else "")
+            claims = kit_lib["claims"]
+            assets = kit_lib["assets"]
+
         by_type: dict[str, int] = {}
         by_status: dict[str, int] = {}
         for c in claims:
             by_type[c["claim_type"]] = by_type.get(c["claim_type"], 0) + 1
             by_status[c["status"]] = by_status.get(c["status"], 0) + 1
 
+        image_count = len(images) + sum(1 for a in assets if a.get("image_url"))
         return {"found": True, "brand": brand, "generic": brow["generic_name"],
                 "therapy_area": brow["therapy_area"], "lifecycle_key": brow["lifecycle_key"],
                 "client": client["name"] if client else "", "indications": indications,
                 "claims": claims, "modules": modules, "images": images, "assets": assets,
                 "counts": {"claims": len(claims), "approved": by_status.get("approved", 0),
-                           "modules": len(modules), "images": len(images), "assets": len(assets),
+                           "modules": len(modules), "images": image_count, "assets": len(assets),
                            "by_type": by_type, "by_status": by_status}}
     finally:
         conn.close()

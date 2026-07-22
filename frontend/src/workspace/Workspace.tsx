@@ -1,23 +1,71 @@
 import { useEffect, useRef, useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
+import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { styled } from "@mui/material/styles";
+import Accordion from "@mui/material/Accordion";
+import AccordionSummary from "@mui/material/AccordionSummary";
+import AccordionDetails from "@mui/material/AccordionDetails";
 import { AgentTeamPanel } from "./AgentTeamPanel";
 import { BriefCard } from "./BriefCard";
+import { CampaignArtifacts } from "./CampaignArtifacts";
 import { ChatMessages } from "./ChatMessages";
+import { DecisionTrail } from "./studio/DecisionTrail";
 import { Composer } from "./Composer";
 import { IntakeCard } from "./IntakeCard";
 import { PersonaProfileModal } from "./persona/PersonaProfileModal";
-import { PlanSummaryCard } from "./PlanSummaryCard";
 import { PlansDrawer } from "./PlansDrawer";
+import { PlanSummaryCard } from "./PlanSummaryCard";
+import { SimplePlanSummary } from "./SimplePlanSummary";
 import { StageOperations } from "./stages/StageOperations";
 import { StageOrchestration } from "./stages/StageOrchestration";
 import { StageReporting } from "./stages/StageReporting";
+import { AssemblyCanvas } from "./studio/AssemblyCanvas";
 import { WorkflowStepper } from "./stages/WorkflowStepper";
 import { useWorkspace } from "./useWorkspace";
 import { ConsolePanel } from "../components/ConsolePanel";
-import { tokens, indigoTint } from "../theme/tokens";
+import { tokens, indigoTint, light } from "../theme/tokens";
+
+// All four stages are freely accessible at any time — there is no unlock gating.
+// The legacy /api/run-stream flow and its revealed_phases tracking stay in the
+// codebase (openProject still reads state.revealed_phases) but no longer drive Stage 1.
+
+/** Toggle row shown above the plan — the simplified summary is the default view,
+ * but the full generated Brand Engagement Plan is one click away, not deleted. */
+function PlanViewToggle({ showFull, onToggle }: { showFull: boolean; onToggle: () => void }) {
+  return (
+    <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 1 }}>
+      <Button size="small" variant="text" onClick={onToggle}>
+        {showFull ? "← Back to simplified summary" : "View full plan →"}
+      </Button>
+    </Box>
+  );
+}
+
+/** The retired plan outputs (hardcoded simplified summary + 30-section Brand Engagement
+ * Plan), archived behind an accordion — recoverable, out of the way. The Campaign
+ * Strategy + Campaign Brief (CampaignArtifacts) are the standing default. */
+function ArchivedPlanViews({ children }: { children: React.ReactNode }) {
+  return (
+    <Accordion
+      sx={{
+        background: light(0.4),
+        border: `1px solid ${indigoTint(0.12)}`,
+        borderRadius: tokens.radius.md,
+        mt: 3,
+        boxShadow: "none",
+        "&:before": { display: "none" },
+      }}
+    >
+      <AccordionSummary expandIcon={<span className="material-symbols-outlined">expand_more</span>}>
+        <Typography sx={{ fontWeight: 700, fontSize: 13 }}>Previous plan views (archived)</Typography>
+      </AccordionSummary>
+      <AccordionDetails>{children}</AccordionDetails>
+    </Accordion>
+  );
+}
 
 const EmptyState = styled(Box)(({ theme }) => ({
   flex: 1,
@@ -31,28 +79,99 @@ const EmptyState = styled(Box)(({ theme }) => ({
   padding: theme.spacing(10),
 }));
 
-export function Workspace({ prefillBrand }: { prefillBrand?: string | null }) {
+function EditableProjectTitle({ name, onRename, light }: { name: string; onRename: (name: string) => void | Promise<void>; light?: boolean }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(name);
+
+  useEffect(() => {
+    if (!editing) setDraft(name);
+  }, [name, editing]);
+
+  const commit = () => {
+    setEditing(false);
+    const trimmed = draft.trim();
+    if (trimmed && trimmed !== name) onRename(trimmed);
+    else setDraft(name);
+  };
+
+  if (editing) {
+    return (
+      <TextField
+        autoFocus
+        size="small"
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") commit();
+          if (e.key === "Escape") { setDraft(name); setEditing(false); }
+        }}
+        sx={{ "& .MuiInputBase-input": { fontSize: tokens.fontSize.xl, fontWeight: 700, py: 0.5 } }}
+      />
+    );
+  }
+
+  return (
+    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+      <Typography variant="h3" sx={{ fontSize: tokens.fontSize.xl, color: light ? "#FFFFFF" : undefined }}>{name}</Typography>
+      <IconButton
+        size="small"
+        aria-label="Rename plan"
+        onClick={() => setEditing(true)}
+        sx={light ? { color: "rgba(255,255,255,0.8)", "&:hover": { color: "#fff", background: "rgba(255,255,255,0.12)" } } : undefined}
+      >
+        <span className="material-symbols-outlined" style={{ fontSize: 17 }}>edit</span>
+      </IconButton>
+    </Box>
+  );
+}
+
+export function Workspace({
+  prefillBrand,
+  openProjectId,
+  seedMessage,
+  seedFile,
+}: {
+  prefillBrand?: string | null;
+  openProjectId?: string | null;
+  seedMessage?: string | null;
+  seedFile?: File | null;
+}) {
   const ws = useWorkspace();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [showFullPlan, setShowFullPlan] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const bootstrapped = useRef(false);
+  const seeded = useRef(false);
 
+  // Entry routing: open the requested plan, or spin up a fresh one that lands
+  // straight on the briefing intake — no "click to begin" empty state.
   useEffect(() => {
     if (bootstrapped.current) return;
     bootstrapped.current = true;
-    if (prefillBrand) {
-      ws.newProject().then(() => {
-        // small delay so projectId lands in state before send
-      });
-    }
+    if (openProjectId) ws.openProject(openProjectId);
+    else ws.newProject();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Once the fresh project's id lands, auto-send the seed (a brand pick or a typed
+  // one-line requirement) and drop the intake. With no seed the intake stays open.
   useEffect(() => {
-    if (prefillBrand && ws.projectId && ws.showIntake) {
+    if (openProjectId || seeded.current || !ws.projectId || !ws.showIntake) return;
+    // A file import from Home takes priority: upload it into the fresh plan and drop the intake.
+    if (seedFile) {
+      seeded.current = true;
       ws.setShowIntake(false);
-      ws.sendMessage(`I want to plan a campaign for ${prefillBrand}`);
+      ws.uploadFile(seedFile);
+      return;
     }
+    const seed = prefillBrand
+      ? `I want to plan a campaign for ${prefillBrand}`
+      : (seedMessage?.trim() || null);
+    if (!seed) return;
+    seeded.current = true;
+    ws.setShowIntake(false);
+    ws.sendMessage(seed);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ws.projectId]);
 
@@ -61,7 +180,7 @@ export function Workspace({ prefillBrand }: { prefillBrand?: string | null }) {
   }, [ws.items]);
 
   return (
-    <Box sx={{ display: "flex", height: "calc(100vh - 56px)", minHeight: 0 }}>
+    <Box sx={{ display: "flex", flexDirection: "column", height: "calc(100vh - 56px)", minHeight: 0 }}>
       <PlansDrawer
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
@@ -69,26 +188,63 @@ export function Workspace({ prefillBrand }: { prefillBrand?: string | null }) {
         activeId={ws.projectId}
         onOpenProject={(id) => { ws.openProject(id); setDrawerOpen(false); }}
         onNewProject={() => { ws.newProject(); setDrawerOpen(false); }}
+        onDeleteProject={ws.deleteProject}
       />
 
-      <Box component="main" sx={{ flex: "0 0 42%", minWidth: 320, display: "flex", flexDirection: "column", borderRight: `1px solid ${indigoTint(0.1)}`, position: "relative" }}>
-        <Button
-          size="small"
-          variant="outlined"
-          onClick={() => setDrawerOpen(true)}
-          sx={{ alignSelf: "flex-start", m: 2, mb: 0 }}
-        >
-          ☰ Plans
-        </Button>
+      {/* Sub-bar: a darker shade of the app-bar gradient. Holds the plan title +
+          rename + plans menu on the left, and the folder-tab WorkflowStepper spread
+          across the rest — the active tab sits flush with the bar's bottom edge so
+          it merges into the workspace below like the tab of a paper folder (no
+          shadow under the bar, it would cut the seam). */}
+      <Box
+        sx={{
+          flex: "0 0 auto",
+          display: "flex",
+          alignItems: "stretch",
+          gap: 3,
+          px: 3,
+          pt: 0.75,
+          pb: 0,
+          backgroundColor: tokens.color.primaryDark,
+          position: "relative",
+          zIndex: 1,
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flex: "0 0 auto", py: 1 }}>
+          {ws.projectId && <EditableProjectTitle name={ws.projectName} onRename={ws.renameProject} light />}
+          <IconButton
+            size="small"
+            aria-label="Plans"
+            onClick={() => setDrawerOpen(true)}
+            sx={{ color: "rgba(255,255,255,0.8)", "&:hover": { color: "#fff", background: "rgba(255,255,255,0.12)" } }}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: 20 }}>more_vert</span>
+          </IconButton>
+        </Box>
+        {ws.projectId && (
+          <Box sx={{ flex: 1, minWidth: 0, display: "flex", alignItems: "flex-end" }}>
+            <WorkflowStepper
+              stage={ws.stage}
+              onSelect={ws.setStage}
+              subLabel={
+                ws.studio.active || (ws.studio.sections.length > 0 && !ws.studio.done)
+                  ? `SECTION ${Math.min(ws.studio.sections.length + 1, ws.studio.total)}/${ws.studio.total}`
+                  : undefined
+              }
+            />
+          </Box>
+        )}
+      </Box>
 
+      <Box sx={{ display: "flex", flex: 1, minHeight: 0 }}>
+      <Box component="main" sx={{ flex: "0 0 30vw", minWidth: 320, display: "flex", flexDirection: "column", borderRight: `1px solid ${indigoTint(0.1)}`, position: "relative", backgroundColor: tokens.color.bgBaseChat }}>
         {!ws.projectId ? (
           <EmptyState>
             <span className="material-symbols-outlined" style={{ fontSize: 46, color: tokens.color.primary }}>hub</span>
             <Typography variant="body1">
-              <b>No plan open.</b>
+              <b>Preparing your brief…</b>
               <br />
-              Start a new plan and just tell the agent what you're working on — which brand, which
-              therapy area, where it is in its lifecycle.
+              Setting up a fresh plan. If nothing appears, start one manually.
             </Typography>
             <Button variant="contained" color="primary" onClick={() => ws.newProject()}>
               + New plan
@@ -97,65 +253,143 @@ export function Workspace({ prefillBrand }: { prefillBrand?: string | null }) {
         ) : (
           <>
             <Box sx={{ p: 3, pb: 2, borderBottom: `1px solid ${indigoTint(0.1)}` }}>
-              <Typography variant="h3" sx={{ fontSize: tokens.fontSize.xl }}>{ws.projectName}</Typography>
               <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                The agent captures your brief in conversation, then runs its research agents on the right.
+                The agent captures your brief in conversation, then does its research on the right.
               </Typography>
             </Box>
 
             <Box ref={scrollRef} sx={{ flex: 1, overflowY: "auto", px: 3 }}>
-              {ws.showIntake && <IntakeCard onSubmit={ws.submitIntake} onSkip={() => ws.setShowIntake(false)} />}
+              {ws.showIntake && (
+                <IntakeCard
+                  onSubmit={ws.submitIntake}
+                  onSkip={() => ws.setShowIntake(false)}
+                  onImport={(file) => { ws.setShowIntake(false); ws.uploadFile(file); }}
+                />
+              )}
               <ChatMessages
-                items={ws.items}
+                items={ws.activeChatItems}
                 onSkipPersonaOffer={ws.skipPersonaOffer}
                 onRunPersonas={ws.runPersonas}
                 onApplyFeedback={ws.applyFeedback}
                 onOpenPersonaProfile={ws.openPersonaProfile}
+                typingAuthor={ws.typingAuthor}
+                onAnswerAsk={ws.answerStudioAsk}
+                kickoffAwaitingStage={ws.kickoffAwaitingStage}
+                onKickoffUsePlan={ws.onKickoffUsePlan}
+                onKickoffWantUpload={ws.onKickoffWantUpload}
               />
             </Box>
 
             <Box sx={{ p: 3, pt: 2 }}>
-              <Composer disabled={ws.busy} onSend={ws.sendMessage} onUpload={ws.uploadFile} />
+              <Composer disabled={ws.busy} onSend={ws.sendMessage} onUpload={ws.handleUpload} />
             </Box>
           </>
         )}
       </Box>
 
-      <Box component="aside" sx={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 380, minHeight: 0 }}>
+      {/* Same canvas as the chat pane: the folder-tab seam must be uniform across both panes. */}
+      <Box component="aside" sx={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 380, minHeight: 0, backgroundColor: tokens.color.canvas }}>
         {ws.projectId && (
           <>
-            <WorkflowStepper stage={ws.stage} unlocked={!!ws.result} onSelect={ws.setStage} />
-            <Box sx={{ flex: 1, overflowY: "auto", p: 3, pt: 1 }}>
-              {ws.stage === 1 && (
+            <Box sx={{ flex: 1, overflowY: "auto", p: 3, pt: 3 }}>
+              {ws.stage === 1 && (ws.studio.active || ws.studio.sections.length > 0 || ws.studio.done) && (
+                <>
+                  {/* Sequential Plan Studio: the canvas replaces the rail during a build.
+                      Only the active section exists; the rest are folded or a whisper. */}
+                  {!ws.studio.done && <AssemblyCanvas studio={ws.studio} onSkip={ws.skipStudioPacing} />}
+                  {ws.studio.records.length > 0 && !ws.studio.done && (
+                    <ConsolePanel title="Decision trail" icon="psychology" collapsible sx={{ mt: 3 }}>
+                      <DecisionTrail records={ws.studio.records} dense />
+                    </ConsolePanel>
+                  )}
+                  {ws.studio.done && (
+                    <Box sx={{ mt: 3 }}>
+                      <CampaignArtifacts projectId={ws.projectId} onSeeded={() => ws.setStage(2)} refreshToken={ws.artifactRefresh.planning} />
+                      {ws.planHtml && (
+                        <ArchivedPlanViews>
+                          <PlanViewToggle showFull={showFullPlan} onToggle={() => setShowFullPlan((v) => !v)} />
+                          {showFullPlan ? (
+                            <PlanSummaryCard
+                              projectId={ws.projectId}
+                              planHtml={ws.planHtml}
+                              planMarkdown={ws.planMarkdown}
+                              planFrozen={ws.planFrozen}
+                              planEditing={ws.planEditing}
+                              sectionsProgress={null}
+                              onBeginEdit={ws.beginPlanEdit}
+                              onCancelEdit={ws.cancelPlanEdit}
+                              onSaveEdit={ws.savePlanEdit}
+                              onCloseUpdates={ws.closeUpdatesAction}
+                            />
+                          ) : (
+                            <SimplePlanSummary />
+                          )}
+                        </ArchivedPlanViews>
+                      )}
+                      <Box sx={{ mt: 3 }}>
+                        <AssemblyCanvas studio={ws.studio} onSkip={ws.skipStudioPacing} />
+                      </Box>
+                    </Box>
+                  )}
+                </>
+              )}
+              {ws.stage === 1 && !(ws.studio.active || ws.studio.sections.length > 0 || ws.studio.done) && (
                 <>
                   <ConsolePanel title="Brief" icon="assignment" collapsible sx={{ mb: 3 }}>
                     <BriefCard slots={ws.slots} inferred={ws.inferred} />
                   </ConsolePanel>
-                  <ConsolePanel title="Agent team" icon="smart_toy" collapsible>
-                    <AgentTeamPanel agents={ws.agents} caption={ws.teamCaption} />
-                  </ConsolePanel>
+                  {/* Nothing to say before the brief completes — no placeholder card. */}
+                  {ws.agents.length > 0 && (
+                    <ConsolePanel title="Agent" icon="smart_toy" collapsible>
+                      <AgentTeamPanel agents={ws.agents} caption={ws.teamCaption} />
+                    </ConsolePanel>
+                  )}
                   {ws.planHtml && (
-                    <PlanSummaryCard
-                      projectId={ws.projectId}
-                      planHtml={ws.planHtml}
-                      planMarkdown={ws.planMarkdown}
-                      planFrozen={ws.planFrozen}
-                      planEditing={ws.planEditing}
-                      sectionsProgress={ws.sectionsProgress}
-                      onBeginEdit={ws.beginPlanEdit}
-                      onCancelEdit={ws.cancelPlanEdit}
-                      onSaveEdit={ws.savePlanEdit}
-                      onCloseUpdates={ws.closeUpdatesAction}
-                    />
+                    <Box>
+                      <CampaignArtifacts projectId={ws.projectId} onSeeded={() => ws.setStage(2)} refreshToken={ws.artifactRefresh.planning} />
+                      <ArchivedPlanViews>
+                        <PlanViewToggle showFull={showFullPlan} onToggle={() => setShowFullPlan((v) => !v)} />
+                        {showFullPlan ? (
+                          <PlanSummaryCard
+                            projectId={ws.projectId}
+                            planHtml={ws.planHtml}
+                            planMarkdown={ws.planMarkdown}
+                            planFrozen={ws.planFrozen}
+                            planEditing={ws.planEditing}
+                            sectionsProgress={ws.sectionsProgress}
+                            onBeginEdit={ws.beginPlanEdit}
+                            onCancelEdit={ws.cancelPlanEdit}
+                            onSaveEdit={ws.savePlanEdit}
+                            onCloseUpdates={ws.closeUpdatesAction}
+                          />
+                        ) : (
+                          <SimplePlanSummary />
+                        )}
+                      </ArchivedPlanViews>
+                    </Box>
                   )}
                 </>
               )}
-              {ws.stage === 2 && <StageOrchestration result={ws.result} />}
-              {ws.stage === 3 && <StageOperations result={ws.result} />}
+              {ws.stage === 2 && (
+                <StageOrchestration
+                  result={ws.result}
+                  projectId={ws.projectId}
+                  refreshToken={ws.artifactRefresh.orchestration}
+                />
+              )}
+              {ws.stage === 3 && (
+                <StageOperations
+                  result={ws.result}
+                  projectId={ws.projectId}
+                  agentBusy={ws.busy && ws.typingAuthor === "operations"}
+                  refreshToken={ws.artifactRefresh.operations}
+                />
+              )}
               {ws.stage === 4 && <StageReporting result={ws.result} />}
             </Box>
           </>
         )}
+      </Box>
       </Box>
       <PersonaProfileModal personaId={ws.profileOpen} onClose={ws.closePersonaProfile} />
     </Box>

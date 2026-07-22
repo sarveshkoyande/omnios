@@ -1,0 +1,279 @@
+{
+  "available": true,
+  "totals": {
+    "documents": 3386,
+    "raw_files": 4069,
+    "sources": 26,
+    "companies": 50,
+    "oncology_brands": 36,
+    "award_mentions": 524,
+    "message_evidence": 777,
+    "asco_abstracts": 7295,
+    "seer_cancer_stats": 10,
+    "opdp_letters": 114
+  },
+  "source_counts": [
+    {
+      "source": "pubmed",
+      "count": 1285
+    },
+    {
+      "source": "clinicaltrials",
+      "count": 1253
+    },
+    {
+      "source": "dailymed",
+      "count": 354
+    },
+    {
+      "source": "openfda",
+      "count": 191
+    },
+    {
+      "source": "fda_opdp:untitled_letter_document",
+      "count": 114
+    },
+    {
+      "source": "google_trends",
+      "count": 78
+    },
+    {
+      "source": "sec_edgar:annual_filing_document",
+      "count": 26
+    },
+    {
+      "source": "sec_edgar:submissions",
+      "count": 26
+    },
+    {
+      "source": "awards",
+      "count": 17
+    },
+    {
+      "source": "seer:statfacts",
+      "count": 10
+    },
+    {
+      "source": "asco:abstract_list_csv",
+      "count": 1
+    },
+    {
+      "source": "brand_site:enhertu:hcp",
+      "count": 1
+    },
+    {
+      "source": "brand_site:enhertu:patient",
+      "count": 1
+    },
+    {
+      "source": "brand_site:imbruvica:hcp",
+      "count": 1
+    }
+  ],
+  "evidence_mix": [
+    {
+      "label": "Official messages",
+      "count": 96
+    },
+    {
+      "label": "FDA label sections",
+      "count": 596
+    },
+    {
+      "label": "DailyMed SPLs",
+      "count": 15
+    },
+    {
+      "label": "Clinical trials",
+      "count": 594
+    },
+    {
+      "label": "PubMed articles",
+      "count": 578
+    },
+    {
+      "label": "ASCO abstracts",
+      "count": 7260
+    },
+    {
+      "label": "SEER cancer stats",
+      "count": 10
+    },
+    {
+      "label": "Award rows",
+      "count": 25
+    },
+    {
+      "label": "OPDP letters",
+      "count": 39
+    },
+    {
+      "label": "SEC mentions",
+      "count": 60
+    }
+  ],
+  "top_brands": [
+    {
+      "brand": "Keytruda",
+      "total_evidence_count": 62,
+      "official_brand_message_count": 24,
+      "label_message_count": 5,
+      "dailymed_label_count": 1,
+      "clinical_trial_count": 0,
+      "pubmed_article_count": 5,
+      "asco_abstract_count": 0,
+      "award_mention_count": 0,
+      "sec_annual_filing_mention_count": 7
+    },
+    {
+      "brand": "Imbruvica",
+      "total_evidence_count": 58,
+      "official_brand_message_count": 24,
+      "label_message_count": 5,
+      "dailymed_label_count": 0,
+      "clinical_trial_count": 0,
+      "pubmed_article_count": 5,
+      "asco_abstract_count": 0,
+      "award_mention_count": 1,
+      "sec_annual_filing_mention_count": 2
+    },
+    {
+      "brand": "Opdivo",
+      "total_evidence_count": 53,
+      "official_brand_message_count": 24,
+      "label_message_count": 5,
+      "dailymed_label_count": 0,
+      "clinical_trial_count": 0,
+      "pubmed_article_count": 5,
+      "asco_abstract_count": 0,
+      "award_mention_count": 0,
+      "sec_annual_filing_mention_count": 4
+    },
+    {
+      "brand": "Kisqali",
+      "total_evidence_count": 51,
+      "official_brand_message_count": 0,
+      "label_message_count": 5,
+      "dailymed_label_count": 2,
+      "clinical_trial_count": 32,
+      "pubmed_article_count": 5,
+      "asco_abstract_count": 0,
+      "award_mention_count": 1,
+      "sec_annual_filing_mention_count": 1
+    },
+    {
+      "brand": "Enhertu",
+      "total_evidence_count": 47,
+      "official_brand_message_count": 24,
+      "label_message_count": 6,
+      "dailymed_label_count": 1,
+      "clinical_trial_count": 0,
+      "pubmed_article_count": 5,
+      "asco_abstract_count": 2,
+      "award_mention_count": 0,
+      "sec_annual_filing_mention_count": 2
+    },
+    {
+      "brand": "Talzenna",
+      "total_evidence_count": 47,
+      "official_brand_message_count": 0,
+      "label_message_count": 15,
+      "dailymed_label_count": 0,
+      "clinical_trial_count": 0,
+      "pubmed_article_count": 5,
+      "asco_abstract_count": 0,
+      "award_mention_count": 0,
+      "sec_annual_filing_mention_count": 1
+    },
+    {
+      "brand": "Darzalex",
+      "total_evidence_count": 28,
+      "official_brand_message_count": 0,
+      "label_message_count": 5,
+      "dailymed_label_count": 2,
+      "clinical_trial_count": 4,
+      "pubmed_article_count": 5,
+      "asco_abstract_count": 0,
+      "award_mention_count": 0,
+      "sec_annual_filing_mention_count": 3
+    },
+    {
+      "brand": "Jakafi",
+      "total_evidence_count": 27,
+      "official_brand_message_count": 0,
+      "label_message_count": 5,
+      "dailymed_label_count": 1,
+      "clinical_trial_count": 4,
+      "pubmed_article_count": 5,
+      "asco_abstract_count": 0,
+      "award_mention_count": 0,
+      "sec_annual_filing_mention_count": 2
+    },
+    {
+      "brand": "Cabometyx",
+      "total_evidence_count": 26,
+      "official_brand_message_count": 0,
+      "label_message_count": 5,
+      "dailymed_label_count": 1,
+      "clinical_trial_count": 5,
+      "pubmed_article_count": 5,
+      "asco_abstract_count": 0,
+      "award_mention_count": 0,
+      "sec_annual_filing_mention_count": 2
+    },
+    {
+      "brand": "Monjuvi",
+      "total_evidence_count": 26,
+      "official_brand_message_count": 0,
+      "label_message_count": 10,
+      "dailymed_label_count": 2,
+      "clinical_trial_count": 5,
+      "pubmed_article_count": 5,
+      "asco_abstract_count": 0,
+      "award_mention_count": 0,
+      "sec_annual_filing_mention_count": 1
+    },
+    {
+      "brand": "Calquence",
+      "total_evidence_count": 23,
+      "official_brand_message_count": 0,
+      "label_message_count": 10,
+      "dailymed_label_count": 0,
+      "clinical_trial_count": 0,
+      "pubmed_article_count": 5,
+      "asco_abstract_count": 0,
+      "award_mention_count": 0,
+      "sec_annual_filing_mention_count": 1
+    },
+    {
+      "brand": "Imfinzi",
+      "total_evidence_count": 23,
+      "official_brand_message_count": 0,
+      "label_message_count": 5,
+      "dailymed_label_count": 0,
+      "clinical_trial_count": 0,
+      "pubmed_article_count": 5,
+      "asco_abstract_count": 0,
+      "award_mention_count": 0,
+      "sec_annual_filing_mention_count": 3
+    }
+  ],
+  "message_mix": [
+    {
+      "label": "fda_label_message",
+      "count": 596
+    },
+    {
+      "label": "official_brand_message",
+      "count": 96
+    },
+    {
+      "label": "sec_annual_filing_mention",
+      "count": 60
+    },
+    {
+      "label": "award_campaign",
+      "count": 25
+    }
+  ]
+}

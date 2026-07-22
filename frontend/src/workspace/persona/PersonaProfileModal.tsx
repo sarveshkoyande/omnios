@@ -8,7 +8,7 @@ import { styled } from "@mui/material/styles";
 import { fetchPersonaDetail } from "../../api";
 import type { PersonaDetail } from "../types";
 import { personaInitials } from "./personaUtils";
-import { indigoTint } from "../../theme/tokens";
+import { indigoTint, gradientBrand } from "../../theme/tokens";
 
 const Fact = styled(Box)(({ theme }) => ({
   background: "rgba(255,255,255,0.5)",
@@ -49,7 +49,7 @@ export function PersonaProfileModal({ personaId, onClose }: { personaId: string 
                 width: 54, height: 54, borderRadius: "50%", flex: "0 0 auto",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 fontSize: 18, fontWeight: 700, color: "#fff",
-                background: "linear-gradient(135deg,#4F46E5,#7C3AED)",
+                background: gradientBrand,
               }}
             >
               {personaInitials(detail.name)}
@@ -57,7 +57,7 @@ export function PersonaProfileModal({ personaId, onClose }: { personaId: string 
             <Box>
               <Typography variant="h3" sx={{ fontSize: 18 }}>{detail.name}</Typography>
               <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>
-                {detail.specialty} · {detail.age ?? "—"} · {detail.gender} · {detail.ethnicity}
+                {detail.specialty} · {detail.age ?? "N/A"} · {detail.gender} · {detail.ethnicity}
               </Typography>
               <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>
                 {detail.location} {detail.years_in_practice ? `· ${detail.years_in_practice} yrs in practice` : ""}
@@ -70,9 +70,9 @@ export function PersonaProfileModal({ personaId, onClose }: { personaId: string 
           )}
 
           <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 1, mb: 2 }}>
-            <Fact><b>{detail.prescribing?.monthly_trx ?? "—"}</b><br /><Typography variant="caption">Monthly TRx</Typography></Fact>
-            <Fact><b>{detail.prescribing?.monthly_nrx ?? "—"}</b><br /><Typography variant="caption">Monthly NRx</Typography></Fact>
-            <Fact><b>{detail.digital?.affinity ?? "—"}</b><br /><Typography variant="caption">Digital ({detail.digital?.affinity_score ?? "—"})</Typography></Fact>
+            <Fact><b>{detail.prescribing?.monthly_trx ?? "N/A"}</b><br /><Typography variant="caption">Monthly TRx</Typography></Fact>
+            <Fact><b>{detail.prescribing?.monthly_nrx ?? "N/A"}</b><br /><Typography variant="caption">Monthly NRx</Typography></Fact>
+            <Fact><b>{detail.digital?.affinity ?? "N/A"}</b><br /><Typography variant="caption">Digital ({detail.digital?.affinity_score ?? "N/A"})</Typography></Fact>
           </Box>
 
           {detail.bio && <Typography variant="body2" sx={{ mb: 2 }}>{detail.bio}</Typography>}
@@ -108,10 +108,10 @@ export function PersonaProfileModal({ personaId, onClose }: { personaId: string 
             </Box>
           </Box>
 
-          <ChanRow><span>In-person stance</span><b>{detail.channels?.f2f_stance ?? "—"}</b></ChanRow>
-          <ChanRow><span>Email stance</span><b>{detail.channels?.email_stance ?? "—"}</b></ChanRow>
-          <ChanRow><span>Adoption curve</span><b>{detail.prescribing?.adoption_curve ?? "—"}</b></ChanRow>
-          <ChanRow><span>Rep access</span><b>{detail.digital?.rep_access ?? "—"}</b></ChanRow>
+          <ChanRow><span>In-person stance</span><b>{detail.channels?.f2f_stance ?? "N/A"}</b></ChanRow>
+          <ChanRow><span>Email stance</span><b>{detail.channels?.email_stance ?? "N/A"}</b></ChanRow>
+          <ChanRow><span>Adoption curve</span><b>{detail.prescribing?.adoption_curve ?? "N/A"}</b></ChanRow>
+          <ChanRow><span>Rep access</span><b>{detail.digital?.rep_access ?? "N/A"}</b></ChanRow>
         </Box>
       )}
     </Dialog>

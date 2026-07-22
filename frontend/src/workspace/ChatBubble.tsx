@@ -1,22 +1,24 @@
+import { keyframes } from "@emotion/react";
 import { styled } from "@mui/material/styles";
-import { tokens, glass, glassFallback, indigoTint, gradientBrand } from "../theme/tokens";
+import { tokens } from "../theme/tokens";
 
-const glassSupports = "@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)))";
-
-/** AgentBubble — a Tier-A milk-glass panel with a small indigo accent dot. */
+/** AgentBubble — a flat solid surface with a small primary accent dot. */
 export const AgentBubble = styled("div")(({ theme }) => ({
   position: "relative",
-  maxWidth: 640,
+  width: "fit-content",
+  maxWidth: "60%",
+  minWidth: 0,
   padding: theme.spacing(2.5, 3.5),
   borderTopLeftRadius: 4,
   borderRadius: tokens.radius.md,
-  background: glassFallback,
-  border: glass.border,
-  boxShadow: glass.shadow,
+  background: tokens.color.surface,
+  border: `1px solid ${tokens.color.outline}`,
+  boxShadow: "none",
   color: tokens.color.text,
   fontSize: tokens.fontSize.md,
   lineHeight: 1.6,
-  [glassSupports]: { background: glass.panel, backdropFilter: glass.blur, WebkitBackdropFilter: glass.blur },
+  overflowWrap: "break-word",
+  wordBreak: "break-word",
   "&::before": {
     content: '""',
     position: "absolute",
@@ -25,63 +27,88 @@ export const AgentBubble = styled("div")(({ theme }) => ({
     width: 8,
     height: 8,
     borderRadius: "50%",
-    background: gradientBrand,
-    boxShadow: "0 1px 3px rgba(79,70,229,0.4)",
+    background: tokens.color.primary,
   },
 }));
 
-/** UserBubble — brand-gradient, white text, right-aligned. */
+/** UserBubble — solid brand card, white text, right-aligned. */
 export const UserBubble = styled("div")(({ theme }) => ({
-  maxWidth: 640,
+  width: "fit-content",
+  maxWidth: "60%",
   marginLeft: "auto",
   padding: theme.spacing(2.5, 3.5),
   borderTopRightRadius: 4,
   borderRadius: tokens.radius.md,
-  background: gradientBrand,
+  background: tokens.color.primary,
   color: "#fff",
-  boxShadow: "0 6px 20px rgba(79,70,229,0.28)",
+  boxShadow: "none",
   fontSize: tokens.fontSize.md,
   lineHeight: 1.6,
+  overflowWrap: "break-word",
+  wordBreak: "break-word",
 }));
 
 /** NarrationLine — quiet dashed aside for scene-setting text. */
 export const NarrationLine = styled("div")(({ theme }) => ({
   maxWidth: 640,
   padding: theme.spacing(2, 0),
-  borderTop: `1px dashed ${indigoTint(0.2)}`,
-  borderBottom: `1px dashed ${indigoTint(0.2)}`,
+  borderTop: `1px dashed ${tokens.color.outline}`,
+  borderBottom: `1px dashed ${tokens.color.outline}`,
   color: tokens.color.inkSoft,
   fontStyle: "italic",
   fontSize: tokens.fontSize.md,
 }));
 
-/** TurnBubble — a teammate's turn: glass panel with an accent left edge. */
+/** TurnBubble — a teammate's turn: flat panel with a left accent edge. */
 export const TurnBubble = styled("div")<{ accent: string }>(({ theme, accent }) => ({
   position: "relative",
-  maxWidth: 640,
+  width: "fit-content",
+  maxWidth: "60%",
+  minWidth: 0,
   padding: theme.spacing(2.5, 3.5),
   borderRadius: tokens.radius.md,
-  background: glassFallback,
-  border: glass.border,
+  background: tokens.color.surface,
+  border: `1px solid ${tokens.color.outline}`,
   borderLeft: `4px solid ${accent}`,
-  boxShadow: glass.shadow,
+  boxShadow: "none",
   color: tokens.color.text,
   fontSize: tokens.fontSize.md,
   lineHeight: 1.6,
-  [glassSupports]: { background: glass.panel, backdropFilter: glass.blur, WebkitBackdropFilter: glass.blur },
+  overflowWrap: "break-word",
+  wordBreak: "break-word",
 }));
 
-/** BanterBubble — a recessed translucent side-remark, indented. */
-export const BanterBubble = styled("div")<{ accent: string }>(({ theme, accent }) => ({
-  maxWidth: 460,
-  marginLeft: theme.spacing(9),
-  padding: theme.spacing(1.5, 3),
-  borderRadius: tokens.radius.pill,
-  background: "rgba(255,255,255,0.45)",
-  border: `1px solid ${indigoTint(0.1)}`,
-  fontSize: tokens.fontSize.sm,
+/** StatusLine — quiet ambient activity, not a message from anyone: the single agent's
+ * internal work-steps get this instead of a peer bubble, so it never reads as a second
+ * conversational identity. A soft pulsing dot + small italic caption, no avatar, no box. */
+const dotPulse = keyframes`
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+`;
+
+const statusIn = keyframes`
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+`;
+
+export const StatusLine = styled("div")(({ theme }) => ({
+  display: "flex",
+  alignItems: "center",
+  gap: theme.spacing(1),
+  marginLeft: theme.spacing(7),
   color: tokens.color.inkSoft,
-  "& b": { color: accent },
+  fontSize: tokens.fontSize.sm,
+  fontStyle: "italic",
+  animation: `${statusIn} 320ms ease`,
+  "&::before": {
+    content: '""',
+    width: 6,
+    height: 6,
+    borderRadius: "50%",
+    flex: "0 0 auto",
+    background: tokens.color.secondary,
+    animation: `${dotPulse} 1.6s ease-in-out infinite`,
+  },
 }));
 
 export const ClarifyBadge = styled("span")({
@@ -93,8 +120,8 @@ export const ClarifyBadge = styled("span")({
   letterSpacing: "0.04em",
   textTransform: "uppercase",
   color: tokens.color.primary,
-  background: indigoTint(0.1),
-  border: glass.borderTint,
+  background: tokens.color.primaryContainer,
+  border: `1px solid ${tokens.color.outline}`,
   borderRadius: tokens.radius.pill,
   padding: "3px 11px",
 });

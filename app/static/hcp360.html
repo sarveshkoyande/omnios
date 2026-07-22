@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>HCP 360 — Omni OS</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root { color-scheme: light dark; }
+  body { font-family: -apple-system, Segoe UI, Roboto, sans-serif; margin: 0; padding: 24px;
+         background: #0b0d12; color: #e8eaee; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .sub { color: #9aa2af; font-size: 13px; margin-bottom: 20px; }
+  .stats { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+  .stat { background: #161a22; border: 1px solid #262c38; border-radius: 8px; padding: 10px 14px; }
+  .stat b { display: block; font-size: 18px; }
+  .stat span { font-size: 11px; color: #9aa2af; }
+  .filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+  .filters input, .filters select { background: #161a22; border: 1px solid #262c38; color: #e8eaee;
+         border-radius: 6px; padding: 6px 10px; font-size: 13px; }
+  .filters button { background: #3d6bff; border: none; color: white; border-radius: 6px;
+         padding: 6px 14px; font-size: 13px; cursor: pointer; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid #1f2430; }
+  th { color: #9aa2af; font-weight: 600; font-size: 11px; text-transform: uppercase; }
+  tr:hover { background: #161a22; cursor: pointer; }
+  .layout { display: flex; gap: 20px; align-items: flex-start; }
+  .list { flex: 1; min-width: 0; }
+  .detail { width: 420px; flex-shrink: 0; background: #12151c; border: 1px solid #262c38;
+            border-radius: 10px; padding: 16px; position: sticky; top: 24px; max-height: 85vh; overflow: auto; }
+  .detail h2 { font-size: 15px; margin: 0 0 2px; }
+  .detail .npi { color: #9aa2af; font-size: 12px; margin-bottom: 12px; }
+  .section { margin-bottom: 14px; }
+  .section h3 { font-size: 11px; text-transform: uppercase; color: #6f7787; margin: 0 0 6px; }
+  .kv { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; font-size: 12.5px; }
+  .kv div.k { color: #9aa2af; }
+  .empty { color: #6f7787; font-size: 13px; padding: 30px 0; text-align: center; }
+  .badge { display: inline-block; background: #22283a; border-radius: 4px; padding: 1px 6px; font-size: 11px; }
+  .ask { display: flex; gap: 8px; margin-bottom: 20px; }
+  .ask input { flex: 1; background: #161a22; border: 1px solid #262c38; color: #e8eaee;
+         border-radius: 6px; padding: 8px 12px; font-size: 13px; }
+  .ask button { background: #22c07a; border: none; color: #08150e; font-weight: 600; border-radius: 6px;
+         padding: 8px 16px; font-size: 13px; cursor: pointer; }
+  .ask-answer { margin: -10px 0 20px; padding: 12px 14px; background: #101a15; border: 1px solid #1f3a2b;
+         border-radius: 8px; font-size: 13px; line-height: 1.5; display: none; }
+  .ask-tools { margin-top: 8px; color: #6f7787; font-size: 11px; font-family: monospace; }
+</style>
+</head>
+<body>
+  <h1>HCP 360</h1>
+  <div class="sub">Synthetic HCP demographics, channel/content affinity, day-time preference, TRx and writer status — joined by NPI.</div>
+
+  <div class="ask">
+    <input id="ask-q" placeholder="Ask the data — e.g. &quot;segment HCPs by preferred channel&quot; or &quot;how many oncologists write Xalkori&quot;"
+           onkeydown="if(event.key==='Enter') askData()">
+    <button onclick="askData()">Ask</button>
+  </div>
+  <div class="ask-answer" id="ask-answer"></div>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="filters">
+    <input id="f-specialty" placeholder="specialty (e.g. Medical Oncology)" size="24">
+    <input id="f-state" placeholder="state (e.g. NY)" size="6" maxlength="2">
+    <input id="f-brand" placeholder="brand writer (e.g. Xalkori)" size="16">
+    <input id="f-limit" placeholder="limit" size="4" value="100">
+    <button onclick="loadList()">Filter</button>
+  </div>
+
+  <div class="layout">
+    <div class="list">
+      <table>
+        <thead><tr><th>NPI</th><th>Name</th><th>Specialty</th><th>State</th><th>City</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div class="detail" id="detail"><div class="empty">Click a row to see the full 360 view.</div></div>
+  </div>
+
+<script>
+async function loadStats() {
+  const s = await (await fetch('/api/hcp360')).json();
+  const el = document.getElementById('stats');
+  el.innerHTML = Object.entries(s).map(([table, n]) =>
+    `<div class="stat"><b>${n}</b><span>${table}</span></div>`).join('');
+}
+
+async function loadList() {
+  const specialty = document.getElementById('f-specialty').value.trim();
+  const state = document.getElementById('f-state').value.trim();
+  const brand = document.getElementById('f-brand').value.trim();
+  const limit = document.getElementById('f-limit').value.trim() || '100';
+  const params = new URLSearchParams({specialty, state, brand_writer: brand, limit});
+  const rows = await (await fetch('/api/hcp360/hcps?' + params)).json();
+  const tbody = document.getElementById('rows');
+  tbody.innerHTML = rows.map(r => `
+    <tr onclick="loadDetail(${r.npi_number__c})">
+      <td>${r.npi_number__c}</td>
+      <td>${r.first_name__c || ''} ${r.last_name__c || ''}</td>
+      <td>${r.primary_specialty_description__c || ''}</td>
+      <td>${r.state_code__c || ''}</td>
+      <td>${r.city__c || ''}</td>
+    </tr>`).join('') || '<tr><td colspan="5" class="empty">No matches.</td></tr>';
+}
+
+function kv(obj, keys) {
+  return `<div class="kv">${keys.map(([k, label]) =>
+    `<div class="k">${label}</div><div>${(obj && obj[k] != null && obj[k] !== '') ? obj[k] : '—'}</div>`).join('')}</div>`;
+}
+
+async function loadDetail(npi) {
+  const h = await (await fetch('/api/hcp360/hcps/' + npi)).json();
+  const ca = h.channel_affinity || {};
+  const co = h.content_affinity || {};
+  const w = h.writer_status || {};
+  const trx = h.trx || [];
+  document.getElementById('detail').innerHTML = `
+    <h2>${h.first_name__c || ''} ${h.last_name__c || ''}</h2>
+    <div class="npi">NPI ${h.npi_number__c} · ${h.primary_specialty_description__c || ''} · ${h.city__c || ''}, ${h.state_code__c || ''}</div>
+
+    <div class="section"><h3>Demographics</h3>${kv(h, [
+      ['credential_desc__c','Credential'],['gender__c','Gender'],['age__c','Age'],
+      ['email__c','Email'],['phone_number__c','Phone'],
+      ['ama_pdrp_flag__c','PDRP flag'],['ama_no_contact__c','No contact']])}</div>
+
+    <div class="section"><h3>Channel affinity</h3>${kv(ca, [
+      ['preferred_channel__c','Preferred'],['digitalscore_raw__c','Digital'],
+      ['ehrscore_raw__c','EHR'],['emailscore_raw__c','Email'],
+      ['progscore_raw__c','Prog'],['telescore_raw__c','Tele']])}</div>
+
+    <div class="section"><h3>Content affinity</h3>${kv(co, [
+      ['most_preferred_content_tag__c','1st'],
+      ['second_most_preferred_content_tag__c','2nd'],
+      ['third_most_preferred_content_tag__c','3rd']])}</div>
+
+    <div class="section"><h3>Writer status</h3>${kv(w, [
+      ['segment__c','Segment'],['writing_persona__c','Persona'],
+      ['brand__c','Brand'],['number_of_brands_writer__c','# brands'],
+      ['digital_affinity__c','Digital affinity'],['market_trx_tier__c','Market TRx tier'],
+      ['rep_potential__c','Rep potential']])}</div>
+
+    <div class="section"><h3>TRx (${trx.length})</h3>
+      ${trx.map(t => `<div class="kv"><div class="k">${t.bb_usc_desc2__c}</div><div><span class="badge">${t.trx_count__c}</span></div></div>`).join('') || '—'}
+    </div>
+  `;
+}
+
+async function askData() {
+  const q = document.getElementById('ask-q').value.trim();
+  if (!q) return;
+  const box = document.getElementById('ask-answer');
+  box.style.display = 'block';
+  box.textContent = 'Thinking…';
+  try {
+    const r = await fetch('/api/hcp360/ask', {
+      method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({question: q}),
+    });
+    const data = await r.json();
+    const toolsLine = (data.tool_calls && data.tool_calls.length)
+      ? `<div class="ask-tools">tools used: ${data.tool_calls.map(t => t.name).join(', ')}</div>` : '';
+    box.innerHTML = `${(data.answer || '').replace(/</g, '&lt;')}${toolsLine}`;
+  } catch (e) {
+    box.textContent = 'Request failed — is the server running?';
+  }
+}
+
+loadStats();
+loadList();
+</script>
+</body>
+</html>

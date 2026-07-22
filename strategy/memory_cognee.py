@@ -11,8 +11,18 @@ AZURE_AI_FOUNDRY_API_KEY against a custom base_url. cognee's built-in "anthropic
 provider calls the raw `anthropic.AsyncAnthropic` SDK with no way to override its base
 URL, so it always targets api.anthropic.com and cannot use a Foundry key. Its "custom"
 provider (LLMProvider.CUSTOM -> GenericAPIAdapter) goes through litellm + instructor and
-does honour a custom endpoint, so that's the provider this module configures --
-confirmed working end-to-end against the Foundry deployment (add -> cognify -> search).
+does honour a custom endpoint, so that's the provider this module configures.
+
+Known issue (2026-07-15/16): the Foundry endpoint sometimes hangs on connect from this
+network, and litellm/openai's client has no override for the hardcoded 600s HTTP
+fallback timeout -- one grounding topic stalling for 10 minutes blocked a plan run (see
+server_8733.log, 2026-07-15T10:29:20). A local-Ollama alternative was tried and reverted
+same day: CPU-only inference on this machine was too slow/heavy for structured-output
+calls (100% CPU, 300s+ per call even on a 1B model) and risked crashing the box, so it's
+off the table until this machine has a GPU. Process-knowledge grounding is therefore
+disabled by default (OMNI_PROCESS_GROUNDING=0 in .env) until one of these is fixed --
+see process_knowledge.py's enabled() gate, which short-circuits before this module is
+ever touched.
 
 Embeddings: Claude/Foundry has no embedding endpoint, and there's no OpenAI key in this
 app, so embeddings run locally via fastembed (all-MiniLM-L6-v2, 384-dim, no API key, no

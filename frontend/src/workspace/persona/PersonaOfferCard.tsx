@@ -52,7 +52,7 @@ export function PersonaOfferCard({
     <AgentBubble sx={{ maxWidth: 640 }}>
       <Typography sx={{ fontWeight: 700, mb: 0.5 }}>Pressure-test this plan with synthetic personas?</Typography>
       <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
-        I can run the plan past prescribers from your target audience — they'll react honestly and tell
+        I can run the plan past prescribers from your target audience. They'll react honestly and tell
         you what's missing and what would make them engage. The ones matching this plan's specialty are
         pre-selected; pick (or deselect) who should review it:
       </Typography>

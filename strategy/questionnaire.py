@@ -8,7 +8,7 @@ surfaced as "needs alignment" questions for the brand team.
 """
 from __future__ import annotations
 
-NEEDS_ALIGNMENT = "Needs alignment — the agent will ask you this in chat"
+NEEDS_ALIGNMENT = "Needs alignment: the agent will ask you this in chat"
 
 _SECTIONS = ["Brands Objectives", "Campaign Success", "Dependancies", "Key Dates"]
 
@@ -50,11 +50,11 @@ def build_cx_questionnaire(brand: str, persona: str, strategy: dict, bam: dict, 
         "cq1": (f"To move {persona} HCPs at the {stage_label} stage toward: {sp['engagement_goal']} "
                 f"The journey should leave them believing “{m['desired_belief']}”."),
         "cq2": (f"Leverage point: the {stage_label} journey stage, where the core barrier is "
-                f"“{sp['core_barrier']}” — the single highest-value point to intervene for {brand}."),
+                f"“{sp['core_barrier']}”, the single highest-value point to intervene for {brand}."),
         "cq3": (f"Because the current prescriber belief (“{m['current_belief']}”) caps adoption; shifting it "
                 f"unlocks the brand impact signalled by this stage: {sp['promotion_signal']}"),
         "cq4": f"The BAM A→B shift: {bam['a_to_b_shift']}",
-        "cq5": " — ".join(one_idea.values()),
+        "cq5": ", ".join(one_idea.values()),
         "cq6": ("Track the standard omnichannel KPI set drafted in the measurement section; leading hypothesis "
                 "metrics: " + "; ".join(kpi["leading_indicators"][:3]) + "."),
     }

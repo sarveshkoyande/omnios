@@ -4,15 +4,34 @@ from __future__ import annotations
 import json
 import time
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 from storage import get_db, save_blob, upsert_document
 
 BASE_URL = "https://dailymed.nlm.nih.gov/dailymed/services/v2"
+HEADERS = {
+    "User-Agent": "OmniDataHubResearchBot/0.1 (+local research; DailyMed public API)",
+    "Accept": "application/json,text/plain,*/*",
+}
+
+
+def _session() -> requests.Session:
+    session = requests.Session()
+    retries = Retry(
+        total=3,
+        backoff_factor=0.8,
+        status_forcelist=(429, 500, 502, 503, 504),
+        allowed_methods=("GET",),
+    )
+    session.mount("https://", HTTPAdapter(max_retries=retries))
+    session.headers.update(HEADERS)
+    return session
 
 
 def fetch_for_term(conn, term: str, limit: int = 5) -> int:
     count = 0
-    resp = requests.get(f"{BASE_URL}/spls.json", params={"drug_name": term, "pagesize": limit}, timeout=30)
+    resp = _session().get(f"{BASE_URL}/spls.json", params={"drug_name": term, "pagesize": limit}, timeout=30)
     resp.raise_for_status()
     data = resp.json()
     save_blob("dailymed", f"search_{term.replace(' ', '_')}.json", resp.text)

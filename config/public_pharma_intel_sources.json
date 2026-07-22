@@ -1,0 +1,248 @@
+{
+  "as_of": "2026-07-19",
+  "policy": "Only ingest public, non-login pages and public APIs. Respect robots.txt and site terms. Do not redistribute copyrighted creative assets; store URLs and derived metadata/text snippets only.",
+  "sources": [
+    {
+      "id": "drug_discovery_trends_pharma_50_2025",
+      "name": "Drug Discovery & Development Pharma 50 2025",
+      "category": "company_rankings",
+      "access": "public_web",
+      "url": "https://www.drugdiscoverytrends.com/pharma-50-the-50-largest-pharmaceutical-companies-in-the-world-for-2025/",
+      "ingest_enabled": true,
+      "fields": ["rank", "company", "headquarters", "revenue", "oncology_mentions"]
+    },
+    {
+      "id": "pmlive_oncology_sales",
+      "name": "PMLiVE Top Pharma List - oncology sales",
+      "category": "oncology_market_rankings",
+      "access": "public_web",
+      "url": "https://pmlive.com/top_pharma_list/top-20-pharma-companies-by-oncology-sales/",
+      "ingest_enabled": true,
+      "fields": ["company", "oncology_sales_by_year"]
+    },
+    {
+      "id": "pm360_trailblazer_2025_winners",
+      "name": "PM360 2025 Trailblazer Awards Winners",
+      "category": "awards_campaigns",
+      "access": "public_web",
+      "url": "https://pm360online.com/pm360s-2025-trailblazer-awards-winners/",
+      "ingest_enabled": true,
+      "fields": ["category", "award_level", "campaign", "brand", "manufacturer", "agency", "therapy_area"]
+    },
+    {
+      "id": "pm360_trailblazer_unbranded_cancer_2025",
+      "name": "PM360 Trailblazer Gold - Cancer Doesn't Play Fair",
+      "category": "awards_campaigns",
+      "access": "public_web",
+      "url": "https://pm360online.com/the-pm360-trailblazer-gold-award-winner-unbranded-campaign-cancer-doesnt-play-fair/",
+      "ingest_enabled": true,
+      "fields": ["campaign", "manufacturer", "agency", "core_message", "why_awarded"]
+    },
+    {
+      "id": "fierce_pharma_marketing_awards_2024",
+      "name": "Fierce Pharma Marketing Awards winners and coverage",
+      "category": "awards_campaigns",
+      "access": "public_web",
+      "url": "https://www.fiercepharmaweek.com/fiercepharmaweekcom/fierce-pharma-marketing-awards-winners",
+      "ingest_enabled": true,
+      "fields": ["category", "winner", "finalists", "campaign", "brand", "agency", "supplemental_article"]
+    },
+    {
+      "id": "mmm_awards",
+      "name": "MM+M Awards",
+      "category": "awards_campaigns",
+      "access": "public_web_or_paywalled",
+      "url": "https://www.mmm-online.com/mmm-awards/",
+      "ingest_enabled": false,
+      "fields": ["winners", "finalists", "category", "brand", "agency"],
+      "reason_disabled": "Re-verified 2026-07-21: request times out for our scraper UA (no HTTP response within 20s), consistent with bot mitigation. Use public excerpts, finalist pages, or press releases when permitted."
+    },
+    {
+      "id": "clio_health",
+      "name": "Clio Health winners gallery",
+      "category": "awards_campaigns",
+      "access": "public_web",
+      "url": "https://clios.com/health/",
+      "ingest_enabled": false,
+      "fields": ["award", "campaign", "entrant", "brand", "agency"],
+      "reason_disabled": "Re-verified 2026-07-21: returns HTTP 403 for our scraper UA. Dynamic gallery; requires a dedicated parser and terms review before bulk ingestion."
+    },
+    {
+      "id": "cannes_lions_health",
+      "name": "Cannes Lions Health / Pharma Lions winners",
+      "category": "awards_campaigns",
+      "access": "public_web",
+      "url": "https://www.lovethework.com/",
+      "ingest_enabled": false,
+      "fields": ["award", "campaign", "brand", "agency", "case_film_url"],
+      "reason_disabled": "Re-verified 2026-07-21: homepage returns HTTP 200 but is a JS-rendered SPA shell with no health/pharma-filtered content in the static HTML; a full-page capture would just index generic nav markup. Needs a dedicated parser (or headless render) scoped to the health/pharma award category before enabling."
+    },
+    {
+      "id": "clinicaltrials_gov",
+      "name": "ClinicalTrials.gov API v2",
+      "category": "clinical_trials",
+      "access": "public_api",
+      "url": "https://clinicaltrials.gov/api/v2/studies",
+      "ingest_enabled": true,
+      "fields": ["nct_id", "sponsor", "condition", "intervention", "phase", "status", "locations"]
+    },
+    {
+      "id": "pubmed",
+      "name": "PubMed / NCBI E-utilities",
+      "category": "medical_literature",
+      "access": "public_api",
+      "url": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/",
+      "ingest_enabled": true,
+      "fields": ["pmid", "title", "journal", "year", "abstract"]
+    },
+    {
+      "id": "asco_annual_meeting_abstracts",
+      "name": "ASCO Annual Meeting Abstracts",
+      "category": "medical_literature_congress",
+      "access": "public_download",
+      "url": "https://www.asco.org/annual-meeting/program/abstracts-posters",
+      "ingest_enabled": true,
+      "fields": ["abstract_number", "presentation_title", "session_title", "track", "speaker", "abstract_body", "presentation_date"]
+    },
+    {
+      "id": "seer_statfacts",
+      "name": "NCI SEER Cancer Stat Facts",
+      "category": "epidemiology_market_context",
+      "access": "public_web",
+      "url": "https://seer.cancer.gov/statfacts/",
+      "ingest_enabled": true,
+      "fields": ["cancer_site", "estimated_new_cases", "estimated_deaths", "relative_survival", "percent_all_cases", "percent_all_deaths"]
+    },
+    {
+      "id": "dailymed",
+      "name": "DailyMed SPL API",
+      "category": "labeling",
+      "access": "public_api",
+      "url": "https://dailymed.nlm.nih.gov/dailymed/services/v2/",
+      "ingest_enabled": true,
+      "fields": ["setid", "brand", "generic", "manufacturer", "label_sections"]
+    },
+    {
+      "id": "openfda_labels",
+      "name": "openFDA Drug Label API",
+      "category": "labeling",
+      "access": "public_api",
+      "url": "https://api.fda.gov/drug/label.json",
+      "ingest_enabled": true,
+      "fields": ["set_id", "openfda", "indications", "warnings", "adverse_reactions"]
+    },
+    {
+      "id": "drugs_fda",
+      "name": "Drugs@FDA Data Files",
+      "category": "approvals_regulatory",
+      "access": "public_download",
+      "url": "https://www.fda.gov/drugs/drug-approvals-and-databases/drugsfda-data-files",
+      "ingest_enabled": true,
+      "fields": ["application", "product", "sponsor", "submission", "approval_history", "review_documents"]
+    },
+    {
+      "id": "fda_orange_book",
+      "name": "FDA Orange Book data files",
+      "category": "approvals_regulatory",
+      "access": "public_download",
+      "url": "https://www.fda.gov/drugs/drug-approvals-and-databases/orange-book-data-files",
+      "ingest_enabled": true,
+      "fields": ["ingredient", "trade_name", "applicant", "patent", "exclusivity", "approval_date", "rld", "reference_standard"]
+    },
+    {
+      "id": "fda_purple_book",
+      "name": "FDA Purple Book",
+      "category": "approvals_regulatory",
+      "access": "public_download",
+      "url": "https://purplebooksearch.fda.gov/downloads",
+      "ingest_enabled": true,
+      "fields": ["bla_number", "proprietary_name", "proper_name", "applicant", "biosimilar", "interchangeable", "reference_product", "exclusivity", "patent_list"]
+    },
+    {
+      "id": "fda_ad_comm",
+      "name": "FDA Advisory Committee calendar and materials",
+      "category": "regulatory_events",
+      "access": "public_web",
+      "url": "https://www.fda.gov/advisory-committees/advisory-committee-calendar",
+      "ingest_enabled": false,
+      "fields": ["meeting", "drug", "indication", "briefing_documents", "vote"],
+      "reason_disabled": "Verified 2026-07-21: page returns HTTP 200 but the meeting table (<table class=\"lcds-datatable--advisory-committee-calendar\">) ships with an empty <thead>-only body — rows are populated client-side by jQuery DataTables from a JS-driven data source we could not locate in the served JS bundle or drupalSettings (no /views/ajax call, no JSON export param). Needs a headless-browser render (e.g. Playwright) or the underlying data endpoint reverse-engineered before this can be scraped statically. Individual meeting detail pages (e.g. /advisory-committees/advisory-committee-calendar/{slug}) do exist and are static/scrapable once discovered via search or the (still-to-find) feed."
+    },
+    {
+      "id": "fda_oncology_approval_notifications",
+      "name": "FDA Oncology / Hematologic Malignancies Approval Notifications",
+      "category": "approvals_regulatory",
+      "access": "public_web",
+      "url": "https://www.fda.gov/drugs/resources-information-approved-drugs/oncology-cancerhematologic-malignancies-approval-notifications",
+      "ingest_enabled": true,
+      "fields": ["approval_date", "drug_or_regimen", "indication_summary", "notification_url"]
+    },
+    {
+      "id": "ema_medicines",
+      "name": "EMA medicines",
+      "category": "approvals_regulatory",
+      "access": "public_database",
+      "url": "https://www.ema.europa.eu/en/about-us/about-website/download-website-data-json-data-format",
+      "ingest_enabled": true,
+      "fields": ["medicine", "active_substance", "therapeutic_area", "indication", "status", "holder", "decision_date", "medicine_url", "document_type", "document_url"]
+    },
+    {
+      "id": "sec_edgar",
+      "name": "SEC EDGAR company filings",
+      "category": "company_financials_strategy",
+      "access": "public_api",
+      "url": "https://data.sec.gov/submissions/",
+      "ingest_enabled": true,
+      "fields": ["cik", "ticker", "company", "form", "filing_date", "accession_number", "primary_document"]
+    },
+    {
+      "id": "company_investor_relations",
+      "name": "Company annual reports and investor presentations",
+      "category": "company_financials_strategy",
+      "access": "public_web",
+      "url": "company-specific investor relations pages for the top 50 companies",
+      "ingest_enabled": false,
+      "fields": ["sales_by_brand", "pipeline", "commercial_priorities", "launch_plans"],
+      "reason_disabled": "No single source URL — needs a curated per-company IR page list (~50 URLs) before public_web.py or a dedicated scraper can run it. SEC EDGAR (sec_edgar, sec_filing_docs, already enabled) covers the US-listed subset of this via 10-K/proxy filings in the meantime. Next concrete expansion candidate."
+    },
+    {
+      "id": "brand_websites",
+      "name": "Public brand and disease-education websites",
+      "category": "messaging_campaigns",
+      "access": "public_web",
+      "url": "brand-specific official HCP and patient websites",
+      "ingest_enabled": false,
+      "fields": ["headline", "claims", "cta", "audience", "isi_url", "fair_balance", "channel"],
+      "reason_disabled": "Superseded — this is already implemented under scrapers/brand_sites.py against the curated list in config/official_oncology_brand_sites.json (enabled and running in run_all.py). Kept here disabled to avoid double-counting; left as a placeholder in case a future non-oncology brand-site pass is wanted."
+    },
+    {
+      "id": "fda_bad_ad",
+      "name": "FDA OPDP Bad Ad Program",
+      "category": "promotional_compliance",
+      "access": "public_web",
+      "url": "https://www.fda.gov/drugs/office-prescription-drug-promotion/bad-ad-program",
+      "ingest_enabled": true,
+      "fields": ["company", "brand", "violation", "claim_issue", "channel"],
+      "note": "URL corrected 2026-07-21 (old path 404s, page moved under /drugs/office-prescription-drug-promotion/bad-ad-program). Verified static HTML, no login/JS gate. Content is program description/FAQ/reporting-channel text, not a structured violation table — captured as a public_web document, not a structured warehouse table."
+    },
+    {
+      "id": "fda_opdp_untitled_letters",
+      "name": "FDA OPDP Untitled Letters and Corresponding Promotional Communications",
+      "category": "promotional_compliance",
+      "access": "public_web",
+      "url": "https://www.fda.gov/drugs/warning-letters-and-notice-violation-letters-pharmaceutical-companies/untitled-letters",
+      "ingest_enabled": true,
+      "fields": ["issued_date", "company", "product_issue", "letter_type", "letter_pdf_url", "letter_text", "promotional_material_links"]
+    },
+    {
+      "id": "who_ictRP",
+      "name": "WHO ICTRP",
+      "category": "clinical_trials",
+      "access": "public_database",
+      "url": "https://trialsearch.who.int/",
+      "ingest_enabled": false,
+      "fields": ["trial_id", "sponsor", "condition", "intervention", "country"],
+      "reason_disabled": "Verified 2026-07-21: the search portal itself needs form/session interaction (not a flat page), and WHO's documented bulk-download route requires a WHO-issued username/password (request via ictrpinfo@who.int) — not fetchable anonymously. ClinicalTrials.gov (already enabled) covers the large majority of oncology trials relevant to this warehouse in the meantime."
+    }
+  ]
+}

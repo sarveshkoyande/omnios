@@ -1,0 +1,97 @@
+/** SSE protocol v2 — Sequential Plan Studio (docs/SEQUENTIAL_STUDIO_DESIGN.md). */
+
+export interface GroundingItem {
+  source: string;
+  label: string;
+  snippet: string;
+  ref?: string;
+}
+
+export interface AskOption {
+  label: string;
+  source?: string;
+}
+
+export interface LlmStatus {
+  engine?: string;
+  ok?: boolean | null;
+  detail?: string;
+  ts?: string;
+  diagnostics?: Record<string, string | number | boolean | null>;
+}
+
+/** One landed step's reasoning: inputs used (with source class), framework applied,
+ * the decision, rationale, and which brief sections it feeds (decision_spine.py). */
+export interface DecisionRecord {
+  stage_id: string;
+  stage_name: string;
+  section_id: string;
+  decision: string;
+  framework: string;
+  rationale: string;
+  inputs: { label: string; value: string; source_class: string; source: string }[];
+  alternatives: { label: string; why_rejected: string }[];
+  feeds: string[];
+  answered_by_user: boolean;
+}
+
+export interface StudioAsk {
+  ask_id: string;
+  section: number;
+  text: string;
+  source?: "ai" | "deterministic" | "deterministic-fallback";
+  llm_status?: LlmStatus;
+  evidence_basis?: string;
+  framework?: string;
+  blocked?: string;
+  why: string;
+  recommendation_reason?: string;
+  recommendation: AskOption;
+  options: AskOption[];
+  free_text: boolean;
+}
+
+export type StudioEvent =
+  | { type: "run_open"; total_sections: number }
+  | { type: "phase_open"; idx: number; section_id: string; num: number; title: string; owner: string; owner_name: string }
+  | { type: "grounding"; section_id: string; items: GroundingItem[] }
+  | ({ type: "ask" } & StudioAsk)
+  | { type: "drafting"; section_id: string; note: string }
+  | { type: "section_html"; section_id: string; num: number; title: string; owner: string; html: string }
+  | { type: "phase_done"; section_id: string; idx: number }
+  | ({ type: "decision_record" } & DecisionRecord)
+  | { type: "chat"; author: string; text: string; kind: "turn" | "banter"; reply_to?: string }
+  | { type: "plan"; html: string; markdown: string; partial: boolean }
+  | { type: "agents_init"; agents: { id: string; name: string; role: string }[] }
+  | { type: "run_done" }
+  | { type: "error"; message: string };
+
+export interface StudioSection {
+  section_id: string;
+  num: number;
+  title: string;
+  owner: string;
+  html: string;
+}
+
+export interface StudioSlot {
+  idx: number;
+  num: number;
+  title: string;
+  owner: string;
+  ownerName: string;
+  state: "ground" | "ask" | "draft";
+  grounding: GroundingItem[];
+  draftNote?: string;
+}
+
+export interface StudioState {
+  active: boolean;
+  total: number;
+  sections: StudioSection[];
+  slot: StudioSlot | null;
+  done: boolean;
+  records: DecisionRecord[];
+}
+
+export const STUDIO_IDLE: StudioState = { active: false, total: 0, sections: [], slot: null, done: false, records: [] };

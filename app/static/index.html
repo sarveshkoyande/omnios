@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Omni OS — Brand Engagement Planning Agent</title>
+<title>Omni OS: Brand Engagement Planning Agent</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0">
 <style>
@@ -222,16 +222,27 @@
   .composer { flex: 0 0 auto; padding: 12px 18px 16px; border-top: 1px solid var(--line); }
   .composer .box { display: flex; gap: 8px; align-items: flex-end; border-radius: 12px; padding: 8px 8px 8px 14px;
     background: var(--glass-strong); border: 1px solid var(--line); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
-    box-shadow: var(--shadow-raised-sm); transition: box-shadow .15s ease, border-color .15s ease; }
+    box-shadow: var(--shadow-raised-sm); transition: box-shadow .3s ease, border-color .3s ease; }
   .composer .box:focus-within { border-color: rgba(0,174,239,0.5); box-shadow: var(--shadow-raised), 0 0 0 3px rgba(0,174,239,0.14); }
+  /* Purple-blue glow that pulses while the composer holds text -- a live "ready to send" cue. */
+  .composer .box.has-text { border-color: rgba(122,58,237,0.45); animation: composer-glow 2.4s ease-in-out infinite; }
+  @keyframes composer-glow {
+    0%, 100% { box-shadow: var(--shadow-raised-sm), 0 0 12px 1px rgba(122,58,237,0.28), 0 0 0 1px rgba(0,174,239,0.22); }
+    50% { box-shadow: var(--shadow-raised-sm), 0 0 24px 5px rgba(122,58,237,0.5), 0 0 0 1px rgba(0,174,239,0.4); }
+  }
   .composer textarea { flex: 1; resize: none; border: none; background: transparent; color: var(--text); font: inherit; outline: none; max-height: 120px; line-height: 1.4; padding: 4px 0; }
   .composer .send { display: flex; align-items: center; justify-content: center;
     background: var(--btn-gradient); color: #fff; border: none; border-radius: 9px;
     width: 36px; height: 36px; cursor: pointer; flex: 0 0 auto; box-shadow: var(--shadow-raised-sm);
-    transition: transform .12s ease, box-shadow .12s ease, background .12s ease; }
+    transition: transform .12s ease, box-shadow .3s ease, background .12s ease; }
   .composer .send:hover:not(:disabled) { background: var(--btn-gradient-hover); transform: translateY(-1px); }
   .composer .send:active:not(:disabled) { transform: translateY(0); box-shadow: var(--shadow-pressed); }
-  .composer .send:disabled { background: rgba(11,61,145,0.18); color: var(--faint); cursor: not-allowed; box-shadow: none; }
+  .composer .send:disabled { background: rgba(11,61,145,0.18); color: var(--faint); cursor: not-allowed; box-shadow: none; animation: none; }
+  .composer .box.has-text .send:not(:disabled) { animation: send-glow 2.4s ease-in-out infinite; }
+  @keyframes send-glow {
+    0%, 100% { box-shadow: var(--shadow-raised-sm), 0 0 8px 1px rgba(122,58,237,0.45), 0 0 0 1px rgba(0,174,239,0.3); }
+    50% { box-shadow: var(--shadow-raised-sm), 0 0 18px 5px rgba(122,58,237,0.75), 0 0 0 1px rgba(0,174,239,0.55); }
+  }
   .composer .attach { display: flex; align-items: center; justify-content: center; background: transparent; color: var(--muted); border: none; border-radius: 9px; width: 32px; height: 32px; cursor: pointer; flex: 0 0 auto; margin-bottom: 2px; }
   .composer .attach:hover { background: rgba(11,61,145,0.08); color: var(--indegene-navy); }
   .composer .attach:disabled { color: var(--faint); cursor: not-allowed; background: none; }
@@ -905,7 +916,7 @@
   .tk-raci-r { background: #DFF2E1; color: #1B7A34; } .tk-raci-a { background: #FFE6EF; color: var(--tk-magenta); }
   .tk-raci-c { background: #E4F3FC; color: #0B6FA8; } .tk-raci-i { background: #F1F1F1; color: #666; }
 
-  /* Agent-recommended fields — filled by the intelligence/activation agents from researched industry benchmarks.
+  /* Agent-recommended fields, filled by the intelligence/activation agents from researched industry benchmarks.
      Deliberately a DIFFERENT colour from the amber "Needs alignment" chip: violet means the
      field IS answered (by a benchmark recommendation); amber means nobody has answered it. */
   .plan-agent-chip { display: inline-flex; align-items: center; gap: 3px; font-size: 9px; font-weight: 700;
@@ -941,7 +952,7 @@
   .bm-gov li { margin-bottom: 5px; font-size: 11.5px; line-height: 1.45; }
   .bm-srcs { font-size: 11px; } .bm-srcs a { color: #0B6FA8; }
 
-  /* Content library — claims/references/components that fill Phase 2 & 3 */
+  /* Content library: claims/references/components that fill Phase 2 & 3 */
   .tk-lib-block { margin-top: 14px; border-top: 2px dashed var(--line); padding-top: 12px; }
   .tk-lib-h { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--indegene-navy); margin: 0 0 3px; }
   .tk-lib-h .material-symbols-outlined { font-size: 18px; color: var(--green); }
@@ -1077,23 +1088,31 @@
   .pi-kv b { color: var(--indegene-navy); } .pi-kv.bad b { color: var(--red); } .pi-kv.good b { color: var(--green); }
 
   /* ================= 4-stage workflow stepper + stage panes ================= */
-  .wf-stepper { display: none; align-items: center; gap: 2px; padding: 10px 12px; border-bottom: 1px solid var(--line);
+  /* Chevron/arrow stepper: segments butt together (negative margin = arrow width) and
+     overlap via descending z-index so each tip reads on top of the next segment's notch. */
+  .wf-stepper { display: none; align-items: stretch; padding: 10px 12px; border-bottom: 1px solid var(--line);
     background: var(--glass-strong); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); overflow-x: auto; }
   .wf-stepper.show { display: flex; }
-  .wf-step { display: flex; align-items: center; gap: 8px; background: none; border: 1px solid transparent;
-    border-radius: 10px; padding: 6px 10px; cursor: pointer; white-space: nowrap; transition: background .2s, border-color .2s; }
-  .wf-step:hover:not(:disabled) { background: rgba(11,61,145,.05); }
-  .wf-step.active { background: rgba(11,61,145,.09); border-color: rgba(11,61,145,.22); }
-  .wf-step.locked { opacity: .42; cursor: not-allowed; }
-  .wf-num { width: 26px; height: 26px; border-radius: 50%; background: #eef0f3; color: var(--muted);
-    display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
-  .wf-num .material-symbols-outlined { font-size: 16px; }
-  .wf-step.active .wf-num { background: var(--indegene-navy); color: #fff; }
-  .wf-step.done .wf-num { background: var(--green); color: #fff; }
-  .wf-txt { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2; }
-  .wf-txt b { font-size: 11.5px; color: var(--indegene-navy); }
-  .wf-txt span { font-size: 9px; color: var(--faint); text-transform: uppercase; letter-spacing: .4px; }
-  .wf-sep { flex: 1 1 12px; min-width: 10px; height: 2px; background: var(--line); border-radius: 2px; }
+  .wf-step { --wf-arrow: 16px; position: relative; display: flex; flex: 1 1 0; min-width: 108px; align-items: center;
+    justify-content: center; gap: 6px; height: 40px; padding: 0 14px 0 calc(14px + var(--wf-arrow));
+    border: none; cursor: pointer; white-space: nowrap; text-align: center;
+    background: #E3E7F1; color: var(--muted);
+    clip-path: polygon(0 0, calc(100% - var(--wf-arrow)) 0, 100% 50%, calc(100% - var(--wf-arrow)) 100%, 0 100%, var(--wf-arrow) 50%);
+    transition: background .5s ease, color .35s ease; animation: wf-pop .38s ease; }
+  .wf-step:first-child { margin-left: 0; padding-left: 14px;
+    clip-path: polygon(0 0, calc(100% - var(--wf-arrow)) 0, 100% 50%, calc(100% - var(--wf-arrow)) 100%, 0 100%); }
+  .wf-step:last-child { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, var(--wf-arrow) 50%); }
+  .wf-step:not(:first-child) { margin-left: calc(-1 * var(--wf-arrow)); }
+  .wf-step:hover:not(:disabled) { filter: brightness(1.04); }
+  .wf-step.locked { color: var(--faint); cursor: not-allowed; }
+  .wf-step.done { background: var(--indegene-navy); color: #fff; }
+  .wf-step.active { color: #fff; background: linear-gradient(120deg, var(--indegene-navy) 0%, var(--indegene-cyan) 35%, var(--indegene-navy) 70%);
+    background-size: 220% 100%; animation: wf-pop .38s ease, wf-shimmer 2.6s linear infinite; box-shadow: 0 4px 14px -6px rgba(11,61,145,.55); }
+  .wf-txt { display: flex; flex-direction: column; align-items: center; line-height: 1.2; }
+  .wf-txt b { font-size: 11.5px; }
+  .wf-txt span { font-size: 9px; opacity: .8; text-transform: uppercase; letter-spacing: .4px; }
+  @keyframes wf-pop { from { transform: scale(.94); opacity: .5; } to { transform: scale(1); opacity: 1; } }
+  @keyframes wf-shimmer { 0% { background-position: 0% 0; } 100% { background-position: -220% 0; } }
 
   .stage-pane { display: none; } .stage-pane.show { display: block; }
   .stage-head { display: flex; align-items: flex-start; gap: 11px; margin-bottom: 14px; }
@@ -1304,6 +1323,8 @@
   .lib-assets { display: flex; flex-direction: column; gap: 6px; }
   .asset-row { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid var(--line);
     border-radius: 9px; padding: 8px 11px; }
+  .asset-thumb { width: 44px; height: 44px; border-radius: 6px; object-fit: cover; flex: 0 0 auto;
+    border: 1px solid var(--line); cursor: zoom-in; }
   .asset-fmt { font-size: 9px; font-weight: 700; text-transform: uppercase; color: #fff; background: var(--tk-cyan,#00AEEF);
     padding: 2px 7px; border-radius: 4px; flex: 0 0 auto; }
   .asset-body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
@@ -1427,7 +1448,7 @@
       <button class="plans-toggle" id="plans-toggle" title="Open your saved plans"><span class="material-symbols-outlined">menu</span> Plans</button>
       <div class="empty-state" id="empty-state">
         <div class="big"><span class="material-symbols-outlined">hub</span></div>
-        <div><strong>No plan open.</strong><br>Start a new plan and just tell the agent what you're working on —<br>which brand, which therapy area, where it is in its lifecycle.</div>
+        <div><strong>No plan open.</strong><br>Start a new plan and just tell the agent what you're working on:<br>which brand, which therapy area, where it is in its lifecycle.</div>
         <button class="btn-new" id="empty-new"><span class="material-symbols-outlined">add</span> New plan</button>
       </div>
       <div class="chat-head" id="chat-head" style="display:none">
@@ -1439,25 +1460,25 @@
           <span class="material-symbols-outlined">edit_note</span>
           <div>
             <b>Start with a quick brief</b>
-            <span>Fill in the blanks below — or paste your own brief in any wording. I'll read it and pull out brand, molecule, indication, lifecycle, audience, budget and the rest, then ask about anything important that's missing.</span>
+            <span>Fill in the blanks below, or paste your own brief in any wording. I'll read it and pull out brand, molecule, indication, lifecycle, audience, budget and the rest, then ask about anything important that's missing.</span>
           </div>
         </div>
         <textarea id="intake-text" class="intake-text" spellcheck="false" rows="9"></textarea>
         <div class="intake-actions">
-          <button class="intake-skip" id="intake-skip">Skip — I'll just chat</button>
+          <button class="intake-skip" id="intake-skip">Skip, I'll just chat</button>
           <button class="intake-go" id="intake-go">Extract brief <span class="material-symbols-outlined">arrow_forward</span></button>
         </div>
       </div>
       <div class="messages" id="messages" style="display:none"></div>
       <div class="composer" id="composer" style="display:none">
         <div class="box">
-          <button class="attach" id="attach" title="Upload a document (e.g. a brand plan) — the agent reads it for the brief"><span class="material-symbols-outlined">attach_file</span></button>
+          <button class="attach" id="attach" title="Upload a document (e.g. a brand plan) so the agent can read it for the brief"><span class="material-symbols-outlined">attach_file</span></button>
           <input type="file" id="file-input" accept=".pdf,.docx,.txt,.md" style="display:none">
           <textarea id="input" rows="1" placeholder="Message the planning agent…"></textarea>
-          <button class="mic" id="mic" title="Voice input — dictate your message" style="display:none"><span class="material-symbols-outlined">mic</span></button>
+          <button class="mic" id="mic" title="Voice input: dictate your message" style="display:none"><span class="material-symbols-outlined">mic</span></button>
           <button class="send" id="send"><span class="material-symbols-outlined">send</span></button>
         </div>
-        <div class="hint">Enter to send · Shift+Enter for a new line · <span class="material-symbols-outlined hint-ico">attach_file</span> to upload a brand plan (.pdf/.docx/.txt/.md). No forms — the agent fills the brief on the right as you talk.</div>
+        <div class="hint">Enter to send · Shift+Enter for a new line · <span class="material-symbols-outlined hint-ico">attach_file</span> to upload a brand plan (.pdf/.docx/.txt/.md)</div>
       </div>
     </main>
 
@@ -1495,7 +1516,7 @@
             <div class="plan-actions" id="plan-edit-actions" style="display:none">
               <button class="primary" id="save-plan-btn"><span class="material-symbols-outlined">save</span> Save changes</button>
               <button id="cancel-plan-edit-btn"><span class="material-symbols-outlined">close</span> Cancel</button>
-              <span class="plan-edit-hint">Click any text to edit it — headings, paragraphs, list items and simple table cells.</span>
+              <span class="plan-edit-hint">Click any text to edit it: headings, paragraphs, list items and simple table cells.</span>
             </div>
             <div class="plan-doc-body" id="plan-body"></div>
           </div>
@@ -1532,7 +1553,7 @@ const WORKFLOW_STAGES = [
   { id:2, key:"orchestration", name:"Engagement Orchestration", short:"Orchestration", icon:"account_tree",
     blurb:"Turn the plan into an orchestrated journey: triggers, next-best-channel and cadence." },
   { id:3, key:"operations",    name:"Campaign Operations",      short:"Operations",    icon:"dashboard",
-    blurb:"Execute in parallel tracks by channel — assets, MLR status and tactics per lane." },
+    blurb:"Execute in parallel tracks by channel: assets, MLR status and tactics per lane." },
   { id:4, key:"reporting",     name:"Reporting & Insights",     short:"Reporting",     icon:"insights",
     blurb:"Measurement scorecard, channel performance framework and insights." },
 ];
@@ -1575,8 +1596,8 @@ function userAvatarHtml() { return `<img src="${USER_AVATAR_IMG}" alt="" loading
 function agentName(id) { return (AGENT_PEOPLE[id] || {}).name || (agentMeta[id] || {}).name || id; }
 function agentRole(id) { return (AGENT_PEOPLE[id] || {}).role || (agentMeta[id] || {}).role || ""; }
 // Agents are now named by their function (e.g. "Strategy & Positioning Agent"), so role is
-// usually blank -- this omits the dangling " — " separator a bare role-less name would leave.
-function agentTooltip(id) { const r = agentRole(id); return r ? `${agentName(id)} — ${r}` : agentName(id); }
+// usually blank; this ternary skips the dangling " ()" a bare role-less name would otherwise leave.
+function agentTooltip(id) { const r = agentRole(id); return r ? `${agentName(id)} (${r})` : agentName(id); }
 function monogramSvg(id, size) {
   const p = AGENT_PEOPLE[id] || { initials: "?", c1: "#1768D1", c2: "#4AA6F2" };
   const gid = "agAv" + id + (_avatarSeq++);
@@ -1922,7 +1943,7 @@ async function offerPersonas() {
     m.className = "msg agent";
     m.innerHTML = `<div class="avatar">${iconSpan("groups")}</div><div class="bubble"><div class="pv-offer">`
       + `<b>Pressure-test this plan with synthetic personas?</b>`
-      + `<p>I can run the plan past prescribers from your target audience — they'll react honestly and tell you what's missing and what would make them engage. The ones matching this plan's specialty are pre-selected; pick (or deselect) who should review it:</p>`
+      + `<p>I can run the plan past prescribers from your target audience, and they'll react honestly and tell you what's missing and what would make them engage. The ones matching this plan's specialty are pre-selected; pick (or deselect) who should review it:</p>`
       + `<div class="pv-pick">${all.map(pick).join("")}</div>`
       + `<div class="pv-actions"><button class="pv-run pv-run-btn">Run persona review</button><button class="pv-skip pv-skip-btn">Not now</button></div>`
       + `</div></div>`;
@@ -1950,7 +1971,7 @@ async function runPersonaReview(ids, offerEl, btn) {
     removeTyping();
     if (offerEl) offerEl.remove();
     state.personaReviews = data.reviews || [];
-    addMessage("agent", `Here's how ${state.personaReviews.length} of your target personas reacted — honest feedback, in their words:`);
+    addMessage("agent", `Here's how ${state.personaReviews.length} of your target personas reacted: honest feedback, in their words:`);
     renderPersonaReviews(state.personaReviews);
     await loadProjects();
   } catch (e) { removeTyping(); addMessage("agent", "⚠ The persona review didn't complete. You can try again."); }
@@ -1964,7 +1985,7 @@ function personaReviewEl(r) {
   const m = document.createElement("div");
   m.className = "msg agent";
   const col = PV_SENTIMENT_COL[r.sentiment] || "var(--line)";
-  const list = (arr) => (arr && arr.length) ? `<ul>${arr.map(x => `<li>${renderInline(x)}</li>`).join("")}</ul>` : `<ul><li style="color:var(--faint)">—</li></ul>`;
+  const list = (arr) => (arr && arr.length) ? `<ul>${arr.map(x => `<li>${renderInline(x)}</li>`).join("")}</ul>` : `<ul><li style="color:var(--faint)">N/A</li></ul>`;
   const chans = (r.channel_reactions || []).map(c => {
     const cls = c.reaction === "love it" ? "love" : (c.reaction === "wasted on me" ? "waste" : "fine");
     return `<span class="pv-cpill ${cls}" title="${c.reaction}">${c.bucket} ${c.pct}%</span>`;
@@ -1993,7 +2014,7 @@ function planUpdateCard(sections) {
     : `<p style="margin:4px 0 0;font-size:12.5px;color:var(--muted)">Folded into the plan.</p>`;
   div.innerHTML = `<div class="avatar">${iconSpan("auto_fix_high")}</div><div class="bubble"><div class="pv-offer">`
     + `<b>Plan updated</b>`
-    + `<p style="margin-bottom:4px">Your answer was folded straight in — no need to ask again. The plan on the right now reflects:</p>`
+    + `<p style="margin-bottom:4px">Your answer was folded straight in, no need to ask again. The plan on the right now reflects:</p>`
     + list
     + `</div></div>`;
   return div;
@@ -2003,8 +2024,8 @@ function personaApplyResultCard(changes) {
   const div = document.createElement("div");
   div.className = "msg agent";
   const list = changes.length
-    ? `<ul>${changes.map(c => `<li><b>${renderInline(c.note)}</b> — ${c.from_pct}% → ${c.to_pct}%</li>`).join("")}</ul>`
-    : `<p style="margin:4px 0 0;font-size:12.5px;color:var(--muted)">No material change was needed — the mix already fits this audience.</p>`;
+    ? `<ul>${changes.map(c => `<li><b>${renderInline(c.note)}</b>: ${c.from_pct}% → ${c.to_pct}%</li>`).join("")}</ul>`
+    : `<p style="margin:4px 0 0;font-size:12.5px;color:var(--muted)">No material change was needed: the mix already fits this audience.</p>`;
   div.innerHTML = `<div class="avatar">${iconSpan("auto_fix_high")}</div><div class="bubble"><div class="pv-offer">`
     + `<b>Plan updated from persona feedback</b>`
     + `<p style="margin-bottom:4px">${changes.length} channel${changes.length === 1 ? "" : "s"} rebalanced on the plan to the right:</p>`
@@ -2017,7 +2038,7 @@ function personaApplyBar(ids) {
   div.className = "msg agent";
   div.innerHTML = `<div class="avatar">${iconSpan("auto_fix_high")}</div><div class="bubble"><div class="pv-offer">`
     + `<b>Adjust the plan based on this feedback?</b>`
-    + `<p>I can automatically rebalance the channel mix toward what these personas actually respond to, and refresh the plan document on the right — a bounded nudge, not a rebuild, and every change names the persona whose preference drove it.</p>`
+    + `<p>I can automatically rebalance the channel mix toward what these personas actually respond to, and refresh the plan document on the right (a bounded nudge, not a rebuild); every change names the persona whose preference drove it.</p>`
     + `<div class="pv-actions"><button class="pv-run pv-apply-btn">Apply feedback to plan</button></div>`
     + `</div></div>`;
   const btn = div.querySelector(".pv-apply-btn");
@@ -2058,13 +2079,13 @@ function personaModalHtml(p) {
   const ch = p.channels || {}, rx = p.prescribing || {}, dg = p.digital || {};
   const chips = (arr, cls) => (arr || []).map(x => `<span class="pv-cpill ${cls}">${renderInline(x)}</span>`).join(" ");
   return `<div class="pm-head"><span class="pm-ava">${pvInitials(p.name)}</span>`
-    + `<div><h2>${renderInline(p.name)}</h2><div class="pm-sub">${renderInline(p.specialty || "")} · ${p.age || "—"} · ${renderInline(p.gender || "")} · ${renderInline(p.ethnicity || "")}</div>`
+    + `<div><h2>${renderInline(p.name)}</h2><div class="pm-sub">${renderInline(p.specialty || "")} · ${p.age || "N/A"} · ${renderInline(p.gender || "")} · ${renderInline(p.ethnicity || "")}</div>`
     + `<div class="pm-sub">${renderInline(p.location || "")} · ${p.years_in_practice ? p.years_in_practice + " yrs in practice" : ""}</div></div></div>`
     + `<p class="pm-tagline">${renderInline(p.tagline || "")}</p>`
     + `<div class="pm-facts">`
-    + `<div class="pm-fact"><b>${rx.monthly_trx ?? "—"}</b><span>Monthly TRx</span></div>`
-    + `<div class="pm-fact"><b>${rx.monthly_nrx ?? "—"}</b><span>Monthly NRx</span></div>`
-    + `<div class="pm-fact"><b>${dg.affinity || "—"}</b><span>Digital affinity (${dg.affinity_score ?? "—"})</span></div>`
+    + `<div class="pm-fact"><b>${rx.monthly_trx ?? "N/A"}</b><span>Monthly TRx</span></div>`
+    + `<div class="pm-fact"><b>${rx.monthly_nrx ?? "N/A"}</b><span>Monthly NRx</span></div>`
+    + `<div class="pm-fact"><b>${dg.affinity || "N/A"}</b><span>Digital affinity (${dg.affinity_score ?? "N/A"})</span></div>`
     + `</div>`
     + `<p class="pm-bio">${renderInline(p.bio || "")}</p>`
     + (p.voice_sample ? `<div class="pm-quote">“${renderInline(p.voice_sample)}”</div>` : "")
@@ -2076,10 +2097,10 @@ function personaModalHtml(p) {
     + `<div><b>Decision drivers</b><ul>${(p.decision_drivers || []).map(x => `<li>${renderInline(x)}</li>`).join("")}</ul></div>`
     + `<div><b>Frustrations</b><ul>${(p.frustrations || []).map(x => `<li>${renderInline(x)}</li>`).join("")}</ul></div>`
     + `</div>`
-    + `<div class="pm-chanrow"><span>In-person stance</span><b>${renderInline(ch.f2f_stance || "—")}</b></div>`
-    + `<div class="pm-chanrow"><span>Email stance</span><b>${renderInline(ch.email_stance || "—")}</b></div>`
-    + `<div class="pm-chanrow"><span>Adoption curve</span><b>${renderInline(rx.adoption_curve || "—")}</b></div>`
-    + `<div class="pm-chanrow"><span>Rep access</span><b>${renderInline(dg.rep_access || "—")}</b></div>`;
+    + `<div class="pm-chanrow"><span>In-person stance</span><b>${renderInline(ch.f2f_stance || "N/A")}</b></div>`
+    + `<div class="pm-chanrow"><span>Email stance</span><b>${renderInline(ch.email_stance || "N/A")}</b></div>`
+    + `<div class="pm-chanrow"><span>Adoption curve</span><b>${renderInline(rx.adoption_curve || "N/A")}</b></div>`
+    + `<div class="pm-chanrow"><span>Rep access</span><b>${renderInline(dg.rep_access || "N/A")}</b></div>`;
 }
 
 // ---- inter-agent banter (short back-and-forth so the team feels alive, not a relay) ----
@@ -2241,7 +2262,7 @@ function initAgents(agents) {
     </div>`).join("");
   body.innerHTML = `<div class="agent-team-wrap">
       <div class="agent-team" id="agent-team">${team}</div>
-      <div class="team-caption" id="team-caption">Your team is ready — kicking off the research…</div>
+      <div class="team-caption" id="team-caption">Your team is ready, kicking off the research…</div>
     </div><div class="agent-cards" id="agent-cards"></div>`;
   const cards = $("agent-cards");
   agents.forEach(a => {
@@ -2276,8 +2297,8 @@ function updateAgent(ev) {
   } else if (ev.status === "done") {
     if (tm) tm.className = "team-member st-done";
     // Only the planner's FINAL turn (it opens and closes the run) ends the team story.
-    if (ev.final) setTeamCaption("Your team has finished — the plan is on the right.");
-    else setTeamCaption(`<strong>${agentName(ev.id)}</strong> finished — its plan sections just filled in on the right.`);
+    if (ev.final) setTeamCaption("Your team has finished: the plan is on the right.");
+    else setTeamCaption(`<strong>${agentName(ev.id)}</strong> finished, and its plan sections just filled in on the right.`);
     if (el) {
       el.className = "agent-card st-done-card";
       const dot = el.querySelector(".agent-status"); dot.className = "agent-status st-done";
@@ -2315,10 +2336,10 @@ function renderAgentsDoneFromResult(result) {
   const hasKit = !!(kit && kit.tagline);
   const roster = [
     ["planner",
-      "Framed the plan structure, locked the brief and governance" + (hasKit ? ` — grounded in the **${kit.tagline}** brand intelligence kit —` : "") +
+      "Framed the plan structure, locked the brief and governance" + (hasKit ? ` (grounded in the **${kit.tagline}** brand intelligence kit)` : "") +
         " then closed the loop with the executive summary and open questions.",
       ["Opened the run by scaffolding all four toolkit phases; finalized the document once the team finished",
-       ...(hasKit ? [`Brand kit: ${kit.source_label || "brand hub"} — “${kit.core_claim || ""}”`] : [])]],
+       ...(hasKit ? [`Brand kit: ${kit.source_label || "brand hub"}, “${kit.core_claim || ""}”`] : [])]],
     ["intel",
       `${result.inferred_inputs.lifecycle_label} → targeting **${result.inferred_inputs.persona}** HCPs. Indexed **${bDocs + tDocs}** live documents. ` +
         (comps.length ? `Found **${comps.length}** competitor(s): ${comps.join(", ")}.` : "No distinct competitors found.") +
@@ -2328,12 +2349,12 @@ function renderAgentsDoneFromResult(result) {
       `Journey stage **${result.stage_2_4_strategy.inputs.stage}**. ` + (hasKit ? "Message pool grounded in the brand's own claims. " : "") + "Positioning drafted.",
       [bam.a_to_b_shift ? `A→B shift: ${bam.a_to_b_shift}` : null,
        bam.key_message_topics ? `Key messages: ${bam.key_message_topics.join(", ")}` : null,
-       cx.level ? `CX maturity: ${cx.level} — ${cx.rationale}` : null,
+       cx.level ? `CX maturity: ${cx.level} (${cx.rationale})` : null,
        pos.positioning_statement ? `Positioning: ${pos.positioning_statement}` : null].filter(Boolean)],
     ["inspiration",
-      `Found **${precedents.length}** precedent campaign(s)` + (precedents.length ? (matchedAny ? " matched to this therapy area." : " (no therapy match — most recent shown).") : ".") +
+      `Found **${precedents.length}** precedent campaign(s)` + (precedents.length ? (matchedAny ? " matched to this therapy area." : " (no therapy match, most recent shown).") : ".") +
         (hasKit && (kit.concepts || []).length ? ` The brand's own shelf holds **${kit.concepts.length}** concepts.` : ""),
-      precedents.length ? precedents.map(p => `"${p.title}" — ${p.tier} in ${p.category} (${p.agency_sponsor}), ${p.program} ${p.year}`) : ["No award-winning campaigns indexed yet"]],
+      precedents.length ? precedents.map(p => `"${p.title}": ${p.tier} in ${p.category} (${p.agency_sponsor}), ${p.program} ${p.year}`) : ["No award-winning campaigns indexed yet"]],
     ["activation",
       (topCh.length ? `Emphasis on **${topCh.map(([k,v])=>`${k} ${v}%`).join(", ")}**. ` : "") +
         `**${kpi.leading_indicators.length}** leading / **${kpi.lagging_indicators.length}** lagging / **${kpi.operational_kpis.length}** operational KPIs set.`,
@@ -2349,7 +2370,7 @@ function renderAgentsDoneFromResult(result) {
     </div>`).join("");
   body.innerHTML = `<div class="agent-team-wrap">
       <div class="agent-team">${team}</div>
-      <div class="team-caption">Your team has finished — the plan is on the right.</div>
+      <div class="team-caption">Your team has finished: the plan is on the right.</div>
     </div><div class="agent-cards" id="agent-cards"></div>`;
   const cards = $("agent-cards");
   roster.forEach(([id, summary, bullets]) => {
@@ -2368,8 +2389,8 @@ function renderAgentsDoneFromResult(result) {
 function fmtBudget(b) { return b ? "$" + Number(b).toLocaleString() : "percentages only"; }
 function renderBrief() {
   const s = state.slots, inf = state.inferred;
-  const row = (k, v, filled) => `<div class="brief-row"><span class="k">${k}</span><span class="v ${filled ? "filled":""}">${v || "—"}</span></div>`;
-  const chips = (arr) => arr && arr.length ? `<div class="chips">${arr.map(c=>`<span class="chip">${renderInline(c)}</span>`).join("")}</div>` : `<span class="v">—</span>`;
+  const row = (k, v, filled) => `<div class="brief-row"><span class="k">${k}</span><span class="v ${filled ? "filled":""}">${v || "N/A"}</span></div>`;
+  const chips = (arr) => arr && arr.length ? `<div class="chips">${arr.map(c=>`<span class="chip">${renderInline(c)}</span>`).join("")}</div>` : `<span class="v">N/A</span>`;
   let html = "";
   html += row("Brand", renderInline(s.brand), !!s.brand);
   html += row("Therapy area", renderInline(s.therapy_area), !!s.therapy_area);
@@ -2576,7 +2597,7 @@ async function closeUpdates() {
   try {
     await fetch("/api/projects/" + encodeURIComponent(state.projectId) + "/close-updates", { method: "POST" });
     setPlanFrozenUI(true);
-    addMessage("agent", "🔒 Updates closed — this plan is locked in. I won't auto-adjust it further.");
+    addMessage("agent", "🔒 Updates closed: this plan is locked in. I won't auto-adjust it further.");
     scrollChat();
   } catch (e) { /* best-effort */ }
 }
@@ -2608,12 +2629,11 @@ function renderStepper() {
     const active = s.id === state.stage;
     const locked = s.id > 1 && !unlocked;
     const cls = ["wf-step", active ? "active" : "", done ? "done" : "", locked ? "locked" : ""].join(" ");
-    const mark = locked ? "lock" : (done ? "check" : s.icon);
     return `<button class="${cls}" data-stage="${s.id}" ${locked ? "disabled" : ""}
+        style="z-index:${WORKFLOW_STAGES.length - i}"
         title="${locked ? "Complete Planning & Strategy first" : s.blurb}">
-        <span class="wf-num">${iconSpan(mark)}</span>
         <span class="wf-txt"><b>${s.name}</b><span>Stage ${s.id}</span></span>
-      </button>` + (i < WORKFLOW_STAGES.length - 1 ? `<span class="wf-sep"></span>` : "");
+      </button>`;
   }).join("");
   el.querySelectorAll("[data-stage]").forEach(b =>
     b.onclick = () => setStage(parseInt(b.getAttribute("data-stage"), 10)));
@@ -2655,9 +2675,9 @@ function renderStageOrchestration() {
   const chsel = (r.stage_5_channel_selection || {}).channels || [];
 
   const shift = `<div class="orch-objective">
-      <div class="oo-k">Orchestration objective — belief shift</div>
-      <div class="oo-shift"><span class="oo-a">${renderInline(m.current_belief || "—")}</span>
-        ${iconSpan("east")}<span class="oo-b">${renderInline(m.desired_belief || "—")}</span></div>
+      <div class="oo-k">Orchestration objective: belief shift</div>
+      <div class="oo-shift"><span class="oo-a">${renderInline(m.current_belief || "N/A")}</span>
+        ${iconSpan("east")}<span class="oo-b">${renderInline(m.desired_belief || "N/A")}</span></div>
       ${bam.a_to_b_shift ? `<div class="oo-note">${renderInline(bam.a_to_b_shift)}</div>` : ""}
     </div>`;
 
@@ -2679,9 +2699,9 @@ function renderStageOrchestration() {
   const nbc = chsel.slice().sort((a,b) => (prioRank[a.brand_priority] ?? 3) - (prioRank[b.brand_priority] ?? 3))
     .map((c, i) => `<tr>
         <td class="nbc-rank">${i+1}</td><td><b>${renderInline(c.channel)}</b></td>
-        <td><span class="nbc-prio p-${(c.brand_priority||"").toLowerCase()}">${renderInline(c.brand_priority||"—")}</span></td>
-        <td>${renderInline(c.availability||"—")}</td>
-        <td>${renderInline(String(c.preference_affinity ?? "—"))}</td>
+        <td><span class="nbc-prio p-${(c.brand_priority||"").toLowerCase()}">${renderInline(c.brand_priority||"N/A")}</span></td>
+        <td>${renderInline(c.availability||"N/A")}</td>
+        <td>${renderInline(String(c.preference_affinity ?? "N/A"))}</td>
       </tr>`).join("");
 
   const ladder = (mf.key_messages || []).map((km, i) => `
@@ -2700,7 +2720,7 @@ function renderStageOrchestration() {
     `<div class="card"><h4>${iconSpan("route")} Journey orchestration</h4>${journeys}
        ${mj.interim_check ? `<p class="plan-caveat">Governance: ${renderInline(mj.interim_check)}</p>` : ""}</div>` +
     `<div class="card"><h4>${iconSpan("low_priority")} Next-best-channel ranking</h4>
-       <p class="tk-lib-sub">Ranked by brand priority — the orchestration engine's channel-selection order.</p>
+       <p class="tk-lib-sub">Ranked by brand priority: the orchestration engine's channel-selection order.</p>
        <table class="plan-table"><tr><th>#</th><th>Channel</th><th>Priority</th><th>Availability</th><th>Affinity</th></tr>${nbc}</table></div>` +
     `<div class="card"><h4>${iconSpan("format_list_numbered")} Message ladder (sequencing)</h4>${ladder || '<div class="muted-card">No key messages.</div>'}</div>` +
     `<div class="card"><h4>${iconSpan("call_split")} Personal vs non-personal split &amp; cadence</h4>
@@ -2731,20 +2751,20 @@ function renderStageOperations() {
     const assets = assetsByLane[ch] || [];
     const tps = touch[ch] || [];
     const ready = assets.length > 0;
-    const amt = v.amount ? "$" + Number(v.amount).toLocaleString() : "—";
+    const amt = v.amount ? "$" + Number(v.amount).toLocaleString() : "N/A";
     const assetRows = assets.map(a => `
       <div class="ops-asset">
         <span class="ops-fmt">${renderInline(a.asset_format)}</span>
         <span class="ops-atitle" title="${renderInline(a.title)}">${renderInline(a.title)}</span>
         <span class="ops-mlr ${a.branded ? "branded" : "unbranded"}">${a.branded ? "Branded" : "Unbranded"}</span>
       </div>`).join("") ||
-      `<div class="ops-empty">${iconSpan("add_circle")} No approved asset yet — content production required.</div>`;
+      `<div class="ops-empty">${iconSpan("add_circle")} No approved asset yet, content production required.</div>`;
     const tacticRows = tps.map(t => `<li>${renderInline(t)}</li>`).join("") || `<li class="muted-card">No touchpoints mapped.</li>`;
     return `<div class="ops-lane">
         <div class="ops-lane-head">
           <span class="ops-lane-ico">${iconSpan(_LANE_ICON[ch] || "donut_small")}</span>
           <div class="ops-lane-title"><b>${renderInline(ch)}</b>
-            <span>${v.pct}% · ${amt} · ${renderInline(ppnpp[ch] || "—")}</span></div>
+            <span>${v.pct}% · ${amt} · ${renderInline(ppnpp[ch] || "N/A")}</span></div>
           <span class="ops-status ${ready ? "ok" : "warn"}">${ready ? "Assets ready" : "Content needed"}</span>
         </div>
         <div class="ops-bar"><div class="ops-bar-fill" style="width:${v.pct}%"></div></div>
@@ -2759,8 +2779,8 @@ function renderStageOperations() {
 
   el.innerHTML =
     stageHead("dashboard", "Campaign Operations",
-      "Execution runs as parallel tracks — one lane per channel, each with its own budget, tactics, content assets and readiness status.") +
-    (lib.found ? "" : `<div class="card"><div class="tk-lib-empty">No content library indexed for this brand — lanes show tactics only. Run <code>scripts/build_content_library.py</code> to populate assets.</div></div>`) +
+      "Execution runs as parallel tracks: one lane per channel, each with its own budget, tactics, content assets and readiness status.") +
+    (lib.found ? "" : `<div class="card"><div class="tk-lib-empty">No content library indexed for this brand, so lanes show tactics only. Run <code>scripts/build_content_library.py</code> to populate assets.</div></div>`) +
     `<div class="ops-grid">${lanes || '<div class="muted-card">No channel allocation.</div>'}</div>` +
     (gantt ? `<div class="card"><h4>${iconSpan("calendar_month")} Execution timeline (all lanes)</h4>
        <table class="plan-table"><tr><th>Task category</th><th>Weeks</th><th>Representative tasks</th></tr>${gantt}</table>
@@ -2787,7 +2807,7 @@ function renderStageReporting() {
 
   const kpiList = (title, items, ico, cls) => `
     <div class="rep-kpi ${cls}"><div class="rep-kpi-h">${iconSpan(ico)}${title}<span>${items.length}</span></div>
-      <ul>${items.map(i=>`<li>${renderInline(i)}</li>`).join("") || '<li class="muted-card">—</li>'}</ul></div>`;
+      <ul>${items.map(i=>`<li>${renderInline(i)}</li>`).join("") || '<li class="muted-card">N/A</li>'}</ul></div>`;
 
   const tmlRows = tml.map(t => `<tr>
       <td><b>${renderInline(t.test)}</b></td><td>${renderInline(t.measure)}</td>
@@ -2799,16 +2819,16 @@ function renderStageReporting() {
   const chRows = Object.entries(alloc).sort((a,b)=>b[1].pct-a[1].pct).map(([ch,v], i) => `<tr>
       <td>${iconSpan(_LANE_ICON[ch] || "donut_small")} ${renderInline(ch)}</td>
       <td>${v.pct}%</td>
-      <td>${renderInline(leads[i % (leads.length||1)] || "—")}</td>
+      <td>${renderInline(leads[i % (leads.length||1)] || "N/A")}</td>
       <td><span class="rep-target">Baseline needed</span></td></tr>`).join("");
 
   const insights = [
-    `Lifecycle posture: <b>${renderInline(inf.lifecycle_label || "—")}</b> — measurement should weight ${
+    `Lifecycle posture: <b>${renderInline(inf.lifecycle_label || "N/A")}</b>, so measurement should weight ${
       /loss|exclusivity|decline/i.test(inf.lifecycle_label||"") ? "retention and adherence over new-patient acquisition"
       : /launch/i.test(inf.lifecycle_label||"") ? "awareness, reach and first-prescription conversion"
       : "share-of-voice conversion and depth of engagement"}.`,
-    `Priority audience <b>${renderInline(inf.persona || "—")}</b> at the <b>${renderInline(inf.stage_label || "—")}</b> journey stage — read leading indicators at the segment level, not just campaign level.`,
-    `${(lib.counts||{}).approved_claims || 0} MLR-approved claims are live; unsubstantiated claims block reporting credibility — keep the claims-to-reference graph clean before scaling spend.`,
+    `Priority audience <b>${renderInline(inf.persona || "N/A")}</b> at the <b>${renderInline(inf.stage_label || "N/A")}</b> journey stage: read leading indicators at the segment level, not just campaign level.`,
+    `${(lib.counts||{}).approved_claims || 0} MLR-approved claims are live; unsubstantiated claims block reporting credibility, so keep the claims-to-reference graph clean before scaling spend.`,
     `No live performance data is connected yet. The scorecard below is the <b>measurement plan</b> (what to track and what good looks like), not observed results.`,
   ].map(i => `<li>${i}</li>`).join("");
 
@@ -2824,7 +2844,7 @@ function renderStageReporting() {
       </div>${kpi.cadence_note ? `<p class="plan-caveat">Review cadence: ${renderInline(kpi.cadence_note)}</p>` : ""}</div>` +
     `<div class="card"><h4>${iconSpan("bar_chart")} Channel measurement framework</h4>
        <table class="plan-table"><tr><th>Channel</th><th>Share</th><th>Primary leading KPI</th><th>Target</th></tr>${chRows}</table>
-       <p class="plan-caveat">Targets require a baseline from the first in-market period — no observed data is connected.</p></div>` +
+       <p class="plan-caveat">Targets require a baseline from the first in-market period: no observed data is connected.</p></div>` +
     (tmlRows ? `<div class="card"><h4>${iconSpan("science")} Test · Measure · Learn</h4>
        <div class="tk-scroll"><table class="plan-table"><tr><th>Test</th><th>Measure</th><th>Channels</th><th>Frequency</th><th>What good looks like</th></tr>${tmlRows}</table></div></div>` : "");
 }
@@ -3003,7 +3023,7 @@ function claimCardHtml(c) {
     const inner = `${iconSpan("link")}${label}${id}`;
     return r.url ? `<a class="claim-ref" href="${r.url}" target="_blank" title="${renderInline(r.citation||"")}">${inner}</a>`
                  : `<span class="claim-ref">${inner}</span>`;
-  }).join("") || `<span class="claim-ref none">${iconSpan("link_off")} No reference — MLR risk</span>`;
+  }).join("") || `<span class="claim-ref none">${iconSpan("link_off")} No reference (MLR risk)</span>`;
   const mat = c.material_number ? `<span class="claim-mat">${renderInline(c.material_number)}</span>` : "";
   const ind = c.indication ? `<span class="claim-ind">${renderInline(c.indication)}</span>` : "";
   return `<article class="claim-card st-${c.status}">
@@ -3037,8 +3057,13 @@ function moduleCardHtml(m) {
 }
 
 function assetRowHtml(a) {
-  const link = a.blob_key ? `<a class="asset-open" href="/api/blob/${a.blob_key}" target="_blank">${iconSpan("open_in_new")} Open</a>` : "";
+  const img = a.image_url || (/\.(png|jpe?g|webp|gif|svg)$/i.test(a.url || "") ? a.url : "");
+  const thumb = img ? `<img class="asset-thumb lib-img" src="${img}" alt="${renderInline(a.title)}"
+      data-full="${img}" data-cap="${renderInline(a.title)}" loading="lazy">` : "";
+  const link = a.blob_key ? `<a class="asset-open" href="/api/blob/${a.blob_key}" target="_blank">${iconSpan("open_in_new")} Open</a>`
+    : (img ? `<a class="asset-open" href="${img}" target="_blank">${iconSpan("open_in_new")} Open</a>` : "");
   return `<div class="asset-row">
+    ${thumb}
     <span class="asset-fmt">${renderInline(a.asset_format)}</span>
     <div class="asset-body"><b>${renderInline(a.title)}</b>
       <span>${renderInline(a.description || "")}</span></div>
@@ -3052,7 +3077,7 @@ function wireLightbox(root) {
     $("lb-img").src = fig.getAttribute("data-full");
     const src = fig.getAttribute("data-src");
     $("lb-cap").innerHTML = renderInline(fig.getAttribute("data-cap")) +
-      (src ? ` — <a href="${src}" target="_blank">view on DailyMed</a>` : "");
+      (src ? ` (<a href="${src}" target="_blank">view on DailyMed</a>)` : "");
     $("lightbox").classList.add("show");
   });
 }
@@ -3145,13 +3170,13 @@ function renderPortfolioInsights(dash) {
         <h3>${iconSpan("donut_small")} Lifecycle mix</h3>
         <div class="pi-bar">${segs}</div>
         <div class="pi-legend">${legend}</div>
-        <p class="pi-note">${total} brands across ${(dash.clients||[]).length} clients. Stage drives channel weighting —
+        <p class="pi-note">${total} brands across ${(dash.clients||[]).length} clients. Stage drives channel weighting:
           launch skews education/reach, LOE skews retention.</p>
       </div>
       <div class="pi-card">
         <h3>${iconSpan("trending_up")} Momentum leaders</h3>
         ${top}
-        <p class="pi-note">Visible-activity score from indexed trials, literature and labels — not market share.</p>
+        <p class="pi-note">Visible-activity score from indexed trials, literature and labels, not market share.</p>
       </div>
       <div class="pi-card">
         <h3>${iconSpan("verified")} Content library health</h3>
@@ -3213,7 +3238,7 @@ function clarifyCardHtml(cl) {
       <div class="clarify-title">${iconSpan("help")} ${renderInline(cl.title)}</div>
       <div class="clarify-src">${renderInline(cl.source)}</div>
       <ol class="clarify-qs">${qs}</ol>
-      <div class="clarify-hint">${iconSpan("forum")} Answer here in the chat — or say <em>skip</em> to move on, <em>skip all</em> to finish.</div>
+      <div class="clarify-hint">${iconSpan("forum")} Answer here in the chat, or say <em>skip</em> to move on, <em>skip all</em> to finish.</div>
     </div>
   </div>`;
 }
@@ -3243,7 +3268,10 @@ function setupVoice() {
 }
 
 // ---------- wiring ----------
-function autoGrow() { const t = $("input"); t.style.height = "auto"; t.style.height = Math.min(t.scrollHeight, 120) + "px"; }
+function autoGrow() {
+  const t = $("input"); t.style.height = "auto"; t.style.height = Math.min(t.scrollHeight, 120) + "px";
+  t.closest(".box").classList.toggle("has-text", t.value.trim().length > 0);
+}
 $("input").addEventListener("input", autoGrow);
 $("input").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
 $("send").onclick = sendMessage;

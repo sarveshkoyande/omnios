@@ -1,0 +1,22 @@
+{
+  "_note": "Nudge agent policy (PRD 6.8). Per-team delivery channel + who escalation goes to. Autonomy = notify + auto-escalate: the agent notifies owners and, on repeated overdue, escalates to the lead/conductor automatically — it never closes a compliance gate. Channels are declared here; actual Slack/Teams/email delivery is wired when webhooks/tokens are supplied, until then nudges land in the in-app notification centre with the channel recorded.",
+  "lead_time_days": 3,
+  "escalate_after_fires": 2,
+  "escalation_recipient": "Campaign conductor + team lead",
+  "default_channel": "email",
+  "teams": {
+    "Web team":                          { "channel": "slack" },
+    "Content & derivative assets team":  { "channel": "slack" },
+    "Campaign operations team":          { "channel": "teams" },
+    "Data & data cloud team":            { "channel": "teams" },
+    "Reporting & insights team":         { "channel": "email" },
+    "MLR / Regulatory / Medical":        { "channel": "email" }
+  },
+  "gate_recipients": {
+    "MLR": "MLR / Regulatory / Medical",
+    "CONSENT": "Data & data cloud team",
+    "ISI": "MLR / Regulatory / Medical",
+    "AFU": "Content & derivative assets team",
+    "AE_MIR": "Pharmacovigilance / Medical Information"
+  }
+}

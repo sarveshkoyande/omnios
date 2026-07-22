@@ -38,6 +38,23 @@ def _badge(icon: str, text) -> str:
     return f"<span class='plan-badge'>{_icon(icon)}{_esc(text)}</span>"
 
 
+# Owner-team pill shown under a §26-32 Tactical Plan heading -- same 5-team roster as Stage 2's
+# setup-task board (strategy/orchestration_tasks.py's TEAM_* constants). Duplicated by literal
+# name rather than imported: orchestration_tasks.py already imports this module, so importing
+# back would be circular.
+_TEAM_ICON = {
+    "Web team": "language",
+    "Content & derivative assets team": "perm_media",
+    "Campaign operations team": "account_tree",
+    "Data & data cloud team": "storage",
+    "Reporting & insights team": "insights",
+}
+
+
+def _team_badge(team: str) -> str:
+    return f"<div class='plan-badges'>{_badge(_TEAM_ICON.get(team, 'group'), f'Owner: {team}')}</div>"
+
+
 _NEEDS_CHIP = "<span class='plan-open-chip'>Needs alignment</span>"
 
 
@@ -137,6 +154,94 @@ def _grounding_md(ctx: dict, topic: str) -> str:
     if not g:
         return ""
     return f"\n> 📖 **Grounded in {g['source']}:** {g['guidance']}\n"
+
+
+def _brief_grounding_html(ctx: dict) -> str:
+    """A brief-specific grounding block pulled from the SME knowledge base."""
+    g = ctx.get("brief_grounding") or {}
+    if not g:
+        return ""
+    topics = [
+        ("intake_context", "Brief framing"),
+        ("segmentation_targeting", "Audience and targeting"),
+        ("journey_messaging", "Message architecture"),
+        ("competitive_positioning", "Positioning"),
+        ("channel_budget", "Channel and budget"),
+        ("measurement_kpi", "Measurement"),
+        ("risk_governance", "Risk and governance"),
+    ]
+    items = []
+    for topic, label in topics:
+        entry = g.get(topic)
+        if not entry:
+            continue
+        txt = entry["guidance"].replace("\n", " ").strip()
+        if len(txt) > 220:
+            txt = txt[:219].rstrip() + "..."
+        items.append(f"<li><strong>{_esc(label)}:</strong> {_esc(txt)}</li>")
+    if not items:
+        return ""
+    return (
+        "<div class='plan-grounding' style='margin:.5rem 0 .9rem;padding:.6rem .85rem;"
+        "border-left:3px solid #2563eb;background:rgba(37,99,235,.06);border-radius:6px;font-size:.9em'>"
+        "<div style='display:flex;align-items:center;gap:.35rem;font-weight:600;color:#2563eb;"
+        "margin-bottom:.3rem'><span class='material-symbols-outlined'>menu_book</span>"
+        "<span>SME brief grounding</span></div>"
+        f"<ul style='margin:.25rem 0 0 1.15rem;padding:0'>{''.join(items)}</ul>"
+        "</div>"
+    )
+
+
+def _brief_grounding_md(ctx: dict) -> str:
+    g = ctx.get("brief_grounding") or {}
+    if not g:
+        return ""
+    topics = [
+        ("intake_context", "Brief framing"),
+        ("segmentation_targeting", "Audience and targeting"),
+        ("journey_messaging", "Message architecture"),
+        ("competitive_positioning", "Positioning"),
+        ("channel_budget", "Channel and budget"),
+        ("measurement_kpi", "Measurement"),
+        ("risk_governance", "Risk and governance"),
+    ]
+    lines = ["\n> SME brief grounding"]
+    for topic, label in topics:
+        entry = g.get(topic)
+        if not entry:
+            continue
+        txt = entry["guidance"].replace("\n", " ").strip()
+        if len(txt) > 220:
+            txt = txt[:219].rstrip() + "..."
+        lines.append(f"> - **{label}:** {txt}")
+    lines.append("")
+    return "\n".join(lines)
+
+
+def _campaign_brief_journey_html(ctx: dict) -> str:
+    """Mermaid-rendered journey diagram used in the campaign brief section."""
+    diagram = ctx.get("campaign_brief_diagram") or {}
+    image_url = diagram.get("image_url") or "/static/v2/assets/campaign-brief-journey.png"
+    status = "auto-generated from campaign ops"
+    if diagram.get("ok") is False:
+        status = "Mermaid render fallback"
+    return (
+        "<div class='plan-journey-diagram' style='margin:.75rem 0 1rem'>"
+        "<div style='display:flex;align-items:center;gap:.35rem;font-weight:600;color:#2563eb;margin-bottom:.35rem'>"
+        "<span class='material-symbols-outlined'>diagram</span>"
+        f"<span>Campaign journey diagram · {status}</span>"
+        "</div>"
+        f"<img src='{_esc(image_url)}' alt='Campaign journey diagram' "
+        "style='width:100%;max-width:1240px;border:1px solid rgba(37,99,235,.15);border-radius:14px;"
+        "box-shadow:0 1px 3px rgba(16,24,40,.08);background:#fff'/>"
+        "</div>"
+    )
+
+
+def _campaign_brief_journey_md(ctx: dict) -> str:
+    diagram = ctx.get("campaign_brief_diagram") or {}
+    image_url = diagram.get("image_url") or "/static/v2/assets/campaign-brief-journey.png"
+    return f"\n![Campaign journey diagram]({_esc(image_url)})\n"
 
 
 def _external_evidence_html(ctx: dict) -> str:
@@ -579,7 +684,7 @@ def _render_content_to_channel(content_library: dict | None) -> str:
     for channel, items in buckets.items():
         icon = next((ic for ch, ic in _ASSET_CHANNEL.values() if ch == channel), "language")
         rows = "".join(
-            f"<div class='tk-cf-asset'><span class='tk-cf-fmt'>{_esc(a.get('asset_format',''))}</span>"
+            f"<div class='tk-cf-asset'>{_asset_thumb(a)}<span class='tk-cf-fmt'>{_esc(a.get('asset_format',''))}</span>"
             f"<span class='tk-cf-title'>{_esc(a.get('title',''))}</span>"
             f"<span class='tk-cf-badge'>{'Branded' if a.get('branded') else 'Unbranded'}</span></div>"
             for a in items)
@@ -959,43 +1064,48 @@ def _sec_openq(ctx, md, h, R):
              + _render_open_questions(open_groups) + _DET_CLOSE)
 
 
-def _sec_brief(ctx, md, h, R):
+def _brief_rows(ctx: dict) -> list[tuple[str, str]]:
+    """Key/value rows for the engagement brief -- inferred fields plus whatever the
+    fill-in-the-blanks intake captured. Shared by §3 Brief and §33 Campaign brief so the
+    "reformatted intake slots" view in the Campaign Brief never drifts from §3."""
     brand, ta = ctx["brand"], ctx["therapy_area"]
     inferred = ctx.get("inferred") or {}
     indication = ctx.get("indication", "")
     competitors = ctx.get("competitors") or []
     stage_label = ((ctx.get("strategy") or {}).get("inputs") or {}).get("stage", "—")
     kit = ctx.get("brand_kit")
+    rows = [("Brand", brand), ("Therapy area", ta)]
+    if indication:
+        rows.append(("Indication", indication))
+    rows += [("Lifecycle", inferred.get("lifecycle_label", "—")),
+             ("Priority persona", inferred.get("persona", "—")),
+             ("Journey stage", stage_label), ("Competitive set", ", ".join(competitors) or "—")]
+    if kit:
+        rows += [("Brand platform", f"{kit.get('tagline', '')} — {kit.get('core_claim', '')}"),
+                 ("Company", kit.get("company", ""))]
+    # User-supplied brief fields captured by the fill-in-the-blanks intake (only those given).
+    ub = ctx.get("brief") or {}
+    for lbl, key in (("Campaign", "campaign_name"), ("Molecule", "molecule"), ("Audience", "audience"),
+                      ("Geography", "geography"), ("Duration", "duration"), ("Objective", "objective"),
+                      ("Target KPI", "kpi"), ("Preferred channels", "preferred_channels"),
+                      ("Existing assets", "existing_assets"), ("Constraints", "constraints"),
+                      ("Reason for campaign", "reason"), ("Notes", "notes")):
+        v = ub.get(key)
+        if v and v != "(not specified)":
+            rows.append((lbl, v))
+    return rows
+
+
+def _sec_brief(ctx, md, h, R):
     md.append("## 3. Brief\n")
     md.append(_grounding_md(ctx, "intake_context"))
-    md.append(f"- **Brand:** {brand}\n- **Therapy area:** {ta}\n"
-              + (f"- **Indication:** {indication}\n" if indication else "")
-              + f"- **Lifecycle:** {inferred.get('lifecycle_label', '—')}\n"
-              f"- **Priority persona:** {inferred.get('persona', '—')}\n- **Journey stage:** {stage_label}\n"
-              f"- **Competitive set:** {', '.join(competitors) or '—'}\n")
-    brief_rows = [("Brand", brand), ("Therapy area", ta)]
-    if indication:
-        brief_rows.append(("Indication", indication))
-    brief_rows += [("Lifecycle", inferred.get("lifecycle_label", "—")),
-                   ("Priority persona", inferred.get("persona", "—")),
-                   ("Journey stage", stage_label), ("Competitive set", ", ".join(competitors) or "—")]
-    if kit:
-        brief_rows += [("Brand platform", f"{kit.get('tagline', '')} — {kit.get('core_claim', '')}"),
-                       ("Company", kit.get("company", ""))]
-        md.append(f"- **Brand platform:** {kit.get('tagline', '')} — {kit.get('core_claim', '')}")
-    # User-supplied brief fields captured by the fill-in-the-blanks intake (only those given).
-    _ub = ctx.get("brief") or {}
-    for _lbl, _key in (("Campaign", "campaign_name"), ("Molecule", "molecule"), ("Audience", "audience"),
-                       ("Geography", "geography"), ("Duration", "duration"), ("Objective", "objective"),
-                       ("Target KPI", "kpi"), ("Preferred channels", "preferred_channels"),
-                       ("Existing assets", "existing_assets"), ("Constraints", "constraints"),
-                       ("Reason for campaign", "reason"), ("Notes", "notes")):
-        _v = _ub.get(_key)
-        if _v and _v != "(not specified)":
-            brief_rows.append((_lbl, _v))
-            md.append(f"- **{_lbl}:** {_v}")
+    md.append(_brief_grounding_md(ctx))
+    brief_rows = _brief_rows(ctx)
+    md.extend(f"- **{k}:** {v}" for k, v in brief_rows)
+    md.append("")
     h.append(R.det(3, "Brief", "assignment")
              + _grounding_html(ctx, "intake_context")
+             + _brief_grounding_html(ctx)
              + "<table class='plan-kv'>"
              + "".join(f"<tr><th>{k}</th><td>{_esc(v)}</td></tr>" for k, v in brief_rows)
              + "</table>" + _DET_CLOSE)
@@ -1487,6 +1597,296 @@ def _sec_brand_foundation(ctx, md, h, R):
 
 
 # --------------------------------------------------------------------------- #
+# Tactical Plan + Campaign Brief (§26-33) -- turns the strategy above into field,
+# channel, scientific, account and measurement tactics. Grounded in an uploaded
+# strategic-plan document when one was attached (ctx["strategic_source"]); otherwise
+# derived from this plan's own positioning/BAM/budget/KPI/SWOT, same degrade-gracefully
+# idiom as every other section. App-native rendering -- these are NOT a pixel replica of
+# any agency slide deck, just the same content structure in this app's own design system.
+# --------------------------------------------------------------------------- #
+
+_PATIENT_GATE_PERMISSIBLE = [
+    "Unbranded disease- and testing/diagnosis-education",
+    "\"Ask your care team\" prompts pointing patients toward the right conversation",
+    "Signposting to verified, independent support/advocacy resources",
+]
+_PATIENT_GATE_RESTRICTED = [
+    "Any product claim or branded promotion",
+    "Efficacy figures or comparative claims",
+    "Outcome or survival guarantees; fear-based messaging",
+]
+
+
+def _render_guardrail_box(items: list[str], heading: str = "Guardrails") -> str:
+    if not items:
+        return ""
+    rows = "".join(f"<li>{_esc(it)}</li>" for it in items)
+    return (
+        "<div class='plan-guardrail-box' style='margin:.6rem 0;padding:.6rem .85rem;"
+        "border-left:3px solid #D97706;background:rgba(217,119,6,.08);border-radius:6px'>"
+        "<div style='display:flex;align-items:center;gap:.35rem;font-weight:700;color:#D97706;"
+        f"margin-bottom:.3rem'>{_icon('warning')}<span>{_esc(heading)}</span></div>"
+        f"<ul style='margin:0;padding-left:1.1rem'>{rows}</ul></div>"
+    )
+
+
+def _strategic_source_note(ctx: dict) -> str:
+    src = ctx.get("strategic_source")
+    if src and src.get("has_content"):
+        name = src.get("source_name") or "the uploaded strategic plan"
+        return f"Grounded in **{name}**."
+    return "Derived from this plan's own positioning, evidence and budget sections (§16–21) — no strategic-plan document was uploaded."
+
+
+def _tactical_csfs(ctx: dict) -> list[dict]:
+    src = ctx.get("strategic_source")
+    if src and src.get("csfs"):
+        return [{"title": c, "detail": ""} for c in src["csfs"]]
+    bam = ctx.get("bam") or {}
+    pos = ctx.get("positioning") or {}
+    strat = ctx.get("strategy") or {}
+    return [
+        {"title": "Establish the positioning", "detail": pos.get("positioning_statement", "")},
+        {"title": "Convert evidence to consideration", "detail": bam.get("a_to_b_shift", "")},
+        {"title": "Enable confident adoption",
+         "detail": (strat.get("stage_profile") or {}).get("engagement_goal", "")},
+    ]
+
+
+def _sec_tactical_overview(ctx, md, h, R):
+    csfs = _tactical_csfs(ctx)
+    note = _strategic_source_note(ctx)
+    md.append("## 26. Tactical plan overview & CSF map\n")
+    md.append("_Owner: Campaign operations team_\n")
+    md.append(f"_{note}_\n")
+    for i, c in enumerate(csfs, start=1):
+        md.append(f"**{i}. {c['title']}**" + (f" — {c['detail']}" if c["detail"] else ""))
+    md.append("")
+    cards = "".join(
+        f"<div class='plan-precedent-card'><div class='pc-title'>{i}. {_esc(c['title'])}</div>"
+        + (f"<div class='pc-meta'>{_esc(c['detail'])}</div>" if c["detail"] else "") + "</div>"
+        for i, c in enumerate(csfs, start=1))
+    h.append(R.det(26, "Tactical plan overview & CSF map", "flag")
+             + _team_badge("Campaign operations team")
+             + f"<p class='plan-caveat'>{_esc(note)}</p>{cards}" + _DET_CLOSE)
+
+
+def _sec_tactical_field(ctx, md, h, R):
+    inferred = ctx.get("inferred") or {}
+    pos = ctx.get("positioning") or {}
+    persona = inferred.get("persona", "the priority persona")
+    play = [
+        ("Open", f"Lead with the {persona.lower()}'s core question, not the product."),
+        ("Evidence", pos.get("positioning_statement", "Lead with the plan's positioning statement, with fair balance.")),
+        ("Manage", "Offer the AE-management / support resources for this stage."),
+        ("Refer", "Connect to medical/MSL for scientific depth beyond the approved claims."),
+    ]
+    md.append("## 27. Field approach & targeting\n")
+    md.append("_Owner: Campaign operations team_\n")
+    md.append(_grounding_md(ctx, "segmentation_targeting"))
+    md.append(f"**Targeting priority:** {persona} accounts where engagement is high-value but not yet routine.\n")
+    for step, text in play:
+        md.append(f"- **{step}:** {text}")
+    md.append("")
+    h.append(R.det(27, "Field approach & targeting", "groups")
+             + _team_badge("Campaign operations team")
+             + _grounding_html(ctx, "segmentation_targeting")
+             + f"<p><strong>Targeting priority:</strong> {_esc(persona)} accounts where engagement is high-value "
+               "but not yet routine.</p><ol class='plan-field-play'>"
+             + "".join(f"<li><strong>{_esc(step)}:</strong> {_esc(text)}</li>" for step, text in play)
+             + "</ol>" + _DET_CLOSE)
+
+
+def _sec_tactical_omnichannel(ctx, md, h, R):
+    strat = ctx.get("strategy") or {}
+    mix = strat.get("channel_mix_pct") or (ctx.get("budget_allocation") or {})
+    ranked = sorted(mix.items(), key=lambda kv: -(kv[1] if isinstance(kv[1], (int, float)) else kv[1].get("pct", 0)))
+    md.append("## 28. Omnichannel & media tactics\n")
+    md.append("_Owner: Campaign operations team_\n")
+    md.append(_grounding_md(ctx, "channel_budget"))
+    md.append("| Channel | Tactical role | Relative priority |")
+    md.append("|---|---|---|")
+    bars = ""
+    for i, (ch, v) in enumerate(ranked):
+        pct = v if isinstance(v, (int, float)) else v.get("pct", 0)
+        role = "Evidence & consideration" if i == 0 else ("Testing/awareness education" if i == 1 else "Reach & reinforcement")
+        md.append(f"| {ch} | {role} | {pct}% |")
+        bars += (f"<div class='plan-bar-row'>{_icon(_CHANNEL_ICONS.get(ch, 'donut_small'))}"
+                 f"<div class='plan-bar-label'>{_esc(ch)} · {_esc(role)}</div>"
+                 f"<div class='plan-bar-track'><div class='plan-bar-fill' style='width:{pct}%'></div></div>"
+                 f"<div class='plan-bar-val'>{pct}%</div></div>")
+    md.append("\n_Quarterly flighting requires the brand team's real media calendar — this shows relative channel "
+              "priority only, not a Q1–Q4 spend split._\n")
+    h.append(R.det(28, "Omnichannel & media tactics", "payments")
+             + _team_badge("Campaign operations team")
+             + _grounding_html(ctx, "channel_budget") + bars
+             + "<p class='plan-caveat'>Quarterly flighting requires the brand team's real media calendar — this "
+               "shows relative channel priority only, not a Q1–Q4 spend split.</p>" + _DET_CLOSE)
+
+
+def _sec_tactical_scientific(ctx, md, h, R):
+    src = ctx.get("strategic_source")
+    competitors = ctx.get("competitors") or []
+    strat_evidence = src.get("evidence") if src else []
+    if not strat_evidence:
+        proof_points = ((ctx.get("strategy") or {}).get("messaging_architecture") or {}).get("proof_points", [])
+        strat_evidence = proof_points
+    guardrails = (src.get("guardrails")[:2] if src and src.get("guardrails") else [
+        "No head-to-head or comparative claims beyond what was actually studied.",
+        "Keep medical/scientific-exchange content separate from promotional material (commercial-medical firewall).",
+    ])
+    md.append("## 29. Scientific engagement, congress & peer\n")
+    md.append("_Owner: Content & derivative assets team_\n")
+    md.append(_grounding_md(ctx, "market_landscape"))
+    md.append(f"**Competitive/class context:** {', '.join(competitors) or 'no distinct competitors identified'}\n")
+    md.append("**Evidence anchors for scientific exchange**")
+    for e in strat_evidence[:5]:
+        md.append(f"- {e}")
+    md.append("")
+    h.append(R.det(29, "Scientific engagement, congress & peer", "science")
+             + _team_badge("Content & derivative assets team")
+             + _grounding_html(ctx, "market_landscape")
+             + f"<p><strong>Competitive/class context:</strong> {_esc(', '.join(competitors) or 'no distinct competitors identified')}</p>"
+             + "<h3 class='plan-sec-sub'>Evidence anchors for scientific exchange</h3><ul>"
+             + "".join(f"<li>{_esc(e)}</li>" for e in strat_evidence[:5]) + "</ul>"
+             + _render_guardrail_box(guardrails, "Scientific-exchange guardrails") + _DET_CLOSE)
+
+
+def _account_archetypes(ctx: dict) -> list[tuple[str, str]]:
+    """(archetype, primary move) pairs -- shared by §30 and the Stage 2 orchestration task
+    generator (strategy/orchestration_tasks.py) so the two stay consistent."""
+    strat = ctx.get("strategy") or {}
+    touchpoints = strat.get("recommended_touchpoints") or {}
+    engagement_goal = ((strat.get("stage_profile") or {}).get("engagement_goal")
+                       or "build engagement toward the plan's objective")
+    return [
+        ("Academic / research", f"Deepen scientific engagement — {engagement_goal.lower()}."),
+        ("High-volume community", "Drive identification/testing behavior and management confidence."),
+        ("Integrated network", f"Systematize the play into standing pathways ({', '.join(list(touchpoints)[:2]) or 'field + digital'})."),
+    ]
+
+
+def _sec_tactical_account(ctx, md, h, R):
+    archetypes = _account_archetypes(ctx)
+    md.append("## 30. Account & pathway strategy\n")
+    md.append("_Owner: Campaign operations team_\n")
+    md.append("_Illustrative account archetypes — replace with the brand team's real account-tiering data._\n")
+    md.append("| Archetype | Primary move |")
+    md.append("|---|---|")
+    for name, move in archetypes:
+        md.append(f"| {name} | {move} |")
+    md.append("")
+    h.append(R.det(30, "Account & pathway strategy", "alt_route")
+             + _team_badge("Campaign operations team")
+             + "<p class='plan-caveat'>Illustrative account archetypes — replace with the brand team's real "
+               "account-tiering data.</p><table class='plan-table'><tr><th>Archetype</th><th>Primary move</th></tr>"
+             + "".join(f"<tr><td>{_esc(n)}</td><td>{_esc(m)}</td></tr>" for n, m in archetypes)
+             + "</table>" + _DET_CLOSE)
+
+
+def _sec_tactical_patient(ctx, md, h, R):
+    md.append("## 31. Patient & support (gated)\n")
+    md.append("_Owner: Content & derivative assets team_\n")
+    md.append("**Status: gated** — patient/caregiver tactics require approved patient-facing PI, ISI, "
+              "patient-appropriate risk language and regulatory (e.g. DTC) sign-off before anything beyond "
+              "unbranded education can run.\n")
+    md.append("**Permissible now (unbranded, for review)**")
+    for p in _PATIENT_GATE_PERMISSIBLE:
+        md.append(f"- {p}")
+    md.append("\n**Not permissible until gated inputs exist**")
+    for r in _PATIENT_GATE_RESTRICTED:
+        md.append(f"- {r}")
+    md.append("")
+    h.append(R.det(31, "Patient & support (gated)", "favorite")
+             + _team_badge("Content & derivative assets team")
+             + "<p class='plan-caveat'><strong>Status: gated</strong> — patient/caregiver tactics require approved "
+               "patient-facing PI, ISI, patient-appropriate risk language and regulatory (e.g. DTC) sign-off before "
+               "anything beyond unbranded education can run.</p>"
+               "<div class='plan-swot-grid'>"
+               "<div class='plan-swot-cell s-opp'><h3>Permissible now (unbranded)</h3><ul>"
+             + "".join(f"<li>{_esc(p)}</li>" for p in _PATIENT_GATE_PERMISSIBLE) + "</ul></div>"
+               "<div class='plan-swot-cell s-threat'><h3>Not permissible until gated</h3><ul>"
+             + "".join(f"<li>{_esc(r)}</li>" for r in _PATIENT_GATE_RESTRICTED) + "</ul></div></div>"
+             + _DET_CLOSE)
+
+
+def _sec_tactical_measurement(ctx, md, h, R):
+    kpi = ctx.get("kpi") or {}
+    src = ctx.get("strategic_source")
+    guardrails = src.get("guardrails") if src and src.get("guardrails") else STANDARD_RISKS[:4]
+    md.append("## 32. Tactical measurement & guardrails recap\n")
+    md.append("_Owner: Reporting & insights team_\n")
+    md.append(_grounding_md(ctx, "measurement_kpi"))
+    for title, items in [("Leading indicators", kpi.get("leading_indicators", [])),
+                         ("Lagging indicators", kpi.get("lagging_indicators", []))]:
+        md.append(f"**{title}**")
+        for it in items:
+            md.append(f"- {it}")
+        md.append("")
+    md.append("**Guardrails recap**")
+    for g in guardrails:
+        md.append(f"- {g}")
+    md.append("")
+    h.append(R.det(32, "Tactical measurement & guardrails recap", "query_stats")
+             + _team_badge("Reporting & insights team")
+             + _grounding_html(ctx, "measurement_kpi")
+             + "".join(
+                 f"<h3 class='plan-sec-sub'>{_esc(title)}</h3><ul>" + "".join(f"<li>{_esc(it)}</li>" for it in items) + "</ul>"
+                 for title, items in [("Leading indicators", kpi.get("leading_indicators", [])),
+                                      ("Lagging indicators", kpi.get("lagging_indicators", []))])
+             + _render_guardrail_box(guardrails, "Guardrails recap") + _DET_CLOSE)
+
+
+def _sec_campaign_brief(ctx, md, h, R):
+    pos = ctx.get("positioning") or {}
+    bam = ctx.get("bam") or {}
+    src = ctx.get("strategic_source") or {}
+    source_note = _strategic_source_note(ctx)
+    csfs = _tactical_csfs(ctx)
+    exec_summary = (f"{ctx.get('brand', 'This brand')} — {pos.get('positioning_statement', '')} "
+                    f"North star: {bam.get('a_to_b_shift', '')}").strip()
+    brief_rows = _brief_rows(ctx)
+    md.append("## 33. Campaign brief\n")
+    md.append(f"{exec_summary}\n")
+    md.append(f"**Source basis:** {source_note}\n")
+    if src.get("evidence"):
+        md.append("**Strategic evidence anchors**")
+        for e in src.get("evidence", [])[:4]:
+            md.append(f"- {e}")
+        md.append("")
+    if src.get("guardrails"):
+        md.append("**Strategic guardrails**")
+        for g in src.get("guardrails", [])[:4]:
+            md.append(f"- {g}")
+        md.append("")
+    md.append("**Priority tactics (from the CSF map, §26)**")
+    for c in csfs:
+        md.append(f"- {c['title']}")
+    md.append(_campaign_brief_journey_md(ctx))
+    md.append("\n**Brief, reformatted**\n")
+    md.append(_brief_grounding_md(ctx))
+    md.extend(f"- **{k}:** {v}" for k, v in brief_rows)
+    md.append("\n_This brief's objective and KPI targets are what Stage 3 Operations seeds its campaign-flow "
+              "defaults from — sharpen them here and the flow builder picks up the change._\n")
+    h.append(R.det(33, "Campaign brief", "summarize")
+             + f"<p>{_esc(exec_summary)}</p>"
+             + f"<p class='plan-caveat'><strong>Source basis:</strong> {_esc(source_note)}</p>"
+             + ("<h3 class='plan-sec-sub'>Strategic evidence anchors</h3><ul>"
+                + "".join(f"<li>{_esc(e)}</li>" for e in src.get("evidence", [])[:4]) + "</ul>"
+                if src.get("evidence") else "")
+             + _render_guardrail_box((src.get("guardrails") or [])[:4], "Strategic guardrails")
+             + "<h3 class='plan-sec-sub'>Priority tactics (from the CSF map, §26)</h3><ul>"
+             + "".join(f"<li>{_esc(c['title'])}</li>" for c in csfs) + "</ul>"
+             + _campaign_brief_journey_html(ctx)
+             + _brief_grounding_html(ctx)
+             + "<h3 class='plan-sec-sub'>Brief, reformatted</h3><table class='plan-kv'>"
+             + "".join(f"<tr><th>{k}</th><td>{_esc(v)}</td></tr>" for k, v in brief_rows) + "</table>"
+             + "<p class='plan-caveat'>This brief's objective and KPI targets are what Stage 3 Operations seeds "
+               "its campaign-flow defaults from — sharpen them here and the flow builder picks up the change.</p>"
+             + _DET_CLOSE)
+
+
+# --------------------------------------------------------------------------- #
 # Section registry + composer driver
 # --------------------------------------------------------------------------- #
 
@@ -1558,6 +1958,26 @@ _SECTION_TABLE = [
     ("sec", 25, "Brand foundation (brand intelligence hub)", "workspace_premium", "", "planner",
      lambda c: bool(c.get("brand_kit")), _sec_brand_foundation,
      lambda c, full: not c.get("brand_kit")),
+    # §26-33: Tactical Plan + Campaign Brief -- turns the strategy above into field, channel,
+    # scientific, account and measurement tactics. ctx is fully computed up front by
+    # compute_plan_ctx before any of these can render, so ready() is unconditionally True
+    # (same as §22/23) rather than gating on a specific key.
+    ("sec", 26, "Tactical plan overview & CSF map", "flag", "", "planner",
+     lambda c: True, _sec_tactical_overview, _never),
+    ("sec", 27, "Field approach & targeting", "groups", "", "strategy",
+     lambda c: True, _sec_tactical_field, _never),
+    ("sec", 28, "Omnichannel & media tactics", "payments", "", "activation",
+     lambda c: True, _sec_tactical_omnichannel, _never),
+    ("sec", 29, "Scientific engagement, congress & peer", "science", "", "intel",
+     lambda c: True, _sec_tactical_scientific, _never),
+    ("sec", 30, "Account & pathway strategy", "alt_route", "", "strategy",
+     lambda c: True, _sec_tactical_account, _never),
+    ("sec", 31, "Patient & support (gated)", "favorite", "", "planner",
+     lambda c: True, _sec_tactical_patient, _never),
+    ("sec", 32, "Tactical measurement & guardrails recap", "query_stats", "", "activation",
+     lambda c: True, _sec_tactical_measurement, _never),
+    ("sec", 33, "Campaign brief", "summarize", "", "planner",
+     lambda c: True, _sec_campaign_brief, _never),
 ]
 
 

@@ -27,7 +27,7 @@ export const planDocSkinCss = `
   --glass-strong: rgba(255,255,255,0.85);
   --glass-blur: blur(10px) saturate(150%);
   --shadow-raised-sm: 0 6px 16px -8px rgba(11,61,145,0.20), inset 0 1px 0 rgba(255,255,255,0.6);
-  --tk-magenta: #C6007E; --tk-cyan: #00AEEF; --tk-navy: #002060; --tk-grey: #808080;
+  --tk-magenta: #C6007E; --tk-cyan: #006B94; --tk-navy: #002060; --tk-grey: #5C6570;
   --tk-green: #92D050; --tk-band: #0070C0; --tk-msg-green: #E2EFDA; --tk-msg-orange: #F4B183;
   --tk-msg-blue: #DEEBF7; --tk-open: #B45309; --tk-open-bg: #FEF3C7;
 

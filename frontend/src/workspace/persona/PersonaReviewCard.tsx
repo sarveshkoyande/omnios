@@ -41,7 +41,7 @@ export function PersonaReviewCard({
         ))}
       </Box>
     ) : (
-      <Typography variant="caption" sx={{ color: "text.secondary" }}>—</Typography>
+      <Typography variant="caption" sx={{ color: "text.secondary" }}>N/A</Typography>
     );
 
   return (

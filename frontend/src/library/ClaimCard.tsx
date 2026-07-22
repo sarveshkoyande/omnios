@@ -5,18 +5,28 @@ import Typography from "@mui/material/Typography";
 import { styled } from "@mui/material/styles";
 import { CLAIM_SRC_LABEL, CLAIM_TYPE_LABEL } from "./types";
 import type { Claim } from "./types";
-import { glass, indigoTint, shade, tokens } from "../theme/tokens";
+import { glass, shade, tokens } from "../theme/tokens";
 
-const STATUS_COLOR: Record<string, string> = {
+const STATUS_RAIL: Record<string, string> = {
   approved: tokens.color.success,
   in_review: tokens.color.warning,
-  draft: shade(0.35),
+  draft: shade(0.3),
+};
+const STATUS_PILL_BG: Record<string, string> = {
+  approved: tokens.color.successSoft,
+  in_review: tokens.color.warningSoft,
+  draft: shade(0.08),
+};
+const STATUS_PILL_INK: Record<string, string> = {
+  approved: tokens.color.successInk,
+  in_review: tokens.color.warningInk,
+  draft: tokens.color.inkSoft,
 };
 
 const Card = styled("article")<{ status: string }>(({ theme, status }) => ({
   background: glass.content,
-  border: `1px solid ${indigoTint(0.12)}`,
-  borderLeft: `3px solid ${STATUS_COLOR[status] ?? shade(0.3)}`,
+  border: glass.border,
+  borderLeft: `4px solid ${STATUS_RAIL[status] ?? shade(0.3)}`,
   borderRadius: tokens.radius.md,
   padding: theme.spacing(3),
   marginBottom: theme.spacing(2),
@@ -31,10 +41,25 @@ export function ClaimCard({ claim }: { claim: Claim }) {
         <Chip
           size="small"
           label={claim.status.replace("_", " ")}
-          sx={{ background: STATUS_COLOR[claim.status], color: claim.status === "draft" ? "#fff" : tokens.color.text }}
+          sx={{
+            background: STATUS_PILL_BG[claim.status] ?? shade(0.08),
+            color: STATUS_PILL_INK[claim.status] ?? tokens.color.inkSoft,
+            fontWeight: 700,
+          }}
         />
         {claim.material_number && (
-          <Typography sx={{ fontFamily: tokens.font.mono, fontSize: 10, color: "text.secondary", background: shade(0.05), px: 1, borderRadius: 1 }}>
+          <Typography
+            sx={{
+              fontSize: 10,
+              fontWeight: 600,
+              letterSpacing: "0.02em",
+              fontVariantNumeric: "tabular-nums",
+              color: "text.secondary",
+              background: shade(0.05),
+              px: 1,
+              borderRadius: 1,
+            }}
+          >
             {claim.material_number}
           </Typography>
         )}
@@ -57,7 +82,7 @@ export function ClaimCard({ claim }: { claim: Claim }) {
             );
           })
         ) : (
-          <Chip size="small" color="error" label="No reference — MLR risk" />
+          <Chip size="small" color="error" label="No reference: MLR risk" />
         )}
       </Box>
 

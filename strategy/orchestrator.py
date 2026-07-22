@@ -16,6 +16,7 @@ the final full document. Five broad-mandate agents (not ten narrow ones -- conso
 from __future__ import annotations
 
 import pathlib
+import random
 import sys
 import time
 
@@ -45,6 +46,9 @@ from execution_plan import build_execution_work_plan, build_execution_raci  # no
 from test_measure_learn import build_test_measure_learn  # noqa: E402
 import process_knowledge  # noqa: E402  (grounds each agent's section in the ingested Omni OS process docs)
 import external_evidence  # noqa: E402  (live public-source datapoints agents cite to back decisions)
+import campaign_ops  # noqa: E402  (Stage 3 campaign-operations journey-diagram synthesis)
+import hcp_360  # noqa: E402  (synthetic HCP 360 panel -- grounds the strategy agent in real per-HCP facts)
+import tactical_source  # noqa: E402  (best-effort CSF/guardrail/evidence pull from an uploaded strategic-plan doc)
 
 
 # Which documented-process topic each agent consults for its section(s). Drives both the
@@ -82,6 +86,17 @@ def _agent_grounding_bullets(ctx: dict, agent_id: str) -> list[str]:
     if agent_id == "intel":
         for d in (ctx.get("external_evidence") or [])[:3]:
             out.append(f"🔎 {d['label']}: {d['value']} — {d['source']} (as of {d['as_of']})")
+    # The strategy agent owns segmentation/targeting, so it cites the HCP 360 panel's measured
+    # numbers alongside its illustrative ABCD/TCG segmentation.
+    if agent_id == "strategy":
+        g = ctx.get("hcp_360_grounding") or {}
+        if g:
+            out.append(f"👥 HCP 360 ({g['confidence']}): {g['headline']}")
+            if g.get("segment_breakdown"):
+                top3 = sorted(g["segment_breakdown"].items(), key=lambda kv: -kv[1])[:3]
+                out.append("👥 Writer segments: " + ", ".join(f"{v:.0f}% {k}" for k, v in top3))
+            if g.get("top_content_tags"):
+                out.append("👥 Top content affinity: " + ", ".join(g["top_content_tags"]))
     return out
 
 # Each agent is named by its function. The Engagement Plan Composer (formerly "Cooper") is
@@ -152,6 +167,90 @@ def _say(agent_id: str, text: str, to: str = ""):
     return {"type": "banter", "id": agent_id, "to": to, "text": text}
 
 
+# align's compute_plan_ctx() makes real, sequential network calls (ClinicalTrials.gov, PubMed,
+# openFDA, cognee's process-knowledge graph) that can run 30-60s+ -- with nothing streamed
+# during that window the client sits on a silent connection and it reads as hung. This runs
+# alongside it on a background thread so the client keeps seeing something happen instead.
+#
+# Scripted in the SAME order compute_plan_ctx actually works through its sections (process/
+# external grounding -> market & competitive intel -> strategy & positioning -> creative
+# inspiration -> activation planning), so a line landing roughly lines up with real progress
+# instead of being generic filler.
+_PRECOMPUTE_HEARTBEAT_LINES = [
+    lambda: _say("intel", "Cross-checking the firm's own playbook for this therapy area too.", to="planner"),
+    lambda: _say("planner", "Take your time — grounded beats fast here.", to="intel"),
+    lambda: _say("intel", "Sizing the competitive field and the addressable HCP universe now.", to="strategy"),
+    lambda: _say("strategy", "Building the positioning read — where this brand can credibly win.", to="intel"),
+    lambda: _say("strategy", "I'll have the journey-stage read ready the moment your numbers land.", to="intel"),
+    lambda: _say("intel", "Benchmarking the channel mix against comparable launches.", to="planner"),
+    lambda: _say("inspiration", "Pulling precedent campaigns and award-winning work for this therapy area.", to="strategy"),
+    lambda: _say("activation", "Sketching the KPI framework so measurement is ready on arrival.", to="inspiration"),
+    lambda: _say("planner", "Almost there — assembling everything into the first section now.", to="activation"),
+]
+# Once the scripted lines above run out, keep cycling this larger pool on a longer beat
+# indefinitely -- shuffled and never repeating the immediately-previous line, so an unusually
+# slow run reads as continued (varied) work rather than one message stuck on loop.
+_PRECOMPUTE_HEARTBEAT_FALLBACK = [
+    lambda: _say("planner", "Still with you — this one's taking longer than usual.", to="intel"),
+    lambda: _say("intel", "One of the public sources is slow to respond; retrying rather than skipping it.", to="planner"),
+    lambda: _say("intel", "ClinicalTrials.gov is being slow today — worth the wait for a real trial count.", to="planner"),
+    lambda: _say("strategy", "No shortcuts on positioning — re-checking it against the competitive set.", to="intel"),
+    lambda: _say("planner", "Quality over speed here — the plan only cites what actually checks out.", to="strategy"),
+    lambda: _say("inspiration", "Still comparing against precedent campaigns for the best-fit creative angle.", to="planner"),
+    lambda: _say("intel", "PubMed's queue is backed up; hanging on for the real publication count.", to="strategy"),
+    lambda: _say("activation", "Cross-checking engagement benchmarks before locking the channel mix.", to="intel"),
+    lambda: _say("planner", "This is the thorough part — worth it once the plan lands.", to="activation"),
+    lambda: _say("strategy", "openFDA can be sluggish; staying on the line rather than guessing at the label.", to="planner"),
+    lambda: _say("intel", "Re-running the competitor scan — first pass looked thin.", to="strategy"),
+    lambda: _say("planner", "Nearly through the live pulls — thanks for hanging in there.", to="intel"),
+]
+_HEARTBEAT_TICK_SEC = 0.2
+_HEARTBEAT_LINE_EVERY_SEC = 5.0
+_HEARTBEAT_FALLBACK_EVERY_SEC = 7.0
+
+
+def _shuffled_fallback_cycle():
+    """Yield `_PRECOMPUTE_HEARTBEAT_FALLBACK` forever, reshuffled each lap, never repeating the
+    line that just played at the seam between one lap and the next."""
+    last = None
+    while True:
+        order = list(_PRECOMPUTE_HEARTBEAT_FALLBACK)
+        random.shuffle(order)
+        if last is not None and order[0] is last:
+            order.append(order.pop(0))
+        for line in order:
+            last = line
+            yield line
+
+
+def precompute_heartbeat(done_event):
+    """Yielded while a background thread runs compute_plan_ctx: an immediate 'intel is
+    running' event (un-greys/shimmers that agent card client-side with zero new frontend
+    code, since it's the same event shape run_phase() already emits), then grounded banter
+    every few seconds until `done_event` (a threading.Event) is set -- looping a shuffled
+    fallback set indefinitely once the scripted lines run out, so an unusually slow run never
+    goes silent or repeats itself. Polls in short ticks so it stops promptly rather than
+    over-sleeping past the real compute finishing."""
+    yield _run("intel", "Pulling live evidence — ClinicalTrials.gov, PubMed and openFDA — "
+                        "for what backs this brief…")
+    line_idx = 0
+    elapsed_since_line = 0.0
+    fallback_cycle = _shuffled_fallback_cycle()
+    while not done_event.is_set():
+        time.sleep(_HEARTBEAT_TICK_SEC)
+        if done_event.is_set():
+            return
+        elapsed_since_line += _HEARTBEAT_TICK_SEC
+        if line_idx < len(_PRECOMPUTE_HEARTBEAT_LINES):
+            if elapsed_since_line >= _HEARTBEAT_LINE_EVERY_SEC:
+                yield _PRECOMPUTE_HEARTBEAT_LINES[line_idx]()
+                line_idx += 1
+                elapsed_since_line = 0.0
+        elif elapsed_since_line >= _HEARTBEAT_FALLBACK_EVERY_SEC:
+            yield next(fallback_cycle)()
+            elapsed_since_line = 0.0
+
+
 # The interactive build reveals the plan phase by phase: the run itself only ever reveals
 # Phase 1 (Align) + the always-on base/supporting sections; the later phases unlock as the
 # user answers each phase's clarify questions in chat (see open_questions.revealed_phases_for).
@@ -184,6 +283,7 @@ def run_agents(brand: str, therapy_area: str, lifecycle_key: str, budget: float 
     yield {"type": "agents_init", "agents": AGENT_ROSTER}
     ctx: dict = {"brand": brand, "therapy_area": therapy_area, "lifecycle_key": lifecycle_key, "budget": budget,
                  "maturity_notes": maturity_notes, "indication": indication, "brief": brief or {}}
+    ctx["slots"] = ctx["brief"]
 
     ind_note = f" for the {indication} indication" if indication else ""
     done_agents: set = set()
@@ -201,12 +301,13 @@ def run_agents(brand: str, therapy_area: str, lifecycle_key: str, budget: float 
     # Recall the firm's documented process for every agent's remit up front (one concurrent
     # batch), so each agent's section can render its Omni OS grounding. {} => renders as before.
     ctx["process_grounding"] = process_knowledge.ground_all(brand, therapy_area)
+    ctx["brief_grounding"] = process_knowledge.brief_grounding(brand, therapy_area)
     # Live external datapoints (public sources only) the agents cite to back decisions.
     ctx["external_evidence"] = external_evidence.datapoints(therapy_area, brand)
     done_agents.add("planner")
     _, _, n_done0, n_total0 = compose_plan_partial(ctx, done_agents, "")
     planner_summary = (f"Plan structure framed — **{n_total0}** sections scaffolded across the four toolkit phases. "
-                       f"Brief, governance and caveats are locked; the team fills the rest in live on the right.")
+                       f"Brief, governance and caveats are locked; your agent fills the rest in live on the right.")
     planner_bullets = [inferred["rationale"],
                        f"{n_done0} of {n_total0} sections filled at kickoff; each remaining section is labelled with the agent that owns it"]
     if kit:
@@ -216,6 +317,8 @@ def run_agents(brand: str, therapy_area: str, lifecycle_key: str, budget: float 
         planner_bullets += [f"Brand kit: {kit.get('source_label', '')} — core claim “{kit.get('core_claim', '')}”",
                             f"{len((kit.get('guardrails') or {}).get('dos', []))} brand dos / "
                             f"{len((kit.get('guardrails') or {}).get('donts', []))} don'ts folded into Risk & governance"]
+    if ctx.get("brief_grounding"):
+        planner_bullets.append(f"SME brief grounding loaded: {len(ctx['brief_grounding'])} brief topics consulted before drafting")
     planner_bullets += _agent_grounding_bullets(ctx, "planner")
     yield {"type": "agent", "id": "planner", "status": "done", "summary": planner_summary,
            "detail": {"bullets": planner_bullets}}
@@ -256,6 +359,7 @@ def run_agents(brand: str, therapy_area: str, lifecycle_key: str, budget: float 
     ctx["swot"] = swot_result
     audience_profile = benchmarks.maya_audience_profile(brand, therapy_area, inferred["persona"])
     ctx["audience_profile"] = audience_profile
+    ctx["hcp_360_grounding"] = hcp_360.ground_segment(therapy_area, inferred["persona"])
     done_agents.add("intel")
     intel_summary = (
         f"{inferred['lifecycle_label']} → targeting **{inferred['persona']}** HCPs. Indexed **{b_n + t_n}** live documents. "
@@ -299,7 +403,8 @@ def run_agents(brand: str, therapy_area: str, lifecycle_key: str, budget: float 
     # 3. Strategy & Positioning -- journey/BAM/PP-NPP/micro-journeys/CX-maturity/TCG/message flow + positioning
     yield _run("strategy", "Mapping the journey stage and BAM-chart belief shift, splitting channels, building the "
                            "message flow, and drafting positioning…")
-    strategy = generate_strategy(brand, therapy_area, inferred["persona"], inferred["stage_key"])
+    strategy = generate_strategy(brand, therapy_area, inferred["persona"], inferred["stage_key"],
+                                 ctx["brief_grounding"])
     ctx["strategy"] = strategy
     bam = build_bam_chart(inferred["stage_key"])
     pp_npp = classify_pp_npp(strategy["channel_mix_pct"])
@@ -348,6 +453,8 @@ def run_agents(brand: str, therapy_area: str, lifecycle_key: str, budget: float 
         + ("Message pool grounded in the brand's own claims. " if kit else "")
         + "Positioning drafted."
     )
+    if ctx.get("brief_grounding"):
+        strat_bullets.append(f"SME brief grounding carried into strategy: {len(ctx['brief_grounding'])} topics")
     strat_bullets += _agent_grounding_bullets(ctx, "strategy")
     yield {"type": "agent", "id": "strategy", "status": "done", "summary": strat_summary, "detail": {"bullets": strat_bullets}}
     yield _plan_partial(ctx, done_agents, "strategy")
@@ -515,6 +622,7 @@ def compute_plan_ctx(brand: str, therapy_area: str, lifecycle_key: str, budget: 
     heavy work happens on the first phase and later phases are instant."""
     ctx: dict = {"brand": brand, "therapy_area": therapy_area, "lifecycle_key": lifecycle_key, "budget": budget,
                  "maturity_notes": maturity_notes, "indication": indication, "brief": brief or {}}
+    ctx["slots"] = ctx["brief"]
     inferred = infer_persona_and_stage(lifecycle_key)
     ctx["inferred"] = inferred
     kit = brand_kit_mod.kit_for(brand)
@@ -526,6 +634,15 @@ def compute_plan_ctx(brand: str, therapy_area: str, lifecycle_key: str, budget: 
     # Live external datapoints (public sources only) the agents cite to back decisions.
     ctx["external_evidence"] = external_evidence.datapoints(therapy_area, brand)
 
+    # An uploaded strategic-plan document (captured by /api/upload alongside the brief) grounds
+    # the Tactical Plan sections when present; None when no such document was uploaded, in which
+    # case those sections fall back to Omni OS's own already-computed strategy ctx below.
+    tactical_text = (brief or {}).get("tactical_source_text")
+    ctx["strategic_source"] = (
+        tactical_source.extract_strategic_source(tactical_text, (brief or {}).get("tactical_source_name", ""))
+        if tactical_text else None
+    )
+
     # -- Market & Competitive Intelligence --
     ctx["market"] = market_landscape(brand, therapy_area)
     if kit and kit.get("competitors"):
@@ -535,9 +652,12 @@ def compute_plan_ctx(brand: str, therapy_area: str, lifecycle_key: str, budget: 
     ctx["competitors"] = competitors
     ctx["swot"] = build_swot(brand, competitors, therapy_area, refresh=True) if competitors else None
     ctx["audience_profile"] = benchmarks.maya_audience_profile(brand, therapy_area, inferred["persona"])
+    ctx["hcp_360_grounding"] = hcp_360.ground_segment(therapy_area, inferred["persona"])
+    ctx["brief_grounding"] = process_knowledge.brief_grounding(brand, therapy_area)
 
     # -- Strategy & Positioning --
-    strategy = generate_strategy(brand, therapy_area, inferred["persona"], inferred["stage_key"])
+    strategy = generate_strategy(brand, therapy_area, inferred["persona"], inferred["stage_key"],
+                                 ctx["brief_grounding"])
     ctx["strategy"] = strategy
     bam = build_bam_chart(inferred["stage_key"])
     micro_journeys = build_micro_journeys(inferred["stage_key"], strategy["recommended_touchpoints"])
@@ -794,7 +914,7 @@ def phase_open(phase: str):
     yield {"type": "agents_init", "agents": [a for a in AGENT_ROSTER if a["id"] in agents],
            "phase": phase, "phase_no": PHASE_NO[phase], "phase_label": PHASE_LABELS[phase]}
     yield {"type": "narration",
-           "text": f"**Phase {PHASE_NO[phase]} · {PHASE_LABELS[phase]}** — {len(agents)} agents are on this step now."}
+           "text": f"**Phase {PHASE_NO[phase]} · {PHASE_LABELS[phase]}** — your agent is on this step now."}
 
 
 def run_phase(phase: str, ctx: dict, opened: bool = False):
@@ -884,6 +1004,7 @@ def _assemble_result(ctx: dict) -> dict:
         "stage_5_budget": {"total_budget": ctx["budget"] or None, "allocation": ctx["budget_allocation"],
                             "caveat": strategy["caveat"]},
         "stage_5_channel_selection": ctx["channel_selection"],
+        "stage_3_campaign_plan": campaign_ops.build_campaign_plan(ctx),
         "content_library": ctx.get("content_library", {}),
         "audience_profile": ctx.get("audience_profile", {}),
         "engagement_baseline": ctx.get("engagement_baseline", {}),

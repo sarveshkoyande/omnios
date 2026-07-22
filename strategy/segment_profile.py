@@ -102,7 +102,7 @@ def _personalization_recommendation(stage_key: str, persona: str, digital_dist: 
 # Sheet 3's full 16-question template, verbatim, grouped under its three blue band
 # headings. Auto-answered rows come from persona/stage/BAM state; the rest are
 # genuinely brand-team facts and stay open for alignment.
-TCG_NEEDS_ALIGNMENT = "Needs alignment — the agent will ask you this in chat"
+TCG_NEEDS_ALIGNMENT = "Needs alignment: the agent will ask you this in chat"
 
 _TCG_QUESTIONS = [
     ("t1", "What does the target customer group represent and how are we addressing it?",
@@ -160,7 +160,7 @@ def build_tcg_template(persona: str, profile: dict, strategy: dict, bam: dict,
 
     auto = {
         "t1": f"{persona} HCPs at the {strategy['inputs']['stage']} journey stage.",
-        "t4": f"The {strategy['inputs']['stage']} stage transition — {sp['engagement_goal']}",
+        "t4": f"The {strategy['inputs']['stage']} stage transition: {sp['engagement_goal']}",
         "t5": f"BAM behavioral objective (A→B shift): {bam['a_to_b_shift']}",
         "t9": f"Mental state at this stage: {sp['mental_state']}",
         "t11": f"Current behavior & beliefs: “{m['current_belief']}”.",

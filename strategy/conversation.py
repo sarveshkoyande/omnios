@@ -184,6 +184,222 @@ def _extract_brief(message: str, slots: dict) -> None:
                 slots["budget"] = b
 
 
+# --------------------------------------------------------------------- brand-plan import ---
+# A brand plan rarely follows the fill-in-the-blanks template, but it almost always states
+# its facts as labelled lines ("Brand: Nuvexa", "Indication — mBC", "Total budget: $2.5M")
+# or short bullets. This pass reads those labels off the document so an uploaded plan fills
+# the SAME brief slots as if the details had been typed. Each slot maps to an ordered set of
+# label synonyms (most specific first); the first labelled line that matches wins, then the
+# connective extractor and the whole-document core matchers sweep up anything unlabelled.
+_DOC_FIELD_LABELS: list[tuple[str, list[str]]] = [
+    ("campaign_name",      ["campaign name", "campaign title", "initiative", "program name", "plan name"]),
+    ("brand",              ["brand name", "product name", "brand", "product", "asset"]),
+    ("molecule",           ["molecule", "inn", "generic name", "compound", "active ingredient"]),
+    ("indication",         ["indication", "disease", "condition", "patient population"]),
+    ("therapy_area",       ["therapy area", "therapeutic area", "disease area", "specialty", "ta"]),
+    ("audience",           ["target audience", "target customer", "target segment", "hcp segment", "audience", "customer segment", "customer"]),
+    ("geography",          ["geography", "geographies", "markets", "market", "region", "countries", "country", "territory"]),
+    ("duration",           ["campaign period", "flight dates", "timeline", "timeframe", "time frame", "duration", "flight", "period", "dates"]),
+    ("objective",          ["business objective", "objectives", "objective", "goals", "goal", "aim", "purpose", "ambition"]),
+    ("kpi",                ["success metrics", "success metric", "measure of success", "kpis", "kpi", "measures", "metric", "metrics"]),
+    ("preferred_channels", ["preferred channels", "channel mix", "channels", "tactics", "touchpoints", "media plan", "media"]),
+    ("existing_assets",    ["existing assets", "available assets", "content available", "assets"]),
+    ("constraints",        ["constraints", "considerations", "limitations", "barriers", "risks"]),
+    ("lifecycle",          ["lifecycle stage", "life cycle stage", "lifecycle", "life cycle", "brand stage", "maturity", "stage", "phase"]),
+    ("reason",             ["rationale", "background", "situation", "reason", "why now", "context"]),
+    ("budget",             ["total budget", "media budget", "budget", "investment", "spend"]),
+]
+
+
+def _find_labeled(text: str, labels: list[str]) -> str:
+    """First 'Label: value' (or 'Label - value') line matching any synonym, falling back to
+    'Label   value' (a wide gap, no punctuation -- how a two-column PDF table row usually
+    serializes) and finally a label alone on its own line with the value on the next
+    non-blank line (how a single-cell-per-line PDF table extraction usually serializes).
+    Anchored at the line start (after an optional bullet) so a label can't fire inside a
+    longer word/phrase."""
+    lines = text.splitlines()
+    for label in labels:
+        esc = re.escape(label)
+        same_line_punct = re.compile(rf"(?im)^[ \t\-\*•]*{esc}[ \t]*[:\-–—][ \t]+(.+?)[ \t]*$")
+        m = same_line_punct.search(text)
+        if m:
+            val = _clean_field(m.group(1))
+            if val:
+                return val
+
+        same_line_gap = re.compile(rf"(?im)^[ \t\-\*•]*{esc}[ \t]{{2,}}(.+?)[ \t]*$")
+        m = same_line_gap.search(text)
+        if m:
+            val = _clean_field(m.group(1))
+            if val:
+                return val
+
+        label_only = re.compile(rf"(?im)^[ \t\-\*•]*{esc}[ \t]*[:\-–—]?[ \t]*$")
+        for i, line in enumerate(lines):
+            if label_only.match(line):
+                for nxt in lines[i + 1: i + 3]:
+                    candidate = nxt.strip()
+                    if candidate:
+                        val = _clean_field(candidate)
+                        if val:
+                            return val
+                break
+    return ""
+
+
+def _extract_brief_from_text_llm(text: str) -> dict:
+    """LLM-first brief extraction from uploaded/pasted strategic material.
+
+    The rules extractor remains below as a fallback and hole-filler, but the primary read
+    should be semantic: decks rarely preserve labels cleanly after PDF/DOCX extraction.
+    """
+    try:
+        import conversation_llm
+        if not conversation_llm.llm_available():
+            return {"fields": {}, "items": []}
+        client = conversation_llm._get_client()
+        system = """You extract campaign-planning brief fields from pharma strategic-plan text.
+Return STRICT JSON only: {"fields": object}. Valid fields are:
+campaign_name, brand, molecule, indication, therapy_area, lifecycle_key, audience,
+geography, duration, objective, kpi, preferred_channels, existing_assets, constraints,
+notes, reason, budget.
+
+Rules:
+- Read semantically, not just labels. The text may be copied from slides or a PDF.
+- Use only facts present or clearly implied in the text; do not invent.
+- lifecycle_key must be one of launch, growth, mature, loe, or omitted.
+- budget must be a number in USD if stated, otherwise omit.
+- Keep field values concise but specific enough to drive a tactical campaign brief."""
+        resp = client.messages.create(
+            model=conversation_llm.MODEL,
+            max_tokens=4096,
+            system=system,
+            messages=[{"role": "user", "content": text[:24000]}],
+        )
+        out = next(b.text for b in resp.content if b.type == "text").strip()
+        if out.startswith("```"):
+            out = out.strip("`")
+            out = out[4:] if out.lower().startswith("json") else out
+        data = json.loads(out.strip())
+        fields = data.get("fields") if isinstance(data, dict) else {}
+        if not isinstance(fields, dict):
+            return {"fields": {}, "items": []}
+
+        cleaned = {}
+        for key in (
+            "campaign_name", "brand", "molecule", "indication", "therapy_area", "lifecycle_key",
+            "audience", "geography", "duration", "objective", "kpi", "preferred_channels",
+            "existing_assets", "constraints", "notes", "reason",
+        ):
+            val = fields.get(key)
+            if isinstance(val, str) and val.strip():
+                cleaned[key] = _clean_field(val)
+        lc = str(fields.get("lifecycle_key") or "").lower().strip()
+        if lc in LIFECYCLE_BY_KEY:
+            cleaned["lifecycle_key"] = lc
+        budget = fields.get("budget")
+        if isinstance(budget, (int, float)) and budget:
+            cleaned["budget"] = float(budget)
+        elif isinstance(budget, str):
+            parsed = _parse_budget(budget)
+            if parsed:
+                cleaned["budget"] = parsed
+        return {"fields": cleaned, "items": []}
+    except Exception as exc:  # noqa: BLE001
+        print(f"[conversation] LLM brief extraction failed; falling back to rules: {exc}")
+        return {"fields": {}, "items": []}
+
+
+def extract_brief_from_text(text: str) -> dict:
+    """Read a brand-plan document and pull the brief slots out of it -- labelled facts first
+    (Brand:, Indication:, Budget:, Objective: ...), then the connective/template extractor,
+    then the whole-document core matchers as a fallback. Returns the resolved field values
+    plus a display list of exactly what was captured, so the UI can show it back to the user."""
+    print(f"[brief-extract] input text length={len(text)} chars")
+    llm_first = _extract_brief_from_text_llm(text)
+    fields: dict = dict(llm_first.get("fields") or {})
+    print(f"[brief-extract] llm pass fields={sorted(fields.keys())}")
+
+    # 1) Labelled facts, line by line.
+    labeled: dict[str, str] = {}
+    for key, labels in _DOC_FIELD_LABELS:
+        val = _find_labeled(text, labels)
+        if val:
+            labeled[key] = val
+    print(f"[brief-extract] labelled-regex fields={sorted(labeled.keys())}")
+
+    # 2) Connective / template prose fills anything the labels missed.
+    prose: dict = {}
+    _extract_brief(text, prose)
+    print(f"[brief-extract] prose fields={sorted(prose.keys())}")
+
+    for key in ("campaign_name", "molecule", "indication", "audience", "geography", "duration",
+                "objective", "kpi", "preferred_channels", "existing_assets", "constraints",
+                "notes", "reason"):
+        v = labeled.get(key) or prose.get(key)
+        if v and key not in fields:
+            fields[key] = v
+
+    # Brand: labelled -> known-brand match -> whole-document scan.
+    brand = ""
+    if labeled.get("brand"):
+        brand = _match_known_brand(labeled["brand"]) or labeled["brand"].split(",")[0].strip()
+    if not brand:
+        brand = _match_known_brand(text) or ""
+    if brand and "brand" not in fields:
+        fields["brand"] = brand
+
+    # Therapy area: labelled -> catalog mapping from the brand -> known-therapy scan.
+    ta = labeled.get("therapy_area") or ""
+    if not ta and brand:
+        cat = lookup_brand(brand)
+        if cat and cat.get("therapy_area"):
+            ta = cat["therapy_area"]
+    if not ta:
+        ta = _match_known_therapy(text) or ""
+    if ta and "therapy_area" not in fields:
+        fields["therapy_area"] = ta
+
+    # Lifecycle: keyword-map the labelled stage, else scan the whole document.
+    lc = _match_lifecycle(labeled.get("lifecycle", "")) or _match_lifecycle(text) or ""
+    if lc and "lifecycle_key" not in fields:
+        fields["lifecycle_key"] = lc
+
+    # Budget: labelled amount -> the connective 'budget of ...' clause.
+    budget = 0.0
+    if labeled.get("budget"):
+        budget = _parse_budget(labeled["budget"]) or 0.0
+    if not budget:
+        budget = prose.get("budget") or 0.0
+    if budget and "budget" not in fields:
+        fields["budget"] = budget
+
+    # Human-readable display list (non-empty only), in a natural reading order.
+    lc_label = LIFECYCLE_BY_KEY.get(fields.get("lifecycle_key", ""), {}).get("label", "")
+    _display_order = [
+        ("campaign_name", "Campaign"), ("brand", "Brand"), ("molecule", "Molecule"),
+        ("indication", "Indication"), ("therapy_area", "Therapy area"), ("lifecycle_key", "Lifecycle"),
+        ("audience", "Audience"), ("geography", "Geography"), ("duration", "Duration"),
+        ("budget", "Budget"), ("objective", "Objective"), ("kpi", "Target KPI"),
+        ("preferred_channels", "Preferred channels"), ("existing_assets", "Existing assets"),
+        ("constraints", "Constraints"), ("reason", "Reason"),
+    ]
+    items = []
+    for key, label in _display_order:
+        if key not in fields:
+            continue
+        if key == "budget":
+            disp = _human_budget(fields["budget"])
+        elif key == "lifecycle_key":
+            disp = lc_label or str(fields[key])
+        else:
+            disp = str(fields[key])
+        items.append({"key": key, "label": label, "value": disp})
+
+    return {"fields": fields, "items": items}
+
+
 def new_state() -> dict:
     return {
         "slots": {
@@ -718,25 +934,11 @@ def _interpret_message_rules(message: str, state: dict) -> tuple[dict, str, str]
     # All required slots captured -> kick off the run (after the reason gate below).
     state["awaiting"] = None
     state["phase"] = "running"
-    budget_line = f"\n• Budget: ${int(slots['budget']):,}" if slots["budget"] else "\n• Budget: (percentages only)"
-    indication_line = f"\n• Indication: **{slots['indication']}**" if slots.get("indication") else ""
-    # Echo back the richer brief fields the intake captured, so the user sees what was parsed.
-    extra_lines = ""
-    for label, key in (("Audience", "audience"), ("Geography", "geography"), ("Duration", "duration"),
-                       ("Objective", "objective"), ("Target KPI", "kpi"), ("Preferred channels", "preferred_channels"),
-                       ("Reason", "reason")):
-        val = slots.get(key)
-        if val and val != "(not specified)":
-            extra_lines += f"\n• {label}: **{val}**"
+    # The brief itself is already visible above (import card / editable fields) -- don't echo
+    # it back a second time, just confirm and kick off the run.
     reply = (
-        "Perfect — here's the brief I've locked in:\n"
-        f"• Brand: **{slots['brand']}**\n"
-        f"• Therapy area: **{slots['therapy_area']}**"
-        f"{indication_line}\n"
-        f"• Lifecycle: **{slots['lifecycle_key']}**"
-        f"{budget_line}"
-        f"{extra_lines}\n\n"
-        "I'm putting my research agents to work now — watch them think through the market, competitors, "
-        "positioning, channel mix and measurement on the right. This takes ~30–60 seconds while they pull live data…"
+        "Perfect — brief locked in. I'm putting my agent to work now — watch it think through "
+        "the market, competitors, positioning, channel mix and measurement on the right. This "
+        "takes ~30–60 seconds while it pulls live data…"
     )
     return _reason_gate(state, reply, "run")
