@@ -122,7 +122,7 @@ before or after it:
 _client = None  # lazily built + cached Foundry client; cleared on construction failure so a later retry can succeed
 
 
-def _get_foundry_client():
+def _get_client():
     """Build (and cache) the AnthropicFoundry client.
 
     Prefers a plain API key (AZURE_AI_FOUNDRY_API_KEY) -- no azure-identity or Azure AD
@@ -212,7 +212,7 @@ def _call_gemini(payload: dict) -> str:
 
 
 def _call_foundry(payload: dict) -> str:
-    client = _get_foundry_client()
+    client = _get_client()
     # NOTE: output_config.format (native structured outputs) is not enabled on every Azure AI
     # Foundry workspace -- it 400s there with "structured_outputs not supported in your
     # workspace." Falling back to plain-JSON-in-the-system-prompt works everywhere, at the
