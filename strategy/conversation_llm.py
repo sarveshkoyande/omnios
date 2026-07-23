@@ -119,17 +119,53 @@ before or after it:
 {{"brand": string, "therapy_area": string, "lifecycle_key": "launch"|"growth"|"mature"|"loe"|"",
 "budget": number, "budget_asked": boolean, "maturity_notes": string, "ready": boolean, "reply": string}}"""
 
+class _TextBlock:
+    def __init__(self, text: str) -> None:
+        self.type = "text"
+        self.text = text
+
+
+class _AnthropicShapedResponse:
+    def __init__(self, text: str) -> None:
+        self.content = [_TextBlock(text)]
+
+
+class _GeminiClient:
+    """Drop-in stand-in for the AnthropicFoundry client, shaped so every one of this app's
+    ~11 call sites (all written as `client.messages.create(model=..., system=..., messages=[...])`
+    then `resp.content[i].text`) works completely unchanged when Gemini is the active provider
+    -- `model=` is ignored in favor of GEMINI_MODEL, everything else is translated 1:1."""
+
+    class _Messages:
+        def create(self, model=None, max_tokens: int = 700, system: str | None = None,
+                    messages: list[dict] | None = None, **_ignored):
+            import litellm
+            msgs = ([{"role": "system", "content": system}] if system else []) + list(messages or [])
+            resp = litellm.completion(model=GEMINI_MODEL, api_key=_gemini_key(), max_tokens=max_tokens, messages=msgs)
+            return _AnthropicShapedResponse(resp.choices[0].message.content)
+
+    messages = _Messages()
+
+
 _client = None  # lazily built + cached Foundry client; cleared on construction failure so a later retry can succeed
 
 
 def _get_client():
-    """Build (and cache) the AnthropicFoundry client.
+    """Build (and cache) the LLM client every call site in this app uses.
 
-    Prefers a plain API key (AZURE_AI_FOUNDRY_API_KEY) -- no azure-identity or Azure AD
-    round-trip needed, which is what a platform like Render can set as a single secret.
-    Falls back to Azure AD (DefaultAzureCredential) only if no key is configured, for
-    environments that use a service principal / managed identity instead.
+    Returns a Gemini-backed shim if GEMINI_API_KEY/GOOGLE_API_KEY is set (same priority as
+    active_provider()/interpret_message_llm()) -- so setting a personal Gemini key covers
+    every AI-assisted feature in the app, not just the conversational intake seam.
+
+    Otherwise builds (and caches) the AnthropicFoundry client. Prefers a plain API key
+    (AZURE_AI_FOUNDRY_API_KEY) -- no azure-identity or Azure AD round-trip needed, which is
+    what a platform like Render can set as a single secret. Falls back to Azure AD
+    (DefaultAzureCredential) only if no key is configured, for environments that use a
+    service principal / managed identity instead.
     """
+    if _gemini_key():
+        return _GeminiClient()
+
     global _client
     if _client is not None:
         return _client
