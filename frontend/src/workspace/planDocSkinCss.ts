@@ -87,7 +87,9 @@ export const planDocSkinCss = `
     }
     .plan-sec-chev { font-size: 18px !important; color: var(--muted) !important; background: none !important; padding: 0 !important; transition: transform .18s ease; }
     &[open] > summary .plan-sec-chev { transform: rotate(180deg); }
-    .plan-sec-body { padding: 2px 12px 12px; }
+    /* Wide tables (channel selection, RACI, benchmarks, etc.) scroll horizontally
+       inside their own section instead of pushing the whole card wider than its column. */
+    .plan-sec-body { padding: 2px 12px 12px; max-width: 100%; overflow-x: auto; }
     .plan-sec-sub { margin: 10px 0 6px; }
   }
   .tk-sec-align > summary .material-symbols-outlined:first-child { background: var(--tk-magenta); }

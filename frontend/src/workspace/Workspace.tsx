@@ -16,6 +16,7 @@ import { DecisionTrail } from "./studio/DecisionTrail";
 import { Composer } from "./Composer";
 import { IntakeCard } from "./IntakeCard";
 import { PersonaProfileModal } from "./persona/PersonaProfileModal";
+import { PlanSectionsRail } from "./PlanSectionsRail";
 import { PlansDrawer } from "./PlansDrawer";
 import { PlanSummaryCard } from "./PlanSummaryCard";
 import { SimplePlanSummary } from "./SimplePlanSummary";
@@ -237,55 +238,10 @@ export function Workspace({
       </Box>
 
       <Box sx={{ display: "flex", flex: 1, minHeight: 0 }}>
-      <Box component="main" sx={{ flex: "0 0 30vw", minWidth: 320, display: "flex", flexDirection: "column", borderRight: `1px solid ${indigoTint(0.1)}`, position: "relative", backgroundColor: tokens.color.bgBaseChat }}>
-        {!ws.projectId ? (
-          <EmptyState>
-            <span className="material-symbols-outlined" style={{ fontSize: 46, color: tokens.color.primary }}>hub</span>
-            <Typography variant="body1">
-              <b>Preparing your brief…</b>
-              <br />
-              Setting up a fresh plan. If nothing appears, start one manually.
-            </Typography>
-            <Button variant="contained" color="primary" onClick={() => ws.newProject()}>
-              + New plan
-            </Button>
-          </EmptyState>
-        ) : (
-          <>
-            <Box sx={{ p: 3, pb: 2, borderBottom: `1px solid ${indigoTint(0.1)}` }}>
-              <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                The agent captures your brief in conversation, then does its research on the right.
-              </Typography>
-            </Box>
-
-            <Box ref={scrollRef} sx={{ flex: 1, overflowY: "auto", px: 3 }}>
-              {ws.showIntake && (
-                <IntakeCard
-                  onSubmit={ws.submitIntake}
-                  onSkip={() => ws.setShowIntake(false)}
-                  onImport={(file) => { ws.setShowIntake(false); ws.uploadFile(file); }}
-                />
-              )}
-              <ChatMessages
-                items={ws.activeChatItems}
-                onSkipPersonaOffer={ws.skipPersonaOffer}
-                onRunPersonas={ws.runPersonas}
-                onApplyFeedback={ws.applyFeedback}
-                onOpenPersonaProfile={ws.openPersonaProfile}
-                typingAuthor={ws.typingAuthor}
-                onAnswerAsk={ws.answerStudioAsk}
-                kickoffAwaitingStage={ws.kickoffAwaitingStage}
-                onKickoffUsePlan={ws.onKickoffUsePlan}
-                onKickoffWantUpload={ws.onKickoffWantUpload}
-              />
-            </Box>
-
-            <Box sx={{ p: 3, pt: 2 }}>
-              <Composer disabled={ws.busy} onSend={ws.sendMessage} onUpload={ws.handleUpload} />
-            </Box>
-          </>
-        )}
-      </Box>
+      {/* Left rail: read-only table of contents for the Stage 1 Sequential Plan Studio build. */}
+      {ws.projectId && ws.stage === 1 && (ws.studio.active || ws.studio.sections.length > 0 || ws.studio.done) && (
+        <PlanSectionsRail studio={ws.studio} />
+      )}
 
       {/* Same canvas as the chat pane: the folder-tab seam must be uniform across both panes. */}
       <Box component="aside" sx={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 380, minHeight: 0, backgroundColor: tokens.color.canvas }}>
@@ -296,7 +252,7 @@ export function Workspace({
                 <>
                   {/* Sequential Plan Studio: the canvas replaces the rail during a build.
                       Only the active section exists; the rest are folded or a whisper. */}
-                  {!ws.studio.done && <AssemblyCanvas studio={ws.studio} onSkip={ws.skipStudioPacing} />}
+                  {!ws.studio.done && <AssemblyCanvas studio={ws.studio} onSkip={ws.skipStudioPacing} onContinue={ws.continueStudioSection} />}
                   {ws.studio.records.length > 0 && !ws.studio.done && (
                     <ConsolePanel title="Decision trail" icon="psychology" collapsible sx={{ mt: 3 }}>
                       <DecisionTrail records={ws.studio.records} dense />
@@ -327,7 +283,7 @@ export function Workspace({
                         </ArchivedPlanViews>
                       )}
                       <Box sx={{ mt: 3 }}>
-                        <AssemblyCanvas studio={ws.studio} onSkip={ws.skipStudioPacing} />
+                        <AssemblyCanvas studio={ws.studio} onSkip={ws.skipStudioPacing} onContinue={ws.continueStudioSection} />
                       </Box>
                     </Box>
                   )}
@@ -386,6 +342,59 @@ export function Workspace({
                 />
               )}
               {ws.stage === 4 && <StageReporting result={ws.result} />}
+            </Box>
+          </>
+        )}
+      </Box>
+
+      {/* Right rail: the AI Assistant. Same conversation/composer as before -- moved from
+          the left to the right so the middle column (plan content) reads first. */}
+      <Box component="main" sx={{ flex: "0 0 350px", minWidth: 320, display: "flex", flexDirection: "column", borderLeft: `1px solid ${indigoTint(0.1)}`, position: "relative", backgroundColor: tokens.color.bgBaseChat }}>
+        {!ws.projectId ? (
+          <EmptyState>
+            <span className="material-symbols-outlined" style={{ fontSize: 46, color: tokens.color.primary }}>hub</span>
+            <Typography variant="body1">
+              <b>Preparing your brief…</b>
+              <br />
+              Setting up a fresh plan. If nothing appears, start one manually.
+            </Typography>
+            <Button variant="contained" color="primary" onClick={() => ws.newProject()}>
+              + New plan
+            </Button>
+          </EmptyState>
+        ) : (
+          <>
+            <Box sx={{ p: 2, pb: 1.5, borderBottom: `1px solid ${indigoTint(0.1)}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <Typography sx={{ fontWeight: 700, fontSize: 14 }}>AI Assistant</Typography>
+              <Button size="small" variant="outlined" sx={{ borderRadius: 999 }} onClick={() => ws.newProject()}>
+                + New chat
+              </Button>
+            </Box>
+
+            <Box ref={scrollRef} sx={{ flex: 1, overflowY: "auto", px: 2 }}>
+              {ws.showIntake && (
+                <IntakeCard
+                  onSubmit={ws.submitIntake}
+                  onSkip={() => ws.setShowIntake(false)}
+                  onImport={(file) => { ws.setShowIntake(false); ws.uploadFile(file); }}
+                />
+              )}
+              <ChatMessages
+                items={ws.activeChatItems}
+                onSkipPersonaOffer={ws.skipPersonaOffer}
+                onRunPersonas={ws.runPersonas}
+                onApplyFeedback={ws.applyFeedback}
+                onOpenPersonaProfile={ws.openPersonaProfile}
+                typingAuthor={ws.typingAuthor}
+                onAnswerAsk={ws.answerStudioAsk}
+                kickoffAwaitingStage={ws.kickoffAwaitingStage}
+                onKickoffUsePlan={ws.onKickoffUsePlan}
+                onKickoffWantUpload={ws.onKickoffWantUpload}
+              />
+            </Box>
+
+            <Box sx={{ p: 2, pt: 1.5 }}>
+              <Composer disabled={ws.busy} onSend={ws.sendMessage} onUpload={ws.handleUpload} />
             </Box>
           </>
         )}

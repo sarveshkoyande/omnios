@@ -10,6 +10,7 @@ import { styled } from "@mui/material/styles";
 import { tokens } from "../../theme/tokens";
 import { AgentAvatar } from "../Avatar";
 import { PlanDocument } from "../PlanDocument";
+import { SCROLL_TO_SECTION_EVENT } from "../PlanSectionsRail";
 import { STAGE_AGENTS } from "../types";
 import type { StudioState } from "./studioTypes";
 
@@ -79,7 +80,15 @@ const SectionBlock = styled("div")({
   "&:last-of-type": { borderBottom: "none", marginBottom: 0, paddingBottom: 0 },
 });
 
-export function AssemblyCanvas({ studio, onSkip }: { studio: StudioState; onSkip: () => void }) {
+export function AssemblyCanvas({
+  studio,
+  onSkip,
+  onContinue,
+}: {
+  studio: StudioState;
+  onSkip: () => void;
+  onContinue?: () => void;
+}) {
   const built = studio.sections.length;
   const activeDisplayNum = built + 1;
   const pct = studio.total > 0 ? Math.round((built / studio.total) * 100) : 0;
@@ -92,6 +101,23 @@ export function AssemblyCanvas({ studio, onSkip }: { studio: StudioState; onSkip
     if (studio.active && !studio.done) setManualExpanded(null);
   }, [studio.active]);
   const expanded = manualExpanded ?? (studio.active && !studio.done);
+
+  // The Plan Sections rail dispatches this when a completed section is clicked --
+  // expand (if collapsed) and scroll the real rendered section into view.
+  useEffect(() => {
+    const onGoTo = (e: Event) => {
+      const sectionId = (e as CustomEvent<{ sectionId: string }>).detail?.sectionId;
+      if (!sectionId) return;
+      setManualExpanded(true);
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          document.getElementById(`plan-section-${sectionId}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 60);
+      });
+    };
+    window.addEventListener(SCROLL_TO_SECTION_EVENT, onGoTo);
+    return () => window.removeEventListener(SCROLL_TO_SECTION_EVENT, onGoTo);
+  }, []);
 
   return (
     <Accordion
@@ -149,7 +175,7 @@ export function AssemblyCanvas({ studio, onSkip }: { studio: StudioState; onSkip
             growing top-to-bottom, with the active section drafting inline at the bottom. */}
         <Box>
           {studio.sections.map((s, idx) => (
-            <SectionBlock key={s.section_id}>
+            <SectionBlock key={s.section_id} id={`plan-section-${s.section_id}`}>
               <Typography
                 sx={{ fontSize: tokens.fontSize.xs, fontWeight: 700, color: "text.secondary", mb: 0.75 }}
               >
@@ -219,7 +245,14 @@ export function AssemblyCanvas({ studio, onSkip }: { studio: StudioState; onSkip
             </SectionBlock>
           )}
 
-          {built === 0 && !studio.slot && (
+          {studio.awaitingContinue && !studio.done && (
+            <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 1.5, pt: 1.5, borderTop: `1px solid ${tokens.color.outline}` }}>
+              <Button variant="contained" size="small" onClick={onContinue} endIcon={<span className="material-symbols-outlined" style={{ fontSize: 16 }}>arrow_forward</span>}>
+                Continue to next section
+              </Button>
+            </Box>
+          )}
+          {built === 0 && !studio.slot && !studio.awaitingContinue && (
             <Typography variant="body2" sx={{ color: "text.secondary" }}>
               Your plan will appear here section by section as it's built…
             </Typography>

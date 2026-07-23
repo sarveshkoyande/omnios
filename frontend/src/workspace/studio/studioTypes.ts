@@ -92,6 +92,9 @@ export interface StudioState {
   slot: StudioSlot | null;
   done: boolean;
   records: DecisionRecord[];
+  /** True right after a section lands, until the user clicks "Continue to next section" --
+   * sections no longer auto-advance one into the next. */
+  awaitingContinue: boolean;
 }
 
-export const STUDIO_IDLE: StudioState = { active: false, total: 0, sections: [], slot: null, done: false, records: [] };
+export const STUDIO_IDLE: StudioState = { active: false, total: 0, sections: [], slot: null, done: false, records: [], awaitingContinue: false };

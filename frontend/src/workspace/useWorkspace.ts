@@ -305,7 +305,11 @@ export function useWorkspace() {
       setAgents([{ id: STAGE_AGENTS.planning.id, name: STAGE_AGENTS.planning.name, status: "running" }]);
       setTeamCaption("Researching your brief...");
       pacerRef.current?.dispose();
-      const pacer = new Pacer((ev) => applyStudioEvent(ev, pid), setTypingAuthor);
+      const pacer = new Pacer(
+        (ev) => applyStudioEvent(ev, pid),
+        setTypingAuthor,
+        (awaiting) => setStudio((prev) => ({ ...prev, awaitingContinue: awaiting })),
+      );
       pacerRef.current = pacer;
       const es = new EventSource(`/api/studio/stream?project_id=${encodeURIComponent(pid)}`);
       esRef.current = es;
@@ -349,6 +353,10 @@ export function useWorkspace() {
 
   const skipStudioPacing = useCallback(() => {
     pacerRef.current?.skip();
+  }, []);
+
+  const continueStudioSection = useCallback(() => {
+    pacerRef.current?.resume();
   }, []);
 
   const startRun = useCallback(
@@ -522,6 +530,7 @@ export function useWorkspace() {
         total: sections.length,
         slot: null,
         records: [],
+        awaitingContinue: false,
         sections: sections.map((s) => ({ ...s, owner: STAGE_AGENTS.planning.id })),
       });
     } else if ((st.studio && !st.studio_done) || (st.phase === "running" && !proj.result)) {
@@ -972,5 +981,6 @@ export function useWorkspace() {
     typingAuthor,
     answerStudioAsk,
     skipStudioPacing,
+    continueStudioSection,
   };
 }

@@ -6,6 +6,9 @@
  *  - banter replies get extra 900–1600 ms jitter after their target is visible
  *  - non-chat events keep a 500 ms floor so the assembly reads as deliberate
  *  - skip() flushes everything instantly (also the reduced-motion default)
+ *  - after each section lands (phase_done), the pacer PAUSES and waits for an
+ *    explicit resume() -- sections no longer auto-advance one into the next.
+ *    skip() still flushes past any pending pause, for the "Skip ahead" escape hatch.
  */
 import type { StudioEvent } from "./studioTypes";
 
@@ -18,20 +21,32 @@ export class Pacer {
   private skipping = REDUCED;
   private disposed = false;
   private timer: ReturnType<typeof setTimeout> | null = null;
+  private paused = false;
 
   constructor(
     private apply: (ev: StudioEvent) => void,
     private setTyping: (author: string | null) => void,
+    private setAwaitingContinue: (awaiting: boolean) => void = () => {},
   ) {}
 
   enqueue(ev: StudioEvent) {
     this.queue.push(ev);
+    if (!this.running && !this.paused) void this.drain();
+  }
+
+  /** Called by the "Continue to next section" button. */
+  resume() {
+    if (!this.paused) return;
+    this.paused = false;
+    this.setAwaitingContinue(false);
     if (!this.running) void this.drain();
   }
 
   /** Flush everything immediately (skip-ahead control / reduced motion). */
   skip() {
     this.skipping = true;
+    this.paused = false;
+    this.setAwaitingContinue(false);
     if (this.timer) {
       clearTimeout(this.timer);
       this.timer = null;
@@ -78,6 +93,12 @@ export class Pacer {
       }
       if (this.disposed) return;
       this.apply(ev);
+      if (ev.type === "phase_done" && !this.skipping) {
+        this.paused = true;
+        this.setAwaitingContinue(true);
+        this.running = false;
+        return;
+      }
     }
     this.running = false;
   }

@@ -1,8 +1,9 @@
+import type { TableHTMLAttributes } from "react";
 import { styled } from "@mui/material/styles";
 import { indigoTint, tokens } from "../../theme/tokens";
 
 /** Shared data-table look for the workflow stages — dense, legible, glass-tinted. */
-export const PlanTable = styled("table")({
+const StyledTable = styled("table")({
   width: "100%",
   borderCollapse: "collapse",
   margin: "6px 0",
@@ -15,3 +16,13 @@ export const PlanTable = styled("table")({
   },
   th: { color: tokens.color.primary, fontWeight: 700, background: indigoTint(0.06) },
 });
+
+/** Wrapped in its own horizontal-scroll container so a wide table (many columns) scrolls
+ * inside its card instead of pushing the card wider than the column it sits in. */
+export function PlanTable(props: TableHTMLAttributes<HTMLTableElement>) {
+  return (
+    <div style={{ width: "100%", maxWidth: "100%", overflowX: "auto" }}>
+      <StyledTable {...props} />
+    </div>
+  );
+}

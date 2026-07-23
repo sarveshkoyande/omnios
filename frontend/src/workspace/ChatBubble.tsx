@@ -6,7 +6,7 @@ import { tokens } from "../theme/tokens";
 export const AgentBubble = styled("div")(({ theme }) => ({
   position: "relative",
   width: "fit-content",
-  maxWidth: "60%",
+  maxWidth: "90%",
   minWidth: 0,
   padding: theme.spacing(2.5, 3.5),
   borderTopLeftRadius: 4,
@@ -15,7 +15,7 @@ export const AgentBubble = styled("div")(({ theme }) => ({
   border: `1px solid ${tokens.color.outline}`,
   boxShadow: "none",
   color: tokens.color.text,
-  fontSize: tokens.fontSize.md,
+  fontSize: 13,
   lineHeight: 1.6,
   overflowWrap: "break-word",
   wordBreak: "break-word",
@@ -34,7 +34,7 @@ export const AgentBubble = styled("div")(({ theme }) => ({
 /** UserBubble — solid brand card, white text, right-aligned. */
 export const UserBubble = styled("div")(({ theme }) => ({
   width: "fit-content",
-  maxWidth: "60%",
+  maxWidth: "90%",
   marginLeft: "auto",
   padding: theme.spacing(2.5, 3.5),
   borderTopRightRadius: 4,
@@ -42,7 +42,7 @@ export const UserBubble = styled("div")(({ theme }) => ({
   background: tokens.color.primary,
   color: "#fff",
   boxShadow: "none",
-  fontSize: tokens.fontSize.md,
+  fontSize: 13,
   lineHeight: 1.6,
   overflowWrap: "break-word",
   wordBreak: "break-word",
@@ -56,14 +56,14 @@ export const NarrationLine = styled("div")(({ theme }) => ({
   borderBottom: `1px dashed ${tokens.color.outline}`,
   color: tokens.color.inkSoft,
   fontStyle: "italic",
-  fontSize: tokens.fontSize.md,
+  fontSize: 13,
 }));
 
 /** TurnBubble — a teammate's turn: flat panel with a left accent edge. */
 export const TurnBubble = styled("div")<{ accent: string }>(({ theme, accent }) => ({
   position: "relative",
   width: "fit-content",
-  maxWidth: "60%",
+  maxWidth: "90%",
   minWidth: 0,
   padding: theme.spacing(2.5, 3.5),
   borderRadius: tokens.radius.md,
@@ -72,7 +72,7 @@ export const TurnBubble = styled("div")<{ accent: string }>(({ theme, accent }) 
   borderLeft: `4px solid ${accent}`,
   boxShadow: "none",
   color: tokens.color.text,
-  fontSize: tokens.fontSize.md,
+  fontSize: 13,
   lineHeight: 1.6,
   overflowWrap: "break-word",
   wordBreak: "break-word",

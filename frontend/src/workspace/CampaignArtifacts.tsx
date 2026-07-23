@@ -263,7 +263,7 @@ export function CampaignArtifacts({
   return (
     <Box>
       {/* ------------------------------ Campaign Strategy ------------------------------ */}
-      <ConsolePanel title="Campaign Strategy — decision trail" icon="psychology" collapsible sx={{ mb: 3 }}>
+      <ConsolePanel id="decision-trail-anchor" title="Campaign Strategy — decision trail" icon="psychology" collapsible sx={{ mb: 3 }}>
         <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1.5 }}>
           {data.strategy.note}
         </Typography>
@@ -284,6 +284,7 @@ export function CampaignArtifacts({
 
       {/* ------------------------------ Campaign Brief --------------------------------- */}
       <ConsolePanel
+        id="campaign-brief-anchor"
         title={`Campaign Brief — ${b.header.brand || "brand"}`}
         icon="assignment_turned_in"
         action={

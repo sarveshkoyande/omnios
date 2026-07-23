@@ -163,10 +163,14 @@ export function AskCard({
       </Typography>
       <Box sx={{ mb: 0.75, display: "flex", flexWrap: "wrap", gap: 0.5, alignItems: "center" }}>
         {recommendationSource && <SourceChip>{recommendationSource}</SourceChip>}
-        <StatusChip title={llmStatus?.detail ?? undefined}>
-          <span className="material-symbols-outlined" style={{ fontSize: 14 }}>{llmIcon}</span>
-          {llmState}
-        </StatusChip>
+        {/* Only surface this status chip when something's actually wrong or still pending --
+            a routine successful generation doesn't need a "Claude generated this" badge. */}
+        {llmStatus?.ok !== true && (
+          <StatusChip title={llmStatus?.detail ?? undefined}>
+            <span className="material-symbols-outlined" style={{ fontSize: 14 }}>{llmIcon}</span>
+            {llmState}
+          </StatusChip>
+        )}
         {hasGroundingDetails && (
           <IconAction
             role="button"
