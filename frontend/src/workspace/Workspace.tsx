@@ -238,8 +238,11 @@ export function Workspace({
       </Box>
 
       <Box sx={{ display: "flex", flex: 1, minHeight: 0 }}>
-      {/* Left rail: read-only table of contents for the Stage 1 Sequential Plan Studio build. */}
-      {ws.projectId && ws.stage === 1 && (ws.studio.active || ws.studio.sections.length > 0 || ws.studio.done) && (
+      {/* Left rail: read-only table of contents for the Stage 1 Sequential Plan Studio build.
+          Shown from the very start of Stage 1 (even during the intake brief, before the studio
+          run has started) since all 19 titles are already known statically -- staying present
+          the whole time avoids a layout jump once the build actually kicks off. */}
+      {ws.projectId && ws.stage === 1 && (
         <PlanSectionsRail studio={ws.studio} />
       )}
 
@@ -252,9 +255,9 @@ export function Workspace({
                 <>
                   {/* Sequential Plan Studio: the canvas replaces the rail during a build.
                       Only the active section exists; the rest are folded or a whisper. */}
-                  {!ws.studio.done && <AssemblyCanvas studio={ws.studio} onSkip={ws.skipStudioPacing} onContinue={ws.continueStudioSection} />}
+                  {!ws.studio.done && <AssemblyCanvas studio={ws.studio} onSkip={ws.skipStudioPacing} />}
                   {ws.studio.records.length > 0 && !ws.studio.done && (
-                    <ConsolePanel title="Decision trail" icon="psychology" collapsible sx={{ mt: 3 }}>
+                    <ConsolePanel id="decision-trail-anchor" title="Decision trail" icon="psychology" collapsible sx={{ mt: 3 }}>
                       <DecisionTrail records={ws.studio.records} dense />
                     </ConsolePanel>
                   )}
@@ -283,7 +286,7 @@ export function Workspace({
                         </ArchivedPlanViews>
                       )}
                       <Box sx={{ mt: 3 }}>
-                        <AssemblyCanvas studio={ws.studio} onSkip={ws.skipStudioPacing} onContinue={ws.continueStudioSection} />
+                        <AssemblyCanvas studio={ws.studio} onSkip={ws.skipStudioPacing} />
                       </Box>
                     </Box>
                   )}
@@ -390,11 +393,17 @@ export function Workspace({
                 kickoffAwaitingStage={ws.kickoffAwaitingStage}
                 onKickoffUsePlan={ws.onKickoffUsePlan}
                 onKickoffWantUpload={ws.onKickoffWantUpload}
+                onContinueStudioSection={ws.continueStudioSection}
               />
             </Box>
 
             <Box sx={{ p: 2, pt: 1.5 }}>
-              <Composer disabled={ws.busy} onSend={ws.sendMessage} onUpload={ws.handleUpload} />
+              {/* Chat stays usable the whole time the Sequential Plan Studio is building --
+                  `busy` spans the entire multi-minute section-by-section build (it's only
+                  cleared at an ask/run_done/error), so gating the composer on it would lock
+                  the user out of chatting for most of Stage 1. Only a genuine single in-flight
+                  chat request (outside an active studio run) disables it. */}
+              <Composer disabled={ws.busy && !ws.studio.active} onSend={ws.sendMessage} onUpload={ws.handleUpload} />
             </Box>
           </>
         )}

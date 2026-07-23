@@ -264,6 +264,12 @@ export function Composer({
 
   useEffect(() => () => { recordingRef.current = false; recognizerRef.current?.stop(); }, []);
 
+  // Re-focus the moment typing becomes possible again, so the user never has to click back
+  // into the box after a send/response cycle re-enables it -- it should just keep the cursor.
+  useEffect(() => {
+    if (!disabled) textAreaRef.current?.focus();
+  }, [disabled]);
+
   return (
     <Box>
       {/* Registered so the conic gradient angle can be smoothly animated. */}

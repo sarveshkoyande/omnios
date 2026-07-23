@@ -15,11 +15,11 @@ import { STAGE_AGENTS } from "../types";
 import type { StudioState } from "./studioTypes";
 
 /**
- * AssemblyCanvas is the LIVE PLAN PREVIEW for the sequential studio run: instead of an
- * abstract build-trace (dots + placeholder cards), it renders the real Brand Engagement Plan
- * document growing section-by-section as each one lands, with the currently-drafting section
- * shown inline at the bottom. Auto-expanded while a build runs; collapses to a one-line
- * summary once done, since the finished brief + plan take over below it.
+ * AssemblyCanvas is the LIVE PLAN PREVIEW for the sequential studio run: renders the real
+ * Brand Engagement Plan content ONE section at a time (not an endless stacked scroll) --
+ * whichever section is currently "in view". By default that follows the live build (the
+ * section currently drafting, or the one that just landed); clicking a completed row in the
+ * Plan Sections rail pins the view to that section instead, until "Jump to latest" is clicked.
  */
 const shimmerMove = keyframes`
   from { background-position: 200% 0; }
@@ -34,11 +34,6 @@ const Shimmer = styled("div")({
   backgroundSize: "200% 100%",
   animation: `${shimmerMove} 1.2s linear infinite`,
 });
-
-const settleIn = keyframes`
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: none; }
-`;
 
 const GroundChip = styled("span")({
   display: "inline-flex",
@@ -71,27 +66,15 @@ const ProgressFill = styled("div")({
   transition: "width 500ms ease",
 });
 
-/** One real section of the plan, rendered as document content as soon as it lands. */
-const SectionBlock = styled("div")({
-  animation: `${settleIn} 420ms ease`,
-  paddingBottom: 18,
-  marginBottom: 18,
-  borderBottom: `1px solid ${tokens.color.outline}`,
-  "&:last-of-type": { borderBottom: "none", marginBottom: 0, paddingBottom: 0 },
-});
-
-export function AssemblyCanvas({
-  studio,
-  onSkip,
-  onContinue,
-}: {
-  studio: StudioState;
-  onSkip: () => void;
-  onContinue?: () => void;
-}) {
+export function AssemblyCanvas({ studio, onSkip }: { studio: StudioState; onSkip: () => void }) {
   const built = studio.sections.length;
   const activeDisplayNum = built + 1;
   const pct = studio.total > 0 ? Math.round((built / studio.total) * 100) : 0;
+  const latestSection = built > 0 ? studio.sections[built - 1] : null;
+
+  // null = "follow live" (whatever's currently drafting, or the most recently landed section).
+  // Set to a specific id when the user clicks an older completed section in the rail.
+  const [pinnedId, setPinnedId] = useState<string | null>(null);
 
   // Auto-open while the build is actively running so the live plan is visible instead of hiding
   // behind a collapsed summary; collapses once done (the finished plan renders below). The
@@ -102,22 +85,22 @@ export function AssemblyCanvas({
   }, [studio.active]);
   const expanded = manualExpanded ?? (studio.active && !studio.done);
 
-  // The Plan Sections rail dispatches this when a completed section is clicked --
-  // expand (if collapsed) and scroll the real rendered section into view.
+  // The Plan Sections rail dispatches this when a completed section is clicked -- pin the
+  // canvas to that section (expanding it first if collapsed).
   useEffect(() => {
     const onGoTo = (e: Event) => {
       const sectionId = (e as CustomEvent<{ sectionId: string }>).detail?.sectionId;
       if (!sectionId) return;
       setManualExpanded(true);
-      requestAnimationFrame(() => {
-        setTimeout(() => {
-          document.getElementById(`plan-section-${sectionId}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
-        }, 60);
-      });
+      setPinnedId(sectionId);
     };
     window.addEventListener(SCROLL_TO_SECTION_EVENT, onGoTo);
     return () => window.removeEventListener(SCROLL_TO_SECTION_EVENT, onGoTo);
   }, []);
+
+  const pinnedSection = pinnedId ? studio.sections.find((s) => s.section_id === pinnedId) ?? null : null;
+  const viewingPinned = pinnedSection !== null;
+  const showingLatestWhilePinned = viewingPinned && pinnedSection.section_id === latestSection?.section_id;
 
   return (
     <Accordion
@@ -146,6 +129,17 @@ export function AssemblyCanvas({
             >
               {studio.done ? "Plan canvas" : "Building your plan — live"} · {built}/{studio.total}
             </Typography>
+            {viewingPinned && !showingLatestWhilePinned && (
+              <Button
+                variant="text"
+                size="small"
+                onClick={(e) => { e.stopPropagation(); setPinnedId(null); }}
+                onFocus={(e) => e.stopPropagation()}
+                sx={{ fontSize: tokens.fontSize.xs }}
+              >
+                Jump to latest
+              </Button>
+            )}
             {!studio.done && (
               <Button
                 variant="text"
@@ -171,22 +165,22 @@ export function AssemblyCanvas({
         </Box>
       </AccordionSummary>
       <AccordionDetails>
-        {/* The live plan preview: every built section rendered as real document content,
-            growing top-to-bottom, with the active section drafting inline at the bottom. */}
+        {/* Exactly one section's content is shown at a time -- no stacked/endless scroll. */}
         <Box>
-          {studio.sections.map((s, idx) => (
-            <SectionBlock key={s.section_id} id={`plan-section-${s.section_id}`}>
-              <Typography
-                sx={{ fontSize: tokens.fontSize.xs, fontWeight: 700, color: "text.secondary", mb: 0.75 }}
-              >
-                {idx + 1} · {s.title}
+          {viewingPinned ? (
+            <>
+              <Typography sx={{ fontSize: tokens.fontSize.xs, fontWeight: 700, color: "text.secondary", mb: 0.75 }}>
+                {pinnedSection.num} · {pinnedSection.title}
               </Typography>
-              <PlanDocument html={s.html} editing={false} />
-            </SectionBlock>
-          ))}
-
-          {studio.slot && (
-            <SectionBlock>
+              <PlanDocument html={pinnedSection.html} editing={false} />
+              {studio.slot && (
+                <Typography variant="caption" sx={{ color: "text.secondary", fontStyle: "italic", display: "block", mt: 1.5 }}>
+                  A new section is drafting live — <Box component="span" onClick={() => setPinnedId(null)} sx={{ color: "primary.main", cursor: "pointer", fontWeight: 700 }}>jump to it</Box>.
+                </Typography>
+              )}
+            </>
+          ) : studio.slot ? (
+            <Box>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <Typography sx={{ fontWeight: 700, fontSize: tokens.fontSize.md, flex: 1 }}>
                   {activeDisplayNum} · {studio.slot.title}
@@ -242,22 +236,21 @@ export function AssemblyCanvas({
                   <Shimmer />
                 </Box>
               )}
-            </SectionBlock>
-          )}
-
-          {studio.awaitingContinue && !studio.done && (
-            <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 1.5, pt: 1.5, borderTop: `1px solid ${tokens.color.outline}` }}>
-              <Button variant="contained" size="small" onClick={onContinue} endIcon={<span className="material-symbols-outlined" style={{ fontSize: 16 }}>arrow_forward</span>}>
-                Continue to next section
-              </Button>
             </Box>
-          )}
-          {built === 0 && !studio.slot && !studio.awaitingContinue && (
+          ) : latestSection ? (
+            <Box>
+              <Typography sx={{ fontSize: tokens.fontSize.xs, fontWeight: 700, color: "text.secondary", mb: 0.75 }}>
+                {built} · {latestSection.title}
+              </Typography>
+              <PlanDocument html={latestSection.html} editing={false} />
+            </Box>
+          ) : (
             <Typography variant="body2" sx={{ color: "text.secondary" }}>
               Your plan will appear here section by section as it's built…
             </Typography>
           )}
-          {studio.done && (
+
+          {studio.done && !viewingPinned && (
             <Typography variant="body2" sx={{ color: "success.main", fontWeight: 600, textAlign: "center", mt: 1 }}>
               ✓ All {studio.total} sections assembled.
             </Typography>

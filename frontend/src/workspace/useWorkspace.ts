@@ -62,6 +62,7 @@ export interface ChatItem {
     | "persona-apply-result"
     | "brief-extract"
     | "studio-ask"
+    | "studio-continue"
     | "kickoff-choice";
   text?: string;
   clarify?: ClarifyPayload;
@@ -77,6 +78,10 @@ export interface ChatItem {
   askAnswered?: string;
   kickoffStage?: StageAgentId;
   kickoffResolved?: boolean;
+  /** "studio-continue" item: which section just landed, and whether it's already been
+   * continued past (so the card can show a resolved/quiet state instead of disappearing). */
+  continueSectionTitle?: string;
+  continueResolved?: boolean;
 }
 
 let seq = 0;
@@ -117,6 +122,7 @@ export function useWorkspace() {
   const esRef = useRef<EventSource | null>(null);
   const pacerRef = useRef<Pacer | null>(null);
   const slotOwnerNameRef = useRef("");
+  const sectionTitleRef = useRef<Record<string, string>>({});
   const studioActiveRef = useRef(false);
   const hasOpenQuestionsRef = useRef(false);
   const planFrozenRef = useRef(false);
@@ -243,6 +249,7 @@ export function useWorkspace() {
         setStudio((prev) => (prev.slot ? { ...prev, slot: { ...prev.slot, state: "draft", draftNote: ev.note } } : prev));
         break;
       case "section_html":
+        sectionTitleRef.current[ev.section_id] = ev.title;
         setStudio((prev) => ({
           ...prev,
           slot: null,
@@ -308,7 +315,15 @@ export function useWorkspace() {
       const pacer = new Pacer(
         (ev) => applyStudioEvent(ev, pid),
         setTypingAuthor,
-        (awaiting) => setStudio((prev) => ({ ...prev, awaitingContinue: awaiting })),
+        (awaiting, sectionId) => {
+          setStudio((prev) => ({ ...prev, awaitingContinue: awaiting }));
+          // The continue prompt lives IN CHAT (not as a canvas button) so it never blocks
+          // typing -- and shows up right alongside whatever else the user is discussing.
+          if (awaiting) {
+            const title = sectionId ? sectionTitleRef.current[sectionId] : undefined;
+            setItems((prev) => [...prev, { id: nextId(), kind: "studio-continue", continueSectionTitle: title }]);
+          }
+        },
       );
       pacerRef.current = pacer;
       const es = new EventSource(`/api/studio/stream?project_id=${encodeURIComponent(pid)}`);
@@ -353,10 +368,18 @@ export function useWorkspace() {
 
   const skipStudioPacing = useCallback(() => {
     pacerRef.current?.skip();
+    setItems((prev) => prev.map((it) => (it.kind === "studio-continue" && !it.continueResolved ? { ...it, continueResolved: true } : it)));
   }, []);
 
-  const continueStudioSection = useCallback(() => {
+  const continueStudioSection = useCallback((itemId?: string) => {
     pacerRef.current?.resume();
+    setItems((prev) =>
+      prev.map((it) =>
+        it.kind === "studio-continue" && (itemId ? it.id === itemId : !it.continueResolved)
+          ? { ...it, continueResolved: true }
+          : it,
+      ),
+    );
   }, []);
 
   const startRun = useCallback(

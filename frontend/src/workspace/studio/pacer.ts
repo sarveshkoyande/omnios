@@ -26,7 +26,7 @@ export class Pacer {
   constructor(
     private apply: (ev: StudioEvent) => void,
     private setTyping: (author: string | null) => void,
-    private setAwaitingContinue: (awaiting: boolean) => void = () => {},
+    private setAwaitingContinue: (awaiting: boolean, sectionId?: string) => void = () => {},
   ) {}
 
   enqueue(ev: StudioEvent) {
@@ -95,7 +95,7 @@ export class Pacer {
       this.apply(ev);
       if (ev.type === "phase_done" && !this.skipping) {
         this.paused = true;
-        this.setAwaitingContinue(true);
+        this.setAwaitingContinue(true, ev.section_id);
         this.running = false;
         return;
       }

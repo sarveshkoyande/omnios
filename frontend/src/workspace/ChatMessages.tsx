@@ -8,6 +8,7 @@ import { PersonaApplyBar, PersonaApplyResultCard } from "./persona/PersonaApplyB
 import { PersonaOfferCard } from "./persona/PersonaOfferCard";
 import { PersonaReviewCard } from "./persona/PersonaReviewCard";
 import { AskCard } from "./studio/AskCard";
+import { StudioContinueCard } from "./studio/StudioContinueCard";
 import { KickoffCard } from "./KickoffCard";
 import { TypingDots } from "./TypingDots";
 import type { ChatItem } from "./useWorkspace";
@@ -32,6 +33,7 @@ export function ChatMessages({
   kickoffAwaitingStage,
   onKickoffUsePlan,
   onKickoffWantUpload,
+  onContinueStudioSection,
 }: {
   items: ChatItem[];
   onSkipPersonaOffer: (itemId: string) => void;
@@ -43,6 +45,7 @@ export function ChatMessages({
   kickoffAwaitingStage?: StageAgentId | null;
   onKickoffUsePlan?: (itemId: string, stageId: StageAgentId) => void;
   onKickoffWantUpload?: (itemId: string, stageId: StageAgentId) => void;
+  onContinueStudioSection?: (itemId: string) => void;
 }) {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 4, py: 2.5 }}>
@@ -152,6 +155,15 @@ export function ChatMessages({
                 onAnswer={(value) => onAnswerAsk?.(item.id, item.ask!, value)}
               />
             ) : null;
+          case "studio-continue":
+            return (
+              <StudioContinueCard
+                key={item.id}
+                sectionTitle={item.continueSectionTitle}
+                resolved={item.continueResolved}
+                onContinue={() => onContinueStudioSection?.(item.id)}
+              />
+            );
           case "kickoff-choice":
             return item.kickoffStage ? (
               <KickoffCard
