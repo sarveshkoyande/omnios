@@ -107,6 +107,252 @@ CREATE INDEX IF NOT EXISTS idx_label_message_brand ON regulatory_label_message(b
 CREATE INDEX IF NOT EXISTS idx_label_message_section ON regulatory_label_message(label_section);
 CREATE INDEX IF NOT EXISTS idx_label_message_therapy ON regulatory_label_message(therapy_area);
 
+CREATE TABLE IF NOT EXISTS openfda_event_reaction_count (
+    event_reaction_id TEXT PRIMARY KEY,
+    source_document_id INTEGER NOT NULL,
+    brand TEXT NOT NULL,
+    reaction_term TEXT NOT NULL,
+    reaction_count INTEGER NOT NULL DEFAULT 0,
+    api_last_updated TEXT,
+    source_url TEXT,
+    updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_openfda_event_reaction_brand ON openfda_event_reaction_count(brand);
+CREATE INDEX IF NOT EXISTS idx_openfda_event_reaction_term ON openfda_event_reaction_count(reaction_term);
+
+CREATE TABLE IF NOT EXISTS openfda_event_serious_count (
+    event_serious_id TEXT PRIMARY KEY,
+    source_document_id INTEGER NOT NULL,
+    brand TEXT NOT NULL,
+    serious_code TEXT NOT NULL,
+    serious_label TEXT,
+    report_count INTEGER NOT NULL DEFAULT 0,
+    api_last_updated TEXT,
+    source_url TEXT,
+    updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_openfda_event_serious_brand ON openfda_event_serious_count(brand);
+
+CREATE TABLE IF NOT EXISTS openfda_drug_shortage (
+    shortage_id TEXT PRIMARY KEY,
+    source_document_id INTEGER NOT NULL,
+    status TEXT,
+    update_type TEXT,
+    initial_posting_date TEXT,
+    update_date TEXT,
+    discontinued_date TEXT,
+    package_ndc TEXT,
+    generic_name TEXT,
+    brand_names TEXT,
+    manufacturer_names TEXT,
+    company_name TEXT,
+    availability TEXT,
+    shortage_reason TEXT,
+    related_info TEXT,
+    contact_info TEXT,
+    therapeutic_category TEXT,
+    dosage_form TEXT,
+    presentation TEXT,
+    is_oncology_priority INTEGER NOT NULL DEFAULT 0,
+    source_url TEXT,
+    api_last_updated TEXT,
+    updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_openfda_shortage_status ON openfda_drug_shortage(status);
+CREATE INDEX IF NOT EXISTS idx_openfda_shortage_generic ON openfda_drug_shortage(generic_name);
+CREATE INDEX IF NOT EXISTS idx_openfda_shortage_oncology ON openfda_drug_shortage(is_oncology_priority);
+
+CREATE TABLE IF NOT EXISTS openfda_drug_recall (
+    recall_record_id TEXT PRIMARY KEY,
+    source_document_id INTEGER NOT NULL,
+    matched_brand TEXT,
+    query_term TEXT,
+    term_type TEXT,
+    recall_number TEXT,
+    classification TEXT,
+    status TEXT,
+    recalling_firm TEXT,
+    voluntary_mandated TEXT,
+    product_type TEXT,
+    product_description TEXT,
+    reason_for_recall TEXT,
+    distribution_pattern TEXT,
+    code_info TEXT,
+    initial_firm_notification TEXT,
+    recall_initiation_date TEXT,
+    report_date TEXT,
+    termination_date TEXT,
+    center_classification_date TEXT,
+    source_url TEXT,
+    api_last_updated TEXT,
+    updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_openfda_recall_brand ON openfda_drug_recall(matched_brand);
+CREATE INDEX IF NOT EXISTS idx_openfda_recall_classification ON openfda_drug_recall(classification);
+CREATE INDEX IF NOT EXISTS idx_openfda_recall_status ON openfda_drug_recall(status);
+CREATE INDEX IF NOT EXISTS idx_openfda_recall_report_date ON openfda_drug_recall(report_date);
+
+CREATE TABLE IF NOT EXISTS openfda_ndc_product (
+    ndc_product_id TEXT PRIMARY KEY,
+    source_document_id INTEGER NOT NULL,
+    matched_brand TEXT,
+    query_term TEXT,
+    query_field TEXT,
+    product_ndc TEXT,
+    brand_name TEXT,
+    generic_name TEXT,
+    labeler_name TEXT,
+    product_type TEXT,
+    marketing_category TEXT,
+    application_number TEXT,
+    dosage_form TEXT,
+    route TEXT,
+    active_ingredients TEXT,
+    pharm_class TEXT,
+    dea_schedule TEXT,
+    listing_expiration_date TEXT,
+    marketing_start_date TEXT,
+    marketing_end_date TEXT,
+    finished INTEGER,
+    source_url TEXT,
+    api_last_updated TEXT,
+    updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_openfda_ndc_brand ON openfda_ndc_product(matched_brand);
+CREATE INDEX IF NOT EXISTS idx_openfda_ndc_product_ndc ON openfda_ndc_product(product_ndc);
+CREATE INDEX IF NOT EXISTS idx_openfda_ndc_labeler ON openfda_ndc_product(labeler_name);
+
+CREATE TABLE IF NOT EXISTS openfda_ndc_package (
+    ndc_package_id TEXT PRIMARY KEY,
+    ndc_product_id TEXT NOT NULL,
+    source_document_id INTEGER NOT NULL,
+    matched_brand TEXT,
+    product_ndc TEXT,
+    package_ndc TEXT,
+    package_description TEXT,
+    marketing_start_date TEXT,
+    marketing_end_date TEXT,
+    sample INTEGER,
+    source_url TEXT,
+    updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_openfda_ndc_package_brand ON openfda_ndc_package(matched_brand);
+CREATE INDEX IF NOT EXISTS idx_openfda_ndc_package_ndc ON openfda_ndc_package(package_ndc);
+
+CREATE TABLE IF NOT EXISTS rxnorm_concept (
+    rxnorm_concept_id TEXT PRIMARY KEY,
+    source_document_id INTEGER NOT NULL,
+    matched_brand TEXT,
+    query_term TEXT,
+    term_type TEXT,
+    rxcui TEXT NOT NULL,
+    name TEXT,
+    synonym TEXT,
+    tty TEXT,
+    language TEXT,
+    suppress TEXT,
+    umlscui TEXT,
+    related_concept_count INTEGER NOT NULL DEFAULT 0,
+    historical_ndc_count INTEGER NOT NULL DEFAULT 0,
+    source_url TEXT,
+    updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_rxnorm_concept_brand ON rxnorm_concept(matched_brand);
+CREATE INDEX IF NOT EXISTS idx_rxnorm_concept_rxcui ON rxnorm_concept(rxcui);
+CREATE INDEX IF NOT EXISTS idx_rxnorm_concept_tty ON rxnorm_concept(tty);
+
+CREATE TABLE IF NOT EXISTS rxnorm_related_concept (
+    rxnorm_related_id TEXT PRIMARY KEY,
+    source_rxnorm_concept_id TEXT NOT NULL,
+    matched_brand TEXT,
+    source_rxcui TEXT NOT NULL,
+    related_rxcui TEXT NOT NULL,
+    related_name TEXT,
+    related_synonym TEXT,
+    related_tty TEXT,
+    language TEXT,
+    suppress TEXT,
+    umlscui TEXT,
+    updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_rxnorm_related_brand ON rxnorm_related_concept(matched_brand);
+CREATE INDEX IF NOT EXISTS idx_rxnorm_related_source ON rxnorm_related_concept(source_rxcui);
+CREATE INDEX IF NOT EXISTS idx_rxnorm_related_rxcui ON rxnorm_related_concept(related_rxcui);
+CREATE INDEX IF NOT EXISTS idx_rxnorm_related_tty ON rxnorm_related_concept(related_tty);
+
+CREATE TABLE IF NOT EXISTS fda_srlc_labeling_change (
+    srlc_change_id TEXT PRIMARY KEY,
+    source_document_id INTEGER NOT NULL,
+    matched_brand TEXT,
+    query_term TEXT,
+    drug_name TEXT,
+    active_ingredient TEXT,
+    application_number TEXT,
+    application_type TEXT,
+    supplement_date TEXT,
+    database_updated TEXT,
+    detail_url TEXT,
+    text_excerpt TEXT,
+    updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_fda_srlc_brand ON fda_srlc_labeling_change(matched_brand);
+CREATE INDEX IF NOT EXISTS idx_fda_srlc_drug ON fda_srlc_labeling_change(drug_name);
+CREATE INDEX IF NOT EXISTS idx_fda_srlc_supplement_date ON fda_srlc_labeling_change(supplement_date);
+
+CREATE TABLE IF NOT EXISTS nci_drug_dictionary_entry (
+    nci_drug_entry_id TEXT PRIMARY KEY,
+    source_document_id INTEGER NOT NULL,
+    matched_brand TEXT,
+    query_term TEXT,
+    term_type TEXT,
+    term_id TEXT,
+    nci_concept_id TEXT,
+    nci_concept_name TEXT,
+    name TEXT,
+    pretty_url_name TEXT,
+    first_letter TEXT,
+    term_name_type TEXT,
+    definition_text TEXT,
+    drug_info_summary_url TEXT,
+    alias_count INTEGER NOT NULL DEFAULT 0,
+    updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_nci_drug_brand ON nci_drug_dictionary_entry(matched_brand);
+CREATE INDEX IF NOT EXISTS idx_nci_drug_term_id ON nci_drug_dictionary_entry(term_id);
+CREATE INDEX IF NOT EXISTS idx_nci_drug_concept ON nci_drug_dictionary_entry(nci_concept_id);
+
+CREATE TABLE IF NOT EXISTS nci_drug_dictionary_alias (
+    nci_drug_alias_id TEXT PRIMARY KEY,
+    nci_drug_entry_id TEXT NOT NULL,
+    matched_brand TEXT,
+    alias_type TEXT,
+    alias_name TEXT,
+    updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_nci_drug_alias_brand ON nci_drug_dictionary_alias(matched_brand);
+CREATE INDEX IF NOT EXISTS idx_nci_drug_alias_name ON nci_drug_dictionary_alias(alias_name);
+
+CREATE TABLE IF NOT EXISTS nci_drug_information_summary (
+    nci_drug_info_id TEXT PRIMARY KEY,
+    source_document_id INTEGER NOT NULL,
+    matched_brand TEXT,
+    query_term TEXT,
+    nci_concept_name TEXT,
+    title TEXT,
+    us_brand_names TEXT,
+    fda_approved TEXT,
+    use_in_cancer TEXT,
+    posted_date TEXT,
+    updated_date TEXT,
+    link_count INTEGER NOT NULL DEFAULT 0,
+    source_url TEXT,
+    text_excerpt TEXT,
+    updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_nci_drug_info_brand ON nci_drug_information_summary(matched_brand);
+CREATE INDEX IF NOT EXISTS idx_nci_drug_info_concept ON nci_drug_information_summary(nci_concept_name);
+CREATE INDEX IF NOT EXISTS idx_nci_drug_info_updated ON nci_drug_information_summary(updated_date);
+
 CREATE TABLE IF NOT EXISTS dailymed_label (
     setid TEXT PRIMARY KEY,
     source_document_id INTEGER NOT NULL,
@@ -172,6 +418,27 @@ CREATE TABLE IF NOT EXISTS clinical_trial_intervention (
 );
 CREATE INDEX IF NOT EXISTS idx_trial_intervention_nct ON clinical_trial_intervention(nct_id);
 CREATE INDEX IF NOT EXISTS idx_trial_intervention_name ON clinical_trial_intervention(intervention_name);
+
+CREATE TABLE IF NOT EXISTS clinical_trial_location (
+    trial_location_id TEXT PRIMARY KEY,
+    nct_id TEXT NOT NULL,
+    facility TEXT,
+    city TEXT,
+    state TEXT,
+    zip TEXT,
+    country TEXT,
+    latitude REAL,
+    longitude REAL,
+    status TEXT,
+    contact_name TEXT,
+    contact_phone TEXT,
+    contact_email TEXT,
+    updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_trial_location_nct ON clinical_trial_location(nct_id);
+CREATE INDEX IF NOT EXISTS idx_trial_location_country ON clinical_trial_location(country);
+CREATE INDEX IF NOT EXISTS idx_trial_location_state ON clinical_trial_location(state);
+CREATE INDEX IF NOT EXISTS idx_trial_location_facility ON clinical_trial_location(facility);
 
 CREATE TABLE IF NOT EXISTS pubmed_article (
     pmid TEXT PRIMARY KEY,
@@ -274,6 +541,39 @@ CREATE TABLE IF NOT EXISTS search_interest_point (
 );
 CREATE INDEX IF NOT EXISTS idx_search_interest_point_term ON search_interest_point(term);
 CREATE INDEX IF NOT EXISTS idx_search_interest_point_date ON search_interest_point(date);
+
+CREATE TABLE IF NOT EXISTS cms_open_payment_general (
+    record_id TEXT PRIMARY KEY,
+    source_document_id INTEGER NOT NULL,
+    matched_brand TEXT NOT NULL,
+    covered_recipient_type TEXT,
+    covered_recipient_profile_id TEXT,
+    covered_recipient_npi TEXT,
+    recipient_name TEXT,
+    recipient_city TEXT,
+    recipient_state TEXT,
+    recipient_country TEXT,
+    recipient_primary_type TEXT,
+    recipient_specialty TEXT,
+    submitting_manufacturer TEXT,
+    payment_manufacturer TEXT,
+    total_amount_usd REAL,
+    date_of_payment TEXT,
+    form_of_payment TEXT,
+    nature_of_payment TEXT,
+    contextual_information TEXT,
+    related_product_indicator TEXT,
+    product_category_or_therapy_area TEXT,
+    associated_product TEXT,
+    program_year INTEGER,
+    payment_publication_date TEXT,
+    source_url TEXT,
+    updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_cms_open_payment_brand ON cms_open_payment_general(matched_brand);
+CREATE INDEX IF NOT EXISTS idx_cms_open_payment_npi ON cms_open_payment_general(covered_recipient_npi);
+CREATE INDEX IF NOT EXISTS idx_cms_open_payment_specialty ON cms_open_payment_general(recipient_specialty);
+CREATE INDEX IF NOT EXISTS idx_cms_open_payment_amount ON cms_open_payment_general(total_amount_usd);
 
 CREATE TABLE IF NOT EXISTS opdp_enforcement_action (
     action_id TEXT PRIMARY KEY,
@@ -668,6 +968,187 @@ FROM regulatory_label_message
 WHERE is_oncology_priority=1
 ORDER BY brand, label_section, message_text;
 
+CREATE VIEW IF NOT EXISTS v_openfda_event_oncology_reactions AS
+SELECT
+    brand,
+    reaction_term,
+    reaction_count,
+    api_last_updated,
+    source_url
+FROM openfda_event_reaction_count
+ORDER BY reaction_count DESC, brand, reaction_term;
+
+CREATE VIEW IF NOT EXISTS v_openfda_event_oncology_seriousness AS
+SELECT
+    brand,
+    serious_code,
+    serious_label,
+    report_count,
+    api_last_updated,
+    source_url
+FROM openfda_event_serious_count
+ORDER BY brand, serious_code;
+
+CREATE VIEW IF NOT EXISTS v_openfda_oncology_drug_shortages AS
+SELECT
+    status,
+    update_type,
+    initial_posting_date,
+    update_date,
+    generic_name,
+    brand_names,
+    manufacturer_names,
+    company_name,
+    availability,
+    shortage_reason,
+    related_info,
+    therapeutic_category,
+    presentation,
+    source_url,
+    api_last_updated
+FROM openfda_drug_shortage
+WHERE is_oncology_priority=1
+ORDER BY status, generic_name, update_date DESC, package_ndc;
+
+CREATE VIEW IF NOT EXISTS v_openfda_oncology_drug_recalls AS
+SELECT
+    matched_brand,
+    query_term,
+    term_type,
+    recall_number,
+    classification,
+    status,
+    recalling_firm,
+    product_description,
+    reason_for_recall,
+    distribution_pattern,
+    code_info,
+    recall_initiation_date,
+    report_date,
+    termination_date,
+    source_url,
+    api_last_updated
+FROM openfda_drug_recall
+ORDER BY report_date DESC, matched_brand, classification, recall_number;
+
+CREATE VIEW IF NOT EXISTS v_openfda_oncology_ndc_products AS
+SELECT
+    matched_brand,
+    query_term,
+    query_field,
+    product_ndc,
+    brand_name,
+    generic_name,
+    labeler_name,
+    product_type,
+    marketing_category,
+    application_number,
+    dosage_form,
+    route,
+    active_ingredients,
+    listing_expiration_date,
+    marketing_start_date,
+    marketing_end_date,
+    finished,
+    source_url,
+    api_last_updated
+FROM openfda_ndc_product
+ORDER BY matched_brand, brand_name, product_ndc;
+
+CREATE VIEW IF NOT EXISTS v_openfda_oncology_ndc_packages AS
+SELECT
+    p.matched_brand,
+    p.brand_name,
+    p.generic_name,
+    p.labeler_name,
+    p.marketing_category,
+    p.dosage_form,
+    p.route,
+    pkg.product_ndc,
+    pkg.package_ndc,
+    pkg.package_description,
+    pkg.marketing_start_date,
+    pkg.marketing_end_date,
+    pkg.sample,
+    pkg.source_url
+FROM openfda_ndc_package pkg
+JOIN openfda_ndc_product p ON p.ndc_product_id=pkg.ndc_product_id
+ORDER BY p.matched_brand, p.brand_name, pkg.package_ndc;
+
+CREATE VIEW IF NOT EXISTS v_rxnorm_oncology_concepts AS
+SELECT
+    matched_brand,
+    query_term,
+    term_type,
+    rxcui,
+    name,
+    synonym,
+    tty,
+    related_concept_count,
+    historical_ndc_count,
+    source_url
+FROM rxnorm_concept
+ORDER BY matched_brand, term_type, name, rxcui;
+
+CREATE VIEW IF NOT EXISTS v_rxnorm_oncology_related_concepts AS
+SELECT
+    matched_brand,
+    source_rxcui,
+    related_rxcui,
+    related_name,
+    related_synonym,
+    related_tty,
+    suppress
+FROM rxnorm_related_concept
+ORDER BY matched_brand, source_rxcui, related_tty, related_name;
+
+CREATE VIEW IF NOT EXISTS v_fda_srlc_oncology_labeling_changes AS
+SELECT
+    matched_brand,
+    query_term,
+    drug_name,
+    active_ingredient,
+    application_number,
+    application_type,
+    supplement_date,
+    database_updated,
+    detail_url,
+    text_excerpt
+FROM fda_srlc_labeling_change
+ORDER BY supplement_date DESC, database_updated DESC, matched_brand, drug_name;
+
+CREATE VIEW IF NOT EXISTS v_nci_oncology_drug_dictionary AS
+SELECT
+    matched_brand,
+    query_term,
+    term_type,
+    term_id,
+    nci_concept_id,
+    nci_concept_name,
+    name,
+    term_name_type,
+    definition_text,
+    drug_info_summary_url,
+    alias_count
+FROM nci_drug_dictionary_entry
+ORDER BY matched_brand, term_type, nci_concept_name, term_id;
+
+CREATE VIEW IF NOT EXISTS v_nci_oncology_drug_information_summaries AS
+SELECT
+    matched_brand,
+    query_term,
+    nci_concept_name,
+    title,
+    us_brand_names,
+    fda_approved,
+    use_in_cancer,
+    posted_date,
+    updated_date,
+    source_url,
+    text_excerpt
+FROM nci_drug_information_summary
+ORDER BY matched_brand, nci_concept_name, title;
+
 CREATE VIEW IF NOT EXISTS v_dailymed_oncology_priority AS
 SELECT
     brand,
@@ -760,17 +1241,43 @@ SELECT
     t.start_date,
     t.primary_completion_date,
     t.last_update_post_date,
+    COUNT(DISTINCT l.trial_location_id) AS location_count,
+    GROUP_CONCAT(DISTINCT l.country) AS countries,
+    GROUP_CONCAT(DISTINCT CASE WHEN l.country='United States' THEN l.state END) AS us_states,
+    GROUP_CONCAT(DISTINCT l.facility) AS facilities,
     GROUP_CONCAT(DISTINCT c.condition) AS conditions,
     GROUP_CONCAT(DISTINCT i.intervention_name) AS interventions,
     t.source_url
 FROM clinical_trial t
 LEFT JOIN clinical_trial_condition c ON c.nct_id=t.nct_id
 LEFT JOIN clinical_trial_intervention i ON i.nct_id=t.nct_id
+LEFT JOIN clinical_trial_location l ON l.nct_id=t.nct_id
 WHERE t.is_oncology_priority=1
 GROUP BY t.nct_id, t.brief_title, t.overall_status, t.phases, t.study_type, t.primary_purpose,
          t.enrollment_count, t.lead_sponsor, t.lead_sponsor_class, t.is_top_pharma_sponsor,
          t.start_date, t.primary_completion_date, t.last_update_post_date, t.source_url
 ORDER BY t.last_update_post_date DESC, t.nct_id;
+
+CREATE VIEW IF NOT EXISTS v_oncology_clinical_trial_locations AS
+SELECT
+    t.nct_id,
+    t.brief_title,
+    t.overall_status,
+    t.phases,
+    t.lead_sponsor,
+    l.facility,
+    l.city,
+    l.state,
+    l.zip,
+    l.country,
+    l.latitude,
+    l.longitude,
+    l.status,
+    t.source_url
+FROM clinical_trial t
+JOIN clinical_trial_location l ON l.nct_id=t.nct_id
+WHERE t.is_oncology_priority=1
+ORDER BY l.country, l.state, l.city, l.facility, t.nct_id;
 
 CREATE VIEW IF NOT EXISTS v_oncology_pubmed_articles AS
 SELECT
@@ -832,6 +1339,34 @@ FROM search_interest_series
 WHERE is_oncology_priority=1
 ORDER BY avg_interest DESC, max_interest DESC, term;
 
+CREATE VIEW IF NOT EXISTS v_cms_open_payments_oncology AS
+SELECT
+    matched_brand AS brand,
+    program_year,
+    COUNT(*) AS payment_count,
+    ROUND(SUM(COALESCE(total_amount_usd, 0)), 2) AS total_amount_usd,
+    COUNT(DISTINCT covered_recipient_npi) AS distinct_recipient_npis,
+    COUNT(DISTINCT recipient_specialty) AS distinct_specialties,
+    source_url
+FROM cms_open_payment_general
+GROUP BY matched_brand, program_year, source_url
+ORDER BY total_amount_usd DESC, payment_count DESC, matched_brand;
+
+CREATE VIEW IF NOT EXISTS v_cms_open_payments_top_recipients AS
+SELECT
+    matched_brand AS brand,
+    program_year,
+    covered_recipient_npi,
+    recipient_name,
+    recipient_state,
+    recipient_specialty,
+    COUNT(*) AS payment_count,
+    ROUND(SUM(COALESCE(total_amount_usd, 0)), 2) AS total_amount_usd,
+    source_url
+FROM cms_open_payment_general
+GROUP BY matched_brand, program_year, covered_recipient_npi, recipient_name, recipient_state, recipient_specialty, source_url
+ORDER BY total_amount_usd DESC, payment_count DESC, recipient_name;
+
 CREATE VIEW IF NOT EXISTS v_oncology_brand_evidence_summary AS
 SELECT
     b.brand,
@@ -870,6 +1405,18 @@ SELECT
     COALESCE((SELECT COUNT(*) FROM ema_medicine em WHERE lower(em.name_of_medicine)=lower(b.brand)), 0) AS ema_medicine_count,
     COALESCE((SELECT COUNT(*) FROM sec_filing_brand_mention sm WHERE lower(sm.brand)=lower(b.brand)), 0) AS sec_annual_filing_mention_count,
     COALESCE((SELECT COUNT(*) FROM search_interest_series si WHERE lower(si.term)=lower(b.brand)), 0) AS search_interest_series_count,
+    COALESCE((SELECT COUNT(*) FROM cms_open_payment_general op WHERE lower(op.matched_brand)=lower(b.brand)), 0) AS open_payment_count,
+    COALESCE((SELECT COUNT(*) FROM openfda_event_reaction_count er WHERE lower(er.brand)=lower(b.brand)), 0) AS adverse_event_reaction_count,
+    COALESCE((SELECT COUNT(*) FROM openfda_drug_shortage ds
+              WHERE instr(lower(ds.brand_names), lower(b.brand)) > 0
+                 OR instr(lower(ds.generic_name), lower(b.brand)) > 0
+                 OR instr(lower(ds.presentation), lower(b.brand)) > 0), 0) AS drug_shortage_count,
+    COALESCE((SELECT COUNT(*) FROM openfda_drug_recall dr WHERE lower(dr.matched_brand)=lower(b.brand)), 0) AS drug_recall_count,
+    COALESCE((SELECT COUNT(*) FROM openfda_ndc_product np WHERE lower(np.matched_brand)=lower(b.brand)), 0) AS ndc_product_count,
+    COALESCE((SELECT COUNT(*) FROM rxnorm_concept rc WHERE lower(rc.matched_brand)=lower(b.brand)), 0) AS rxnorm_concept_count,
+    COALESCE((SELECT COUNT(*) FROM fda_srlc_labeling_change slc WHERE lower(slc.matched_brand)=lower(b.brand)), 0) AS srlc_labeling_change_count,
+    COALESCE((SELECT COUNT(*) FROM nci_drug_dictionary_entry nd WHERE lower(nd.matched_brand)=lower(b.brand)), 0) AS nci_drug_dictionary_count,
+    COALESCE((SELECT COUNT(*) FROM nci_drug_information_summary ni WHERE lower(ni.matched_brand)=lower(b.brand)), 0) AS nci_drug_info_summary_count,
     (
         COALESCE((SELECT COUNT(*) FROM brand_message bm WHERE lower(bm.brand)=lower(b.brand)), 0) +
         COALESCE((SELECT COUNT(*) FROM regulatory_label_message lm WHERE lower(lm.brand)=lower(b.brand)), 0) +
@@ -905,7 +1452,24 @@ SELECT
                      OR lower(pb.ref_product_proprietary_name)=lower(b.brand)), 0) +
         COALESCE((SELECT COUNT(*) FROM ema_medicine em WHERE lower(em.name_of_medicine)=lower(b.brand)), 0) +
         COALESCE((SELECT COUNT(*) FROM sec_filing_brand_mention sm WHERE lower(sm.brand)=lower(b.brand)), 0) +
-        COALESCE((SELECT COUNT(*) FROM search_interest_series si WHERE lower(si.term)=lower(b.brand)), 0)
+        COALESCE((SELECT COUNT(*) FROM search_interest_series si WHERE lower(si.term)=lower(b.brand)), 0) +
+        COALESCE((SELECT COUNT(*) FROM cms_open_payment_general op WHERE lower(op.matched_brand)=lower(b.brand)), 0) +
+        COALESCE((SELECT COUNT(*) FROM openfda_event_reaction_count er WHERE lower(er.brand)=lower(b.brand)), 0) +
+        COALESCE((SELECT COUNT(*) FROM openfda_drug_shortage ds
+                  WHERE instr(lower(ds.brand_names), lower(b.brand)) > 0
+                     OR instr(lower(ds.generic_name), lower(b.brand)) > 0
+                     OR instr(lower(ds.presentation), lower(b.brand)) > 0), 0) +
+        COALESCE((SELECT COUNT(*) FROM openfda_drug_recall dr WHERE lower(dr.matched_brand)=lower(b.brand)), 0)
+        +
+        COALESCE((SELECT COUNT(*) FROM openfda_ndc_product np WHERE lower(np.matched_brand)=lower(b.brand)), 0)
+        +
+        COALESCE((SELECT COUNT(*) FROM rxnorm_concept rc WHERE lower(rc.matched_brand)=lower(b.brand)), 0)
+        +
+        COALESCE((SELECT COUNT(*) FROM fda_srlc_labeling_change slc WHERE lower(slc.matched_brand)=lower(b.brand)), 0)
+        +
+        COALESCE((SELECT COUNT(*) FROM nci_drug_dictionary_entry nd WHERE lower(nd.matched_brand)=lower(b.brand)), 0)
+        +
+        COALESCE((SELECT COUNT(*) FROM nci_drug_information_summary ni WHERE lower(ni.matched_brand)=lower(b.brand)), 0)
     ) AS total_evidence_count
 FROM oncology_brand_seed b
 ORDER BY total_evidence_count DESC, b.brand;
@@ -1535,8 +2099,8 @@ def _extract_company_from_body(body: str) -> str:
     for company in AWARD_PHARMA_COMPANY_HINTS:
         if company.lower() in body_l:
             return company
-    if "•" in body:
-        bits = [bit.strip() for bit in body.split("•") if bit.strip()]
+    if "â€¢" in body:
+        bits = [bit.strip() for bit in body.split("â€¢") if bit.strip()]
         return bits[-1] if bits else ""
     agency_match = re.search(r"\bfor\s+(.+?)\.\s+Agency:", body, flags=re.IGNORECASE)
     if agency_match:
@@ -1555,8 +2119,8 @@ def _extract_company_from_body(body: str) -> str:
 
 
 def _extract_campaign_from_body(body: str) -> str:
-    if "•" in body:
-        bits = [bit.strip() for bit in body.split("•") if bit.strip()]
+    if "â€¢" in body:
+        bits = [bit.strip() for bit in body.split("â€¢") if bit.strip()]
         return bits[0] if bits else body.strip()
     quoted = re.search(r"[\"\u201c?]([^\"\u201d?]+)[\"\u201d?]", body)
     if quoted:
@@ -1583,7 +2147,7 @@ def _previous_fierce_category(lines: list[str], idx: int) -> str:
         if (
             candidate
             and candidate not in FIERCE_SKIP_LINES
-            and candidate != "•"
+            and candidate != "â€¢"
             and not candidate.startswith("Sponsored by")
             and not candidate.startswith("Category Sponsored")
         ):
@@ -1603,7 +2167,7 @@ def _fierce_body_after(lines: list[str], idx: int, max_parts: int = 4) -> str:
         if candidate.startswith("Sponsored by") or candidate.startswith("Category Sponsored"):
             cursor += 1
             continue
-        if candidate in {"WINNER", "Badge of Honor", "Badge of Honor •"}:
+        if candidate in {"WINNER", "Badge of Honor", "Badge of Honor â€¢"}:
             break
         if cursor + 1 < len(lines) and lines[cursor + 1].startswith("Sponsored by"):
             break
@@ -1616,7 +2180,7 @@ def _fierce_body_after(lines: list[str], idx: int, max_parts: int = 4) -> str:
             break
         cursor += 1
     body = " ".join(parts)
-    body = re.sub(r"\s*•\s*", " • ", body)
+    body = re.sub(r"\s*â€¢\s*", " â€¢ ", body)
     return " ".join(body.split()).strip()
 
 
@@ -1630,7 +2194,7 @@ def _upsert_fierce_award_mentions(
 ) -> int:
     written = 0
     for line_no, line in enumerate(lines, start=1):
-        if line not in {"WINNER", "Badge of Honor", "Badge of Honor •"}:
+        if line not in {"WINNER", "Badge of Honor", "Badge of Honor â€¢"}:
             continue
         category = _previous_fierce_category(lines, line_no - 1)
         body = _fierce_body_after(lines, line_no - 1, max_parts=1 if line == "WINNER" else 4)
@@ -3271,13 +3835,154 @@ def _upsert_search_interest(conn: sqlite3.Connection) -> dict[str, int]:
     return counts
 
 
+OPEN_PAYMENT_PRODUCT_SLOTS = range(1, 6)
+
+
+def _money(value: Any) -> float | None:
+    try:
+        return float(str(value or "").replace("$", "").replace(",", "").strip())
+    except Exception:
+        return None
+
+
+def _first_matching_open_payment_product(row: dict[str, Any], brand: str) -> tuple[str, str]:
+    brand_l = brand.lower()
+    first_product = ""
+    first_category = ""
+    for slot in OPEN_PAYMENT_PRODUCT_SLOTS:
+        product = str(row.get(f"name_of_drug_or_biological_or_device_or_medical_supply_{slot}") or "").strip()
+        category = str(row.get(f"product_category_or_therapeutic_area_{slot}") or "").strip()
+        if product and not first_product:
+            first_product = product
+            first_category = category
+        if product and brand_l in product.lower():
+            return product, category
+    return first_product, first_category
+
+
+def _upsert_open_payments(conn: sqlite3.Connection) -> int:
+    conn.execute("DELETE FROM cms_open_payment_general")
+    docs = conn.execute(
+        """
+        SELECT id, search_term, title, url, blob_path, metadata_json
+        FROM documents
+        WHERE source='cms_open_payments:general_payments'
+          AND doc_type='open_payments_general_payments'
+        """
+    ).fetchall()
+    written = 0
+    for doc in docs:
+        brand = (doc["search_term"] or "").strip()
+        if not brand:
+            continue
+        try:
+            payload = json.loads(_load_blob(doc["blob_path"]) or "{}")
+        except Exception:
+            continue
+        for row in payload.get("rows", []):
+            if not isinstance(row, dict):
+                continue
+            record_id = str(row.get("record_id") or "").strip()
+            if not record_id:
+                continue
+            product, category = _first_matching_open_payment_product(row, brand)
+            recipient_name = " ".join(
+                str(row.get(key) or "").strip()
+                for key in [
+                    "covered_recipient_first_name",
+                    "covered_recipient_middle_name",
+                    "covered_recipient_last_name",
+                ]
+                if str(row.get(key) or "").strip()
+            )
+            try:
+                program_year = int(row.get("program_year")) if row.get("program_year") else None
+            except Exception:
+                program_year = None
+            conn.execute(
+                """
+                INSERT INTO cms_open_payment_general
+                    (record_id, source_document_id, matched_brand, covered_recipient_type,
+                     covered_recipient_profile_id, covered_recipient_npi, recipient_name,
+                     recipient_city, recipient_state, recipient_country, recipient_primary_type,
+                     recipient_specialty, submitting_manufacturer, payment_manufacturer,
+                     total_amount_usd, date_of_payment, form_of_payment, nature_of_payment,
+                     contextual_information, related_product_indicator, product_category_or_therapy_area,
+                     associated_product, program_year, payment_publication_date, source_url, updated_at)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                ON CONFLICT(record_id) DO UPDATE SET
+                    source_document_id=excluded.source_document_id,
+                    matched_brand=excluded.matched_brand,
+                    covered_recipient_type=excluded.covered_recipient_type,
+                    covered_recipient_profile_id=excluded.covered_recipient_profile_id,
+                    covered_recipient_npi=excluded.covered_recipient_npi,
+                    recipient_name=excluded.recipient_name,
+                    recipient_city=excluded.recipient_city,
+                    recipient_state=excluded.recipient_state,
+                    recipient_country=excluded.recipient_country,
+                    recipient_primary_type=excluded.recipient_primary_type,
+                    recipient_specialty=excluded.recipient_specialty,
+                    submitting_manufacturer=excluded.submitting_manufacturer,
+                    payment_manufacturer=excluded.payment_manufacturer,
+                    total_amount_usd=excluded.total_amount_usd,
+                    date_of_payment=excluded.date_of_payment,
+                    form_of_payment=excluded.form_of_payment,
+                    nature_of_payment=excluded.nature_of_payment,
+                    contextual_information=excluded.contextual_information,
+                    related_product_indicator=excluded.related_product_indicator,
+                    product_category_or_therapy_area=excluded.product_category_or_therapy_area,
+                    associated_product=excluded.associated_product,
+                    program_year=excluded.program_year,
+                    payment_publication_date=excluded.payment_publication_date,
+                    source_url=excluded.source_url,
+                    updated_at=excluded.updated_at
+                """,
+                (
+                    record_id,
+                    doc["id"],
+                    brand,
+                    row.get("covered_recipient_type", ""),
+                    row.get("covered_recipient_profile_id", ""),
+                    row.get("covered_recipient_npi", ""),
+                    recipient_name,
+                    row.get("recipient_city", ""),
+                    row.get("recipient_state", ""),
+                    row.get("recipient_country", ""),
+                    row.get("covered_recipient_primary_type_1", ""),
+                    row.get("covered_recipient_specialty_1", ""),
+                    row.get("submitting_applicable_manufacturer_or_applicable_gpo_name", ""),
+                    row.get("applicable_manufacturer_or_applicable_gpo_making_payment_name", ""),
+                    _money(row.get("total_amount_of_payment_usdollars")),
+                    row.get("date_of_payment", ""),
+                    row.get("form_of_payment_or_transfer_of_value", ""),
+                    row.get("nature_of_payment_or_transfer_of_value", ""),
+                    row.get("contextual_information", ""),
+                    row.get("related_product_indicator", ""),
+                    category,
+                    product,
+                    program_year,
+                    row.get("payment_publication_date", ""),
+                    doc["url"],
+                    _now(),
+                ),
+            )
+            written += 1
+    return written
+
+
 def _upsert_clinical_trials(conn: sqlite3.Connection) -> dict[str, int]:
-    counts = {"clinical_trials": 0, "clinical_trial_conditions": 0, "clinical_trial_interventions": 0}
+    counts = {
+        "clinical_trials": 0,
+        "clinical_trial_conditions": 0,
+        "clinical_trial_interventions": 0,
+        "clinical_trial_locations": 0,
+    }
     priority_brands = _priority_brand_set(conn)
     top_company_terms = _top_company_terms(conn)
     docs = conn.execute(
         "SELECT id, search_term, title, url, blob_path FROM documents WHERE source='clinicaltrials' AND doc_type='trial_record'"
     ).fetchall()
+    conn.execute("DELETE FROM clinical_trial_location")
     conn.execute("DELETE FROM clinical_trial_intervention")
     conn.execute("DELETE FROM clinical_trial_condition")
     conn.execute("DELETE FROM clinical_trial")
@@ -3293,6 +3998,7 @@ def _upsert_clinical_trials(conn: sqlite3.Connection) -> dict[str, int]:
         conditions_mod = protocol.get("conditionsModule", {})
         design_mod = protocol.get("designModule", {})
         arms_mod = protocol.get("armsInterventionsModule", {})
+        locations_mod = protocol.get("contactsLocationsModule", {})
 
         nct_id = ident.get("nctId", "")
         if not nct_id:
@@ -3430,6 +4136,58 @@ def _upsert_clinical_trials(conn: sqlite3.Connection) -> dict[str, int]:
                 (intervention_id, nct_id, intervention_type, name, is_brand, _now()),
             )
             counts["clinical_trial_interventions"] += 1
+
+        for idx, location in enumerate(locations_mod.get("locations", []) or [], start=1):
+            if not isinstance(location, dict):
+                continue
+            facility = str(location.get("facility") or "").strip()
+            city = str(location.get("city") or "").strip()
+            state = str(location.get("state") or "").strip()
+            country = str(location.get("country") or "").strip()
+            if not any([facility, city, state, country]):
+                continue
+            geo = location.get("geoPoint") or {}
+            contacts = location.get("contacts") or []
+            contact = contacts[0] if contacts and isinstance(contacts[0], dict) else {}
+            location_id = _slug(f"{nct_id}_location_{idx}_{facility}_{city}_{state}_{country}")[:160]
+            conn.execute(
+                """
+                INSERT INTO clinical_trial_location
+                    (trial_location_id, nct_id, facility, city, state, zip, country, latitude,
+                     longitude, status, contact_name, contact_phone, contact_email, updated_at)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                ON CONFLICT(trial_location_id) DO UPDATE SET
+                    facility=excluded.facility,
+                    city=excluded.city,
+                    state=excluded.state,
+                    zip=excluded.zip,
+                    country=excluded.country,
+                    latitude=excluded.latitude,
+                    longitude=excluded.longitude,
+                    status=excluded.status,
+                    contact_name=excluded.contact_name,
+                    contact_phone=excluded.contact_phone,
+                    contact_email=excluded.contact_email,
+                    updated_at=excluded.updated_at
+                """,
+                (
+                    location_id,
+                    nct_id,
+                    facility,
+                    city,
+                    state,
+                    str(location.get("zip") or "").strip(),
+                    country,
+                    geo.get("lat"),
+                    geo.get("lon"),
+                    str(location.get("status") or "").strip(),
+                    str(contact.get("name") or "").strip(),
+                    str(contact.get("phone") or "").strip(),
+                    str(contact.get("email") or "").strip(),
+                    _now(),
+                ),
+            )
+            counts["clinical_trial_locations"] += 1
     return counts
 
 
@@ -3680,6 +4438,811 @@ def _upsert_regulatory_label_messages(conn: sqlite3.Connection) -> int:
     return written
 
 
+SERIOUSNESS_LABELS = {
+    "1": "Serious",
+    "2": "Non-serious",
+}
+
+
+def _upsert_openfda_event_counts(conn: sqlite3.Connection) -> dict[str, int]:
+    counts = {"openfda_event_reaction_counts": 0, "openfda_event_serious_counts": 0}
+    conn.execute("DELETE FROM openfda_event_reaction_count")
+    conn.execute("DELETE FROM openfda_event_serious_count")
+    docs = conn.execute(
+        """
+        SELECT id, search_term, url, blob_path, metadata_json
+        FROM documents
+        WHERE source='openfda:drug_event'
+          AND doc_type='faers_adverse_event_counts'
+        """
+    ).fetchall()
+    for doc in docs:
+        brand = (doc["search_term"] or "").strip()
+        if not brand:
+            continue
+        try:
+            payload = json.loads(_load_blob(doc["blob_path"]) or "{}")
+        except Exception:
+            continue
+        meta = payload.get("meta") or {}
+        last_updated = str(meta.get("last_updated") or "")
+        for idx, row in enumerate(payload.get("reaction_counts") or [], start=1):
+            term = str(row.get("term") or "").strip()
+            if not term:
+                continue
+            try:
+                count = int(row.get("count") or 0)
+            except Exception:
+                count = 0
+            event_reaction_id = _slug(f"{doc['id']}_{brand}_{idx}_{term}")[:140]
+            conn.execute(
+                """
+                INSERT INTO openfda_event_reaction_count
+                    (event_reaction_id, source_document_id, brand, reaction_term, reaction_count,
+                     api_last_updated, source_url, updated_at)
+                VALUES (?,?,?,?,?,?,?,?)
+                ON CONFLICT(event_reaction_id) DO UPDATE SET
+                    brand=excluded.brand,
+                    reaction_term=excluded.reaction_term,
+                    reaction_count=excluded.reaction_count,
+                    api_last_updated=excluded.api_last_updated,
+                    source_url=excluded.source_url,
+                    updated_at=excluded.updated_at
+                """,
+                (event_reaction_id, doc["id"], brand, term, count, last_updated, doc["url"], _now()),
+            )
+            counts["openfda_event_reaction_counts"] += 1
+        for row in payload.get("serious_counts") or []:
+            code = str(row.get("term") or "").strip()
+            if not code:
+                continue
+            try:
+                count = int(row.get("count") or 0)
+            except Exception:
+                count = 0
+            event_serious_id = _slug(f"{doc['id']}_{brand}_serious_{code}")[:140]
+            conn.execute(
+                """
+                INSERT INTO openfda_event_serious_count
+                    (event_serious_id, source_document_id, brand, serious_code, serious_label,
+                     report_count, api_last_updated, source_url, updated_at)
+                VALUES (?,?,?,?,?,?,?,?,?)
+                ON CONFLICT(event_serious_id) DO UPDATE SET
+                    brand=excluded.brand,
+                    serious_code=excluded.serious_code,
+                    serious_label=excluded.serious_label,
+                    report_count=excluded.report_count,
+                    api_last_updated=excluded.api_last_updated,
+                    source_url=excluded.source_url,
+                    updated_at=excluded.updated_at
+                """,
+                (
+                    event_serious_id,
+                    doc["id"],
+                    brand,
+                    code,
+                    SERIOUSNESS_LABELS.get(code, code),
+                    count,
+                    last_updated,
+                    doc["url"],
+                    _now(),
+                ),
+            )
+            counts["openfda_event_serious_counts"] += 1
+    return counts
+
+
+def _list_text(values: Any) -> str:
+    if isinstance(values, list):
+        return "; ".join(str(value).strip() for value in values if str(value).strip())
+    return str(values or "").strip()
+
+
+def _upsert_openfda_drug_shortages(conn: sqlite3.Connection) -> int:
+    conn.execute("DELETE FROM openfda_drug_shortage")
+    docs = conn.execute(
+        """
+        SELECT id, url, blob_path, metadata_json
+        FROM documents
+        WHERE source='openfda:drug_shortages'
+          AND doc_type='drug_shortage_records'
+        """
+    ).fetchall()
+    written = 0
+    for doc in docs:
+        try:
+            payload = json.loads(_load_blob(doc["blob_path"]) or "{}")
+        except Exception:
+            continue
+        meta = payload.get("meta") or {}
+        api_last_updated = str(meta.get("last_updated") or "")
+        for idx, row in enumerate(payload.get("results") or [], start=1):
+            if not isinstance(row, dict):
+                continue
+            openfda = row.get("openfda") or {}
+            package_ndc = str(row.get("package_ndc") or "").strip()
+            presentation = str(row.get("presentation") or "").strip()
+            generic_name = str(row.get("generic_name") or "").strip()
+            company_name = str(row.get("company_name") or "").strip()
+            brand_names = _list_text(openfda.get("brand_name"))
+            manufacturer_names = _list_text(openfda.get("manufacturer_name"))
+            therapeutic_category = _list_text(row.get("therapeutic_category"))
+            shortage_id = _slug(f"{doc['id']}_{package_ndc}_{generic_name}_{company_name}_{idx}")[:140]
+            is_oncology = 1 if "oncology" in therapeutic_category.lower() or _contains_cancer_signal(
+                " ".join([generic_name, brand_names, therapeutic_category, presentation])
+            ) else 0
+            conn.execute(
+                """
+                INSERT INTO openfda_drug_shortage
+                    (shortage_id, source_document_id, status, update_type, initial_posting_date,
+                     update_date, discontinued_date, package_ndc, generic_name, brand_names,
+                     manufacturer_names, company_name, availability, shortage_reason, related_info,
+                     contact_info, therapeutic_category, dosage_form, presentation, is_oncology_priority,
+                     source_url, api_last_updated, updated_at)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                ON CONFLICT(shortage_id) DO UPDATE SET
+                    status=excluded.status,
+                    update_type=excluded.update_type,
+                    initial_posting_date=excluded.initial_posting_date,
+                    update_date=excluded.update_date,
+                    discontinued_date=excluded.discontinued_date,
+                    package_ndc=excluded.package_ndc,
+                    generic_name=excluded.generic_name,
+                    brand_names=excluded.brand_names,
+                    manufacturer_names=excluded.manufacturer_names,
+                    company_name=excluded.company_name,
+                    availability=excluded.availability,
+                    shortage_reason=excluded.shortage_reason,
+                    related_info=excluded.related_info,
+                    contact_info=excluded.contact_info,
+                    therapeutic_category=excluded.therapeutic_category,
+                    dosage_form=excluded.dosage_form,
+                    presentation=excluded.presentation,
+                    is_oncology_priority=excluded.is_oncology_priority,
+                    source_url=excluded.source_url,
+                    api_last_updated=excluded.api_last_updated,
+                    updated_at=excluded.updated_at
+                """,
+                (
+                    shortage_id,
+                    doc["id"],
+                    row.get("status", ""),
+                    row.get("update_type", ""),
+                    row.get("initial_posting_date", ""),
+                    row.get("update_date", ""),
+                    row.get("discontinued_date", ""),
+                    package_ndc,
+                    generic_name,
+                    brand_names,
+                    manufacturer_names,
+                    company_name,
+                    row.get("availability", ""),
+                    row.get("shortage_reason", ""),
+                    row.get("related_info", ""),
+                    row.get("contact_info", ""),
+                    therapeutic_category,
+                    row.get("dosage_form", ""),
+                    presentation,
+                    is_oncology,
+                    doc["url"],
+                    api_last_updated,
+                    _now(),
+                ),
+            )
+            written += 1
+    return written
+
+
+def _upsert_openfda_drug_recalls(conn: sqlite3.Connection) -> int:
+    conn.execute("DELETE FROM openfda_drug_recall")
+    docs = conn.execute(
+        """
+        SELECT id, url, blob_path, metadata_json
+        FROM documents
+        WHERE source='openfda:drug_enforcement'
+          AND doc_type='drug_recall_records'
+        """
+    ).fetchall()
+    written = 0
+    for doc in docs:
+        try:
+            payload = json.loads(_load_blob(doc["blob_path"]) or "{}")
+            doc_meta = json.loads(doc["metadata_json"] or "{}")
+        except Exception:
+            continue
+        meta = payload.get("meta") or {}
+        api_last_updated = str(meta.get("last_updated") or doc_meta.get("last_updated") or "")
+        matched_brand = str(doc_meta.get("brand") or "").strip()
+        query_term = str(doc_meta.get("query_term") or "").strip()
+        term_type = str(doc_meta.get("term_type") or "").strip()
+        for idx, row in enumerate(payload.get("results") or [], start=1):
+            if not isinstance(row, dict):
+                continue
+            recall_number = str(row.get("recall_number") or "").strip()
+            product_description = str(row.get("product_description") or "").strip()
+            recall_record_id = _slug(f"{matched_brand}_{recall_number or idx}_{query_term}")[:160]
+            conn.execute(
+                """
+                INSERT INTO openfda_drug_recall
+                    (recall_record_id, source_document_id, matched_brand, query_term, term_type,
+                     recall_number, classification, status, recalling_firm, voluntary_mandated,
+                     product_type, product_description, reason_for_recall, distribution_pattern,
+                     code_info, initial_firm_notification, recall_initiation_date, report_date,
+                     termination_date, center_classification_date, source_url, api_last_updated,
+                     updated_at)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                ON CONFLICT(recall_record_id) DO UPDATE SET
+                    source_document_id=excluded.source_document_id,
+                    matched_brand=excluded.matched_brand,
+                    query_term=excluded.query_term,
+                    term_type=excluded.term_type,
+                    recall_number=excluded.recall_number,
+                    classification=excluded.classification,
+                    status=excluded.status,
+                    recalling_firm=excluded.recalling_firm,
+                    voluntary_mandated=excluded.voluntary_mandated,
+                    product_type=excluded.product_type,
+                    product_description=excluded.product_description,
+                    reason_for_recall=excluded.reason_for_recall,
+                    distribution_pattern=excluded.distribution_pattern,
+                    code_info=excluded.code_info,
+                    initial_firm_notification=excluded.initial_firm_notification,
+                    recall_initiation_date=excluded.recall_initiation_date,
+                    report_date=excluded.report_date,
+                    termination_date=excluded.termination_date,
+                    center_classification_date=excluded.center_classification_date,
+                    source_url=excluded.source_url,
+                    api_last_updated=excluded.api_last_updated,
+                    updated_at=excluded.updated_at
+                """,
+                (
+                    recall_record_id,
+                    doc["id"],
+                    matched_brand,
+                    query_term,
+                    term_type,
+                    recall_number,
+                    row.get("classification", ""),
+                    row.get("status", ""),
+                    row.get("recalling_firm", ""),
+                    row.get("voluntary_mandated", ""),
+                    row.get("product_type", ""),
+                    product_description,
+                    row.get("reason_for_recall", ""),
+                    row.get("distribution_pattern", ""),
+                    row.get("code_info", ""),
+                    row.get("initial_firm_notification", ""),
+                    row.get("recall_initiation_date", ""),
+                    row.get("report_date", ""),
+                    row.get("termination_date", ""),
+                    row.get("center_classification_date", ""),
+                    doc["url"],
+                    api_last_updated,
+                    _now(),
+                ),
+            )
+            written += 1
+    return written
+
+
+def _active_ingredient_text(values: Any) -> str:
+    if not isinstance(values, list):
+        return ""
+    parts: list[str] = []
+    for value in values:
+        if not isinstance(value, dict):
+            continue
+        name = str(value.get("name") or "").strip()
+        strength = str(value.get("strength") or "").strip()
+        if name and strength:
+            parts.append(f"{name} ({strength})")
+        elif name:
+            parts.append(name)
+    return "; ".join(parts)
+
+
+def _upsert_openfda_ndc(conn: sqlite3.Connection) -> dict[str, int]:
+    counts = {"openfda_ndc_products": 0, "openfda_ndc_packages": 0}
+    conn.execute("DELETE FROM openfda_ndc_package")
+    conn.execute("DELETE FROM openfda_ndc_product")
+    docs = conn.execute(
+        """
+        SELECT id, url, blob_path, metadata_json
+        FROM documents
+        WHERE source='openfda:drug_ndc'
+          AND doc_type='ndc_directory_records'
+        """
+    ).fetchall()
+    for doc in docs:
+        try:
+            payload = json.loads(_load_blob(doc["blob_path"]) or "{}")
+            doc_meta = json.loads(doc["metadata_json"] or "{}")
+        except Exception:
+            continue
+        meta = payload.get("meta") or {}
+        api_last_updated = str(meta.get("last_updated") or doc_meta.get("last_updated") or "")
+        matched_brand = str(doc_meta.get("brand") or "").strip()
+        query_term = str(doc_meta.get("query_term") or "").strip()
+        query_field = str(doc_meta.get("query_field") or "").strip()
+        for idx, row in enumerate(payload.get("results") or [], start=1):
+            if not isinstance(row, dict):
+                continue
+            product_ndc = str(row.get("product_ndc") or "").strip()
+            brand_name = str(row.get("brand_name") or "").strip()
+            generic_name = str(row.get("generic_name") or "").strip()
+            ndc_product_id = _slug(f"{matched_brand}_{product_ndc or idx}_{query_term}")[:160]
+            conn.execute(
+                """
+                INSERT INTO openfda_ndc_product
+                    (ndc_product_id, source_document_id, matched_brand, query_term, query_field,
+                     product_ndc, brand_name, generic_name, labeler_name, product_type,
+                     marketing_category, application_number, dosage_form, route,
+                     active_ingredients, pharm_class, dea_schedule, listing_expiration_date,
+                     marketing_start_date, marketing_end_date, finished, source_url,
+                     api_last_updated, updated_at)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                ON CONFLICT(ndc_product_id) DO UPDATE SET
+                    source_document_id=excluded.source_document_id,
+                    matched_brand=excluded.matched_brand,
+                    query_term=excluded.query_term,
+                    query_field=excluded.query_field,
+                    product_ndc=excluded.product_ndc,
+                    brand_name=excluded.brand_name,
+                    generic_name=excluded.generic_name,
+                    labeler_name=excluded.labeler_name,
+                    product_type=excluded.product_type,
+                    marketing_category=excluded.marketing_category,
+                    application_number=excluded.application_number,
+                    dosage_form=excluded.dosage_form,
+                    route=excluded.route,
+                    active_ingredients=excluded.active_ingredients,
+                    pharm_class=excluded.pharm_class,
+                    dea_schedule=excluded.dea_schedule,
+                    listing_expiration_date=excluded.listing_expiration_date,
+                    marketing_start_date=excluded.marketing_start_date,
+                    marketing_end_date=excluded.marketing_end_date,
+                    finished=excluded.finished,
+                    source_url=excluded.source_url,
+                    api_last_updated=excluded.api_last_updated,
+                    updated_at=excluded.updated_at
+                """,
+                (
+                    ndc_product_id,
+                    doc["id"],
+                    matched_brand,
+                    query_term,
+                    query_field,
+                    product_ndc,
+                    brand_name,
+                    generic_name,
+                    row.get("labeler_name", ""),
+                    row.get("product_type", ""),
+                    row.get("marketing_category", ""),
+                    row.get("application_number", ""),
+                    row.get("dosage_form", ""),
+                    _list_text(row.get("route")),
+                    _active_ingredient_text(row.get("active_ingredients")),
+                    _list_text(row.get("pharm_class")),
+                    row.get("dea_schedule", ""),
+                    row.get("listing_expiration_date", ""),
+                    row.get("marketing_start_date", ""),
+                    row.get("marketing_end_date", ""),
+                    1 if row.get("finished") is True else 0,
+                    doc["url"],
+                    api_last_updated,
+                    _now(),
+                ),
+            )
+            counts["openfda_ndc_products"] += 1
+
+            for package_idx, package in enumerate(row.get("packaging") or [], start=1):
+                if not isinstance(package, dict):
+                    continue
+                package_ndc = str(package.get("package_ndc") or "").strip()
+                if not package_ndc:
+                    continue
+                ndc_package_id = _slug(f"{ndc_product_id}_{package_ndc}_{package_idx}")[:180]
+                conn.execute(
+                    """
+                    INSERT INTO openfda_ndc_package
+                        (ndc_package_id, ndc_product_id, source_document_id, matched_brand,
+                         product_ndc, package_ndc, package_description, marketing_start_date,
+                         marketing_end_date, sample, source_url, updated_at)
+                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+                    ON CONFLICT(ndc_package_id) DO UPDATE SET
+                        ndc_product_id=excluded.ndc_product_id,
+                        source_document_id=excluded.source_document_id,
+                        matched_brand=excluded.matched_brand,
+                        product_ndc=excluded.product_ndc,
+                        package_ndc=excluded.package_ndc,
+                        package_description=excluded.package_description,
+                        marketing_start_date=excluded.marketing_start_date,
+                        marketing_end_date=excluded.marketing_end_date,
+                        sample=excluded.sample,
+                        source_url=excluded.source_url,
+                        updated_at=excluded.updated_at
+                    """,
+                    (
+                        ndc_package_id,
+                        ndc_product_id,
+                        doc["id"],
+                        matched_brand,
+                        product_ndc,
+                        package_ndc,
+                        package.get("description", ""),
+                        package.get("marketing_start_date", ""),
+                        package.get("marketing_end_date", ""),
+                        1 if package.get("sample") is True else 0,
+                        doc["url"],
+                        _now(),
+                    ),
+                )
+                counts["openfda_ndc_packages"] += 1
+    return counts
+
+
+def _upsert_fda_srlc(conn: sqlite3.Connection) -> int:
+    conn.execute("DELETE FROM fda_srlc_labeling_change")
+    docs = conn.execute(
+        """
+        SELECT id, search_term, title, url, blob_path, metadata_json
+        FROM documents
+        WHERE source='fda:safety_labeling_changes'
+          AND doc_type='srlc_detail_page'
+        """
+    ).fetchall()
+    count = 0
+    for doc in docs:
+        try:
+            metadata = json.loads(doc["metadata_json"] or "{}")
+        except Exception:
+            metadata = {}
+        matched_brand = str(metadata.get("brand") or doc["search_term"] or "").strip()
+        drug_name = str(metadata.get("drug_name") or "").strip()
+        application_number = str(metadata.get("application_number") or "").strip()
+        detail_url = str(metadata.get("detail_url") or doc["url"] or "").strip()
+        if not matched_brand or not drug_name:
+            continue
+        detail_text = str(metadata.get("detail_text_excerpt") or "").strip()
+        if not detail_text:
+            detail_text = re.sub(r"\s+", " ", html_lib.unescape(_load_blob(doc["blob_path"]) or "")).strip()[:1200]
+        change_id = _slug(f"{matched_brand}_{drug_name}_{application_number}_{metadata.get('supplement_date', '')}")[:180]
+        conn.execute(
+            """
+            INSERT INTO fda_srlc_labeling_change
+                (srlc_change_id, source_document_id, matched_brand, query_term, drug_name,
+                 active_ingredient, application_number, application_type, supplement_date,
+                 database_updated, detail_url, text_excerpt, updated_at)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
+            ON CONFLICT(srlc_change_id) DO UPDATE SET
+                source_document_id=excluded.source_document_id,
+                matched_brand=excluded.matched_brand,
+                query_term=excluded.query_term,
+                drug_name=excluded.drug_name,
+                active_ingredient=excluded.active_ingredient,
+                application_number=excluded.application_number,
+                application_type=excluded.application_type,
+                supplement_date=excluded.supplement_date,
+                database_updated=excluded.database_updated,
+                detail_url=excluded.detail_url,
+                text_excerpt=excluded.text_excerpt,
+                updated_at=excluded.updated_at
+            """,
+            (
+                change_id,
+                doc["id"],
+                matched_brand,
+                doc["search_term"],
+                drug_name,
+                metadata.get("active_ingredient", ""),
+                application_number,
+                metadata.get("application_type", ""),
+                metadata.get("supplement_date", ""),
+                metadata.get("database_updated", ""),
+                detail_url,
+                detail_text,
+                _now(),
+            ),
+        )
+        count += 1
+    return count
+
+
+def _upsert_nci_drug_dictionary(conn: sqlite3.Connection) -> dict[str, int]:
+    counts = {"nci_drug_dictionary_entries": 0, "nci_drug_dictionary_aliases": 0}
+    conn.execute("DELETE FROM nci_drug_dictionary_alias")
+    conn.execute("DELETE FROM nci_drug_dictionary_entry")
+    docs = conn.execute(
+        """
+        SELECT id, search_term, url, blob_path, metadata_json
+        FROM documents
+        WHERE source='nci:drug_dictionary'
+          AND doc_type='nci_drug_dictionary_entry'
+        """
+    ).fetchall()
+    for doc in docs:
+        try:
+            payload = json.loads(_load_blob(doc["blob_path"]) or "{}")
+            metadata = json.loads(doc["metadata_json"] or "{}")
+        except Exception:
+            continue
+        term_id = str(payload.get("termId") or metadata.get("term_id") or "").strip()
+        if not term_id:
+            continue
+        matched_brand = str(metadata.get("brand") or doc["search_term"] or "").strip()
+        query_term = str(metadata.get("query_term") or "").strip()
+        entry_id = _slug(f"{matched_brand}_{query_term}_{term_id}")[:180]
+        definition = payload.get("definition") or {}
+        drug_info = payload.get("drugInfoSummaryLink") or {}
+        aliases = [alias for alias in payload.get("aliases") or [] if isinstance(alias, dict)]
+        conn.execute(
+            """
+            INSERT INTO nci_drug_dictionary_entry
+                (nci_drug_entry_id, source_document_id, matched_brand, query_term, term_type,
+                 term_id, nci_concept_id, nci_concept_name, name, pretty_url_name,
+                 first_letter, term_name_type, definition_text, drug_info_summary_url,
+                 alias_count, updated_at)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+            ON CONFLICT(nci_drug_entry_id) DO UPDATE SET
+                source_document_id=excluded.source_document_id,
+                matched_brand=excluded.matched_brand,
+                query_term=excluded.query_term,
+                term_type=excluded.term_type,
+                term_id=excluded.term_id,
+                nci_concept_id=excluded.nci_concept_id,
+                nci_concept_name=excluded.nci_concept_name,
+                name=excluded.name,
+                pretty_url_name=excluded.pretty_url_name,
+                first_letter=excluded.first_letter,
+                term_name_type=excluded.term_name_type,
+                definition_text=excluded.definition_text,
+                drug_info_summary_url=excluded.drug_info_summary_url,
+                alias_count=excluded.alias_count,
+                updated_at=excluded.updated_at
+            """,
+            (
+                entry_id,
+                doc["id"],
+                matched_brand,
+                query_term,
+                metadata.get("term_type", ""),
+                term_id,
+                payload.get("nciConceptId", ""),
+                payload.get("nciConceptName", ""),
+                payload.get("name", ""),
+                payload.get("prettyUrlName", ""),
+                payload.get("firstLetter", ""),
+                payload.get("termNameType", ""),
+                definition.get("text", "") if isinstance(definition, dict) else "",
+                drug_info.get("uri", "") if isinstance(drug_info, dict) else "",
+                len(aliases),
+                _now(),
+            ),
+        )
+        counts["nci_drug_dictionary_entries"] += 1
+        for idx, alias in enumerate(aliases, start=1):
+            alias_name = str(alias.get("name") or "").strip()
+            if not alias_name:
+                continue
+            alias_id = _slug(f"{entry_id}_{alias.get('type', '')}_{alias_name}_{idx}")[:220]
+            conn.execute(
+                """
+                INSERT INTO nci_drug_dictionary_alias
+                    (nci_drug_alias_id, nci_drug_entry_id, matched_brand, alias_type,
+                     alias_name, updated_at)
+                VALUES (?,?,?,?,?,?)
+                ON CONFLICT(nci_drug_alias_id) DO UPDATE SET
+                    nci_drug_entry_id=excluded.nci_drug_entry_id,
+                    matched_brand=excluded.matched_brand,
+                    alias_type=excluded.alias_type,
+                    alias_name=excluded.alias_name,
+                    updated_at=excluded.updated_at
+                """,
+                (alias_id, entry_id, matched_brand, alias.get("type", ""), alias_name, _now()),
+            )
+            counts["nci_drug_dictionary_aliases"] += 1
+    return counts
+
+
+def _upsert_nci_drug_info(conn: sqlite3.Connection) -> int:
+    conn.execute("DELETE FROM nci_drug_information_summary")
+    docs = conn.execute(
+        """
+        SELECT id, search_term, url, metadata_json
+        FROM documents
+        WHERE source='nci:drug_information_summary'
+          AND doc_type='nci_drug_information_summary'
+        """
+    ).fetchall()
+    count = 0
+    for doc in docs:
+        try:
+            metadata = json.loads(doc["metadata_json"] or "{}")
+        except Exception:
+            metadata = {}
+        matched_brand = str(metadata.get("brand") or doc["search_term"] or "").strip()
+        concept = str(metadata.get("nci_concept_name") or metadata.get("query_term") or "").strip()
+        if not matched_brand or not concept:
+            continue
+        info_id = _slug(f"{matched_brand}_{concept}")[:180]
+        conn.execute(
+            """
+            INSERT INTO nci_drug_information_summary
+                (nci_drug_info_id, source_document_id, matched_brand, query_term,
+                 nci_concept_name, title, us_brand_names, fda_approved, use_in_cancer,
+                 posted_date, updated_date, link_count, source_url, text_excerpt, updated_at)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+            ON CONFLICT(nci_drug_info_id) DO UPDATE SET
+                source_document_id=excluded.source_document_id,
+                matched_brand=excluded.matched_brand,
+                query_term=excluded.query_term,
+                nci_concept_name=excluded.nci_concept_name,
+                title=excluded.title,
+                us_brand_names=excluded.us_brand_names,
+                fda_approved=excluded.fda_approved,
+                use_in_cancer=excluded.use_in_cancer,
+                posted_date=excluded.posted_date,
+                updated_date=excluded.updated_date,
+                link_count=excluded.link_count,
+                source_url=excluded.source_url,
+                text_excerpt=excluded.text_excerpt,
+                updated_at=excluded.updated_at
+            """,
+            (
+                info_id,
+                doc["id"],
+                matched_brand,
+                metadata.get("query_term", ""),
+                concept,
+                metadata.get("title", ""),
+                metadata.get("us_brand_names", ""),
+                metadata.get("fda_approved", ""),
+                metadata.get("use_in_cancer_excerpt", ""),
+                metadata.get("posted_date", ""),
+                metadata.get("updated_date", ""),
+                int(metadata.get("link_count") or 0),
+                doc["url"],
+                metadata.get("text_excerpt", ""),
+                _now(),
+            ),
+        )
+        count += 1
+    return count
+
+
+def _historical_ndc_count(payload: dict[str, Any]) -> int:
+    group = payload.get("historicalNdcConcept") or payload.get("historicalNdcTime") or payload
+    if isinstance(group, dict):
+        values = group.get("historicalNdc") or group.get("ndc") or []
+        if isinstance(values, list):
+            return len(values)
+        if values:
+            return 1
+    return 0
+
+
+def _upsert_rxnorm(conn: sqlite3.Connection) -> dict[str, int]:
+    counts = {"rxnorm_concepts": 0, "rxnorm_related_concepts": 0}
+    conn.execute("DELETE FROM rxnorm_related_concept")
+    conn.execute("DELETE FROM rxnorm_concept")
+    docs = conn.execute(
+        """
+        SELECT id, url, blob_path
+        FROM documents
+        WHERE source='rxnav:rxnorm'
+          AND doc_type='rxnorm_concept_records'
+        """
+    ).fetchall()
+    for doc in docs:
+        try:
+            payload = json.loads(_load_blob(doc["blob_path"]) or "{}")
+        except Exception:
+            continue
+        props = payload.get("properties") or {}
+        related_groups = ((payload.get("related") or {}).get("allRelatedGroup") or {}).get("conceptGroup") or []
+        related_rows: list[tuple[str, dict[str, Any]]] = []
+        for group in related_groups:
+            if not isinstance(group, dict):
+                continue
+            tty = str(group.get("tty") or "").strip()
+            for concept in group.get("conceptProperties") or []:
+                if isinstance(concept, dict):
+                    related_rows.append((tty, concept))
+        matched_brand = str(payload.get("brand") or "").strip()
+        query_term = str(payload.get("query_term") or "").strip()
+        term_type = str(payload.get("term_type") or "").strip()
+        rxcui = str(props.get("rxcui") or payload.get("rxcui") or "").strip()
+        if not rxcui:
+            continue
+        concept_id = _slug(f"{matched_brand}_{term_type}_{query_term}_{rxcui}")[:160]
+        conn.execute(
+            """
+            INSERT INTO rxnorm_concept
+                (rxnorm_concept_id, source_document_id, matched_brand, query_term, term_type,
+                 rxcui, name, synonym, tty, language, suppress, umlscui, related_concept_count,
+                 historical_ndc_count, source_url, updated_at)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+            ON CONFLICT(rxnorm_concept_id) DO UPDATE SET
+                source_document_id=excluded.source_document_id,
+                matched_brand=excluded.matched_brand,
+                query_term=excluded.query_term,
+                term_type=excluded.term_type,
+                rxcui=excluded.rxcui,
+                name=excluded.name,
+                synonym=excluded.synonym,
+                tty=excluded.tty,
+                language=excluded.language,
+                suppress=excluded.suppress,
+                umlscui=excluded.umlscui,
+                related_concept_count=excluded.related_concept_count,
+                historical_ndc_count=excluded.historical_ndc_count,
+                source_url=excluded.source_url,
+                updated_at=excluded.updated_at
+            """,
+            (
+                concept_id,
+                doc["id"],
+                matched_brand,
+                query_term,
+                term_type,
+                rxcui,
+                props.get("name", ""),
+                props.get("synonym", ""),
+                props.get("tty", ""),
+                props.get("language", ""),
+                props.get("suppress", ""),
+                props.get("umlscui", ""),
+                len(related_rows),
+                _historical_ndc_count(payload.get("historical_ndcs") or {}),
+                doc["url"],
+                _now(),
+            ),
+        )
+        counts["rxnorm_concepts"] += 1
+        for idx, (group_tty, concept) in enumerate(related_rows, start=1):
+            related_rxcui = str(concept.get("rxcui") or "").strip()
+            if not related_rxcui:
+                continue
+            related_id = _slug(f"{concept_id}_{related_rxcui}_{group_tty}_{idx}")[:180]
+            conn.execute(
+                """
+                INSERT INTO rxnorm_related_concept
+                    (rxnorm_related_id, source_rxnorm_concept_id, matched_brand, source_rxcui,
+                     related_rxcui, related_name, related_synonym, related_tty, language,
+                     suppress, umlscui, updated_at)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+                ON CONFLICT(rxnorm_related_id) DO UPDATE SET
+                    source_rxnorm_concept_id=excluded.source_rxnorm_concept_id,
+                    matched_brand=excluded.matched_brand,
+                    source_rxcui=excluded.source_rxcui,
+                    related_rxcui=excluded.related_rxcui,
+                    related_name=excluded.related_name,
+                    related_synonym=excluded.related_synonym,
+                    related_tty=excluded.related_tty,
+                    language=excluded.language,
+                    suppress=excluded.suppress,
+                    umlscui=excluded.umlscui,
+                    updated_at=excluded.updated_at
+                """,
+                (
+                    related_id,
+                    concept_id,
+                    matched_brand,
+                    rxcui,
+                    related_rxcui,
+                    concept.get("name", ""),
+                    concept.get("synonym", ""),
+                    concept.get("tty", "") or group_tty,
+                    concept.get("language", ""),
+                    concept.get("suppress", ""),
+                    concept.get("umlscui", ""),
+                    _now(),
+                ),
+            )
+            counts["rxnorm_related_concepts"] += 1
+    return counts
+
+
 def build() -> dict[str, int]:
     conn = get_db()
     conn.row_factory = sqlite3.Row
@@ -3688,13 +5251,27 @@ def build() -> dict[str, int]:
         "v_top_pharma_oncology_priority",
         "v_official_oncology_brand_messages",
         "v_oncology_label_messages",
+        "v_openfda_event_oncology_reactions",
+        "v_openfda_event_oncology_seriousness",
+        "v_openfda_oncology_drug_shortages",
+        "v_openfda_oncology_drug_recalls",
+        "v_openfda_oncology_ndc_products",
+        "v_openfda_oncology_ndc_packages",
+        "v_rxnorm_oncology_concepts",
+        "v_rxnorm_oncology_related_concepts",
+        "v_fda_srlc_oncology_labeling_changes",
+        "v_nci_oncology_drug_dictionary",
+        "v_nci_oncology_drug_information_summaries",
         "v_dailymed_oncology_priority",
         "v_oncology_message_campaign_evidence",
         "v_oncology_clinical_trials",
+        "v_oncology_clinical_trial_locations",
         "v_oncology_pubmed_articles",
         "v_asco_oncology_abstracts",
         "v_seer_oncology_market_context",
         "v_oncology_search_interest",
+        "v_cms_open_payments_oncology",
+        "v_cms_open_payments_top_recipients",
         "v_oncology_brand_evidence_summary",
         "v_opdp_oncology_enforcement",
         "v_opdp_oncology_letter_documents",
@@ -3726,8 +5303,17 @@ def build() -> dict[str, int]:
         counts["asco_abstracts"] = _upsert_asco_abstracts(conn)
         counts["seer_cancer_stats"] = _upsert_seer_stats(conn)
         counts.update(_upsert_search_interest(conn))
+        counts["cms_open_payment_general"] = _upsert_open_payments(conn)
         counts.update(_upsert_clinical_trials(conn))
         counts["regulatory_label_messages"] = _upsert_regulatory_label_messages(conn)
+        counts.update(_upsert_openfda_event_counts(conn))
+        counts["openfda_drug_shortages"] = _upsert_openfda_drug_shortages(conn)
+        counts["openfda_drug_recalls"] = _upsert_openfda_drug_recalls(conn)
+        counts.update(_upsert_openfda_ndc(conn))
+        counts.update(_upsert_rxnorm(conn))
+        counts["fda_srlc_labeling_changes"] = _upsert_fda_srlc(conn)
+        counts.update(_upsert_nci_drug_dictionary(conn))
+        counts["nci_drug_information_summaries"] = _upsert_nci_drug_info(conn)
         counts["opdp_enforcement_actions"] = _upsert_opdp_actions(conn)
         counts["opdp_letter_documents"] = _upsert_opdp_letter_documents(conn)
         counts.update(_upsert_orange_book(conn))
@@ -3763,3 +5349,6 @@ def build() -> dict[str, int]:
 if __name__ == "__main__":
     for key, value in build().items():
         print(f"{key}: {value}")
+
+
+

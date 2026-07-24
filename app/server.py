@@ -31,6 +31,7 @@ from strategy.lifecycle import list_lifecycle_options  # noqa: E402
 from strategy.autorun import run_full_analysis  # noqa: E402
 from competitive.swot import build_swot  # noqa: E402
 from strategy import projects as pstore  # noqa: E402
+from strategy import brief_summary  # noqa: E402  (presentational â‰¤20-word brief-field summaries)
 from strategy.conversation import (new_state, opening_message, interpret_message, llm_enabled,  # noqa: E402
                                    get_llm_status, ask_clarify_group, clarify_payload,
                                    extract_brief_from_text)
@@ -59,7 +60,7 @@ from strategy import orchestration_store  # noqa: E402  (external bindings + stu
 from strategy import orchestration_sync  # noqa: E402  (two-way sync: inbound reconcile + conflict rules)
 from strategy import orchestration_nudge  # noqa: E402  (Nudge agent: notify + auto-escalate)
 from strategy import orchestration_gates  # noqa: E402  (Veeva/SFMC read/gate context: AFU expiry, send state)
-from strategy import campaign_artifacts  # noqa: E402  (Campaign Strategy + Brief — the planning stage's two linked artifacts)
+from strategy import campaign_artifacts  # noqa: E402  (Campaign Strategy + Brief â€” the planning stage's two linked artifacts)
 from strategy import campaign_ops  # noqa: E402  (Stage 3 on-demand campaign-flow (re)generation)
 from strategy import process_knowledge  # noqa: E402  (Cognee-backed SME process grounding)
 from strategy import cognee_feedback  # noqa: E402  (human feedback overlay for Cognee grounding)
@@ -122,8 +123,21 @@ def _pharma_intel_summary() -> dict:
             "award_mentions": scalar("SELECT COUNT(*) FROM campaign_award_mention"),
             "message_evidence": scalar("SELECT COUNT(*) FROM v_oncology_message_campaign_evidence"),
             "asco_abstracts": scalar("SELECT COUNT(*) FROM asco_abstract"),
+            "clinical_trial_locations": scalar("SELECT COUNT(*) FROM v_oncology_clinical_trial_locations"),
             "seer_cancer_stats": scalar("SELECT COUNT(*) FROM seer_cancer_stat"),
             "opdp_letters": scalar("SELECT COUNT(*) FROM opdp_letter_document"),
+            "open_payments": scalar("SELECT COUNT(*) FROM cms_open_payment_general"),
+            "adverse_event_reactions": scalar("SELECT COUNT(*) FROM openfda_event_reaction_count"),
+            "drug_shortages": scalar("SELECT COUNT(*) FROM openfda_drug_shortage WHERE is_oncology_priority=1"),
+            "drug_recalls": scalar("SELECT COUNT(*) FROM openfda_drug_recall"),
+            "ndc_products": scalar("SELECT COUNT(*) FROM openfda_ndc_product"),
+            "ndc_packages": scalar("SELECT COUNT(*) FROM openfda_ndc_package"),
+            "rxnorm_concepts": scalar("SELECT COUNT(*) FROM rxnorm_concept"),
+            "rxnorm_related_concepts": scalar("SELECT COUNT(*) FROM rxnorm_related_concept"),
+            "safety_labeling_changes": scalar("SELECT COUNT(*) FROM fda_srlc_labeling_change"),
+            "nci_drug_dictionary_entries": scalar("SELECT COUNT(*) FROM nci_drug_dictionary_entry"),
+            "nci_drug_dictionary_aliases": scalar("SELECT COUNT(*) FROM nci_drug_dictionary_alias"),
+            "nci_drug_info_summaries": scalar("SELECT COUNT(*) FROM nci_drug_information_summary"),
         }
         source_counts = [
             dict(row)
@@ -133,7 +147,7 @@ def _pharma_intel_summary() -> dict:
                 FROM documents
                 GROUP BY source
                 ORDER BY count DESC, source
-                LIMIT 14
+                LIMIT 16
                 """
             )
         ]
@@ -142,26 +156,55 @@ def _pharma_intel_summary() -> dict:
             {"label": "FDA label sections", "count": scalar("SELECT COUNT(*) FROM regulatory_label_message WHERE is_oncology_priority=1")},
             {"label": "DailyMed SPLs", "count": scalar("SELECT COUNT(*) FROM v_dailymed_oncology_priority")},
             {"label": "Clinical trials", "count": scalar("SELECT COUNT(*) FROM v_oncology_clinical_trials")},
+            {"label": "Clinical trial sites", "count": scalar("SELECT COUNT(*) FROM v_oncology_clinical_trial_locations")},
             {"label": "PubMed articles", "count": scalar("SELECT COUNT(*) FROM v_oncology_pubmed_articles")},
             {"label": "ASCO abstracts", "count": scalar("SELECT COUNT(*) FROM v_asco_oncology_abstracts")},
             {"label": "SEER cancer stats", "count": scalar("SELECT COUNT(*) FROM v_seer_oncology_market_context")},
             {"label": "Award rows", "count": scalar("SELECT COUNT(*) FROM v_oncology_award_mentions")},
             {"label": "OPDP letters", "count": scalar("SELECT COUNT(*) FROM v_opdp_oncology_letter_documents")},
             {"label": "SEC mentions", "count": scalar("SELECT COUNT(*) FROM v_sec_oncology_brand_mentions")},
+            {"label": "Open Payments", "count": scalar("SELECT COUNT(*) FROM cms_open_payment_general")},
+            {"label": "FAERS reactions", "count": scalar("SELECT COUNT(*) FROM openfda_event_reaction_count")},
+            {"label": "Drug shortages", "count": scalar("SELECT COUNT(*) FROM v_openfda_oncology_drug_shortages")},
+            {"label": "Drug recalls", "count": scalar("SELECT COUNT(*) FROM v_openfda_oncology_drug_recalls")},
+            {"label": "NDC products", "count": scalar("SELECT COUNT(*) FROM v_openfda_oncology_ndc_products")},
+            {"label": "NDC packages", "count": scalar("SELECT COUNT(*) FROM v_openfda_oncology_ndc_packages")},
+            {"label": "RxNorm concepts", "count": scalar("SELECT COUNT(*) FROM v_rxnorm_oncology_concepts")},
+            {"label": "RxNorm related", "count": scalar("SELECT COUNT(*) FROM v_rxnorm_oncology_related_concepts")},
+            {"label": "Safety label changes", "count": scalar("SELECT COUNT(*) FROM v_fda_srlc_oncology_labeling_changes")},
+            {"label": "NCI drug definitions", "count": scalar("SELECT COUNT(*) FROM v_nci_oncology_drug_dictionary")},
+            {"label": "NCI drug summaries", "count": scalar("SELECT COUNT(*) FROM v_nci_oncology_drug_information_summaries")},
         ]
-        top_brands = [
-            dict(row)
-            for row in conn.execute(
-                """
-                SELECT brand, total_evidence_count, official_brand_message_count, label_message_count,
-                       dailymed_label_count, clinical_trial_count, pubmed_article_count,
-                       asco_abstract_count, award_mention_count, sec_annual_filing_mention_count
-                FROM v_oncology_brand_evidence_summary
-                ORDER BY total_evidence_count DESC, brand
-                LIMIT 12
-                """
-            )
-        ]
+        try:
+            top_brands = [
+                dict(row)
+                for row in conn.execute(
+                    """
+                    SELECT brand, total_evidence_count, official_brand_message_count, label_message_count,
+                           dailymed_label_count, clinical_trial_count, pubmed_article_count,
+                           asco_abstract_count, award_mention_count, sec_annual_filing_mention_count,
+                           open_payment_count, adverse_event_reaction_count, drug_shortage_count, drug_recall_count, ndc_product_count,
+                           rxnorm_concept_count, srlc_labeling_change_count, nci_drug_dictionary_count, nci_drug_info_summary_count
+                    FROM v_oncology_brand_evidence_summary
+                    ORDER BY total_evidence_count DESC, brand
+                    LIMIT 12
+                    """
+                )
+            ]
+        except Exception:
+            top_brands = [
+                {**dict(row), "open_payment_count": 0, "adverse_event_reaction_count": 0, "drug_shortage_count": 0, "drug_recall_count": 0, "ndc_product_count": 0, "rxnorm_concept_count": 0, "srlc_labeling_change_count": 0, "nci_drug_dictionary_count": 0, "nci_drug_info_summary_count": 0}
+                for row in conn.execute(
+                    """
+                    SELECT brand, total_evidence_count, official_brand_message_count, label_message_count,
+                           dailymed_label_count, clinical_trial_count, pubmed_article_count,
+                           asco_abstract_count, award_mention_count, sec_annual_filing_mention_count
+                    FROM v_oncology_brand_evidence_summary
+                    ORDER BY total_evidence_count DESC, brand
+                    LIMIT 12
+                    """
+                )
+            ]
         message_mix = [
             dict(row)
             for row in conn.execute(
@@ -230,10 +273,76 @@ def _artifact_item(row: sqlite3.Row, *, content_fields: list[str] | None = None)
         "form",
         "filing_date",
         "cancer_site",
+        "matched_brand",
+        "recipient_name",
+        "recipient_state",
+        "recipient_specialty",
+        "payment_manufacturer",
+        "nature_of_payment",
+        "associated_product",
+        "program_year",
+        "reaction_term",
+        "reaction_count",
+        "serious_label",
+        "report_count",
+        "api_last_updated",
+        "status",
+        "availability",
+        "shortage_reason",
+        "generic_name",
+        "brand_names",
+        "company_name",
+        "query_term",
+        "term_type",
+        "recall_number",
+        "classification",
+        "status",
+        "facility",
+        "city",
+        "state",
+        "country",
+        "location_count",
+        "countries",
+        "us_states",
+        "product_ndc",
+        "package_ndc",
+        "brand_name",
+        "generic_name",
+        "labeler_name",
+        "marketing_category",
+        "dosage_form",
+        "route",
+        "application_number",
+        "application_type",
+        "supplement_date",
+        "database_updated",
+        "active_ingredient",
+        "drug_name",
+        "rxcui",
+        "tty",
+        "term_type",
+        "related_concept_count",
+        "historical_ndc_count",
+        "related_rxcui",
+        "related_tty",
+        "recalling_firm",
+        "report_date",
+        "recall_initiation_date",
+        "srlc_change_id",
+        "term_id",
+        "nci_concept_id",
+        "nci_concept_name",
+        "term_name_type",
+        "alias_count",
+        "us_brand_names",
+        "fda_approved",
+        "posted_date",
+        "updated_date",
+        "link_count",
     ]
     return {
-        "id": str(data.get("id") or data.get("message_id") or data.get("label_message_id") or data.get("abstract_number") or data.get("nct_id") or data.get("pmid") or data.get("mention_id") or data.get("stat_id") or data.get("letter_id") or data.get("sec_brand_mention_id") or data.get("external_id") or ""),
-        "title": data.get("title") or data.get("presentation_title") or data.get("brief_title") or data.get("campaign") or data.get("product_issue") or data.get("cancer_site") or data.get("brand") or data.get("source") or "Untitled artifact",
+        "id": str(data.get("id") or data.get("message_id") or data.get("label_message_id") or data.get("abstract_number") or data.get("nct_id") or data.get("pmid") or data.get("mention_id") or data.get("stat_id") or data.get("letter_id") or data.get("sec_brand_mention_id") or data.get("record_id") or data.get("external_id") or ""),
+        "title": data.get("title") or data.get("presentation_title") or data.get("brief_title") or data.get("campaign") or data.get("product_issue") or data.get("recipient_name") or data.get("cancer_site") or data.get("brand") or data.get("source") or "Untitled artifact",
         "subtitle": data.get("source_url") or data.get("url") or data.get("filing_url") or "",
         "url": data.get("source_url") or data.get("url") or data.get("filing_url") or "",
         "content": str(content or "")[:12000],
@@ -251,7 +360,7 @@ def _pharma_intel_artifacts(kind: str, value: str = "", limit: int = 20) -> dict
     try:
         params: tuple = (limit,)
         title = value or kind.replace("_", " ").title()
-        content_fields = ["message_text", "abstract_body", "abstract", "context_snippet", "text_excerpt", "raw_line"]
+        content_fields = ["message_text", "abstract_body", "abstract", "context_snippet", "text_excerpt", "raw_line", "contextual_information"]
         sql = """
             SELECT d.id, d.source, d.external_id, d.search_term, d.title, d.doc_type, d.url, d.blob_path, d.fetched_at
             FROM documents d
@@ -327,6 +436,27 @@ def _pharma_intel_artifacts(kind: str, value: str = "", limit: int = 20) -> dict
                 ORDER BY t.last_update_post_date DESC, t.nct_id
                 LIMIT ?
             """
+        elif kind == "clinical_trial_locations":
+            title = "Clinical trial sites"
+            content_fields = ["text_excerpt"]
+            sql = """
+                SELECT l.*, t.brief_title AS title, t.source_url AS url, d.blob_path,
+                       ('Trial: ' || IFNULL(t.brief_title, '') || char(10) ||
+                        'NCT ID: ' || IFNULL(t.nct_id, '') || char(10) ||
+                        'Facility: ' || IFNULL(l.facility, '') || char(10) ||
+                        'Location: ' || IFNULL(l.city, '') ||
+                            CASE WHEN IFNULL(l.state, '') <> '' THEN ', ' || l.state ELSE '' END ||
+                            CASE WHEN IFNULL(l.country, '') <> '' THEN ', ' || l.country ELSE '' END || char(10) ||
+                        'Site status: ' || IFNULL(l.status, '') || char(10) ||
+                        'Trial status: ' || IFNULL(t.overall_status, '') || char(10) ||
+                        'Sponsor: ' || IFNULL(t.lead_sponsor, '')) AS text_excerpt
+                FROM clinical_trial_location l
+                JOIN clinical_trial t ON t.nct_id=l.nct_id
+                JOIN documents d ON d.id=t.source_document_id
+                WHERE t.is_oncology_priority=1
+                ORDER BY l.country, l.state, l.city, l.facility, t.nct_id
+                LIMIT ?
+            """
         elif kind == "pubmed_articles":
             title = "PubMed articles"
             sql = """
@@ -383,6 +513,176 @@ def _pharma_intel_artifacts(kind: str, value: str = "", limit: int = 20) -> dict
                 FROM sec_filing_brand_mention sfm
                 JOIN documents d ON d.id=sfm.source_document_id
                 ORDER BY sfm.filing_date DESC, sfm.brand, sfm.mention_count DESC
+                LIMIT ?
+            """
+        elif kind == "open_payments":
+            title = "Open Payments"
+            sql = """
+                SELECT opg.*, d.title, d.blob_path, d.url
+                FROM cms_open_payment_general opg
+                JOIN documents d ON d.id=opg.source_document_id
+                ORDER BY opg.total_amount_usd DESC, opg.matched_brand, opg.record_id
+                LIMIT ?
+            """
+        elif kind == "faers_reactions":
+            title = "FAERS reactions"
+            sql = """
+                SELECT er.*, er.reaction_term AS title, d.blob_path, d.url
+                FROM openfda_event_reaction_count er
+                JOIN documents d ON d.id=er.source_document_id
+                ORDER BY er.reaction_count DESC, er.brand, er.reaction_term
+                LIMIT ?
+            """
+        elif kind == "drug_shortages":
+            title = "Drug shortages"
+            sql = """
+                SELECT ds.*, ds.generic_name AS title, d.blob_path, d.url
+                FROM openfda_drug_shortage ds
+                JOIN documents d ON d.id=ds.source_document_id
+                WHERE ds.is_oncology_priority=1
+                ORDER BY ds.status, ds.generic_name, ds.update_date DESC
+                LIMIT ?
+            """
+        elif kind == "drug_recalls":
+            title = "Drug recalls"
+            content_fields = ["text_excerpt", "product_description", "reason_for_recall", "distribution_pattern", "code_info"]
+            sql = """
+                SELECT dr.*, dr.product_description AS title,
+                       ('Product: ' || IFNULL(dr.product_description, '') || char(10) ||
+                        'Reason: ' || IFNULL(dr.reason_for_recall, '') || char(10) ||
+                        'Distribution: ' || IFNULL(dr.distribution_pattern, '') || char(10) ||
+                        'Code info: ' || IFNULL(dr.code_info, '') || char(10) ||
+                        'Firm: ' || IFNULL(dr.recalling_firm, '') || char(10) ||
+                        'Recall number: ' || IFNULL(dr.recall_number, '') || char(10) ||
+                        'Classification: ' || IFNULL(dr.classification, '') || char(10) ||
+                        'Status: ' || IFNULL(dr.status, '') || char(10) ||
+                        'Initiated: ' || IFNULL(dr.recall_initiation_date, '') || char(10) ||
+                        'Reported: ' || IFNULL(dr.report_date, '')) AS text_excerpt,
+                       d.blob_path, d.url
+                FROM openfda_drug_recall dr
+                JOIN documents d ON d.id=dr.source_document_id
+                ORDER BY dr.report_date DESC, dr.matched_brand, dr.classification, dr.recall_number
+                LIMIT ?
+            """
+        elif kind == "ndc_products":
+            title = "NDC products"
+            content_fields = ["text_excerpt"]
+            sql = """
+                SELECT np.*, COALESCE(NULLIF(np.brand_name, ''), NULLIF(np.product_ndc, ''), NULLIF(np.generic_name, ''), np.matched_brand) AS title,
+                       ('Brand: ' || IFNULL(np.brand_name, '') || char(10) ||
+                        'Generic: ' || IFNULL(np.generic_name, '') || char(10) ||
+                        'Product NDC: ' || IFNULL(np.product_ndc, '') || char(10) ||
+                        'Labeler: ' || IFNULL(np.labeler_name, '') || char(10) ||
+                        'Marketing category: ' || IFNULL(np.marketing_category, '') || char(10) ||
+                        'Application: ' || IFNULL(np.application_number, '') || char(10) ||
+                        'Dosage form: ' || IFNULL(np.dosage_form, '') || char(10) ||
+                        'Route: ' || IFNULL(np.route, '') || char(10) ||
+                        'Active ingredients: ' || IFNULL(np.active_ingredients, '') || char(10) ||
+                        'Marketing start: ' || IFNULL(np.marketing_start_date, '') || char(10) ||
+                        'Listing expiration: ' || IFNULL(np.listing_expiration_date, '')) AS text_excerpt,
+                       d.blob_path, d.url
+                FROM openfda_ndc_product np
+                JOIN documents d ON d.id=np.source_document_id
+                ORDER BY np.matched_brand, np.brand_name, np.product_ndc
+                LIMIT ?
+            """
+        elif kind == "ndc_packages":
+            title = "NDC packages"
+            content_fields = ["text_excerpt"]
+            sql = """
+                SELECT pkg.*, p.brand_name, p.generic_name, p.labeler_name, p.marketing_category,
+                       p.dosage_form, p.route, pkg.package_ndc AS title,
+                       ('Brand: ' || IFNULL(p.brand_name, '') || char(10) ||
+                        'Generic: ' || IFNULL(p.generic_name, '') || char(10) ||
+                        'Product NDC: ' || IFNULL(pkg.product_ndc, '') || char(10) ||
+                        'Package NDC: ' || IFNULL(pkg.package_ndc, '') || char(10) ||
+                        'Package: ' || IFNULL(pkg.package_description, '') || char(10) ||
+                        'Labeler: ' || IFNULL(p.labeler_name, '') || char(10) ||
+                        'Marketing category: ' || IFNULL(p.marketing_category, '') || char(10) ||
+                        'Dosage form: ' || IFNULL(p.dosage_form, '') || char(10) ||
+                        'Route: ' || IFNULL(p.route, '') || char(10) ||
+                        'Package marketing start: ' || IFNULL(pkg.marketing_start_date, '')) AS text_excerpt,
+                       d.blob_path, d.url
+                FROM openfda_ndc_package pkg
+                JOIN openfda_ndc_product p ON p.ndc_product_id=pkg.ndc_product_id
+                JOIN documents d ON d.id=pkg.source_document_id
+                ORDER BY p.matched_brand, p.brand_name, pkg.package_ndc
+                LIMIT ?
+            """
+        elif kind == "rxnorm_concepts":
+            title = "RxNorm concepts"
+            content_fields = ["text_excerpt"]
+            sql = """
+                SELECT rc.*, COALESCE(NULLIF(rc.name, ''), rc.rxcui) AS title,
+                       ('Matched brand: ' || IFNULL(rc.matched_brand, '') || char(10) ||
+                        'Query term: ' || IFNULL(rc.query_term, '') || char(10) ||
+                        'RxCUI: ' || IFNULL(rc.rxcui, '') || char(10) ||
+                        'Name: ' || IFNULL(rc.name, '') || char(10) ||
+                        'Term type: ' || IFNULL(rc.tty, '') || char(10) ||
+                        'Synonym: ' || IFNULL(rc.synonym, '') || char(10) ||
+                        'Related concepts: ' || IFNULL(rc.related_concept_count, 0) || char(10) ||
+                        'Historical NDC count: ' || IFNULL(rc.historical_ndc_count, 0)) AS text_excerpt,
+                       d.blob_path, d.url
+                FROM rxnorm_concept rc
+                JOIN documents d ON d.id=rc.source_document_id
+                ORDER BY rc.matched_brand, rc.term_type, rc.name, rc.rxcui
+                LIMIT ?
+            """
+        elif kind == "rxnorm_related":
+            title = "RxNorm related concepts"
+            content_fields = ["text_excerpt"]
+            sql = """
+                SELECT rr.*, rr.related_name AS title,
+                       ('Matched brand: ' || IFNULL(rr.matched_brand, '') || char(10) ||
+                        'Source RxCUI: ' || IFNULL(rr.source_rxcui, '') || char(10) ||
+                        'Related RxCUI: ' || IFNULL(rr.related_rxcui, '') || char(10) ||
+                        'Related name: ' || IFNULL(rr.related_name, '') || char(10) ||
+                        'Related term type: ' || IFNULL(rr.related_tty, '') || char(10) ||
+                        'Synonym: ' || IFNULL(rr.related_synonym, '') || char(10) ||
+                        'Suppress: ' || IFNULL(rr.suppress, '')) AS text_excerpt,
+                       NULL AS blob_path, '' AS url
+                FROM rxnorm_related_concept rr
+                ORDER BY rr.matched_brand, rr.source_rxcui, rr.related_tty, rr.related_name
+                LIMIT ?
+            """
+        elif kind == "safety_labeling_changes":
+            title = "Safety-related labeling changes"
+            content_fields = ["text_excerpt"]
+            sql = """
+                SELECT slc.*, COALESCE(NULLIF(slc.drug_name, ''), slc.matched_brand) AS title,
+                       ('Matched brand: ' || IFNULL(slc.matched_brand, '') || char(10) ||
+                        'Drug name: ' || IFNULL(slc.drug_name, '') || char(10) ||
+                        'Active ingredient: ' || IFNULL(slc.active_ingredient, '') || char(10) ||
+                        'Application: ' || IFNULL(slc.application_type, '') || ' ' || IFNULL(slc.application_number, '') || char(10) ||
+                        'Supplement date: ' || IFNULL(slc.supplement_date, '') || char(10) ||
+                        'Database updated: ' || IFNULL(slc.database_updated, '') || char(10) || char(10) ||
+                        IFNULL(slc.text_excerpt, '')) AS text_excerpt,
+                       d.blob_path, COALESCE(NULLIF(slc.detail_url, ''), d.url) AS url
+                FROM fda_srlc_labeling_change slc
+                JOIN documents d ON d.id=slc.source_document_id
+                ORDER BY slc.supplement_date DESC, slc.database_updated DESC, slc.matched_brand, slc.drug_name
+                LIMIT ?
+            """
+        elif kind == "nci_drug_dictionary":
+            title = "NCI drug definitions"
+            content_fields = ["definition_text"]
+            sql = """
+                SELECT nd.*, COALESCE(NULLIF(nd.nci_concept_name, ''), NULLIF(nd.name, ''), nd.query_term) AS title,
+                       d.blob_path, COALESCE(NULLIF(nd.drug_info_summary_url, ''), d.url) AS url
+                FROM nci_drug_dictionary_entry nd
+                JOIN documents d ON d.id=nd.source_document_id
+                ORDER BY nd.matched_brand, nd.term_type, nd.nci_concept_name, nd.term_id
+                LIMIT ?
+            """
+        elif kind == "nci_drug_info":
+            title = "NCI drug summaries"
+            content_fields = ["use_in_cancer", "text_excerpt"]
+            sql = """
+                SELECT ni.*, COALESCE(NULLIF(ni.title, ''), ni.nci_concept_name) AS title,
+                       d.blob_path, ni.source_url AS url
+                FROM nci_drug_information_summary ni
+                JOIN documents d ON d.id=ni.source_document_id
+                ORDER BY ni.matched_brand, ni.nci_concept_name, ni.title
                 LIMIT ?
             """
         elif kind == "message_evidence":
@@ -518,7 +818,7 @@ def api_persona_review(req: PersonaReviewRequest):
         raise HTTPException(404, "project not found")
     result = proj.get("result")
     if not result:
-        raise HTTPException(400, "no plan to review yet — generate the plan first")
+        raise HTTPException(400, "no plan to review yet â€” generate the plan first")
     chosen = [p for p in (personas_mod.get(pid) for pid in req.persona_ids) if p]
     if not chosen:
         raise HTTPException(400, "no valid personas selected")
@@ -565,7 +865,7 @@ def api_persona_apply(req: PersonaApplyRequest):
     }
     # Keep the strategy-layer mix in step: the Campaign Brief (campaign_artifacts.py)
     # projects channel & journey from ctx["strategy"]["channel_mix_pct"], not from
-    # budget_allocation — without this the brief keeps showing the pre-rebalance mix.
+    # budget_allocation â€” without this the brief keeps showing the pre-rebalance mix.
     ctx.setdefault("strategy", {})["channel_mix_pct"] = adj["new_mix"]
     result, plan_md, plan_html = orchestrator.recompose_plan(ctx)
 
@@ -639,6 +939,10 @@ def api_get_project(pid: str):
     proj = pstore.get_project(pid)
     if not proj:
         raise HTTPException(404, "project not found")
+    # Presentational only: attach short keyword summaries of the long brief fields so the
+    # BriefCard shows a gist instead of echoing whole paragraphs from the deck. The stored
+    # slots are untouched, so grounding still reads the full captured text.
+    brief_summary.attach((proj.get("state") or {}).get("slots"))
     return proj
 
 
@@ -718,7 +1022,7 @@ def api_save_campaign_plan_layout(pid: str, req: dict):
 def api_generate_orchestration_tasks(pid: str, req: dict | None = None):
     """Derive the Stage 2 setup-task checklist from what Stage 1 already computed (the
     campaign-ops touchpoint/entry-criteria/decision-logic/segmentation skeleton, the message
-    flow, and the Tactical Plan §26-33) and persist it. Overwrites -- called only from an
+    flow, and the Tactical Plan Â§26-33) and persist it. Overwrites -- called only from an
     explicit user action (the chat kickoff card's 'Use the Stage 1 plan' / upload-and-build
     choice, or the 'Regenerate from plan' button), never automatically on tab open, so it
     never silently clobbers a user's edits. Optional body {"extra_context": str} folds a
@@ -872,7 +1176,7 @@ def api_orchestration_notification_ack(pid: str, req: dict):
 
 @app.get("/api/projects/{pid}/campaign-artifacts")
 def api_campaign_artifacts(pid: str):
-    """The Planning stage's two linked artifacts — Campaign Strategy (decision records) +
+    """The Planning stage's two linked artifacts â€” Campaign Strategy (decision records) +
     Campaign Brief (operational, hybrid agency-brief anatomy). Deterministic composition from
     the saved plan ctx; decision records are re-derived when not persisted, so this also works
     for projects planned before the decision spine existed."""
@@ -881,7 +1185,7 @@ def api_campaign_artifacts(pid: str):
         raise HTTPException(404, "project not found")
     ctx = proj["state"].get("_plan_ctx")
     if not ctx:
-        raise HTTPException(400, "Stage 1 hasn't produced a plan yet — run it before composing artifacts.")
+        raise HTTPException(400, "Stage 1 hasn't produced a plan yet â€” run it before composing artifacts.")
     return campaign_artifacts.compose_artifacts(ctx)
 
 
@@ -1192,11 +1496,11 @@ def api_chat(req: ChatRequest):
             if i + 1 < len(orchestrator.PHASE_ORDER):
                 next_phase = orchestrator.PHASE_ORDER[i + 1]
             if next_phase:
-                reply = (f"✅ **Phase {orchestrator.PHASE_NO[cur_phase]} · {orchestrator.PHASE_LABELS[cur_phase]}** "
+                reply = (f"âœ… **Phase {orchestrator.PHASE_NO[cur_phase]} Â· {orchestrator.PHASE_LABELS[cur_phase]}** "
                          f"is signed off and folded into the plan. Bringing the agents in for **Phase "
-                         f"{orchestrator.PHASE_NO[next_phase]} · {orchestrator.PHASE_LABELS[next_phase]}** now…")
+                         f"{orchestrator.PHASE_NO[next_phase]} Â· {orchestrator.PHASE_LABELS[next_phase]}** nowâ€¦")
             else:
-                reply = ("✅ **Phase 4 · Deploy the campaign** is signed off. That completes all four toolkit phases — "
+                reply = ("âœ… **Phase 4 Â· Deploy the campaign** is signed off. That completes all four toolkit phases â€” "
                          "the plan is fully built and every section is live on the right. Pressure-test it with "
                          "synthetic personas next, or say **close updates** to lock it in.")
 
@@ -1245,6 +1549,7 @@ def api_chat(req: ChatRequest):
 
     pstore.save_project(req.project_id, name=name, state=state, messages=messages,
                         result=result_for_save, plan_markdown=plan_markdown, plan_html=plan_html)
+    brief_summary.attach(slots)  # short keyword summaries for the BriefCard display
     return {"reply": reply, "slots": slots, "phase": state["phase"], "action": action, "name": name,
             "llm_status": get_llm_status(), "clarify": clarify, "clarify_just_completed": clarify_just_completed,
             "next_phase": next_phase,
@@ -1275,7 +1580,7 @@ async def api_upload(project_id: str = Form(...), file: UploadFile = File(...)):
     messages = proj["messages"]
     state = proj["state"]
     slots = state["slots"]
-    messages.append(_msg("user", f"📎 Uploaded **{file.filename}**"))
+    messages.append(_msg("user", f"ðŸ“Ž Uploaded **{file.filename}**"))
 
     # Keep the chat-turn prompt bounded -- a strategic-plan deck can run well past a sane
     # single-turn size, but brief/tactical extraction below reads the FULL document so labelled
@@ -1312,6 +1617,7 @@ async def api_upload(project_id: str = Form(...), file: UploadFile = File(...)):
         name = _campaign_id_name(project_id)
 
     pstore.save_project(project_id, name=name, state=state, messages=messages)
+    brief_summary.attach(slots)  # short keyword summaries for the BriefCard display
     return {"reply": reply, "slots": slots, "phase": state["phase"], "action": action, "name": name,
             "llm_status": get_llm_status(), "filename": file.filename,
             "extracted": extracted["items"], "filled_count": len(extracted["items"])}
@@ -1430,11 +1736,17 @@ def api_run_stream(project_id: str, phase: str = "align"):
 
 
 # ------------------------------------------------------------------ #
-# Sequential Plan Studio (SSE protocol v2) — the section-by-section run that
+# Sequential Plan Studio (SSE protocol v2) â€” the section-by-section run that
 # drives Stage 1. The stream ENDS at every grounded ask; /api/studio/answer
 # records the user's call and the client reopens the stream, which resumes
 # from the persisted cursor -- a refresh or reconnect never skips a gate.
 # ------------------------------------------------------------------ #
+# project_id -> {"event": Event, "ctx": full-ctx-or-None}: the background fill_plan_ctx job
+# started when the first (customer-group) ask is posed from the fast core ctx. The resume
+# request waits on it (heartbeat meanwhile) so the heavy compute overlaps the user's answer time.
+_STUDIO_FILL: dict[str, dict] = {}
+
+
 @app.get("/api/studio/stream")
 def api_studio_stream(project_id: str):
     proj = pstore.get_project(project_id)
@@ -1477,54 +1789,75 @@ def api_studio_stream(project_id: str):
 
         try:
             studio = state.setdefault("studio", {"idx": 0, "answers": {}, "await_ask": None})
-            if not state.get("_plan_ctx"):
-                # Same background-thread + grounded-heartbeat pattern as /api/run-stream's
-                # Align compute -- the 30-60s+ first pull is never a silent connection.
+            ctx = state.get("_plan_ctx")
+            if ctx is None:
+                # FIRST touch: pose the customer-group question from a sub-second CORE ctx and fill
+                # the heavy remainder (market/strategy/grounding â€” minutes of network+LLM work) in
+                # the BACKGROUND, so the first ask lands in seconds instead of behind the full compute.
                 yield f"data: {json.dumps({'type': 'agents_init', 'agents': orchestrator.AGENT_ROSTER})}\n\n"
-                done_event = threading.Event()
-                ctx_holder: dict = {}
+                ctx = orchestrator.compute_core_ctx(
+                    slots["brand"], slots["therapy_area"], slots["lifecycle_key"], slots["budget"],
+                    slots.get("maturity_notes", ""), slots.get("indication", ""), brief=slots)
+                state["_plan_ctx"] = ctx
+                _fill_job = {"event": threading.Event(), "ctx": None}
+                _STUDIO_FILL[project_id] = _fill_job
 
-                def _compute_ctx():
+                def _bg_fill(core=ctx, job=_fill_job):
                     try:
-                        ctx_holder["ctx"] = orchestrator.compute_plan_ctx(
-                            slots["brand"], slots["therapy_area"], slots["lifecycle_key"], slots["budget"],
-                            slots.get("maturity_notes", ""), slots.get("indication", ""), brief=slots)
-                    except Exception as exc:  # noqa: BLE001 - re-raised on the main thread below
-                        ctx_holder["error"] = exc
+                        orchestrator.fill_plan_ctx(core, lazy_grounding=True, fast=True)
+                        job["ctx"] = core
+                    except Exception as exc:  # noqa: BLE001 - resume computes inline if this fails
+                        print(f"[studio] background fill_plan_ctx failed: {exc!r}")
                     finally:
-                        done_event.set()
+                        job["event"].set()
 
-                compute_thread = threading.Thread(target=_compute_ctx, daemon=True)
-                compute_thread.start()
-                for ev in orchestrator.precompute_heartbeat(done_event):
-                    # precompute_heartbeat speaks in run-stream's {"type":"agent"/"banter"} shape;
-                    # the studio client understands the {"type":"chat", author, kind} shape instead.
+                threading.Thread(target=_bg_fill, daemon=True).start()
+            elif ctx.get("_core_only"):
+                # RESUME after the first ask: the heavy remainder is needed now (to draft the
+                # customer-group section and everything after). Wait on the background fill with a
+                # live heartbeat; compute inline if its job is gone (e.g. the server restarted).
+                yield f"data: {json.dumps({'type': 'agents_init', 'agents': orchestrator.AGENT_ROSTER})}\n\n"
+                _fill_job = _STUDIO_FILL.get(project_id)
+                if _fill_job is None:
+                    _fill_job = {"event": threading.Event(), "ctx": None}
+
+                    def _fill_now(core=ctx, job=_fill_job):
+                        try:
+                            orchestrator.fill_plan_ctx(core, lazy_grounding=True, fast=True)
+                            job["ctx"] = core
+                        except Exception as exc:  # noqa: BLE001
+                            job["error"] = exc
+                        finally:
+                            job["event"].set()
+
+                    threading.Thread(target=_fill_now, daemon=True).start()
+                for ev in orchestrator.precompute_heartbeat(_fill_job["event"]):
                     if ev["type"] == "agent":
                         yield f"data: {json.dumps({'type': 'chat', 'author': ev['id'], 'kind': 'turn', 'reply_to': '', 'text': ev['say']})}\n\n"
                     elif ev["type"] == "banter":
                         yield f"data: {json.dumps({'type': 'chat', 'author': ev['id'], 'kind': 'banter', 'reply_to': ev.get('to', ''), 'text': ev['text']})}\n\n"
-                compute_thread.join()
-                if "error" in ctx_holder:
-                    raise ctx_holder["error"]
-                ctx = ctx_holder["ctx"]
+                if _fill_job.get("error"):
+                    raise _fill_job["error"]
+                ctx = _fill_job.get("ctx") or ctx
+                if ctx.get("_core_only"):  # background fill failed -> do it inline as a last resort
+                    try:
+                        orchestrator.fill_plan_ctx(ctx, lazy_grounding=True)
+                    except Exception as exc:  # noqa: BLE001
+                        print(f"[studio] inline fill fallback failed: {exc!r}")
                 state["_plan_ctx"] = ctx
-            else:
-                ctx = state["_plan_ctx"]
+                _STUDIO_FILL.pop(project_id, None)
+            # else: a fully-populated ctx is already cached -- use it as-is.
 
-            # The full plan is ALREADY computed the moment ctx exists -- the section stream
-            # below is only a paced, theatrical reveal of data that's already in ctx. Persist a
-            # viewable brief + plan RIGHT NOW so the plan panel is populated even if the reveal
-            # never finishes: an interrupted stream, an unanswered ask, or the user closing the
-            # tab. Previously plan_html only landed at the terminal run_done (after all 18
-            # sections + several LLM asks), so any early exit left the reported "brief shows, but
-            # the final plan never loads". Re-runs on each ask-resume too, so ask-driven tweaks
-            # keep the saved plan fresh. Deterministic + local (no network), so it's cheap.
-            try:
-                early_result, plan_md, plan_html = orchestrator.recompose_plan(ctx)
-                pstore.save_project(project_id, state=state, messages=messages,
-                                    result=early_result, plan_markdown=plan_md, plan_html=plan_html)
-            except Exception as exc:  # noqa: BLE001 - the reveal still runs even if the snapshot fails
-                print(f"[studio] early plan persist failed: {exc}")
+            # Persist a viewable brief + plan snapshot as soon as the FULL ctx exists (skipped while
+            # _core_only, since the heavy sections aren't computed yet). Cheap + local, so it re-runs
+            # on each ask-resume to keep the saved plan fresh even if the reveal never finishes.
+            if not ctx.get("_core_only"):
+                try:
+                    early_result, plan_md, plan_html = orchestrator.recompose_plan(ctx)
+                    pstore.save_project(project_id, state=state, messages=messages,
+                                        result=early_result, plan_markdown=plan_md, plan_html=plan_html)
+                except Exception as exc:  # noqa: BLE001 - the reveal still runs even if the snapshot fails
+                    print(f"[studio] early plan persist failed: {exc}")
 
             for ev in studio_run.stream(ctx, studio):
                 if ev["type"] == "chat":
@@ -1540,6 +1873,17 @@ def api_studio_stream(project_id: str):
                 elif ev["type"] == "run_done":
                     state["studio_done"] = True
                     _persist_run_done()
+                elif ev["type"] == "ask":
+                    # Warm grounding for THIS section (it drafts on resume) through the next ask,
+                    # in the background while the user reads and answers, so the resume flows
+                    # straight through (PRD: "think of the next while that input is coming in").
+                    cur = studio["idx"]
+                    if cur < len(studio_run.SEQUENCE):
+                        threading.Thread(
+                            target=studio_run.prefetch_grounding,
+                            args=(slots.get("brand", ""), slots.get("therapy_area", ""), cur),
+                            daemon=True,
+                        ).start()
                 yield f"data: {json.dumps(ev)}\n\n"
         except Exception as e:  # surface failures to the UI rather than hanging
             yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
@@ -1892,3 +2236,4 @@ def root_legacy():
 
 
 app.mount("/static", StaticFiles(directory=APP_DIR / "static"), name="static")
+

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import Box from "@mui/material/Box";
 import Dialog from "@mui/material/Dialog";
 import IconButton from "@mui/material/IconButton";
@@ -27,12 +27,24 @@ const evidenceKindByLabel: Record<string, string> = {
   "FDA label sections": "fda_label_sections",
   "DailyMed SPLs": "dailymed_spls",
   "Clinical trials": "clinical_trials",
+  "Clinical trial sites": "clinical_trial_locations",
   "PubMed articles": "pubmed_articles",
   "ASCO abstracts": "asco_abstracts",
   "SEER cancer stats": "seer_cancer_stats",
   "Award rows": "award_rows",
   "OPDP letters": "opdp_letters",
   "SEC mentions": "sec_mentions",
+  "Open Payments": "open_payments",
+  "FAERS reactions": "faers_reactions",
+  "Drug shortages": "drug_shortages",
+  "Drug recalls": "drug_recalls",
+  "NDC products": "ndc_products",
+  "NDC packages": "ndc_packages",
+  "RxNorm concepts": "rxnorm_concepts",
+  "RxNorm related": "rxnorm_related",
+  "Safety label changes": "safety_labeling_changes",
+  "NCI drug definitions": "nci_drug_dictionary",
+  "NCI drug summaries": "nci_drug_info",
 };
 
 function clickableSx(enabled: boolean) {
@@ -108,10 +120,10 @@ function CoverageTable({ rows, onOpen }: { rows: PharmaIntelSummary["top_brands"
   const max = Math.max(1, ...rows.map((row) => Number(row.total_evidence_count || 0)));
   return (
     <Box sx={{ overflowX: "auto" }}>
-      <Box component="table" sx={{ width: "100%", borderCollapse: "collapse", minWidth: 760 }}>
+      <Box component="table" sx={{ width: "100%", borderCollapse: "collapse", minWidth: 1250 }}>
         <Box component="thead">
           <Box component="tr" sx={{ borderBottom: `1px solid ${tokens.color.outline}` }}>
-            {["Brand", "Total", "Labels", "Trials", "PubMed", "ASCO", "Awards", "SEC"].map((h) => (
+            {["Brand", "Total", "Labels", "Trials", "PubMed", "ASCO", "Awards", "SEC", "OpenPay", "FAERS", "Shortage", "Recall", "NDC", "RxNorm", "SrLC", "NCI", "NCI use"].map((h) => (
               <Box component="th" key={h} sx={{ textAlign: h === "Brand" ? "left" : "right", py: 1, px: 1, fontSize: 12, color: "text.secondary" }}>
                 {h}
               </Box>
@@ -153,6 +165,15 @@ function CoverageTable({ rows, onOpen }: { rows: PharmaIntelSummary["top_brands"
                   row.asco_abstract_count,
                   row.award_mention_count,
                   row.sec_annual_filing_mention_count,
+                  row.open_payment_count,
+                  row.adverse_event_reaction_count,
+                  row.drug_shortage_count,
+                  row.drug_recall_count,
+                  row.ndc_product_count,
+                  row.rxnorm_concept_count,
+                  row.srlc_labeling_change_count,
+                  row.nci_drug_dictionary_count,
+                  row.nci_drug_info_summary_count,
                 ].map((value, idx) => (
                   <Box component="td" key={idx} sx={{ py: 1.1, px: 1, textAlign: "right", fontSize: 13, fontWeight: 700 }}>
                     {fmt.format(Number(value || 0))}
@@ -460,12 +481,24 @@ export function Artefacts() {
         <>
           <CogneeQaPanel />
 
-          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", lg: "repeat(5, 1fr)" }, gap: 2 }}>
+          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", lg: "repeat(5, 1fr)", xl: "repeat(17, 1fr)" }, gap: 2 }}>
             <StatTile icon="database" label="Documents" value={data.totals.documents ?? 0} onOpen={() => setDrilldown({ kind: "documents", title: "Indexed source documents" })} />
             <StatTile icon="travel_explore" label="Sources" value={data.totals.sources ?? 0} onOpen={() => setDrilldown({ kind: "documents", title: "Indexed source documents" })} />
             <StatTile icon="biotech" label="ASCO abstracts" value={data.totals.asco_abstracts ?? 0} onOpen={() => setDrilldown({ kind: "asco_abstracts", title: "ASCO abstracts" })} />
+            <StatTile icon="location_on" label="Trial sites" value={data.totals.clinical_trial_locations ?? 0} onOpen={() => setDrilldown({ kind: "clinical_trial_locations", title: "Clinical trial sites" })} />
             <StatTile icon="query_stats" label="SEER sites" value={data.totals.seer_cancer_stats ?? 0} onOpen={() => setDrilldown({ kind: "seer_cancer_stats", title: "SEER cancer stats" })} />
             <StatTile icon="campaign" label="Message evidence" value={data.totals.message_evidence ?? 0} onOpen={() => setDrilldown({ kind: "message_evidence", title: "Message evidence" })} />
+            <StatTile icon="payments" label="Open Payments" value={data.totals.open_payments ?? 0} onOpen={() => setDrilldown({ kind: "open_payments", title: "Open Payments" })} />
+            <StatTile icon="health_metrics" label="FAERS reactions" value={data.totals.adverse_event_reactions ?? 0} onOpen={() => setDrilldown({ kind: "faers_reactions", title: "FAERS reactions" })} />
+            <StatTile icon="inventory_2" label="Drug shortages" value={data.totals.drug_shortages ?? 0} onOpen={() => setDrilldown({ kind: "drug_shortages", title: "Drug shortages" })} />
+            <StatTile icon="warning" label="Drug recalls" value={data.totals.drug_recalls ?? 0} onOpen={() => setDrilldown({ kind: "drug_recalls", title: "Drug recalls" })} />
+            <StatTile icon="medication" label="NDC products" value={data.totals.ndc_products ?? 0} onOpen={() => setDrilldown({ kind: "ndc_products", title: "NDC products" })} />
+            <StatTile icon="inventory" label="NDC packages" value={data.totals.ndc_packages ?? 0} onOpen={() => setDrilldown({ kind: "ndc_packages", title: "NDC packages" })} />
+            <StatTile icon="hub" label="RxNorm concepts" value={data.totals.rxnorm_concepts ?? 0} onOpen={() => setDrilldown({ kind: "rxnorm_concepts", title: "RxNorm concepts" })} />
+            <StatTile icon="account_tree" label="RxNorm related" value={data.totals.rxnorm_related_concepts ?? 0} onOpen={() => setDrilldown({ kind: "rxnorm_related", title: "RxNorm related concepts" })} />
+            <StatTile icon="new_releases" label="Safety labels" value={data.totals.safety_labeling_changes ?? 0} onOpen={() => setDrilldown({ kind: "safety_labeling_changes", title: "Safety-related labeling changes" })} />
+            <StatTile icon="science" label="NCI definitions" value={data.totals.nci_drug_dictionary_entries ?? 0} onOpen={() => setDrilldown({ kind: "nci_drug_dictionary", title: "NCI drug definitions" })} />
+            <StatTile icon="fact_check" label="NCI summaries" value={data.totals.nci_drug_info_summaries ?? 0} onOpen={() => setDrilldown({ kind: "nci_drug_info", title: "NCI drug summaries" })} />
           </Box>
 
           <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "1.15fr 0.85fr" }, gap: 3 }}>
@@ -494,3 +527,4 @@ export function Artefacts() {
     </Box>
   );
 }
+

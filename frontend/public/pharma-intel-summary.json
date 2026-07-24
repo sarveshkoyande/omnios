@@ -1,29 +1,41 @@
 {
   "available": true,
   "totals": {
-    "documents": 3386,
-    "raw_files": 4069,
-    "sources": 26,
+    "documents": 3748,
+    "raw_files": 4464,
+    "sources": 34,
     "companies": 50,
     "oncology_brands": 36,
     "award_mentions": 524,
-    "message_evidence": 777,
+    "message_evidence": 769,
     "asco_abstracts": 7295,
+    "clinical_trial_locations": 16306,
     "seer_cancer_stats": 10,
-    "opdp_letters": 114
+    "opdp_letters": 114,
+    "open_payments": 275,
+    "adverse_event_reactions": 300,
+    "drug_shortages": 134,
+    "drug_recalls": 20,
+    "ndc_products": 248,
+    "ndc_packages": 315,
+    "rxnorm_concepts": 36,
+    "rxnorm_related_concepts": 763,
+    "safety_labeling_changes": 26,
+    "nci_drug_dictionary_entries": 14,
+    "nci_drug_dictionary_aliases": 143
   },
   "source_counts": [
     {
-      "source": "pubmed",
-      "count": 1285
+      "source": "clinicaltrials",
+      "count": 1367
     },
     {
-      "source": "clinicaltrials",
-      "count": 1253
+      "source": "pubmed",
+      "count": 1335
     },
     {
       "source": "dailymed",
-      "count": 354
+      "count": 364
     },
     {
       "source": "openfda",
@@ -35,7 +47,19 @@
     },
     {
       "source": "google_trends",
-      "count": 78
+      "count": 80
+    },
+    {
+      "source": "fda:safety_labeling_changes",
+      "count": 44
+    },
+    {
+      "source": "openfda:drug_ndc",
+      "count": 40
+    },
+    {
+      "source": "rxnav:rxnorm",
+      "count": 36
     },
     {
       "source": "sec_edgar:annual_filing_document",
@@ -50,30 +74,18 @@
       "count": 17
     },
     {
-      "source": "seer:statfacts",
-      "count": 10
+      "source": "openfda:drug_enforcement",
+      "count": 15
     },
     {
-      "source": "asco:abstract_list_csv",
-      "count": 1
-    },
-    {
-      "source": "brand_site:enhertu:hcp",
-      "count": 1
-    },
-    {
-      "source": "brand_site:enhertu:patient",
-      "count": 1
-    },
-    {
-      "source": "brand_site:imbruvica:hcp",
-      "count": 1
+      "source": "nci:drug_dictionary",
+      "count": 14
     }
   ],
   "evidence_mix": [
     {
       "label": "Official messages",
-      "count": 96
+      "count": 88
     },
     {
       "label": "FDA label sections",
@@ -81,11 +93,15 @@
     },
     {
       "label": "DailyMed SPLs",
-      "count": 15
+      "count": 26
     },
     {
       "label": "Clinical trials",
-      "count": 594
+      "count": 707
+    },
+    {
+      "label": "Clinical trial sites",
+      "count": 16306
     },
     {
       "label": "PubMed articles",
@@ -110,48 +126,252 @@
     {
       "label": "SEC mentions",
       "count": 60
+    },
+    {
+      "label": "Open Payments",
+      "count": 275
+    },
+    {
+      "label": "FAERS reactions",
+      "count": 300
+    },
+    {
+      "label": "Drug shortages",
+      "count": 134
+    },
+    {
+      "label": "Drug recalls",
+      "count": 20
+    },
+    {
+      "label": "NDC products",
+      "count": 248
+    },
+    {
+      "label": "NDC packages",
+      "count": 315
+    },
+    {
+      "label": "RxNorm concepts",
+      "count": 36
+    },
+    {
+      "label": "RxNorm related",
+      "count": 763
+    },
+    {
+      "label": "Safety label changes",
+      "count": 26
+    },
+    {
+      "label": "NCI drug definitions",
+      "count": 14
     }
   ],
   "top_brands": [
     {
       "brand": "Keytruda",
-      "total_evidence_count": 62,
+      "total_evidence_count": 170,
       "official_brand_message_count": 24,
       "label_message_count": 5,
-      "dailymed_label_count": 1,
-      "clinical_trial_count": 0,
+      "dailymed_label_count": 2,
+      "clinical_trial_count": 4,
       "pubmed_article_count": 5,
       "asco_abstract_count": 0,
       "award_mention_count": 0,
-      "sec_annual_filing_mention_count": 7
+      "sec_annual_filing_mention_count": 7,
+      "open_payment_count": 25,
+      "adverse_event_reaction_count": 25,
+      "drug_shortage_count": 0,
+      "drug_recall_count": 1,
+      "ndc_product_count": 15,
+      "rxnorm_concept_count": 2,
+      "srlc_labeling_change_count": 2,
+      "nci_drug_dictionary_count": 1
     },
     {
       "brand": "Imbruvica",
-      "total_evidence_count": 58,
-      "official_brand_message_count": 24,
+      "total_evidence_count": 157,
+      "official_brand_message_count": 21,
       "label_message_count": 5,
-      "dailymed_label_count": 0,
-      "clinical_trial_count": 0,
+      "dailymed_label_count": 1,
+      "clinical_trial_count": 5,
       "pubmed_article_count": 5,
       "asco_abstract_count": 0,
       "award_mention_count": 1,
-      "sec_annual_filing_mention_count": 2
+      "sec_annual_filing_mention_count": 2,
+      "open_payment_count": 25,
+      "adverse_event_reaction_count": 25,
+      "drug_shortage_count": 0,
+      "drug_recall_count": 0,
+      "ndc_product_count": 40,
+      "rxnorm_concept_count": 2,
+      "srlc_labeling_change_count": 3,
+      "nci_drug_dictionary_count": 1
     },
     {
       "brand": "Opdivo",
-      "total_evidence_count": 53,
-      "official_brand_message_count": 24,
+      "total_evidence_count": 146,
+      "official_brand_message_count": 19,
       "label_message_count": 5,
-      "dailymed_label_count": 0,
-      "clinical_trial_count": 0,
+      "dailymed_label_count": 2,
+      "clinical_trial_count": 3,
       "pubmed_article_count": 5,
       "asco_abstract_count": 0,
       "award_mention_count": 0,
-      "sec_annual_filing_mention_count": 4
+      "sec_annual_filing_mention_count": 4,
+      "open_payment_count": 25,
+      "adverse_event_reaction_count": 25,
+      "drug_shortage_count": 0,
+      "drug_recall_count": 4,
+      "ndc_product_count": 20,
+      "rxnorm_concept_count": 2,
+      "srlc_labeling_change_count": 2,
+      "nci_drug_dictionary_count": 1
+    },
+    {
+      "brand": "Enhertu",
+      "total_evidence_count": 115,
+      "official_brand_message_count": 24,
+      "label_message_count": 6,
+      "dailymed_label_count": 1,
+      "clinical_trial_count": 5,
+      "pubmed_article_count": 5,
+      "asco_abstract_count": 2,
+      "award_mention_count": 0,
+      "sec_annual_filing_mention_count": 2,
+      "open_payment_count": 25,
+      "adverse_event_reaction_count": 25,
+      "drug_shortage_count": 0,
+      "drug_recall_count": 0,
+      "ndc_product_count": 2,
+      "rxnorm_concept_count": 2,
+      "srlc_labeling_change_count": 1,
+      "nci_drug_dictionary_count": 0
+    },
+    {
+      "brand": "Lynparza",
+      "total_evidence_count": 112,
+      "official_brand_message_count": 0,
+      "label_message_count": 5,
+      "dailymed_label_count": 1,
+      "clinical_trial_count": 5,
+      "pubmed_article_count": 5,
+      "asco_abstract_count": 0,
+      "award_mention_count": 0,
+      "sec_annual_filing_mention_count": 2,
+      "open_payment_count": 25,
+      "adverse_event_reaction_count": 25,
+      "drug_shortage_count": 0,
+      "drug_recall_count": 2,
+      "ndc_product_count": 27,
+      "rxnorm_concept_count": 2,
+      "srlc_labeling_change_count": 2,
+      "nci_drug_dictionary_count": 1
+    },
+    {
+      "brand": "Darzalex",
+      "total_evidence_count": 107,
+      "official_brand_message_count": 0,
+      "label_message_count": 5,
+      "dailymed_label_count": 2,
+      "clinical_trial_count": 9,
+      "pubmed_article_count": 5,
+      "asco_abstract_count": 0,
+      "award_mention_count": 0,
+      "sec_annual_filing_mention_count": 3,
+      "open_payment_count": 25,
+      "adverse_event_reaction_count": 25,
+      "drug_shortage_count": 0,
+      "drug_recall_count": 2,
+      "ndc_product_count": 9,
+      "rxnorm_concept_count": 2,
+      "srlc_labeling_change_count": 2,
+      "nci_drug_dictionary_count": 1
+    },
+    {
+      "brand": "Imfinzi",
+      "total_evidence_count": 107,
+      "official_brand_message_count": 0,
+      "label_message_count": 5,
+      "dailymed_label_count": 1,
+      "clinical_trial_count": 5,
+      "pubmed_article_count": 5,
+      "asco_abstract_count": 0,
+      "award_mention_count": 0,
+      "sec_annual_filing_mention_count": 3,
+      "open_payment_count": 25,
+      "adverse_event_reaction_count": 25,
+      "drug_shortage_count": 0,
+      "drug_recall_count": 1,
+      "ndc_product_count": 11,
+      "rxnorm_concept_count": 2,
+      "srlc_labeling_change_count": 1,
+      "nci_drug_dictionary_count": 1
+    },
+    {
+      "brand": "Tagrisso",
+      "total_evidence_count": 98,
+      "official_brand_message_count": 0,
+      "label_message_count": 5,
+      "dailymed_label_count": 1,
+      "clinical_trial_count": 4,
+      "pubmed_article_count": 5,
+      "asco_abstract_count": 0,
+      "award_mention_count": 0,
+      "sec_annual_filing_mention_count": 1,
+      "open_payment_count": 25,
+      "adverse_event_reaction_count": 25,
+      "drug_shortage_count": 0,
+      "drug_recall_count": 0,
+      "ndc_product_count": 17,
+      "rxnorm_concept_count": 2,
+      "srlc_labeling_change_count": 1,
+      "nci_drug_dictionary_count": 1
+    },
+    {
+      "brand": "Venclexta",
+      "total_evidence_count": 98,
+      "official_brand_message_count": 0,
+      "label_message_count": 5,
+      "dailymed_label_count": 1,
+      "clinical_trial_count": 5,
+      "pubmed_article_count": 5,
+      "asco_abstract_count": 0,
+      "award_mention_count": 0,
+      "sec_annual_filing_mention_count": 1,
+      "open_payment_count": 25,
+      "adverse_event_reaction_count": 25,
+      "drug_shortage_count": 0,
+      "drug_recall_count": 0,
+      "ndc_product_count": 18,
+      "rxnorm_concept_count": 2,
+      "srlc_labeling_change_count": 1,
+      "nci_drug_dictionary_count": 1
+    },
+    {
+      "brand": "Erleada",
+      "total_evidence_count": 95,
+      "official_brand_message_count": 0,
+      "label_message_count": 5,
+      "dailymed_label_count": 1,
+      "clinical_trial_count": 5,
+      "pubmed_article_count": 5,
+      "asco_abstract_count": 0,
+      "award_mention_count": 0,
+      "sec_annual_filing_mention_count": 1,
+      "open_payment_count": 25,
+      "adverse_event_reaction_count": 25,
+      "drug_shortage_count": 0,
+      "drug_recall_count": 0,
+      "ndc_product_count": 19,
+      "rxnorm_concept_count": 2,
+      "srlc_labeling_change_count": 1,
+      "nci_drug_dictionary_count": 1
     },
     {
       "brand": "Kisqali",
-      "total_evidence_count": 51,
+      "total_evidence_count": 82,
       "official_brand_message_count": 0,
       "label_message_count": 5,
       "dailymed_label_count": 2,
@@ -159,103 +379,35 @@
       "pubmed_article_count": 5,
       "asco_abstract_count": 0,
       "award_mention_count": 1,
-      "sec_annual_filing_mention_count": 1
+      "sec_annual_filing_mention_count": 1,
+      "open_payment_count": 0,
+      "adverse_event_reaction_count": 0,
+      "drug_shortage_count": 0,
+      "drug_recall_count": 1,
+      "ndc_product_count": 23,
+      "rxnorm_concept_count": 2,
+      "srlc_labeling_change_count": 2,
+      "nci_drug_dictionary_count": 1
     },
     {
-      "brand": "Enhertu",
-      "total_evidence_count": 47,
-      "official_brand_message_count": 24,
+      "brand": "Carvykti",
+      "total_evidence_count": 77,
+      "official_brand_message_count": 0,
       "label_message_count": 6,
       "dailymed_label_count": 1,
-      "clinical_trial_count": 0,
-      "pubmed_article_count": 5,
-      "asco_abstract_count": 2,
-      "award_mention_count": 0,
-      "sec_annual_filing_mention_count": 2
-    },
-    {
-      "brand": "Talzenna",
-      "total_evidence_count": 47,
-      "official_brand_message_count": 0,
-      "label_message_count": 15,
-      "dailymed_label_count": 0,
-      "clinical_trial_count": 0,
-      "pubmed_article_count": 5,
-      "asco_abstract_count": 0,
-      "award_mention_count": 0,
-      "sec_annual_filing_mention_count": 1
-    },
-    {
-      "brand": "Darzalex",
-      "total_evidence_count": 28,
-      "official_brand_message_count": 0,
-      "label_message_count": 5,
-      "dailymed_label_count": 2,
       "clinical_trial_count": 4,
-      "pubmed_article_count": 5,
-      "asco_abstract_count": 0,
+      "pubmed_article_count": 4,
+      "asco_abstract_count": 3,
       "award_mention_count": 0,
-      "sec_annual_filing_mention_count": 3
-    },
-    {
-      "brand": "Jakafi",
-      "total_evidence_count": 27,
-      "official_brand_message_count": 0,
-      "label_message_count": 5,
-      "dailymed_label_count": 1,
-      "clinical_trial_count": 4,
-      "pubmed_article_count": 5,
-      "asco_abstract_count": 0,
-      "award_mention_count": 0,
-      "sec_annual_filing_mention_count": 2
-    },
-    {
-      "brand": "Cabometyx",
-      "total_evidence_count": 26,
-      "official_brand_message_count": 0,
-      "label_message_count": 5,
-      "dailymed_label_count": 1,
-      "clinical_trial_count": 5,
-      "pubmed_article_count": 5,
-      "asco_abstract_count": 0,
-      "award_mention_count": 0,
-      "sec_annual_filing_mention_count": 2
-    },
-    {
-      "brand": "Monjuvi",
-      "total_evidence_count": 26,
-      "official_brand_message_count": 0,
-      "label_message_count": 10,
-      "dailymed_label_count": 2,
-      "clinical_trial_count": 5,
-      "pubmed_article_count": 5,
-      "asco_abstract_count": 0,
-      "award_mention_count": 0,
-      "sec_annual_filing_mention_count": 1
-    },
-    {
-      "brand": "Calquence",
-      "total_evidence_count": 23,
-      "official_brand_message_count": 0,
-      "label_message_count": 10,
-      "dailymed_label_count": 0,
-      "clinical_trial_count": 0,
-      "pubmed_article_count": 5,
-      "asco_abstract_count": 0,
-      "award_mention_count": 0,
-      "sec_annual_filing_mention_count": 1
-    },
-    {
-      "brand": "Imfinzi",
-      "total_evidence_count": 23,
-      "official_brand_message_count": 0,
-      "label_message_count": 5,
-      "dailymed_label_count": 0,
-      "clinical_trial_count": 0,
-      "pubmed_article_count": 5,
-      "asco_abstract_count": 0,
-      "award_mention_count": 0,
-      "sec_annual_filing_mention_count": 3
+      "sec_annual_filing_mention_count": 3,
+      "open_payment_count": 25,
+      "adverse_event_reaction_count": 25,
+      "drug_shortage_count": 0,
+      "drug_recall_count": 0,
+      "ndc_product_count": 2,
+      "rxnorm_concept_count": 2,
+      "srlc_labeling_change_count": 0,
+      "nci_drug_dictionary_count": 0
     }
   ],
   "message_mix": [
@@ -265,7 +417,7 @@
     },
     {
       "label": "official_brand_message",
-      "count": 96
+      "count": 88
     },
     {
       "label": "sec_annual_filing_mention",

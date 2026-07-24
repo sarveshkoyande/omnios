@@ -16,9 +16,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
+import brief_summary  # noqa: E402  (≤14-word gists so asks never echo the deck verbatim)
 import decision_spine  # noqa: E402  (SME-grounded stage registry + extra asks + decision records)
+import external_evidence  # noqa: E402  (live public-source datapoints, pulled per-section on demand)
 import llm_decisioning  # noqa: E402  (Foundry + Cognee question/brief synthesis)
 import plan_document  # noqa: E402  (renders one section via its _SECTION_TABLE entry)
+import process_knowledge  # noqa: E402  (Cognee-backed SME process grounding, pulled per-section)
 from orchestrator import AGENT_ROSTER, compute_plan_ctx  # noqa: E402
 from segment_profile import build_segment_profile, build_tcg_template  # noqa: E402
 
@@ -144,6 +147,93 @@ def _basis(ctx: dict, fallback: str, direct_key: str | None = None,
     return fallback
 
 
+# ------------------------------------------------------------------ #
+# Lazy per-section grounding (+ prefetch during ask pauses).
+#
+# compute_plan_ctx(lazy_grounding=True) leaves process_grounding/external_evidence
+# empty; each section's slice is pulled here the moment it opens, and the NEXT
+# section's slice is warmed in a background thread while the user answers an ask.
+# These module caches are keyed by (brand, therapy_area[, topic]) so they survive
+# across the separate resume requests (ctx is reloaded from disk each resume, but
+# this process-local cache is not) — no re-pull, no DB write race.
+# ------------------------------------------------------------------ #
+_GROUND_CACHE: dict[tuple, dict] = {}
+_EXT_CACHE: dict[tuple, list] = {}
+
+
+def _ground_topics(brand: str, therapy_area: str, topics: list[str]) -> dict:
+    """Ground `topics` cache-first. Returns {topic: grounding-or-{}} for every requested topic
+    (an empty {} marks 'grounded, nothing found' so it is never re-attempted)."""
+    out: dict[str, dict] = {}
+    missing: list[str] = []
+    for t in topics:
+        key = (brand, therapy_area, t)
+        if key in _GROUND_CACHE:
+            out[t] = _GROUND_CACHE[key]
+        else:
+            missing.append(t)
+    if missing:
+        try:
+            got = process_knowledge.ground_all(brand, therapy_area, topics=missing)
+        except Exception as exc:  # noqa: BLE001 - grounding must never break the run
+            print(f"[studio] section grounding failed: {exc!r}")
+            got = {}
+        for t in missing:
+            val = got.get(t) or {}
+            _GROUND_CACHE[(brand, therapy_area, t)] = val
+            out[t] = val
+    return out
+
+
+def _ground_external(brand: str, therapy_area: str) -> list:
+    key = (brand, therapy_area)
+    if key not in _EXT_CACHE:
+        try:
+            _EXT_CACHE[key] = external_evidence.datapoints(therapy_area, brand)
+        except Exception as exc:  # noqa: BLE001
+            print(f"[studio] external evidence pull failed: {exc!r}")
+            _EXT_CACHE[key] = []
+    return _EXT_CACHE[key]
+
+
+def ensure_grounding(ctx: dict, step: dict) -> None:
+    """Populate ctx grounding for THIS section only (cache-first) — the deferred slice of what
+    compute_plan_ctx used to pull all at once."""
+    if ctx.get("_core_only"):
+        # First ask is posed from the fast core ctx — do NO grounding pulls here so it lands in
+        # seconds; grounding fills once fill_plan_ctx completes and the section re-grounds on resume.
+        return
+    brand = ctx.get("brand", "") or ""
+    ta = ctx.get("therapy_area", "") or ""
+    pg = ctx.setdefault("process_grounding", {})
+    needed = [t for t in step.get("topics", []) if t not in pg]
+    if needed:
+        pg.update(_ground_topics(brand, ta, needed))
+    # Only the customer-group section surfaces live external evidence today; pull it there.
+    if step["id"] == "tcg" and not ctx.get("external_evidence"):
+        ctx["external_evidence"] = _ground_external(brand, ta)
+
+
+def prefetch_grounding(brand: str, therapy_area: str, from_idx: int) -> None:
+    """Warm the cache for `from_idx` (the section that drafts right after the answer) through the
+    NEXT ask-bearing section — run in a background thread during an ask pause so the resume drafts
+    and re-asks straight from cache instead of grounding on the critical path. Best-effort; writes
+    only the process-local cache."""
+    idx = from_idx
+    while idx < len(SEQUENCE):
+        step = SEQUENCE[idx]
+        try:
+            _ground_topics(brand, therapy_area, list(step.get("topics", [])))
+            if step["id"] == "tcg":
+                _ground_external(brand, therapy_area)
+        except Exception as exc:  # noqa: BLE001 - prefetch is best-effort
+            print(f"[studio] prefetch failed at idx {idx}: {exc!r}")
+        # Ground the starting section even if it has an ask, then stop at the FOLLOWING ask.
+        if idx > from_idx and step.get("ask"):
+            break
+        idx += 1
+
+
 def grounding_items(ctx: dict, step: dict) -> list[dict]:
     items = []
     pg = ctx.get("process_grounding") or {}
@@ -231,18 +321,25 @@ def _build_ask_draft(ctx: dict, step: dict) -> dict | None:
         return _attach_grounding_to_ask(ctx, step, decision_spine.spine_ask_extras(ctx, step))
     inferred = ctx.get("inferred") or {}
     if kind == "audience":
-        rec = _brief_field(ctx, "audience") or inferred.get("persona", "")
-        alts = [s for s in ("Evidence-driven skeptics", "Guideline followers", "Digital-first early adopters",
-                            "Relationship-led traditionalists") if s.lower() != rec.lower()][:2]
+        # The brief's audience is the BROAD group, shown as ≤20-word context in the question —
+        # not offered back as a verbatim option. The ask is: which segment within it to lead with.
+        broad_full = _brief_field(ctx, "audience") or inferred.get("persona", "")
+        broad = brief_summary.summarize_value(broad_full, 14) if broad_full else "the lifecycle-stage default audience"
+        seg_lib = ["Evidence-driven skeptics", "Guideline followers",
+                   "Digital-first early adopters", "Relationship-led traditionalists"]
+        rec_seg = seg_lib[0]
+        alts = [s for s in seg_lib if s != rec_seg][:3]
         return _attach_grounding_to_ask(ctx, step, {"ask_id": f"ask-{step['num']}", "section": step["num"],
-                "question_focus": "Confirm the target audience and eligibility rules for the plan.",
-                "text": "",
+                "question_focus": f"Broad audience is {broad}. Ask which segment within it to prioritise first.",
+                "broad_group": broad,
+                "text": f"Your broad target is **{broad}**. Within that, which segment should the plan lead with?",
                 "evidence_basis": _basis(ctx,
                     "Directional default from lifecycle-stage segment map, audience benchmark, and SME process grounding.",
                     "audience", ("csfs", "positioning")),
-                "why": "This is the audience lock: it drives eligibility, message ladder, channel weighting and flow defaults.",
-                "recommendation": {"label": rec, "source": "brief audience if provided; otherwise lifecycle-stage segment map"},
-                "options": [{"label": a, "source": "segment-library alternative; not brief-provided"} for a in alts],
+                "why": "The segment lock drives eligibility, message ladder, channel weighting and flow defaults.",
+                "recommendation": {"label": rec_seg, "source": "SME lead-segment default for this broad group"},
+                "recommendation_reason": "Evidence-driven skeptics move first on OS-grade data, so leading with them anchors the ladder for the rest.",
+                "options": [{"label": a, "source": "segment-library alternative"} for a in alts],
                 "free_text": True})
     if kind == "objective":
         bam = ctx.get("bam") or {}
@@ -251,15 +348,16 @@ def _build_ask_draft(ctx: dict, step: dict) -> dict | None:
             positioning = next((str(v).strip() for v in positioning if str(v or "").strip()), "")
         rec = (_brief_field(ctx, "objective") or positioning
                or bam.get("a_to_b_shift") or "Shift awareness into confident first use").strip()
+        rec = brief_summary.summarize_value(rec, 14)  # never the whole two-part deck paragraph
         options = []
         if bam.get("a_to_b_shift") and bam.get("a_to_b_shift") != rec:
-            options.append({"label": bam["a_to_b_shift"], "source": "BAM framework default"})
+            options.append({"label": brief_summary.summarize_value(bam["a_to_b_shift"], 14), "source": "BAM framework default"})
         for c in _strategic_items(ctx, "csfs", limit=2):
             if c.lower() != rec.lower():
-                options.append({"label": c, "source": f"CSF from {_source_name(ctx)}"})
+                options.append({"label": brief_summary.summarize_value(c, 14), "source": f"CSF from {_source_name(ctx)}"})
         return _attach_grounding_to_ask(ctx, step, {"ask_id": f"ask-{step['num']}", "section": step["num"],
                 "question_focus": "Choose the CX objective / north star that every KPI and tactic should trace back to.",
-                "text": "",
+                "text": f"North-star objective reads as **{rec}**. Lock this, or steer it another way?",
                 "evidence_basis": _basis(ctx,
                     "Directional BAM objective from lifecycle-stage rules and SME process grounding; validate with brand strategy.",
                     "objective", ("positioning", "csfs")),
@@ -275,7 +373,7 @@ def _build_ask_draft(ctx: dict, step: dict) -> dict | None:
         alts = [k["topic"] for k in kms[1:3]]
         return _attach_grounding_to_ask(ctx, step, {"ask_id": f"ask-{step['num']}", "section": step["num"],
                 "question_focus": "Pick the lead message rung for the ladder.",
-                "text": "",
+                "text": f"Lead the message ladder with **{rec}**, or open on a different rung?",
                 "evidence_basis": _basis(ctx,
                     "Directional message-flow default from journey stage; brand-kit claims are used when available.",
                     None, ("evidence", "positioning", "csfs")),
@@ -289,26 +387,31 @@ def _build_ask_draft(ctx: dict, step: dict) -> dict | None:
         if not mix:
             return None
         ranked = sorted(mix.items(), key=lambda kv: -kv[1])
-        preferred = _brief_field(ctx, "preferred_channels")
-        rec = preferred if preferred else f"{ranked[0][0]}-led mix ({ranked[0][1]}%)"
+        preferred_full = _brief_field(ctx, "preferred_channels")
+        preferred = brief_summary.summarize_value(preferred_full, 14) if preferred_full else ""
+        broad = preferred or "the channel-affinity default mix"
+        rec = f"{ranked[0][0]}-led mix ({ranked[0][1]}%)"
         alts = [f"{k}-led mix ({v}%)" for k, v in ranked[1:3]]
+        text = (f"Your brief leans to **{preferred}**. Which channel should anchor the budget and cadence?"
+                if preferred else "Which channel should anchor the budget and cadence for the journey?")
         return _attach_grounding_to_ask(ctx, step, {"ask_id": f"ask-{step['num']}", "section": step["num"],
-                "question_focus": "Set the anchor channel and budget split for the journey.",
-                "text": "",
+                "question_focus": f"Broad channel intent: {broad}. Ask which channel anchors budget and cadence.",
+                "broad_group": broad,
+                "text": text,
                 "evidence_basis": _basis(ctx,
                     "Directional channel-affinity mix from lifecycle/persona framework; replace with brand media plan if available.",
                     "preferred_channels", ("csfs", "guardrails")),
                 "why": "The anchor channel takes the largest budget share and sets the cadence guardrails.",
-                "recommendation": {"label": rec, "source": "brief channel preference if provided; otherwise channel-affinity model"},
+                "recommendation": {"label": rec, "source": "channel-affinity model top rank"},
                 "options": [{"label": a, "source": "channel-affinity model alternative"} for a in alts],
                 "free_text": True})
     if kind == "timeline":
         duration = _brief_field(ctx, "duration")
-        rec = duration if duration else "13-week standard wave"
+        rec = brief_summary.summarize_value(duration, 14) if duration else "13-week standard wave"
         options = [] if duration else [{"label": "Compressed 9-week wave", "source": "execution model trade-off"}]
         return _attach_grounding_to_ask(ctx, step, {"ask_id": f"ask-{step['num']}", "section": step["num"],
                 "question_focus": "Confirm the execution window and whether there is a hard launch date.",
-                "text": "",
+                "text": f"Plan to a **{rec}**? Confirm the window, or set a hard launch date.",
                 "evidence_basis": _basis(ctx,
                     "Default execution wave from the work-plan model; confirm against launch date and MLR capacity.",
                     "duration", ("guardrails", "csfs")),
@@ -322,6 +425,11 @@ def _build_ask_llm_first(ctx: dict, step: dict) -> dict | None:
     draft = _build_ask_draft(ctx, step)
     if not draft:
         return None
+    if ctx.get("_core_only"):
+        # Racing to pose the first ask from the core ctx — skip the ~10s LLM refine and ship the
+        # grounded deterministic draft; later asks (full ctx) get the LLM polish as normal.
+        draft.setdefault("source", "fast-draft")
+        return draft
     return llm_decisioning.refine_studio_ask(ctx, step, draft)
 
 
@@ -407,8 +515,26 @@ def stream(ctx: dict, studio: dict):
         if studio.get("opened_num") != step["num"]:
             studio["opened_num"] = step["num"]
             yield handoff_chat(ctx, step, idx)
-        yield {"type": "grounding", "section_id": step["id"], "items": grounding_items(ctx, step)}
-        ask = build_ask(ctx, step)
+        try:
+            ensure_grounding(ctx, step)  # lazy: pull only THIS section's grounding, now
+            grounding = grounding_items(ctx, step)
+        except Exception as exc:  # noqa: BLE001 — a grounding hiccup must not kill the run
+            print(f"[studio] grounding_items failed for {step['id']}: {exc!r}")
+            grounding = []
+        yield {"type": "grounding", "section_id": step["id"], "items": grounding}
+        # A flaky grounding/LLM failure in one section must degrade to the deterministic
+        # draft (or no ask) — never crash the whole run and strand the user mid-build.
+        if step["id"] in studio["answers"]:
+            ask = None  # already answered on a prior pass — don't rebuild (saves a wasted LLM refine on resume)
+        else:
+            try:
+                ask = build_ask(ctx, step)
+            except Exception as exc:  # noqa: BLE001
+                print(f"[studio] build_ask failed for {step['id']}: {exc!r}")
+                try:
+                    ask = _build_ask_draft(ctx, step)
+                except Exception:  # noqa: BLE001
+                    ask = None
         if ask:  # every ask names its spine framework + what it unblocks (why-chip data)
             stage = decision_spine.stage_for(step["id"])
             if stage:
@@ -452,3 +578,4 @@ def stream(ctx: dict, studio: dict):
                    "supporting analysis. Exports are live; persona pressure-testing is available whenever you want it."}
     yield {"type": "plan", "html": html_out, "markdown": md, "partial": False}
     yield {"type": "run_done"}
+

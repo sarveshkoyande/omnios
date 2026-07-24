@@ -131,13 +131,13 @@ export function Home({
           </Typography>
         )}
 
-        {/* Greeting — circular avatar placeholder + a personal hello above the composer. */}
+        {/* Greeting — animated agent avatar + a personal hello above the composer. */}
         <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 2, mt: 1 }}>
           <Box
             aria-hidden
             sx={{
-              width: 80,
-              height: 80,
+              width: 88,
+              height: 88,
               borderRadius: "50%",
               overflow: "hidden",
               display: "grid",
@@ -145,10 +145,14 @@ export function Home({
               background: `linear-gradient(135deg, ${indigoTint(0.16)}, ${tokens.color.primaryContainer})`,
               border: `2px solid ${tokens.color.surface}`,
               boxShadow: `0 6px 18px ${shade(0.14)}`,
-              color: tokens.color.primary,
             }}
           >
-            <span className="material-symbols-outlined" style={{ fontSize: 44 }}>person</span>
+            <Box
+              component="img"
+              src="/static/agent_image/agent-image.gif"
+              alt=""
+              sx={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+            />
           </Box>
           <Typography sx={{ fontSize: { xs: 22, md: 27 }, fontWeight: 700, color: "text.primary", lineHeight: 1.2 }}>
             Hi Shaswata!{" "}

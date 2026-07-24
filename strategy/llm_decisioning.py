@@ -21,6 +21,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import conversation_llm
 import process_knowledge
 import decision_spine
+import brief_summary  # ≤20-word clamp so refined labels never echo the deck verbatim
 
 
 def _strip_json(text: str) -> str:
@@ -266,6 +267,9 @@ def refine_studio_ask(ctx: dict, step: dict, draft: dict) -> dict:
                     "Use the uploaded strategic-source extraction when present.",
                     "Use the SME process graph and brief grounding to shape the question.",
                     "Keep the recommendation/options tightly grounded in the actual context.",
+                    "Summarise any brief- or deck-sourced text to at most 20 words; NEVER quote a brief field verbatim.",
+                    "Every recommendation and option label must be a short phrase, ideally 8 words or fewer, never a full paragraph.",
+                    "If the draft carries a 'broad_group', treat it as the broad audience/channel: name it briefly in the question (<=20 words), then ask which specific segment/channel within it to prioritise. Options must be concrete segments/channels, not the broad group restated.",
                     "Provide recommendation_reason as 1-2 short sentences explaining why the recommended option is the best grounded default.",
                     "Never invent facts not supported by the input context.",
                 ],
@@ -283,6 +287,13 @@ def refine_studio_ask(ctx: dict, step: dict, draft: dict) -> dict:
         )
         out = _call_json(system, payload, max_tokens=900)
         merged = _normalize_ask_payload(out, draft, step)
+        # Safety net: clamp labels to ≤14 words even if the model echoed the deck.
+        rec = merged.get("recommendation")
+        if isinstance(rec, dict) and rec.get("label"):
+            rec["label"] = brief_summary.summarize_value(rec["label"], 14)
+        for opt in merged.get("options") or []:
+            if isinstance(opt, dict) and opt.get("label"):
+                opt["label"] = brief_summary.summarize_value(opt["label"], 14)
         merged["source"] = "ai"
         status = {
             "engine": "azure-foundry",
@@ -295,7 +306,9 @@ def refine_studio_ask(ctx: dict, step: dict, draft: dict) -> dict:
         merged["llm_status"] = status
         return merged
     except Exception as exc:  # noqa: BLE001
-        short = str(exc).strip().splitlines()[0][:500]
+        # `or [type(exc).__name__]` guards an empty exception message: "".splitlines() is []
+        # and [0] would raise its OWN IndexError, escaping this handler and killing the run.
+        short = (str(exc).strip().splitlines() or [type(exc).__name__])[0][:500]
         detail = f"Claude ask rewrite failed ({short}); used deterministic fallback."
         error_diagnostics = {
             "exception_type": type(exc).__name__,
@@ -312,6 +325,38 @@ def refine_studio_ask(ctx: dict, step: dict, draft: dict) -> dict:
             "diagnostics": _diagnostics(error_diagnostics),
         }
         return out
+
+
+def summarize_brief_fields(fields: dict, max_words: int = 14) -> dict:
+    """Keyword-compress each captured brief field into an ultra-short display gist.
+
+    Returns {key: short}. Empty dict on any failure — the caller keeps its
+    deterministic fallback, so the app still shortens without the LLM.
+    """
+    fields = {k: str(v) for k, v in (fields or {}).items() if str(v or "").strip()}
+    if not fields or not conversation_llm.llm_available():
+        return {}
+    try:
+        payload = {"fields": fields, "max_words": max_words}
+        system = (
+            "You compress pharma campaign-brief fields into ultra-short, strategic, keyword-driven "
+            "display summaries.\n"
+            f"For EACH field, return a summary of AT MOST {max_words} words. Keep only the decision-critical "
+            "keywords — segments, mechanism, claim constraints, endpoints, trial names, key numbers — and drop "
+            "filler, parentheticals, hedging and repetition. Prefer terse keyword phrases over full sentences; "
+            "no leading label like 'Objective:'.\n"
+            "Return STRICT JSON: an object mapping each input field key to its shortened string. "
+            "No extra keys, no markdown, no commentary, never an empty string."
+        )
+        out = _call_json(system, payload, max_tokens=1200)
+        cleaned: dict = {}
+        for key in fields:
+            value = out.get(key) if isinstance(out, dict) else None
+            if isinstance(value, str) and value.strip():
+                cleaned[key] = " ".join(value.split())
+        return cleaned
+    except Exception:  # noqa: BLE001 — summarisation is best-effort; caller falls back
+        return {}
 
 
 def enhance_campaign_brief(ctx: dict, draft: dict) -> dict:
@@ -372,7 +417,7 @@ def enhance_campaign_brief(ctx: dict, draft: dict) -> dict:
         merged["llm_status"] = status
         return merged
     except Exception as exc:  # noqa: BLE001
-        short = str(exc).strip().splitlines()[0][:200]
+        short = (str(exc).strip().splitlines() or [type(exc).__name__])[0][:200]
         detail = f"Claude brief synthesis failed ({short}); used deterministic fallback."
         _set_status(False, detail)
         out = copy.deepcopy(draft)

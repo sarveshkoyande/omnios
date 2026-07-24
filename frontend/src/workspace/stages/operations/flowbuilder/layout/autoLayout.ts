@@ -28,6 +28,51 @@ const snap = (v: number) => Math.round(v / GRID) * GRID;
 const elkPortId = (nodeId: string, portId: string) => `${nodeId}::${portId}`;
 
 const PORT_SIDE_TO_ELK: Record<string, string> = { top: "NORTH", right: "EAST", bottom: "SOUTH", left: "WEST" };
+const MIN_NODE_GAP = 36;
+
+type PageNode = Page["nodes"][number];
+
+function overlapsWithPadding(a: PageNode, b: PageNode): boolean {
+  return !(
+    a.position.x + a.size.w + MIN_NODE_GAP <= b.position.x ||
+    b.position.x + b.size.w + MIN_NODE_GAP <= a.position.x ||
+    a.position.y + a.size.h + MIN_NODE_GAP <= b.position.y ||
+    b.position.y + b.size.h + MIN_NODE_GAP <= a.position.y
+  );
+}
+
+function separateOverlappingNodes(nodes: Page["nodes"]): { nodes: Page["nodes"]; movedIds: Set<string> } {
+  const placed: PageNode[] = [];
+  const movedIds = new Set<string>();
+
+  for (const node of nodes) {
+    let current = node;
+    if (!node.pinned && node.type !== "comment" && node.type !== "text") {
+      let guard = 0;
+      let shifted = true;
+      while (shifted && guard < 200) {
+        shifted = false;
+        for (const other of placed) {
+          if (other.type === "comment" || other.type === "text") continue;
+          if (!overlapsWithPadding(current, other)) continue;
+          current = {
+            ...current,
+            position: {
+              ...current.position,
+              y: Math.max(current.position.y, other.position.y + other.size.h + MIN_NODE_GAP),
+            },
+          };
+          movedIds.add(current.id);
+          shifted = true;
+        }
+        guard += 1;
+      }
+    }
+    placed.push(current);
+  }
+
+  return { nodes: placed, movedIds };
+}
 
 export async function autoLayoutPage(page: Page, direction: Direction): Promise<Page> {
   const laneKinds = new Set(["lane", "pool", "container", "list", "subgraph", "phase"]);
@@ -105,7 +150,7 @@ export async function autoLayoutPage(page: Page, direction: Direction): Promise<
       // capture below.
       "elk.edgeRouting": "ORTHOGONAL",
       "elk.layered.unnecessaryBendpoints": "false",
-      "elk.spacing.nodeNode": "56",
+      "elk.spacing.nodeNode": "72",
       "elk.layered.spacing.nodeNodeBetweenLayers": "120",
       // elk.spacing.edgeEdge/edgeEdgeBetweenLayers is how far apart two
       // near-parallel edge tracks sit -- it needs to clear a full label's
@@ -135,12 +180,13 @@ export async function autoLayoutPage(page: Page, direction: Direction): Promise<
   // half a grid cell away from where its own edges assume it sits, which is
   // exactly what produced the little jogs right at the box boundary. Manual
   // drags still snap to grid (Canvas.tsx's own snapGrid); this is layout-only.
-  const nodes = page.nodes.map((n) => {
+  const laidOutNodes = page.nodes.map((n) => {
     if (n.pinned) return n; // manual positions preserved for pinned nodes
     const pos = posById.get(n.id);
     if (!pos) return n;
     return { ...n, position: { x: pos.x, y: pos.y } };
   });
+  const { nodes, movedIds } = separateOverlappingNodes(laidOutNodes);
 
   // ELK already worked out a clean bend-point route per edge that keeps clear of
   // node bodies and (as much as the layered algorithm can) other edges. Previously
@@ -161,6 +207,9 @@ export async function autoLayoutPage(page: Page, direction: Direction): Promise<
     const elkEdge = elkEdgeById.get(e.id);
     const section = elkEdge?.sections?.[0];
     const bendPoints = section?.bendPoints ?? [];
+    if (movedIds.has(e.source.nodeId) || movedIds.has(e.target.nodeId)) {
+      return { ...e, line: { ...e.line, routing: "step" as const, waypoints: [] } };
+    }
     if (bendPoints.length === 0 || e.line.routing === "curved") return e;
     return {
       ...e,

@@ -20,6 +20,8 @@ export interface Slots {
   reason?: string;
   notes?: string;
   maturity_notes?: string;
+  /** Presentational ≤20-word summaries of the long brief fields (server-attached). */
+  brief_summary?: Partial<Record<string, string>>;
   [k: string]: unknown;
 }
 

@@ -352,7 +352,7 @@ export function Workspace({
 
       {/* Right rail: the AI Assistant. Same conversation/composer as before -- moved from
           the left to the right so the middle column (plan content) reads first. */}
-      <Box component="main" sx={{ flex: "0 0 350px", minWidth: 320, display: "flex", flexDirection: "column", borderLeft: `1px solid ${indigoTint(0.1)}`, position: "relative", backgroundColor: tokens.color.bgBaseChat }}>
+      <Box component="main" sx={{ flex: "0 0 30vw", minWidth: 320, display: "flex", flexDirection: "column", borderLeft: `1px solid ${indigoTint(0.1)}`, position: "relative", backgroundColor: tokens.color.bgBaseChat }}>
         {!ws.projectId ? (
           <EmptyState>
             <span className="material-symbols-outlined" style={{ fontSize: 46, color: tokens.color.primary }}>hub</span>

@@ -12,13 +12,12 @@
  */
 import type { StudioEvent } from "./studioTypes";
 
-const REDUCED = typeof window !== "undefined" &&
-  window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-
 export class Pacer {
   private queue: StudioEvent[] = [];
   private running = false;
-  private skipping = REDUCED;
+  // Instant by default: the deliberate build "rhythm" was an artificial pause the user
+  // did not want. Events are applied as soon as they arrive (also covers reduced-motion).
+  private skipping = true;
   private disposed = false;
   private timer: ReturnType<typeof setTimeout> | null = null;
   private paused = false;

@@ -4,7 +4,7 @@ import Box from "@mui/material/Box";
 import InputBase from "@mui/material/InputBase";
 import Typography from "@mui/material/Typography";
 import { GlassPanel } from "../glass/primitives";
-import { tokens, indigoTint, shade } from "../theme/tokens";
+import { tokens, indigoTint, light } from "../theme/tokens";
 
 const settleIn = keyframes`
   from { opacity: 0; transform: translateY(14px); }
@@ -71,7 +71,16 @@ export function HomeIntakeCard({
   return (
     <GlassPanel
       tier="A"
-      sx={{ p: 4, animation: `${settleIn} 380ms ease` }}
+      sx={{
+        // Transparent container, no card chrome — the composer below is the only box, so it
+        // sits edge-to-edge with the dashboard stat cards instead of being inset inside a panel.
+        p: 0,
+        background: "transparent",
+        border: "none",
+        boxShadow: "none",
+        overflow: "visible",
+        animation: `${settleIn} 380ms ease`,
+      }}
       onDragEnter={(e: React.DragEvent) => {
         e.preventDefault();
         dragDepth.current += 1;
@@ -102,17 +111,19 @@ export function HomeIntakeCard({
         </Typography>
       </Box>
 
-      {/* Composer surface — a single white card: field on top, one aligned toolbar row below. */}
+      {/* Composer surface — the single frosted input box: translucent so the page glow bleeds
+          through, brand-tinted border, spanning the full width to line up with the stat cards. */}
       <Box
         sx={{
           borderRadius: tokens.radius.md,
-          background: tokens.color.surface,
-          border: dragActive ? `1.5px dashed ${tokens.color.primary}` : `1px solid ${tokens.color.outline}`,
-          boxShadow: dragActive ? `0 8px 28px ${indigoTint(0.22)}` : `0 2px 10px ${shade(0.06)}`,
-          transition: "border-color 140ms ease, box-shadow 140ms ease",
+          background: dragActive ? light(0.7) : light(0.82),
+          backdropFilter: "blur(10px)",
+          border: dragActive ? `1.5px dashed ${tokens.color.primary}` : `1px solid ${indigoTint(0.28)}`,
+          boxShadow: dragActive ? `0 8px 28px ${indigoTint(0.22)}` : `0 10px 30px ${indigoTint(0.12)}`,
+          transition: "border-color 140ms ease, box-shadow 140ms ease, background 140ms ease",
           "&:focus-within": {
             borderColor: tokens.color.primary,
-            boxShadow: `0 0 0 3px ${indigoTint(0.14)}`,
+            boxShadow: `0 0 0 3px ${indigoTint(0.16)}, 0 10px 30px ${indigoTint(0.14)}`,
           },
         }}
       >

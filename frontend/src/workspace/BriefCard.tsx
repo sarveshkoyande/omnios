@@ -64,9 +64,27 @@ export function BriefCard({ slots, inferred }: { slots: Slots; inferred: Inferre
       {extras.length > 0 && (
         <>
           <GroupLabel>From your brief</GroupLabel>
-          {extras.map(([label, key]) => (
-            <DefinitionRow key={key} label={label} value={String(slots[key])} />
-          ))}
+          {extras.map(([label, key]) => {
+            const full = String(slots[key]);
+            // Show the server's ≤20-word gist, not the whole paragraph from the deck.
+            const short = slots.brief_summary?.[key as string];
+            const value = short || full;
+            return (
+              <DefinitionRow
+                key={key}
+                label={label}
+                value={
+                  short && short !== full ? (
+                    <Box component="span" title={full}>
+                      {value}
+                    </Box>
+                  ) : (
+                    value
+                  )
+                }
+              />
+            );
+          })}
         </>
       )}
 

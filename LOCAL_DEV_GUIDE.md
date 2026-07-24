@@ -37,9 +37,15 @@ Get a key at https://aistudio.google.com/apikey. Restart uvicorn after changing 
 it's only read once, at process startup.
 
 **Provider priority**, decided automatically, no toggle needed:
-1. `GEMINI_API_KEY` set → uses Gemini
-2. else `AZURE_AI_FOUNDRY_API_KEY` set → uses Claude via Azure Foundry
+1. Azure Foundry configured (`AZURE_AI_FOUNDRY_API_KEY`, or `azure-identity` installed for the
+   Azure AD path) → uses Claude via Azure Foundry
+2. else `GEMINI_API_KEY` / `GOOGLE_API_KEY` set → uses Gemini
 3. else → deterministic rules engine (no AI)
+
+Note: Foundry wins whenever it *looks* configured, so to actually exercise Gemini locally you
+must leave `AZURE_AI_FOUNDRY_API_KEY` unset **and** have no `azure-identity` package
+installed — otherwise the run goes to Foundry and, if that credential fails, straight to the
+rules engine rather than to Gemini.
 
 ## 3. Use the app
 

@@ -614,25 +614,56 @@ def run_agents(brand: str, therapy_area: str, lifecycle_key: str, budget: float 
     yield {"type": "done"}
 
 
-def compute_plan_ctx(brand: str, therapy_area: str, lifecycle_key: str, budget: float = 0,
+def compute_core_ctx(brand: str, therapy_area: str, lifecycle_key: str, budget: float = 0,
                      maturity_notes: str = "", indication: str = "", brief: dict | None = None) -> dict:
-    """Run every agent's deterministic computation ONCE and return the fully-populated ctx
-    (plus cx_questionnaire + open_questions). No streaming, no theater -- the phased run
-    (run_phase) plays the visible agent work per phase from this pre-computed ctx, so the
-    heavy work happens on the first phase and later phases are instant."""
+    """The FAST core of a plan ctx (sub-second): only what's needed to pose the first
+    (customer-group) question — brand/therapy/lifecycle/brief plus the deterministic
+    persona+stage inference and the local brand kit. Everything heavy (grounding, market,
+    strategy, message flow, KPIs, …) is filled later by fill_plan_ctx, so the Studio run can
+    pose its first ask in seconds instead of blocking minutes behind the full compute."""
     ctx: dict = {"brand": brand, "therapy_area": therapy_area, "lifecycle_key": lifecycle_key, "budget": budget,
                  "maturity_notes": maturity_notes, "indication": indication, "brief": brief or {}}
     ctx["slots"] = ctx["brief"]
-    inferred = infer_persona_and_stage(lifecycle_key)
-    ctx["inferred"] = inferred
-    kit = brand_kit_mod.kit_for(brand)
-    ctx["brand_kit"] = kit
+    ctx["inferred"] = infer_persona_and_stage(lifecycle_key)
+    ctx["brand_kit"] = brand_kit_mod.kit_for(brand)
+    ctx["process_grounding"] = {}
+    ctx["external_evidence"] = []
+    ctx["strategic_source"] = None
+    ctx["_core_only"] = True  # cleared by fill_plan_ctx once the heavy remainder is populated
+    return ctx
+
+
+def compute_plan_ctx(brand: str, therapy_area: str, lifecycle_key: str, budget: float = 0,
+                     maturity_notes: str = "", indication: str = "", brief: dict | None = None,
+                     lazy_grounding: bool = False) -> dict:
+    """Full plan ctx = fast core + heavy fill. The classic phased flow calls this directly; the
+    Studio flow poses its first ask from compute_core_ctx() and runs fill_plan_ctx() in the
+    background so the first question isn't stuck behind minutes of market/strategy/grounding work."""
+    ctx = compute_core_ctx(brand, therapy_area, lifecycle_key, budget, maturity_notes, indication, brief)
+    return fill_plan_ctx(ctx, lazy_grounding=lazy_grounding)
+
+
+def fill_plan_ctx(ctx: dict, lazy_grounding: bool = False, fast: bool = False) -> dict:
+    """Populate the heavy remainder of a ctx built by compute_core_ctx (mutates in place):
+    every agent's deterministic computation, plus cx_questionnaire + open_questions.
+
+    `fast` (the Studio background fill) timeboxes/skips the three multi-minute calls that only
+    feed LATER sections — live SWOT refresh, cognee brief-grounding, precedent-campaign search —
+    so the next ask isn't stuck behind ~200s of network+LLM work. They degrade to cached/empty."""
+    brand = ctx["brand"]; therapy_area = ctx["therapy_area"]; lifecycle_key = ctx["lifecycle_key"]
+    budget = ctx["budget"]; maturity_notes = ctx["maturity_notes"]; indication = ctx["indication"]
+    brief = ctx["brief"]; inferred = ctx["inferred"]; kit = ctx["brand_kit"]
     # Ground every agent's section in the firm's own documented process (Omni OS docs ingested
-    # into cognee). One concurrent batch; returns {} if the knowledge layer is unavailable, in
-    # which case the plan renders exactly as before.
-    ctx["process_grounding"] = process_knowledge.ground_all(brand, therapy_area)
-    # Live external datapoints (public sources only) the agents cite to back decisions.
-    ctx["external_evidence"] = external_evidence.datapoints(therapy_area, brand)
+    # into cognee) + live external datapoints. These are the two HEAVY pulls (cognee recall +
+    # ClinicalTrials/PubMed/openFDA network). With lazy_grounding (the Sequential Studio flow)
+    # they are deferred: studio_run.ensure_grounding pulls each section's slice on demand and
+    # prefetches the next during the ask pause. The classic phased flow keeps the eager pull.
+    if lazy_grounding:
+        ctx["process_grounding"] = {}
+        ctx["external_evidence"] = []
+    else:
+        ctx["process_grounding"] = process_knowledge.ground_all(brand, therapy_area)
+        ctx["external_evidence"] = external_evidence.datapoints(therapy_area, brand)
 
     # An uploaded strategic-plan document (captured by /api/upload alongside the brief) grounds
     # the Tactical Plan sections when present; None when no such document was uploaded, in which
@@ -650,10 +681,15 @@ def compute_plan_ctx(brand: str, therapy_area: str, lifecycle_key: str, budget: 
     else:
         competitors = discover_competitors(therapy_area, brand, limit=5)
     ctx["competitors"] = competitors
-    ctx["swot"] = build_swot(brand, competitors, therapy_area, refresh=True) if competitors else None
+    # SWOT live-refresh is tens of seconds and only feeds a later section. In fast mode SKIP it
+    # (None = the same state as a no-competitor plan, which the renderers already handle) — no
+    # background thread, since these external calls contend with cognee/network and blow up the
+    # total time unpredictably. [[studio-lazy-grounding]] can backfill it per-section later.
+    ctx["swot"] = None if fast else (build_swot(brand, competitors, therapy_area, refresh=True) if competitors else None)
     ctx["audience_profile"] = benchmarks.maya_audience_profile(brand, therapy_area, inferred["persona"])
     ctx["hcp_360_grounding"] = hcp_360.ground_segment(therapy_area, inferred["persona"])
-    ctx["brief_grounding"] = process_knowledge.brief_grounding(brand, therapy_area)
+    # cognee brief-grounding is ~80s here and every recall fails to {} anyway; skip it in fast mode.
+    ctx["brief_grounding"] = {} if fast else process_knowledge.brief_grounding(brand, therapy_area)
 
     # -- Strategy & Positioning --
     strategy = generate_strategy(brand, therapy_area, inferred["persona"], inferred["stage_key"],
@@ -686,7 +722,8 @@ def compute_plan_ctx(brand: str, therapy_area: str, lifecycle_key: str, budget: 
                                                       inferred["stage_key"], competitors)
 
     # -- Creative Inspiration --
-    ctx["precedents"] = find_precedent_campaigns(therapy_area, brand, limit=3)
+    # Precedent-campaign search is ~60s of network and only feeds later creative sections; skip in fast mode.
+    ctx["precedents"] = [] if fast else find_precedent_campaigns(therapy_area, brand, limit=3)
     ctx["award_campaigns"] = awards_store.awards_for(brand=brand, therapy_area=therapy_area, limit=4)
     # A kit brand's authored content library (claims + creative components WITH images) is the
     # source of truth -- it wins over any lossy echo persisted into campaign_store from a prior
@@ -720,6 +757,7 @@ def compute_plan_ctx(brand: str, therapy_area: str, lifecycle_key: str, budget: 
     # -- Engagement Planner close (questionnaire + open questions) --
     ctx["cx_questionnaire"] = build_cx_questionnaire(brand, inferred["persona"], strategy, ctx["bam"], kpi)
     ctx["open_questions"] = build_open_questions(cx_maturity["feasibility_checklist"], ctx["cx_questionnaire"], ctx["tcg"])
+    ctx.pop("_core_only", None)  # heavy remainder is now populated
     return ctx
 
 

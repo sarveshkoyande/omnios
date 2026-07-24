@@ -1,5 +1,5 @@
-{
-  "as_of": "2026-07-19",
+﻿{
+  "as_of": "2026-07-23",
   "policy": "Only ingest public, non-login pages and public APIs. Respect robots.txt and site terms. Do not redistribute copyrighted creative assets; store URLs and derived metadata/text snippets only.",
   "sources": [
     {
@@ -96,6 +96,16 @@
       "fields": ["pmid", "title", "journal", "year", "abstract"]
     },
     {
+      "id": "cms_open_payments_general",
+      "name": "CMS Open Payments General Payments",
+      "category": "hcp_kol_engagement",
+      "access": "public_api",
+      "url": "https://openpaymentsdata.cms.gov/api/1/datastore/query/",
+      "ingest_enabled": true,
+      "fields": ["record_id", "recipient_npi", "recipient_specialty", "manufacturer", "payment_amount", "payment_date", "nature_of_payment", "associated_product", "program_year"],
+      "note": "Added 2026-07-23. The scraper resolves the latest General Payment Data dataset from the CMS metastore, then performs bounded brand-matched DKAN queries instead of downloading the full multi-million-row CSV."
+    },
+    {
       "id": "asco_annual_meeting_abstracts",
       "name": "ASCO Annual Meeting Abstracts",
       "category": "medical_literature_congress",
@@ -132,6 +142,86 @@
       "fields": ["set_id", "openfda", "indications", "warnings", "adverse_reactions"]
     },
     {
+      "id": "openfda_drug_events",
+      "name": "openFDA Drug Adverse Event API",
+      "category": "pharmacovigilance_safety",
+      "access": "public_api",
+      "url": "https://api.fda.gov/drug/event.json",
+      "ingest_enabled": true,
+      "fields": ["brand", "reaction_term", "reaction_count", "seriousness_count", "openfda_last_updated"],
+      "note": "Added 2026-07-23. Stores aggregate FAERS count outputs for seeded oncology brands, not individual adverse-event case records."
+    },
+    {
+      "id": "openfda_drug_shortages",
+      "name": "openFDA Drug Shortages API",
+      "category": "access_supply_disruption",
+      "access": "public_api",
+      "url": "https://api.fda.gov/drug/shortages.json",
+      "ingest_enabled": true,
+      "fields": ["generic_name", "brand_name", "company_name", "status", "availability", "shortage_reason", "presentation", "initial_posting_date", "update_date", "therapeutic_category"],
+      "note": "Added 2026-07-23. Pulls oncology therapeutic-category shortage records for access-risk and patient-support planning."
+    },
+    {
+      "id": "openfda_drug_enforcement",
+      "name": "openFDA Drug Enforcement / Recall API",
+      "category": "recalls_regulatory_risk",
+      "access": "public_api",
+      "url": "https://api.fda.gov/drug/enforcement.json",
+      "ingest_enabled": true,
+      "fields": ["recall_number", "classification", "status", "recalling_firm", "product_description", "reason_for_recall", "report_date", "recall_initiation_date", "distribution_pattern"],
+      "note": "Added 2026-07-23. Pulls bounded product-description recall matches for seeded oncology brands and label-derived generic terms."
+    },
+    {
+      "id": "openfda_drug_ndc",
+      "name": "openFDA Drug NDC Directory API",
+      "category": "marketed_product_packaging",
+      "access": "public_api",
+      "url": "https://api.fda.gov/drug/ndc.json",
+      "ingest_enabled": true,
+      "fields": ["product_ndc", "package_ndc", "brand_name", "generic_name", "labeler_name", "marketing_category", "dosage_form", "route", "marketing_start_date", "marketing_end_date", "finished"],
+      "note": "Added 2026-07-23. Pulls bounded NDC Directory records for seeded oncology brands and label-derived generic terms."
+    },
+    {
+      "id": "nlm_rxnorm",
+      "name": "NLM RxNorm / RxNav API",
+      "category": "drug_vocabulary_normalization",
+      "access": "public_api",
+      "url": "https://rxnav.nlm.nih.gov/REST/",
+      "ingest_enabled": true,
+      "fields": ["rxcui", "name", "tty", "synonym", "related_concepts", "historical_ndcs"],
+      "note": "Added 2026-07-23. Resolves seeded oncology brand and label-derived generic terms to RxNorm concept identifiers and related vocabulary concepts."
+    },
+    {
+      "id": "fda_safety_labeling_changes",
+      "name": "FDA Drug Safety-related Labeling Changes",
+      "category": "labeling_safety_updates",
+      "access": "public_web",
+      "url": "https://www.accessdata.fda.gov/scripts/cder/safetylabelingchanges/index.cfm",
+      "ingest_enabled": true,
+      "fields": ["drug_name", "active_ingredient", "application_number", "application_type", "supplement_date", "database_updated", "detail_page_text"],
+      "note": "Added 2026-07-23. Captures bounded SrLC search results and FDA detail pages for seeded oncology brands."
+    },
+    {
+      "id": "nci_drug_dictionary",
+      "name": "NCI Drug Dictionary API",
+      "category": "oncology_drug_definitions",
+      "access": "public_api",
+      "url": "https://webapis.cancer.gov/drugdictionary/v1/",
+      "ingest_enabled": true,
+      "fields": ["term_id", "nci_concept_id", "nci_concept_name", "definition_text", "aliases", "drug_info_summary_url"],
+      "note": "Added 2026-07-23. Captures structured NCI drug/agent definitions and synonyms for label-derived oncology generic terms."
+    },
+    {
+      "id": "nci_drug_information_summaries",
+      "name": "NCI Cancer Drug Information Summaries",
+      "category": "oncology_drug_use_summaries",
+      "access": "public_web",
+      "url": "https://www.cancer.gov/about-cancer/treatment/drugs",
+      "ingest_enabled": true,
+      "fields": ["title", "us_brand_names", "fda_approved", "use_in_cancer", "posted_date", "updated_date", "related_links"],
+      "note": "Added 2026-07-23. Captures NCI patient-facing cancer drug summary pages linked from resolved NCI Drug Dictionary entries."
+    },
+    {
       "id": "drugs_fda",
       "name": "Drugs@FDA Data Files",
       "category": "approvals_regulatory",
@@ -166,7 +256,7 @@
       "url": "https://www.fda.gov/advisory-committees/advisory-committee-calendar",
       "ingest_enabled": false,
       "fields": ["meeting", "drug", "indication", "briefing_documents", "vote"],
-      "reason_disabled": "Verified 2026-07-21: page returns HTTP 200 but the meeting table (<table class=\"lcds-datatable--advisory-committee-calendar\">) ships with an empty <thead>-only body — rows are populated client-side by jQuery DataTables from a JS-driven data source we could not locate in the served JS bundle or drupalSettings (no /views/ajax call, no JSON export param). Needs a headless-browser render (e.g. Playwright) or the underlying data endpoint reverse-engineered before this can be scraped statically. Individual meeting detail pages (e.g. /advisory-committees/advisory-committee-calendar/{slug}) do exist and are static/scrapable once discovered via search or the (still-to-find) feed."
+      "reason_disabled": "Verified 2026-07-21: page returns HTTP 200 but the meeting table (<table class=\"lcds-datatable--advisory-committee-calendar\">) ships with an empty <thead>-only body â€” rows are populated client-side by jQuery DataTables from a JS-driven data source we could not locate in the served JS bundle or drupalSettings (no /views/ajax call, no JSON export param). Needs a headless-browser render (e.g. Playwright) or the underlying data endpoint reverse-engineered before this can be scraped statically. Individual meeting detail pages (e.g. /advisory-committees/advisory-committee-calendar/{slug}) do exist and are static/scrapable once discovered via search or the (still-to-find) feed."
     },
     {
       "id": "fda_oncology_approval_notifications",
@@ -203,7 +293,7 @@
       "url": "company-specific investor relations pages for the top 50 companies",
       "ingest_enabled": false,
       "fields": ["sales_by_brand", "pipeline", "commercial_priorities", "launch_plans"],
-      "reason_disabled": "No single source URL — needs a curated per-company IR page list (~50 URLs) before public_web.py or a dedicated scraper can run it. SEC EDGAR (sec_edgar, sec_filing_docs, already enabled) covers the US-listed subset of this via 10-K/proxy filings in the meantime. Next concrete expansion candidate."
+      "reason_disabled": "No single source URL â€” needs a curated per-company IR page list (~50 URLs) before public_web.py or a dedicated scraper can run it. SEC EDGAR (sec_edgar, sec_filing_docs, already enabled) covers the US-listed subset of this via 10-K/proxy filings in the meantime. Next concrete expansion candidate."
     },
     {
       "id": "brand_websites",
@@ -213,7 +303,7 @@
       "url": "brand-specific official HCP and patient websites",
       "ingest_enabled": false,
       "fields": ["headline", "claims", "cta", "audience", "isi_url", "fair_balance", "channel"],
-      "reason_disabled": "Superseded — this is already implemented under scrapers/brand_sites.py against the curated list in config/official_oncology_brand_sites.json (enabled and running in run_all.py). Kept here disabled to avoid double-counting; left as a placeholder in case a future non-oncology brand-site pass is wanted."
+      "reason_disabled": "Superseded â€” this is already implemented under scrapers/brand_sites.py against the curated list in config/official_oncology_brand_sites.json (enabled and running in run_all.py). Kept here disabled to avoid double-counting; left as a placeholder in case a future non-oncology brand-site pass is wanted."
     },
     {
       "id": "fda_bad_ad",
@@ -223,7 +313,7 @@
       "url": "https://www.fda.gov/drugs/office-prescription-drug-promotion/bad-ad-program",
       "ingest_enabled": true,
       "fields": ["company", "brand", "violation", "claim_issue", "channel"],
-      "note": "URL corrected 2026-07-21 (old path 404s, page moved under /drugs/office-prescription-drug-promotion/bad-ad-program). Verified static HTML, no login/JS gate. Content is program description/FAQ/reporting-channel text, not a structured violation table — captured as a public_web document, not a structured warehouse table."
+      "note": "URL corrected 2026-07-21 (old path 404s, page moved under /drugs/office-prescription-drug-promotion/bad-ad-program). Verified static HTML, no login/JS gate. Content is program description/FAQ/reporting-channel text, not a structured violation table â€” captured as a public_web document, not a structured warehouse table."
     },
     {
       "id": "fda_opdp_untitled_letters",
@@ -242,7 +332,8 @@
       "url": "https://trialsearch.who.int/",
       "ingest_enabled": false,
       "fields": ["trial_id", "sponsor", "condition", "intervention", "country"],
-      "reason_disabled": "Verified 2026-07-21: the search portal itself needs form/session interaction (not a flat page), and WHO's documented bulk-download route requires a WHO-issued username/password (request via ictrpinfo@who.int) — not fetchable anonymously. ClinicalTrials.gov (already enabled) covers the large majority of oncology trials relevant to this warehouse in the meantime."
+      "reason_disabled": "Verified 2026-07-21: the search portal itself needs form/session interaction (not a flat page), and WHO's documented bulk-download route requires a WHO-issued username/password (request via ictrpinfo@who.int) â€” not fetchable anonymously. ClinicalTrials.gov (already enabled) covers the large majority of oncology trials relevant to this warehouse in the meantime."
     }
   ]
 }
+

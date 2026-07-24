@@ -1,4 +1,4 @@
-"""Runs every scraper against the configured seed terms and prints a summary."""
+﻿"""Runs every scraper against the configured seed terms and prints a summary."""
 from __future__ import annotations
 
 import json
@@ -13,13 +13,21 @@ import drugs_fda
 import ema_medicines
 import fda_opdp
 import fda_oncology_approvals
+import fda_srlc
 import google_trends
+import nci_drug_dictionary
+import open_payments
+import openfda_events
+import openfda_ndc
+import openfda_recalls
+import openfda_shortages
 import openfda
 import orange_book
 import pharma_intel
 import pubmed
 import public_web
 import purple_book
+import rxnorm
 import sec_edgar
 import sec_filing_docs
 import seer_statfacts
@@ -43,12 +51,28 @@ def main() -> None:
     results["dailymed"] = dailymed.run(drugs)
     print("=== openFDA ===")
     results["openfda"] = openfda.run(drugs)
+    print("=== openFDA FAERS adverse-event counts ===")
+    results["openfda_events"] = openfda_events.run(max_brands=12)
+    print("=== openFDA oncology drug shortages ===")
+    results["openfda_shortages"] = openfda_shortages.run()
+    print("=== openFDA oncology drug recalls ===")
+    results["openfda_recalls"] = openfda_recalls.run(max_brands=18, per_term_limit=50)
+    print("=== openFDA oncology NDC Directory ===")
+    results["openfda_ndc"] = openfda_ndc.run(max_brands=18, per_term_limit=50)
+    print("=== NLM RxNorm oncology vocabulary ===")
+    results["rxnorm"] = rxnorm.run(max_brands=18)
+    print("=== FDA Safety-related Labeling Changes ===")
+    results["fda_srlc"] = fda_srlc.run(max_brands=18)
+    print("=== NCI Drug Dictionary ===")
+    results["nci_drug_dictionary"] = nci_drug_dictionary.run(max_brands=18)
     print("=== ClinicalTrials.gov ===")
     results["clinicaltrials"] = clinicaltrials.run(drugs + therapy_areas)
     print("=== PubMed ===")
     results["pubmed"] = pubmed.run(drugs + therapy_areas)
     print("=== Google Trends ===")
     results["google_trends"] = google_trends.run(drugs + therapy_areas)
+    print("=== CMS Open Payments ===")
+    results["open_payments"] = open_payments.run(max_brands=12, per_brand_limit=25, product_slots=1)
     print("=== Award-winning campaigns ===")
     results["awards"] = awards.run(award_sources)
     print("=== Public pharma intelligence pages ===")
@@ -91,3 +115,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+

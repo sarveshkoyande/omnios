@@ -637,7 +637,9 @@ def interpret_message(message: str, state: dict) -> tuple[dict, str, str]:
                 print(f"[conversation] {provider_label} answered this turn.")
                 return _reason_gate(state, reply, action)  # ask 'why this campaign' before any run
             except Exception as e:  # noqa: BLE001 -- fall back to rules on any LLM/auth failure
-                short = str(e).strip().splitlines()[0][:200]
+                # splitlines() is empty for an exception with a blank message, so fall back to
+                # the class name rather than IndexError-ing inside the error handler itself.
+                short = (str(e).strip().splitlines() or [type(e).__name__])[0][:200]
                 detail = f"{provider_label} call failed ({short}); used the rule-based fallback for this turn."
                 print(f"[conversation] {provider_label} call failed, using rules ({e})")
                 _set_status("rules", False, detail)

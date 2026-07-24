@@ -1,10 +1,10 @@
 """LLM-backed implementation of the conversation seam.
 
-Three-tier fallback, cheapest/most-preferred first:
-  1. Gemini, via `litellm` (GEMINI_API_KEY or GOOGLE_API_KEY env var) -- lets a dev use their
-     own Gemini key instead of needing the team's Azure credential.
-  2. Claude through **Microsoft Foundry (Azure AI)** -- the original path, auth via a plain
+Three-tier fallback, most-preferred first:
+  1. Claude through **Microsoft Foundry (Azure AI)** -- the primary path, auth via a plain
      API key (preferred) or Azure AD (`DefaultAzureCredential`) as a fallback.
+  2. Gemini, via `litellm` (GEMINI_API_KEY or GOOGLE_API_KEY env var) -- only used when
+     Foundry is not configured, so a dev without the team's Azure credential can still work.
   3. Neither configured -> conversation.py falls back to the deterministic rules engine.
 
 Same return contract as the rules engine regardless of provider:
@@ -51,7 +51,7 @@ def _load_dotenv() -> None:
 _load_dotenv()
 
 
-# --- Gemini config (tier 1) ---------------------------------------------------------------
+# --- Gemini config (tier 2) ---------------------------------------------------------------
 GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini/gemini-2.5-flash")
 
 
@@ -59,7 +59,7 @@ def _gemini_key() -> str | None:
     return os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
 
 
-# --- Azure Foundry config (tier 2) ---------------------------------------------------------
+# --- Azure Foundry config (tier 1) ---------------------------------------------------------
 # The AnthropicFoundry client builds the correctly-versioned endpoint itself from just the
 # Azure resource name (`resource=`) -- it resolves to https://<resource>.services.ai.azure.com/anthropic/.
 # Passing a hand-built `base_url` (e.g. an Azure AI Foundry *project* endpoint like
@@ -153,17 +153,18 @@ _client = None  # lazily built + cached Foundry client; cleared on construction 
 def _get_client():
     """Build (and cache) the LLM client every call site in this app uses.
 
-    Returns a Gemini-backed shim if GEMINI_API_KEY/GOOGLE_API_KEY is set (same priority as
-    active_provider()/interpret_message_llm()) -- so setting a personal Gemini key covers
-    every AI-assisted feature in the app, not just the conversational intake seam.
+    Builds (and caches) the AnthropicFoundry client whenever Foundry is configured. Prefers a
+    plain API key (AZURE_AI_FOUNDRY_API_KEY) -- no azure-identity or Azure AD round-trip
+    needed, which is what a platform like Render can set as a single secret. Falls back to
+    Azure AD (DefaultAzureCredential) only if no key is configured, for environments that use
+    a service principal / managed identity instead.
 
-    Otherwise builds (and caches) the AnthropicFoundry client. Prefers a plain API key
-    (AZURE_AI_FOUNDRY_API_KEY) -- no azure-identity or Azure AD round-trip needed, which is
-    what a platform like Render can set as a single secret. Falls back to Azure AD
-    (DefaultAzureCredential) only if no key is configured, for environments that use a
-    service principal / managed identity instead.
+    Only when Foundry is NOT configured does this return a Gemini-backed shim, if
+    GEMINI_API_KEY/GOOGLE_API_KEY is set (same priority as active_provider()/
+    interpret_message_llm()) -- so a personal Gemini key covers every AI-assisted feature in
+    the app, not just the conversational intake seam.
     """
-    if _gemini_key():
+    if not _foundry_configured() and _gemini_key():
         return _GeminiClient()
 
     global _client
@@ -210,10 +211,10 @@ def _foundry_configured() -> bool:
 def active_provider() -> str | None:
     """Which provider a call to interpret_message_llm() would use right now, in priority
     order, or None if nothing is configured (conversation.py then uses the rules engine)."""
-    if _gemini_key():
-        return "gemini"
     if _foundry_configured():
         return "azure-foundry"
+    if _gemini_key():
+        return "gemini"
     return None
 
 
