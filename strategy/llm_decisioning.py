@@ -21,7 +21,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import conversation_llm
 import process_knowledge
 import decision_spine
-import brief_summary  # ≤20-word clamp so refined labels never echo the deck verbatim
+import brief_summary  # shared word ceiling + clamp so labels never echo the deck verbatim
 
 
 def _strip_json(text: str) -> str:
@@ -287,13 +287,13 @@ def refine_studio_ask(ctx: dict, step: dict, draft: dict) -> dict:
         )
         out = _call_json(system, payload, max_tokens=900)
         merged = _normalize_ask_payload(out, draft, step)
-        # Safety net: clamp labels to ≤14 words even if the model echoed the deck.
+        # Safety net: clamp labels to the shared word ceiling even if the model echoed the deck.
         rec = merged.get("recommendation")
         if isinstance(rec, dict) and rec.get("label"):
-            rec["label"] = brief_summary.summarize_value(rec["label"], 14)
+            rec["label"] = brief_summary.summarize_value(rec["label"], brief_summary.MAX_WORDS)
         for opt in merged.get("options") or []:
             if isinstance(opt, dict) and opt.get("label"):
-                opt["label"] = brief_summary.summarize_value(opt["label"], 14)
+                opt["label"] = brief_summary.summarize_value(opt["label"], brief_summary.MAX_WORDS)
         merged["source"] = "ai"
         status = {
             "engine": "azure-foundry",
@@ -327,8 +327,54 @@ def refine_studio_ask(ctx: dict, step: dict, draft: dict) -> dict:
         return out
 
 
-def summarize_brief_fields(fields: dict, max_words: int = 14) -> dict:
+def _word_count(text: str) -> int:
+    return len(str(text or "").split())
+
+
+def _summarize_system_prompt(max_words: int, repair: bool = False) -> str:
+    """The word ceiling is stated as an inviolable rule, repeated at both ends of the
+    prompt (models honour a limit far more reliably when it opens AND closes the
+    instruction) and framed as *intent capture* rather than truncation — a clipped
+    fragment is a failure here, not a partial success."""
+    rule = (
+        f"ABSOLUTE RULE: every summary you return MUST be {max_words} words or fewer. "
+        f"This is a hard limit, not a target. A {max_words + 1}-word answer is a failed answer.\n"
+    )
+    body = (
+        "You compress pharma campaign-brief fields into ultra-short, strategic display summaries "
+        "for a UI that renders each one on a SINGLE line.\n\n"
+        + rule +
+        "\nHow to stay inside the limit:\n"
+        "- Capture the INTENT of the field, not its contents. Do not attempt to list everything.\n"
+        "- When the source enumerates many items, name the through-line instead of the items "
+        "(e.g. 'MSL-led scientific exchange across congress, KOL and testing education' — not the "
+        "full channel list).\n"
+        "- Keep what drives a decision: audience, mechanism, claim constraints, endpoints, trial "
+        "names, key numbers. Drop filler, parentheticals, hedging, repetition and examples.\n"
+        "- Terse keyword phrases beat full sentences. No leading label like 'Objective:'.\n"
+        "- NEVER truncate mid-thought or end with an ellipsis. If it does not fit, re-express the "
+        "whole idea more abstractly until it fits. A complete short thought always beats a "
+        "clipped long one.\n\n"
+        "Return STRICT JSON: an object mapping each input field key to its shortened string. "
+        "No extra keys, no markdown, no commentary, never an empty string.\n"
+        + rule
+    )
+    if repair:
+        body += (
+            "\nThe fields below are RETRIES: your previous answer exceeded the limit. Compress "
+            "them much harder this time — go more abstract, keep only the single most "
+            "decision-critical idea per field.\n"
+        )
+    return body
+
+
+def summarize_brief_fields(fields: dict, max_words: int = brief_summary.MAX_WORDS) -> dict:
     """Keyword-compress each captured brief field into an ultra-short display gist.
+
+    Enforces the word ceiling rather than trusting it: anything the model returns over
+    `max_words` is sent back for a harder re-compression (twice) instead of being clipped,
+    so a row reads as a complete short thought rather than a severed sentence. Only
+    compliant summaries are returned; the caller clamps whatever never complied.
 
     Returns {key: short}. Empty dict on any failure — the caller keeps its
     deterministic fallback, so the app still shortens without the LLM.
@@ -337,23 +383,30 @@ def summarize_brief_fields(fields: dict, max_words: int = 14) -> dict:
     if not fields or not conversation_llm.llm_available():
         return {}
     try:
-        payload = {"fields": fields, "max_words": max_words}
-        system = (
-            "You compress pharma campaign-brief fields into ultra-short, strategic, keyword-driven "
-            "display summaries.\n"
-            f"For EACH field, return a summary of AT MOST {max_words} words. Keep only the decision-critical "
-            "keywords — segments, mechanism, claim constraints, endpoints, trial names, key numbers — and drop "
-            "filler, parentheticals, hedging and repetition. Prefer terse keyword phrases over full sentences; "
-            "no leading label like 'Objective:'.\n"
-            "Return STRICT JSON: an object mapping each input field key to its shortened string. "
-            "No extra keys, no markdown, no commentary, never an empty string."
-        )
-        out = _call_json(system, payload, max_tokens=1200)
         cleaned: dict = {}
-        for key in fields:
-            value = out.get(key) if isinstance(out, dict) else None
-            if isinstance(value, str) and value.strip():
-                cleaned[key] = " ".join(value.split())
+        pending = dict(fields)
+        # Attempt 1 is the normal pass, attempt 2 the repair pass for over-length replies.
+        # Kept at 2 deliberately: brief_summary._llm_summaries already retries around this
+        # for keys that come back missing, and the product of two unbounded retry loops
+        # would put several avoidable LLM round-trips on the brief path.
+        for attempt in range(2):
+            if not pending:
+                break
+            system = _summarize_system_prompt(max_words, repair=attempt > 0)
+            out = _call_json(system, {"fields": pending, "max_words": max_words}, max_tokens=1200)
+            if not isinstance(out, dict):
+                break
+            still_long: dict = {}
+            for key, source in pending.items():
+                value = out.get(key)
+                if not isinstance(value, str) or not value.strip():
+                    continue
+                value = " ".join(value.split())
+                if _word_count(value) <= max_words:
+                    cleaned[key] = value
+                else:
+                    still_long[key] = source
+            pending = still_long
         return cleaned
     except Exception:  # noqa: BLE001 — summarisation is best-effort; caller falls back
         return {}

@@ -336,13 +336,18 @@ export interface StrategicSourceSummary {
 }
 
 /** Fixed team roster + display order -- kept in sync with strategy/orchestration_tasks.py. */
+/** Also the left-to-right order of the team tabs in Engagement Orchestration. */
 export const ORCHESTRATION_TEAMS = [
   "Web team",
   "Content & derivative assets team",
-  "Campaign operations team",
   "Data & data cloud team",
+  "Campaign operations team",
   "Reporting & insights team",
 ] as const;
+
+/** Default team for a manually added task. Named rather than indexed so reordering the
+ *  tabs above cannot silently change which team new tasks land in. */
+export const DEFAULT_TASK_TEAM = "Campaign operations team";
 
 export interface ChannelSelectionRow {
   channel: string;
@@ -523,6 +528,17 @@ export const STAGE_AGENTS = {
 } as const satisfies Record<string, AgentPersona>;
 
 export type StageAgentId = keyof typeof STAGE_AGENTS;
+
+/** Workspace stage number -> owning agent. The stage tabs are 1-based, so index 0 is unused.
+ *  Single source of truth for "whose window am I looking at" — the chat header identity and
+ *  the per-stage accent colour both resolve through this. */
+export const STAGE_AGENT_BY_INDEX: readonly StageAgentId[] = [
+  "planning", "planning", "orchestration", "operations", "reporting",
+] as const;
+
+export function agentForStage(stage: number): StageAgentId {
+  return STAGE_AGENT_BY_INDEX[stage] ?? "planning";
+}
 
 /** Keyed lookup for AgentAvatar / ChatMessages, which only ever address agents by id. */
 export const AGENT_PEOPLE: Record<string, AgentPersona> = STAGE_AGENTS;

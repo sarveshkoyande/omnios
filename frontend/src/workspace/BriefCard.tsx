@@ -1,8 +1,12 @@
+import { useState } from "react";
 import Box from "@mui/material/Box";
 import { styled } from "@mui/material/styles";
 import type { Slots } from "./types";
 import { tokens, indigoTint } from "../theme/tokens";
 import { DefinitionRow, PillChip } from "../glass/primitives";
+
+/** Words shown on the single collapsed line before "See more" takes over. */
+const PREVIEW_WORDS = 10;
 
 /** Sub-section label inside the brief (small caps, indigo). */
 const GroupLabel = styled("div")(({ theme }) => ({
@@ -19,6 +23,60 @@ const GroupLabel = styled("div")(({ theme }) => ({
 function fmtBudget(n?: number) {
   if (!n) return "";
   return `$${n.toLocaleString()}`;
+}
+
+/** First `n` words, so the collapsed line is a predictable length rather than
+ *  however much happens to fit the pane width. */
+function previewWords(text: string, n: number) {
+  const words = text.split(/\s+/).filter(Boolean);
+  return words.length <= n ? text : `${words.slice(0, n).join(" ")}…`;
+}
+
+/** Small inline "See more" / "See less" affordance. */
+const ToggleLink = styled("button")({
+  appearance: "none",
+  background: "none",
+  border: "none",
+  padding: 0,
+  marginTop: 2,
+  font: "inherit",
+  fontSize: tokens.fontSize.xs,
+  fontWeight: 700,
+  color: tokens.color.primary,
+  cursor: "pointer",
+  "&:hover": { textDecoration: "underline" },
+});
+
+/** A brief value that shows ONE ~10-word line by default and reveals the full
+ *  captured text on demand. Collapsed is the default for every row. */
+function ExpandableValue({ short, full }: { short: string; full: string }) {
+  const [open, setOpen] = useState(false);
+  const collapsed = previewWords(short, PREVIEW_WORDS);
+  // Nothing gained by a toggle when the one-line preview is already the whole value.
+  const hasMore = full.trim().length > 0 && full.trim() !== collapsed.trim();
+
+  return (
+    <Box sx={{ minWidth: 0 }}>
+      <Box
+        component="span"
+        sx={{
+          display: "block",
+          ...(open
+            ? { whiteSpace: "normal" }
+            : // Hard single line: the word clamp sets the length, this stops a long
+              // unbroken token from wrapping to a second line in a narrow pane.
+              { whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }),
+        }}
+      >
+        {open ? full : collapsed}
+      </Box>
+      {hasMore && (
+        <ToggleLink type="button" onClick={() => setOpen((v) => !v)}>
+          {open ? "See less" : "See more"}
+        </ToggleLink>
+      )}
+    </Box>
+  );
 }
 
 const EXTRA_FIELDS: [string, keyof Slots][] = [
@@ -66,22 +124,13 @@ export function BriefCard({ slots, inferred }: { slots: Slots; inferred: Inferre
           <GroupLabel>From your brief</GroupLabel>
           {extras.map(([label, key]) => {
             const full = String(slots[key]);
-            // Show the server's ≤20-word gist, not the whole paragraph from the deck.
-            const short = slots.brief_summary?.[key as string];
-            const value = short || full;
+            // Show the server's ≤15-word gist, not the whole paragraph from the deck.
+            const short = slots.brief_summary?.[key as string] || full;
             return (
               <DefinitionRow
                 key={key}
                 label={label}
-                value={
-                  short && short !== full ? (
-                    <Box component="span" title={full}>
-                      {value}
-                    </Box>
-                  ) : (
-                    value
-                  )
-                }
+                value={<ExpandableValue short={short} full={full} />}
               />
             );
           })}

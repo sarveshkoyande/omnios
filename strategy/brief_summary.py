@@ -1,10 +1,10 @@
 """Presentational brief summariser.
 
 Condenses a captured brief field to an ultra-short, strategic, keyword-driven
-gist (<15 words) for *display* — the BriefCard artifact and studio ask labels —
-so the UI stops echoing whole paragraphs from the uploaded deck. It never mutates
-the stored full text: grounding, decision records and the plan body still read
-the originals.
+gist (a hard ≤MAX_WORDS words) for *display* — the BriefCard artifact and studio
+ask labels — so the UI stops echoing whole paragraphs from the uploaded deck. It
+never mutates the stored full text: grounding, decision records and the plan body
+still read the originals, and the UI keeps the full value behind "See more".
 
 LLM-first (keyword compression via llm_decisioning) with an in-memory cache so a
 given field text is only ever summarised once; a deterministic clip is the
@@ -19,8 +19,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-# Target length for a display summary.
-MAX_WORDS = 14
+# Hard ceiling for a display summary. This is a guardrail, not a target: nothing
+# rendered into a brief row may exceed it, so the LLM path verifies its own output
+# against it and repairs violations before the deterministic clip is ever reached.
+MAX_WORDS = 15
 
 # Strip a leading "Two-part strategic focus:", "Objective:", "Goal —", etc.
 _LEADIN = re.compile(
@@ -99,7 +101,10 @@ def _llm_summaries(fields: dict[str, str], max_words: int) -> dict[str, str]:
             short = got.get(key)
             if isinstance(short, str) and short.strip():
                 short = " ".join(short.split())
-                if len(short.split()) > max_words:  # clamp the odd over-length LLM reply
+                # summarize_brief_fields already rejects and re-asks for over-length replies,
+                # so this is the last line of defence rather than the usual path: clamp anything
+                # that survived both LLM attempts so the ceiling holds unconditionally.
+                if len(short.split()) > max_words:
                     short = summarize_value(short, max_words)
                 _LLM_CACHE[_key(text, max_words)] = short
                 result[key] = short

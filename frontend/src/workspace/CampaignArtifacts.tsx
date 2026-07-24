@@ -222,24 +222,24 @@ export function CampaignArtifacts({
   refreshToken?: number;
 }) {
   const [data, setData] = useState<CampaignArtifactsPayload | null>(null);
-  const [err, setErr] = useState(false);
+  const [err, setErr] = useState<"no-plan" | "failed" | null>(null);
   const [seeding, setSeeding] = useState(false);
   const [seeded, setSeeded] = useState(false);
   const [approveErr, setApproveErr] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    setErr(false);
+    setErr(null);
     // The backend persists the just-finished run's ctx in a `finally` block AFTER it streams
     // the "done" event that triggers this mount, so the very first fetch can race a save that
     // hasn't landed yet. Retry a few times before treating it as a real failure.
     const attempt = (n: number) => {
       getCampaignArtifacts(projectId)
         .then((d) => { if (!cancelled) setData(d); })
-        .catch(() => {
+        .catch((e: unknown) => {
           if (cancelled) return;
           if (n < 4) setTimeout(() => attempt(n + 1), 800);
-          else setErr(true);
+          else setErr(String((e as Error)?.message ?? "").includes("400") ? "no-plan" : "failed");
         });
     };
     attempt(0);
@@ -255,7 +255,16 @@ export function CampaignArtifacts({
       .finally(() => setSeeding(false));
   }, [projectId, onSeeded]);
 
-  if (err) return <Typography sx={{ color: "text.secondary", fontStyle: "italic" }}>Artifacts unavailable — run Stage 1 first.</Typography>;
+  // Only a 400 genuinely means "no plan yet"; anything else is a transient/compose failure and
+  // telling a user who just watched 19/19 sections land to "run Stage 1 first" is simply wrong.
+  if (err)
+    return (
+      <Typography sx={{ color: "text.secondary", fontStyle: "italic" }}>
+        {err === "no-plan"
+          ? "Artifacts unavailable — run Stage 1 first."
+          : "Couldn’t load the campaign brief just now. It stays saved with the plan — reopen this tab to retry."}
+      </Typography>
+    );
   if (!data) return <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}><CircularProgress size={22} /></Box>;
 
   const b = data.brief;

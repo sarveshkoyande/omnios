@@ -4,11 +4,12 @@ import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
-import { styled } from "@mui/material/styles";
+import { styled, ThemeProvider } from "@mui/material/styles";
 import Accordion from "@mui/material/Accordion";
 import AccordionSummary from "@mui/material/AccordionSummary";
 import AccordionDetails from "@mui/material/AccordionDetails";
 import { AgentTeamPanel } from "./AgentTeamPanel";
+import { AgentAvatar } from "./Avatar";
 import { BriefCard } from "./BriefCard";
 import { CampaignArtifacts } from "./CampaignArtifacts";
 import { ChatMessages } from "./ChatMessages";
@@ -26,8 +27,10 @@ import { StageReporting } from "./stages/StageReporting";
 import { AssemblyCanvas } from "./studio/AssemblyCanvas";
 import { WorkflowStepper } from "./stages/WorkflowStepper";
 import { useWorkspace } from "./useWorkspace";
+import { STAGE_AGENTS, agentForStage } from "./types";
 import { ConsolePanel } from "../components/ConsolePanel";
 import { tokens, indigoTint, light } from "../theme/tokens";
+import { stageTheme } from "../theme/stageTheme";
 
 // All four stages are freely accessible at any time — there is no unlock gating.
 // The legacy /api/run-stream flow and its revealed_phases tracking stay in the
@@ -139,6 +142,10 @@ export function Workspace({
   seedFile?: File | null;
 }) {
   const ws = useWorkspace();
+  // Who owns the window currently on screen — drives both the chat header identity and the
+  // accent colour the stage is themed with.
+  const stageAgentId = agentForStage(ws.stage);
+  const stageAgent = STAGE_AGENTS[stageAgentId];
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [showFullPlan, setShowFullPlan] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -181,6 +188,8 @@ export function Workspace({
   }, [ws.items]);
 
   return (
+    // Each stage wears its own agent's accent; planning resolves to the base theme unchanged.
+    <ThemeProvider theme={stageTheme(stageAgentId)}>
     <Box sx={{ display: "flex", flexDirection: "column", height: "calc(100vh - 56px)", minHeight: 0 }}>
       <PlansDrawer
         open={drawerOpen}
@@ -368,7 +377,14 @@ export function Workspace({
         ) : (
           <>
             <Box sx={{ p: 2, pb: 1.5, borderBottom: `1px solid ${indigoTint(0.1)}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <Typography sx={{ fontWeight: 700, fontSize: 14 }}>AI Assistant</Typography>
+              {/* The stage's agent identity lives here, directly above its conversation --
+                  the window you are in tells you who you are talking to. */}
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 0 }}>
+                <AgentAvatar id={stageAgent.id} size={26} />
+                <Typography sx={{ fontWeight: 700, fontSize: 13, lineHeight: 1.25 }}>
+                  {stageAgent.name}
+                </Typography>
+              </Box>
               <Button size="small" variant="outlined" sx={{ borderRadius: 999 }} onClick={() => ws.newProject()}>
                 + New chat
               </Button>
@@ -411,5 +427,6 @@ export function Workspace({
       </Box>
       <PersonaProfileModal personaId={ws.profileOpen} onClose={ws.closePersonaProfile} />
     </Box>
+    </ThemeProvider>
   );
 }

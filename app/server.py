@@ -1175,7 +1175,7 @@ def api_orchestration_notification_ack(pid: str, req: dict):
 
 
 @app.get("/api/projects/{pid}/campaign-artifacts")
-def api_campaign_artifacts(pid: str):
+def api_campaign_artifacts(pid: str, enrich: bool = False):
     """The Planning stage's two linked artifacts â€” Campaign Strategy (decision records) +
     Campaign Brief (operational, hybrid agency-brief anatomy). Deterministic composition from
     the saved plan ctx; decision records are re-derived when not persisted, so this also works
@@ -1186,7 +1186,7 @@ def api_campaign_artifacts(pid: str):
     ctx = proj["state"].get("_plan_ctx")
     if not ctx:
         raise HTTPException(400, "Stage 1 hasn't produced a plan yet â€” run it before composing artifacts.")
-    return campaign_artifacts.compose_artifacts(ctx)
+    return campaign_artifacts.compose_artifacts(ctx, enrich=enrich)
 
 
 @app.get("/api/pharma-intel/summary")

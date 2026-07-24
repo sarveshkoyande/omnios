@@ -236,7 +236,7 @@ def _render_mermaid_png(plan: dict, out_path: Path) -> dict:
             pass
 
 
-def compose_brief(ctx: dict) -> dict:
+def compose_brief(ctx: dict, enrich: bool = False) -> dict:
     recs = _records(ctx)
     inferred = ctx.get("inferred") or {}
     slots = ctx.get("brief") or ctx.get("slots") or {}
@@ -252,7 +252,18 @@ def compose_brief(ctx: dict) -> dict:
     diagram = {}
     if plan:
         out_path = Path(__file__).resolve().parent.parent / "app" / "static" / "v2" / "assets" / "campaign-brief-journey.png"
-        diagram = _render_mermaid_png(plan, out_path)
+        # Rendering shells out to `npx -y @mermaid-js/mermaid-cli`, which resolves a package and
+        # launches headless Chromium -- tens of seconds at best, minutes on a cold npx cache. That
+        # must never sit inside a request the UI is blocking on: it was the reason a finished
+        # Stage 1 still reported "Artifacts unavailable -- run Stage 1 first" (the client gave up
+        # retrying long before this returned). Reuse an already-rendered PNG; only render when a
+        # caller explicitly opts in.
+        if out_path.exists():
+            diagram = {"ok": True, "detail": "cached render"}
+        elif enrich:
+            diagram = _render_mermaid_png(plan, out_path)
+        else:
+            diagram = {"ok": False, "detail": "journey diagram not rendered yet"}
         ctx["campaign_brief_diagram"] = {
             "ok": diagram.get("ok", False),
             "detail": diagram.get("detail", ""),
@@ -392,8 +403,18 @@ def compose_brief(ctx: dict) -> dict:
     }
     # Preserve the deterministic projection so the SME grounding, decision records, and
     # campaign-ops skeleton remain visible to the user instead of being reworded by an LLM.
+    # The LLM pass is opt-in for the same reason as the diagram above: it is an LLM round-trip
+    # (plus cognee recall) and the brief is already complete and correct without it.
+    if not enrich:
+        return draft
     return llm_decisioning.enhance_campaign_brief(ctx, draft)
 
 
-def compose_artifacts(ctx: dict) -> dict:
-    return {"strategy": compose_strategy(ctx), "brief": compose_brief(ctx)}
+def compose_artifacts(ctx: dict, enrich: bool = False) -> dict:
+    """Deterministic by default so this stays a fast read.
+
+    `enrich=True` additionally renders the journey PNG and runs the LLM brief synthesis --
+    both are slow enough that they belong behind an explicit opt-in, never on the path the
+    workspace blocks on right after Stage 1 finishes.
+    """
+    return {"strategy": compose_strategy(ctx), "brief": compose_brief(ctx, enrich=enrich)}

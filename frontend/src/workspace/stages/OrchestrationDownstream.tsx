@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import Typography from "@mui/material/Typography";
@@ -49,6 +49,25 @@ export function OrchestrationDownstream({
   useEffect(() => {
     refresh();
   }, [refresh]);
+
+  // Populate on load rather than sitting empty until someone presses "Push to systems":
+  // once tasks exist but nothing has been routed yet, do that first push automatically.
+  // Guarded per project so it runs once and never fights a user who cleared the bindings.
+  const autoPushed = useRef<string | null>(null);
+  useEffect(() => {
+    if (!projectId || !tasks?.length) return;
+    if (bindings === null || bindings.length > 0) return; // not loaded yet, or already populated
+    if (autoPushed.current === projectId) return;
+    autoPushed.current = projectId;
+    setPushing(true);
+    pushOrchestration(projectId)
+      .then((r) => {
+        setSummary(r.counts);
+        setBindings(r.bindings);
+      })
+      .catch(() => {})
+      .finally(() => setPushing(false));
+  }, [projectId, tasks, bindings]);
 
   const doPush = useCallback(() => {
     if (!projectId) return;
