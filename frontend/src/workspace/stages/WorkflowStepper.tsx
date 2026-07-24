@@ -1,5 +1,6 @@
 import { styled } from "@mui/material/styles";
 import { tokens, focusRingOnBrand } from "../../theme/tokens";
+import { accent } from "../../theme/stageTheme";
 
 export const WORKFLOW_STAGES = [
   { id: 1, name: "Planning & Strategy", icon: "strategy", blurb: "Brief, multi-agent research and the Brand Engagement Plan." },
@@ -75,7 +76,7 @@ const StepNumber = styled("span")<{ active: boolean }>(({ active }) => ({
   justifyContent: "center",
   fontSize: tokens.fontSize.xs,
   fontWeight: 700,
-  background: active ? tokens.color.primary : "transparent",
+  background: active ? accent.primary : "transparent",
   border: active ? "none" : "1.5px solid rgba(255,255,255,0.5)",
   color: active ? "#fff" : "rgba(255,255,255,0.85)",
   transition: "background 160ms ease, color 160ms ease, border-color 160ms ease",

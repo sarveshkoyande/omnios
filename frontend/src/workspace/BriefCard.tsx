@@ -48,8 +48,10 @@ const ToggleLink = styled("button")({
 });
 
 /** A brief value that shows ONE ~10-word line by default and reveals the full
- *  captured text on demand. Collapsed is the default for every row. */
-function ExpandableValue({ short, full }: { short: string; full: string }) {
+ *  captured text on demand. Collapsed is the default for every row.
+ *  Shared with BriefExtractCard so the brief reads identically in the chat rail
+ *  and in the workspace panel. */
+export function ExpandableValue({ short, full }: { short: string; full: string }) {
   const [open, setOpen] = useState(false);
   const collapsed = previewWords(short, PREVIEW_WORDS);
   // Nothing gained by a toggle when the one-line preview is already the whole value.

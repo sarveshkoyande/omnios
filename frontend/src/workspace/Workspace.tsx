@@ -30,7 +30,7 @@ import { useWorkspace } from "./useWorkspace";
 import { STAGE_AGENTS, agentForStage } from "./types";
 import { ConsolePanel } from "../components/ConsolePanel";
 import { tokens, indigoTint, light } from "../theme/tokens";
-import { stageTheme } from "../theme/stageTheme";
+import { stageTheme, stageVars, accent } from "../theme/stageTheme";
 
 // All four stages are freely accessible at any time — there is no unlock gating.
 // The legacy /api/run-stream flow and its revealed_phases tracking stay in the
@@ -190,7 +190,10 @@ export function Workspace({
   return (
     // Each stage wears its own agent's accent; planning resolves to the base theme unchanged.
     <ThemeProvider theme={stageTheme(stageAgentId)}>
-    <Box sx={{ display: "flex", flexDirection: "column", height: "calc(100vh - 56px)", minHeight: 0 }}>
+    {/* stageVars publishes the accent as CSS variables for the chrome that is styled with
+        literal token strings rather than through the palette (section headers, stage icons,
+        the top bar). Everything outside this subtree keeps the blue fallbacks. */}
+    <Box sx={{ ...stageVars(stageAgentId), display: "flex", flexDirection: "column", height: "calc(100vh - 56px)", minHeight: 0 }}>
       <PlansDrawer
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
@@ -215,7 +218,7 @@ export function Workspace({
           px: 3,
           pt: 0.75,
           pb: 0,
-          backgroundColor: tokens.color.primaryDark,
+          backgroundColor: accent.primaryDark,
           position: "relative",
           zIndex: 1,
         }}

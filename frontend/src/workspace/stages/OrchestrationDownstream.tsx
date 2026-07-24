@@ -8,6 +8,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import { PlanTable } from "./PlanTable";
 import { ConsolePanel } from "../../components/ConsolePanel";
 import { indigoTint, tokens } from "../../theme/tokens";
+import { accent } from "../../theme/stageTheme";
 import IconButton from "@mui/material/IconButton";
 import { getOrchestrationBindings, pushOrchestration, simulateExternalChange, syncOrchestration } from "../../api";
 import type { ExternalBinding, OrchestrationTask, SyncResponse } from "../types";
@@ -138,7 +139,7 @@ export function OrchestrationDownstream({
 
       {syncResult && (
         <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap", mb: 2, alignItems: "center" }}>
-          <span className="material-symbols-outlined" style={{ fontSize: 16, color: tokens.color.primary }}>sync</span>
+          <span className="material-symbols-outlined" style={{ fontSize: 16, color: accent.primary }}>sync</span>
           <Typography variant="caption" sx={{ color: "text.secondary" }}>
             {syncResult.applied.length
               ? `${syncResult.applied.length} inbound change${syncResult.applied.length === 1 ? "" : "s"} applied`
@@ -174,7 +175,7 @@ export function OrchestrationDownstream({
                   <td>
                     {b.external_url ? (
                       <Tooltip title={b.external_url}>
-                        <span style={{ fontFamily: "monospace", fontSize: 11, color: tokens.color.primary }}>{b.external_id}</span>
+                        <span style={{ fontFamily: "monospace", fontSize: 11, color: accent.primary }}>{b.external_id}</span>
                       </Tooltip>
                     ) : (
                       <span style={{ color: "#888", fontSize: 12 }}>—</span>

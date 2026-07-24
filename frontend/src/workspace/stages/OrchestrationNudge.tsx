@@ -7,6 +7,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import { styled } from "@mui/material/styles";
 import { ConsolePanel } from "../../components/ConsolePanel";
 import { indigoTint, tokens } from "../../theme/tokens";
+import { accent } from "../../theme/stageTheme";
 import { ackNotification, getNotifications, runNudges } from "../../api";
 import type { Notification, OrchestrationTask } from "../types";
 
@@ -117,7 +118,7 @@ export function OrchestrationNudge({
               </Box>
               <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 0.25 }}>{n.body}</Typography>
               <Box sx={{ display: "flex", gap: 0.5, alignItems: "center", mt: 0.5 }}>
-                <span className="material-symbols-outlined" style={{ fontSize: 14, color: tokens.color.primary }}>
+                <span className="material-symbols-outlined" style={{ fontSize: 14, color: accent.primary }}>
                   {CHANNEL_ICON[n.channel] ?? "send"}
                 </span>
                 <Typography variant="caption" sx={{ color: "text.secondary" }}>

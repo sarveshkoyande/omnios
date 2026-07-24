@@ -1,34 +1,27 @@
 import { keyframes } from "@emotion/react";
 import { styled } from "@mui/material/styles";
+// Aliased: TurnBubble below takes a styled-prop literally named `accent`, which would shadow
+// this import inside that callback.
+import { accent as stageAccent } from "../theme/stageTheme";
 import { tokens } from "../theme/tokens";
 
-/** AgentBubble — a flat solid surface with a small primary accent dot. */
+/** AgentBubble — a flat white surface with the stage agent's accent bar down its left edge. */
 export const AgentBubble = styled("div")(({ theme }) => ({
   position: "relative",
   width: "fit-content",
   maxWidth: "90%",
   minWidth: 0,
   padding: theme.spacing(1, 1.5),
-  borderTopLeftRadius: 4,
   borderRadius: tokens.radius.md,
   background: tokens.color.surface,
   border: `1px solid ${tokens.color.outline}`,
+  borderLeft: `4px solid ${stageAccent.primary}`,
   boxShadow: "none",
   color: tokens.color.text,
   fontSize: 13,
   lineHeight: 1.6,
   overflowWrap: "break-word",
   wordBreak: "break-word",
-  "&::before": {
-    content: '""',
-    position: "absolute",
-    top: -4,
-    left: 16,
-    width: 8,
-    height: 8,
-    borderRadius: "50%",
-    background: tokens.color.primary,
-  },
 }));
 
 /** UserBubble — solid brand card, white text, right-aligned. */
@@ -39,7 +32,7 @@ export const UserBubble = styled("div")(({ theme }) => ({
   padding: theme.spacing(1, 1.5),
   borderTopRightRadius: 4,
   borderRadius: tokens.radius.md,
-  background: tokens.color.primary,
+  background: stageAccent.primary,
   color: "#fff",
   boxShadow: "none",
   fontSize: 13,
@@ -119,8 +112,8 @@ export const ClarifyBadge = styled("span")({
   fontWeight: 700,
   letterSpacing: "0.04em",
   textTransform: "uppercase",
-  color: tokens.color.primary,
-  background: tokens.color.primaryContainer,
+  color: stageAccent.primary,
+  background: stageAccent.container,
   border: `1px solid ${tokens.color.outline}`,
   borderRadius: tokens.radius.pill,
   padding: "3px 11px",

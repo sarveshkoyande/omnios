@@ -17,6 +17,7 @@ import { OrchestrationDownstream } from "./OrchestrationDownstream";
 import { OrchestrationNudge } from "./OrchestrationNudge";
 import { ConsolePanel } from "../../components/ConsolePanel";
 import { glass, indigoTint, shade, tokens } from "../../theme/tokens";
+import { accent } from "../../theme/stageTheme";
 import { getProject, generateOrchestrationTasks, saveOrchestrationTasks } from "../../api";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
@@ -318,7 +319,7 @@ export function StageOrchestration({
             <IconButton onClick={() => setDetailTask(null)} sx={{ position: "absolute", top: 12, right: 12 }} aria-label="Close">
               <span className="material-symbols-outlined">close</span>
             </IconButton>
-            <Typography variant="overline" sx={{ color: tokens.color.primary, fontWeight: 700 }}>{detailTask.team}</Typography>
+            <Typography variant="overline" sx={{ color: accent.primary, fontWeight: 700 }}>{detailTask.team}</Typography>
             <Typography variant="h3" sx={{ fontSize: 18, mb: 1 }}>{detailTask.title}</Typography>
             <Chip
               size="small"

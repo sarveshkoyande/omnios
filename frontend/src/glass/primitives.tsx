@@ -8,6 +8,7 @@ import type { ChipProps } from "@mui/material/Chip";
 import Typography from "@mui/material/Typography";
 import { styled } from "@mui/material/styles";
 import { tokens, glass, glassFallback } from "../theme/tokens";
+import { accent } from "../theme/stageTheme";
 
 type Tier = "A" | "B" | "0";
 
@@ -40,7 +41,9 @@ const SectionLabel = styled(Typography)({
   fontWeight: 700,
   letterSpacing: "0.6px",
   textTransform: "uppercase",
-  color: tokens.color.onPrimaryContainer,
+  // Follows the stage accent inside a workspace stage; the fallback is the original blue,
+  // so every other screen in the app is unaffected.
+  color: accent.onContainer,
   lineHeight: 1.4,
 });
 
@@ -67,9 +70,9 @@ export function SectionCard({
   return (
     <GlassPanel tier="A" sx={{ p: 0, ...sx }} {...rest}>
       {hasHeader && (
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, px: 2, py: 1.5, backgroundColor: tokens.color.primaryContainer, borderBottom: `1px solid ${tokens.color.outline}` }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, px: 2, py: 1.5, backgroundColor: accent.container, borderBottom: `1px solid ${tokens.color.outline}` }}>
           {icon && (
-            <span className="material-symbols-outlined" style={{ fontSize: 18, color: tokens.color.onPrimaryContainer }}>
+            <span className="material-symbols-outlined" style={{ fontSize: 18, color: accent.onContainer }}>
               {icon}
             </span>
           )}

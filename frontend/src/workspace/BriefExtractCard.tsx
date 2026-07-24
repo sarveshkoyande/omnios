@@ -1,6 +1,7 @@
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { GlassPanel, DefinitionRow } from "../glass/primitives";
+import { ExpandableValue } from "./BriefCard";
 import { tokens } from "../theme/tokens";
 import type { BriefExtractItem } from "./types";
 
@@ -26,7 +27,13 @@ export function BriefExtractCard({ items }: { items: BriefExtractItem[] }) {
       </Typography>
       <Box>
         {items.map((it) => (
-          <DefinitionRow key={it.key} label={it.label} value={it.value} />
+          <DefinitionRow
+            key={it.key}
+            label={it.label}
+            // Same one-line + "See more" treatment as the workspace brief panel: these values
+            // are whole paragraphs lifted from the deck, and this card sits in the narrow chat rail.
+            value={<ExpandableValue short={String(it.value ?? "")} full={String(it.value ?? "")} />}
+          />
         ))}
       </Box>
     </GlassPanel>
