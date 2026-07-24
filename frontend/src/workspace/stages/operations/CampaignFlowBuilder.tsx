@@ -21,6 +21,16 @@ import { exportCanvasImage } from "./flowbuilder/io/image";
 import { useWorkflowStore } from "./flowbuilder/store/useWorkflowStore";
 import { parseDocument } from "./flowbuilder/schema";
 import { tokens, glassFallback, indigoTint } from "../../../theme/tokens";
+import { accent } from "../../../theme/stageTheme";
+
+// The two primary toolbar actions follow the stage accent (red on Campaign Operations) rather
+// than the app blue. This toolbar renders inside the workspace subtree where stageVars() sets
+// --stage-primary, so accent.* resolves to the stage colour; the fallback keeps blue elsewhere.
+const STAGE_ACTION_SX = {
+  borderRadius: tokens.radius.pill,
+  backgroundColor: accent.primary,
+  "&:hover": { backgroundColor: accent.primaryDark },
+} as const;
 import { getProject, pushSfmcJourney, regenerateCampaignFlowDocument, saveCampaignFlowDocument } from "../../../api";
 import { campaignFlowToDocument } from "./campaignAdapter";
 import type { CampaignFlow } from "../../types";
@@ -158,7 +168,7 @@ function Toolbar({
             size="small"
             variant="contained"
             onClick={onOpenSfmc}
-            sx={{ borderRadius: tokens.radius.pill }}
+            sx={STAGE_ACTION_SX}
           >
             Push to SFMC
           </Button>
@@ -167,7 +177,7 @@ function Toolbar({
           size="small"
           variant="contained"
           onClick={downloadHighRes}
-          sx={{ borderRadius: tokens.radius.pill }}
+          sx={STAGE_ACTION_SX}
           startIcon={<span className="material-symbols-outlined" style={{ fontSize: 16 }}>download</span>}
         >
           Download High-Res
@@ -439,7 +449,7 @@ function BuilderShell({
         // width with nodes rendered far outside the visible frame.
         position: "relative",
         display: "flex", flexDirection: "column", height: "72vh", minHeight: 560, maxHeight: 900,
-        borderRadius: tokens.radius.md, overflow: "hidden", border: `1px solid ${indigoTint(0.12)}`,
+        borderRadius: tokens.radius.sm, overflow: "hidden", border: `1px solid ${indigoTint(0.12)}`,
       }}
     >
       {(agentBusy || regenerating) && <AgentWorkingOverlay />}

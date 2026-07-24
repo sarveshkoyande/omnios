@@ -522,9 +522,9 @@ export interface AgentPersona { id: string; name: string; initials: string; c1: 
 
 export const STAGE_AGENTS = {
   planning: { id: "planning", name: "Campaign Planning & Strategy Agent", initials: "PS", c1: "#1768D1", c2: "#4AA6F2", photo: "/static/agent_avatars/agent-1-blue.png" },
-  orchestration: { id: "orchestration", name: "Engagement Orchestration Agent", initials: "EO", c1: "#22B36B", c2: "#57DD97", photo: "/static/agent_avatars/agent-3-green.png" },
-  operations: { id: "operations", name: "Campaign Operations Agent", initials: "CO", c1: "#D1341C", c2: "#F2694A", photo: "/static/agent_avatars/agent-2-red.png" },
-  reporting: { id: "reporting", name: "Reporting & Insights Agent", initials: "RI", c1: "#F5730A", c2: "#FFA333", photo: "/static/agent_avatars/agent-4-orange.png" },
+  orchestration: { id: "orchestration", name: "Engagement Orchestration Agent", initials: "EO", c1: "#047857", c2: "#10B981", photo: "/static/agent_avatars/agent-3-green.png" },
+  operations: { id: "operations", name: "Campaign Operations Agent", initials: "CO", c1: "#cc0047", c2: "#E85B8A", photo: "/static/agent_avatars/agent-2-red.png" },
+  reporting: { id: "reporting", name: "Reporting & Insights Agent", initials: "RI", c1: "#C2410C", c2: "#F97316", photo: "/static/agent_avatars/agent-4-orange.png" },
 } as const satisfies Record<string, AgentPersona>;
 
 export type StageAgentId = keyof typeof STAGE_AGENTS;
