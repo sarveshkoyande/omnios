@@ -1,7 +1,21 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { styled } from "@mui/material/styles";
 import { AGENT_PEOPLE } from "./types";
 import { shade } from "../theme/tokens";
+
+// Warm the browser cache with every agent portrait once, at module load. Without this each
+// PNG (~160KB) is only fetched the first time its avatar paints, and because the chat-header
+// avatar is a single element whose `src` changes on stage switch, the browser keeps showing
+// the previously-decoded portrait (usually the blue planning one) until the next PNG arrives.
+// Pre-decoding them up front makes the swap instant.
+if (typeof window !== "undefined") {
+  for (const person of Object.values(AGENT_PEOPLE)) {
+    if (person.photo) {
+      const img = new Image();
+      img.src = person.photo;
+    }
+  }
+}
 
 /** Laminated ID-badge portrait: photo over a gradient-monogram fallback.
  *
@@ -35,6 +49,9 @@ const Photo = styled("img")({
 export function AgentAvatar({ id, size = 38 }: { id: string; size?: number }) {
   const p = AGENT_PEOPLE[id] ?? { initials: "?", c1: "#1768D1", c2: "#4AA6F2", name: id, photo: "" };
   const [photoFailed, setPhotoFailed] = useState(false);
+  // When this avatar's id changes (the chat header follows the active stage), forget a prior
+  // load failure so the new agent's portrait gets a fresh attempt.
+  useEffect(() => setPhotoFailed(false), [id]);
   const gradId = `ag-${id}-${size}`;
   return (
     <Ring size={size} ringColor={p.c1}>
@@ -51,7 +68,9 @@ export function AgentAvatar({ id, size = 38 }: { id: string; size?: number }) {
         </text>
       </svg>
       {p.photo && !photoFailed && (
-        <Photo src={p.photo} alt="" loading="lazy" onError={() => setPhotoFailed(true)} />
+        // key by src so a stage switch mounts a fresh <img> for the new portrait instead of
+        // holding the previous agent's decoded frame; eager + async decode so it appears at once.
+        <Photo key={p.photo} src={p.photo} alt="" decoding="async" onError={() => setPhotoFailed(true)} />
       )}
     </Ring>
   );

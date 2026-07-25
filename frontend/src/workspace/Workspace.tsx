@@ -27,7 +27,7 @@ import { StageReporting } from "./stages/StageReporting";
 import { AssemblyCanvas } from "./studio/AssemblyCanvas";
 import { WorkflowStepper } from "./stages/WorkflowStepper";
 import { useWorkspace } from "./useWorkspace";
-import { STAGE_AGENTS, agentForStage } from "./types";
+import { STAGE_AGENTS, agentForStage, type StageAgentId } from "./types";
 import { ConsolePanel } from "../components/ConsolePanel";
 import { tokens, indigoTint, light } from "../theme/tokens";
 import { stageTheme, stageVars, accent } from "../theme/stageTheme";
@@ -135,17 +135,21 @@ export function Workspace({
   openProjectId,
   seedMessage,
   seedFile,
+  onStageAgentChange,
 }: {
   prefillBrand?: string | null;
   openProjectId?: string | null;
   seedMessage?: string | null;
   seedFile?: File | null;
+  /** Reports the on-screen stage's agent up to App so the top bar can wear its accent. */
+  onStageAgentChange?: (agent: StageAgentId) => void;
 }) {
   const ws = useWorkspace();
   // Who owns the window currently on screen — drives both the chat header identity and the
   // accent colour the stage is themed with.
   const stageAgentId = agentForStage(ws.stage);
   const stageAgent = STAGE_AGENTS[stageAgentId];
+  useEffect(() => { onStageAgentChange?.(stageAgentId); }, [stageAgentId, onStageAgentChange]);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [showFullPlan, setShowFullPlan] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);

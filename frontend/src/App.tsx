@@ -9,6 +9,8 @@ import { Artefacts } from "./views/Artefacts";
 import { Home } from "./views/Home";
 import { Workspace } from "./workspace/Workspace";
 import { tokens } from "./theme/tokens";
+import { stageAccent } from "./theme/stageTheme";
+import type { StageAgentId } from "./workspace/types";
 
 // "planning-v2" retired 2026-07-19: the planning_v2 engine now powers the Workspace
 // Planning & Strategy stage (decision spine + Campaign Strategy/Brief artifacts); the
@@ -48,6 +50,12 @@ export default function App() {
   const [openProjectId, setOpenProjectId] = useState<string | null>(null);
   const [seedMessage, setSeedMessage] = useState<string | null>(null);
   const [seedFile, setSeedFile] = useState<File | null>(null);
+  // The top bar wears the active stage's accent. Only the Workspace has stages, so every other
+  // view (Home / Artefacts / Library) falls back to planning — i.e. the original blue bar.
+  const [workspaceAgent, setWorkspaceAgent] = useState<StageAgentId>("planning");
+  const topBarAgent: StageAgentId = view === "workspace" ? workspaceAgent : "planning";
+  // A shade lighter than the stage sub-bar below it (which uses the darker primaryDark).
+  const topBarColor = stageAccent(topBarAgent).primary;
 
   // Open an existing plan straight from a Home card.
   const goOpenPlan = (id: string) => {
@@ -80,7 +88,7 @@ export default function App() {
   return (
     <>
       <Box sx={{ position: "relative", zIndex: 1 }}>
-        <AppBar position="sticky">
+        <AppBar position="sticky" sx={{ backgroundColor: topBarColor, transition: "background-color 220ms ease" }}>
           <Toolbar sx={{ gap: 1.5, minHeight: 56 }}>
             <span className="material-symbols-outlined" style={{ fontSize: 26, color: "#fff" }}>
               hub
@@ -117,7 +125,7 @@ export default function App() {
           </Toolbar>
         </AppBar>
         {view === "home" && <Home onOpenPlan={goOpenPlan} onStartNew={goStartNew} onImportFile={goImportFile} />}
-        {view === "workspace" && <Workspace prefillBrand={prefillBrand} openProjectId={openProjectId} seedMessage={seedMessage} seedFile={seedFile} />}
+        {view === "workspace" && <Workspace prefillBrand={prefillBrand} openProjectId={openProjectId} seedMessage={seedMessage} seedFile={seedFile} onStageAgentChange={setWorkspaceAgent} />}
         {view === "library" && <Library />}
         {view === "artefacts" && <Artefacts />}
       </Box>
