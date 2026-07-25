@@ -10,6 +10,10 @@ export interface GroundingItem {
 export interface AskOption {
   label: string;
   source?: string;
+  /** Evidence shown under the option: an addressable-population estimate and the criteria
+   *  that define the segment. Present on the segmentation ask. */
+  size?: string;
+  criteria?: string;
 }
 
 export interface LlmStatus {
@@ -49,6 +53,10 @@ export interface StudioAsk {
   recommendation: AskOption;
   options: AskOption[];
   free_text: boolean;
+  /** When true the user can select more than one option; the answer is the joined labels. */
+  multi_select?: boolean;
+  /** One-line summary of the data analysis behind the options (e.g. the sizing methodology). */
+  evidence_note?: string;
 }
 
 export type StudioEvent =

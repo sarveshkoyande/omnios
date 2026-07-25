@@ -74,6 +74,14 @@ CREATE TABLE IF NOT EXISTS blob (
     created_at    TEXT NOT NULL                 -- ISO-8601 UTC; ORA: TIMESTAMP WITH TIME ZONE
 );
 
+-- Blob *bytes*, used only on the disk-free Postgres backend (blob_store.py branches on
+-- db.IS_PG). On local SQLite the bytes stay on the filesystem under data/blobs/ and this
+-- table is unused. BLOB translates to BYTEA on Postgres (see strategy/db.py to_pg_ddl).
+CREATE TABLE IF NOT EXISTS blob_data (
+    blob_key      TEXT PRIMARY KEY,             -- sha256 hex; matches blob.blob_key
+    data          BLOB NOT NULL                 -- the raw bytes; ORA: BLOB, PG: BYTEA
+);
+
 -- ------------------------------------------------------------------ references --------
 
 -- A source that can substantiate claims. source_type keeps provenance explicit.

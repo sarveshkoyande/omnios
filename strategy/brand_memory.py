@@ -16,6 +16,7 @@ import time
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from paths import data_path  # noqa: E402
+import db  # noqa: E402  (dual-dialect SQLite/Postgres connection factory)
 
 BASE_DIR = pathlib.Path(__file__).resolve().parent.parent
 DB_PATH = data_path("brand_memory.db")
@@ -33,9 +34,8 @@ CREATE TABLE IF NOT EXISTS brand_memory (
 """
 
 
-def _conn() -> sqlite3.Connection:
-    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(DB_PATH)
+def _conn():
+    conn = db.connect("brand_memory")
     conn.execute(_SCHEMA)
     return conn
 

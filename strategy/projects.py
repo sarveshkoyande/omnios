@@ -16,6 +16,7 @@ import uuid
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from paths import data_path  # noqa: E402
+import db  # noqa: E402  (dual-dialect SQLite/Postgres connection factory)
 
 DB_PATH = data_path("projects.db")
 
@@ -35,23 +36,21 @@ CREATE TABLE IF NOT EXISTS projects (
 """
 
 
-def _conn() -> sqlite3.Connection:
-    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+def _conn():
+    conn = db.connect("projects")
     conn.executescript(SCHEMA)
-    # Lightweight migration: existing DB files predate campaign_plan_layout, and
-    # CREATE TABLE IF NOT EXISTS won't add columns to an already-created table.
-    try:
-        conn.execute("ALTER TABLE projects ADD COLUMN campaign_plan_layout TEXT")
-        conn.commit()
-    except sqlite3.OperationalError:
-        pass  # column already exists
-    try:
-        conn.execute("ALTER TABLE projects ADD COLUMN orchestration_tasks TEXT")
-        conn.commit()
-    except sqlite3.OperationalError:
-        pass  # column already exists
+    # Lightweight migration: existing DB files predate these columns, and
+    # CREATE TABLE IF NOT EXISTS won't add columns to an already-created table. SQLite has no
+    # `ADD COLUMN IF NOT EXISTS`, so we attempt a plain ADD COLUMN and swallow the "column
+    # exists" error on both dialects. The rollback() matters on Postgres: without it the
+    # failed ALTER leaves the transaction aborted and every later statement fails (on SQLite
+    # it's a harmless no-op).
+    for col in ("campaign_plan_layout", "orchestration_tasks"):
+        try:
+            conn.execute(f"ALTER TABLE projects ADD COLUMN {col} TEXT")
+            conn.commit()
+        except Exception:  # noqa: BLE001  (SQLite: OperationalError; Postgres: DuplicateColumn)
+            conn.rollback()
     return conn
 
 

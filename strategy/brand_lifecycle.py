@@ -21,6 +21,7 @@ import time
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import campaign_store  # noqa: E402  (reuses its DB path, schema init, and brand upsert)
+import db  # noqa: E402  (dual-dialect SQLite/Postgres connection factory)
 
 BASE_DIR = pathlib.Path(__file__).resolve().parent.parent
 INTEL_JSON = BASE_DIR / "config" / "brand_market_intel.json"
@@ -31,12 +32,9 @@ def _now() -> str:
     return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
 
-def _conn() -> sqlite3.Connection:
+def _conn():
     campaign_store.init_db()
-    conn = sqlite3.connect(campaign_store.DB_PATH)
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA foreign_keys = ON")
-    return conn
+    return db.connect("campaigns")
 
 
 def _brand_client_map() -> dict[str, dict]:

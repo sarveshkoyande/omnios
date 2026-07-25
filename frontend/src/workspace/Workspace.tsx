@@ -18,6 +18,7 @@ import { Composer } from "./Composer";
 import { IntakeCard } from "./IntakeCard";
 import { PersonaProfileModal } from "./persona/PersonaProfileModal";
 import { PlanSectionsRail } from "./PlanSectionsRail";
+import { StageSectionRail, ORCH_SECTIONS, OPS_SECTIONS, REPORT_SECTIONS } from "./StageSectionRail";
 import { PlansDrawer } from "./PlansDrawer";
 import { PlanSummaryCard } from "./PlanSummaryCard";
 import { SimplePlanSummary } from "./SimplePlanSummary";
@@ -261,6 +262,10 @@ export function Workspace({
       {ws.projectId && ws.stage === 1 && (
         <PlanSectionsRail studio={ws.studio} />
       )}
+      {/* Stages 2-4 get the same left-hand section nav as Stage 1, to jump between their panels. */}
+      {ws.projectId && ws.stage === 2 && <StageSectionRail sections={ORCH_SECTIONS} />}
+      {ws.projectId && ws.stage === 3 && <StageSectionRail sections={OPS_SECTIONS} />}
+      {ws.projectId && ws.stage === 4 && <StageSectionRail sections={REPORT_SECTIONS} />}
 
       {/* Same canvas as the chat pane: the folder-tab seam must be uniform across both panes. */}
       <Box component="aside" sx={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 380, minHeight: 0, backgroundColor: tokens.color.canvas }}>

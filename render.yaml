@@ -1,3 +1,15 @@
+# Postgres for the writable relational stores + blob bytes is hosted OUTSIDE Render, on
+# Prisma Postgres (prisma.io/postgres -- free tier). We only consume it via a connection
+# string; Prisma's ORM is NOT used anywhere in this app -- every store still speaks plain
+# SQL through strategy/db.py's psycopg wrapper, unchanged. Because the DB lives outside
+# Render's account, Render can't auto-provision it the way it can its own managed Postgres
+# -- create the Prisma Postgres instance yourself (see POSTGRES_MIGRATION.md) and paste its
+# connection string into the DATABASE_URL secret below (Render dashboard -> Environment).
+# strategy/db.py routes every writable store there once DATABASE_URL is set; blob_store.py
+# writes bytes into the blob_data (BYTEA) table. The persistent disk is still kept below for
+# the read-only knowledge-base snapshot (omni_kb.db) and the cognee memory layer, which are
+# not part of this Postgres migration.
+
 services:
   - type: web
     name: omni-data-hub
@@ -31,6 +43,13 @@ services:
         value: 3.12.7
       - key: OMNI_DATA_DIR
         value: /var/data
+      # Connection string for the external Prisma Postgres database (see note at the top of
+      # this file). Secret -- paste the real value into the Render dashboard (Environment
+      # tab); sync:false keeps it out of the repo. Its presence flips strategy/db.py from
+      # SQLite to Postgres for every writable store; unset it to fall back to the
+      # disk-backed SQLite files with zero code change.
+      - key: DATABASE_URL
+        sync: false
       # Use the Foundry RESOURCE name (not a full endpoint). The AnthropicFoundry SDK
       # derives the correct Anthropic passthrough URL from it:
       # https://<resource>.services.ai.azure.com/anthropic/ . Do NOT set

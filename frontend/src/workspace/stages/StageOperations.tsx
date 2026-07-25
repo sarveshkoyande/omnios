@@ -97,8 +97,13 @@ export function StageOperations({
         </ConsolePanel>
       ) : layoutReady && plan ? (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 3, mb: 3 }}>
-          <PlanningSummaryRail plan={plan} />
-          <CampaignFlowBuilder projectId={projectId} flow={plan.flow} agentBusy={agentBusy} />
+          {/* Anchor ids feed the left-hand StageSectionRail (StageSectionRail.tsx OPS_SECTIONS). */}
+          <Box id="ops-summary">
+            <PlanningSummaryRail plan={plan} />
+          </Box>
+          <Box id="ops-flow">
+            <CampaignFlowBuilder projectId={projectId} flow={plan.flow} agentBusy={agentBusy} />
+          </Box>
         </Box>
       ) : (
         <ConsolePanel sx={{ mb: 3 }}>

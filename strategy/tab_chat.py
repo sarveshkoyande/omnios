@@ -31,6 +31,7 @@ import time
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from paths import data_path  # noqa: E402
+import db  # noqa: E402  (dual-dialect SQLite/Postgres connection factory)
 import projects as pstore  # noqa: E402
 import conversation_llm  # noqa: E402
 
@@ -46,10 +47,8 @@ STAGE_AGENTS = {
 _OPS_CONTEXT_STAGES = ("planning", "orchestration", "operations", "reporting")
 
 
-def _conn() -> sqlite3.Connection:
-    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+def _conn():
+    conn = db.connect("tab_chat")
     conn.execute("""CREATE TABLE IF NOT EXISTS messages (
         project_id TEXT NOT NULL,
         stage_id   TEXT NOT NULL,

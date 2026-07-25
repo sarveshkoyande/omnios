@@ -183,10 +183,14 @@ export function StageOrchestration({
       />
 
       {/* Timeline leads: the schedule frames everything below it, so it is the first thing
-          read on entering the stage — before the per-team task detail. */}
-      <OrchestrationTimeline projectId={projectId} tasks={tasks} />
+          read on entering the stage — before the per-team task detail. Anchor ids here feed the
+          left-hand StageSectionRail (StageSectionRail.tsx ORCH_SECTIONS). */}
+      <Box id="orch-timeline">
+        <OrchestrationTimeline projectId={projectId} tasks={tasks} />
+      </Box>
 
       <ConsolePanel
+        id="orch-activities"
         title="Activities & setup tasks"
         icon="checklist"
         sx={{ mb: 3 }}
@@ -309,9 +313,13 @@ export function StageOrchestration({
         </Box>
       </ConsolePanel>
 
-      <OrchestrationDownstream projectId={projectId} tasks={tasks} />
+      <Box id="orch-downstream">
+        <OrchestrationDownstream projectId={projectId} tasks={tasks} />
+      </Box>
 
-      <OrchestrationNudge projectId={projectId} tasks={tasks} />
+      <Box id="orch-agent">
+        <OrchestrationNudge projectId={projectId} tasks={tasks} />
+      </Box>
 
       <Dialog open={!!detailTask} onClose={() => setDetailTask(null)} maxWidth="sm" fullWidth>
         {detailTask && (

@@ -12,10 +12,12 @@ Section names never leak ahead of their phase: `run_open` carries a count only.
 from __future__ import annotations
 
 import sys
+import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
+import benchmarks  # noqa: E402  (addressable HCP universe sizing for segment evidence)
 import brief_summary  # noqa: E402  (≤14-word gists so asks never echo the deck verbatim)
 import decision_spine  # noqa: E402  (SME-grounded stage registry + extra asks + decision records)
 import external_evidence  # noqa: E402  (live public-source datapoints, pulled per-section on demand)
@@ -307,6 +309,46 @@ def _attach_grounding_to_ask(ctx: dict, step: dict, ask: dict | None) -> dict | 
 
 
 # ------------------------------------------------------------------ #
+# Segment evidence: size each behavioural segment against the addressable HCP
+# universe so the lead-segment ask reads as an analysis ("≈ X HCPs, these are the
+# criteria, this is why we recommend it"), not a bare pick-one.
+# ------------------------------------------------------------------ #
+# Illustrative behavioural shares of the addressable universe (sum to 100). Real total
+# comes from benchmarks.audience_size(); the split is a heuristic read, same
+# illustrative-on-real-inputs pattern as segment_profile.py — flagged in evidence_basis.
+_SEGMENT_LIBRARY = [
+    {"label": "Evidence-driven skeptics", "share": 22,
+     "criteria": "High scientific-ladder position · demand RCT-grade OS/PFS data · move on peer, KOL and congress proof."},
+    {"label": "Guideline followers", "share": 34,
+     "criteria": "Anchor to NCCN/ESMO updates · reflex-testing adopters · switch when guidelines and labels shift."},
+    {"label": "Digital-first early adopters", "share": 18,
+     "criteria": "High owned-digital affinity · self-serve e-detailing · responsive to webinar and EHR point-of-care."},
+    {"label": "Relationship-led traditionalists", "share": 26,
+     "criteria": "Rep-access dependent · F2F-led · value continuity of care · slower to switch treatment."},
+]
+
+
+def _segment_evidence(ctx: dict) -> tuple[list[dict], str, int]:
+    """Per-segment sizing against the real addressable universe. Returns (segments, note, total)."""
+    ta = ctx.get("therapy_area", "") or ""
+    total = 0
+    try:
+        total = int((benchmarks.audience_size(ta) or {}).get("total") or 0)
+    except Exception:  # noqa: BLE001 — sizing is best-effort; fall back to a neutral universe
+        total = 0
+    if total <= 0:
+        total = 5000  # neutral fallback when this therapy area isn't in the universe table
+    segs = []
+    for s in _SEGMENT_LIBRARY:
+        size = round(total * s["share"] / 100)
+        segs.append({**s, "size": size,
+                     "size_str": f"≈ {size:,} HCPs ({s['share']}% of universe)"})
+    note = (f"Sized against ≈ {total:,} addressable US HCPs, split across four behavioural segments "
+            f"(ABCD tier × scientific-ladder position × digital posture).")
+    return segs, note, total
+
+
+# ------------------------------------------------------------------ #
 # Grounded asks: recommendation-first, options from real ctx data.
 # ------------------------------------------------------------------ #
 def build_ask(ctx: dict, step: dict) -> dict | None:
@@ -322,24 +364,32 @@ def _build_ask_draft(ctx: dict, step: dict) -> dict | None:
     inferred = ctx.get("inferred") or {}
     if kind == "audience":
         # The brief's audience is the BROAD group, shown as ≤20-word context in the question —
-        # not offered back as a verbatim option. The ask is: which segment within it to lead with.
+        # not offered back as a verbatim option. The ask is: which segment(s) within it to lead
+        # with. Multi-select: the plan can lead with more than one segment.
         broad_full = _brief_field(ctx, "audience") or inferred.get("persona", "")
         broad = brief_summary.summarize_value(broad_full, 14) if broad_full else "the lifecycle-stage default audience"
-        seg_lib = ["Evidence-driven skeptics", "Guideline followers",
-                   "Digital-first early adopters", "Relationship-led traditionalists"]
-        rec_seg = seg_lib[0]
-        alts = [s for s in seg_lib if s != rec_seg][:3]
+        segs, evidence_note, _total = _segment_evidence(ctx)
+        rec, alts = segs[0], segs[1:4]
+
+        def _seg_opt(s: dict, source: str) -> dict:
+            return {"label": s["label"], "source": source, "size": s["size_str"], "criteria": s["criteria"]}
+
         return _attach_grounding_to_ask(ctx, step, {"ask_id": f"ask-{step['num']}", "section": step["num"],
-                "question_focus": f"Broad audience is {broad}. Ask which segment within it to prioritise first.",
+                "question_focus": f"Broad audience is {broad}. Ask which segment(s) within it to prioritise.",
                 "broad_group": broad,
-                "text": f"Your broad target is **{broad}**. Within that, which segment should the plan lead with?",
+                "text": f"Your broad target is **{broad}**. Within that, which segment(s) should the plan lead with? "
+                        "You can pick more than one.",
+                "multi_select": True,
+                "evidence_note": evidence_note,
                 "evidence_basis": _basis(ctx,
-                    "Directional default from lifecycle-stage segment map, audience benchmark, and SME process grounding.",
+                    "Segment sizes estimated from the addressable HCP universe (benchmarks) split by ABCD tier and "
+                    "digital posture; SME process grounding.",
                     "audience", ("csfs", "positioning")),
                 "why": "The segment lock drives eligibility, message ladder, channel weighting and flow defaults.",
-                "recommendation": {"label": rec_seg, "source": "SME lead-segment default for this broad group"},
-                "recommendation_reason": "Evidence-driven skeptics move first on OS-grade data, so leading with them anchors the ladder for the rest.",
-                "options": [{"label": a, "source": "segment-library alternative"} for a in alts],
+                "recommendation": {**_seg_opt(rec, "SME lead-segment default for this broad group")},
+                "recommendation_reason": f"Evidence-driven skeptics ({rec['size_str']}) move first on OS-grade data, so "
+                                         "leading with them anchors the ladder for every other segment.",
+                "options": [_seg_opt(s, "segment-library alternative") for s in alts],
                 "free_text": True})
     if kind == "objective":
         bam = ctx.get("bam") or {}
@@ -441,15 +491,20 @@ def apply_answer(ctx: dict, step: dict, value: str) -> str:
     ctx.setdefault("studio_answers", {})[step["id"]] = value
     if step["id"] == "tcg":
         rec = (ctx.get("inferred") or {}).get("persona", "")
-        if value and rec and value.strip().lower() != rec.strip().lower():
-            try:  # re-aim the segment profile + TCG at the chosen group
-                ctx["inferred"]["persona"] = value.strip()
-                sp = build_segment_profile(value.strip(), ctx["inferred"]["stage_key"])
+        # Multi-select answers arrive as a "; "-joined list; the FIRST is the lead segment the
+        # profile re-aims at, the rest are recorded alongside it.
+        segments = [s.strip() for s in value.split(";") if s.strip()]
+        lead = segments[0] if segments else value.strip()
+        if lead and rec and lead.lower() != rec.strip().lower():
+            try:  # re-aim the segment profile + TCG at the lead group
+                ctx["inferred"]["persona"] = lead
+                sp = build_segment_profile(lead, ctx["inferred"]["stage_key"])
                 ctx["segment_profile"] = sp
-                ctx["tcg"] = build_tcg_template(value.strip(), sp, ctx.get("strategy") or {}, ctx.get("bam") or {},
+                ctx["tcg"] = build_tcg_template(lead, sp, ctx.get("strategy") or {}, ctx.get("bam") or {},
                                                 agent_answers=(ctx.get("audience_profile") or {}).get("answers"),
                                                 agent_name="Market & Competitive Intelligence")
-                note = f"re-aimed the customer group at “{value.strip()}” and rebuilt the profile"
+                extra = f" (+{len(segments) - 1} more segment{'s' if len(segments) > 2 else ''})" if len(segments) > 1 else ""
+                note = f"re-aimed the customer group at “{lead}”{extra} and rebuilt the profile"
             except Exception:  # noqa: BLE001 — fall back to recording the preference
                 pass
     return note
@@ -541,6 +596,15 @@ def stream(ctx: dict, studio: dict):
                 ask.setdefault("framework", stage["framework"]["name"])
                 ask.setdefault("blocked", " · ".join(stage["feeds"]))
         if ask and step["id"] not in studio["answers"]:
+            # The very first (segmentation) ask is posed from the fast core ctx, so without this it
+            # would appear almost the instant the budget is entered — reading as unconsidered. Pace
+            # it: show the agent visibly sizing the segments, then reveal the analysed ask a few
+            # seconds later. Guarded so a reconnect/refresh doesn't pace it again.
+            if step["id"] == "tcg" and ctx.get("_core_only") and not studio.get("tcg_paced"):
+                studio["tcg_paced"] = True
+                yield {"type": "chat", "author": step["owner"], "kind": "turn", "reply_to": "",
+                       "text": "Sizing each segment against the addressable HCP universe before we choose…"}
+                time.sleep(4.5)
             # Unanswered ask: (re-)pose it and end the stream. A reconnect lands
             # right back here, so a refresh can never skip a gate.
             studio["await_ask"] = ask

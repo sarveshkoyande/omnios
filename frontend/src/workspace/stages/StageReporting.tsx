@@ -60,7 +60,8 @@ export function StageReporting({ result }: { result: PlanResult | null }) {
         agent="reporting"
       />
 
-      <ConsolePanel sx={{ mb: 3 }}>
+      {/* Anchor ids feed the left-hand StageSectionRail (StageSectionRail.tsx REPORT_SECTIONS). */}
+      <ConsolePanel id="rep-overview" sx={{ mb: 3 }}>
         <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(88px, 1fr))", gap: 1.5 }}>
           <ScoreTile><Typography sx={{ fontSize: 20, fontWeight: 700 }}>{kpi.leading_indicators.length}</Typography><Typography variant="caption">Leading KPIs</Typography></ScoreTile>
           <ScoreTile><Typography sx={{ fontSize: 20, fontWeight: 700 }}>{kpi.lagging_indicators.length}</Typography><Typography variant="caption">Lagging KPIs</Typography></ScoreTile>
@@ -70,7 +71,7 @@ export function StageReporting({ result }: { result: PlanResult | null }) {
         </Box>
       </ConsolePanel>
 
-      <ConsolePanel title="Insights & read-outs" sx={{ mb: 3 }}>
+      <ConsolePanel id="rep-insights" title="Insights & read-outs" sx={{ mb: 3 }}>
         <Box component="ul" sx={{ m: 0, pl: 2.5, fontSize: 13, lineHeight: 1.7 }}>
           <li>Lifecycle posture: <b>{inf.lifecycle_label || "N/A"}</b>. Measurement should weight {measurementFocus}.</li>
           <li>Priority audience <b>{inf.persona || "N/A"}</b> at the <b>{inf.stage_label || "N/A"}</b> journey stage. Read leading indicators at the segment level, not just campaign level.</li>
@@ -79,7 +80,7 @@ export function StageReporting({ result }: { result: PlanResult | null }) {
         </Box>
       </ConsolePanel>
 
-      <ConsolePanel title="KPI scorecard" sx={{ mb: 3 }}>
+      <ConsolePanel id="rep-kpi" title="KPI scorecard" sx={{ mb: 3 }}>
         <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 2 }}>
           <KpiCol accent={tokens.color.success}>
             <Typography sx={{ display: "flex", alignItems: "center", gap: 1, fontWeight: 700, fontSize: 12, mb: 1 }}>
@@ -103,7 +104,7 @@ export function StageReporting({ result }: { result: PlanResult | null }) {
         {kpi.cadence_note && <Typography variant="caption" sx={{ color: "text.secondary", fontStyle: "italic", display: "block", mt: 1.5 }}>Review cadence: {kpi.cadence_note}</Typography>}
       </ConsolePanel>
 
-      <ConsolePanel title="Channel measurement framework" sx={{ mb: 3 }}>
+      <ConsolePanel id="rep-channels" title="Channel measurement framework" sx={{ mb: 3 }}>
         <PlanTable>
           <thead><tr><th>Channel</th><th>Share</th><th>Primary leading KPI</th><th>Target</th></tr></thead>
           <tbody>
@@ -122,8 +123,8 @@ export function StageReporting({ result }: { result: PlanResult | null }) {
         </Typography>
       </ConsolePanel>
 
-      {tml.length > 0 && (
-        <ConsolePanel title="Test · Measure · Learn">
+      <ConsolePanel id="rep-tml" title="Test · Measure · Learn">
+        {tml.length > 0 ? (
           <Box sx={{ overflowX: "auto" }}>
             <PlanTable>
               <thead><tr><th>Test</th><th>Measure</th><th>Channels</th><th>Frequency</th><th>What good looks like</th></tr></thead>
@@ -136,8 +137,12 @@ export function StageReporting({ result }: { result: PlanResult | null }) {
               </tbody>
             </PlanTable>
           </Box>
-        </ConsolePanel>
-      )}
+        ) : (
+          <Typography sx={{ color: "text.secondary", fontStyle: "italic" }}>
+            No test · measure · learn cycles defined yet.
+          </Typography>
+        )}
+      </ConsolePanel>
     </Box>
   );
 }

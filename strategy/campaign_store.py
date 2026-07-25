@@ -20,6 +20,7 @@ import time
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import blob_store  # noqa: E402
 import brand_kit  # noqa: E402
+import db  # noqa: E402  (dual-dialect SQLite/Postgres connection factory)
 from paths import data_path  # noqa: E402
 
 DB_PATH = data_path("campaigns.db")
@@ -30,12 +31,8 @@ def _now() -> str:
     return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
 
-def _conn() -> sqlite3.Connection:
-    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA foreign_keys = ON")
-    return conn
+def _conn():
+    return db.connect("campaigns")
 
 
 def init_db() -> None:

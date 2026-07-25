@@ -22,6 +22,7 @@ import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from paths import data_path  # noqa: E402
+import db  # noqa: E402  (dual-dialect SQLite/Postgres connection factory)
 import benchmarks  # noqa: E402  (specialties_for() maps a therapy area to real specialties)
 import conversation_llm  # noqa: E402  (shared Anthropic Foundry client for ask())
 
@@ -41,12 +42,8 @@ _FILES = [
 ]
 
 
-def _conn() -> sqlite3.Connection:
-    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA foreign_keys = ON")
-    return conn
+def _conn():
+    return db.connect("hcp_360")
 
 
 def init_db() -> None:
