@@ -92,7 +92,7 @@ export const theme = createTheme({
       defaultProps: { elevation: 0 },
       styleOverrides: {
         root: {
-          backgroundColor: tokens.color.primary,
+          backgroundColor: tokens.color.topBar,
           color: "#FFFFFF",
           border: "none",
           backgroundImage: "none",

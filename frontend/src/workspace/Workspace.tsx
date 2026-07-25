@@ -224,15 +224,15 @@ export function Workspace({
         }}
       >
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flex: "0 0 auto", py: 1 }}>
-          {ws.projectId && <EditableProjectTitle name={ws.projectName} onRename={ws.renameProject} light />}
           <IconButton
             size="small"
-            aria-label="Plans"
+            aria-label="Plan history"
             onClick={() => setDrawerOpen(true)}
             sx={{ color: "rgba(255,255,255,0.8)", "&:hover": { color: "#fff", background: "rgba(255,255,255,0.12)" } }}
           >
-            <span className="material-symbols-outlined" style={{ fontSize: 20 }}>more_vert</span>
+            <span className="material-symbols-outlined" style={{ fontSize: 20 }}>history</span>
           </IconButton>
+          {ws.projectId && <EditableProjectTitle name={ws.projectName} onRename={ws.renameProject} light />}
         </Box>
         {ws.projectId && (
           <Box sx={{ flex: 1, minWidth: 0, display: "flex", alignItems: "flex-end" }}>

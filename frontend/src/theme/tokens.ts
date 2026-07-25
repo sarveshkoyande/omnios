@@ -53,6 +53,7 @@ export const tokens = {
     accentSurfaceText: "#012F63",
     bgBase: "#F4F6F8",
     bgBaseChat: "#F4F6F8",
+    topBar: "#000000",
   },
   fontSize: { xs: 13, sm: 14, md: 15, lg: 17, xl: 20, xxl: 24, display: 28 },
   font: {

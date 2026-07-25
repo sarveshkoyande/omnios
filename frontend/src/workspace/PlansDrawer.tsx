@@ -93,7 +93,7 @@ export function PlansDrawer({
   };
 
   return (
-    <Drawer open={open} onClose={onClose} anchor="left" slotProps={{ paper: { sx: { width: 280 } } }}>
+    <Drawer open={open} onClose={onClose} anchor="left" slotProps={{ paper: { sx: { width: 420 } } }}>
       <Box sx={{ p: 3, display: "flex", flexDirection: "column", height: "100%" }}>
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
           <Typography variant="h3" sx={{ fontSize: tokens.fontSize.md }}>Plans</Typography>
