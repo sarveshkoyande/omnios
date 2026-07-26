@@ -42,6 +42,7 @@ from strategy import open_questions as open_questions_mod  # noqa: E402  (phase-
 from strategy.document_intake import extract_text  # noqa: E402
 from strategy import dashboard as dashboard_mod  # noqa: E402
 from strategy import feed as feed_mod  # noqa: E402
+from strategy import db  # noqa: E402  (dual-dialect KB connection: SQLite file locally, Postgres on Render)
 from strategy import campaign_store  # noqa: E402
 from strategy import brand_memory  # noqa: E402
 from strategy import blob_store  # noqa: E402  (serves real label images to the Claims Library)
@@ -93,8 +94,8 @@ def _safe_filename(name: str) -> str:
 
 
 def _pharma_intel_summary() -> dict:
-    db_path = data_path("omni_kb.db")
-    if not db_path.exists():
+    conn = db.kb_connect()  # Postgres on Render (KB loaded by load_kb_to_pg.py); SQLite file locally
+    if conn is None:
         return {
             "available": False,
             "totals": {},
@@ -103,8 +104,6 @@ def _pharma_intel_summary() -> dict:
             "top_brands": [],
             "message_mix": [],
         }
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row
     try:
         raw_dir = BASE_DIR / "data" / "raw"
         raw_file_count = sum(1 for path in raw_dir.rglob("*") if path.is_file()) if raw_dir.exists() else 0
@@ -355,12 +354,10 @@ def _artifact_item(row: sqlite3.Row, *, content_fields: list[str] | None = None)
 
 
 def _pharma_intel_artifacts(kind: str, value: str = "", limit: int = 20) -> dict:
-    db_path = data_path("omni_kb.db")
-    if not db_path.exists():
+    conn = db.kb_connect()  # Postgres on Render (KB loaded by load_kb_to_pg.py); SQLite file locally
+    if conn is None:
         raise HTTPException(404, "knowledge base unavailable")
     limit = max(1, min(limit, 40))
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row
     try:
         params: tuple = (limit,)
         title = value or kind.replace("_", " ").title()
