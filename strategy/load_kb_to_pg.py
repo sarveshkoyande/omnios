@@ -57,6 +57,42 @@ def _translate_group_concat(sql: str) -> str:
     return re.sub(r"GROUP_CONCAT\s*\(\s*(DISTINCT\s+)?(.*?)\)", repl, sql, flags=re.IGNORECASE)
 
 
+def _translate_round(sql: str) -> str:
+    """ROUND(expr, n) -> ROUND((expr)::numeric, n). Postgres has no round(double precision,
+    int) (only round(numeric, int)); a SUM/AVG of a REAL column is double precision, so the
+    two-arg ROUND in the CMS open-payments views fails without a cast. Balanced-paren aware
+    so a nested SUM(COALESCE(...)) argument is handled correctly."""
+    out: list[str] = []
+    i, n = 0, len(sql)
+    while i < n:
+        is_word = sql[i - 1].isalnum() or sql[i - 1] == "_" if i else False
+        if sql[i:i + 5].lower() == "round" and not is_word:
+            j = i + 5
+            while j < n and sql[j].isspace():
+                j += 1
+            if j < n and sql[j] == "(":                    # find the matching close paren
+                depth, k = 0, j
+                while k < n:
+                    depth += (sql[k] == "(") - (sql[k] == ")")
+                    if depth == 0:
+                        break
+                    k += 1
+                inner = sql[j + 1:k]
+                d, comma = 0, -1                            # last top-level comma splits (expr, n)
+                for p, ch in enumerate(inner):
+                    d += (ch == "(") - (ch == ")")
+                    if ch == "," and d == 0:
+                        comma = p
+                if comma != -1:
+                    arg1, rest = inner[:comma].strip(), inner[comma:]
+                    out.append(f"ROUND(({arg1})::numeric{rest})")
+                    i = k + 1
+                    continue
+        out.append(sql[i])
+        i += 1
+    return "".join(out)
+
+
 def translate(sql: str, *, is_view: bool) -> str:
     """Translate one SQLite CREATE statement to Postgres. Reuses db.to_pg_ddl for the shared
     rules (INTEGER PRIMARY KEY -> IDENTITY / natural BIGINT, BLOB -> BYTEA, PRAGMA strip),
@@ -64,6 +100,7 @@ def translate(sql: str, *, is_view: bool) -> str:
     if is_view:
         sql = re.sub(r"\binstr\s*\(", "strpos(", sql, flags=re.IGNORECASE)  # same arg order/semantics
         sql = _translate_group_concat(sql)
+        sql = _translate_round(sql)
     stmts = db.to_pg_ddl(sql) or [sql]
     out = []
     for s in stmts:
@@ -101,7 +138,7 @@ def _copy_table_data(src: sqlite3.Connection, pg, table: str) -> int:
     return total
 
 
-def load(source: pathlib.Path, exclude: set[str]) -> None:
+def load(source: pathlib.Path, exclude: set[str], views_only: bool = False) -> None:
     if not db.IS_PG:
         sys.exit("DATABASE_URL is not set to a postgres:// URL -- nothing to load into. Aborting.")
     if not source.exists():
@@ -114,45 +151,51 @@ def load(source: pathlib.Path, exclude: set[str]) -> None:
     indexes = _objects(src, "index")
     views = _objects(src, "view")
     excluded = sorted(exclude)
-    print(f"source={source}  tables={len(tables)}  indexes={len(indexes)}  views={len(views)}"
+    print(f"source={source}  {'VIEWS-ONLY  ' if views_only else ''}"
+          f"tables={len(tables)}  indexes={len(indexes)}  views={len(views)}"
           + (f"  excluded={excluded}" if excluded else ""))
 
     failures: list[str] = []
+    view_errors: dict[str, str] = {}
 
-    # 1. Drop existing KB objects (views first, then tables CASCADE) so a re-run is clean.
+    # Always drop existing views first (they depend on tables). In views-only mode we stop
+    # there and go straight to recreating them (fast, no data reload); a full run also
+    # drops + rebuilds the tables, data and indexes.
     for n, _ in views:
         try:
             pg.execute(f'DROP VIEW IF EXISTS "{n}" CASCADE'); pg.commit()
-        except Exception as e:  # noqa: BLE001
-            pg.rollback()
-    for n, _ in tables:
-        try:
-            pg.execute(f'DROP TABLE IF EXISTS "{n}" CASCADE'); pg.commit()
-        except Exception as e:  # noqa: BLE001
+        except Exception:  # noqa: BLE001
             pg.rollback()
 
-    # 2. Create tables + copy data.
-    for n, sql in tables:
-        try:
-            pg.execute(translate(sql, is_view=False)); pg.commit()
-        except Exception as e:  # noqa: BLE001
-            pg.rollback(); failures.append(f"CREATE TABLE {n}: {e}"); print(f"  ! table {n}: {e}"); continue
-        try:
-            rows = _copy_table_data(src, pg, n)
-            print(f"  table {n}: {rows} rows")
-        except Exception as e:  # noqa: BLE001
-            pg.rollback(); failures.append(f"DATA {n}: {e}"); print(f"  ! data {n}: {e}")
+    if not views_only:
+        for n, _ in tables:
+            try:
+                pg.execute(f'DROP TABLE IF EXISTS "{n}" CASCADE'); pg.commit()
+            except Exception:  # noqa: BLE001
+                pg.rollback()
 
-    # 3. Indexes (best-effort; skip-on-error).
-    idx_ok = 0
-    for n, sql in indexes:
-        try:
-            pg.execute(translate(sql, is_view=False)); pg.commit(); idx_ok += 1
-        except Exception as e:  # noqa: BLE001
-            pg.rollback(); failures.append(f"INDEX {n}: {e}")
-    print(f"  indexes created: {idx_ok}/{len(indexes)}")
+        # Create tables + copy data.
+        for n, sql in tables:
+            try:
+                pg.execute(translate(sql, is_view=False)); pg.commit()
+            except Exception as e:  # noqa: BLE001
+                pg.rollback(); failures.append(f"CREATE TABLE {n}: {e}"); print(f"  ! table {n}: {e}"); continue
+            try:
+                rows = _copy_table_data(src, pg, n)
+                print(f"  table {n}: {rows} rows")
+            except Exception as e:  # noqa: BLE001
+                pg.rollback(); failures.append(f"DATA {n}: {e}"); print(f"  ! data {n}: {e}")
 
-    # 4. Views, retry-until-stable so view-on-view dependencies resolve regardless of order.
+        # Indexes (best-effort; skip-on-error).
+        idx_ok = 0
+        for n, sql in indexes:
+            try:
+                pg.execute(translate(sql, is_view=False)); pg.commit(); idx_ok += 1
+            except Exception as e:  # noqa: BLE001
+                pg.rollback(); failures.append(f"INDEX {n}: {e}")
+        print(f"  indexes created: {idx_ok}/{len(indexes)}")
+
+    # Views, retry-until-stable so view-on-view dependencies resolve regardless of order.
     pending = list(views)
     while pending:
         made_progress = False
@@ -162,11 +205,11 @@ def load(source: pathlib.Path, exclude: set[str]) -> None:
                 pg.execute(translate(sql, is_view=True)); pg.commit()
                 made_progress = True
             except Exception as e:  # noqa: BLE001
-                pg.rollback(); still.append((n, sql)); last = str(e)
+                pg.rollback(); still.append((n, sql)); view_errors[n] = str(e)
         if not made_progress:
             for n, sql in still:
-                failures.append(f"VIEW {n}: could not create (likely translation/dependency)")
-                print(f"  ! view {n}")
+                failures.append(f"VIEW {n}: {view_errors.get(n, 'could not create')}")
+                print(f"  ! view {n}: {view_errors.get(n, '')}")
             break
         pending = still
     print(f"  views created: {len(views) - len(pending)}/{len(views)}")
@@ -189,11 +232,13 @@ def main() -> None:
     ap.add_argument("--exclude", default="", help="comma-separated table names to skip")
     ap.add_argument("--slim", action="store_true",
                     help="skip the large tables no app query/view uses (fits a smaller free tier)")
+    ap.add_argument("--views-only", action="store_true",
+                    help="only drop + recreate the views (fast; leaves loaded table data untouched)")
     args = ap.parse_args()
     exclude = {t.strip() for t in args.exclude.split(",") if t.strip()}
     if args.slim:
         exclude |= SLIM_EXCLUDE
-    load(pathlib.Path(args.source), exclude)
+    load(pathlib.Path(args.source), exclude, views_only=args.views_only)
 
 
 if __name__ == "__main__":
