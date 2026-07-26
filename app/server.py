@@ -64,6 +64,7 @@ from strategy import campaign_artifacts  # noqa: E402  (Campaign Strategy + Brie
 from strategy import campaign_ops  # noqa: E402  (Stage 3 on-demand campaign-flow (re)generation)
 from strategy import process_knowledge  # noqa: E402  (Cognee-backed SME process grounding)
 from strategy import cognee_feedback  # noqa: E402  (human feedback overlay for Cognee grounding)
+from strategy.paths import data_path  # noqa: E402
 from strategy.planning_v2 import pipeline as planning_v2_pipeline  # noqa: E402  (v2 Strategic-to-Tactical Planning Engine)
 
 app = FastAPI(title="Omni OS Brand Engagement Planning Agent")
@@ -92,7 +93,7 @@ def _safe_filename(name: str) -> str:
 
 
 def _pharma_intel_summary() -> dict:
-    db_path = BASE_DIR / "data" / "omni_kb.db"
+    db_path = data_path("omni_kb.db")
     if not db_path.exists():
         return {
             "available": False,
@@ -232,8 +233,11 @@ def _read_kb_blob(blob_path: str | None, max_chars: int = 12000) -> str:
     if not blob_path:
         return ""
     try:
-        path = (BASE_DIR / blob_path).resolve()
-        path.relative_to(BASE_DIR.resolve())
+        rel = pathlib.Path(blob_path)
+        if rel.parts and rel.parts[0] == "data":
+            rel = pathlib.Path(*rel.parts[1:])
+        path = data_path(*rel.parts).resolve()
+        path.relative_to(data_path().resolve())
         if not path.is_file():
             return ""
         raw = path.read_bytes()[: max_chars * 4]
@@ -351,7 +355,7 @@ def _artifact_item(row: sqlite3.Row, *, content_fields: list[str] | None = None)
 
 
 def _pharma_intel_artifacts(kind: str, value: str = "", limit: int = 20) -> dict:
-    db_path = BASE_DIR / "data" / "omni_kb.db"
+    db_path = data_path("omni_kb.db")
     if not db_path.exists():
         raise HTTPException(404, "knowledge base unavailable")
     limit = max(1, min(limit, 40))

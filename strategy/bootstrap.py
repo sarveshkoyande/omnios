@@ -22,6 +22,7 @@ from __future__ import annotations
 import importlib.util
 import pathlib
 import shutil
+import sqlite3
 import sys
 import threading
 import traceback
@@ -32,8 +33,46 @@ from paths import DATA_DIR, data_path, ensure_data_dir  # noqa: E402
 
 SEED_DIR = ROOT / "assets" / "seed"
 _SEED_FILES = ["omni_kb.db", "client_brand_intel.json"]
+_KB_REQUIRED_OBJECTS = {
+    "documents",
+    "pharma_source",
+    "brand_message",
+    "regulatory_label_message",
+    "v_oncology_brand_evidence_summary",
+    "cms_open_payment_general",
+    "openfda_event_reaction_count",
+}
 
 _seeding = threading.Lock()
+
+
+def _sqlite_has_objects(path: pathlib.Path, names: set[str]) -> bool:
+    if not path.exists():
+        return False
+    try:
+        conn = sqlite3.connect(path)
+        try:
+            found = {
+                row[0]
+                for row in conn.execute(
+                    "SELECT name FROM sqlite_master WHERE type IN ('table', 'view') AND name IN (%s)"
+                    % ",".join("?" for _ in names),
+                    tuple(names),
+                )
+            }
+            return names.issubset(found)
+        finally:
+            conn.close()
+    except sqlite3.DatabaseError:
+        return False
+
+
+def _kb_needs_refresh(src: pathlib.Path, dst: pathlib.Path) -> bool:
+    if not dst.exists():
+        return True
+    if not _sqlite_has_objects(dst, _KB_REQUIRED_OBJECTS):
+        return True
+    return src.exists() and src.stat().st_size > dst.stat().st_size and _sqlite_has_objects(src, _KB_REQUIRED_OBJECTS)
 
 
 def seed_kb() -> list[str]:
@@ -42,7 +81,8 @@ def seed_kb() -> list[str]:
     copied = []
     for name in _SEED_FILES:
         src, dst = SEED_DIR / name, data_path(name)
-        if src.exists() and not dst.exists():
+        needs_copy = _kb_needs_refresh(src, dst) if name == "omni_kb.db" else not dst.exists()
+        if src.exists() and needs_copy:
             shutil.copy2(src, dst)
             copied.append(name)
     return copied

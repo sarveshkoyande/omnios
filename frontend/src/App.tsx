@@ -50,6 +50,7 @@ export default function App() {
   const [openProjectId, setOpenProjectId] = useState<string | null>(null);
   const [seedMessage, setSeedMessage] = useState<string | null>(null);
   const [seedFile, setSeedFile] = useState<File | null>(null);
+  const [initialWorkspaceStage, setInitialWorkspaceStage] = useState(1);
   // The top bar wears the active stage's accent. Only the Workspace has stages, so every other
   // view (Home / Artefacts / Library) falls back to planning — i.e. the original blue bar.
   const [workspaceAgent, setWorkspaceAgent] = useState<StageAgentId>("planning");
@@ -62,17 +63,19 @@ export default function App() {
     setPrefillBrand(null);
     setSeedMessage(null);
     setSeedFile(null);
+    setInitialWorkspaceStage(1);
     setOpenProjectId(id);
     setView("workspace");
   };
 
   // Start a fresh plan — lands directly on the briefing intake (optionally seeded
   // with a one-line requirement typed on Home). No "click to begin" gate.
-  const goStartNew = (seed?: string) => {
+  const goStartNew = (seed?: string, initialStage = 1) => {
     setPrefillBrand(null);
     setOpenProjectId(null);
     setSeedFile(null);
     setSeedMessage(seed ?? null);
+    setInitialWorkspaceStage(initialStage);
     setView("workspace");
   };
 
@@ -82,6 +85,7 @@ export default function App() {
     setOpenProjectId(null);
     setSeedMessage(null);
     setSeedFile(file);
+    setInitialWorkspaceStage(1);
     setView("workspace");
   };
 
@@ -122,10 +126,40 @@ export default function App() {
               ))}
             </NavList>
             <Box sx={{ flex: 1 }} />
+            <Box
+              sx={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 1,
+                minWidth: 0,
+                color: "#FFFFFF",
+                fontSize: tokens.fontSize.sm,
+                fontWeight: 700,
+              }}
+            >
+              <Box
+                sx={{
+                  width: 30,
+                  height: 30,
+                  borderRadius: "50%",
+                  display: "grid",
+                  placeItems: "center",
+                  background: "rgba(255,255,255,0.18)",
+                  boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.28)",
+                }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: 18 }}>
+                  person
+                </span>
+              </Box>
+              <Typography component="span" sx={{ display: { xs: "none", sm: "inline" }, color: "#FFFFFF", fontSize: tokens.fontSize.sm, fontWeight: 700 }}>
+                Shaswata
+              </Typography>
+            </Box>
           </Toolbar>
         </AppBar>
         {view === "home" && <Home onOpenPlan={goOpenPlan} onStartNew={goStartNew} onImportFile={goImportFile} />}
-        {view === "workspace" && <Workspace prefillBrand={prefillBrand} openProjectId={openProjectId} seedMessage={seedMessage} seedFile={seedFile} onStageAgentChange={setWorkspaceAgent} />}
+        {view === "workspace" && <Workspace prefillBrand={prefillBrand} openProjectId={openProjectId} seedMessage={seedMessage} seedFile={seedFile} initialStage={initialWorkspaceStage} onStageAgentChange={setWorkspaceAgent} />}
         {view === "library" && <Library />}
         {view === "artefacts" && <Artefacts />}
       </Box>

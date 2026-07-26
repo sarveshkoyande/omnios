@@ -136,12 +136,14 @@ export function Workspace({
   openProjectId,
   seedMessage,
   seedFile,
+  initialStage,
   onStageAgentChange,
 }: {
   prefillBrand?: string | null;
   openProjectId?: string | null;
   seedMessage?: string | null;
   seedFile?: File | null;
+  initialStage?: number;
   /** Reports the on-screen stage's agent up to App so the top bar can wear its accent. */
   onStageAgentChange?: (agent: StageAgentId) => void;
 }) {
@@ -166,6 +168,13 @@ export function Workspace({
     else ws.newProject();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!ws.projectId || !initialStage || initialStage === 1) return;
+    ws.setStage(Math.min(Math.max(initialStage, 1), 4));
+    ws.setShowIntake(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ws.projectId, initialStage]);
 
   // Once the fresh project's id lands, auto-send the seed (a brand pick or a typed
   // one-line requirement) and drop the intake. With no seed the intake stays open.
