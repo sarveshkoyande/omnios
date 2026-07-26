@@ -9,7 +9,7 @@ import { indigoTint, tokens } from "../theme/tokens";
 /** Static, known-ahead-of-time titles for the 19 Sequential Plan Studio sections
  * (strategy/studio_run.py's SEQUENCE, resolved against plan_document._SECTION_TABLE) --
  * shown before a section is even reached, not just once it lands. */
-const SECTION_TITLES = [
+export const SECTION_TITLES = [
   "Target Customer Group Template",
   "CX Planning Questionnaire",
   "Omnichannel CX Feasibility Analysis",

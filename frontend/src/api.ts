@@ -187,6 +187,7 @@ import type {
   PersonaReview,
   ProjectDetail,
   ProjectSummary,
+  ReportingInsights,
 } from "./workspace/types";
 import type { WorkflowDocument } from "./workspace/stages/operations/flowbuilder/schema/document";
 import type { CampaignFlow } from "./workspace/types";
@@ -210,6 +211,12 @@ export async function createProject(name: string): Promise<ProjectSummary> {
 export async function getProject(id: string): Promise<ProjectDetail> {
   const res = await fetch(`/api/projects/${encodeURIComponent(id)}`);
   if (!res.ok) throw new Error(`GET /api/projects/${id} -> ${res.status}`);
+  return res.json();
+}
+
+export async function fetchReportingInsights(projectId: string): Promise<ReportingInsights> {
+  const res = await fetch(`/api/projects/${encodeURIComponent(projectId)}/reporting-insights`);
+  if (!res.ok) throw new Error(`GET reporting-insights -> ${res.status}`);
   return res.json();
 }
 

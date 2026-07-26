@@ -476,6 +476,48 @@ export interface PlanResult {
   };
 }
 
+/** Reporting & Insights tab payload (GET /api/projects/{pid}/reporting-insights). */
+export interface ReportingSignal {
+  label: string;
+  kind: string;
+  value_pct?: number;
+  low_pct?: number;
+  high_pct?: number;
+  band?: string;
+  note?: string;
+  primary?: boolean;
+}
+export interface ReportingKpi extends ReportingSignal {
+  value?: number;
+  value_display?: string;
+  sub?: string;
+}
+export interface SegmentRow {
+  value: string;
+  count: number;
+}
+export interface ReportingInsights {
+  available: boolean;
+  brand: string;
+  therapy_area: string;
+  lifecycle_label: string;
+  lifecycle_key: string;
+  stage_label: string;
+  caveat: string;
+  funnel: { stage: string; note: string; signals: ReportingSignal[] };
+  kpis: ReportingKpi[];
+  demographics: {
+    available: boolean;
+    total_hcps?: number;
+    by_specialty?: SegmentRow[];
+    by_preferred_channel?: SegmentRow[];
+    by_segment?: SegmentRow[];
+    by_state?: SegmentRow[];
+  };
+  tagging: { note: string; columns: string[]; rows: { parameter: string; convention: string; example: string }[] };
+  test_design: { approach: string; note: string; rows: { test: string; variants: string; measure: string; primary: boolean }[] };
+}
+
 export interface ChatResponse {
   reply: string;
   slots: Slots;

@@ -211,6 +211,29 @@ function audienceFilterLabel(rule: string) {
   return rule.replace(/^(Entry|Segment):\s*/i, "");
 }
 
+function StrategyDecisionTrailPanel({ data, sx }: { data: CampaignArtifactsPayload; sx?: object }) {
+  return (
+    <ConsolePanel id="decision-trail-anchor" title="Campaign Strategy - decision trail" icon="psychology" collapsible sx={sx}>
+      <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1.5 }}>
+        {data.strategy.note}
+      </Typography>
+      {data.strategy.source_summary && (
+        <Section>
+          <Eyebrow>Source basis</Eyebrow>
+          <Typography variant="body2" sx={{ mb: 0.75 }}>{data.strategy.source_summary.basis}</Typography>
+          {data.strategy.source_summary.positioning && (
+            <Typography variant="body2" sx={{ mb: 0.5 }}><b>Positioning:</b> {data.strategy.source_summary.positioning}</Typography>
+          )}
+          {data.strategy.source_summary.csfs.length > 0 && (
+            <Rows items={data.strategy.source_summary.csfs.map((c) => `CSF: ${c}`)} />
+          )}
+        </Section>
+      )}
+      <DecisionTrail records={data.strategy.records} dense />
+    </ConsolePanel>
+  );
+}
+
 export function CampaignArtifacts({
   projectId,
   onSeeded,
@@ -267,29 +290,34 @@ export function CampaignArtifacts({
     );
   if (!data) return <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}><CircularProgress size={22} /></Box>;
 
+  const strategyData = data;
   const b = data.brief;
 
   return (
     <Box>
+      {(() => { const data = strategyData; const sourceSummary = data.strategy.source_summary ?? { basis: "", positioning: "", csfs: [] }; return false ? (
+        <>
       {/* ------------------------------ Campaign Strategy ------------------------------ */}
       <ConsolePanel id="decision-trail-anchor" title="Campaign Strategy — decision trail" icon="psychology" collapsible sx={{ mb: 3 }}>
         <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1.5 }}>
           {data.strategy.note}
         </Typography>
-        {data.strategy.source_summary && (
+        {sourceSummary && (
           <Section>
             <Eyebrow>Source basis</Eyebrow>
-            <Typography variant="body2" sx={{ mb: 0.75 }}>{data.strategy.source_summary.basis}</Typography>
-            {data.strategy.source_summary.positioning && (
-              <Typography variant="body2" sx={{ mb: 0.5 }}><b>Positioning:</b> {data.strategy.source_summary.positioning}</Typography>
+            <Typography variant="body2" sx={{ mb: 0.75 }}>{sourceSummary.basis}</Typography>
+            {sourceSummary.positioning && (
+              <Typography variant="body2" sx={{ mb: 0.5 }}><b>Positioning:</b> {sourceSummary.positioning}</Typography>
             )}
-            {data.strategy.source_summary.csfs.length > 0 && (
-              <Rows items={data.strategy.source_summary.csfs.map((c) => `CSF: ${c}`)} />
+            {sourceSummary.csfs.length > 0 && (
+              <Rows items={sourceSummary.csfs.map((c) => `CSF: ${c}`)} />
             )}
           </Section>
         )}
         <DecisionTrail records={data.strategy.records} dense />
       </ConsolePanel>
+        </>
+      ) : null; })()}
 
       {/* ------------------------------ Campaign Brief --------------------------------- */}
       <ConsolePanel
@@ -545,6 +573,7 @@ export function CampaignArtifacts({
           {" "}{b.traceability.map((t) => t.stage_id).join(" · ")}.
         </Typography>
       </ConsolePanel>
+      <StrategyDecisionTrailPanel data={data} sx={{ mt: 3 }} />
     </Box>
   );
 }

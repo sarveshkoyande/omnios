@@ -18,14 +18,17 @@ import { Composer } from "./Composer";
 import { IntakeCard } from "./IntakeCard";
 import { PersonaProfileModal } from "./persona/PersonaProfileModal";
 import { PlanSectionsRail } from "./PlanSectionsRail";
+import { SECTION_TITLES } from "./PlanSectionsRail";
 import { StageSectionRail, ORCH_SECTIONS, OPS_SECTIONS, REPORT_SECTIONS } from "./StageSectionRail";
 import { PlansDrawer } from "./PlansDrawer";
+import { PlanDocument } from "./PlanDocument";
 import { PlanSummaryCard } from "./PlanSummaryCard";
 import { SimplePlanSummary } from "./SimplePlanSummary";
 import { StageOperations } from "./stages/StageOperations";
 import { StageOrchestration } from "./stages/StageOrchestration";
 import { StageReporting } from "./stages/StageReporting";
 import { AssemblyCanvas } from "./studio/AssemblyCanvas";
+import type { StudioState } from "./studio/studioTypes";
 import { WorkflowStepper } from "./stages/WorkflowStepper";
 import { useWorkspace } from "./useWorkspace";
 import { STAGE_AGENTS, agentForStage, type StageAgentId } from "./types";
@@ -69,6 +72,78 @@ function ArchivedPlanViews({ children }: { children: React.ReactNode }) {
       </AccordionSummary>
       <AccordionDetails>{children}</AccordionDetails>
     </Accordion>
+  );
+}
+
+function FinalPlanSections({ studio }: { studio: StudioState }) {
+  const sectionsByNum = new Map(studio.sections.map((section) => [section.num, section]));
+  const completeCount = studio.sections.length;
+  const total = Math.max(studio.total || SECTION_TITLES.length, SECTION_TITLES.length);
+
+  return (
+    <ConsolePanel
+      id="final-plan-sections-anchor"
+      title="Plan sections"
+      icon="format_list_numbered"
+      sx={{ mt: 3 }}
+    >
+      <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1.5 }}>
+        {completeCount}/{total} generated. Sections are minimized by default.
+      </Typography>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+        {SECTION_TITLES.map((title, index) => {
+          const num = index + 1;
+          const section = sectionsByNum.get(num);
+          return (
+            <Accordion
+              key={`${num}-${title}`}
+              disableGutters
+              sx={{
+                background: tokens.color.surface,
+                border: `1px solid ${tokens.color.outline}`,
+                borderRadius: tokens.radius.sm,
+                boxShadow: "none",
+                "&:before": { display: "none" },
+              }}
+            >
+              <AccordionSummary expandIcon={<span className="material-symbols-outlined">expand_more</span>}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, minWidth: 0 }}>
+                  <Box
+                    component="span"
+                    sx={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: "50%",
+                      display: "inline-grid",
+                      placeItems: "center",
+                      flex: "0 0 auto",
+                      background: section ? tokens.color.primaryContainer : tokens.color.canvas,
+                      color: section ? tokens.color.primary : "text.secondary",
+                      fontSize: 11,
+                      fontWeight: 800,
+                    }}
+                  >
+                    {num}
+                  </Box>
+                  <Typography sx={{ fontSize: tokens.fontSize.sm, fontWeight: 700 }}>
+                    {section?.title || title}
+                  </Typography>
+                </Box>
+              </AccordionSummary>
+              <AccordionDetails>
+                {section ? (
+                  <PlanDocument html={section.html} editing={false} />
+                ) : (
+                  <Typography variant="body2" sx={{ color: "text.secondary", fontStyle: "italic" }}>
+                    This section has not been generated for this plan.
+                  </Typography>
+                )}
+              </AccordionDetails>
+            </Accordion>
+          );
+        })}
+      </Box>
+    </ConsolePanel>
   );
 }
 
@@ -315,9 +390,7 @@ export function Workspace({
                           )}
                         </ArchivedPlanViews>
                       )}
-                      <Box sx={{ mt: 3 }}>
-                        <AssemblyCanvas studio={ws.studio} onSkip={ws.skipStudioPacing} />
-                      </Box>
+                      <FinalPlanSections studio={ws.studio} />
                     </Box>
                   )}
                 </>
@@ -374,7 +447,7 @@ export function Workspace({
                   refreshToken={ws.artifactRefresh.operations}
                 />
               )}
-              {ws.stage === 4 && <StageReporting result={ws.result} />}
+              {ws.stage === 4 && <StageReporting result={ws.result} projectId={ws.projectId} />}
             </Box>
           </>
         )}

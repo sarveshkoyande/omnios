@@ -32,11 +32,14 @@ export const OPS_SECTIONS: RailSection[] = [
 ];
 
 export const REPORT_SECTIONS: RailSection[] = [
-  { id: "rep-overview", label: "Scorecard overview", icon: "dashboard" },
-  { id: "rep-insights", label: "Insights & read-outs", icon: "lightbulb" },
+  { id: "rep-funnel", label: "Stage-promotion signals", icon: "conversion_path" },
+  { id: "rep-kpicards", label: "Delivery & engagement KPIs", icon: "speed" },
+  { id: "rep-demographics", label: "HCP audience", icon: "groups" },
+  { id: "rep-tagging", label: "Link & tagging matrix", icon: "link" },
+  { id: "rep-test", label: "Test design", icon: "science" },
   { id: "rep-kpi", label: "KPI scorecard", icon: "scoreboard" },
   { id: "rep-channels", label: "Channel measurement", icon: "insights" },
-  { id: "rep-tml", label: "Test · Measure · Learn", icon: "science" },
+  { id: "rep-tml", label: "Test · Measure · Learn", icon: "biotech" },
 ];
 
 const Row = styled(Box)<{ active?: boolean }>(({ theme, active }) => ({

@@ -53,6 +53,7 @@ from strategy import plan_export  # noqa: E402  (Word/PDF export of the composed
 from strategy import plan_pdf  # noqa: E402  (pixel-faithful PDF via headless Chromium)
 from strategy import sfmc_export  # noqa: E402  (Salesforce Marketing Cloud Journey Builder export bundle)
 from strategy import hcp_360  # noqa: E402  (synthetic HCP 360: demographics/affinity/TRx/writer status)
+from strategy import reporting_insights  # noqa: E402  (Reporting tab: KPI/funnel/demographic/tagging cards)
 from strategy import tab_chat  # noqa: E402  (per-workspace-tab agent chat, incl. diagram-editing)
 from strategy import orchestration_tasks  # noqa: E402  (Stage 2 setup-task checklist, derived from ctx)
 from strategy import orchestration_schedule  # noqa: E402  (Engagement Orchestration timeline/critical-path/ROI)
@@ -1381,6 +1382,15 @@ def api_tab_chat_ask(pid: str, stage_id: str, req: TabChatRequest):
     return tab_chat.ask(pid, stage_id, req.message, document=req.document)
 
 
+@app.get("/api/projects/{pid}/reporting-insights")
+def api_reporting_insights(pid: str):
+    """Reporting tab payload: stage-promotion funnel, delivery/engagement KPI cards, real
+    HCP-panel demographics, the UTM link/tagging matrix, and the A/B test design."""
+    if not pstore.get_project(pid):
+        raise HTTPException(404, "project not found")
+    return reporting_insights.build(pid)
+
+
 @app.get("/api/projects/{pid}/export.docx")
 def api_export_docx(pid: str):
     proj = pstore.get_project(pid)
@@ -2195,6 +2205,16 @@ def api_hcp360_detail(npi: int):
     if not hcp:
         raise HTTPException(404, f"no HCP with npi {npi}")
     return hcp
+
+
+@app.get("/api/hcp360/segment/{group_by}")
+def api_hcp360_segment(group_by: str):
+    """Panel counts grouped by one allow-listed dimension (specialty/state/preferred_channel/
+    segment/writing_persona/brand) -- powers the Reporting tab's demographic breakdowns."""
+    try:
+        return {"group_by": group_by, "rows": hcp_360.segment_summary(group_by)}
+    except ValueError as e:
+        raise HTTPException(400, str(e))
 
 
 class HcpAskRequest(BaseModel):

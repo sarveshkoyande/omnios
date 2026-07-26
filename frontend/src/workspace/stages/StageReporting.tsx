@@ -1,11 +1,15 @@
+import { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
+import Chip from "@mui/material/Chip";
 import Typography from "@mui/material/Typography";
 import { styled } from "@mui/material/styles";
 import { ConsolePanel } from "../../components/ConsolePanel";
 import { PlanTable } from "./PlanTable";
 import { StageHead } from "./StageHead";
 import { indigoTint, tokens } from "../../theme/tokens";
-import type { PlanResult } from "../types";
+import { accent } from "../../theme/stageTheme";
+import { fetchReportingInsights } from "../../api";
+import type { PlanResult, ReportingInsights, ReportingKpi, ReportingSignal, SegmentRow } from "../types";
 
 const LANE_ICON: Record<string, string> = {
   Field: "groups",
@@ -16,13 +20,6 @@ const LANE_ICON: Record<string, string> = {
   Peer: "diversity_3",
 };
 
-const ScoreTile = styled(Box)<{ tint?: string }>(({ theme, tint }) => ({
-  textAlign: "center",
-  borderRadius: tokens.radius.md,
-  padding: theme.spacing(2, 1),
-  background: tint ?? indigoTint(0.07),
-}));
-
 const KpiCol = styled(Box)<{ accent: string }>(({ theme, accent }) => ({
   borderLeft: `3px solid ${accent}`,
   borderRadius: tokens.radius.sm,
@@ -31,56 +28,193 @@ const KpiCol = styled(Box)<{ accent: string }>(({ theme, accent }) => ({
   background: "rgba(255,255,255,0.4)",
 }));
 
-export function StageReporting({ result }: { result: PlanResult | null }) {
-  if (!result) {
+// A measurement card: big target headline + band + context. Primary cards get an accent ring.
+const InsightCard = styled(Box)<{ primary?: boolean }>(({ theme, primary }) => ({
+  borderRadius: tokens.radius.md,
+  border: `1px solid ${primary ? accent.primary : indigoTint(0.14)}`,
+  boxShadow: primary ? `0 0 0 1px ${accent.primary}22` : "none",
+  padding: theme.spacing(1.75),
+  background: "rgba(255,255,255,0.55)",
+  display: "flex",
+  flexDirection: "column",
+  gap: theme.spacing(0.25),
+  minWidth: 0,
+}));
+
+function metricHeadline(m: ReportingKpi | ReportingSignal): string {
+  if ("value_display" in m && m.value_display) return m.value_display;
+  if (m.band) return m.band;
+  if (m.value_pct != null) return `${m.value_pct}%`;
+  return "—";
+}
+
+/** Horizontal count bars for a demographic dimension (counts are comparable within a dim). */
+function SegmentBars({ rows }: { rows: SegmentRow[] }) {
+  const max = Math.max(1, ...rows.map((r) => r.count));
+  return (
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 0.6 }}>
+      {rows.map((r) => (
+        <Box key={r.value} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Typography variant="caption" sx={{ flex: "0 0 42%", minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={r.value}>
+            {r.value}
+          </Typography>
+          <Box sx={{ flex: 1, height: 8, borderRadius: 4, background: indigoTint(0.08), overflow: "hidden" }}>
+            <Box sx={{ width: `${(r.count / max) * 100}%`, height: "100%", background: accent.primary, borderRadius: 4 }} />
+          </Box>
+          <Typography variant="caption" sx={{ flex: "0 0 auto", fontWeight: 700, color: "text.secondary" }}>{r.count}</Typography>
+        </Box>
+      ))}
+    </Box>
+  );
+}
+
+function DemoBlock({ title, rows }: { title: string; rows?: SegmentRow[] }) {
+  if (!rows?.length) return null;
+  return (
+    <Box sx={{ flex: 1, minWidth: 200 }}>
+      <Typography variant="caption" sx={{ fontWeight: 700, display: "block", mb: 0.75, color: "text.secondary" }}>{title}</Typography>
+      <SegmentBars rows={rows} />
+    </Box>
+  );
+}
+
+export function StageReporting({ result, projectId }: { result: PlanResult | null; projectId: string | null }) {
+  const [insights, setInsights] = useState<ReportingInsights | null>(null);
+
+  useEffect(() => {
+    if (!projectId) return;
+    let cancelled = false;
+    fetchReportingInsights(projectId)
+      .then((d) => { if (!cancelled) setInsights(d); })
+      .catch(() => { if (!cancelled) setInsights(null); });
+    return () => { cancelled = true; };
+  }, [projectId, result]);
+
+  if (!result && !insights) {
     return <ConsolePanel><Typography sx={{ color: "text.secondary", fontStyle: "italic" }}>Complete Stage 1 to see the measurement framework.</Typography></ConsolePanel>;
   }
-  const kpi = result.stage_7_kpi ?? { leading_indicators: [], lagging_indicators: [], operational_kpis: [] };
-  const tml = result.stage_9_test_measure_learn?.rows ?? [];
-  const alloc = result.stage_5_budget?.allocation ?? {};
-  const inf = result.inferred_inputs;
-  const lib: NonNullable<PlanResult["content_library"]> = result.content_library ?? { found: false, assets: [], counts: {} };
 
-  const lifecycleLower = (inf.lifecycle_label || "").toLowerCase();
-  const measurementFocus = /loss|exclusivity|decline/.test(lifecycleLower)
-    ? "retention and adherence over new-patient acquisition"
-    : /launch/.test(lifecycleLower)
-      ? "awareness, reach and first-prescription conversion"
-      : "share-of-voice conversion and depth of engagement";
-
-  const leads = kpi.leading_indicators;
-  const chRows = Object.entries(alloc).sort((a, b) => b[1].pct - a[1].pct);
+  const demo = insights?.demographics;
 
   return (
     <Box>
       <StageHead
         icon="insights"
         title="Reporting & Insights"
-        blurb="The closed-loop scorecard: which KPIs prove the plan worked, how each channel is measured, and what to learn next."
+        blurb="The closed-loop scorecard: the KPIs that prove the plan worked, the audience they measure, and how every touch is tagged and tested."
         agent="reporting"
       />
 
-      {/* Anchor ids feed the left-hand StageSectionRail (StageSectionRail.tsx REPORT_SECTIONS). */}
-      <ConsolePanel id="rep-overview" sx={{ mb: 3 }}>
-        <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(88px, 1fr))", gap: 1.5 }}>
-          <ScoreTile><Typography sx={{ fontSize: 20, fontWeight: 700 }}>{kpi.leading_indicators.length}</Typography><Typography variant="caption">Leading KPIs</Typography></ScoreTile>
-          <ScoreTile><Typography sx={{ fontSize: 20, fontWeight: 700 }}>{kpi.lagging_indicators.length}</Typography><Typography variant="caption">Lagging KPIs</Typography></ScoreTile>
-          <ScoreTile><Typography sx={{ fontSize: 20, fontWeight: 700 }}>{kpi.operational_kpis.length}</Typography><Typography variant="caption">Operational KPIs</Typography></ScoreTile>
-          <ScoreTile><Typography sx={{ fontSize: 20, fontWeight: 700 }}>{Object.keys(alloc).length}</Typography><Typography variant="caption">Channels tracked</Typography></ScoreTile>
-          <ScoreTile><Typography sx={{ fontSize: 20, fontWeight: 700 }}>{lib.counts?.assets ?? 0}</Typography><Typography variant="caption">Assets in market</Typography></ScoreTile>
-        </Box>
-      </ConsolePanel>
+      {insights && (
+        <>
+          {/* Stage-promotion funnel — the signals that move an HCP to the next journey stage. */}
+          <ConsolePanel id="rep-funnel" title={`Stage-promotion signals — ${insights.funnel.stage}`} sx={{ mb: 3 }}>
+            <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1.5 }}>{insights.funnel.note}</Typography>
+            <Box sx={{ display: "flex", gap: 1, alignItems: "stretch", flexWrap: "wrap" }}>
+              {insights.funnel.signals.map((s, i) => (
+                <Box key={s.label} sx={{ display: "flex", alignItems: "center", gap: 1, flex: "1 1 200px" }}>
+                  <InsightCard primary={s.primary} sx={{ flex: 1 }}>
+                    <Typography variant="caption" sx={{ fontWeight: 700 }}>{s.label}</Typography>
+                    <Typography sx={{ fontSize: 22, fontWeight: 800, color: s.primary ? accent.primary : "text.primary", lineHeight: 1.1 }}>{metricHeadline(s)}</Typography>
+                    <Typography variant="caption" sx={{ color: "text.secondary" }}>{s.note}</Typography>
+                    {s.primary && <Chip size="small" label="primary promotion signal" sx={{ mt: 0.5, height: 18, fontSize: 10, alignSelf: "flex-start", bgcolor: `${accent.primary}18`, color: accent.primary }} />}
+                  </InsightCard>
+                  {i < insights.funnel.signals.length - 1 && (
+                    <span className="material-symbols-outlined" style={{ fontSize: 20, color: indigoTint(0.4) }}>arrow_forward</span>
+                  )}
+                </Box>
+              ))}
+            </Box>
+          </ConsolePanel>
 
-      <ConsolePanel id="rep-insights" title="Insights & read-outs" sx={{ mb: 3 }}>
-        <Box component="ul" sx={{ m: 0, pl: 2.5, fontSize: 13, lineHeight: 1.7 }}>
-          <li>Lifecycle posture: <b>{inf.lifecycle_label || "N/A"}</b>. Measurement should weight {measurementFocus}.</li>
-          <li>Priority audience <b>{inf.persona || "N/A"}</b> at the <b>{inf.stage_label || "N/A"}</b> journey stage. Read leading indicators at the segment level, not just campaign level.</li>
-          <li>{lib.counts?.approved_claims ?? 0} MLR-approved claims are live; unsubstantiated claims block reporting credibility. Keep the claims-to-reference graph clean before scaling spend.</li>
-          <li>No live performance data is connected yet. The scorecard below is the <b>measurement plan</b> (what to track and what good looks like), not observed results.</li>
-        </Box>
-      </ConsolePanel>
+          {/* Delivery & engagement KPI cards. */}
+          <ConsolePanel id="rep-kpicards" title="Delivery & engagement KPIs" sx={{ mb: 3 }}>
+            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 1.5 }}>
+              {insights.kpis.map((k) => (
+                <InsightCard key={k.label} primary={k.primary}>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 1 }}>
+                    <Typography variant="caption" sx={{ fontWeight: 700 }}>{k.label}</Typography>
+                    <Chip size="small" label={k.kind === "volume" ? "volume" : "rate"} variant="outlined" sx={{ height: 18, fontSize: 10 }} />
+                  </Box>
+                  <Typography sx={{ fontSize: 24, fontWeight: 800, color: k.primary ? accent.primary : "text.primary", lineHeight: 1.1 }}>{metricHeadline(k)}</Typography>
+                  {k.sub && <Typography variant="caption" sx={{ color: "text.secondary" }}>{k.sub}</Typography>}
+                  {k.note && <Typography variant="caption" sx={{ color: "text.disabled", fontStyle: "italic" }}>{k.note}</Typography>}
+                </InsightCard>
+              ))}
+            </Box>
+            <Typography variant="caption" sx={{ color: "text.secondary", fontStyle: "italic", display: "block", mt: 1.5 }}>{insights.caveat}</Typography>
+          </ConsolePanel>
 
-      <ConsolePanel id="rep-kpi" title="KPI scorecard" sx={{ mb: 3 }}>
+          {/* Real HCP-panel demographics. */}
+          {demo?.available && (
+            <ConsolePanel id="rep-demographics" title={`HCP audience — ${demo.total_hcps?.toLocaleString()} in panel`} sx={{ mb: 3 }}>
+              <Box sx={{ display: "flex", gap: 3, flexWrap: "wrap" }}>
+                <DemoBlock title="By specialty" rows={demo.by_specialty} />
+                <DemoBlock title="By preferred channel" rows={demo.by_preferred_channel} />
+                <DemoBlock title="By segment" rows={demo.by_segment} />
+              </Box>
+              <Typography variant="caption" sx={{ color: "text.secondary", fontStyle: "italic", display: "block", mt: 1.5 }}>
+                Live counts from the HCP 360 panel. Ask the Reporting agent (left) to segment or list specific HCPs.
+              </Typography>
+            </ConsolePanel>
+          )}
+
+          {/* Link/tagging (UTM) matrix deliverable. */}
+          <ConsolePanel id="rep-tagging" title="Link & tagging matrix (UTM taxonomy)" sx={{ mb: 3 }}>
+            <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1 }}>{insights.tagging.note}</Typography>
+            <Box sx={{ overflowX: "auto" }}>
+              <PlanTable>
+                <thead><tr>{insights.tagging.columns.map((c) => <th key={c}>{c}</th>)}</tr></thead>
+                <tbody>
+                  {insights.tagging.rows.map((r) => (
+                    <tr key={r.parameter}>
+                      <td style={{ fontFamily: "monospace", fontSize: 12 }}>{r.parameter}</td>
+                      <td>{r.convention}</td>
+                      <td style={{ fontFamily: "monospace", fontSize: 12, color: accent.primary }}>{r.example}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </PlanTable>
+            </Box>
+          </ConsolePanel>
+
+          {/* A/B test design. */}
+          <ConsolePanel id="rep-test" title="Test design" sx={{ mb: 3 }}>
+            <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1 }}>{insights.test_design.approach}</Typography>
+            <PlanTable>
+              <thead><tr><th>Test</th><th>Variants</th><th>Measure</th><th></th></tr></thead>
+              <tbody>
+                {insights.test_design.rows.map((r) => (
+                  <tr key={r.test}>
+                    <td><b>{r.test}</b></td>
+                    <td>{r.variants}</td>
+                    <td>{r.measure}</td>
+                    <td>{r.primary && <Chip size="small" label="primary" sx={{ height: 18, fontSize: 10, bgcolor: `${accent.primary}18`, color: accent.primary }} />}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </PlanTable>
+            <Typography variant="caption" sx={{ color: "text.secondary", fontStyle: "italic", display: "block", mt: 1 }}>{insights.test_design.note}</Typography>
+          </ConsolePanel>
+        </>
+      )}
+
+      {result && <MeasurementPlan result={result} />}
+    </Box>
+  );
+}
+
+/** The plan-derived measurement framework (KPI scorecard, channel measurement, test·measure·learn). */
+function MeasurementPlan({ result }: { result: PlanResult }) {
+  const kpi = result.stage_7_kpi ?? { leading_indicators: [], lagging_indicators: [], operational_kpis: [] };
+  const tml = result.stage_9_test_measure_learn?.rows ?? [];
+  const alloc = result.stage_5_budget?.allocation ?? {};
+  const leads = kpi.leading_indicators;
+  const chRows = Object.entries(alloc).sort((a, b) => b[1].pct - a[1].pct);
+
+  return (
+    <>
+      <ConsolePanel id="rep-kpi" title="KPI scorecard (measurement plan)" sx={{ mb: 3 }}>
         <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 2 }}>
           <KpiCol accent={tokens.color.success}>
             <Typography sx={{ display: "flex", alignItems: "center", gap: 1, fontWeight: 700, fontSize: 12, mb: 1 }}>
@@ -118,9 +252,6 @@ export function StageReporting({ result }: { result: PlanResult | null }) {
             ))}
           </tbody>
         </PlanTable>
-        <Typography variant="caption" sx={{ color: "text.secondary", fontStyle: "italic", display: "block", mt: 1 }}>
-          Targets require a baseline from the first in-market period. No observed data is connected.
-        </Typography>
       </ConsolePanel>
 
       <ConsolePanel id="rep-tml" title="Test · Measure · Learn">
@@ -143,6 +274,6 @@ export function StageReporting({ result }: { result: PlanResult | null }) {
           </Typography>
         )}
       </ConsolePanel>
-    </Box>
+    </>
   );
 }

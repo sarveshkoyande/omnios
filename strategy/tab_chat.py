@@ -34,6 +34,8 @@ from paths import data_path  # noqa: E402
 import db  # noqa: E402  (dual-dialect SQLite/Postgres connection factory)
 import projects as pstore  # noqa: E402
 import conversation_llm  # noqa: E402
+import hcp_360  # noqa: E402  (Reporting agent tools: list_hcps / segment_summary / get_hcp)
+import reporting_insights  # noqa: E402  (Reporting agent grounding: KPIs / funnel / demographics)
 
 DB_PATH = data_path("tab_chat.db")
 
@@ -697,6 +699,61 @@ def _ask_generic(project_id: str, stage_id: str, message: str) -> dict:
         return {"reply": f"Couldn't reach the LLM ({e})."}
 
 
+_REPORTING_SYSTEM = (
+    "You are the Reporting & Insights agent for a pharma omnichannel campaign. Answer questions "
+    "about measurement — KPIs, the stage-promotion funnel, delivery/engagement targets, the UTM "
+    "link/tagging matrix and the A/B test design — and about the HCP 360 audience panel. Ground "
+    "measurement answers in the REPORTING INSIGHTS below; use the tools (list_hcps, "
+    "segment_summary, get_hcp) for anything about specific HCPs or panel breakdowns. Be concise. "
+    "The KPI numbers are TARGETS/benchmarks (industry baselines scaled by the lifecycle index), "
+    "not observed results — say so when you cite a rate. Never invent panel numbers; only report "
+    "what the tools return.\n\nREPORTING INSIGHTS:\n{insights}\n\nPLAN (excerpt):\n{plan}"
+)
+
+
+def _ask_reporting(project_id: str, message: str) -> dict:
+    """Reporting agent: a bounded tool-use loop over the HCP 360 panel, grounded in the
+    reporting-insights payload + the plan. Never raises -- degrades to a plain reply."""
+    proj = pstore.get_project(project_id)
+    if not proj:
+        return {"reply": "I can't find this project."}
+    if not conversation_llm.llm_available():
+        return {"reply": "The LLM isn't configured, so I can't answer free-text questions right "
+                         "now — the KPI, demographic and tagging cards on the right are still live."}
+    try:
+        insights = reporting_insights.summary_text(project_id)
+    except Exception:  # noqa: BLE001
+        insights = "(reporting insights unavailable)"
+    plan_content = (proj.get("plan_markdown") or "")[:5000] or "(no plan generated yet)"
+    system = _REPORTING_SYSTEM.format(insights=insights[:4000], plan=plan_content)
+    history = get_history(project_id, "reporting")[-8:]
+    convo = "\n".join(f"{m['role']}: {m['text']}" for m in history)
+    try:
+        client = conversation_llm._get_client()
+        messages: list[dict] = [{"role": "user", "content": f"Conversation so far:\n{convo}\n\nUser: {message}"}]
+        for _ in range(3):  # bounded tool-use budget
+            resp = client.messages.create(model=conversation_llm.MODEL, max_tokens=800,
+                                           system=system, tools=hcp_360._TOOLS, messages=messages)
+            messages.append({"role": "assistant", "content": resp.content})
+            tool_uses = [b for b in resp.content if b.type == "tool_use"]
+            if not tool_uses:
+                text = next((b.text for b in resp.content if b.type == "text"), "").strip()
+                return {"reply": text or "No answer produced."}
+            tool_results = []
+            for tu in tool_uses:
+                try:
+                    fn = hcp_360._TOOL_FUNCS.get(tu.name)
+                    out = fn(**tu.input) if fn else {"error": f"unknown tool {tu.name}"}
+                except Exception as e:  # noqa: BLE001
+                    out = {"error": str(e)}
+                tool_results.append({"type": "tool_result", "tool_use_id": tu.id,
+                                      "content": json.dumps(out, default=str)[:4000]})
+            messages.append({"role": "user", "content": tool_results})
+        return {"reply": "Couldn't settle on an answer within the tool-call budget — try a narrower question."}
+    except Exception as e:  # noqa: BLE001
+        return {"reply": f"Couldn't reach the LLM ({e})."}
+
+
 # ------------------------------------------------------------------------- dispatch ---
 
 def ask(project_id: str, stage_id: str, message: str, document: dict | None = None) -> dict:
@@ -710,6 +767,8 @@ def ask(project_id: str, stage_id: str, message: str, document: dict | None = No
         result = _ask_operations(project_id, message, document=document)
     elif stage_id == "orchestration":
         result = _ask_orchestration(project_id, message)
+    elif stage_id == "reporting":
+        result = _ask_reporting(project_id, message)
     else:
         result = _ask_generic(project_id, stage_id, message)
     append(project_id, stage_id, "assistant", stage_id, result.get("reply", ""))
