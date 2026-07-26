@@ -1,14 +1,12 @@
-# Postgres for the writable relational stores + blob bytes is hosted OUTSIDE Render, on
-# Prisma Postgres (prisma.io/postgres -- free tier). We only consume it via a connection
-# string; Prisma's ORM is NOT used anywhere in this app -- every store still speaks plain
-# SQL through strategy/db.py's psycopg wrapper, unchanged. Because the DB lives outside
-# Render's account, Render can't auto-provision it the way it can its own managed Postgres
-# -- create the Prisma Postgres instance yourself (see POSTGRES_MIGRATION.md) and paste its
-# connection string into the DATABASE_URL secret below (Render dashboard -> Environment).
-# strategy/db.py routes every writable store there once DATABASE_URL is set; blob_store.py
-# writes bytes into the blob_data (BYTEA) table. The persistent disk is still kept below for
-# the read-only knowledge-base snapshot (omni_kb.db) and the cognee memory layer, which are
-# not part of this Postgres migration.
+# Storage model: SQLite files + blob store on the persistent disk below (durable across
+# deploys). This is the app's native, zero-cost data layer. The Postgres path
+# (strategy/db.py + POSTGRES_MIGRATION.md) still exists and activates if DATABASE_URL is set,
+# but it is intentionally NOT set here: a trial on Prisma Postgres hit the free-tier plan
+# limit (the ~170MB knowledge base + 540K-row load exceeded it, locking the database). If you
+# want Postgres later, use a paid plan or a provider that fits the data, then add DATABASE_URL
+# as an env var. Do NOT set DATABASE_URL to an over-quota database -- the app can't connect
+# and won't start. The knowledge base ships as a ~90MB dependency-slim seed committed in git
+# (assets/seed/omni_kb.db), seeded to the disk by bootstrap.py on first boot.
 
 services:
   - type: web
@@ -43,13 +41,6 @@ services:
         value: 3.12.7
       - key: OMNI_DATA_DIR
         value: /var/data
-      # Connection string for the external Prisma Postgres database (see note at the top of
-      # this file). Secret -- paste the real value into the Render dashboard (Environment
-      # tab); sync:false keeps it out of the repo. Its presence flips strategy/db.py from
-      # SQLite to Postgres for every writable store; unset it to fall back to the
-      # disk-backed SQLite files with zero code change.
-      - key: DATABASE_URL
-        sync: false
       # Use the Foundry RESOURCE name (not a full endpoint). The AnthropicFoundry SDK
       # derives the correct Anthropic passthrough URL from it:
       # https://<resource>.services.ai.azure.com/anthropic/ . Do NOT set

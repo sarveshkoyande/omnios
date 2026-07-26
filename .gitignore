@@ -5,9 +5,11 @@
 # --- runtime data store (SQLite + blobs, reseeded from assets/seed + config) ---
 /data/
 
-# --- knowledge base: too large for git; now lives in Postgres (loaded once via
-#     strategy/load_kb_to_pg.py). Kept locally for SQLite-only dev, but never committed. ---
-/assets/seed/omni_kb.db
+# --- knowledge base: the committed seed (assets/seed/omni_kb.db) is a ~90MB dependency-slim
+#     of the full KB (drops the large raw tables no app query/view uses); it seeds to the
+#     persistent disk on boot. The full ~170MB master is kept local-only as the rebuild
+#     source (scratch/slim_closure.py rebuilds the slim from it) and never committed. ---
+/assets/seed/omni_kb_full.db
 
 # --- python ---
 __pycache__/
