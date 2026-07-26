@@ -23,7 +23,6 @@ export interface RailSection {
 export const ORCH_SECTIONS: RailSection[] = [
   { id: "orch-timeline", label: "Timeline & time-saved", icon: "timeline" },
   { id: "orch-activities", label: "Activities & setup tasks", icon: "checklist" },
-  { id: "orch-downstream", label: "Downstream systems", icon: "sync_alt" },
   { id: "orch-agent", label: "Nudge agent", icon: "smart_toy" },
 ];
 

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import Typography from "@mui/material/Typography";
@@ -13,16 +13,15 @@ import Tooltip from "@mui/material/Tooltip";
 import { styled } from "@mui/material/styles";
 import { StageHead } from "./StageHead";
 import { OrchestrationTimeline } from "./OrchestrationTimeline";
-import { OrchestrationDownstream } from "./OrchestrationDownstream";
 import { OrchestrationNudge } from "./OrchestrationNudge";
 import { ConsolePanel } from "../../components/ConsolePanel";
 import { glass, indigoTint, shade, tokens } from "../../theme/tokens";
 import { accent } from "../../theme/stageTheme";
-import { getProject, generateOrchestrationTasks, saveOrchestrationTasks } from "../../api";
+import { getProject, generateOrchestrationTasks, saveOrchestrationTasks, getOrchestrationBindings, pushOrchestration } from "../../api";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 import { ORCHESTRATION_TEAMS, DEFAULT_TASK_TEAM } from "../types";
-import type { OrchestrationTask, PlanResult } from "../types";
+import type { ExternalBinding, OrchestrationTask, PlanResult } from "../types";
 
 const TEAM_ICON: Record<string, string> = {
   "Web team": "language",
@@ -132,6 +131,32 @@ export function StageOrchestration({
     };
   }, [effectiveResult, projectId, refreshToken]);
 
+  // Downstream bindings: each task's tracked item in the routed system-of-work. Fetched so
+  // every task card can show its activity id + a link to visit the item. If tasks exist but
+  // nothing has been pushed yet, push once automatically to create them (the same idempotent
+  // push the removed Downstream panel used to do -- minus its UI).
+  const [bindings, setBindings] = useState<ExternalBinding[] | null>(null);
+  const autoPushed = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!projectId) return;
+    let cancelled = false;
+    getOrchestrationBindings(projectId)
+      .then((r) => { if (!cancelled) setBindings(r.bindings); })
+      .catch(() => { if (!cancelled) setBindings([]); });
+    return () => { cancelled = true; };
+  }, [projectId, refreshToken]);
+
+  useEffect(() => {
+    if (!projectId || !tasks?.length) return;
+    if (bindings === null || bindings.length > 0) return; // not loaded yet, or already populated
+    if (autoPushed.current === projectId) return;
+    autoPushed.current = projectId;
+    pushOrchestration(projectId)
+      .then((r) => setBindings(r.bindings))
+      .catch(() => {});
+  }, [projectId, tasks, bindings]);
+
   const toggleTask = (id: string) => {
     if (!tasks) return;
     persist(tasks.map((t) => (t.id === id ? { ...t, done: !t.done } : t)));
@@ -165,6 +190,11 @@ export function StageOrchestration({
   const grouped: Record<string, OrchestrationTask[]> = {};
   for (const t of tasks ?? []) {
     (grouped[t.team] ??= []).push(t);
+  }
+  // activity_id -> its binding, preferring one that actually carries a link.
+  const bindingByActivity: Record<string, ExternalBinding> = {};
+  for (const b of bindings ?? []) {
+    if (!bindingByActivity[b.activity_id] || b.external_url) bindingByActivity[b.activity_id] = b;
   }
   const teamOrder = [...ORCHESTRATION_TEAMS, ...Object.keys(grouped).filter((t) => !(ORCHESTRATION_TEAMS as readonly string[]).includes(t))];
   // Only teams that actually have work get a tab.
@@ -266,13 +296,39 @@ export function StageOrchestration({
                         )}
                       </Box>
                     </Box>
-                    <Box sx={{ flex: "0 0 140px", textAlign: "right" }}>
+                    <Box sx={{ flex: "0 0 168px", textAlign: "right" }}>
                       <Typography variant="caption" sx={{ display: "block", color: "text.secondary" }}>
                         SLA: {t.sla ?? "TBD"}
                       </Typography>
                       <Typography variant="caption" sx={{ display: "block", color: "text.secondary" }}>
                         {t.assigned_to ?? "Unassigned"}
                       </Typography>
+                      {/* Activity id + link to the tracked item in the routed system of work. */}
+                      <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 0.15, mt: 0.4 }}>
+                        <Tooltip title="Activity ID">
+                          <Typography variant="caption" sx={{ fontFamily: "monospace", fontSize: 10.5, color: "text.disabled" }}>
+                            {t.id}
+                          </Typography>
+                        </Tooltip>
+                        {bindingByActivity[t.id]?.external_url && (
+                          <Tooltip title={`Visit tracked item — ${bindingByActivity[t.id].external_url}`}>
+                            <Box
+                              component="a"
+                              href={bindingByActivity[t.id].external_url ?? undefined}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              sx={{
+                                display: "inline-flex", alignItems: "center", gap: 0.25,
+                                fontFamily: "monospace", fontSize: 10.5, color: accent.primary,
+                                textDecoration: "none", "&:hover": { textDecoration: "underline" },
+                              }}
+                            >
+                              {bindingByActivity[t.id].external_id}
+                              <span className="material-symbols-outlined" style={{ fontSize: 12 }}>open_in_new</span>
+                            </Box>
+                          </Tooltip>
+                        )}
+                      </Box>
                     </Box>
                     <IconButton size="small" onClick={() => setDetailTask(t)} aria-label="View task detail">
                       <span className="material-symbols-outlined" style={{ fontSize: 16 }}>open_in_new</span>
@@ -313,9 +369,6 @@ export function StageOrchestration({
         </Box>
       </ConsolePanel>
 
-      <Box id="orch-downstream">
-        <OrchestrationDownstream projectId={projectId} tasks={tasks} />
-      </Box>
 
       <Box id="orch-agent">
         <OrchestrationNudge projectId={projectId} tasks={tasks} />
