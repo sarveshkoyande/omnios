@@ -22,6 +22,7 @@ import os
 import re
 import sqlite3
 import sys
+import threading
 import pathlib
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
@@ -179,8 +180,9 @@ class _PgCursor:
 class _PgConn:
     """Thin wrapper over a psycopg connection exposing the sqlite3 surface the stores use."""
 
-    def __init__(self, raw):
+    def __init__(self, raw, pooled=False):
         self._raw = raw
+        self._pooled = pooled
 
     def execute(self, sql, params=()):
         sql2, appended = to_pg_sql(sql)
@@ -211,21 +213,81 @@ class _PgConn:
         self._raw.rollback()
 
     def close(self):
-        self._raw.close()
+        # On the pooled Postgres path, "closing" returns the connection to the pool for
+        # reuse instead of tearing down the (expensive, remote) socket.
+        if self._pooled:
+            _put_pooled(self._raw)
+        else:
+            self._raw.close()
+
+
+# --------------------------------------------------------------------- connection pool ---
+# Over a REMOTE Postgres (e.g. Prisma) the stores' "open a connection, run one or two
+# statements, close it" pattern -- which is essentially free on a local SQLite file -- is
+# pathological: every call pays a TLS + auth handshake, and a low free-tier connection cap is
+# quickly exhausted, so the whole app crawls, writes hang, and requests 500 under any
+# concurrency. A process-wide pool keeps a small set of warm connections and hands them out
+# instead. Created lazily so the SQLite path never imports psycopg_pool. Sized by DB_POOL_MAX
+# (default 5) -- lower it if the managed Postgres rejects connections, raise it for more
+# concurrency.
+_pool = None
+_pool_disabled = False
+_pool_lock = threading.Lock()
+
+
+def _get_pool():
+    """The process-wide connection pool, or None if pooling is unavailable (psycopg_pool not
+    installed -- e.g. a local one-off script). Callers fall back to a direct connection then."""
+    global _pool, _pool_disabled
+    if _pool_disabled:
+        return None
+    if _pool is None:
+        with _pool_lock:
+            if _pool is None and not _pool_disabled:
+                try:
+                    from psycopg_pool import ConnectionPool  # lazy: only needed on Postgres
+                except Exception:  # noqa: BLE001 -- pool extra not installed; use direct conns
+                    _pool_disabled = True
+                    return None
+                _pool = ConnectionPool(
+                    DATABASE_URL,
+                    min_size=1,
+                    max_size=int(os.environ.get("DB_POOL_MAX", "5") or "5"),
+                    kwargs={"row_factory": _pg_row_factory},
+                    max_lifetime=300,   # recycle every 5 min -- a remote host may drop idle conns
+                    max_idle=60,
+                    timeout=30,         # wait up to 30s for a free connection, then raise
+                    open=False,
+                )
+                _pool.open()  # fills the pool in the background; getconn() waits as needed
+    return _pool
+
+
+def _put_pooled(raw):
+    try:
+        _get_pool().putconn(raw)
+    except Exception:  # noqa: BLE001 -- returning a connection must never raise into a caller
+        try:
+            raw.close()
+        except Exception:  # noqa: BLE001
+            pass
 
 
 def connect(db_name: str = "campaigns"):
     """Return a connection. SQLite: a real sqlite3 connection to <DATA_DIR>/<db_name>.db
-    (unchanged behaviour). Postgres: a wrapped psycopg connection to DATABASE_URL (all the
-    logical DBs share one Postgres database; table names are already globally distinct)."""
+    (unchanged behaviour). Postgres: a pooled psycopg connection to DATABASE_URL (all the
+    logical DBs share one Postgres database; table names are already globally distinct).
+    `conn.close()` returns the pooled connection for reuse rather than tearing it down."""
     if not IS_PG:
         conn = sqlite3.connect(data_path(f"{db_name}.db"))
         conn.row_factory = sqlite3.Row
         conn.execute("PRAGMA foreign_keys = ON")
         return conn
-    import psycopg  # imported lazily so the disk deployment never needs psycopg installed
-    raw = psycopg.connect(DATABASE_URL, row_factory=_pg_row_factory)
-    return _PgConn(raw)
+    pool = _get_pool()
+    if pool is not None:
+        return _PgConn(pool.getconn(), pooled=True)
+    import psycopg  # fallback when psycopg_pool isn't installed (e.g. a local one-off script)
+    return _PgConn(psycopg.connect(DATABASE_URL, row_factory=_pg_row_factory), pooled=False)
 
 
 def kb_connect():

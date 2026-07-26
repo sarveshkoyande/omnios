@@ -7,9 +7,12 @@ anthropic==0.116.0
 azure-identity==1.25.3
 pytrends==4.9.2
 python-multipart==0.0.32
-# Postgres driver for the dual-dialect DB layer (strategy/db.py). Only imported when
-# DATABASE_URL is set to a postgres:// URL; the default SQLite path never loads it.
-psycopg[binary]>=3.2
+# Postgres driver + connection pool for the dual-dialect DB layer (strategy/db.py). Only
+# imported when DATABASE_URL is set to a postgres:// URL; the default SQLite path never loads
+# it. The [pool] extra pulls psycopg_pool -- essential over a remote managed Postgres so the
+# app reuses warm connections instead of paying a handshake (and exhausting the connection
+# cap) on every store call.
+psycopg[binary,pool]>=3.2
 pypdf==6.14.2
 python-docx==1.2.0
 python-pptx==1.0.2
