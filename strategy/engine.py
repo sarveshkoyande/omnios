@@ -11,6 +11,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
 from rules import CHANNEL_TOUCHPOINTS, PERSONA_MULTIPLIERS, STAGE_BY_KEY, STAGES  # noqa: E402
 from paths import data_path  # noqa: E402
+import db  # noqa: E402  (dual-dialect KB connection: SQLite file locally, Postgres on Render)
 
 DB_PATH = data_path("omni_kb.db")
 
@@ -34,11 +35,11 @@ def _compute_channel_mix(stage_key: str, persona: str) -> dict[str, float]:
 
 def _kb_grounding(search_term: str, limit: int = 5) -> dict[str, list[dict]]:
     result = {"clinicaltrials": [], "pubmed": [], "openfda": [], "dailymed": [], "google_trends": []}
-    if not search_term or not DB_PATH.exists():
+    if not search_term:
         return result
-
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = db.kb_connect()
+    if conn is None:
+        return result
     for source in result:
         rows = conn.execute(
             """

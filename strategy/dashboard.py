@@ -15,6 +15,7 @@ import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import campaign_store  # noqa: E402
+import db  # noqa: E402  (dual-dialect KB connection: SQLite file locally, Postgres on Render)
 from paths import data_path  # noqa: E402
 
 BASE_DIR = pathlib.Path(__file__).resolve().parent.parent
@@ -60,7 +61,7 @@ def brand_performance() -> dict:
         competitors = json.loads(COMPETITORS.read_text(encoding="utf-8"))
     campaigns = campaign_store.campaign_counts_by_brand()
 
-    conn = sqlite3.connect(KB_DB) if KB_DB.exists() else None
+    conn = db.kb_connect()
     clients_out = []
     totals = {"brands": 0, "clients": 0, "recruiting_trials": 0, "campaigns": 0}
     for client, brands in catalog.items():

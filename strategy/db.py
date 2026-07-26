@@ -169,6 +169,12 @@ class _PgCursor:
     def fetchall(self):
         return self._cur.fetchall()
 
+    def __iter__(self):
+        # Some callers iterate the cursor directly (`for row in conn.execute(...)`) instead
+        # of calling fetchall(); psycopg cursors are iterable, so delegate to the raw cursor
+        # (which yields Row via the row_factory). sqlite3 cursors already support this.
+        return iter(self._cur)
+
 
 class _PgConn:
     """Thin wrapper over a psycopg connection exposing the sqlite3 surface the stores use."""
@@ -220,6 +226,31 @@ def connect(db_name: str = "campaigns"):
     import psycopg  # imported lazily so the disk deployment never needs psycopg installed
     raw = psycopg.connect(DATABASE_URL, row_factory=_pg_row_factory)
     return _PgConn(raw)
+
+
+def kb_connect():
+    """Connection to the read-only knowledge base (`omni_kb`), or None when it isn't
+    available. On Postgres the KB tables live in the shared database (loaded once by
+    strategy/load_kb_to_pg.py) so this always returns a connection. On SQLite it's the
+    data/omni_kb.db file; when that file is absent this returns None so callers degrade to
+    empty results exactly as their old `if KB_DB.exists()` guard did (sqlite3.connect would
+    otherwise create an empty file with no tables and make every query raise)."""
+    if IS_PG:
+        conn = connect("omni_kb")
+        # Probe that the KB has actually been loaded (strategy/load_kb_to_pg.py). If the
+        # tables aren't there yet, return None so every reader degrades to empty results
+        # instead of raising a 500 -- this makes the deploy order-independent (the app can
+        # ship before the one-time load runs, then light up once the data is present).
+        try:
+            conn.execute("SELECT 1 FROM documents LIMIT 1").fetchone()
+            return conn
+        except Exception:  # noqa: BLE001
+            conn.rollback()
+            conn.close()
+            return None
+    if not data_path("omni_kb.db").exists():
+        return None
+    return connect("omni_kb")
 
 
 # --------------------------------------------------------------------- self-test ---------

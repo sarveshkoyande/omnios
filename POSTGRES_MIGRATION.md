@@ -12,8 +12,18 @@ Today the app persists everything as **SQLite files + a file blob store under `D
 the "nothing is retained across deploys" problem.
 
 This document describes moving the **writable** stores onto a managed **Postgres** for
-horizontal scaling or a disk-free service. The read-only knowledge base (`omni_kb.db`) stays
-a committed SQLite snapshot either way — it is never written at runtime.
+horizontal scaling or a disk-free service.
+
+> **Knowledge base (`omni_kb.db`) — now also in Postgres.** The read-only KB was originally a
+> committed SQLite snapshot, but it grew to ~170MB, which exceeds GitHub's 100MB blob limit and
+> broke when shipped via Git LFS (Render's build never pulled the LFS object, so the file was a
+> 134-byte pointer and every KB read 500'd). It is no longer committed to git. Instead it lives
+> in the same Postgres database, loaded once by **`strategy/load_kb_to_pg.py`** (run locally
+> against `DATABASE_URL`). The four KB readers — `strategy/dashboard.py`, `strategy/feed.py`,
+> `strategy/engine.py`, and the pharma-intel block in `app/server.py` — read it through
+> `db.kb_connect()`: Postgres when `DATABASE_URL` is set, the local `data/omni_kb.db` file
+> otherwise (SQLite dev is unchanged). `db.kb_connect()` returns `None` when the KB isn't loaded
+> yet, so readers degrade to empty results instead of 500ing (the deploy is order-independent).
 
 > **Status (now wired in):** every writable store now opens its connection through
 > `strategy/db.py`'s `db.connect(...)`, so setting `DATABASE_URL=postgres://…` routes them
@@ -98,6 +108,27 @@ is already identical in both dialects — no change needed there.
       `render.yaml` already declares the `DATABASE_URL` env var slot.
    The persistent disk is kept for the read-only KB snapshot (`omni_kb.db`) and the cognee
    memory layer; it could be removed if those move too.
+
+## Knowledge base: one-time load into Postgres
+
+Run locally (where the real `omni_kb.db` exists) against the Prisma connection string:
+```
+pip install "psycopg[binary]"                          # if not already installed locally
+export DATABASE_URL="postgres://...prisma..."          # PowerShell: $env:DATABASE_URL="..."
+python strategy/load_kb_to_pg.py                        # full KB (52 tables / 35 views / ~540K rows)
+# or, if the Prisma free tier is tight on storage:
+python strategy/load_kb_to_pg.py --slim                # skips large tables no app query/view uses
+```
+The loader is idempotent (drops + recreates each object) and resilient (per-object try/except;
+prints a summary of anything skipped). Only two view constructs need translation and are handled:
+`instr(a,b)`→`strpos(a,b)` and `GROUP_CONCAT(DISTINCT x)`→`string_agg(DISTINCT (x)::text, ',')`.
+
+## `DATABASE_URL` retention across deploys
+
+`DATABASE_URL` is a **manually-set Render environment secret** (`sync: false` in `render.yaml`),
+so Render preserves it across every deploy automatically — nothing extra is needed to "keep the
+data". The data itself is durable in Prisma Postgres. If the variable is ever removed, the app
+falls back to disk-backed SQLite with zero code change.
 
 ## Verify (still required — the live psycopg path has not been run against a real Postgres)
 

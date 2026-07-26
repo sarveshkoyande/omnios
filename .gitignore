@@ -5,6 +5,10 @@
 # --- runtime data store (SQLite + blobs, reseeded from assets/seed + config) ---
 /data/
 
+# --- knowledge base: too large for git; now lives in Postgres (loaded once via
+#     strategy/load_kb_to_pg.py). Kept locally for SQLite-only dev, but never committed. ---
+/assets/seed/omni_kb.db
+
 # --- python ---
 __pycache__/
 *.py[cod]

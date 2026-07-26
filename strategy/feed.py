@@ -18,6 +18,7 @@ import sqlite3
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import db  # noqa: E402  (dual-dialect KB connection: SQLite file locally, Postgres on Render)
 from paths import data_path  # noqa: E402
 
 BASE_DIR = pathlib.Path(__file__).resolve().parent.parent
@@ -56,11 +57,10 @@ def _curated() -> list[dict]:
 
 
 def _live_kb(limit: int = 6) -> list[dict]:
-    if not KB_DB.exists():
+    conn = db.kb_connect()
+    if conn is None:
         return []
     roster = _roster_brands()
-    conn = sqlite3.connect(KB_DB)
-    conn.row_factory = sqlite3.Row
     out = []
     try:
         # Only surface freshly-indexed evidence for the client roster brands (not the
