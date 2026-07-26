@@ -190,6 +190,7 @@ class _PgConn:
     def __init__(self, raw, pooled=False):
         self._raw = raw
         self._pooled = pooled
+        self._returned = False
 
     def execute(self, sql, params=()):
         sql2, appended = to_pg_sql(sql)
@@ -221,11 +222,27 @@ class _PgConn:
 
     def close(self):
         # On the pooled Postgres path, "closing" returns the connection to the pool for
-        # reuse instead of tearing down the (expensive, remote) socket.
+        # reuse instead of tearing down the (expensive, remote) socket. Idempotent so the
+        # __del__ safety net below can't double-return.
+        if self._returned:
+            return
+        self._returned = True
         if self._pooled:
             _put_pooled(self._raw)
         else:
             self._raw.close()
+
+    def __del__(self):
+        # Safety net against connection leaks. Many stores do `conn = _conn(); ...; close()`
+        # without a try/finally, so an exception between open and close skips close() -- which
+        # on a bounded pool would permanently lose that connection and, after a few, drain the
+        # pool so every later call blocks until timeout (a full-app hang). Returning the
+        # connection when the wrapper is garbage-collected makes a missed close() self-heal.
+        if not self._returned:
+            try:
+                self.close()
+            except Exception:  # noqa: BLE001 -- never raise from a finalizer
+                pass
 
 
 # --------------------------------------------------------------------- connection pool ---
