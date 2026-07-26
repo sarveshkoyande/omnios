@@ -18,7 +18,7 @@ PRAGMA foreign_keys = ON;
 -- ------------------------------------------------------------------ 1. demographic ----
 -- ORA: NUMBER(10) NPI, VARCHAR2 text columns, DATE/TIMESTAMP WITH TIME ZONE -> stored
 -- here as ISO-8601 TEXT (matches how the JSON already encodes them).
-CREATE TABLE IF NOT EXISTS pfizer_demographic_data__dlm (
+CREATE TABLE IF NOT EXISTS hcp_demographic_data__dlm (
     datasourceobject__c              TEXT,
     datasource__c                    TEXT,
     internalorganization__c          TEXT,     -- always NULL in reference data
@@ -59,14 +59,14 @@ CREATE TABLE IF NOT EXISTS global_channel_affinity_and_preference (
     ehrscore_raw__c          INTEGER,
     emailscore_raw__c        INTEGER,
     last_refresh_date__c     TEXT,
-    npi_number__c             INTEGER PRIMARY KEY REFERENCES pfizer_demographic_data__dlm(npi_number__c),
+    npi_number__c             INTEGER PRIMARY KEY REFERENCES hcp_demographic_data__dlm(npi_number__c),
     preferred_channel__c     TEXT,
     progscore_raw__c         INTEGER,
     telescore_raw__c         INTEGER
 );
 
 -- -------------------------------------------------------------- 3. content affinity ---
-CREATE TABLE IF NOT EXISTS pf_global_content_affinity_score_data (
+CREATE TABLE IF NOT EXISTS global_content_affinity_score_data (
     datasourceobject__c                    TEXT,
     datasource__c                          TEXT,
     internalorganization__c                TEXT,
@@ -74,7 +74,7 @@ CREATE TABLE IF NOT EXISTS pf_global_content_affinity_score_data (
     last_refresh_date__c                   TEXT,
     month__c                               TEXT,
     most_preferred_content_tag__c          TEXT,
-    npi_num__c                             INTEGER PRIMARY KEY REFERENCES pfizer_demographic_data__dlm(npi_number__c),
+    npi_num__c                             INTEGER PRIMARY KEY REFERENCES hcp_demographic_data__dlm(npi_number__c),
     second_most_preferred_content_tag__c   TEXT,
     third_most_preferred_content_tag__c    TEXT
 );
@@ -88,7 +88,7 @@ CREATE TABLE IF NOT EXISTS tbl_trx_therapeutic_data__dlm (
     kq_npi_number__c        INTEGER,
     bb_usc_desc2__c         TEXT,
     last_refresh_date__c    TEXT,
-    npi_number__c            INTEGER REFERENCES pfizer_demographic_data__dlm(npi_number__c),
+    npi_number__c            INTEGER REFERENCES hcp_demographic_data__dlm(npi_number__c),
     trx_count__c             INTEGER
 );
 CREATE INDEX IF NOT EXISTS ix_trx_npi ON tbl_trx_therapeutic_data__dlm (npi_number__c);
@@ -102,7 +102,7 @@ CREATE TABLE IF NOT EXISTS global_day_time_preference_data (
     kq_npi_num__c                                 INTEGER,
     last_refresh_date__c                          TEXT,
     month__c                                      TEXT,
-    npi_num__c                                    INTEGER PRIMARY KEY REFERENCES pfizer_demographic_data__dlm(npi_number__c),
+    npi_num__c                                    INTEGER PRIMARY KEY REFERENCES hcp_demographic_data__dlm(npi_number__c),
     most_preferred_day_ehr__c                     TEXT,
     most_preferred_day_session_ehr__c             TEXT,
     most_preferred_session_ehr__c                 TEXT,
@@ -151,7 +151,7 @@ CREATE TABLE IF NOT EXISTS global_day_time_preference_data (
 );
 
 -- ------------------------------------------------------------------- 6. TL / writer ---
-CREATE TABLE IF NOT EXISTS tbl_pfizer_tl_data__dlm (
+CREATE TABLE IF NOT EXISTS tbl_tl_data__dlm (
     datasourceobject__c                          TEXT,
     datasource__c                                 TEXT,
     internalorganization__c                       TEXT,
@@ -168,7 +168,7 @@ CREATE TABLE IF NOT EXISTS tbl_pfizer_tl_data__dlm (
     last_refresh_date__c                          TEXT,
     market_trx_tier__c                            TEXT,
     mylotarg_writer__c                            INTEGER,
-    npi_id__c                                     INTEGER PRIMARY KEY REFERENCES pfizer_demographic_data__dlm(npi_number__c),
+    npi_id__c                                     INTEGER PRIMARY KEY REFERENCES hcp_demographic_data__dlm(npi_number__c),
     nsclc_trx_tier__c                             TEXT,
     number_of_brands_writer__c                    INTEGER,
     practitioner_first_name__c                    TEXT,   -- '0' sentinel or real, polymorphic

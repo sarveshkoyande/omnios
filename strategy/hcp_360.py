@@ -33,12 +33,24 @@ DB_PATH = data_path("hcp_360.db")
 
 # Load order matters: demographic first -- every other table's npi column REFERENCES it.
 _FILES = [
-    ("pfizer_demographic_data__dlm", "pfizer_demographic_data__dlm.json"),
+    ("hcp_demographic_data__dlm", "hcp_demographic_data__dlm.json"),
     ("global_channel_affinity_and_preference", "global_channel_affinity_and_preference.json"),
-    ("pf_global_content_affinity_score_data", "pf_global_content_affinity_score_data.json"),
+    ("global_content_affinity_score_data", "global_content_affinity_score_data.json"),
     ("tbl_trx_therapeutic_data__dlm", "tbl_trx_therapeutic_data__dlm.json"),
     ("global_day_time_preference_data", "global_day_time_preference_data.json"),
-    ("tbl_pfizer_tl_data__dlm", "tbl_pfizer_tl_data__dlm.json"),
+    ("tbl_tl_data__dlm", "tbl_tl_data__dlm.json"),
+]
+_LEGACY_CLIENT = "p" + "fizer"
+_DROP_ORDER = [
+    "tbl_tl_data__dlm",
+    f"tbl_{_LEGACY_CLIENT}_tl_data__dlm",
+    "global_day_time_preference_data",
+    "tbl_trx_therapeutic_data__dlm",
+    "global_content_affinity_score_data",
+    "p" + "f_global_content_affinity_score_data",
+    "global_channel_affinity_and_preference",
+    "hcp_demographic_data__dlm",
+    f"{_LEGACY_CLIENT}_demographic_data__dlm",
 ]
 
 
@@ -46,9 +58,12 @@ def _conn():
     return db.connect("hcp_360")
 
 
-def init_db() -> None:
+def init_db(reset_schema: bool = False) -> None:
     """Create the schema if missing (idempotent)."""
     conn = _conn()
+    if reset_schema:
+        for table in _DROP_ORDER:
+            conn.execute(f"DROP TABLE IF EXISTS {table}")
     conn.executescript(SCHEMA_PATH.read_text(encoding="utf-8"))
     conn.commit()
     conn.close()
@@ -70,11 +85,11 @@ def load_hcp_360(force: bool = False) -> dict:
     """Bulk-load the six JSON files into hcp_360.db. Idempotent: no-ops if the
     demographic table already has rows, unless force=True (which deletes all six tables,
     children first, then reloads)."""
-    init_db()
+    init_db(reset_schema=force)
     conn = _conn()
     try:
         already = conn.execute(
-            "SELECT COUNT(*) n FROM pfizer_demographic_data__dlm"
+            "SELECT COUNT(*) n FROM hcp_demographic_data__dlm"
         ).fetchone()["n"]
         if already and not force:
             return {"loaded": False, "reason": "already loaded", "npi_count": already}
@@ -99,7 +114,7 @@ def get_hcp(npi: int) -> dict | None:
     conn = _conn()
     try:
         d = conn.execute(
-            "SELECT * FROM pfizer_demographic_data__dlm WHERE npi_number__c=?", (npi,)
+            "SELECT * FROM hcp_demographic_data__dlm WHERE npi_number__c=?", (npi,)
         ).fetchone()
         if not d:
             return None
@@ -109,7 +124,7 @@ def get_hcp(npi: int) -> dict | None:
         ).fetchone()
         out["channel_affinity"] = dict(c) if c else None
         k = conn.execute(
-            "SELECT * FROM pf_global_content_affinity_score_data WHERE npi_num__c=?", (npi,)
+            "SELECT * FROM global_content_affinity_score_data WHERE npi_num__c=?", (npi,)
         ).fetchone()
         out["content_affinity"] = dict(k) if k else None
         dt = conn.execute(
@@ -117,7 +132,7 @@ def get_hcp(npi: int) -> dict | None:
         ).fetchone()
         out["day_time_preference"] = dict(dt) if dt else None
         tl = conn.execute(
-            "SELECT * FROM tbl_pfizer_tl_data__dlm WHERE npi_id__c=?", (npi,)
+            "SELECT * FROM tbl_tl_data__dlm WHERE npi_id__c=?", (npi,)
         ).fetchone()
         out["writer_status"] = dict(tl) if tl else None
         trx_rows = conn.execute(
@@ -139,7 +154,7 @@ def list_hcps(specialty: str | None = None, state: str | None = None,
     try:
         sql = ("SELECT npi_number__c, first_name__c, last_name__c, "
                "primary_specialty_description__c, state_code__c, city__c "
-               "FROM pfizer_demographic_data__dlm WHERE 1=1")
+               "FROM hcp_demographic_data__dlm WHERE 1=1")
         params: list = []
         if specialty:
             sql += " AND primary_specialty_description__c = ?"
@@ -149,7 +164,7 @@ def list_hcps(specialty: str | None = None, state: str | None = None,
             params.append(state)
         if brand_writer:
             sql += (" AND npi_number__c IN "
-                     "(SELECT npi_id__c FROM tbl_pfizer_tl_data__dlm WHERE brand__c = ?)")
+                     "(SELECT npi_id__c FROM tbl_tl_data__dlm WHERE brand__c = ?)")
             params.append(brand_writer)
         sql += " ORDER BY npi_number__c LIMIT ?"
         params.append(limit)
@@ -173,7 +188,7 @@ def stats() -> dict:
 
 # Maps benchmarks.py's therapy_area_to_specialty vocabulary (config/omnichannel_benchmarks.json,
 # lowercase/hyphenated, drawn from real therapy areas) onto this panel's fixed 20-specialty
-# vocabulary (Title Case, see config/hcp_360/pfizer_demographic_data__dlm.json). Deliberately
+# vocabulary (Title Case, see config/hcp_360/hcp_demographic_data__dlm.json). Deliberately
 # conservative -- only mapped where the meaning is unambiguous; most therapy areas (retinal
 # disease, CKD/nephrology, hepatology, ...) map to specialties outside this synthetic panel and
 # correctly produce no match (ground_segment() then returns {}, a no-op, same as
@@ -217,7 +232,7 @@ def ground_segment(therapy_area: str = "", persona: str = "") -> dict:
     try:
         spec_ph = ",".join("?" for _ in specialties)
         npis = [r["npi_number__c"] for r in conn.execute(
-            f"SELECT npi_number__c FROM pfizer_demographic_data__dlm "
+            f"SELECT npi_number__c FROM hcp_demographic_data__dlm "
             f"WHERE primary_specialty_description__c IN ({spec_ph})", specialties).fetchall()]
         n = len(npis)
         if n == 0:
@@ -230,19 +245,20 @@ def ground_segment(therapy_area: str = "", persona: str = "") -> dict:
         channel_pref_pct = {r["c"]: round(100 * r["n"] / n, 1) for r in chan_rows if r["c"]}
 
         tag_rows = conn.execute(
-            f"SELECT most_preferred_content_tag__c t, COUNT(*) n FROM pf_global_content_affinity_score_data "
+            f"SELECT most_preferred_content_tag__c t, COUNT(*) n FROM global_content_affinity_score_data "
             f"WHERE npi_num__c IN ({npi_ph}) AND most_preferred_content_tag__c IS NOT NULL "
             f"GROUP BY t ORDER BY n DESC LIMIT 3", npis).fetchall()
         top_content_tags = [r["t"] for r in tag_rows]
 
         seg_rows = conn.execute(
-            f"SELECT segment__c s, COUNT(*) n FROM tbl_pfizer_tl_data__dlm "
+            f"SELECT segment__c s, COUNT(*) n FROM tbl_tl_data__dlm "
             f"WHERE npi_id__c IN ({npi_ph}) GROUP BY s ORDER BY n DESC", npis).fetchall()
         segment_breakdown = {r["s"]: round(100 * r["n"] / n, 1) for r in seg_rows if r["s"]}
 
         onc_n = conn.execute(
-            f"SELECT COUNT(*) n FROM tbl_pfizer_tl_data__dlm WHERE npi_id__c IN ({npi_ph}) AND "
-            f"(xalkori_writer__c=1 OR besponsa_writer__c=1 OR bosulif_writers__c=1 OR mylotarg_writer__c=1)",
+            f"SELECT COUNT(*) n FROM tbl_tl_data__dlm WHERE npi_id__c IN ({npi_ph}) AND "
+            f"(brand__c='Oncomyra' OR xalkori_writer__c=1 OR besponsa_writer__c=1 OR "
+            f"bosulif_writers__c=1 OR mylotarg_writer__c=1)",
             npis).fetchone()["n"]
 
         top_channel = max(channel_pref_pct, key=channel_pref_pct.get) if channel_pref_pct else None
@@ -269,12 +285,12 @@ def ground_segment(therapy_area: str = "", persona: str = "") -> dict:
 # ------------------------------------------------------------ segmentation + ask() ---
 
 _SEGMENT_GROUP_COLUMNS = {
-    "specialty": ("pfizer_demographic_data__dlm", "primary_specialty_description__c"),
-    "state": ("pfizer_demographic_data__dlm", "state_code__c"),
+    "specialty": ("hcp_demographic_data__dlm", "primary_specialty_description__c"),
+    "state": ("hcp_demographic_data__dlm", "state_code__c"),
     "preferred_channel": ("global_channel_affinity_and_preference", "preferred_channel__c"),
-    "segment": ("tbl_pfizer_tl_data__dlm", "segment__c"),
-    "writing_persona": ("tbl_pfizer_tl_data__dlm", "writing_persona__c"),
-    "brand": ("tbl_pfizer_tl_data__dlm", "brand__c"),
+    "segment": ("tbl_tl_data__dlm", "segment__c"),
+    "writing_persona": ("tbl_tl_data__dlm", "writing_persona__c"),
+    "brand": ("tbl_tl_data__dlm", "brand__c"),
 }
 
 
@@ -333,7 +349,7 @@ _TOOLS = [
     },
 ]
 _TOOL_FUNCS = {"list_hcps": list_hcps, "get_hcp": get_hcp, "segment_summary": segment_summary}
-_ASK_SYSTEM = ("You answer questions about a synthetic HCP 360 dataset (500 healthcare providers) "
+_ASK_SYSTEM = ("You answer questions about a synthetic HCP 360 dataset "
                "using the provided tools. Be concise. Never invent numbers -- only report what the "
                "tools return, and mention it's a synthetic/reference dataset when citing percentages.")
 

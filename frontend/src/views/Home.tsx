@@ -19,7 +19,7 @@ type Specialist = {
 const SPECIALISTS: Specialist[] = [
   {
     id: "planning",
-    name: "Planning Agent",
+    name: STAGE_AGENTS.planning.name,
     description: "Turn strategy into execution-ready campaign plans.",
     icon: "track_changes",
     stage: 1,
@@ -29,7 +29,7 @@ const SPECIALISTS: Specialist[] = [
   },
   {
     id: "orchestration",
-    name: "Engagement Agent",
+    name: STAGE_AGENTS.orchestration.name,
     description: "Design omnichannel journeys that engage the right HCPs.",
     icon: "groups",
     stage: 2,
@@ -39,7 +39,7 @@ const SPECIALISTS: Specialist[] = [
   },
   {
     id: "operations",
-    name: "Campaign Agent",
+    name: STAGE_AGENTS.operations.name,
     description: "Create assets, activities and deliver seamless campaign execution.",
     icon: "fact_check",
     stage: 3,
@@ -49,7 +49,7 @@ const SPECIALISTS: Specialist[] = [
   },
   {
     id: "reporting",
-    name: "Insights Agent",
+    name: STAGE_AGENTS.reporting.name,
     description: "Measure performance and uncover actionable insights.",
     icon: "monitoring",
     stage: 4,
@@ -99,7 +99,7 @@ function buildBriefItems(projects: ProjectSummary[], assets: number, brands: num
 
   if (assets > 0) {
     items.push({
-      agent: "Campaign Agent",
+      agent: STAGE_AGENTS.operations.name,
       text: `${assets} content asset${assets === 1 ? "" : "s"} available in the library.`,
       action: "View assets",
       icon: "fact_check",
@@ -110,7 +110,7 @@ function buildBriefItems(projects: ProjectSummary[], assets: number, brands: num
 
   if (brands > 0) {
     items.push({
-      agent: "Planning Agent",
+      agent: STAGE_AGENTS.planning.name,
       text: `${brands} brand${brands === 1 ? "" : "s"} available for campaign planning.`,
       action: "Plan next",
       icon: "track_changes",
