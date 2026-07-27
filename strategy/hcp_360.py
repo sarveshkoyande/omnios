@@ -81,26 +81,45 @@ def _load_table(conn: sqlite3.Connection, json_path: pathlib.Path, table: str) -
     return len(rows)
 
 
+def _seed_demographic_count() -> int:
+    """Row count of the committed demographic seed JSON. Lets load_hcp_360 notice when the
+    committed panel has *changed* (e.g. an expanded seed shipped in a deploy) and reload over a
+    stale DB on a persistent disk -- otherwise the idempotent "table already has rows" skip would
+    keep serving the old panel forever after the first boot."""
+    path = CONFIG_DIR / "hcp_demographic_data__dlm.json"
+    if not path.exists():
+        return 0
+    try:
+        return len(json.loads(path.read_text(encoding="utf-8")))
+    except Exception:  # noqa: BLE001 -- a malformed/unreadable seed just disables drift reload
+        return 0
+
+
 def load_hcp_360(force: bool = False) -> dict:
-    """Bulk-load the six JSON files into hcp_360.db. Idempotent: no-ops if the
-    demographic table already has rows, unless force=True (which deletes all six tables,
-    children first, then reloads)."""
+    """Bulk-load the six JSON files into hcp_360.db. Idempotent: no-ops if the demographic table
+    already holds exactly the committed seed's row count. Reloads (delete-all, children first,
+    then re-insert) when force=True OR when the committed seed row count differs from the DB --
+    so a changed seed takes effect on the next boot even on a persistent disk (Render)."""
     init_db(reset_schema=force)
     conn = _conn()
     try:
         already = conn.execute(
             "SELECT COUNT(*) n FROM hcp_demographic_data__dlm"
         ).fetchone()["n"]
-        if already and not force:
+        seed_count = _seed_demographic_count()
+        drifted = bool(already) and bool(seed_count) and seed_count != already
+        if already and not force and not drifted:
             return {"loaded": False, "reason": "already loaded", "npi_count": already}
-        if force:
+        if force or drifted:
             for table, _ in reversed(_FILES):
                 conn.execute(f"DELETE FROM {table}")
         counts = {}
         for table, filename in _FILES:
             counts[table] = _load_table(conn, CONFIG_DIR / filename, table)
         conn.commit()
-        return {"loaded": True, "counts": counts}
+        reason = "seed drift reload" if drifted and not force else ("forced reload" if force else "initial load")
+        return {"loaded": True, "counts": counts, "reason": reason,
+                "previous_npi_count": already, "npi_count": counts.get("hcp_demographic_data__dlm", 0)}
     finally:
         conn.close()
 
