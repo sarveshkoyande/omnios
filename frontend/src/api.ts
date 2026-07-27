@@ -52,6 +52,23 @@ export async function fetchHome(): Promise<HomePayload> {
   return { feed: data.feed ?? [], dashboard: data.dashboard ?? {} };
 }
 
+export interface PromptLibraryEntry {
+  id: string;
+  name: string;
+  stage: string;
+  file: string;
+  blurb: string;
+  kind: "prompt" | "function";
+  text: string;
+}
+
+export async function fetchPromptLibrary(): Promise<PromptLibraryEntry[]> {
+  const res = await fetch("/api/prompt-library");
+  if (!res.ok) throw new Error(`GET /api/prompt-library -> ${res.status}`);
+  const data = await res.json();
+  return data.prompts ?? [];
+}
+
 export interface PharmaIntelSummary {
   available: boolean;
   totals: Record<string, number>;

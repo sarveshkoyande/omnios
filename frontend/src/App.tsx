@@ -7,6 +7,7 @@ import { styled } from "@mui/material/styles";
 import { Library } from "./library/Library";
 import { Artefacts } from "./views/Artefacts";
 import { Home } from "./views/Home";
+import { PromptLibrary } from "./views/PromptLibrary";
 import { Workspace } from "./workspace/Workspace";
 import { tokens } from "./theme/tokens";
 import { stageAccent } from "./theme/stageTheme";
@@ -15,7 +16,10 @@ import type { StageAgentId } from "./workspace/types";
 // "planning-v2" retired 2026-07-19: the planning_v2 engine now powers the Workspace
 // Planning & Strategy stage (decision spine + Campaign Strategy/Brief artifacts); the
 // separate surface is gone. Backend engine survives in strategy/planning_v2/.
-type View = "home" | "workspace" | "library" | "artefacts";
+// "prompts" added 2026-07-28: TEMPORARY tab to browse the app's LLM system prompts
+// (strategy/prompt_library.py) -- remove the nav entry below (and this view) once no
+// longer needed; the backend endpoint is harmless to leave either way.
+type View = "home" | "workspace" | "library" | "artefacts" | "prompts";
 
 const NavList = styled("ul")({
   display: "flex",
@@ -110,6 +114,9 @@ export default function App() {
                 // "Artefacts" tab hidden 2026-07-27 (per request). The <Artefacts /> view and its
                 // /api/pharma-intel routes still exist and render if `view` is set to "artefacts"
                 // some other way, but it's no longer reachable from the nav.
+                // "Prompt Library" added 2026-07-28, TEMPORARY -- remove this entry (and the
+                // "prompts" View case below) once no longer needed.
+                { key: "prompts", label: "Prompt Library", icon: "psychology", onSelect: () => setView("prompts") },
               ] as const).map((item) => (
                 <NavItem
                   key={item.key}
@@ -164,6 +171,7 @@ export default function App() {
         {view === "workspace" && <Workspace prefillBrand={prefillBrand} openProjectId={openProjectId} seedMessage={seedMessage} seedFile={seedFile} initialStage={initialWorkspaceStage} onStageAgentChange={setWorkspaceAgent} />}
         {view === "library" && <Library />}
         {view === "artefacts" && <Artefacts />}
+        {view === "prompts" && <PromptLibrary />}
       </Box>
     </>
   );

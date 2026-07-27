@@ -68,6 +68,7 @@ from strategy import process_knowledge  # noqa: E402  (Cognee-backed SME process
 from strategy import cognee_feedback  # noqa: E402  (human feedback overlay for Cognee grounding)
 from strategy.paths import data_path  # noqa: E402
 from strategy.planning_v2 import pipeline as planning_v2_pipeline  # noqa: E402  (v2 Strategic-to-Tactical Planning Engine)
+from strategy import prompt_library  # noqa: E402  (read-only catalog of the app's LLM system prompts, for the Prompt Library tab)
 
 app = FastAPI(title="Omni OS Brand Engagement Planning Agent")
 
@@ -783,6 +784,13 @@ def _freeze_project_state(state: dict) -> None:
 def api_home():
     """Landing-page payload: per-brand performance dashboard + the ticker feed."""
     return {"dashboard": dashboard_mod.brand_performance(), "feed": feed_mod.build_feed()}
+
+
+@app.get("/api/prompt-library")
+def api_prompt_library():
+    """Read-only catalog of every LLM system prompt / agent 'skill' in the app, pulled live
+    from the running code (see strategy/prompt_library.py) -- for the Prompt Library tab."""
+    return {"prompts": prompt_library.list_prompts()}
 
 
 # ------------------------------------------------------------------ #
