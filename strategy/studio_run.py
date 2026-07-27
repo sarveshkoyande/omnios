@@ -21,6 +21,7 @@ import benchmarks  # noqa: E402  (addressable HCP universe sizing for segment ev
 import brief_summary  # noqa: E402  (≤14-word gists so asks never echo the deck verbatim)
 import decision_spine  # noqa: E402  (SME-grounded stage registry + extra asks + decision records)
 import external_evidence  # noqa: E402  (live public-source datapoints, pulled per-section on demand)
+import hcp_360  # noqa: E402  (dummy HCP 360 panel -- real segment sizing for the audience ask + brief)
 import llm_decisioning  # noqa: E402  (Foundry + Cognee question/brief synthesis)
 import plan_document  # noqa: E402  (renders one section via its _SECTION_TABLE entry)
 import process_knowledge  # noqa: E402  (Cognee-backed SME process grounding, pulled per-section)
@@ -328,8 +329,36 @@ _SEGMENT_LIBRARY = [
 ]
 
 
+_SCOPE_WORD = {"specialty": "matched-specialty", "panel": "oncology panel"}
+
+
 def _segment_evidence(ctx: dict) -> tuple[list[dict], str, int]:
-    """Per-segment sizing against the real addressable universe. Returns (segments, note, total)."""
+    """Per-segment sizing from the HCP 360 dummy panel -- the segments the user picks (and the
+    numbers the final brief quotes) are the panel's real target-list segments, counted on the
+    plan's therapy-area specialties (panel fallback). Returns (segments, note, total). Falls back
+    to the benchmark-library sizing only if the panel is empty/unavailable."""
+    try:
+        sizing = hcp_360.segment_sizing(ctx.get("therapy_area", "") or "")
+    except Exception:  # noqa: BLE001 — sizing is best-effort
+        sizing = {}
+    seg_rows = (sizing or {}).get("segments") or []
+    if not seg_rows:
+        return _segment_evidence_fallback(ctx)
+    total = int(sizing.get("total") or sum(s["count"] for s in seg_rows))
+    scope_word = _SCOPE_WORD.get(sizing.get("scope"), "panel")
+    segs = [{"label": s["segment"], "share": s["pct"], "criteria": s["criteria"], "size": s["count"],
+             "size_str": f"{s['count']:,} HCPs ({s['pct']:.0f}% of the {scope_word})"} for s in seg_rows]
+    spec_note = ""
+    if sizing.get("scope") == "specialty" and sizing.get("specialties"):
+        spec_note = " (" + ", ".join(sizing["specialties"][:3]) + ")"
+    note = (f"Measured on the HCP 360 dummy panel — {total:,} {scope_word} HCPs{spec_note} "
+            f"across {len(segs)} target-list segments.")
+    return segs, note, total
+
+
+def _segment_evidence_fallback(ctx: dict) -> tuple[list[dict], str, int]:
+    """Benchmark-library sizing (illustrative behavioural archetypes) -- used only when the HCP
+    360 panel returns no segments. Returns (segments, note, total)."""
     ta = ctx.get("therapy_area", "") or ""
     total = 0
     try:
@@ -369,7 +398,7 @@ def _build_ask_draft(ctx: dict, step: dict) -> dict | None:
         broad_full = _brief_field(ctx, "audience") or inferred.get("persona", "")
         broad = brief_summary.summarize_value(broad_full, 14) if broad_full else "the lifecycle-stage default audience"
         segs, evidence_note, _total = _segment_evidence(ctx)
-        rec, alts = segs[0], segs[1:4]
+        rec, alts = segs[0], segs[1:]
 
         def _seg_opt(s: dict, source: str) -> dict:
             return {"label": s["label"], "source": source, "size": s["size_str"], "criteria": s["criteria"]}
@@ -382,14 +411,14 @@ def _build_ask_draft(ctx: dict, step: dict) -> dict | None:
                 "multi_select": True,
                 "evidence_note": evidence_note,
                 "evidence_basis": _basis(ctx,
-                    "Segment sizes estimated from the addressable HCP universe (benchmarks) split by ABCD tier and "
-                    "digital posture; SME process grounding.",
+                    "Segment sizes counted on the HCP 360 dummy panel (target-list segment field), filtered to the "
+                    "plan's therapy-area specialties with a whole-panel fallback; SME process grounding.",
                     "audience", ("csfs", "positioning")),
                 "why": "The segment lock drives eligibility, message ladder, channel weighting and flow defaults.",
-                "recommendation": {**_seg_opt(rec, "SME lead-segment default for this broad group")},
-                "recommendation_reason": f"Evidence-driven skeptics ({rec['size_str']}) move first on OS-grade data, so "
-                                         "leading with them anchors the ladder for every other segment.",
-                "options": [_seg_opt(s, "segment-library alternative") for s in alts],
+                "recommendation": {**_seg_opt(rec, "HCP 360 panel — largest addressable segment")},
+                "recommendation_reason": f"{rec['label']} is the largest addressable group in the panel "
+                                         f"({rec['size_str']}); leading with it anchors the ladder for every other segment.",
+                "options": [_seg_opt(s, "HCP 360 panel segment") for s in alts],
                 "free_text": True})
     if kind == "objective":
         bam = ctx.get("bam") or {}
@@ -495,6 +524,10 @@ def apply_answer(ctx: dict, step: dict, value: str) -> str:
         # profile re-aims at, the rest are recorded alongside it.
         segments = [s.strip() for s in value.split(";") if s.strip()]
         lead = segments[0] if segments else value.strip()
+        # Record the picked segments with their real dummy-panel sizing, and re-point the HCP 360
+        # grounding at them so the final brief's segmentation section leads with exactly what the
+        # user chose, sized on the panel population -- not the lifecycle-default persona.
+        _apply_chosen_segments(ctx, segments)
         if lead and rec and lead.lower() != rec.strip().lower():
             try:  # re-aim the segment profile + TCG at the lead group
                 ctx["inferred"]["persona"] = lead
@@ -508,6 +541,41 @@ def apply_answer(ctx: dict, step: dict, value: str) -> str:
             except Exception:  # noqa: BLE001 — fall back to recording the preference
                 pass
     return note
+
+
+def _apply_chosen_segments(ctx: dict, segments: list[str]) -> None:
+    """Match the user's picked segment label(s) back to the HCP 360 panel sizing and stash the
+    result on ctx (`chosen_segments`) plus refresh `hcp_360_grounding` so every downstream brief
+    section that renders that grounding leads with the chosen segment and its measured size. Best
+    effort: any failure (LLM/db/label mismatch) leaves ctx unchanged."""
+    if not segments:
+        return
+    try:
+        sizing = hcp_360.segment_sizing(ctx.get("therapy_area", "") or "")
+    except Exception:  # noqa: BLE001
+        return
+    by_label = {s["segment"].lower(): s for s in (sizing.get("segments") or [])}
+    chosen = [by_label[s.lower()] for s in segments if s.lower() in by_label]
+    if not chosen:
+        return
+    ctx["chosen_segments"] = chosen
+    scope_word = _SCOPE_WORD.get(sizing.get("scope"), "panel")
+    total = int(sizing.get("total") or 0)
+    lead = chosen[0]
+    headline = f"Leading with {lead['segment']} — {lead['count']:,} HCPs ({lead['pct']:.0f}% of the {scope_word})"
+    if len(chosen) > 1:
+        headline += f"; +{len(chosen) - 1} more segment{'s' if len(chosen) > 2 else ''}"
+    g = dict(ctx.get("hcp_360_grounding") or {})
+    g.update({
+        "agent": "strategy",
+        "confidence": g.get("confidence") or f"measured (n={total} synthetic HCPs)",
+        "headline": headline,
+        "segment_breakdown": {s["segment"]: s["pct"] for s in (sizing.get("segments") or [])},
+        "chosen_segments": [s["segment"] for s in chosen],
+        "caveat": g.get("caveat") or "Synthetic HCP 360 panel — directional only, not real prescriber data.",
+        "sources": g.get("sources") or ["hcp_360.db"],
+    })
+    ctx["hcp_360_grounding"] = g
 
 
 # ------------------------------------------------------------------ #

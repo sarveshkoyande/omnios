@@ -4,6 +4,7 @@ import Dialog from "@mui/material/Dialog";
 import IconButton from "@mui/material/IconButton";
 import Link from "@mui/material/Link";
 import CircularProgress from "@mui/material/CircularProgress";
+import Skeleton from "@mui/material/Skeleton";
 import Typography from "@mui/material/Typography";
 import {
   fetchCogneeStatus,
@@ -14,6 +15,7 @@ import {
   type CogneeProbe,
   type CogneeStatus,
   type PharmaIntelArtifacts,
+  type PharmaIntelSection,
   type PharmaIntelSummary,
 } from "../api";
 import { ConsolePanel } from "../components/ConsolePanel";
@@ -428,17 +430,76 @@ function CogneeQaPanel() {
   );
 }
 
+type SectionState = { data: PharmaIntelSummary | null; loading: boolean; error: string };
+
+// Each warehouse section is fetched on its own so the (slow, ~40 COUNT queries)
+// summary streams in progressively instead of blocking the whole page on one call.
+function usePharmaSection(section: PharmaIntelSection): SectionState {
+  const [state, setState] = useState<SectionState>({ data: null, loading: true, error: "" });
+  useEffect(() => {
+    let alive = true;
+    setState({ data: null, loading: true, error: "" });
+    fetchPharmaIntelSummary(section)
+      .then((data) => alive && setState({ data, loading: false, error: "" }))
+      .catch((err) => alive && setState({ data: null, loading: false, error: String(err) }));
+    return () => {
+      alive = false;
+    };
+  }, [section]);
+  return state;
+}
+
+function TilesSkeleton({ count }: { count: number }) {
+  return (
+    <>
+      {Array.from({ length: count }).map((_, idx) => (
+        <Box key={idx} sx={{ border: `1px solid ${tokens.color.outline}`, borderRadius: 2, p: 2, background: "#fff" }}>
+          <Skeleton variant="text" width="70%" height={16} sx={{ mb: 1 }} />
+          <Skeleton variant="text" width="45%" height={30} />
+        </Box>
+      ))}
+    </>
+  );
+}
+
+function BarListSkeleton({ rows = 8 }: { rows?: number }) {
+  return (
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25 }}>
+      {Array.from({ length: rows }).map((_, idx) => (
+        <Box key={idx} sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "220px 1fr 74px" }, gap: 1, alignItems: "center", px: 0.75 }}>
+          <Skeleton variant="text" width="80%" height={14} />
+          <Skeleton variant="rounded" height={12} />
+          <Skeleton variant="text" width={40} height={14} sx={{ ml: { md: "auto" } }} />
+        </Box>
+      ))}
+    </Box>
+  );
+}
+
+function TableSkeleton({ rows = 6 }: { rows?: number }) {
+  return (
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25 }}>
+      {Array.from({ length: rows }).map((_, idx) => (
+        <Skeleton key={idx} variant="rounded" height={30} />
+      ))}
+    </Box>
+  );
+}
+
+function SectionError({ error }: { error: string }) {
+  return <Typography sx={{ color: tokens.color.danger, fontSize: 13 }}>{error}</Typography>;
+}
+
 export function Artefacts() {
-  const [data, setData] = useState<PharmaIntelSummary | null>(null);
-  const [error, setError] = useState("");
+  const totals = usePharmaSection("totals");
+  const mix = usePharmaSection("mix");
+  const brands = usePharmaSection("brands");
+  const sources = usePharmaSection("sources");
+
   const [drilldown, setDrilldown] = useState<Drilldown | null>(null);
   const [artifactData, setArtifactData] = useState<PharmaIntelArtifacts | null>(null);
   const [artifactError, setArtifactError] = useState("");
   const [artifactLoading, setArtifactLoading] = useState(false);
-
-  useEffect(() => {
-    fetchPharmaIntelSummary().then(setData).catch((err) => setError(String(err)));
-  }, []);
 
   useEffect(() => {
     if (!drilldown) return;
@@ -451,9 +512,10 @@ export function Artefacts() {
       .finally(() => setArtifactLoading(false));
   }, [drilldown]);
 
+  const t = totals.data?.totals ?? {};
   const sourceRows = useMemo(
-    () => (data?.source_counts ?? []).map((row) => ({ label: row.source, count: row.count })),
-    [data],
+    () => (sources.data?.source_counts ?? []).map((row) => ({ label: row.source, count: row.count })),
+    [sources.data],
   );
 
   return (
@@ -465,63 +527,75 @@ export function Artefacts() {
         </Typography>
       </Box>
 
-      {error && (
-        <ConsolePanel title="Warehouse status" icon="error">
-          <Typography sx={{ color: tokens.color.danger }}>{error}</Typography>
-        </ConsolePanel>
-      )}
+      <CogneeQaPanel />
 
-      {!data && !error && (
-        <ConsolePanel title="Warehouse status" icon="hourglass_top">
-          <Typography sx={{ color: "text.secondary" }}>Loading warehouse summary...</Typography>
-        </ConsolePanel>
-      )}
-
-      {data && (
-        <>
-          <CogneeQaPanel />
-
-          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", lg: "repeat(5, 1fr)", xl: "repeat(17, 1fr)" }, gap: 2 }}>
-            <StatTile icon="database" label="Documents" value={data.totals.documents ?? 0} onOpen={() => setDrilldown({ kind: "documents", title: "Indexed source documents" })} />
-            <StatTile icon="travel_explore" label="Sources" value={data.totals.sources ?? 0} onOpen={() => setDrilldown({ kind: "documents", title: "Indexed source documents" })} />
-            <StatTile icon="biotech" label="ASCO abstracts" value={data.totals.asco_abstracts ?? 0} onOpen={() => setDrilldown({ kind: "asco_abstracts", title: "ASCO abstracts" })} />
-            <StatTile icon="location_on" label="Trial sites" value={data.totals.clinical_trial_locations ?? 0} onOpen={() => setDrilldown({ kind: "clinical_trial_locations", title: "Clinical trial sites" })} />
-            <StatTile icon="query_stats" label="SEER sites" value={data.totals.seer_cancer_stats ?? 0} onOpen={() => setDrilldown({ kind: "seer_cancer_stats", title: "SEER cancer stats" })} />
-            <StatTile icon="campaign" label="Message evidence" value={data.totals.message_evidence ?? 0} onOpen={() => setDrilldown({ kind: "message_evidence", title: "Message evidence" })} />
-            <StatTile icon="payments" label="Open Payments" value={data.totals.open_payments ?? 0} onOpen={() => setDrilldown({ kind: "open_payments", title: "Open Payments" })} />
-            <StatTile icon="health_metrics" label="FAERS reactions" value={data.totals.adverse_event_reactions ?? 0} onOpen={() => setDrilldown({ kind: "faers_reactions", title: "FAERS reactions" })} />
-            <StatTile icon="inventory_2" label="Drug shortages" value={data.totals.drug_shortages ?? 0} onOpen={() => setDrilldown({ kind: "drug_shortages", title: "Drug shortages" })} />
-            <StatTile icon="warning" label="Drug recalls" value={data.totals.drug_recalls ?? 0} onOpen={() => setDrilldown({ kind: "drug_recalls", title: "Drug recalls" })} />
-            <StatTile icon="medication" label="NDC products" value={data.totals.ndc_products ?? 0} onOpen={() => setDrilldown({ kind: "ndc_products", title: "NDC products" })} />
-            <StatTile icon="inventory" label="NDC packages" value={data.totals.ndc_packages ?? 0} onOpen={() => setDrilldown({ kind: "ndc_packages", title: "NDC packages" })} />
-            <StatTile icon="hub" label="RxNorm concepts" value={data.totals.rxnorm_concepts ?? 0} onOpen={() => setDrilldown({ kind: "rxnorm_concepts", title: "RxNorm concepts" })} />
-            <StatTile icon="account_tree" label="RxNorm related" value={data.totals.rxnorm_related_concepts ?? 0} onOpen={() => setDrilldown({ kind: "rxnorm_related", title: "RxNorm related concepts" })} />
-            <StatTile icon="new_releases" label="Safety labels" value={data.totals.safety_labeling_changes ?? 0} onOpen={() => setDrilldown({ kind: "safety_labeling_changes", title: "Safety-related labeling changes" })} />
-            <StatTile icon="science" label="NCI definitions" value={data.totals.nci_drug_dictionary_entries ?? 0} onOpen={() => setDrilldown({ kind: "nci_drug_dictionary", title: "NCI drug definitions" })} />
-            <StatTile icon="fact_check" label="NCI summaries" value={data.totals.nci_drug_info_summaries ?? 0} onOpen={() => setDrilldown({ kind: "nci_drug_info", title: "NCI drug summaries" })} />
+      {/* Warehouse totals — wraps onto as many rows as it needs (auto-fill), so no
+          tile ever gets squeezed into an unreadable sliver like the old 17-col row. */}
+      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", sm: "repeat(auto-fill, minmax(158px, 1fr))" }, gap: 2 }}>
+        {totals.loading && <TilesSkeleton count={17} />}
+        {!totals.loading && totals.error && (
+          <Box sx={{ gridColumn: "1 / -1" }}>
+            <SectionError error={totals.error} />
           </Box>
+        )}
+        {!totals.loading && !totals.error && (
+          <>
+            <StatTile icon="database" label="Documents" value={t.documents ?? 0} onOpen={() => setDrilldown({ kind: "documents", title: "Indexed source documents" })} />
+            <StatTile icon="travel_explore" label="Sources" value={t.sources ?? 0} onOpen={() => setDrilldown({ kind: "documents", title: "Indexed source documents" })} />
+            <StatTile icon="biotech" label="ASCO abstracts" value={t.asco_abstracts ?? 0} onOpen={() => setDrilldown({ kind: "asco_abstracts", title: "ASCO abstracts" })} />
+            <StatTile icon="location_on" label="Trial sites" value={t.clinical_trial_locations ?? 0} onOpen={() => setDrilldown({ kind: "clinical_trial_locations", title: "Clinical trial sites" })} />
+            <StatTile icon="query_stats" label="SEER sites" value={t.seer_cancer_stats ?? 0} onOpen={() => setDrilldown({ kind: "seer_cancer_stats", title: "SEER cancer stats" })} />
+            <StatTile icon="campaign" label="Message evidence" value={t.message_evidence ?? 0} onOpen={() => setDrilldown({ kind: "message_evidence", title: "Message evidence" })} />
+            <StatTile icon="payments" label="Open Payments" value={t.open_payments ?? 0} onOpen={() => setDrilldown({ kind: "open_payments", title: "Open Payments" })} />
+            <StatTile icon="health_metrics" label="FAERS reactions" value={t.adverse_event_reactions ?? 0} onOpen={() => setDrilldown({ kind: "faers_reactions", title: "FAERS reactions" })} />
+            <StatTile icon="inventory_2" label="Drug shortages" value={t.drug_shortages ?? 0} onOpen={() => setDrilldown({ kind: "drug_shortages", title: "Drug shortages" })} />
+            <StatTile icon="warning" label="Drug recalls" value={t.drug_recalls ?? 0} onOpen={() => setDrilldown({ kind: "drug_recalls", title: "Drug recalls" })} />
+            <StatTile icon="medication" label="NDC products" value={t.ndc_products ?? 0} onOpen={() => setDrilldown({ kind: "ndc_products", title: "NDC products" })} />
+            <StatTile icon="inventory" label="NDC packages" value={t.ndc_packages ?? 0} onOpen={() => setDrilldown({ kind: "ndc_packages", title: "NDC packages" })} />
+            <StatTile icon="hub" label="RxNorm concepts" value={t.rxnorm_concepts ?? 0} onOpen={() => setDrilldown({ kind: "rxnorm_concepts", title: "RxNorm concepts" })} />
+            <StatTile icon="account_tree" label="RxNorm related" value={t.rxnorm_related_concepts ?? 0} onOpen={() => setDrilldown({ kind: "rxnorm_related", title: "RxNorm related concepts" })} />
+            <StatTile icon="new_releases" label="Safety labels" value={t.safety_labeling_changes ?? 0} onOpen={() => setDrilldown({ kind: "safety_labeling_changes", title: "Safety-related labeling changes" })} />
+            <StatTile icon="science" label="NCI definitions" value={t.nci_drug_dictionary_entries ?? 0} onOpen={() => setDrilldown({ kind: "nci_drug_dictionary", title: "NCI drug definitions" })} />
+            <StatTile icon="fact_check" label="NCI summaries" value={t.nci_drug_info_summaries ?? 0} onOpen={() => setDrilldown({ kind: "nci_drug_info", title: "NCI drug summaries" })} />
+          </>
+        )}
+      </Box>
 
-          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "1.15fr 0.85fr" }, gap: 3 }}>
-            <ConsolePanel title="Oncology Evidence Mix" icon="hub">
-              <BarList
-                rows={data.evidence_mix ?? []}
-                onOpen={(row) => setDrilldown({ kind: evidenceKindByLabel[row.label] ?? "documents", title: row.label })}
-              />
-            </ConsolePanel>
-            <ConsolePanel title="Campaign Message Mix" icon="forum">
-              <BarList rows={data.message_mix ?? []} onOpen={(row) => setDrilldown({ kind: `message:${row.label}`, title: row.label })} />
-            </ConsolePanel>
-          </Box>
+      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "1.15fr 0.85fr" }, gap: 3 }}>
+        <ConsolePanel title="Oncology Evidence Mix" icon="hub">
+          {mix.loading && <BarListSkeleton rows={12} />}
+          {!mix.loading && mix.error && <SectionError error={mix.error} />}
+          {!mix.loading && !mix.error && (
+            <BarList
+              rows={mix.data?.evidence_mix ?? []}
+              onOpen={(row) => setDrilldown({ kind: evidenceKindByLabel[row.label] ?? "documents", title: row.label })}
+            />
+          )}
+        </ConsolePanel>
+        <ConsolePanel title="Campaign Message Mix" icon="forum">
+          {mix.loading && <BarListSkeleton rows={6} />}
+          {!mix.loading && mix.error && <SectionError error={mix.error} />}
+          {!mix.loading && !mix.error && (
+            <BarList rows={mix.data?.message_mix ?? []} onOpen={(row) => setDrilldown({ kind: `message:${row.label}`, title: row.label })} />
+          )}
+        </ConsolePanel>
+      </Box>
 
-          <ConsolePanel title="Top Oncology Brand Coverage" icon="monitoring">
-            <CoverageTable rows={data.top_brands ?? []} onOpen={(brand) => setDrilldown({ kind: "brand", value: brand, title: brand })} />
-          </ConsolePanel>
+      <ConsolePanel title="Top Oncology Brand Coverage" icon="monitoring">
+        {brands.loading && <TableSkeleton rows={8} />}
+        {!brands.loading && brands.error && <SectionError error={brands.error} />}
+        {!brands.loading && !brands.error && (
+          <CoverageTable rows={brands.data?.top_brands ?? []} onOpen={(brand) => setDrilldown({ kind: "brand", value: brand, title: brand })} />
+        )}
+      </ConsolePanel>
 
-          <ConsolePanel title="Indexed Source Documents" icon="source">
-            <BarList rows={sourceRows} onOpen={(row) => setDrilldown({ kind: "source", value: row.label, title: row.label })} />
-          </ConsolePanel>
-        </>
-      )}
+      <ConsolePanel title="Indexed Source Documents" icon="source">
+        {sources.loading && <BarListSkeleton rows={10} />}
+        {!sources.loading && sources.error && <SectionError error={sources.error} />}
+        {!sources.loading && !sources.error && (
+          <BarList rows={sourceRows} onOpen={(row) => setDrilldown({ kind: "source", value: row.label, title: row.label })} />
+        )}
+      </ConsolePanel>
 
       <ArtifactViewer drilldown={drilldown} data={artifactData} loading={artifactLoading} error={artifactError} onClose={() => setDrilldown(null)} />
     </Box>

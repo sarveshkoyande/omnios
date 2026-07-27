@@ -107,7 +107,9 @@ export default function App() {
               {([
                 { key: "home", label: "Home", icon: "home", onSelect: () => setView("home") },
                 { key: "workspace", label: "Workspace", icon: "space_dashboard", onSelect: () => goStartNew() },
-                { key: "artefacts", label: "Artefacts", icon: "folder_open", onSelect: () => setView("artefacts") },
+                // "Artefacts" tab hidden 2026-07-27 (per request). The <Artefacts /> view and its
+                // /api/pharma-intel routes still exist and render if `view` is set to "artefacts"
+                // some other way, but it's no longer reachable from the nav.
               ] as const).map((item) => (
                 <NavItem
                   key={item.key}

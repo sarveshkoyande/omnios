@@ -311,6 +311,134 @@ def segment_summary(group_by: str) -> list[dict]:
         conn.close()
 
 
+# The three tables that hold the allow-listed dimensions all carry one row per HCP and
+# join back to the demographic base on NPI (the NPI column name differs per table). This
+# lets cross_tab() combine dimensions that live in different tables -- e.g. preferred_channel
+# (channel table) x segment (target-list table) -- which segment_summary(one column) can't.
+_BASE_TABLE = "hcp_demographic_data__dlm"  # aliased 'd'; one row per HCP -> COUNT(DISTINCT) is exact
+_JOINS = {  # alias -> (table, ON predicate against the demographic base 'd')
+    "ch": ("global_channel_affinity_and_preference", "ch.npi_number__c = d.npi_number__c"),
+    "tl": ("tbl_tl_data__dlm", "tl.npi_id__c = d.npi_number__c"),
+}
+_DIM_SQL = {  # allow-listed dimension -> (table alias, column). Same vocabulary as _SEGMENT_GROUP_COLUMNS.
+    "specialty": ("d", "primary_specialty_description__c"),
+    "state": ("d", "state_code__c"),
+    "preferred_channel": ("ch", "preferred_channel__c"),
+    "segment": ("tl", "segment__c"),
+    "writing_persona": ("tl", "writing_persona__c"),
+    "brand": ("tl", "brand__c"),
+}
+
+
+def cross_tab(group_by: list[str] | str | None = None,
+              filters: dict[str, str] | None = None) -> list[dict]:
+    """Cross-tabulate / filter HCP counts across the joined 360 tables by NPI.
+
+    Both `group_by` dimensions and `filters` keys are allow-listed (same vocabulary as
+    segment_summary) and may live in different tables -- the needed tables are LEFT JOINed
+    to the demographic base on NPI, so you can combine dimensions freely without any
+    pre-built combined filter:
+
+      * How many Digital-preferred HCPs are High Potentials?
+        cross_tab(filters={"preferred_channel": "Digital", "segment": "High Potentials"})
+        -> [{"count": 19}]
+      * Full channel x segment matrix:
+        cross_tab(group_by=["preferred_channel", "segment"])
+        -> [{"preferred_channel": "Digital", "segment": "High Potentials", "count": 19}, ...]
+
+    `group_by` accepts up to two dimensions. `filters` are exact, case-insensitive equality.
+    Only allow-listed columns and parameterized values reach SQL -- no arbitrary SQL. Counts
+    use COUNT(DISTINCT npi) so they never double-count."""
+    if isinstance(group_by, str):
+        group_by = [group_by]
+    group_by = list(group_by or [])
+    filters = dict(filters or {})
+    for dim in group_by + list(filters):
+        if dim not in _DIM_SQL:
+            raise ValueError(f"unknown dimension '{dim}'; use one of {sorted(_DIM_SQL)}")
+    if len(group_by) > 2:
+        raise ValueError("group_by accepts at most 2 dimensions")
+
+    needed = {_DIM_SQL[d][0] for d in group_by + list(filters)} - {"d"}
+    select = [f"{_DIM_SQL[d][0]}.{_DIM_SQL[d][1]} AS {d}" for d in group_by]
+    sql = ("SELECT " + "".join(f"{s}, " for s in select)
+           + f"COUNT(DISTINCT d.npi_number__c) AS count FROM {_BASE_TABLE} d")
+    for alias in ("ch", "tl"):  # stable order; only join what the query needs
+        if alias in needed:
+            table, predicate = _JOINS[alias]
+            sql += f" LEFT JOIN {table} {alias} ON {predicate}"
+    params: list = []
+    where = []
+    for dim, value in filters.items():
+        alias, col = _DIM_SQL[dim]
+        where.append(f"LOWER({alias}.{col}) = LOWER(?)")
+        params.append(value)
+    if where:
+        sql += " WHERE " + " AND ".join(where)
+    if group_by:
+        sql += " GROUP BY " + ", ".join(f"{_DIM_SQL[d][0]}.{_DIM_SQL[d][1]}" for d in group_by)
+        sql += " ORDER BY count DESC"
+    conn = _conn()
+    try:
+        return [dict(r) for r in conn.execute(sql, params).fetchall()]
+    finally:
+        conn.close()
+
+
+# Human-readable criteria per known target-list segment, shown next to each option in the
+# planning audience ask. Generic fallback covers any segment not listed here.
+_SEGMENT_CRITERIA = {
+    "High Potentials": "High future-value writers with headroom to grow — priority for share of voice.",
+    "Switchers": "Actively moving between therapies — winnable with timely comparative evidence.",
+    "Loyalists": "Established brand writers — defend and deepen the relationship.",
+    "Emergers": "Newer / lower-volume writers building a practice — nurture toward adoption.",
+    "Other NSCLC Writers": "Write in the class but not engaged on this brand — broad awareness play.",
+    "Non Writers": "Not currently writing the class — long-horizon education.",
+}
+
+
+def segment_sizing(therapy_area: str = "") -> dict:
+    """Real HCP counts per target-list segment from the 360 panel, sized on the specialties
+    `therapy_area` maps to (falls back to the whole panel when nothing maps). This is what the
+    planning 'audience' ask offers and what the final brief quotes -- the segments the user
+    picks, and their sizing, come from the actual dummy population, not a hardcoded library.
+
+    Returns {"scope": "specialty"|"panel", "specialties": [...], "total": N,
+             "segments": [{"segment": "High Potentials", "count": 198, "pct": 19.1,
+                           "criteria": "..."}, ...]} sorted by count desc. `total` is the
+    scoped HCP count -- the denominator behind every pct."""
+    specialties = _map_specialties(benchmarks.specialties_for(therapy_area) if therapy_area else [])
+    conn = _conn()
+    try:
+        if specialties:
+            spec_ph = ",".join("?" for _ in specialties)
+            total = conn.execute(
+                f"SELECT COUNT(*) n FROM hcp_demographic_data__dlm "
+                f"WHERE primary_specialty_description__c IN ({spec_ph})", specialties).fetchone()["n"]
+            rows = conn.execute(
+                f"SELECT tl.segment__c s, COUNT(*) n FROM tbl_tl_data__dlm tl "
+                f"JOIN hcp_demographic_data__dlm d ON d.npi_number__c = tl.npi_id__c "
+                f"WHERE d.primary_specialty_description__c IN ({spec_ph}) AND tl.segment__c IS NOT NULL "
+                f"GROUP BY s ORDER BY n DESC", specialties).fetchall()
+            scope = "specialty"
+        else:
+            total = conn.execute("SELECT COUNT(*) n FROM hcp_demographic_data__dlm").fetchone()["n"]
+            rows = conn.execute(
+                "SELECT segment__c s, COUNT(*) n FROM tbl_tl_data__dlm WHERE segment__c IS NOT NULL "
+                "GROUP BY s ORDER BY n DESC").fetchall()
+            scope = "panel"
+        total = int(total or 0)
+        segments = [
+            {"segment": r["s"], "count": int(r["n"]),
+             "pct": round(100 * r["n"] / total, 1) if total else 0.0,
+             "criteria": _SEGMENT_CRITERIA.get(r["s"], "Target-list segment from the HCP 360 panel.")}
+            for r in rows
+        ]
+        return {"scope": scope, "specialties": specialties, "total": total, "segments": segments}
+    finally:
+        conn.close()
+
+
 _TOOLS = [
     {
         "name": "list_hcps",
@@ -347,11 +475,44 @@ _TOOLS = [
             "required": ["group_by"],
         },
     },
+    {
+        "name": "cross_tab",
+        "description": "Count HCPs across TWO combined dimensions, or count with combined filters. "
+                        "The dimensions may live in different tables (e.g. preferred_channel and "
+                        "segment) -- they are joined by NPI for you. USE THIS for any 'X that are "
+                        "also Y', overlap, intersection or cross-tab question, e.g. 'how many "
+                        "Digital-preferred HCPs are High Potentials' -> "
+                        "filters={\"preferred_channel\":\"Digital\",\"segment\":\"High Potentials\"}. "
+                        "Filters are exact (case-insensitive). group_by returns a full breakdown "
+                        "table. Never estimate an overlap -- call this instead.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "group_by": {
+                    "type": "array",
+                    "items": {"type": "string", "enum": sorted(_DIM_SQL)},
+                    "description": "up to 2 dimensions to break the count out by (omit for a single total)",
+                },
+                "filters": {
+                    "type": "object",
+                    "description": "dimension -> exact value equality filters, e.g. "
+                                    "{\"preferred_channel\": \"Digital\"}; keys must be allow-listed dimensions",
+                    "additionalProperties": {"type": "string"},
+                },
+            },
+        },
+    },
 ]
-_TOOL_FUNCS = {"list_hcps": list_hcps, "get_hcp": get_hcp, "segment_summary": segment_summary}
+_TOOL_FUNCS = {"list_hcps": list_hcps, "get_hcp": get_hcp,
+               "segment_summary": segment_summary, "cross_tab": cross_tab}
 _ASK_SYSTEM = ("You answer questions about a synthetic HCP 360 dataset "
                "using the provided tools. Be concise. Never invent numbers -- only report what the "
-               "tools return, and mention it's a synthetic/reference dataset when citing percentages.")
+               "tools return, and mention it's a synthetic/reference dataset when citing percentages. "
+               "For any question about an OVERLAP or combination of two dimensions ('X that are also "
+               "Y', 'X segment among Y channel', a cross-tab or intersection), call cross_tab -- the "
+               "tables are joined by NPI, so never say you can't combine filters and never estimate "
+               "the overlap. If a filter value returns 0 or errors, call segment_summary/cross_tab "
+               "with group_by first to discover the exact spelling of the allowed values, then retry.")
 
 
 def ask(question: str) -> dict:

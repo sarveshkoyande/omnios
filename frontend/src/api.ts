@@ -77,8 +77,11 @@ export interface PharmaIntelArtifacts {
   items: PharmaIntelArtifactItem[];
 }
 
-export async function fetchPharmaIntelSummary(): Promise<PharmaIntelSummary> {
-  const res = await fetch("/api/pharma-intel/summary");
+export type PharmaIntelSection = "totals" | "mix" | "brands" | "sources";
+
+export async function fetchPharmaIntelSummary(section?: PharmaIntelSection): Promise<PharmaIntelSummary> {
+  const query = section ? `?section=${section}` : "";
+  const res = await fetch(`/api/pharma-intel/summary${query}`);
   if (res.ok) return res.json();
 
   for (const fallbackPath of ["/static/v2/pharma-intel-summary.json", "/pharma-intel-summary.json"]) {

@@ -94,65 +94,115 @@ def _safe_filename(name: str) -> str:
     return _re.sub(r"[^a-z0-9]+", "-", (name or "brand-engagement-plan").lower()).strip("-") or "brand-engagement-plan"
 
 
-def _pharma_intel_summary() -> dict:
+# Sections the Artefacts page can request independently so the (slow, ~40 COUNT
+# queries) warehouse summary can be fetched in parallel and rendered progressively
+# instead of blocking the whole page on one big call.
+_PHARMA_INTEL_SECTIONS = ("totals", "mix", "brands", "sources")
+
+
+def _pharma_intel_empty(section: str) -> dict:
+    empty = {
+        "available": False,
+        "totals": {},
+        "source_counts": [],
+        "evidence_mix": [],
+        "top_brands": [],
+        "message_mix": [],
+    }
+    if section == "all":
+        return empty
+    return {"available": False, **{k: v for k, v in empty.items() if k != "available"}}
+
+
+def _pharma_intel_summary(section: str = "all") -> dict:
+    """Warehouse summary for the Artefacts page, backed by data/omni_kb.db.
+
+    ``section`` restricts the work to one slice so the frontend can fan the
+    query out into parallel, progressively-rendered requests:
+      - ``totals``  -> the stat-tile counts
+      - ``mix``     -> evidence_mix + message_mix bar lists
+      - ``brands``  -> top-brand coverage table
+      - ``sources`` -> indexed source-document bar list
+      - ``all``     -> everything (backwards-compatible default)
+    """
+    want_totals = section in ("all", "totals")
+    want_mix = section in ("all", "mix")
+    want_brands = section in ("all", "brands")
+    want_sources = section in ("all", "sources")
+
     conn = db.kb_connect()  # Postgres on Render (KB loaded by load_kb_to_pg.py); SQLite file locally
     if conn is None:
-        return {
-            "available": False,
-            "totals": {},
-            "source_counts": [],
-            "evidence_mix": [],
-            "top_brands": [],
-            "message_mix": [],
-        }
+        return _pharma_intel_empty(section)
     try:
-        raw_dir = BASE_DIR / "data" / "raw"
-        raw_file_count = sum(1 for path in raw_dir.rglob("*") if path.is_file()) if raw_dir.exists() else 0
-
         def scalar(sql: str) -> int:
             try:
                 return int(conn.execute(sql).fetchone()[0] or 0)
             except Exception:
                 return 0
 
-        totals = {
-            "documents": scalar("SELECT COUNT(*) FROM documents"),
-            "raw_files": raw_file_count,
-            "sources": scalar("SELECT COUNT(*) FROM pharma_source"),
-            "companies": scalar("SELECT COUNT(*) FROM pharma_company"),
-            "oncology_brands": scalar("SELECT COUNT(*) FROM oncology_brand_seed"),
-            "award_mentions": scalar("SELECT COUNT(*) FROM campaign_award_mention"),
-            "message_evidence": scalar("SELECT COUNT(*) FROM v_oncology_message_campaign_evidence"),
-            "asco_abstracts": scalar("SELECT COUNT(*) FROM asco_abstract"),
-            "clinical_trial_locations": scalar("SELECT COUNT(*) FROM v_oncology_clinical_trial_locations"),
-            "seer_cancer_stats": scalar("SELECT COUNT(*) FROM seer_cancer_stat"),
-            "opdp_letters": scalar("SELECT COUNT(*) FROM opdp_letter_document"),
-            "open_payments": scalar("SELECT COUNT(*) FROM cms_open_payment_general"),
-            "adverse_event_reactions": scalar("SELECT COUNT(*) FROM openfda_event_reaction_count"),
-            "drug_shortages": scalar("SELECT COUNT(*) FROM openfda_drug_shortage WHERE is_oncology_priority=1"),
-            "drug_recalls": scalar("SELECT COUNT(*) FROM openfda_drug_recall"),
-            "ndc_products": scalar("SELECT COUNT(*) FROM openfda_ndc_product"),
-            "ndc_packages": scalar("SELECT COUNT(*) FROM openfda_ndc_package"),
-            "rxnorm_concepts": scalar("SELECT COUNT(*) FROM rxnorm_concept"),
-            "rxnorm_related_concepts": scalar("SELECT COUNT(*) FROM rxnorm_related_concept"),
-            "safety_labeling_changes": scalar("SELECT COUNT(*) FROM fda_srlc_labeling_change"),
-            "nci_drug_dictionary_entries": scalar("SELECT COUNT(*) FROM nci_drug_dictionary_entry"),
-            "nci_drug_dictionary_aliases": scalar("SELECT COUNT(*) FROM nci_drug_dictionary_alias"),
-            "nci_drug_info_summaries": scalar("SELECT COUNT(*) FROM nci_drug_information_summary"),
-        }
-        source_counts = [
-            dict(row)
-            for row in conn.execute(
-                """
-                SELECT source, COUNT(*) AS count
-                FROM documents
-                GROUP BY source
-                ORDER BY count DESC, source
-                LIMIT 16
-                """
-            )
-        ]
-        evidence_mix = [
+        result: dict = {"available": True}
+
+        if want_totals:
+            result["totals"] = _pharma_intel_totals(conn, scalar)
+        if want_sources:
+            result["source_counts"] = _pharma_intel_source_counts(conn)
+        if want_mix:
+            result["evidence_mix"] = _pharma_intel_evidence_mix(scalar)
+            result["message_mix"] = _pharma_intel_message_mix(conn)
+        if want_brands:
+            result["top_brands"] = _pharma_intel_top_brands(conn)
+        return result
+    finally:
+        conn.close()
+
+
+def _pharma_intel_totals(conn, scalar) -> dict:
+    raw_dir = BASE_DIR / "data" / "raw"
+    raw_file_count = sum(1 for path in raw_dir.rglob("*") if path.is_file()) if raw_dir.exists() else 0
+    return {
+        "documents": scalar("SELECT COUNT(*) FROM documents"),
+        "raw_files": raw_file_count,
+        "sources": scalar("SELECT COUNT(*) FROM pharma_source"),
+        "companies": scalar("SELECT COUNT(*) FROM pharma_company"),
+        "oncology_brands": scalar("SELECT COUNT(*) FROM oncology_brand_seed"),
+        "award_mentions": scalar("SELECT COUNT(*) FROM campaign_award_mention"),
+        "message_evidence": scalar("SELECT COUNT(*) FROM v_oncology_message_campaign_evidence"),
+        "asco_abstracts": scalar("SELECT COUNT(*) FROM asco_abstract"),
+        "clinical_trial_locations": scalar("SELECT COUNT(*) FROM v_oncology_clinical_trial_locations"),
+        "seer_cancer_stats": scalar("SELECT COUNT(*) FROM seer_cancer_stat"),
+        "opdp_letters": scalar("SELECT COUNT(*) FROM opdp_letter_document"),
+        "open_payments": scalar("SELECT COUNT(*) FROM cms_open_payment_general"),
+        "adverse_event_reactions": scalar("SELECT COUNT(*) FROM openfda_event_reaction_count"),
+        "drug_shortages": scalar("SELECT COUNT(*) FROM openfda_drug_shortage WHERE is_oncology_priority=1"),
+        "drug_recalls": scalar("SELECT COUNT(*) FROM openfda_drug_recall"),
+        "ndc_products": scalar("SELECT COUNT(*) FROM openfda_ndc_product"),
+        "ndc_packages": scalar("SELECT COUNT(*) FROM openfda_ndc_package"),
+        "rxnorm_concepts": scalar("SELECT COUNT(*) FROM rxnorm_concept"),
+        "rxnorm_related_concepts": scalar("SELECT COUNT(*) FROM rxnorm_related_concept"),
+        "safety_labeling_changes": scalar("SELECT COUNT(*) FROM fda_srlc_labeling_change"),
+        "nci_drug_dictionary_entries": scalar("SELECT COUNT(*) FROM nci_drug_dictionary_entry"),
+        "nci_drug_dictionary_aliases": scalar("SELECT COUNT(*) FROM nci_drug_dictionary_alias"),
+        "nci_drug_info_summaries": scalar("SELECT COUNT(*) FROM nci_drug_information_summary"),
+    }
+
+
+def _pharma_intel_source_counts(conn) -> list:
+    return [
+        dict(row)
+        for row in conn.execute(
+            """
+            SELECT source, COUNT(*) AS count
+            FROM documents
+            GROUP BY source
+            ORDER BY count DESC, source
+            LIMIT 16
+            """
+        )
+    ]
+
+
+def _pharma_intel_evidence_mix(scalar) -> list:
+    return [
             {"label": "Official messages", "count": scalar("SELECT COUNT(*) FROM brand_message")},
             {"label": "FDA label sections", "count": scalar("SELECT COUNT(*) FROM regulatory_label_message WHERE is_oncology_priority=1")},
             {"label": "DailyMed SPLs", "count": scalar("SELECT COUNT(*) FROM v_dailymed_oncology_priority")},
@@ -175,58 +225,54 @@ def _pharma_intel_summary() -> dict:
             {"label": "Safety label changes", "count": scalar("SELECT COUNT(*) FROM v_fda_srlc_oncology_labeling_changes")},
             {"label": "NCI drug definitions", "count": scalar("SELECT COUNT(*) FROM v_nci_oncology_drug_dictionary")},
             {"label": "NCI drug summaries", "count": scalar("SELECT COUNT(*) FROM v_nci_oncology_drug_information_summaries")},
-        ]
-        try:
-            top_brands = [
-                dict(row)
-                for row in conn.execute(
-                    """
-                    SELECT brand, total_evidence_count, official_brand_message_count, label_message_count,
-                           dailymed_label_count, clinical_trial_count, pubmed_article_count,
-                           asco_abstract_count, award_mention_count, sec_annual_filing_mention_count,
-                           open_payment_count, adverse_event_reaction_count, drug_shortage_count, drug_recall_count, ndc_product_count,
-                           rxnorm_concept_count, srlc_labeling_change_count, nci_drug_dictionary_count, nci_drug_info_summary_count
-                    FROM v_oncology_brand_evidence_summary
-                    ORDER BY total_evidence_count DESC, brand
-                    LIMIT 12
-                    """
-                )
-            ]
-        except Exception:
-            top_brands = [
-                {**dict(row), "open_payment_count": 0, "adverse_event_reaction_count": 0, "drug_shortage_count": 0, "drug_recall_count": 0, "ndc_product_count": 0, "rxnorm_concept_count": 0, "srlc_labeling_change_count": 0, "nci_drug_dictionary_count": 0, "nci_drug_info_summary_count": 0}
-                for row in conn.execute(
-                    """
-                    SELECT brand, total_evidence_count, official_brand_message_count, label_message_count,
-                           dailymed_label_count, clinical_trial_count, pubmed_article_count,
-                           asco_abstract_count, award_mention_count, sec_annual_filing_mention_count
-                    FROM v_oncology_brand_evidence_summary
-                    ORDER BY total_evidence_count DESC, brand
-                    LIMIT 12
-                    """
-                )
-            ]
-        message_mix = [
+    ]
+
+
+def _pharma_intel_message_mix(conn) -> list:
+    return [
+        dict(row)
+        for row in conn.execute(
+            """
+            SELECT evidence_type AS label, COUNT(*) AS count
+            FROM v_oncology_message_campaign_evidence
+            GROUP BY evidence_type
+            ORDER BY count DESC, evidence_type
+            """
+        )
+    ]
+
+
+def _pharma_intel_top_brands(conn) -> list:
+    try:
+        return [
             dict(row)
             for row in conn.execute(
                 """
-                SELECT evidence_type AS label, COUNT(*) AS count
-                FROM v_oncology_message_campaign_evidence
-                GROUP BY evidence_type
-                ORDER BY count DESC, evidence_type
+                SELECT brand, total_evidence_count, official_brand_message_count, label_message_count,
+                       dailymed_label_count, clinical_trial_count, pubmed_article_count,
+                       asco_abstract_count, award_mention_count, sec_annual_filing_mention_count,
+                       open_payment_count, adverse_event_reaction_count, drug_shortage_count, drug_recall_count, ndc_product_count,
+                       rxnorm_concept_count, srlc_labeling_change_count, nci_drug_dictionary_count, nci_drug_info_summary_count
+                FROM v_oncology_brand_evidence_summary
+                ORDER BY total_evidence_count DESC, brand
+                LIMIT 12
                 """
             )
         ]
-        return {
-            "available": True,
-            "totals": totals,
-            "source_counts": source_counts,
-            "evidence_mix": evidence_mix,
-            "top_brands": top_brands,
-            "message_mix": message_mix,
-        }
-    finally:
-        conn.close()
+    except Exception:
+        return [
+            {**dict(row), "open_payment_count": 0, "adverse_event_reaction_count": 0, "drug_shortage_count": 0, "drug_recall_count": 0, "ndc_product_count": 0, "rxnorm_concept_count": 0, "srlc_labeling_change_count": 0, "nci_drug_dictionary_count": 0, "nci_drug_info_summary_count": 0}
+            for row in conn.execute(
+                """
+                SELECT brand, total_evidence_count, official_brand_message_count, label_message_count,
+                       dailymed_label_count, clinical_trial_count, pubmed_article_count,
+                       asco_abstract_count, award_mention_count, sec_annual_filing_mention_count
+                FROM v_oncology_brand_evidence_summary
+                ORDER BY total_evidence_count DESC, brand
+                LIMIT 12
+                """
+            )
+        ]
 
 
 def _read_kb_blob(blob_path: str | None, max_chars: int = 12000) -> str:
@@ -1192,9 +1238,14 @@ def api_campaign_artifacts(pid: str, enrich: bool = False):
 
 
 @app.get("/api/pharma-intel/summary")
-def api_pharma_intel_summary():
-    """Read-only visual summary for the Artefacts page, backed by data/omni_kb.db."""
-    return _pharma_intel_summary()
+def api_pharma_intel_summary(section: str = "all"):
+    """Read-only visual summary for the Artefacts page, backed by data/omni_kb.db.
+
+    ``section`` (totals|mix|brands|sources|all) lets the frontend fan the summary
+    out into parallel, progressively-rendered requests instead of one slow call.
+    """
+    section = section if section in _PHARMA_INTEL_SECTIONS else "all"
+    return _pharma_intel_summary(section)
 
 
 @app.get("/api/pharma-intel/artifacts")
