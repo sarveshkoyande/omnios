@@ -140,16 +140,19 @@ export function DefinitionRow({
   const empty = value === undefined || value === null || value === "";
   return (
     <RowRoot>
-      <Box component="span" sx={{ color: "text.primary" }}>
+      {/* The label keeps its natural width (it is short and fixed); the value column takes
+          whatever is left and wraps inside it -- otherwise a long value squeezed the label
+          into a two-line stack while still not fitting itself. */}
+      <Box component="span" sx={{ color: "text.primary", flex: "0 0 auto" }}>
         {label}
       </Box>
-      <Box sx={{ display: "flex", alignItems: "baseline", gap: 1.5, minWidth: 0, textAlign: "right" }}>
+      <Box sx={{ display: "flex", alignItems: "baseline", gap: 1.5, flex: "1 1 auto", minWidth: 0, textAlign: "right", justifyContent: "flex-end" }}>
         {hint && (
           <Typography component="span" variant="caption" sx={{ color: "text.secondary" }}>
             {hint}
           </Typography>
         )}
-        <Box component="span" sx={{ fontWeight: 700, color: empty ? "text.secondary" : "text.primary" }}>
+        <Box component="span" sx={{ fontWeight: 700, minWidth: 0, overflowWrap: "anywhere", color: empty ? "text.secondary" : "text.primary" }}>
           {empty ? "N/A" : value}
         </Box>
       </Box>

@@ -63,11 +63,12 @@ export function ExpandableValue({ short, full }: { short: string; full: string }
         component="span"
         sx={{
           display: "block",
-          ...(open
-            ? { whiteSpace: "normal" }
-            : // Hard single line: the word clamp sets the length, this stops a long
-              // unbroken token from wrapping to a second line in a narrow pane.
-              { whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }),
+          // The WORD clamp above is the only truncation -- and it always comes with a
+          // "See more". CSS must never clip on its own: a value short enough to skip the
+          // clamp but too wide for the rail (a long indication, a slash-joined audience
+          // list) used to be cut mid-word with no way to reveal the rest.
+          whiteSpace: "normal",
+          overflowWrap: "anywhere",
         }}
       >
         {open ? full : collapsed}
