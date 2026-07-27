@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import Box from "@mui/material/Box";
+import Checkbox from "@mui/material/Checkbox";
 import GlobalStyles from "@mui/material/GlobalStyles";
 import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
@@ -175,10 +176,16 @@ export function Composer({
   disabled,
   onSend,
   onUpload,
+  autoAssume,
+  onAutoAssumeChange,
 }: {
   disabled: boolean;
   onSend: (text: string) => void;
   onUpload: (file: File) => void;
+  /** Planning tab only: when set, the auto-assume checkbox is shown under the input.
+   *  Toggling it mid-chat applies from the next question onwards. */
+  autoAssume?: boolean;
+  onAutoAssumeChange?: (enabled: boolean) => void;
 }) {
   const [value, setValue] = useState("");
   const [recording, setRecording] = useState(false);
@@ -332,6 +339,26 @@ export function Composer({
         </SendKey>
       </Well>
       </GlowWrap>
+      {onAutoAssumeChange && (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 1, pl: 0.5 }}>
+          <Checkbox
+            size="small"
+            checked={Boolean(autoAssume)}
+            onChange={(e) => onAutoAssumeChange(e.target.checked)}
+            id="omni-auto-assume"
+            sx={{ p: 0.25, color: tokens.color.inkSoft, "&.Mui-checked": { color: tokens.color.primary } }}
+          />
+          <Typography
+            component="label"
+            htmlFor="omni-auto-assume"
+            variant="caption"
+            sx={{ color: "text.secondary", cursor: "pointer", lineHeight: 1.35 }}
+          >
+            <b>Auto-assume</b> — don't wait for me; take the recommended option on every question
+            {autoAssume ? " (on from the next question)" : ""}
+          </Typography>
+        </Box>
+      )}
       <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 1, pl: 0.5 }}>
         Enter to send. Shift+Enter for a new line. Attach a file to upload a brand plan (.pdf/.docx/.txt/.md).
       </Typography>

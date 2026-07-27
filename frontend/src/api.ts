@@ -354,6 +354,23 @@ export async function postStudioAnswer(projectId: string, askId: string, value: 
   if (!res.ok) throw new Error(`POST /api/studio/answer -> ${res.status}`);
 }
 
+export interface StudioAutoAssumeResult {
+  auto_assume: boolean;
+  /** Set when an ask is already sitting on the gate — the caller answers it to get moving. */
+  pending_ask_id: string | null;
+  pending_value: string;
+}
+
+export async function setStudioAutoAssume(projectId: string, enabled: boolean): Promise<StudioAutoAssumeResult> {
+  const res = await fetch("/api/studio/auto-assume", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ project_id: projectId, enabled }),
+  });
+  if (!res.ok) throw new Error(`POST /api/studio/auto-assume -> ${res.status}`);
+  return res.json();
+}
+
 export async function saveCampaignFlowDocument(projectId: string, doc: WorkflowDocument): Promise<void> {
   const res = await fetch(`/api/projects/${encodeURIComponent(projectId)}/campaign-plan-layout`, {
     method: "PATCH",

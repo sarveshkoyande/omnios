@@ -1807,14 +1807,21 @@ def api_run_stream(project_id: str, phase: str = "align"):
 # started when the first (customer-group) ask is posed from the fast core ctx. The resume
 # request waits on it (heartbeat meanwhile) so the heavy compute overlaps the user's answer time.
 _STUDIO_FILL: dict[str, dict] = {}
+# project_id -> auto-assume on/off. Deliberately in-memory and read live at EVERY ask (rather
+# than persisted with the project or frozen as a stream-open argument): the checkbox is a
+# mid-run toggle, and a running stream holds its own copy of `state`, so a DB write here would
+# be both invisible to it and clobbered by its next save. The client re-sends the flag on each
+# stream open, which is what makes it survive a restart.
+_STUDIO_AUTO: dict[str, bool] = {}
 
 
 @app.get("/api/studio/stream")
-def api_studio_stream(project_id: str):
+def api_studio_stream(project_id: str, auto_assume: bool = False):
     proj = pstore.get_project(project_id)
     if not proj:
         raise HTTPException(404, "project not found")
     slots = proj["state"]["slots"]
+    _STUDIO_AUTO[project_id] = bool(auto_assume)
 
     def event_gen():
         state = proj["state"]
@@ -1921,7 +1928,8 @@ def api_studio_stream(project_id: str):
                 except Exception as exc:  # noqa: BLE001 - the reveal still runs even if the snapshot fails
                     print(f"[studio] early plan persist failed: {exc}")
 
-            for ev in studio_run.stream(ctx, studio):
+            for ev in studio_run.stream(ctx, studio,
+                                        auto_assume=lambda: _STUDIO_AUTO.get(project_id, False)):
                 if ev["type"] == "chat":
                     messages.append(_msg("agent", ev["text"], {"kind": ev["kind"], "author": ev["author"]}))
                 elif ev["type"] == "section_html":
@@ -1935,7 +1943,9 @@ def api_studio_stream(project_id: str):
                 elif ev["type"] == "run_done":
                     state["studio_done"] = True
                     _persist_run_done()
-                elif ev["type"] == "ask":
+                elif ev["type"] == "ask" and not ev.get("auto_assumed"):
+                    # (An auto-assumed ask doesn't pause the stream, so there's no idle window
+                    # to prefetch into -- this section drafts inline, immediately.)
                     # Warm grounding for THIS section (it drafts on resume) through the next ask,
                     # in the background while the user reads and answers, so the resume flows
                     # straight through (PRD: "think of the next while that input is coming in").
@@ -2081,6 +2091,30 @@ def api_studio_answer(body: StudioAnswer):
     messages.append(_msg("user", body.value.strip()))
     pstore.save_project(body.project_id, state=state, messages=messages)
     return {"ok": True, "resume": True}
+
+
+class StudioAutoAssume(BaseModel):
+    project_id: str
+    enabled: bool
+
+
+@app.post("/api/studio/auto-assume")
+def api_studio_auto_assume(body: StudioAutoAssume):
+    """Toggle auto-assume for the planning run. Takes effect at the NEXT ask, including one
+    posed by a stream that is still open. If an ask is already sitting on the gate, the
+    caller is told what value would be assumed for it so it can be answered immediately
+    (the stream is closed at that point, so the server can't resume itself)."""
+    proj = pstore.get_project(body.project_id)
+    if not proj:
+        raise HTTPException(404, "project not found")
+    _STUDIO_AUTO[body.project_id] = bool(body.enabled)
+    pending = (proj["state"].get("studio") or {}).get("await_ask")
+    return {
+        "ok": True,
+        "auto_assume": bool(body.enabled),
+        "pending_ask_id": pending.get("ask_id") if pending else None,
+        "pending_value": studio_run.auto_answer_value(pending) if (pending and body.enabled) else "",
+    }
 
 
 # ------------------------------------------------------------------ #

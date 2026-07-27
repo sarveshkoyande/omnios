@@ -513,7 +513,14 @@ export function Workspace({
                   cleared at an ask/run_done/error), so gating the composer on it would lock
                   the user out of chatting for most of Stage 1. Only a genuine single in-flight
                   chat request (outside an active studio run) disables it. */}
-              <Composer disabled={ws.busy && !ws.studio.active} onSend={ws.sendMessage} onUpload={ws.handleUpload} />
+              <Composer
+                disabled={ws.busy && !ws.studio.active}
+                onSend={ws.sendMessage}
+                onUpload={ws.handleUpload}
+                {...(ws.stage === 1
+                  ? { autoAssume: ws.autoAssume, onAutoAssumeChange: ws.toggleAutoAssume }
+                  : {})}
+              />
             </Box>
           </>
         )}

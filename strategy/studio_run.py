@@ -512,6 +512,33 @@ def _build_ask_llm_first(ctx: dict, step: dict) -> dict | None:
     return llm_decisioning.refine_studio_ask(ctx, step, draft)
 
 
+def auto_answer_value(ask: dict | None) -> str:
+    """The value auto-assume takes on the user's behalf: the agent's own recommendation,
+    falling back to the first offered option. Empty string => nothing safe to assume, so
+    the ask must still be posed."""
+    if not ask:
+        return ""
+    label = ((ask.get("recommendation") or {}).get("label") or "").strip()
+    if label:
+        return label
+    for opt in ask.get("options") or []:
+        label = (opt.get("label") or "").strip()
+        if label:
+            return label
+    return ""
+
+
+def _auto_assume_on(auto_assume) -> bool:
+    """auto_assume is a live callable (so a mid-run toggle is honoured at the NEXT ask
+    rather than being frozen at stream open) or a plain bool."""
+    if callable(auto_assume):
+        try:
+            return bool(auto_assume())
+        except Exception:  # noqa: BLE001 — a broken probe must never stall the run
+            return False
+    return bool(auto_assume)
+
+
 def apply_answer(ctx: dict, step: dict, value: str) -> str:
 
     """Fold an answer into ctx before the section drafts. Returns a short note describing
@@ -620,9 +647,13 @@ def compose_section(ctx: dict, num: int) -> tuple[str, str]:
 # ------------------------------------------------------------------ #
 # The stream: continues from state["studio"]["idx"], ends at every ask.
 # ------------------------------------------------------------------ #
-def stream(ctx: dict, studio: dict):
+def stream(ctx: dict, studio: dict, auto_assume=None):
     """Yields v2 events from the current cursor. Mutates `studio` (the caller persists it).
-    studio = {"idx": int, "answers": {section_id: str}, "await_ask": dict | None}"""
+    studio = {"idx": int, "answers": {section_id: str}, "await_ask": dict | None}
+
+    `auto_assume` (bool or callable-returning-bool, re-read at EVERY ask): when on, the ask
+    is emitted already decided with the agent's recommendation and the stream keeps going
+    instead of ending — the run drafts straight through with no human gate."""
     total = len(SEQUENCE)
     yield {"type": "run_open", "total_sections": total}
 
@@ -663,7 +694,20 @@ def stream(ctx: dict, studio: dict):
             if stage:
                 ask.setdefault("framework", stage["framework"]["name"])
                 ask.setdefault("blocked", " · ".join(stage["feeds"]))
-        if ask and step["id"] not in studio["answers"]:
+        auto_value = ""
+        if ask and step["id"] not in studio["answers"] and _auto_assume_on(auto_assume):
+            auto_value = auto_answer_value(ask)
+        if auto_value:
+            # Auto-assume: record the recommendation as the answer, show the ask as already
+            # decided (so the trail still shows what was chosen and why), and fall through to
+            # drafting in THIS stream — no gate, no answer round-trip.
+            studio["answers"][step["id"]] = auto_value
+            studio["await_ask"] = None
+            studio.setdefault("auto_answered", [])
+            if step["id"] not in studio["auto_answered"]:
+                studio["auto_answered"].append(step["id"])
+            yield {"type": "ask", **ask, "auto_assumed": True, "auto_answer": auto_value}
+        elif ask and step["id"] not in studio["answers"]:
             # The very first (segmentation) ask is posed from the fast core ctx, so without this it
             # would appear almost the instant the budget is entered — reading as unconsidered. Pace
             # it: show the agent visibly sizing the segments, then reveal the analysed ask a few
@@ -682,6 +726,8 @@ def stream(ctx: dict, studio: dict):
         note = ""
         if step["id"] in studio["answers"]:
             note = apply_answer(ctx, step, studio["answers"][step["id"]])
+            if auto_value:
+                note = f"auto-assuming the recommendation — “{auto_value}”"
         studio["await_ask"] = None
         yield {"type": "drafting", "section_id": step["id"],
                "note": (f"Drafting {title} — {note}." if note else f"Drafting {title} from the graph pull.")}
@@ -691,7 +737,9 @@ def stream(ctx: dict, studio: dict):
         # Decision record: the landed step explains itself — inputs, framework, decision,
         # rationale, what it feeds. Accumulated in ctx (campaign_artifacts re-derives them
         # deterministically if this list is ever lost, so persistence is a bonus not a need).
-        record = decision_spine.build_decision_record(ctx, step, studio["answers"].get(step["id"]))
+        record = decision_spine.build_decision_record(
+            ctx, step, studio["answers"].get(step["id"]),
+            answered_by_user=None if not auto_value else False)
         if record:
             ctx.setdefault("decision_records", [])
             if not any(r.get("stage_id") == record["stage_id"] for r in ctx["decision_records"]):

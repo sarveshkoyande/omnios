@@ -18,6 +18,7 @@ import {
   runPersonaReview,
   saveCampaignFlowDocument,
   savePlanContent,
+  setStudioAutoAssume,
   uploadBriefFile,
 } from "../api";
 import type { AgentEntry } from "./AgentTeamPanel";
@@ -119,6 +120,10 @@ export function useWorkspace() {
   const [planEditing, setPlanEditing] = useState(false);
   const [studio, setStudio] = useState<StudioState>(STUDIO_IDLE);
   const [typingAuthor, setTypingAuthor] = useState<string | null>(null);
+  // Auto-assume: the planning agent takes its own recommendation at every ask instead of
+  // waiting. Mirrored into a ref because startStudioRun reads it without re-subscribing.
+  const [autoAssume, setAutoAssume] = useState(false);
+  const autoAssumeRef = useRef(false);
   const esRef = useRef<EventSource | null>(null);
   const pacerRef = useRef<Pacer | null>(null);
   const slotOwnerNameRef = useRef("");
@@ -128,6 +133,10 @@ export function useWorkspace() {
   const planFrozenRef = useRef(false);
   const personaOfferShownRef = useRef(false);
   const hasResultRef = useRef(false);
+  // Latest chat items, readable from callbacks that must not re-bind on every message
+  // (the auto-assume toggle looks up an ask still sitting on the gate).
+  const itemsRef = useRef<ChatItem[]>([]);
+  itemsRef.current = items;
 
   const markPlanFrozen = useCallback((frozen: boolean) => {
     planFrozenRef.current = frozen;
@@ -237,14 +246,18 @@ export function useWorkspace() {
           setItems((prev) => [...prev, { id: nextId(), kind: "turn", agentId: STAGE_AGENTS.planning.id, text: ev.text }]);
         }
         break;
-      case "ask":
+      case "ask": {
+        // Auto-assumed: the ask arrives already decided and the stream keeps running, so the
+        // card renders locked on the recommendation and the run is NOT idle (busy stays set).
+        const autoAnswer = ev.auto_assumed ? ev.auto_answer || ev.recommendation?.label || "" : undefined;
         setStudio((prev) => (prev.slot ? { ...prev, slot: { ...prev.slot, state: "ask" } } : prev));
         setItems((prev) => [
           ...prev,
-          { id: nextId(), kind: "studio-ask", ask: ev, askOwnerName: slotOwnerNameRef.current },
+          { id: nextId(), kind: "studio-ask", ask: ev, askOwnerName: slotOwnerNameRef.current, askAnswered: autoAnswer },
         ]);
-        setBusy(false);
+        if (!ev.auto_assumed) setBusy(false);
         break;
+      }
       case "drafting":
         setStudio((prev) => (prev.slot ? { ...prev, slot: { ...prev.slot, state: "draft", draftNote: ev.note } } : prev));
         break;
@@ -326,14 +339,18 @@ export function useWorkspace() {
         },
       );
       pacerRef.current = pacer;
-      const es = new EventSource(`/api/studio/stream?project_id=${encodeURIComponent(pid)}`);
+      // The flag rides on the stream URL so a reconnect (or a server restart) re-establishes
+      // it; mid-run flips go through POST /api/studio/auto-assume instead.
+      const auto = autoAssumeRef.current ? "&auto_assume=1" : "";
+      const es = new EventSource(`/api/studio/stream?project_id=${encodeURIComponent(pid)}${auto}`);
       esRef.current = es;
       es.onmessage = (evt) => {
         const ev: StudioEvent = JSON.parse(evt.data);
         // The server ends the stream at asks and at run completion; close THIS
         // EventSource so it never auto-reconnects and replays the phase (and
-        // never touch a newer stream that may have replaced it).
-        if (ev.type === "ask" || ev.type === "run_done" || ev.type === "error") {
+        // never touch a newer stream that may have replaced it). An auto-assumed
+        // ask is the exception: the server answered it itself and kept streaming.
+        if ((ev.type === "ask" && !ev.auto_assumed) || ev.type === "run_done" || ev.type === "error") {
           es.close();
           if (esRef.current === es) esRef.current = null;
         }
@@ -364,6 +381,32 @@ export function useWorkspace() {
       }
     },
     [projectId, startStudioRun],
+  );
+
+  /** Checkbox in the composer. Takes effect at the next ask -- including one the server is
+   *  about to pose on a stream that is still open. If an ask is ALREADY sitting on the gate
+   *  the stream has ended, so nothing on the server can resume it: answer that one here with
+   *  the value the server says it would have assumed, which both unblocks it and reopens the
+   *  stream with the flag set. Turning it back off simply stops the next ask being taken. */
+  const toggleAutoAssume = useCallback(
+    async (enabled: boolean) => {
+      autoAssumeRef.current = enabled;
+      setAutoAssume(enabled);
+      if (!projectId) return;
+      try {
+        const res = await setStudioAutoAssume(projectId, enabled);
+        if (!enabled || !res.pending_ask_id) return;
+        const pending = itemsRef.current.find(
+          (it) => it.kind === "studio-ask" && it.ask?.ask_id === res.pending_ask_id && !it.askAnswered,
+        );
+        if (pending?.ask) {
+          void answerStudioAsk(pending.id, pending.ask, res.pending_value || pending.ask.recommendation?.label || "");
+        }
+      } catch {
+        /* best-effort: the flag still rides the next stream open */
+      }
+    },
+    [projectId, answerStudioAsk],
   );
 
   const skipStudioPacing = useCallback(() => {
@@ -1003,6 +1046,8 @@ export function useWorkspace() {
     studio,
     typingAuthor,
     answerStudioAsk,
+    autoAssume,
+    toggleAutoAssume,
     skipStudioPacing,
     continueStudioSection,
   };

@@ -57,6 +57,10 @@ export interface StudioAsk {
   multi_select?: boolean;
   /** One-line summary of the data analysis behind the options (e.g. the sizing methodology). */
   evidence_note?: string;
+  /** Auto-assume was on: the agent took `auto_answer` (its own recommendation) without
+   *  waiting, and the stream kept running instead of stopping at this gate. */
+  auto_assumed?: boolean;
+  auto_answer?: string;
 }
 
 export type StudioEvent =

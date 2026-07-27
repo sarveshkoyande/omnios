@@ -437,8 +437,12 @@ def _inputs_for(ctx: dict, sid: str) -> list[dict]:
     return out
 
 
-def build_decision_record(ctx: dict, step: dict, answer: str | None) -> dict | None:
-    """The reasoning record for a landed step. None when the step anchors no spine stage."""
+def build_decision_record(ctx: dict, step: dict, answer: str | None,
+                          answered_by_user: bool | None = None) -> dict | None:
+    """The reasoning record for a landed step. None when the step anchors no spine stage.
+
+    `answered_by_user=False` with a non-empty `answer` marks an auto-assumed decision: the
+    value is the agent's own recommendation, taken without a human gate."""
     stage = stage_for(step["id"])
     if not stage:
         return None
@@ -459,9 +463,13 @@ def build_decision_record(ctx: dict, step: dict, answer: str | None) -> dict | N
         if mix:
             top = max(mix.items(), key=lambda kv: kv[1])
             decided = f"{top[0]}-led mix ({top[1]}%)"
-    if answer:
+    by_user = bool(answer) if answered_by_user is None else bool(answered_by_user)
+    if answer and by_user:
         alternatives.append({"label": "agent recommendation accepted or overridden by user",
                              "why_rejected": "user call recorded verbatim; recommendation retained in the ask log"})
+    elif answer:
+        alternatives.append({"label": "options offered but not put to the user",
+                             "why_rejected": "auto-assume was on: the agent's recommendation was taken unreviewed"})
 
     return {
         "type": "decision_record",
@@ -474,5 +482,5 @@ def build_decision_record(ctx: dict, step: dict, answer: str | None) -> dict | N
         "inputs": _inputs_for(ctx, sid),
         "alternatives": alternatives,
         "feeds": stage["feeds"],
-        "answered_by_user": bool(answer),
+        "answered_by_user": by_user,
     }

@@ -168,7 +168,9 @@ export function AskCard({
   const [free, setFree] = useState("");
   const [detailAnchor, setDetailAnchor] = useState<HTMLElement | null>(null);
   const [reasonAnchor, setReasonAnchor] = useState<HTMLElement | null>(null);
-  const locked = multi ? confirmed : picked !== null;
+  // Auto-assumed asks arrive already answered: the card is a record of what was taken, not a gate.
+  const autoAssumed = Boolean(ask.auto_assumed);
+  const locked = autoAssumed || (multi ? confirmed : picked !== null);
   const llmStatus = ask.llm_status;
   const llmFailed = llmStatus?.ok === false || ask.source === "deterministic-fallback";
   const llmState = llmStatus?.ok === true
@@ -293,7 +295,7 @@ export function AskCard({
   return (
     <AgentBubble sx={{ maxWidth: 640 }}>
       <Typography sx={{ fontSize: 11, fontWeight: 700, color: "primary.main", mb: 0.75 }}>
-        {ownerName} - needs your call
+        {ownerName} - {autoAssumed ? "decided for you (auto-assume)" : "needs your call"}
       </Typography>
       <Box sx={{ mb: 0.75, display: "flex", flexWrap: "wrap", gap: 0.5, alignItems: "center" }}>
         {recommendationSource && <SourceChip>{recommendationSource}</SourceChip>}
@@ -358,8 +360,12 @@ export function AskCard({
       )}
 
       {locked && (
-        <Typography variant="caption" sx={{ color: "success.main", fontWeight: 700, display: "block", mt: 1 }}>
-          {multi ? `Locked in ${selected.size} segment${selected.size === 1 ? "" : "s"}. Drafting the section with them.` : "Locked in. Drafting the section with it."}
+        <Typography variant="caption" sx={{ color: autoAssumed ? "text.secondary" : "success.main", fontWeight: 700, display: "block", mt: 1 }}>
+          {autoAssumed
+            ? "Auto-assumed the recommendation and kept going. Untick auto-assume to be asked again."
+            : multi
+              ? `Locked in ${selected.size} segment${selected.size === 1 ? "" : "s"}. Drafting the section with them.`
+              : "Locked in. Drafting the section with it."}
         </Typography>
       )}
 
