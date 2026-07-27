@@ -159,12 +159,18 @@ def _get_client():
     Azure AD (DefaultAzureCredential) only if no key is configured, for environments that use
     a service principal / managed identity instead.
 
-    Only when Foundry is NOT configured does this return a Gemini-backed shim, if
-    GEMINI_API_KEY/GOOGLE_API_KEY is set (same priority as active_provider()/
-    interpret_message_llm()) -- so a personal Gemini key covers every AI-assisted feature in
-    the app, not just the conversational intake seam.
+    Returns a Gemini-backed shim FIRST whenever GEMINI_API_KEY/GOOGLE_API_KEY is set (same
+    priority as active_provider()/interpret_message_llm()) -- so a personal Gemini key covers
+    every AI-assisted feature in the app, not just the conversational intake seam. Only when
+    no Gemini key is set does this fall through to Foundry.
+
+    NOTE: _foundry_configured() treats azure-identity merely being *importable* as "Foundry
+    configured" (so it can offer the Azure AD fallback path) -- it does NOT mean a real
+    credential exists. Checking it before the Gemini key would make Foundry win by default in
+    any environment with azure-identity installed, even with no working Foundry credential at
+    all, which is exactly the bug this ordering fixes.
     """
-    if not _foundry_configured() and _gemini_key():
+    if _gemini_key():
         return _GeminiClient()
 
     global _client
@@ -211,10 +217,10 @@ def _foundry_configured() -> bool:
 def active_provider() -> str | None:
     """Which provider a call to interpret_message_llm() would use right now, in priority
     order, or None if nothing is configured (conversation.py then uses the rules engine)."""
-    if _foundry_configured():
-        return "azure-foundry"
     if _gemini_key():
         return "gemini"
+    if _foundry_configured():
+        return "azure-foundry"
     return None
 
 
