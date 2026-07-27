@@ -129,6 +129,7 @@ export function PlanningSummaryRail({ plan }: { plan: CampaignPlan }) {
             name: n.label,
             volume: matched?.volume ?? null,
             volume_note: matched?.volume_note ?? null,
+            volume_exact: matched?.volume_exact ?? false,
           };
         })
     : plan.segments.map((s) => ({
@@ -136,6 +137,7 @@ export function PlanningSummaryRail({ plan }: { plan: CampaignPlan }) {
         name: s.name,
         volume: s.volume,
         volume_note: s.volume_note ?? null,
+        volume_exact: s.volume_exact ?? false,
       }));
 
   return (
@@ -164,7 +166,7 @@ export function PlanningSummaryRail({ plan }: { plan: CampaignPlan }) {
               {audienceSegments.map((s) => (
                 <Box key={s.key} sx={{ borderLeft: `3px solid ${indigoTint(0.45)}`, pl: 1.25, minWidth: 0 }}>
                   <Typography variant="body2" sx={{ fontWeight: 700, lineHeight: 1.3, overflowWrap: "anywhere" }}>
-                    {s.name}{s.volume ? ` Â· ~${s.volume.toLocaleString()}` : ""}
+                    {s.name}{s.volume ? ` Â· ${s.volume_exact ? "" : "~"}${s.volume.toLocaleString()}` : ""}
                   </Typography>
                   {s.volume_note && (
                     <Typography variant="caption" sx={{ color: "text.secondary", display: "block", lineHeight: 1.45, overflowWrap: "anywhere" }}>

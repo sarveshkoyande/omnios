@@ -438,7 +438,16 @@ export function CampaignArtifacts({
                     </Typography>
                     <Chip
                       size="small"
-                      label={s.volume ? `~${s.volume.toLocaleString()}` : "Size TBD"}
+                      title={s.volume_note ?? undefined}
+                      // A counted panel headcount prints exactly; only an apportioned
+                      // estimate keeps the "~".
+                      label={
+                        s.volume
+                          ? s.volume_exact
+                            ? `${s.volume.toLocaleString()} HCPs`
+                            : `~${s.volume.toLocaleString()}`
+                          : "Size TBD"
+                      }
                       sx={{
                         height: 22,
                         flex: "0 0 auto",

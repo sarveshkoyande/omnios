@@ -16,10 +16,12 @@ from __future__ import annotations
 
 import json
 import pathlib
+import re
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import benchmarks  # noqa: E402
+import hcp_360  # noqa: E402  (real panel counts for the segments the user actually picked)
 
 BASE_DIR = pathlib.Path(__file__).resolve().parent.parent
 _SEGMENTS = json.loads((BASE_DIR / "config" / "audience_segments.json").read_text(encoding="utf-8"))
@@ -40,10 +42,75 @@ def _is_patient_campaign(ctx: dict) -> bool:
     return any(k in audience for k in _PATIENT_KEYWORDS)
 
 
+_SCOPE_WORD = {"specialty": "matched-specialty panel", "panel": "oncology panel"}
+
+
+def _answered_segment_names(ctx: dict) -> list[str]:
+    """The segments the user locked at the planning audience ask ('tcg'), which the
+    AskCard joins with '; '. Free-text additions come through here too."""
+    answer = (ctx.get("studio_answers") or {}).get("tcg") or ""
+    return [p.strip() for p in re.split(r"[;\n]+", answer) if p.strip()]
+
+
+def _panel_channel(ctx: dict) -> str:
+    """Follow-up channel for a panel segment: the plan's own anchor channel."""
+    mix = (ctx.get("strategy") or {}).get("channel_mix_pct") or {}
+    return max(mix.items(), key=lambda kv: kv[1])[0] if mix else "Email"
+
+
+def _selected_panel_segments(ctx: dict) -> list[dict]:
+    """The user's locked segments, matched back to the HCP 360 panel's target-list segments
+    so the brief names EXACTLY what was chosen and carries the panel's real headcount.
+
+    A name the panel doesn't know (free text typed into the ask) is still returned -- the brief
+    must reflect the user's call -- just without a count, flagged in its volume_note."""
+    names = _answered_segment_names(ctx)
+    if not names:
+        return []
+    try:
+        sizing = hcp_360.segment_sizing(ctx.get("therapy_area", "") or "")
+    except Exception:  # noqa: BLE001 — panel sizing is best-effort
+        sizing = {}
+    rows = {str(r.get("segment", "")).strip().lower(): r for r in (sizing.get("segments") or [])}
+    scope_word = _SCOPE_WORD.get(sizing.get("scope"), "panel")
+    channel = _panel_channel(ctx)
+    out: list[dict] = []
+    for name in names:
+        row = rows.get(name.lower())
+        criteria = str((row or {}).get("criteria") or "")
+        head, _, tail = criteria.partition("—")
+        seg = {
+            "key": re.sub(r"[^a-z0-9]+", "_", name.lower()).strip("_") or f"segment_{len(out) + 1}",
+            "name": name,
+            "description": (head.strip() or criteria).rstrip(".") or "Segment selected in the planning audience call.",
+            "likes": [tail.strip().rstrip(".")] if tail.strip() else [],
+            "preferred_channels": [channel],
+            "digital_preference": "Digital",
+        }
+        if row:
+            count = int(row.get("count") or 0)
+            pct = row.get("pct") or 0
+            seg["panel_count"] = count
+            seg["panel_note"] = (f"HCP 360 panel count — {count:,} HCPs, {pct:g}% of the "
+                                 f"{scope_word} ({int(sizing.get('total') or 0):,} HCPs).")
+            seg["likes"] = seg["likes"] + [f"{pct:g}% of the {scope_word}"]
+        else:
+            seg["panel_count"] = None
+            seg["panel_note"] = ("Not a target-list segment on the HCP 360 panel — size this one "
+                                 "off the CRM pull before build.")
+        out.append(seg)
+    return out
+
+
 def _select_segments(ctx: dict) -> tuple[list[dict], bool]:
-    """Picks up to _MAX_SEGMENTS candidates from the existing named-segment library
-    (config/audience_segments.json) -- never invents a segment, only selects among
-    real, authored ones. Returns (selected, is_patient_campaign)."""
+    """The campaign's target segments. First choice is what the user actually locked at the
+    planning audience ask (sized on the HCP 360 panel); only when that ask was never answered
+    does this fall back to picking up to _MAX_SEGMENTS candidates from the named-segment library
+    (config/audience_segments.json) by digital posture. Returns (selected, is_patient_campaign)."""
+    picked = _selected_panel_segments(ctx)
+    if picked:
+        return picked, False
+
     is_patient = _is_patient_campaign(ctx)
     if is_patient:
         candidates = _SEGMENTS.get("patient_caregiver_segments", [])
@@ -59,6 +126,9 @@ def _select_segments(ctx: dict) -> tuple[list[dict], bool]:
 
 
 def _segment_volume(seg: dict, selected: list[dict], is_patient: bool, ctx: dict) -> tuple[float | None, str | None]:
+    if "panel_count" in seg:
+        # A user-locked segment: exact headcount from the panel, never an apportioned estimate.
+        return seg["panel_count"], seg.get("panel_note")
     if is_patient:
         return None, "No published patient-population benchmark in this tool: qualitative sizing only."
     audience = benchmarks.audience_size(ctx.get("therapy_area", ""))
@@ -221,6 +291,9 @@ def build_campaign_plan(ctx: dict, use_llm: bool = True) -> dict:
             "profile": seg.get("description", ""),
             "key_characteristics": (seg.get("likes") or [])[:2],
             "volume": volume, "volume_note": note,
+            # True => a counted headcount (HCP 360 panel), not an apportioned estimate, so the
+            # brief can print it as an exact figure rather than a "~".
+            "volume_exact": "panel_count" in seg and volume is not None,
         })
 
     wait_days = _DEFAULT_WAIT_DAYS

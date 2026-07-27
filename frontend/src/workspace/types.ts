@@ -302,7 +302,7 @@ export interface CampaignArtifactsPayload {
     audience: {
       segment: string;
       eligibility_rules: string[];
-      segments: { name: string; profile: string; volume: number | null; volume_note: string | null; key_characteristics: string[] }[];
+      segments: { name: string; profile: string; volume: number | null; volume_note: string | null; volume_exact?: boolean; key_characteristics: string[] }[];
       consent_note: string;
     };
     comms_strategy: {
@@ -390,6 +390,8 @@ export interface CampaignSegment {
   key_characteristics: string[];
   volume: number | null;
   volume_note?: string | null;
+  /** True when `volume` is a counted panel headcount rather than an apportioned estimate. */
+  volume_exact?: boolean;
 }
 
 export type CampaignFlowNodeType = "send" | "wait" | "decision" | "exit" | "followup" | "closure";

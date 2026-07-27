@@ -346,13 +346,18 @@ def compose_brief(ctx: dict, enrich: bool = False) -> dict:
         },
         "audience": {
             "segment": answers.get("tcg") or persona,
+            # Every segment the user locked is listed -- no truncation, or the brief would
+            # silently drop picks (the ask is multi-select and takes free text too).
             "eligibility_rules": [f"Entry: {c}" for c in (plan.get("entry_criteria") or [])[:3]] +
-                                 [f"Segment: {s.get('name', '')}" + (f" (~{s['volume']:,})" if s.get("volume") else "")
-                                  for s in (plan.get("segments") or [])[:3]],
+                                 [f"Segment: {s.get('name', '')}" +
+                                  (f" ({s['volume']:,})" if s.get("volume") and s.get("volume_exact")
+                                   else f" (~{s['volume']:,})" if s.get("volume") else "")
+                                  for s in (plan.get("segments") or [])],
             "segments": [{"name": s.get("name", ""), "profile": s.get("profile", ""),
                           "volume": s.get("volume"), "volume_note": s.get("volume_note"),
+                          "volume_exact": bool(s.get("volume_exact")),
                           "key_characteristics": s.get("key_characteristics") or []}
-                         for s in (plan.get("segments") or [])[:4]],
+                         for s in (plan.get("segments") or [])],
             "consent_note": "Consent + suppression enforced as non-removable clauses on every audience pull.",
         },
         "comms_strategy": {
