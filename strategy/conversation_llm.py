@@ -3,7 +3,7 @@
 Three-tier fallback, most-preferred first:
   1. Claude through **Microsoft Foundry (Azure AI)** -- the primary path, auth via a plain
      API key (preferred) or Azure AD (`DefaultAzureCredential`) as a fallback.
-  2. Gemini, via `litellm` (GEMINI_API_KEY or GOOGLE_API_KEY env var) -- only used when
+  2. Gemini, via `litellm` (GEMINI_API_KEY or GOOGLE_API_KEY env var) -- used only when
      Foundry is not configured, so a dev without the team's Azure credential can still work.
   3. Neither configured -> conversation.py falls back to the deterministic rules engine.
 
@@ -153,49 +153,52 @@ _client = None  # lazily built + cached Foundry client; cleared on construction 
 def _get_client():
     """Build (and cache) the LLM client every call site in this app uses.
 
-    Builds (and caches) the AnthropicFoundry client whenever Foundry is configured. Prefers a
-    plain API key (AZURE_AI_FOUNDRY_API_KEY) -- no azure-identity or Azure AD round-trip
-    needed, which is what a platform like Render can set as a single secret. Falls back to
-    Azure AD (DefaultAzureCredential) only if no key is configured, for environments that use
-    a service principal / managed identity instead.
+    Builds (and caches) the AnthropicFoundry client FIRST whenever Foundry is configured.
+    Prefers a plain API key (AZURE_AI_FOUNDRY_API_KEY) -- no azure-identity or Azure AD
+    round-trip needed, which is what a platform like Render can set as a single secret. Falls
+    back to Azure AD (DefaultAzureCredential) only if no key is configured, for environments
+    that use a service principal / managed identity instead.
 
-    Returns a Gemini-backed shim FIRST whenever GEMINI_API_KEY/GOOGLE_API_KEY is set (same
-    priority as active_provider()/interpret_message_llm()) -- so a personal Gemini key covers
-    every AI-assisted feature in the app, not just the conversational intake seam. Only when
-    no Gemini key is set does this fall through to Foundry.
+    Only when Foundry is NOT configured does this return a Gemini-backed shim, if
+    GEMINI_API_KEY/GOOGLE_API_KEY is set (same priority as active_provider()/
+    interpret_message_llm()) -- so a personal Gemini key still works for local dev without
+    the team's Azure credential.
 
     NOTE: _foundry_configured() treats azure-identity merely being *importable* as "Foundry
     configured" (so it can offer the Azure AD fallback path) -- it does NOT mean a real
-    credential exists. Checking it before the Gemini key would make Foundry win by default in
-    any environment with azure-identity installed, even with no working Foundry credential at
-    all, which is exactly the bug this ordering fixes.
+    credential exists. In an environment with azure-identity installed but no working Foundry
+    credential and no `az login`, this will attempt Foundry, fail, and fall through to the
+    rules engine rather than to Gemini -- unset AZURE_AI_FOUNDRY_API_KEY *and* uninstall
+    azure-identity locally if you need to force local dev onto Gemini instead.
     """
+    global _client
+    if _foundry_configured():
+        if _client is not None:
+            return _client
+        from anthropic import AnthropicFoundry
+
+        api_key = os.environ.get(API_KEY_ENV)
+        # Prefer `resource=` -- the SDK derives the URL from it. Only pass `base_url=` when the
+        # user explicitly set a full override via AZURE_AI_FOUNDRY_ENDPOINT.
+        location_kwargs = {"base_url": ENDPOINT} if ENDPOINT else {"resource": RESOURCE}
+        # Inject api-version only if configured (see API_VERSION note above); harmless when unset.
+        if API_VERSION:
+            location_kwargs["default_query"] = {"api-version": API_VERSION}
+        try:
+            if api_key:
+                _client = AnthropicFoundry(api_key=api_key, **location_kwargs)
+            else:
+                from azure.identity import DefaultAzureCredential, get_bearer_token_provider
+                token_provider = get_bearer_token_provider(DefaultAzureCredential(), SCOPE)
+                _client = AnthropicFoundry(azure_ad_token_provider=token_provider, **location_kwargs)
+            return _client
+        except Exception:
+            _client = None
+            raise
+
     if _gemini_key():
         return _GeminiClient()
-
-    global _client
-    if _client is not None:
-        return _client
-    from anthropic import AnthropicFoundry
-
-    api_key = os.environ.get(API_KEY_ENV)
-    # Prefer `resource=` -- the SDK derives the URL from it. Only pass `base_url=` when the
-    # user explicitly set a full override via AZURE_AI_FOUNDRY_ENDPOINT.
-    location_kwargs = {"base_url": ENDPOINT} if ENDPOINT else {"resource": RESOURCE}
-    # Inject api-version only if configured (see API_VERSION note above); harmless when unset.
-    if API_VERSION:
-        location_kwargs["default_query"] = {"api-version": API_VERSION}
-    try:
-        if api_key:
-            _client = AnthropicFoundry(api_key=api_key, **location_kwargs)
-        else:
-            from azure.identity import DefaultAzureCredential, get_bearer_token_provider
-            token_provider = get_bearer_token_provider(DefaultAzureCredential(), SCOPE)
-            _client = AnthropicFoundry(azure_ad_token_provider=token_provider, **location_kwargs)
-        return _client
-    except Exception:
-        _client = None
-        raise
+    raise RuntimeError("no LLM provider configured")
 
 
 def _foundry_configured() -> bool:
@@ -217,10 +220,10 @@ def _foundry_configured() -> bool:
 def active_provider() -> str | None:
     """Which provider a call to interpret_message_llm() would use right now, in priority
     order, or None if nothing is configured (conversation.py then uses the rules engine)."""
-    if _gemini_key():
-        return "gemini"
     if _foundry_configured():
         return "azure-foundry"
+    if _gemini_key():
+        return "gemini"
     return None
 
 
