@@ -1,12 +1,16 @@
 # Storage model: SQLite files + blob store on the persistent disk below (durable across
 # deploys). This is the app's native, zero-cost data layer. The Postgres path
 # (strategy/db.py + POSTGRES_MIGRATION.md) still exists and activates if DATABASE_URL is set,
-# but it is intentionally NOT set here: a trial on Prisma Postgres hit the free-tier plan
-# limit (the ~170MB knowledge base + 540K-row load exceeded it, locking the database). If you
-# want Postgres later, use a paid plan or a provider that fits the data, then add DATABASE_URL
-# as an env var. Do NOT set DATABASE_URL to an over-quota database -- the app can't connect
-# and won't start. The knowledge base ships as a ~90MB dependency-slim seed committed in git
-# (assets/seed/omni_kb.db), seeded to the disk by bootstrap.py on first boot.
+# but it is intentionally NOT set here yet: a trial on Prisma Postgres hit the free-tier plan
+# limit (the ~170MB knowledge base + 540K-row load exceeded it, locking the database). The
+# knowledge base (and HCP 360) are now pinned to local SQLite regardless of DATABASE_URL
+# (strategy/db.py's LOCAL_ONLY_STORES) -- they're large, committed-seed reference data
+# rebuilt on every boot, not per-run output, so they should never be the thing that fills up
+# a managed Postgres. It is now SAFE to set DATABASE_URL (e.g. to a Neon connection string)
+# to move just the genuine per-run output (projects/campaigns/brand_memory/orchestration/
+# tab_chat) to a managed Postgres -- that data stays small regardless of how large the KB or
+# HCP 360 seed grows. The knowledge base ships as a ~90MB dependency-slim seed committed in
+# git (assets/seed/omni_kb.db), seeded to the disk by bootstrap.py on first boot either way.
 
 services:
   - type: web

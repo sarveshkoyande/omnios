@@ -14,16 +14,25 @@ the "nothing is retained across deploys" problem.
 This document describes moving the **writable** stores onto a managed **Postgres** for
 horizontal scaling or a disk-free service.
 
-> **Knowledge base (`omni_kb.db`) — now also in Postgres.** The read-only KB was originally a
-> committed SQLite snapshot, but it grew to ~170MB, which exceeds GitHub's 100MB blob limit and
-> broke when shipped via Git LFS (Render's build never pulled the LFS object, so the file was a
-> 134-byte pointer and every KB read 500'd). It is no longer committed to git. Instead it lives
-> in the same Postgres database, loaded once by **`strategy/load_kb_to_pg.py`** (run locally
-> against `DATABASE_URL`). The four KB readers — `strategy/dashboard.py`, `strategy/feed.py`,
-> `strategy/engine.py`, and the pharma-intel block in `app/server.py` — read it through
-> `db.kb_connect()`: Postgres when `DATABASE_URL` is set, the local `data/omni_kb.db` file
-> otherwise (SQLite dev is unchanged). `db.kb_connect()` returns `None` when the KB isn't loaded
-> yet, so readers degrade to empty results instead of 500ing (the deploy is order-independent).
+> **Knowledge base (`omni_kb.db`) and HCP 360 (`hcp_360.db`) — pinned to local SQLite, NOT
+> Postgres, even when `DATABASE_URL` is set.** They were briefly routed through Postgres too
+> (loaded once by `strategy/load_kb_to_pg.py`), but that's what caused the original free-tier
+> lockup below: a single bulk load of the ~170MB/540K-row KB was, by itself, enough to exceed
+> Prisma Postgres's free-tier allowance and lock the database. Both datasets are large,
+> committed-seed, rebuilt-on-every-boot reference data (`strategy/bootstrap.py` reseeds them
+> from `assets/seed/omni_kb.db` and `config/hcp_360/*.json` on first boot) -- not per-run
+> output -- so there's nothing to gain and everything to lose by putting them on a
+> consumption-metered managed Postgres. `strategy/db.py`'s `LOCAL_ONLY_STORES = {"omni_kb",
+> "hcp_360"}` forces both through the SQLite branch of `connect()`/`kb_connect()`
+> unconditionally. The committed KB snapshot is also now the already-slimmed ~94.5MB version
+> (`--slim` in `load_kb_to_pg.py`, kept only as a historical/optional path -- it's no longer
+> part of the normal flow), which fits under GitHub's 100MB blob limit without Git LFS.
+>
+> Everything else -- **genuine per-run output**: `projects`, `campaigns` (+`awards_store`,
+> `brand_lifecycle`), `brand_memory`, `orchestration_store`, `tab_chat` -- still routes to
+> Postgres normally when `DATABASE_URL` is set. That's the whole point of the split: a managed
+> Postgres only ever has to hold the output rows a project's runs actually generate, which stays
+> small regardless of how large the reference data grows.
 
 > **Status (now wired in):** every writable store now opens its connection through
 > `strategy/db.py`'s `db.connect(...)`, so setting `DATABASE_URL=postgres://…` routes them

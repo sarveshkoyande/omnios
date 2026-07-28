@@ -1,12 +1,21 @@
-"""One-time loader: copy the read-only knowledge base (omni_kb.db, SQLite) into Postgres.
+"""NOT PART OF THE NORMAL FLOW ANYMORE -- kept only as a historical/optional path.
 
-Why this exists
----------------
+One-time loader: copy the read-only knowledge base (omni_kb.db, SQLite) into Postgres.
+
+`strategy/db.py`'s `LOCAL_ONLY_STORES` now pins `omni_kb` (and `hcp_360`) to local SQLite
+unconditionally, even when DATABASE_URL is set -- loading the full KB into a free-tier managed
+Postgres in one shot is exactly what previously locked a Prisma Postgres database (see
+POSTGRES_MIGRATION.md). The committed seed (`assets/seed/omni_kb.db`, ~94.5MB, already the
+`--slim` cut) is reseeded to local disk on every boot by strategy/bootstrap.py instead. Only
+run this script if you deliberately want the KB in Postgres again for some other reason.
+
+Why this existed
+-----------------
 The KB grew to ~170MB, which is too large for a normal git blob (GitHub's hard limit is
 100MB) and broke when shipped via Git LFS (the host didn't pull the LFS object). Instead of
-shipping the file, the KB now lives in the same managed Postgres the other stores use, and
+shipping the file, the KB used to live in the same managed Postgres the other stores use, and
 the four KB readers (strategy/dashboard.py, feed.py, engine.py, app/server.py's pharma-intel
-block) read it through strategy/db.py's dual-dialect layer. This script is what puts the data
+block) read it through strategy/db.py's dual-dialect layer. This script is what put the data
 there. See POSTGRES_MIGRATION.md.
 
 Usage (run locally, where the real omni_kb.db exists, against the Prisma Postgres URL):

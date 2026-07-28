@@ -1,12 +1,6 @@
-"""DRAFT dual-dialect DB layer (SQLite local / Postgres on Render). NOT YET WIRED IN.
-
-Status: this module is a prepared migration path for moving the writable stores off a
-persistent disk (the current production setup) onto a managed Postgres. It is deliberately
-NOT imported by any running code, so it cannot affect the live disk-backed deployment. Its
-pure SQL-translation helpers are unit-tested at the bottom (`python strategy/db.py`), but
-the Postgres query path itself has NOT been exercised against a real Postgres server yet
-(the dev machine has no Docker/psql). Verify on a real Postgres before switching stores
-over. See POSTGRES_MIGRATION.md for the step-by-step.
+"""Dual-dialect DB layer (SQLite local / Postgres when DATABASE_URL is set). Wired in: every
+writable store (projects, campaigns, brand_memory, orchestration_store, tab_chat) opens its
+connection through `connect()` below. See POSTGRES_MIGRATION.md for the full history.
 
 Design: keep every store's raw SQL exactly as written for SQLite (`?` placeholders,
 `cur.lastrowid`, `INSERT OR IGNORE`) and translate on the way to Postgres, so the diff in
@@ -14,7 +8,10 @@ each store is just `sqlite3.connect(PATH)` -> `db.connect("campaigns")`. The SQL
 returns a real sqlite3 connection (zero behaviour change); the Postgres branch wraps
 psycopg to mimic the small sqlite3 surface the stores use.
 
-Selected by env: DATABASE_URL set to a postgres URL -> Postgres; otherwise SQLite.
+Selected by env: DATABASE_URL set to a postgres URL -> Postgres for most stores; otherwise
+SQLite. `hcp_360` and `omni_kb` are pinned to local SQLite regardless (LOCAL_ONLY_STORES
+below) -- they're large, rebuilt-from-a-committed-seed-on-every-boot datasets, not per-run
+output, and are exactly what blew a prior Prisma Postgres free tier's allowance in one load.
 """
 from __future__ import annotations
 
@@ -30,6 +27,17 @@ from paths import data_path  # noqa: E402
 
 DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
 IS_PG = DATABASE_URL.startswith(("postgres://", "postgresql://"))
+
+# Large, static/reference stores that stay on the local SQLite disk even when DATABASE_URL
+# is set -- they're rebuilt from a committed seed (assets/seed/omni_kb.db, config/hcp_360/*.json)
+# on every boot (see strategy/bootstrap.py), so there's nothing lost by NOT persisting them to
+# Postgres, and keeping them off Postgres is the whole point: it's what a free-tier managed
+# Postgres (Neon, Prisma Postgres, ...) can't absorb -- a prior attempt at loading the full
+# ~170MB/540K-row knowledge base into Prisma Postgres alone was enough to exceed its free-tier
+# allowance and lock the database (see POSTGRES_MIGRATION.md). Genuine per-run OUTPUT (projects,
+# campaigns, brand memory, orchestration, tab chat) still goes to Postgres when DATABASE_URL is
+# set -- only these two bulk/seed stores are pinned local regardless.
+LOCAL_ONLY_STORES = {"omni_kb", "hcp_360"}
 
 # Tables whose surrogate PK is an autoincrement integer `id`. An INSERT into one of these
 # gets `RETURNING id` appended on Postgres so `cursor.lastrowid` keeps working. Junction /
@@ -301,8 +309,11 @@ def connect(db_name: str = "campaigns"):
     """Return a connection. SQLite: a real sqlite3 connection to <DATA_DIR>/<db_name>.db
     (unchanged behaviour). Postgres: a pooled psycopg connection to DATABASE_URL (all the
     logical DBs share one Postgres database; table names are already globally distinct).
-    `conn.close()` returns the pooled connection for reuse rather than tearing it down."""
-    if not IS_PG:
+    `conn.close()` returns the pooled connection for reuse rather than tearing it down.
+
+    `db_name` in LOCAL_ONLY_STORES always forces SQLite here, even when DATABASE_URL is set
+    -- see that set's docstring."""
+    if not IS_PG or db_name in LOCAL_ONLY_STORES:
         conn = sqlite3.connect(data_path(f"{db_name}.db"))
         conn.row_factory = sqlite3.Row
         conn.execute("PRAGMA foreign_keys = ON")
@@ -316,24 +327,10 @@ def connect(db_name: str = "campaigns"):
 
 def kb_connect():
     """Connection to the read-only knowledge base (`omni_kb`), or None when it isn't
-    available. On Postgres the KB tables live in the shared database (loaded once by
-    strategy/load_kb_to_pg.py) so this always returns a connection. On SQLite it's the
-    data/omni_kb.db file; when that file is absent this returns None so callers degrade to
-    empty results exactly as their old `if KB_DB.exists()` guard did (sqlite3.connect would
+    available. Always local SQLite (data/omni_kb.db) regardless of DATABASE_URL -- see
+    LOCAL_ONLY_STORES. Returns None when that file is absent so callers degrade to empty
+    results exactly as their old `if KB_DB.exists()` guard did (sqlite3.connect would
     otherwise create an empty file with no tables and make every query raise)."""
-    if IS_PG:
-        conn = connect("omni_kb")
-        # Probe that the KB has actually been loaded (strategy/load_kb_to_pg.py). If the
-        # tables aren't there yet, return None so every reader degrades to empty results
-        # instead of raising a 500 -- this makes the deploy order-independent (the app can
-        # ship before the one-time load runs, then light up once the data is present).
-        try:
-            conn.execute("SELECT 1 FROM documents LIMIT 1").fetchone()
-            return conn
-        except Exception:  # noqa: BLE001
-            conn.rollback()
-            conn.close()
-            return None
     if not data_path("omni_kb.db").exists():
         return None
     return connect("omni_kb")
