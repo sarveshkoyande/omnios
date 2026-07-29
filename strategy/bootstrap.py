@@ -30,7 +30,6 @@ import traceback
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "strategy"))
 from paths import DATA_DIR, data_path, ensure_data_dir  # noqa: E402
-import db  # noqa: E402  (to detect the Postgres backend: KB lives in the DB there, not a file)
 
 SEED_DIR = ROOT / "assets" / "seed"
 _SEED_FILES = ["omni_kb.db", "client_brand_intel.json"]
@@ -81,13 +80,13 @@ def seed_kb() -> list[str]:
     ensure_data_dir()
     copied = []
     for name in _SEED_FILES:
-        # On Postgres the knowledge base lives in the database (loaded once by
-        # strategy/load_kb_to_pg.py), not as a file under DATA_DIR -- and the 170MB file is
-        # no longer committed to git, so there is nothing to copy on the server. Skip it
-        # there; the small JSON checkpoints still seed to disk normally, and local SQLite
-        # dev (no DATABASE_URL) still copies the KB file as before.
-        if name == "omni_kb.db" and db.IS_PG:
-            continue
+        # The knowledge base is ALWAYS local SQLite now, regardless of DATABASE_URL
+        # (strategy/db.py's LOCAL_ONLY_STORES) -- it's large, committed-seed reference data,
+        # not per-run output, and loading it into a free-tier managed Postgres in one shot is
+        # what previously locked a Prisma Postgres database (see POSTGRES_MIGRATION.md). This
+        # used to skip copying the KB file whenever DATABASE_URL was set (back when the KB was
+        # meant to live IN Postgres) -- that's now stale and must NOT skip, or the KB file
+        # never lands on a fresh Render disk and every KB reader 500s on "no such table".
         src, dst = SEED_DIR / name, data_path(name)
         needs_copy = _kb_needs_refresh(src, dst) if name == "omni_kb.db" else not dst.exists()
         if src.exists() and needs_copy:

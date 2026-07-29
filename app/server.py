@@ -42,7 +42,7 @@ from strategy import open_questions as open_questions_mod  # noqa: E402  (phase-
 from strategy.document_intake import extract_text  # noqa: E402
 from strategy import dashboard as dashboard_mod  # noqa: E402
 from strategy import feed as feed_mod  # noqa: E402
-from strategy import db  # noqa: E402  (dual-dialect KB connection: SQLite file locally, Postgres on Render)
+from strategy import db  # noqa: E402  (KB is always local SQLite via LOCAL_ONLY_STORES; other stores still dual-dialect)
 from strategy import campaign_store  # noqa: E402
 from strategy import brand_memory  # noqa: E402
 from strategy import blob_store  # noqa: E402  (serves real label images to the Claims Library)
@@ -131,7 +131,7 @@ def _pharma_intel_summary(section: str = "all") -> dict:
     want_brands = section in ("all", "brands")
     want_sources = section in ("all", "sources")
 
-    conn = db.kb_connect()  # Postgres on Render (KB loaded by load_kb_to_pg.py); SQLite file locally
+    conn = db.kb_connect()  # always local SQLite (LOCAL_ONLY_STORES), None if the KB file is missing/unseeded
     if conn is None:
         return _pharma_intel_empty(section)
     try:
@@ -402,7 +402,7 @@ def _artifact_item(row: sqlite3.Row, *, content_fields: list[str] | None = None)
 
 
 def _pharma_intel_artifacts(kind: str, value: str = "", limit: int = 20) -> dict:
-    conn = db.kb_connect()  # Postgres on Render (KB loaded by load_kb_to_pg.py); SQLite file locally
+    conn = db.kb_connect()  # always local SQLite (LOCAL_ONLY_STORES), None if the KB file is missing/unseeded
     if conn is None:
         raise HTTPException(404, "knowledge base unavailable")
     limit = max(1, min(limit, 40))

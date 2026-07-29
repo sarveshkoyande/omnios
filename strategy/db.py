@@ -328,12 +328,21 @@ def connect(db_name: str = "campaigns"):
 def kb_connect():
     """Connection to the read-only knowledge base (`omni_kb`), or None when it isn't
     available. Always local SQLite (data/omni_kb.db) regardless of DATABASE_URL -- see
-    LOCAL_ONLY_STORES. Returns None when that file is absent so callers degrade to empty
-    results exactly as their old `if KB_DB.exists()` guard did (sqlite3.connect would
-    otherwise create an empty file with no tables and make every query raise)."""
-    if not data_path("omni_kb.db").exists():
+    LOCAL_ONLY_STORES. Returns None when that file is absent OR present-but-not-actually-
+    seeded (e.g. a stray empty file with no tables) so callers degrade to empty results
+    instead of every reader's `SELECT ... FROM documents` raising "no such table: documents"
+    -- a bare `.exists()` check isn't enough, since sqlite3.connect() on ANY path silently
+    creates an empty file with no schema rather than erroring."""
+    path = data_path("omni_kb.db")
+    if not path.exists():
         return None
-    return connect("omni_kb")
+    conn = connect("omni_kb")
+    try:
+        conn.execute("SELECT 1 FROM documents LIMIT 1").fetchone()
+        return conn
+    except Exception:  # noqa: BLE001 -- any broken/partial KB file degrades to empty, not a 500
+        conn.close()
+        return None
 
 
 # --------------------------------------------------------------------- self-test ---------

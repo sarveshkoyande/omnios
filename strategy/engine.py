@@ -11,7 +11,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
 from rules import CHANNEL_TOUCHPOINTS, PERSONA_MULTIPLIERS, STAGE_BY_KEY, STAGES  # noqa: E402
 from paths import data_path  # noqa: E402
-import db  # noqa: E402  (dual-dialect KB connection: SQLite file locally, Postgres on Render)
+import db  # noqa: E402  (KB is always local SQLite via LOCAL_ONLY_STORES; other stores still dual-dialect)
 
 DB_PATH = data_path("omni_kb.db")
 

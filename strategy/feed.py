@@ -18,7 +18,7 @@ import sqlite3
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-import db  # noqa: E402  (dual-dialect KB connection: SQLite file locally, Postgres on Render)
+import db  # noqa: E402  (KB is always local SQLite via LOCAL_ONLY_STORES; other stores still dual-dialect)
 from paths import data_path  # noqa: E402
 
 BASE_DIR = pathlib.Path(__file__).resolve().parent.parent
