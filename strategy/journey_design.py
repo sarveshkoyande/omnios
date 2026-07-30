@@ -42,12 +42,105 @@ _ENTRY_BY_KEY = {mode["key"]: mode for mode in ENTRY_MODES}
 DEFAULT_SPEC: dict = {
     "entry_mode": "adhoc",
     "trigger_logic": "",
+    "tactics": 3,
     "touchpoints": 3,
     "duration_days": 42,
     "email_frequency_days": 14,
     "reengage_after_days": 7,
     "signup_flow": "",
 }
+
+# The journey is settled by asking a few short questions in turn, not by presenting a form.
+# Each carries a recommended best-practice answer plus the realistic range around it, so the
+# planner is choosing from the actual spread rather than accepting or rejecting one number.
+JOURNEY_QUESTIONS: list[dict] = [
+    {
+        "key": "tactics",
+        "field": "tactics",
+        "question": "How many tactics should this campaign run?",
+        "why": "The tactic count sets how many distinct assets get commissioned and how much MLR "
+               "queue the timeline has to absorb.",
+        "template": "{n} tactics",
+        "choices": [2, 3, 4, 5, 6],
+        "recommended": 3,
+        "notes": {
+            2: "Lean: one core asset plus a follow-up. Fastest to approve.",
+            3: "Standard nurture set -- enough to carry a ladder without straining review.",
+            4: "Adds a channel beyond email; needs a real content inventory behind it.",
+            5: "Multi-channel programme; assume a longer MLR runway.",
+            6: "Heavy build. Only worth it with modular reuse already in place.",
+        },
+    },
+    {
+        "key": "touchpoints",
+        "field": "touchpoints",
+        "question": "How many touchpoints should each HCP receive?",
+        "why": "Touchpoints decide journey length and how many times the ladder can advance before "
+               "the campaign closes.",
+        "template": "{n} touchpoints",
+        "choices": [2, 3, 4, 5, 6],
+        "recommended": 3,
+        "notes": {
+            2: "One message and one follow-up. Little room to move a belief.",
+            3: "Covers a three-rung ladder without fatigue.",
+            4: "Full ladder with a re-engagement pass.",
+            5: "Extended nurture; watch frequency caps against field activity.",
+            6: "Long programme -- justify against opt-out risk.",
+        },
+    },
+    {
+        "key": "gap",
+        "field": "email_frequency_days",
+        "question": "How many days between touchpoints?",
+        "why": "The gap is the cadence guardrail: too tight reads as pressure, too loose and the "
+               "previous message is forgotten.",
+        "template": "{n} days apart",
+        "choices": [7, 10, 14, 21, 30],
+        "recommended": 14,
+        "notes": {
+            7: "Weekly. Intensive -- only for a live moment like a congress.",
+            10: "Brisk without crowding.",
+            14: "Fortnightly: the common HCP nurture cadence.",
+            21: "Gentle; suits a long consideration cycle.",
+            30: "Monthly. Low pressure, slow belief shift.",
+        },
+    },
+    {
+        "key": "reengage",
+        "field": "reengage_after_days",
+        "question": "How long should we wait before re-engaging a non-opener?",
+        "why": "This sets the engagement window the Opened? split is evaluated on, and when the "
+               "re-send with a new subject line fires.",
+        "template": "Re-engage at day {n}",
+        "choices": [3, 5, 7, 10, 14],
+        "recommended": 7,
+        "notes": {
+            3: "Fast retry; risks landing before the first send was even seen.",
+            5: "Short window, still a fair chance to open.",
+            7: "A full week -- the usual open window for HCP email.",
+            10: "Patient; fewer wasted re-sends.",
+            14: "Waits a full cycle; re-send may arrive with the next touchpoint.",
+        },
+    },
+]
+
+
+def question_for(key: str) -> dict | None:
+    return next((q for q in JOURNEY_QUESTIONS if q["key"] == key), None)
+
+
+def option_label(question: dict, value: int) -> str:
+    return question["template"].format(n=value)
+
+
+def value_from_label(question: dict, label: str) -> int | None:
+    """The number behind a chosen label, tolerating free text ("4", "4 touchpoints")."""
+    import re
+
+    match = re.search(r"\d{1,3}", str(label or ""))
+    if not match:
+        return None
+    return int(match.group(0))
 
 _MAX_TOUCHPOINTS = 6  # beyond this the canvas stops being readable and the plan stops being real
 

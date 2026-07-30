@@ -38,10 +38,14 @@ from segment_profile import build_segment_profile, build_tcg_template  # noqa: E
 # should breathe, not interrogate. topics = process-graph topics whose
 # grounding renders as provenance chips when the phase opens.
 # ------------------------------------------------------------------ #
+# `render: False` steps still run: they pose their ask, fold the answer into ctx and emit
+# their decision record -- they just contribute no section to the plan document or the Plan
+# sections list. That keeps the segmentation, objective and program-placement questions
+# exactly where they belong while dropping the toolkit-template write-ups nobody reads.
 SEQUENCE = [
-    {"num": 4,  "id": "tcg",       "owner": "strategy",    "topics": ["segmentation_targeting"], "ask": "audience"},
-    {"num": 5,  "id": "cxq",       "owner": "planner",     "topics": ["intake_context"],         "ask": "objective"},
-    {"num": 6,  "id": "feas",      "owner": "strategy",    "topics": ["journey_messaging"],      "ask": None},
+    {"num": 4,  "id": "tcg",       "owner": "strategy",    "topics": ["segmentation_targeting"], "ask": "audience", "render": False},
+    {"num": 5,  "id": "cxq",       "owner": "planner",     "topics": ["intake_context"],         "ask": "objective", "render": False},
+    {"num": 6,  "id": "feas",      "owner": "strategy",    "topics": ["journey_messaging"],      "ask": None, "render": False},
     {"num": 7,  "id": "msgflow",   "owner": "strategy",    "topics": ["journey_messaging", "competitive_positioning"], "ask": "message"},
     {"num": 8,  "id": "channels",  "owner": "activation",  "topics": ["channel_budget"],         "ask": "channel"},
     {"num": 9,  "id": "content",   "owner": "inspiration", "topics": ["creative_content"],       "ask": None},
@@ -56,10 +60,10 @@ SEQUENCE = [
     {"num": 26, "id": "tacoverview", "owner": "planner",   "topics": ["intake_context"],          "ask": None},
     {"num": 27, "id": "tacfield",    "owner": "strategy",  "topics": ["segmentation_targeting"],  "ask": None},
     {"num": 28, "id": "tacomni",     "owner": "activation", "topics": ["channel_budget"],          "ask": None},
-    {"num": 29, "id": "tacsci",      "owner": "intel",     "topics": ["market_landscape", "competitive_positioning"], "ask": None},
-    {"num": 30, "id": "tacaccount",  "owner": "strategy",  "topics": ["segmentation_targeting"],  "ask": None},
-    {"num": 31, "id": "tacpatient",  "owner": "planner",   "topics": ["risk_governance"],          "ask": None},
-    {"num": 32, "id": "tacmeasure",  "owner": "activation", "topics": ["measurement_kpi", "risk_governance"], "ask": None},
+    {"num": 29, "id": "tacsci",      "owner": "intel",     "topics": ["market_landscape", "competitive_positioning"], "ask": None, "render": False},
+    {"num": 30, "id": "tacaccount",  "owner": "strategy",  "topics": ["segmentation_targeting"],  "ask": None, "render": False},
+    {"num": 31, "id": "tacpatient",  "owner": "planner",   "topics": ["risk_governance"],          "ask": None, "render": False},
+    {"num": 32, "id": "tacmeasure",  "owner": "activation", "topics": ["measurement_kpi", "risk_governance"], "ask": None, "render": False},
     {"num": 33, "id": "tacbrief",    "owner": "planner",   "topics": ["intake_context"],           "ask": None},
 ]
 
@@ -482,6 +486,7 @@ def _build_ask_draft(ctx: dict, step: dict) -> dict | None:
                 "text": f"Your broad target is **{broad}**. Within that, which segment(s) should the plan lead with? "
                         "You can pick more than one.",
                 "multi_select": True,
+                "select_noun": "segment",
                 "evidence_note": evidence_note,
                 "evidence_basis": _basis(ctx,
                     "Segment sizes counted on the HCP 360 dummy panel, filtered to the plan's therapy-area "
@@ -531,29 +536,33 @@ def _build_ask_draft(ctx: dict, step: dict) -> dict | None:
             return None
         ladder = mf.get("message_ladder") or list(sequence)
         optional = mf.get("optional_topics") or []
-        # Which rungs, not which order: the ladder sequence is a clinical convention, so the
-        # user picks scope and the plan always tells it MOA -> Efficacy -> Safety -> Dosing.
-        options = [{"label": topic, "source": "ladder rung outside this stage's default set"}
-                   for topic in ladder if topic not in sequence]
-        options += [{"label": topic,
-                     "source": "access message -- sits outside the clinical ladder, off by default"}
-                    for topic in optional if topic not in sequence]
+        # One rung per option, never the ladder as a single take-it-or-leave-it chip: the
+        # decision is which rungs are in scope, so each has to be tickable on its own. The
+        # order is not up for selection -- the plan always tells it in clinical sequence.
+        kit_source = "message-flow model" + (" + brand-kit claim library" if ctx.get("brand_kit") else "")
+        rungs = [{"label": topic,
+                  "source": kit_source if topic in sequence else "ladder rung outside this stage's default set"}
+                 for topic in ladder]
+        rungs += [{"label": topic,
+                   "source": "access message -- sits outside the clinical ladder, off by default"}
+                  for topic in optional]
         return _attach_grounding_to_ask(ctx, step, {"ask_id": f"ask-{step['num']}", "section": step["num"],
                 "question_focus": "Choose which rungs the message ladder covers; the sequence itself is fixed.",
-                "text": f"Message ladder runs **{' -> '.join(sequence)}**. "
-                        "Keep these rungs, or add and drop any? You can pick more than one.",
+                "text": "Which rungs should the message ladder cover? They are always told in clinical "
+                        "order -- mechanism, then efficacy, then safety, then dosing.",
                 "multi_select": True,
+                "select_noun": "rung",
+                # The clinical rungs start ticked; pricing does not.
+                "preselected": [topic for topic in ladder if topic in sequence],
                 "evidence_basis": _basis(ctx,
                     "Ladder rungs default from the journey stage; brand-kit claims are used where available. "
                     "Sequence follows the clinical order a reviewer expects (mechanism before outcome).",
                     None, ("evidence", "positioning", "csfs")),
                 "why": "The rungs in scope set what every asset can say; the ladder order fixes how it is told.",
-                "recommendation": {"label": " -> ".join(sequence),
-                                   "source": "message-flow model" +
-                                   (" + brand-kit claim library" if ctx.get("brand_kit") else "")},
+                "recommendation": {"label": rungs[0]["label"], "source": rungs[0]["source"]},
                 "recommendation_reason": f"{sequence[0]} opens the ladder because the stage's belief gap is "
                                          f"closed by mechanism-first framing before outcome claims land.",
-                "options": options,
+                "options": rungs[1:],
                 "free_text": True})
     if kind == "channel":
         mix = (ctx.get("strategy") or {}).get("channel_mix_pct") or {}
@@ -568,7 +577,9 @@ def _build_ask_draft(ctx: dict, step: dict) -> dict | None:
         lead, alts = postures[0], postures[1:]
 
         def _posture_opt(posture: dict, source: str) -> dict:
-            return {"label": posture["label"], "source": source, "size": posture["headline"],
+            # `distribution` renders as the per-channel split under the option; the headline
+            # is deliberately not also put in `size`, or the same numbers appear twice.
+            return {"label": posture["label"], "source": source,
                     "criteria": posture["rationale"], "distribution": posture["distribution"]}
 
         text = (f"Your brief leans to **{preferred}**. Which way should this campaign go to market?"
@@ -588,28 +599,7 @@ def _build_ask_draft(ctx: dict, step: dict) -> dict | None:
                 "options": [_posture_opt(p, "alternative posture") for p in alts],
                 "free_text": True})
     if kind == "journey":
-        spec = ctx.get("journey_spec") or journey_design.derive_spec(ctx)
-        current = journey_design.entry_mode(spec)
-        options = [{"label": mode["label"], "source": mode["detail"]}
-                   for mode in journey_design.ENTRY_MODES if mode["key"] != current["key"]]
-        return _attach_grounding_to_ask(ctx, step, {"ask_id": f"ask-{step['num']}", "section": step["num"],
-                "question_focus": "Establish how the journey runs before drawing it: entry trigger, "
-                                  "touchpoint count, cadence and the non-opener rule.",
-                "text": f"I'd run this as **{journey_design.spec_summary(spec)}**. "
-                        "Change the trigger, the number of touchpoints or the cadence?",
-                "journey_spec": spec,
-                "evidence_basis": _basis(ctx,
-                    "Journey shape defaults to a standard nurture cadence, with the window taken from the "
-                    "brief's duration where it states one. Entry trigger is an assumption until confirmed.",
-                    "duration", ("csfs", "guardrails")),
-                "why": "Entry trigger, touchpoint count and cadence decide the journey's shape -- drawing one "
-                       "before they are settled produces a diagram nobody can build.",
-                "recommendation": {"label": journey_design.spec_summary(spec),
-                                   "source": f"{current['label']} -- {current['trigger_hint']}"},
-                "recommendation_reason": "A three-touch fortnightly nurture is the standard shape; the "
-                                         "re-engagement arm catches non-openers before the journey closes.",
-                "options": options,
-                "free_text": True})
+        return _attach_grounding_to_ask(ctx, step, _journey_ask(ctx, step))
     if kind == "timeline":
         duration = _brief_field(ctx, "duration")
         rec = brief_summary.summarize_value(duration, 14) if duration else "13-week standard wave"
@@ -624,6 +614,132 @@ def _build_ask_draft(ctx: dict, step: dict) -> dict | None:
                 "recommendation": {"label": rec, "source": "brief timing if provided; otherwise execution work-plan model"},
                 "options": options, "free_text": True})
     return None
+
+
+def journey_answer_key(question_key: str) -> str:
+    return f"chflow:{question_key}"
+
+
+def journey_pending(ctx: dict) -> str | None:
+    """The next journey question still to be asked, or None when the shape is settled.
+
+    The journey is settled one short question at a time rather than as a form: a planner
+    reasons about cadence and touchpoint count separately, and a single card asking for all
+    of it at once is answered by accepting the default."""
+    answered = ctx.get("journey_answers") or {}
+    for question in journey_design.JOURNEY_QUESTIONS:
+        if question["key"] not in answered:
+            return question["key"]
+    return None if "entry" in answered else "entry"
+
+
+def _journey_numeric_ask(ctx: dict, step: dict, question: dict) -> dict:
+    spec = ctx.get("journey_spec") or journey_design.derive_spec(ctx)
+    current = spec.get(question["field"], question["recommended"])
+    recommended = current if current in question["choices"] else question["recommended"]
+    notes = question["notes"]
+
+    def _option(value: int) -> dict:
+        return {"label": journey_design.option_label(question, value),
+                "source": "best practice" if value == recommended else "alternative cadence",
+                "criteria": notes.get(value, "")}
+
+    alternatives = [_option(v) for v in question["choices"] if v != recommended]
+    return {"ask_id": f"ask-{step['num']}-{question['key']}", "section": step["num"],
+            "answer_key": journey_answer_key(question["key"]),
+            "question_focus": question["question"],
+            "text": question["question"],
+            # Options here are an enumerated range, not competing arguments, so the usual
+            # two-alternative ceiling would hide most of the scale.
+            "keep_options": True,
+            "evidence_basis": _basis(ctx,
+                "Recommended value is the common HCP nurture default; the range around it is what "
+                "real campaigns use. Confirm against the brand's own engagement history.",
+                "duration", ("csfs", "guardrails")),
+            "why": question["why"],
+            "recommendation": _option(recommended),
+            "recommendation_reason": notes.get(recommended, ""),
+            "options": alternatives,
+            "free_text": True}
+
+
+def _journey_entry_ask(ctx: dict, step: dict) -> dict:
+    spec = ctx.get("journey_spec") or journey_design.derive_spec(ctx)
+    current = journey_design.entry_mode(spec)
+    return {"ask_id": f"ask-{step['num']}-entry", "section": step["num"],
+            "answer_key": journey_answer_key("entry"),
+            "question_focus": "Confirm how an HCP enters this journey.",
+            "text": "Last one on the journey: how does an HCP enter it?",
+            "keep_options": True,
+            "journey_spec": spec,
+            "evidence_basis": _basis(ctx,
+                "Entry trigger is an assumption until confirmed; it decides eligibility, the consent "
+                "basis, and whether a fixed send date exists at all.",
+                "duration", ("csfs", "guardrails")),
+            "why": "The trigger decides eligibility and consent basis, and whether the journey has a "
+                   "send date or waits on an event.",
+            "recommendation": {"label": current["label"], "source": current["trigger_hint"],
+                               "criteria": current["detail"]},
+            "recommendation_reason": f"{current['detail']}.",
+            "options": [{"label": mode["label"], "source": mode["trigger_hint"], "criteria": mode["detail"]}
+                        for mode in journey_design.ENTRY_MODES if mode["key"] != current["key"]],
+            "free_text": True}
+
+
+def _journey_ask(ctx: dict, step: dict) -> dict | None:
+    pending = journey_pending(ctx)
+    if pending is None:
+        return None
+    if pending == "entry":
+        return _journey_entry_ask(ctx, step)
+    return _journey_numeric_ask(ctx, step, journey_design.question_for(pending))
+
+
+def apply_journey_answers(ctx: dict, answers: dict) -> None:
+    """Fold every recorded journey sub-answer into ctx. Idempotent: the spec is rebuilt from
+    the answers each time, so a resumed stream lands on the same shape."""
+    collected: dict[str, str] = {}
+    for question in journey_design.JOURNEY_QUESTIONS + [{"key": "entry"}]:
+        value = answers.get(journey_answer_key(question["key"]))
+        if value not in (None, ""):
+            collected[question["key"]] = value
+    ctx["journey_answers"] = collected
+    if not collected:
+        return
+    spec = journey_design.derive_spec(ctx)
+    for question in journey_design.JOURNEY_QUESTIONS:
+        raw = collected.get(question["key"])
+        if raw is None:
+            continue
+        value = journey_design.value_from_label(question, raw)
+        if value is not None:
+            spec[question["field"]] = value
+    if collected.get("entry"):
+        spec = journey_design.parse_answer(collected["entry"], spec)
+    ctx["journey_spec"] = journey_design.derive_spec({}, spec)
+
+
+def _step_answered(step: dict, studio: dict) -> bool:
+    """Whether a step has everything it needs to draft. Most steps carry one ask keyed by
+    section id; the journey step asks a short series, each with its own key."""
+    answers = studio.get("answers") or {}
+    if step["id"] != "chflow":
+        return step["id"] in answers
+    keys = [q["key"] for q in journey_design.JOURNEY_QUESTIONS] + ["entry"]
+    return all(journey_answer_key(key) in answers for key in keys)
+
+
+def _safe_build_ask(ctx: dict, step: dict) -> dict | None:
+    """build_ask, degraded to the deterministic draft on failure -- an LLM hiccup must never
+    strand a run mid-sequence."""
+    try:
+        return build_ask(ctx, step)
+    except Exception as exc:  # noqa: BLE001
+        print(f"[studio] build_ask failed for {step['id']}: {exc!r}")
+        try:
+            return _build_ask_draft(ctx, step)
+        except Exception:  # noqa: BLE001
+            return None
 
 
 def _build_ask_llm_first(ctx: dict, step: dict) -> dict | None:
@@ -644,6 +760,11 @@ def auto_answer_value(ask: dict | None) -> str:
     the ask must still be posed."""
     if not ask:
         return ""
+    # A multi-select's recommendation is only its first row; taking that alone would silently
+    # drop the rest of the pre-ticked set (the whole ladder becomes one rung).
+    preselected = [str(x).strip() for x in (ask.get("preselected") or []) if str(x).strip()]
+    if preselected and ask.get("multi_select"):
+        return "; ".join(preselected)
     label = ((ask.get("recommendation") or {}).get("label") or "").strip()
     if label:
         return label
@@ -820,7 +941,11 @@ def stream(ctx: dict, studio: dict, auto_assume=None):
         yield {"type": "grounding", "section_id": step["id"], "items": grounding}
         # A flaky grounding/LLM failure in one section must degrade to the deterministic
         # draft (or no ask) — never crash the whole run and strand the user mid-build.
-        if step["id"] in studio["answers"]:
+        # Fold any sub-answers recorded on a previous stream back into ctx before deciding
+        # what to ask next -- a multi-question step resumes mid-sequence.
+        if step["id"] == "chflow":
+            apply_journey_answers(ctx, studio["answers"])
+        if _step_answered(step, studio):
             ask = None  # already answered on a prior pass — don't rebuild (saves a wasted LLM refine on resume)
         else:
             try:
@@ -837,19 +962,24 @@ def stream(ctx: dict, studio: dict, auto_assume=None):
                 ask.setdefault("framework", stage["framework"]["name"])
                 ask.setdefault("blocked", " · ".join(stage["feeds"]))
         auto_value = ""
-        if ask and step["id"] not in studio["answers"] and _auto_assume_on(auto_assume):
-            auto_value = auto_answer_value(ask)
-        if auto_value:
-            # Auto-assume: record the recommendation as the answer, show the ask as already
-            # decided (so the trail still shows what was chosen and why), and fall through to
-            # drafting in THIS stream — no gate, no answer round-trip.
-            studio["answers"][step["id"]] = auto_value
+        # Auto-assume has to keep going on a step that asks more than one question, or it
+        # would answer the first and draft with the rest still unset.
+        while ask and _auto_assume_on(auto_assume):
+            taken = auto_answer_value(ask)
+            if not taken:
+                break
+            key = ask.get("answer_key") or step["id"]
+            studio["answers"][key] = taken
+            auto_value = taken
             studio["await_ask"] = None
             studio.setdefault("auto_answered", [])
-            if step["id"] not in studio["auto_answered"]:
-                studio["auto_answered"].append(step["id"])
-            yield {"type": "ask", **ask, "auto_assumed": True, "auto_answer": auto_value}
-        elif ask and step["id"] not in studio["answers"]:
+            if key not in studio["auto_answered"]:
+                studio["auto_answered"].append(key)
+            yield {"type": "ask", **ask, "auto_assumed": True, "auto_answer": taken}
+            if step["id"] == "chflow":
+                apply_journey_answers(ctx, studio["answers"])
+            ask = None if _step_answered(step, studio) else _safe_build_ask(ctx, step)
+        if ask:
             # The very first (segmentation) ask is posed from the fast core ctx, so without this it
             # would appear almost the instant the budget is entered — reading as unconsidered. Pace
             # it: show the agent visibly sizing the segments, then reveal the analysed ask a few
@@ -866,16 +996,22 @@ def stream(ctx: dict, studio: dict, auto_assume=None):
             return
         # Answered (or no ask): draft and emit.
         note = ""
-        if step["id"] in studio["answers"]:
+        if step["id"] == "chflow":
+            apply_journey_answers(ctx, studio["answers"])
+            if ctx.get("journey_spec"):
+                note = "journey shape set to " + journey_design.spec_summary(ctx["journey_spec"])
+        elif step["id"] in studio["answers"]:
             note = apply_answer(ctx, step, studio["answers"][step["id"]])
             if auto_value:
                 note = f"auto-assuming the recommendation — “{auto_value}”"
         studio["await_ask"] = None
-        yield {"type": "drafting", "section_id": step["id"],
-               "note": (f"Drafting {title} — {note}." if note else f"Drafting {title} from the graph pull.")}
-        md, html = compose_section(ctx, step["num"])
-        yield {"type": "section_html", "section_id": step["id"], "num": step["num"], "title": title,
-               "owner": step["owner"], "html": html}
+        renders = step.get("render", True)
+        if renders:
+            yield {"type": "drafting", "section_id": step["id"],
+                   "note": (f"Drafting {title} — {note}." if note else f"Drafting {title} from the graph pull.")}
+            md, html = compose_section(ctx, step["num"])
+            yield {"type": "section_html", "section_id": step["id"], "num": step["num"], "title": title,
+                   "owner": step["owner"], "html": html}
         # Decision record: the landed step explains itself — inputs, framework, decision,
         # rationale, what it feeds. Accumulated in ctx (campaign_artifacts re-derives them
         # deterministically if this list is ever lost, so persistence is a bonus not a need).

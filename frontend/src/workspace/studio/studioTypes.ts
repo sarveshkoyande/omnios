@@ -14,6 +14,9 @@ export interface AskOption {
    *  that define the segment. Present on the segmentation ask. */
   size?: string;
   criteria?: string;
+  /** Per-channel budget split shown under the option. Present on the channel-posture ask,
+   *  where the whole point of the choice is what it does to the mix. */
+  distribution?: { channel: string; pct: number }[];
 }
 
 export interface LlmStatus {
@@ -55,6 +58,11 @@ export interface StudioAsk {
   free_text: boolean;
   /** When true the user can select more than one option; the answer is the joined labels. */
   multi_select?: boolean;
+  /** Multi-select only: labels ticked on open. Falls back to the recommendation alone when
+   *  absent, which is wrong whenever the sensible default is a set rather than one row. */
+  preselected?: string[];
+  /** Multi-select only: what is being counted in the confirm button ("segment", "rung"). */
+  select_noun?: string;
   /** One-line summary of the data analysis behind the options (e.g. the sizing methodology). */
   evidence_note?: string;
   /** Auto-assume was on: the agent took `auto_answer` (its own recommendation) without

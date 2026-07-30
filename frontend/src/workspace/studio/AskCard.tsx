@@ -4,8 +4,8 @@ import Popover from "@mui/material/Popover";
 import Typography from "@mui/material/Typography";
 import { styled } from "@mui/material/styles";
 import { AgentBubble } from "../ChatBubble";
-import { tokens } from "../../theme/tokens";
-import type { StudioAsk } from "./studioTypes";
+import { indigoTint, tokens } from "../../theme/tokens";
+import type { AskOption, StudioAsk } from "./studioTypes";
 
 const SourceChip = styled("span")({
   display: "inline-flex",
@@ -156,14 +156,22 @@ export function AskCard({
   onAnswer: (value: string) => void;
 }) {
   const multi = Boolean(ask.multi_select);
+  // The card counts whatever the ask is choosing between; "segments" was hardcoded and read
+  // wrong the moment a second multi-select (message rungs) existed.
+  const selectNoun = ask.select_noun?.trim() || "option";
   const recommendationLabel = ask.recommendation?.label?.trim() || "Confirm the recommended path";
   const options = ask.options.filter((option) => option.label?.trim());
 
   const [picked, setPicked] = useState<string | null>(answered ?? null);
-  // Multi-select: pre-select the recommendation; a prior answer restores the whole set.
-  const [selected, setSelected] = useState<Set<string>>(() =>
-    new Set(answered ? answered.split(/\s*;\s*/).filter(Boolean) : multi ? [recommendationLabel] : []),
-  );
+  // Multi-select: pre-tick `preselected` when the sensible default is a set (every clinical
+  // message rung, say) and fall back to the recommendation alone otherwise. A prior answer
+  // always wins and restores the whole set.
+  const [selected, setSelected] = useState<Set<string>>(() => {
+    if (answered) return new Set(answered.split(/\s*;\s*/).filter(Boolean));
+    if (!multi) return new Set<string>();
+    const preselected = (ask.preselected ?? []).map((label) => label.trim()).filter(Boolean);
+    return new Set(preselected.length ? preselected : [recommendationLabel]);
+  });
   const [confirmed, setConfirmed] = useState<boolean>(multi ? Boolean(answered) : false);
   const [free, setFree] = useState("");
   const [detailAnchor, setDetailAnchor] = useState<HTMLElement | null>(null);
@@ -231,7 +239,7 @@ export function AskCard({
     onAnswer(final.join("; "));
   };
 
-  const renderOption = (opt: { label: string; source?: string; size?: string; criteria?: string }, isRec: boolean) => {
+  const renderOption = (opt: AskOption, isRec: boolean) => {
     const label = opt.label.trim();
     const chosen = isChosen(label);
     return (
@@ -267,6 +275,27 @@ export function AskCard({
               <Typography component="span" sx={{ display: "block", fontSize: 10.5, lineHeight: 1.4, mt: 0.15, color: chosen ? "rgba(255,255,255,0.9)" : "text.secondary" }}>
                 {opt.criteria}
               </Typography>
+            )}
+            {opt.distribution && opt.distribution.length > 0 && (
+              <Box component="span" sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mt: 0.5 }}>
+                {opt.distribution.map((slice) => (
+                  <Typography
+                    key={slice.channel}
+                    component="span"
+                    sx={{
+                      fontSize: 10,
+                      fontWeight: 700,
+                      lineHeight: 1.6,
+                      px: 0.6,
+                      borderRadius: 0.5,
+                      color: chosen ? "#fff" : "primary.main",
+                      background: chosen ? "rgba(255,255,255,0.18)" : indigoTint(0.1),
+                    }}
+                  >
+                    {slice.channel} {Math.round(slice.pct)}%
+                  </Typography>
+                ))}
+              </Box>
             )}
           </Box>
         </Box>
@@ -355,7 +384,7 @@ export function AskCard({
 
       {multi && !locked && (
         <ConfirmBtn onClick={confirmMulti} disabled={selected.size === 0}>
-          Confirm {selected.size} segment{selected.size === 1 ? "" : "s"}
+          Confirm {selected.size} {selectNoun}{selected.size === 1 ? "" : "s"}
         </ConfirmBtn>
       )}
 
@@ -364,7 +393,7 @@ export function AskCard({
           {autoAssumed
             ? "Auto-assumed the recommendation and kept going. Untick auto-assume to be asked again."
             : multi
-              ? `Locked in ${selected.size} segment${selected.size === 1 ? "" : "s"}. Drafting the section with them.`
+              ? `Locked in ${selected.size} ${selectNoun}${selected.size === 1 ? "" : "s"}. Drafting the section with them.`
               : "Locked in. Drafting the section with it."}
         </Typography>
       )}

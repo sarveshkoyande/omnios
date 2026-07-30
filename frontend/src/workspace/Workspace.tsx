@@ -470,7 +470,7 @@ export function Workspace({
           </EmptyState>
         ) : (
           <>
-            <Box sx={{ p: 2, pb: 1.5, borderBottom: `1px solid ${indigoTint(0.1)}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Box sx={{ p: 2, pb: 1.5, borderBottom: `1px solid ${indigoTint(0.1)}`, display: "flex", alignItems: "center" }}>
               {/* The stage's agent identity lives here, directly above its conversation --
                   the window you are in tells you who you are talking to. */}
               <Box sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 0 }}>
@@ -479,9 +479,6 @@ export function Workspace({
                   {stageAgent.name}
                 </Typography>
               </Box>
-              <Button size="small" variant="outlined" sx={{ borderRadius: 999 }} onClick={() => ws.newProject()}>
-                + New chat
-              </Button>
             </Box>
 
             <Box ref={scrollRef} sx={{ flex: 1, overflowY: "auto", px: 2 }}>

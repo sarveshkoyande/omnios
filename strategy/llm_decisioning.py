@@ -147,6 +147,10 @@ def _clean_text(value, fallback: str = "") -> str:
     return text if text else fallback
 
 
+# Per-option display fields carried from the draft through an LLM rewrite.
+_OPTION_EXTRAS = ("size", "criteria", "distribution")
+
+
 def _clean_option(value, fallback: dict | None = None) -> dict | None:
     fallback = fallback or {}
     if isinstance(value, str):
@@ -167,12 +171,31 @@ def _clean_option(value, fallback: dict | None = None) -> dict | None:
     option = {"label": label}
     if source:
         option["source"] = source
+    # Display enrichment the model never authors -- panel sizing, selection criteria, the
+    # posture's channel split. It lives on the draft, so a rewritten option has to inherit
+    # it or the numbers underneath the choice silently disappear.
+    authored = value if isinstance(value, dict) else {}
+    for key in _OPTION_EXTRAS:
+        extra = authored.get(key) or fallback.get(key)
+        if extra:
+            option[key] = extra
     return option
 
 
 # Alternatives offered alongside the recommendation. Two is the ceiling: with the
 # recommendation and the free-text box that is already four ways to answer.
 _MAX_ASK_OPTIONS = 2
+
+
+def _draft_option_for(item, draft_options: list[dict], index: int) -> dict:
+    """The draft row a rewritten option corresponds to: matched by label where the model kept
+    it, otherwise by position (it is asked to return the same options in the same order)."""
+    label = str((item or {}).get("label") if isinstance(item, dict) else item or "").strip().lower()
+    if label:
+        for option in draft_options:
+            if str(option.get("label") or "").strip().lower() == label:
+                return option
+    return draft_options[index] if index < len(draft_options) else {}
 
 
 def _normalize_ask_payload(out: dict, draft: dict, step: dict) -> dict:
@@ -200,10 +223,11 @@ def _normalize_ask_payload(out: dict, draft: dict, step: dict) -> dict:
         merged["recommendation"] = {"label": fallback_label, "source": "grounded fallback"}
 
     raw_options = out.get("options") if isinstance(out.get("options"), list) else merged.get("options") or []
+    draft_options = merged.get("options") or []
     cleaned_options: list[dict] = []
     seen = {merged["recommendation"]["label"].strip().lower()}
-    for item in raw_options:
-        option = _clean_option(item)
+    for index, item in enumerate(raw_options):
+        option = _clean_option(item, _draft_option_for(item, draft_options, index))
         if not option:
             continue
         key = option["label"].strip().lower()
@@ -214,7 +238,21 @@ def _normalize_ask_payload(out: dict, draft: dict, step: dict) -> dict:
     # Recommendation + 2 alternatives + free text is already four ways to answer one
     # question. Anything beyond that reads as a survey, not a decision, so the cap is
     # enforced here rather than trusted to the prompt.
-    merged["options"] = cleaned_options[:_MAX_ASK_OPTIONS]
+    #
+    # Multi-select asks are exempt: there the options are not competing answers but the set
+    # being chosen from -- segments to target, message rungs to cover. Capping those hides
+    # real choices rather than simplifying anything.
+    if merged.get("multi_select") or merged.get("keep_options"):
+        merged["options"] = cleaned_options
+        # The rewrite may reword labels. A preselected label that no longer matches a row
+        # would tick nothing, so keep only what survived and never open with an empty set.
+        live = {merged["recommendation"]["label"].strip()}
+        live |= {option["label"].strip() for option in merged["options"]}
+        kept = [str(label).strip() for label in (merged.get("preselected") or [])
+                if str(label).strip() in live]
+        merged["preselected"] = kept or [merged["recommendation"]["label"].strip()]
+    else:
+        merged["options"] = cleaned_options[:_MAX_ASK_OPTIONS]
 
     if "free_text" in out:
         merged["free_text"] = bool(out.get("free_text"))
@@ -284,6 +322,7 @@ def refine_studio_ask(ctx: dict, step: dict, draft: dict) -> dict:
                     "Write the way a brand manager speaks: plain campaign language, no framework names, no stage codes (S0-S11), no toolkit sheet numbers in the question text.",
                     "Return at most 2 options alongside the recommendation. Fewer, clearly different choices beat an exhaustive list.",
                     "Options must be meaningfully distinct decisions, not restatements of the recommendation with different wording.",
+                    "When the draft is multi_select, copy every option label VERBATIM and keep the same order -- those labels are matched back to real data, so renaming one drops it.",
                 ],
             },
         }

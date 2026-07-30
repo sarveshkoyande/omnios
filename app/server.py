@@ -2096,7 +2096,9 @@ def api_studio_answer(body: StudioAnswer):
     if not pending or pending.get("ask_id") != body.ask_id:
         raise HTTPException(409, "no matching ask is awaiting an answer")
     step = studio_run.SEQUENCE[studio["idx"]]
-    studio["answers"][step["id"]] = body.value.strip()
+    # A step may pose several questions in turn (the journey series), so the ask names the
+    # key its answer belongs under; the section id is the default for single-ask steps.
+    studio["answers"][pending.get("answer_key") or step["id"]] = body.value.strip()
     messages = proj["messages"]
     messages.append(_msg("user", body.value.strip()))
     pstore.save_project(body.project_id, state=state, messages=messages)

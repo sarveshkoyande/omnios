@@ -6,13 +6,16 @@ import { styled } from "@mui/material/styles";
 import type { StudioState } from "./studio/studioTypes";
 import { indigoTint, tokens } from "../theme/tokens";
 
-/** Static, known-ahead-of-time titles for the 19 Sequential Plan Studio sections
+/** Static, known-ahead-of-time titles for the Sequential Plan Studio sections
  * (strategy/studio_run.py's SEQUENCE, resolved against plan_document._SECTION_TABLE) --
- * shown before a section is even reached, not just once it lands. */
+ * shown before a section is even reached, not just once it lands.
+ *
+ * Only the sections that actually render are listed, in run order, so row N here is the Nth
+ * section the studio emits. Steps marked `render: False` in SEQUENCE still run and still ask
+ * their question -- they just produce no section, so they have no row and the numbering
+ * closes up behind them. The campaign brief is absent for a different reason: it has its own
+ * pinned row below and its own artifact panel. */
 export const SECTION_TITLES = [
-  "Target Customer Group Template",
-  "CX Planning Questionnaire",
-  "Omnichannel CX Feasibility Analysis",
   "Message Flow Template",
   "Channel Selection Template",
   "Map Existing Content & Identify",
@@ -24,11 +27,6 @@ export const SECTION_TITLES = [
   "Tactical plan overview & CSF map",
   "Field approach & targeting",
   "Omnichannel & media tactics",
-  "Scientific engagement, congress & peer",
-  "Account & pathway strategy",
-  "Patient & support (gated)",
-  "Tactical measurement & guardrails recap",
-  "Campaign brief",
 ];
 
 /** Fired by a row's onClick; AssemblyCanvas listens for this to expand (if
@@ -61,7 +59,7 @@ const Dot = styled(Box)<{ state: "done" | "active" | "pending" }>(({ state }) =>
 }));
 
 /** Left-rail table of contents for the Sequential Plan Studio build (Stage 1) --
- * all 19 titles shown upfront, checked off as each lands; the in-progress one shows
+ * every title shown upfront, checked off as each lands; the in-progress one shows
  * a spinner instead of a tick. Completed rows are clickable and jump the main pane
  * to that section. */
 export function PlanSectionsRail({ studio }: { studio: StudioState }) {
