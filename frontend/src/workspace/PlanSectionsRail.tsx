@@ -10,12 +10,12 @@ import { indigoTint, tokens } from "../theme/tokens";
  * (strategy/studio_run.py's SEQUENCE, resolved against plan_document._SECTION_TABLE) --
  * shown before a section is even reached, not just once it lands.
  *
- * The campaign brief is deliberately absent: it has its own pinned row below and its own
- * artifact panel, so listing it again as the last numbered section showed it twice. */
+ * Only the sections that actually render are listed, in run order, so row N here is the Nth
+ * section the studio emits. Steps marked `render: False` in SEQUENCE still run and still ask
+ * their question -- they just produce no section, so they have no row and the numbering
+ * closes up behind them. The campaign brief is absent for a different reason: it has its own
+ * pinned row below and its own artifact panel. */
 export const SECTION_TITLES = [
-  "Target Customer Group Template",
-  "CX Planning Questionnaire",
-  "Omnichannel CX Feasibility Analysis",
   "Message Flow Template",
   "Channel Selection Template",
   "Map Existing Content & Identify",
@@ -27,10 +27,6 @@ export const SECTION_TITLES = [
   "Tactical plan overview & CSF map",
   "Field approach & targeting",
   "Omnichannel & media tactics",
-  "Scientific engagement, congress & peer",
-  "Account & pathway strategy",
-  "Patient & support (gated)",
-  "Tactical measurement & guardrails recap",
 ];
 
 /** Fired by a row's onClick; AssemblyCanvas listens for this to expand (if

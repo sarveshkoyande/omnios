@@ -242,7 +242,7 @@ def _normalize_ask_payload(out: dict, draft: dict, step: dict) -> dict:
     # Multi-select asks are exempt: there the options are not competing answers but the set
     # being chosen from -- segments to target, message rungs to cover. Capping those hides
     # real choices rather than simplifying anything.
-    if merged.get("multi_select"):
+    if merged.get("multi_select") or merged.get("keep_options"):
         merged["options"] = cleaned_options
         # The rewrite may reword labels. A preselected label that no longer matches a row
         # would tick nothing, so keep only what survived and never open with an empty set.

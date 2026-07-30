@@ -1906,6 +1906,13 @@ _never = lambda c, full: False  # noqa: E731
 # (owner 'final' = the Engagement Planner's closing pass, rendered only on the full
 # compose). `ready` guards on the ctx keys the section actually reads, so a section
 # renders the moment its data exists and shows an owner-labelled placeholder before.
+# Sections whose step still runs -- posing its question and feeding the plan -- but whose
+# write-up is not part of the document. These were internal toolkit templates and tactical
+# sub-sections that a brand manager does not read; the decisions they capture still surface
+# through the brief and the decision trail. Mirrored by `render: False` in
+# studio_run.SEQUENCE, which is what stops them being emitted during the live run.
+HIDDEN_SECTIONS = frozenset({4, 5, 6, 29, 30, 31, 32})
+
 _SECTION_TABLE = [
     ("sec", 1, "Executive summary", "insights", "", "final", lambda c: True, _sec_exec, _never),
     ("sec", 2, "Open questions — needs brand-team alignment", "help", "", "final",
@@ -2085,6 +2092,8 @@ def _compose(ctx: dict, done_agents: set | None = None, fresh_agent: str = "",
             md.append("---\n\n# Supporting analysis\n")
             continue
         _, num, title, icon, phase, owner, ready, fn, skip = entry
+        if num in HIDDEN_SECTIONS:
+            continue
         if skip(ctx, full):
             continue
         if not _revealed(phase):
