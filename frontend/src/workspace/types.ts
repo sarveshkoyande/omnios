@@ -514,6 +514,43 @@ export interface EmailMetrics {
   months: string[];
   metrics: EmailMetric[];
 }
+export interface OpensByTimeRow {
+  day: string;
+  cells: number[];
+}
+export interface StateCtrRow {
+  state: string;
+  ctr_pct: number;
+}
+export interface SegmentDeliveryRow {
+  segment: string;
+  pct: number;
+}
+export interface SubjectLineRow {
+  asset_name: string;
+  segment: string;
+  subject_line: string;
+  ab_testing: string;
+  wave_type: string;
+  emails_sent: number;
+  deliveries: number;
+  opens: number;
+  clicks: number;
+  open_rate_pct: number;
+  ctr_pct: number;
+}
+export interface EmailDeepdive {
+  opens_by_time: { hours: string[]; rows: OpensByTimeRow[] };
+  ctr_by_state: StateCtrRow[];
+  delivered_by_segment: SegmentDeliveryRow[];
+  subject_lines: SubjectLineRow[];
+  tiles: {
+    unique_hcp_reached: number;
+    unique_hcp_engaged: number;
+    unique_hcp_deep_engaged: number;
+    unique_subject_lines: number;
+  };
+}
 export interface ReportingInsights {
   available: boolean;
   brand: string;
@@ -525,6 +562,7 @@ export interface ReportingInsights {
   funnel: { stage: string; note: string; signals: ReportingSignal[] };
   kpis: ReportingKpi[];
   email_metrics: EmailMetrics;
+  email_deepdive: EmailDeepdive;
   demographics: {
     available: boolean;
     total_hcps?: number;

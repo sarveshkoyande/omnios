@@ -99,6 +99,106 @@ function DemoBlock({ title, rows }: { title: string; rows?: SegmentRow[] }) {
   );
 }
 
+/** Day × hour-of-day open-rate heatmap — cell shade intensity on the current stage accent. */
+function OpensHeatmap({ hours, rows }: { hours: string[]; rows: { day: string; cells: number[] }[] }) {
+  const max = Math.max(0.01, ...rows.flatMap((r) => r.cells));
+  return (
+    <Box sx={{ overflowX: "auto" }}>
+      <PlanTable>
+        <thead>
+          <tr>
+            <th>Day</th>
+            {hours.map((h) => <th key={h}>{h}</th>)}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r.day}>
+              <td><b>{r.day}</b></td>
+              {r.cells.map((v, i) => (
+                <td key={i} style={{ background: v > 0 ? `${accent.primary}${Math.round((v / max) * 70 + 8).toString(16).padStart(2, "0")}` : undefined, fontVariantNumeric: "tabular-nums" }}>
+                  {v > 0 ? `${v}%` : ""}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </PlanTable>
+    </Box>
+  );
+}
+
+/** Ranked horizontal bar list (state-level CTR) — a lighter-weight substitute for a full
+ * choropleth map, same information (relative ranking + exact value) without a mapping library. */
+function StateCtrList({ rows }: { rows: { state: string; ctr_pct: number }[] }) {
+  const max = Math.max(0.01, ...rows.map((r) => r.ctr_pct));
+  return (
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 0.6, maxHeight: 320, overflowY: "auto" }}>
+      {rows.map((r) => (
+        <Box key={r.state} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Typography variant="caption" sx={{ flex: "0 0 34%", minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            {r.state}
+          </Typography>
+          <Box sx={{ flex: 1, height: 9, borderRadius: 4, background: indigoTint(0.08), overflow: "hidden" }}>
+            <Box sx={{ width: `${(r.ctr_pct / max) * 100}%`, height: "100%", background: accent.primary, borderRadius: 4 }} />
+          </Box>
+          <Typography variant="caption" sx={{ flex: "0 0 auto", fontWeight: 700, color: "text.secondary", minWidth: 44, textAlign: "right" }}>{r.ctr_pct}%</Typography>
+        </Box>
+      ))}
+    </Box>
+  );
+}
+
+const DONUT_SHADES = [1, 0.6, 0.28]; // opacity steps on the stage accent, darkest -> lightest
+
+/** CSS conic-gradient donut (no chart library) shaded in steps of the current stage accent. */
+function SegmentDonut({ rows }: { rows: { segment: string; pct: number }[] }) {
+  let acc = 0;
+  const stops = rows.map((r, i) => {
+    const start = acc;
+    acc += r.pct;
+    const color = `${accent.primary}${Math.round(DONUT_SHADES[i % DONUT_SHADES.length] * 255).toString(16).padStart(2, "0")}`;
+    return `${color} ${start}% ${acc}%`;
+  });
+  return (
+    <Box sx={{ display: "flex", alignItems: "center", gap: 3, flexWrap: "wrap" }}>
+      <Box
+        sx={{
+          width: 150,
+          height: 150,
+          borderRadius: "50%",
+          background: `conic-gradient(${stops.join(", ")})`,
+          display: "grid",
+          placeItems: "center",
+          flex: "0 0 auto",
+        }}
+      >
+        <Box sx={{ width: 84, height: 84, borderRadius: "50%", background: tokens.color.surface }} />
+      </Box>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+        {rows.map((r, i) => (
+          <Box key={r.segment} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Box sx={{ width: 12, height: 12, borderRadius: "3px", background: `${accent.primary}${Math.round(DONUT_SHADES[i % DONUT_SHADES.length] * 255).toString(16).padStart(2, "0")}`, flex: "0 0 auto" }} />
+            <Typography variant="caption">{r.segment} — <b>{r.pct}%</b></Typography>
+          </Box>
+        ))}
+      </Box>
+    </Box>
+  );
+}
+
+const StatTile = styled(Box)(({ theme }) => ({
+  flex: "1 1 180px",
+  minWidth: 160,
+  borderRadius: tokens.radius.md,
+  background: accent.primary,
+  color: "#fff",
+  padding: theme.spacing(2),
+  display: "flex",
+  flexDirection: "column",
+  gap: 4,
+}));
+
 export function StageReporting({ result, projectId }: { result: PlanResult | null; projectId: string | null }) {
   const [insights, setInsights] = useState<ReportingInsights | null>(null);
   const [months, setMonths] = useState(6);
@@ -191,6 +291,75 @@ export function StageReporting({ result, projectId }: { result: PlanResult | nul
                 {insights.email_metrics.note} Showing: {insights.email_metrics.specialty}.
               </Typography>
             </ConsolePanel>
+          )}
+
+          {/* Email deep-dive: open-time heatmap + CTR by state, delivered-by-segment + subject
+              line performance, and reach tiles — all on the current stage accent. */}
+          {insights.email_deepdive && (
+            <>
+              <Box sx={{ display: "flex", gap: 3, flexWrap: "wrap", mb: 3, alignItems: "stretch" }}>
+                <ConsolePanel title="Opens — by time of day" sx={{ flex: "1 1 420px", minWidth: 0 }}>
+                  <OpensHeatmap hours={insights.email_deepdive.opens_by_time.hours} rows={insights.email_deepdive.opens_by_time.rows} />
+                </ConsolePanel>
+                <ConsolePanel title="CTR by state" sx={{ flex: "1 1 320px", minWidth: 0 }}>
+                  <StateCtrList rows={insights.email_deepdive.ctr_by_state} />
+                </ConsolePanel>
+              </Box>
+
+              <Box sx={{ display: "flex", gap: 3, flexWrap: "wrap", mb: 3, alignItems: "stretch" }}>
+                <ConsolePanel title="Delivered by segment" sx={{ flex: "1 1 320px", minWidth: 0 }}>
+                  <SegmentDonut rows={insights.email_deepdive.delivered_by_segment} />
+                </ConsolePanel>
+                <ConsolePanel title="Subject line performance" sx={{ flex: "2 1 480px", minWidth: 0 }}>
+                  <Box sx={{ overflowX: "auto" }}>
+                    <PlanTable>
+                      <thead>
+                        <tr>
+                          <th>Asset name</th><th>Segment</th><th>Subject line</th><th>A/B testing</th><th>Wave type</th>
+                          <th>Emails sent</th><th>Deliveries</th><th>Opens</th><th>Clicks</th><th>Open rate</th><th>CTR</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {insights.email_deepdive.subject_lines.map((r, i) => (
+                          <tr key={i}>
+                            <td>{r.asset_name}</td>
+                            <td>{r.segment || "—"}</td>
+                            <td>{r.subject_line}</td>
+                            <td>{r.ab_testing}</td>
+                            <td>{r.wave_type}</td>
+                            <td>{r.emails_sent}</td>
+                            <td>{r.deliveries}</td>
+                            <td>{r.opens}</td>
+                            <td>{r.clicks}</td>
+                            <td>{r.open_rate_pct}%</td>
+                            <td>{r.ctr_pct}%</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </PlanTable>
+                  </Box>
+                </ConsolePanel>
+              </Box>
+
+              <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap", mb: 3 }}>
+                <StatTile>
+                  <Typography variant="caption" sx={{ opacity: 0.85 }}>Unique HCP reached</Typography>
+                  <Typography sx={{ fontSize: 26, fontWeight: 800 }}>{insights.email_deepdive.tiles.unique_hcp_reached.toLocaleString()}</Typography>
+                </StatTile>
+                <StatTile>
+                  <Typography variant="caption" sx={{ opacity: 0.85 }}>Unique HCP engaged</Typography>
+                  <Typography sx={{ fontSize: 26, fontWeight: 800 }}>{insights.email_deepdive.tiles.unique_hcp_engaged.toLocaleString()}</Typography>
+                </StatTile>
+                <StatTile>
+                  <Typography variant="caption" sx={{ opacity: 0.85 }}>Unique HCP deep engaged</Typography>
+                  <Typography sx={{ fontSize: 26, fontWeight: 800 }}>{insights.email_deepdive.tiles.unique_hcp_deep_engaged.toLocaleString()}</Typography>
+                </StatTile>
+                <StatTile>
+                  <Typography variant="caption" sx={{ opacity: 0.85 }}>Unique subject lines</Typography>
+                  <Typography sx={{ fontSize: 26, fontWeight: 800 }}>{insights.email_deepdive.tiles.unique_subject_lines}</Typography>
+                </StatTile>
+              </Box>
+            </>
           )}
 
           {/* Stage-promotion funnel — the signals that move an HCP to the next journey stage. */}

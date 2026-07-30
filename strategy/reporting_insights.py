@@ -198,6 +198,114 @@ def _email_metrics(idx: float, ct: dict, specialty: str | None, months: int) -> 
     }
 
 
+_DOW = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+_HOUR_BUCKETS = ["3 AM", "6 AM", "9 AM", "12 PM", "3 PM", "6 PM", "9 PM", "12 AM"]
+# Relative weekday/weekend and hour-of-day weighting -- HCPs open email in short bursts
+# around clinic downtime (mid-morning, lunch), weekdays >> weekend, matching the shape of
+# real triggered-email open-time distributions (not a flat/random spread).
+_HOUR_WEIGHT = [0.02, 0.35, 1.0, 1.9, 0.55, 0.12, 0.09, 0.07]
+_DOW_WEIGHT = [0.05, 1.0, 1.35, 1.15, 1.5, 1.7, 0.06]
+
+# A representative subset of US states (not all 50) for the CTR-by-state ranked list.
+_STATES = [
+    "California", "Texas", "New York", "Florida", "Pennsylvania", "Illinois", "Ohio",
+    "Georgia", "North Carolina", "Michigan", "New Jersey", "Virginia", "Massachusetts",
+    "Arizona", "Tennessee", "Indiana", "Missouri", "Maryland", "Wisconsin", "Colorado",
+]
+
+_SEGMENT_BUCKETS = ["High Awareness", "Growing Awareness", "Low Awareness"]
+
+_SUBJECT_LINE_TEMPLATES = [
+    ("Explore clinical trial data of {brand}", "A/B Test — Not Concluded", "FW"),
+    ("Explore {brand} videos on clinical data", "A/B Winner — B", "FW"),
+    ("New patient support resources for {brand}", "A/B — B", "FW"),
+]
+
+
+def _opens_by_time(spec_key: str, open_rate_pct: float) -> dict:
+    """Day-of-week x hour-of-day open-rate heatmap. Illustrative shape (weekday/mid-morning
+    peak) scaled to roughly sum to the metric's own open rate -- not observed send-time data."""
+    rows = []
+    for d, dow in enumerate(_DOW):
+        cells = []
+        for h, hour in enumerate(_HOUR_BUCKETS):
+            base = open_rate_pct * _DOW_WEIGHT[d] * _HOUR_WEIGHT[h] / 12.0
+            wobble = _stable_wave(f"{spec_key}:opens:{dow}", h, 0.25)
+            cells.append(round(max(0.0, base * (1 + wobble)), 2))
+        rows.append({"day": dow, "cells": cells})
+    return {"hours": _HOUR_BUCKETS, "rows": rows}
+
+
+def _ctr_by_state(spec_key: str, ctr_pct: float) -> list[dict]:
+    out = []
+    for i, state in enumerate(_STATES):
+        wobble = _stable_wave(f"{spec_key}:state", i, 0.9)  # wide spread -- state volumes vary a lot
+        out.append({"state": state, "ctr_pct": round(max(0.0, ctr_pct * (1 + wobble) * 1.8), 2)})
+    out.sort(key=lambda r: -r["ctr_pct"])
+    return out
+
+
+def _delivered_by_segment(spec_key: str) -> list[dict]:
+    weights = {b: 20 + abs(_stable_wave(f"{spec_key}:segdist", i, 30)) for i, b in enumerate(_SEGMENT_BUCKETS)}
+    total = sum(weights.values()) or 1.0
+    return [{"segment": b, "pct": round(w / total * 100, 2)} for b, w in weights.items()]
+
+
+def _subject_line_performance(brand: str, spec_key: str, target_hcps: int, email: dict, idx: float) -> list[dict]:
+    open_rate = float(email.get("open_rate_pct", 18.26)) * idx
+    ctr = float(email.get("ctr_pct", 3.0)) * idx
+    rows = []
+    for i, (tmpl, ab_testing, wave_type) in enumerate(_SUBJECT_LINE_TEMPLATES):
+        sent = max(20, int(target_hcps * (0.08 + abs(_stable_wave(f"{spec_key}:sl:sent", i, 0.05)))))
+        deliveries = int(sent * (_DELIVERY_RATE_PCT / 100.0))
+        row_open_rate = round(max(0.0, open_rate * (1 + _stable_wave(f"{spec_key}:sl:open", i, 0.4))), 1)
+        row_ctr = round(max(0.0, ctr * (1 + _stable_wave(f"{spec_key}:sl:ctr", i, 0.5))), 1)
+        opens = int(deliveries * row_open_rate / 100.0)
+        clicks = int(opens * row_ctr / max(row_open_rate, 0.1))
+        rows.append({
+            "asset_name": f"{brand or 'Brand'} — Wave {i + 1}",
+            "segment": "High Awareness" if i >= 2 else "",
+            "subject_line": tmpl.format(brand=brand or "the brand"),
+            "ab_testing": ab_testing,
+            "wave_type": wave_type,
+            "emails_sent": sent,
+            "deliveries": deliveries,
+            "opens": opens,
+            "clicks": clicks,
+            "open_rate_pct": row_open_rate,
+            "ctr_pct": row_ctr,
+        })
+    return rows
+
+
+def _email_deepdive(brand: str, specialty: str | None, idx: float, ct: dict, target_hcps: int) -> dict:
+    """The four extra Email metrics widgets: opens-by-time-of-day heatmap, CTR-by-state ranked
+    list, delivered-by-segment split, and per-subject-line performance table + reach tiles.
+    Same illustrative-simulated-series caveat as _email_metrics -- no live ESP feed connected."""
+    spec_key = (specialty or "all").strip().lower()
+    email = ct.get("email_hcp_triggered", {}) or {}
+    open_rate = float(email.get("open_rate_pct", 18.26)) * idx
+    ctr = float(email.get("ctr_pct", 3.0)) * idx
+
+    subject_lines = _subject_line_performance(brand, spec_key, target_hcps, email, idx)
+    total_deliveries = sum(r["deliveries"] for r in subject_lines) or 1
+    total_opens = sum(r["opens"] for r in subject_lines)
+    total_clicks = sum(r["clicks"] for r in subject_lines)
+
+    return {
+        "opens_by_time": _opens_by_time(spec_key, open_rate),
+        "ctr_by_state": _ctr_by_state(spec_key, ctr),
+        "delivered_by_segment": _delivered_by_segment(spec_key),
+        "subject_lines": subject_lines,
+        "tiles": {
+            "unique_hcp_reached": total_deliveries,
+            "unique_hcp_engaged": total_opens,
+            "unique_hcp_deep_engaged": total_clicks,
+            "unique_subject_lines": len(subject_lines),
+        },
+    }
+
+
 def build(project_id: str, specialty: str | None = None, months: int = 6) -> dict:
     proj = pstore.get_project(project_id) or {}
     result = proj.get("result") or {}
@@ -223,6 +331,7 @@ def build(project_id: str, specialty: str | None = None, months: int = 6) -> dic
     impressions_target = target_hcps * _AVG_FREQUENCY
     months_clamped = max(1, min(months, 24))
     email_metrics = _email_metrics(idx, ct, specialty, months_clamped)
+    email_deepdive = _email_deepdive(brand, specialty, idx, ct, target_hcps)
 
     # Funnel: stage-promotion signals for the priority journey stage.
     funnel = {
@@ -267,6 +376,7 @@ def build(project_id: str, specialty: str | None = None, months: int = 6) -> dic
         "funnel": funnel,
         "kpis": kpis,
         "email_metrics": email_metrics,
+        "email_deepdive": email_deepdive,
         "demographics": demo,
         "tagging": _tagging_matrix(brand),
         "test_design": _test_design(brand),
