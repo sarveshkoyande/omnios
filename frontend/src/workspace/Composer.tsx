@@ -354,14 +354,11 @@ export function Composer({
             variant="caption"
             sx={{ color: "text.secondary", cursor: "pointer", lineHeight: 1.35 }}
           >
-            <b>Auto-assume</b> — don't wait for me; take the recommended option on every question
+            <b>Auto-assume</b>
             {autoAssume ? " (on from the next question)" : ""}
           </Typography>
         </Box>
       )}
-      <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 1, pl: 0.5 }}>
-        Enter to send. Shift+Enter for a new line. Attach a file to upload a brand plan (.pdf/.docx/.txt/.md).
-      </Typography>
     </Box>
   );
 }
