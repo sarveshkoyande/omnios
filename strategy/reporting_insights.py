@@ -208,9 +208,14 @@ _DOW_WEIGHT = [0.05, 1.0, 1.35, 1.15, 1.5, 1.7, 0.06]
 
 # A representative subset of US states (not all 50) for the CTR-by-state ranked list.
 _STATES = [
-    "California", "Texas", "New York", "Florida", "Pennsylvania", "Illinois", "Ohio",
-    "Georgia", "North Carolina", "Michigan", "New Jersey", "Virginia", "Massachusetts",
-    "Arizona", "Tennessee", "Indiana", "Missouri", "Maryland", "Wisconsin", "Colorado",
+    "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut",
+    "Delaware", "District of Columbia", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois",
+    "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland",
+    "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri", "Montana",
+    "Nebraska", "Nevada", "New Hampshire", "New Jersey", "New Mexico", "New York",
+    "North Carolina", "North Dakota", "Ohio", "Oklahoma", "Oregon", "Pennsylvania",
+    "Rhode Island", "South Carolina", "South Dakota", "Tennessee", "Texas", "Utah",
+    "Vermont", "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming",
 ]
 
 _SEGMENT_BUCKETS = ["High Awareness", "Growing Awareness", "Low Awareness"]

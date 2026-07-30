@@ -5,6 +5,7 @@ import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 import Typography from "@mui/material/Typography";
 import { styled } from "@mui/material/styles";
+import { ComposableMap, Geographies, Geography } from "react-simple-maps";
 import { ConsolePanel } from "../../components/ConsolePanel";
 import { PlanTable } from "./PlanTable";
 import { StageHead } from "./StageHead";
@@ -12,6 +13,9 @@ import { indigoTint, tokens } from "../../theme/tokens";
 import { accent } from "../../theme/stageTheme";
 import { fetchReportingInsights } from "../../api";
 import type { PlanResult, ReportingInsights, ReportingKpi, ReportingSignal, SegmentRow } from "../types";
+
+// A public, static US-states topology -- react-simple-maps' documented example source.
+const US_STATES_GEO_URL = "https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json";
 
 const TIME_WINDOWS = [
   { label: "Last 3 months", months: 3 },
@@ -116,7 +120,7 @@ function OpensHeatmap({ hours, rows }: { hours: string[]; rows: { day: string; c
             <tr key={r.day}>
               <td><b>{r.day}</b></td>
               {r.cells.map((v, i) => (
-                <td key={i} style={{ background: v > 0 ? `${accent.primary}${Math.round((v / max) * 70 + 8).toString(16).padStart(2, "0")}` : undefined, fontVariantNumeric: "tabular-nums" }}>
+                <td key={i} style={{ background: v > 0 ? `color-mix(in srgb, ${accent.primary} ${Math.round((v / max) * 85 + 5)}%, white)` : undefined, fontVariantNumeric: "tabular-nums" }}>
                   {v > 0 ? `${v}%` : ""}
                 </td>
               ))}
@@ -130,21 +134,98 @@ function OpensHeatmap({ hours, rows }: { hours: string[]; rows: { day: string; c
 
 /** Ranked horizontal bar list (state-level CTR) — a lighter-weight substitute for a full
  * choropleth map, same information (relative ranking + exact value) without a mapping library. */
-function StateCtrList({ rows }: { rows: { state: string; ctr_pct: number }[] }) {
+/** Real US state-boundary choropleth (react-simple-maps + a public states topology),
+ * shaded on the current stage accent from light (low CTR) to full (high CTR). */
+function StateCtrMap({ rows }: { rows: { state: string; ctr_pct: number }[] }) {
+  const byName = useMemo(() => Object.fromEntries(rows.map((r) => [r.state, r.ctr_pct])), [rows]);
   const max = Math.max(0.01, ...rows.map((r) => r.ctr_pct));
+  const [hover, setHover] = useState<{ name: string; value: number } | null>(null);
+
+  const colorFor = (value: number | undefined) => {
+    if (value == null) return indigoTint(0.08);
+    const pct = Math.round(12 + 88 * (value / max)); // never fully white, even at the low end
+    return `color-mix(in srgb, ${accent.primary} ${pct}%, white)`;
+  };
+
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 0.6, maxHeight: 320, overflowY: "auto" }}>
-      {rows.map((r) => (
-        <Box key={r.state} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <Typography variant="caption" sx={{ flex: "0 0 34%", minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-            {r.state}
-          </Typography>
-          <Box sx={{ flex: 1, height: 9, borderRadius: 4, background: indigoTint(0.08), overflow: "hidden" }}>
-            <Box sx={{ width: `${(r.ctr_pct / max) * 100}%`, height: "100%", background: accent.primary, borderRadius: 4 }} />
+    <Box>
+      <Typography variant="caption" sx={{ display: "block", mb: 0.5, color: "text.secondary", minHeight: 18 }}>
+        {hover ? <><b>{hover.name}</b> — {hover.value}% CTR</> : "Hover a state for its CTR"}
+      </Typography>
+      <ComposableMap projection="geoAlbersUsa" width={480} height={300} style={{ width: "100%", height: "auto" }}>
+        <Geographies geography={US_STATES_GEO_URL}>
+          {({ geographies }) =>
+            geographies.map((geo) => {
+              const name = geo.properties.name as string;
+              const value = byName[name];
+              return (
+                <Geography
+                  key={geo.rsmKey}
+                  geography={geo}
+                  onMouseEnter={() => setHover({ name, value: value ?? 0 })}
+                  onMouseLeave={() => setHover(null)}
+                  style={{
+                    default: { fill: colorFor(value), stroke: tokens.color.surface, strokeWidth: 0.75, outline: "none" },
+                    hover: { fill: accent.primary, stroke: tokens.color.surface, strokeWidth: 0.75, outline: "none" },
+                    pressed: { fill: accent.primary, stroke: tokens.color.surface, strokeWidth: 0.75, outline: "none" },
+                  }}
+                />
+              );
+            })
+          }
+        </Geographies>
+      </ComposableMap>
+    </Box>
+  );
+}
+
+/** Small SVG multi-line chart for the monthly split -- one line per metric, in the requested
+ * metric order, shaded in steps of the current stage accent. */
+function MonthlyTrendChart({ months, metrics }: { months: string[]; metrics: { label: string; monthly: { value_pct: number }[] }[] }) {
+  const W = 640, H = 220, PAD_L = 40, PAD_R = 12, PAD_T = 12, PAD_B = 28;
+  const innerW = W - PAD_L - PAD_R, innerH = H - PAD_T - PAD_B;
+  const max = Math.max(1, ...metrics.flatMap((m) => m.monthly.map((p) => p.value_pct)));
+  const n = months.length;
+  const x = (i: number) => PAD_L + (n <= 1 ? 0 : (i / (n - 1)) * innerW);
+  const y = (v: number) => PAD_T + innerH - (v / max) * innerH;
+  const shadeFor = (i: number) => {
+    const pct = metrics.length <= 1 ? 100 : Math.round((0.35 + 0.65 * (1 - i / (metrics.length - 1))) * 100);
+    return `color-mix(in srgb, ${accent.primary} ${pct}%, white)`;
+  };
+
+  return (
+    <Box>
+      <Box component="svg" viewBox={`0 0 ${W} ${H}`} sx={{ width: "100%", height: "auto", display: "block" }}>
+        {[0, 0.25, 0.5, 0.75, 1].map((f) => (
+          <line key={f} x1={PAD_L} x2={W - PAD_R} y1={PAD_T + innerH * (1 - f)} y2={PAD_T + innerH * (1 - f)} stroke={indigoTint(0.1)} strokeWidth={1} />
+        ))}
+        {[0, 0.25, 0.5, 0.75, 1].map((f) => (
+          <text key={f} x={PAD_L - 6} y={PAD_T + innerH * (1 - f) + 3} fontSize={9} textAnchor="end" fill={tokens.color.inkSoft}>
+            {(max * f).toFixed(1)}%
+          </text>
+        ))}
+        {months.map((m, i) => (
+          <text key={m} x={x(i)} y={H - 8} fontSize={9} textAnchor="middle" fill={tokens.color.inkSoft}>{m.slice(5)}</text>
+        ))}
+        {metrics.map((metric, mi) => {
+          const d = metric.monthly.map((p, i) => `${i === 0 ? "M" : "L"} ${x(i)} ${y(p.value_pct)}`).join(" ");
+          const color = shadeFor(mi);
+          return (
+            <g key={metric.label}>
+              <path d={d} fill="none" stroke={color} strokeWidth={2} />
+              {metric.monthly.map((p, i) => <circle key={i} cx={x(i)} cy={y(p.value_pct)} r={2.5} fill={color} />)}
+            </g>
+          );
+        })}
+      </Box>
+      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, mt: 1 }}>
+        {metrics.map((metric, mi) => (
+          <Box key={metric.label} sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+            <Box sx={{ width: 10, height: 10, borderRadius: "2px", background: shadeFor(mi) }} />
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>{metric.label}</Typography>
           </Box>
-          <Typography variant="caption" sx={{ flex: "0 0 auto", fontWeight: 700, color: "text.secondary", minWidth: 44, textAlign: "right" }}>{r.ctr_pct}%</Typography>
-        </Box>
-      ))}
+        ))}
+      </Box>
     </Box>
   );
 }
@@ -152,13 +233,17 @@ function StateCtrList({ rows }: { rows: { state: string; ctr_pct: number }[] }) 
 const DONUT_SHADES = [1, 0.6, 0.28]; // opacity steps on the stage accent, darkest -> lightest
 
 /** CSS conic-gradient donut (no chart library) shaded in steps of the current stage accent. */
+function _donutShade(i: number): string {
+  const pct = Math.round(DONUT_SHADES[i % DONUT_SHADES.length] * 100);
+  return `color-mix(in srgb, ${accent.primary} ${pct}%, white)`;
+}
+
 function SegmentDonut({ rows }: { rows: { segment: string; pct: number }[] }) {
   let acc = 0;
   const stops = rows.map((r, i) => {
     const start = acc;
     acc += r.pct;
-    const color = `${accent.primary}${Math.round(DONUT_SHADES[i % DONUT_SHADES.length] * 255).toString(16).padStart(2, "0")}`;
-    return `${color} ${start}% ${acc}%`;
+    return `${_donutShade(i)} ${start}% ${acc}%`;
   });
   return (
     <Box sx={{ display: "flex", alignItems: "center", gap: 3, flexWrap: "wrap" }}>
@@ -178,7 +263,7 @@ function SegmentDonut({ rows }: { rows: { segment: string; pct: number }[] }) {
       <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
         {rows.map((r, i) => (
           <Box key={r.segment} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Box sx={{ width: 12, height: 12, borderRadius: "3px", background: `${accent.primary}${Math.round(DONUT_SHADES[i % DONUT_SHADES.length] * 255).toString(16).padStart(2, "0")}`, flex: "0 0 auto" }} />
+            <Box sx={{ width: 12, height: 12, borderRadius: "3px", background: _donutShade(i), flex: "0 0 auto" }} />
             <Typography variant="caption">{r.segment} — <b>{r.pct}%</b></Typography>
           </Box>
         ))}
@@ -267,26 +352,7 @@ export function StageReporting({ result, projectId }: { result: PlanResult | nul
               <Typography variant="caption" sx={{ fontWeight: 700, color: "text.secondary", display: "block", mb: 1 }}>
                 Split by month
               </Typography>
-              <Box sx={{ overflowX: "auto" }}>
-                <PlanTable>
-                  <thead>
-                    <tr>
-                      <th>Metric</th>
-                      {insights.email_metrics.months.map((mo) => <th key={mo}>{mo}</th>)}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {insights.email_metrics.metrics.map((m) => (
-                      <tr key={m.key}>
-                        <td><b>{m.label}</b></td>
-                        {m.monthly.map((row) => (
-                          <td key={row.month}>{row.value_pct}%</td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </PlanTable>
-              </Box>
+              <MonthlyTrendChart months={insights.email_metrics.months} metrics={insights.email_metrics.metrics} />
               <Typography variant="caption" sx={{ color: "text.secondary", fontStyle: "italic", display: "block", mt: 1.5 }}>
                 {insights.email_metrics.note} Showing: {insights.email_metrics.specialty}.
               </Typography>
@@ -302,7 +368,7 @@ export function StageReporting({ result, projectId }: { result: PlanResult | nul
                   <OpensHeatmap hours={insights.email_deepdive.opens_by_time.hours} rows={insights.email_deepdive.opens_by_time.rows} />
                 </ConsolePanel>
                 <ConsolePanel title="CTR by state" sx={{ flex: "1 1 320px", minWidth: 0 }}>
-                  <StateCtrList rows={insights.email_deepdive.ctr_by_state} />
+                  <StateCtrMap rows={insights.email_deepdive.ctr_by_state} />
                 </ConsolePanel>
               </Box>
 
