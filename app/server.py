@@ -1442,12 +1442,14 @@ def api_tab_chat_ask(pid: str, stage_id: str, req: TabChatRequest):
 
 
 @app.get("/api/projects/{pid}/reporting-insights")
-def api_reporting_insights(pid: str):
-    """Reporting tab payload: stage-promotion funnel, delivery/engagement KPI cards, real
-    HCP-panel demographics, the UTM link/tagging matrix, and the A/B test design."""
+def api_reporting_insights(pid: str, specialty: str | None = None, months: int = 6):
+    """Reporting tab payload: stage-promotion funnel, delivery/engagement KPI cards, the
+    email metrics funnel (e-delivery/open/CTR/CTOR/bounce/unsubscribe) with an exact current
+    percentage and a monthly trend, real HCP-panel demographics, the UTM link/tagging matrix,
+    and the A/B test design. `specialty` and `months` filter the email metrics block."""
     if not pstore.get_project(pid):
         raise HTTPException(404, "project not found")
-    return reporting_insights.build(pid)
+    return reporting_insights.build(pid, specialty=specialty, months=months)
 
 
 @app.get("/api/projects/{pid}/export.docx")

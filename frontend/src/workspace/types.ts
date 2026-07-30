@@ -498,6 +498,22 @@ export interface SegmentRow {
   value: string;
   count: number;
 }
+export interface EmailMetricMonth {
+  month: string;
+  value_pct: number;
+}
+export interface EmailMetric {
+  key: "delivery" | "open" | "ctr" | "ctor" | "bounce" | "unsubscribe";
+  label: string;
+  value_pct: number;
+  monthly: EmailMetricMonth[];
+}
+export interface EmailMetrics {
+  note: string;
+  specialty: string;
+  months: string[];
+  metrics: EmailMetric[];
+}
 export interface ReportingInsights {
   available: boolean;
   brand: string;
@@ -508,6 +524,7 @@ export interface ReportingInsights {
   caveat: string;
   funnel: { stage: string; note: string; signals: ReportingSignal[] };
   kpis: ReportingKpi[];
+  email_metrics: EmailMetrics;
   demographics: {
     available: boolean;
     total_hcps?: number;

@@ -234,8 +234,15 @@ export async function getProject(id: string): Promise<ProjectDetail> {
   return res.json();
 }
 
-export async function fetchReportingInsights(projectId: string): Promise<ReportingInsights> {
-  const res = await fetch(`/api/projects/${encodeURIComponent(projectId)}/reporting-insights`);
+export async function fetchReportingInsights(
+  projectId: string,
+  filters?: { specialty?: string | null; months?: number },
+): Promise<ReportingInsights> {
+  const params = new URLSearchParams();
+  if (filters?.specialty) params.set("specialty", filters.specialty);
+  if (filters?.months) params.set("months", String(filters.months));
+  const qs = params.toString();
+  const res = await fetch(`/api/projects/${encodeURIComponent(projectId)}/reporting-insights${qs ? `?${qs}` : ""}`);
   if (!res.ok) throw new Error(`GET reporting-insights -> ${res.status}`);
   return res.json();
 }

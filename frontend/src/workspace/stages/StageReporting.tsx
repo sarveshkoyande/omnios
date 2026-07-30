@@ -1,6 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
+import MenuItem from "@mui/material/MenuItem";
+import Select from "@mui/material/Select";
 import Typography from "@mui/material/Typography";
 import { styled } from "@mui/material/styles";
 import { ConsolePanel } from "../../components/ConsolePanel";
@@ -10,6 +12,25 @@ import { indigoTint, tokens } from "../../theme/tokens";
 import { accent } from "../../theme/stageTheme";
 import { fetchReportingInsights } from "../../api";
 import type { PlanResult, ReportingInsights, ReportingKpi, ReportingSignal, SegmentRow } from "../types";
+
+const TIME_WINDOWS = [
+  { label: "Last 3 months", months: 3 },
+  { label: "Last 6 months", months: 6 },
+  { label: "Last 12 months", months: 12 },
+];
+
+/** A single email-funnel metric card: label + exact current-period percentage. */
+const EmailMetricCard = styled(Box)(({ theme }) => ({
+  flex: "1 1 150px",
+  minWidth: 140,
+  borderRadius: tokens.radius.md,
+  border: `1px solid ${indigoTint(0.14)}`,
+  background: "rgba(255,255,255,0.55)",
+  padding: theme.spacing(1.5),
+  display: "flex",
+  flexDirection: "column",
+  gap: 2,
+}));
 
 const LANE_ICON: Record<string, string> = {
   Field: "groups",
@@ -80,21 +101,24 @@ function DemoBlock({ title, rows }: { title: string; rows?: SegmentRow[] }) {
 
 export function StageReporting({ result, projectId }: { result: PlanResult | null; projectId: string | null }) {
   const [insights, setInsights] = useState<ReportingInsights | null>(null);
+  const [months, setMonths] = useState(6);
+  const [specialty, setSpecialty] = useState<string>("");
 
   useEffect(() => {
     if (!projectId) return;
     let cancelled = false;
-    fetchReportingInsights(projectId)
+    fetchReportingInsights(projectId, { months, specialty: specialty || null })
       .then((d) => { if (!cancelled) setInsights(d); })
       .catch(() => { if (!cancelled) setInsights(null); });
     return () => { cancelled = true; };
-  }, [projectId, result]);
+  }, [projectId, result, months, specialty]);
 
   if (!result && !insights) {
     return <ConsolePanel><Typography sx={{ color: "text.secondary", fontStyle: "italic" }}>Complete Stage 1 to see the measurement framework.</Typography></ConsolePanel>;
   }
 
   const demo = insights?.demographics;
+  const specialtyOptions = useMemo(() => (demo?.by_specialty ?? []).map((r) => r.value), [demo]);
 
   return (
     <Box>
@@ -107,6 +131,68 @@ export function StageReporting({ result, projectId }: { result: PlanResult | nul
 
       {insights && (
         <>
+          {/* Filters — apply to the email metrics funnel below. */}
+          <ConsolePanel id="rep-filters" sx={{ mb: 3 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
+              <Typography variant="caption" sx={{ fontWeight: 700, color: "text.secondary" }}>Filters</Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Typography variant="caption" sx={{ color: "text.secondary" }}>Time</Typography>
+                <Select size="small" value={months} onChange={(e) => setMonths(Number(e.target.value))} sx={{ minWidth: 150, fontSize: 13 }}>
+                  {TIME_WINDOWS.map((w) => <MenuItem key={w.months} value={w.months}>{w.label}</MenuItem>)}
+                </Select>
+              </Box>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Typography variant="caption" sx={{ color: "text.secondary" }}>Specialty</Typography>
+                <Select size="small" value={specialty} onChange={(e) => setSpecialty(e.target.value)} displayEmpty sx={{ minWidth: 170, fontSize: 13 }}>
+                  <MenuItem value="">All specialties</MenuItem>
+                  {specialtyOptions.map((s) => <MenuItem key={s} value={s}>{s}</MenuItem>)}
+                </Select>
+              </Box>
+            </Box>
+          </ConsolePanel>
+
+          {/* Email metrics funnel — exact current-period percentage, in delivery order, plus a
+              monthly split for every metric. */}
+          {insights.email_metrics && (
+            <ConsolePanel id="rep-email-metrics" title="Email metrics" sx={{ mb: 3 }}>
+              <Box sx={{ display: "flex", gap: 1.25, flexWrap: "wrap", mb: 2.5 }}>
+                {insights.email_metrics.metrics.map((m) => (
+                  <EmailMetricCard key={m.key}>
+                    <Typography variant="caption" sx={{ fontWeight: 700 }}>{m.label}</Typography>
+                    <Typography sx={{ fontSize: 24, fontWeight: 800, color: "text.primary", lineHeight: 1.1 }}>{m.value_pct}%</Typography>
+                  </EmailMetricCard>
+                ))}
+              </Box>
+
+              <Typography variant="caption" sx={{ fontWeight: 700, color: "text.secondary", display: "block", mb: 1 }}>
+                Split by month
+              </Typography>
+              <Box sx={{ overflowX: "auto" }}>
+                <PlanTable>
+                  <thead>
+                    <tr>
+                      <th>Metric</th>
+                      {insights.email_metrics.months.map((mo) => <th key={mo}>{mo}</th>)}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {insights.email_metrics.metrics.map((m) => (
+                      <tr key={m.key}>
+                        <td><b>{m.label}</b></td>
+                        {m.monthly.map((row) => (
+                          <td key={row.month}>{row.value_pct}%</td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </PlanTable>
+              </Box>
+              <Typography variant="caption" sx={{ color: "text.secondary", fontStyle: "italic", display: "block", mt: 1.5 }}>
+                {insights.email_metrics.note} Showing: {insights.email_metrics.specialty}.
+              </Typography>
+            </ConsolePanel>
+          )}
+
           {/* Stage-promotion funnel — the signals that move an HCP to the next journey stage. */}
           <ConsolePanel id="rep-funnel" title={`Stage-promotion signals — ${insights.funnel.stage}`} sx={{ mb: 3 }}>
             <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1.5 }}>{insights.funnel.note}</Typography>

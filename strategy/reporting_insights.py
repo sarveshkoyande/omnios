@@ -19,8 +19,10 @@ Degrades gracefully: returns what it can even with a thin plan or an unloaded pa
 """
 from __future__ import annotations
 
+import hashlib
 import pathlib
 import sys
+import time
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import benchmarks  # noqa: E402
@@ -111,7 +113,92 @@ def _test_design(brand: str) -> dict:
     }
 
 
-def build(project_id: str) -> dict:
+# Industry-standard constants not present in config/omnichannel_benchmarks.json (no cited
+# source for these three, unlike open/CTR/CTOR which come from the researched benchmark
+# file) -- reasonable healthcare-email norms, clearly caveated below as illustrative.
+_DELIVERY_RATE_PCT = 98.7
+_BOUNCE_RATE_PCT = 1.3
+_UNSUBSCRIBE_RATE_PCT = 0.18
+
+_EMAIL_METRIC_ORDER = [
+    ("delivery", "E-delivery rate"),
+    ("open", "Email open rate"),
+    ("ctr", "Click-through rate (CTR)"),
+    ("ctor", "Click-to-open rate (CTOR)"),
+    ("bounce", "Bounce rate"),
+    ("unsubscribe", "Unsubscribe rate"),
+]
+
+
+def _stable_wave(key: str, i: int, spread: float) -> float:
+    """Deterministic -spread..+spread wobble, stable across reloads (seeded by key+i), so a
+    month-over-month trend / specialty split reads as a real series instead of visibly
+    re-randomizing on every request."""
+    h = int(hashlib.md5(f"{key}:{i}".encode()).hexdigest(), 16)
+    return ((h % 2000) / 1000.0 - 1.0) * spread
+
+
+def _month_labels(months: int) -> list[str]:
+    now = time.gmtime()
+    labels = []
+    y, m = now.tm_year, now.tm_mon
+    for _ in range(months):
+        labels.append(f"{y:04d}-{m:02d}")
+        m -= 1
+        if m == 0:
+            m, y = 12, y - 1
+    return list(reversed(labels))
+
+
+def _email_metrics(idx: float, ct: dict, specialty: str | None, months: int) -> dict:
+    """E-delivery / open / CTR / CTOR / bounce / unsubscribe, as an exact current-period
+    percentage plus a monthly trend, for the requested specialty filter. No live send data is
+    connected -- values are industry-baseline targets (delivery/bounce/unsubscribe) or the
+    researched channel_tactics benchmarks (open/CTR/CTOR), scaled by the lifecycle index and a
+    stable per-specialty variation; NOT observed campaign performance."""
+    email = (ct.get("email_hcp_triggered", {}) or {})
+    base = {
+        "delivery": _DELIVERY_RATE_PCT,
+        "open": float(email.get("open_rate_pct", 18.26)) * idx,
+        "ctr": float(email.get("ctr_pct", 3.0)) * idx,
+        "ctor": float(email.get("click_to_open_pct", 3.43)) * idx,
+        "bounce": _BOUNCE_RATE_PCT,
+        "unsubscribe": _UNSUBSCRIBE_RATE_PCT,
+    }
+    spec_key = (specialty or "all").strip().lower()
+    spec_shift = _stable_wave(f"spec:{spec_key}", 0, 0.12) if spec_key != "all" else 0.0
+
+    def _clamp_pct(v: float) -> float:
+        return round(min(100.0, max(0.0, v)), 2)
+
+    metrics = []
+    month_labels = _month_labels(months)
+    for key, label in _EMAIL_METRIC_ORDER:
+        current = _clamp_pct(base[key] * (1 + spec_shift))
+        monthly = []
+        for i, m_label in enumerate(month_labels):
+            wobble = _stable_wave(f"{spec_key}:{key}", i, 0.08)
+            monthly.append({"month": m_label, "value_pct": _clamp_pct(current * (1 + wobble))})
+        metrics.append({
+            "key": key,
+            "label": label,
+            "value_pct": round(current, 2),
+            "monthly": monthly,
+        })
+
+    return {
+        "note": "E-delivery/bounce/unsubscribe are industry-baseline targets; open/CTR/CTOR "
+                "are the researched channel_tactics benchmarks (config/omnichannel_benchmarks.json) "
+                "scaled by the lifecycle index. The monthly trend and specialty split are an "
+                "illustrative simulated series, not observed send data -- no live performance "
+                "feed is connected yet. Replace with real ESP/Veeva send reports once available.",
+        "specialty": specialty or "All specialties",
+        "months": month_labels,
+        "metrics": metrics,
+    }
+
+
+def build(project_id: str, specialty: str | None = None, months: int = 6) -> dict:
     proj = pstore.get_project(project_id) or {}
     result = proj.get("result") or {}
     slots = ((proj.get("state") or {}).get("slots") or {})
@@ -134,6 +221,8 @@ def build(project_id: str) -> dict:
     demo = _demographics()
     target_hcps = demo.get("total_hcps") or 1000
     impressions_target = target_hcps * _AVG_FREQUENCY
+    months_clamped = max(1, min(months, 24))
+    email_metrics = _email_metrics(idx, ct, specialty, months_clamped)
 
     # Funnel: stage-promotion signals for the priority journey stage.
     funnel = {
@@ -177,6 +266,7 @@ def build(project_id: str) -> dict:
                   "replace with the brand's own numbers once one in-market period exists.",
         "funnel": funnel,
         "kpis": kpis,
+        "email_metrics": email_metrics,
         "demographics": demo,
         "tagging": _tagging_matrix(brand),
         "test_design": _test_design(brand),
