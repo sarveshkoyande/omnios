@@ -10,9 +10,12 @@ from __future__ import annotations
 import json
 import pathlib
 import random
+import sys
 
 BASE_DIR = pathlib.Path(__file__).resolve().parent.parent
 CONFIG_DIR = BASE_DIR / "config" / "hcp_360"
+sys.path.insert(0, str(BASE_DIR / "strategy"))
+import segment_labels  # noqa: E402  (SEGMENT_MIX owns the panel's segment shape)
 COHORT_SIZE = 6_873
 ONCOMYRA_TOTAL_TARGET = 3_473
 NPI_START = 191_000_000
@@ -114,7 +117,6 @@ def main() -> None:
         "Access & Reimbursement", "Real World Evidence", "Adverse Event Management",
         "MOA", "Patient Support Programs",
     ]
-    segments = ["High Potentials", "Switchers", "Emergers", "Loyalists", "Other NSCLC Writers"]
     personas = ["New Writer", "Consistent Writer", "Occasional Writer", "Emergers", "Lapsed Writer"]
     brands = ["Xalkori", "Besponsa", "Bosulif", "Mylotarg", "Eucrisa"]
     trx_classes = [
@@ -146,7 +148,8 @@ def main() -> None:
         top_tag = _choice(content_tags, idx)
         second_tag = _choice(content_tags, idx + 4)
         third_tag = _choice(content_tags, idx + 8)
-        segment = _choice(segments, idx)
+        # Weighted, not round-robin: cycling the list gave every segment an identical share.
+        segment = segment_labels.pick_segment(rng)
         persona = _choice(personas, idx + 1)
         brand = "Oncomyra" if idx < expansion_oncomyra else _choice(brands, idx)
         product_score = rng.randint(15, 98)

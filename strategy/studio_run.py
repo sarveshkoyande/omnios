@@ -482,6 +482,7 @@ def _build_ask_draft(ctx: dict, step: dict) -> dict | None:
                 "text": f"Your broad target is **{broad}**. Within that, which segment(s) should the plan lead with? "
                         "You can pick more than one.",
                 "multi_select": True,
+                "select_noun": "segment",
                 "evidence_note": evidence_note,
                 "evidence_basis": _basis(ctx,
                     "Segment sizes counted on the HCP 360 dummy panel, filtered to the plan's therapy-area "
@@ -531,29 +532,33 @@ def _build_ask_draft(ctx: dict, step: dict) -> dict | None:
             return None
         ladder = mf.get("message_ladder") or list(sequence)
         optional = mf.get("optional_topics") or []
-        # Which rungs, not which order: the ladder sequence is a clinical convention, so the
-        # user picks scope and the plan always tells it MOA -> Efficacy -> Safety -> Dosing.
-        options = [{"label": topic, "source": "ladder rung outside this stage's default set"}
-                   for topic in ladder if topic not in sequence]
-        options += [{"label": topic,
-                     "source": "access message -- sits outside the clinical ladder, off by default"}
-                    for topic in optional if topic not in sequence]
+        # One rung per option, never the ladder as a single take-it-or-leave-it chip: the
+        # decision is which rungs are in scope, so each has to be tickable on its own. The
+        # order is not up for selection -- the plan always tells it in clinical sequence.
+        kit_source = "message-flow model" + (" + brand-kit claim library" if ctx.get("brand_kit") else "")
+        rungs = [{"label": topic,
+                  "source": kit_source if topic in sequence else "ladder rung outside this stage's default set"}
+                 for topic in ladder]
+        rungs += [{"label": topic,
+                   "source": "access message -- sits outside the clinical ladder, off by default"}
+                  for topic in optional]
         return _attach_grounding_to_ask(ctx, step, {"ask_id": f"ask-{step['num']}", "section": step["num"],
                 "question_focus": "Choose which rungs the message ladder covers; the sequence itself is fixed.",
-                "text": f"Message ladder runs **{' -> '.join(sequence)}**. "
-                        "Keep these rungs, or add and drop any? You can pick more than one.",
+                "text": "Which rungs should the message ladder cover? They are always told in clinical "
+                        "order -- mechanism, then efficacy, then safety, then dosing.",
                 "multi_select": True,
+                "select_noun": "rung",
+                # The clinical rungs start ticked; pricing does not.
+                "preselected": [topic for topic in ladder if topic in sequence],
                 "evidence_basis": _basis(ctx,
                     "Ladder rungs default from the journey stage; brand-kit claims are used where available. "
                     "Sequence follows the clinical order a reviewer expects (mechanism before outcome).",
                     None, ("evidence", "positioning", "csfs")),
                 "why": "The rungs in scope set what every asset can say; the ladder order fixes how it is told.",
-                "recommendation": {"label": " -> ".join(sequence),
-                                   "source": "message-flow model" +
-                                   (" + brand-kit claim library" if ctx.get("brand_kit") else "")},
+                "recommendation": {"label": rungs[0]["label"], "source": rungs[0]["source"]},
                 "recommendation_reason": f"{sequence[0]} opens the ladder because the stage's belief gap is "
                                          f"closed by mechanism-first framing before outcome claims land.",
-                "options": options,
+                "options": rungs[1:],
                 "free_text": True})
     if kind == "channel":
         mix = (ctx.get("strategy") or {}).get("channel_mix_pct") or {}
@@ -568,7 +573,9 @@ def _build_ask_draft(ctx: dict, step: dict) -> dict | None:
         lead, alts = postures[0], postures[1:]
 
         def _posture_opt(posture: dict, source: str) -> dict:
-            return {"label": posture["label"], "source": source, "size": posture["headline"],
+            # `distribution` renders as the per-channel split under the option; the headline
+            # is deliberately not also put in `size`, or the same numbers appear twice.
+            return {"label": posture["label"], "source": source,
                     "criteria": posture["rationale"], "distribution": posture["distribution"]}
 
         text = (f"Your brief leans to **{preferred}**. Which way should this campaign go to market?"
@@ -644,6 +651,11 @@ def auto_answer_value(ask: dict | None) -> str:
     the ask must still be posed."""
     if not ask:
         return ""
+    # A multi-select's recommendation is only its first row; taking that alone would silently
+    # drop the rest of the pre-ticked set (the whole ladder becomes one rung).
+    preselected = [str(x).strip() for x in (ask.get("preselected") or []) if str(x).strip()]
+    if preselected and ask.get("multi_select"):
+        return "; ".join(preselected)
     label = ((ask.get("recommendation") or {}).get("label") or "").strip()
     if label:
         return label

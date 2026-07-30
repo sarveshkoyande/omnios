@@ -9,9 +9,12 @@ from __future__ import annotations
 import json
 import pathlib
 import random
+import sys
 
 BASE_DIR = pathlib.Path(__file__).resolve().parent.parent
 CONFIG_DIR = BASE_DIR / "config" / "hcp_360"
+sys.path.insert(0, str(BASE_DIR / "strategy"))
+import segment_labels  # noqa: E402  (SEGMENT_MIX owns the panel's segment shape)
 COHORT_SIZE = 538
 NPI_START = 190_000_000
 SOURCE_OBJECT = "omnios_oncomyra_hcp_360"
@@ -122,7 +125,6 @@ def main() -> None:
         "MOA",
         "Patient Support Programs",
     ]
-    segments = ["High Potentials", "Switchers", "Emergers", "Loyalists", "Other NSCLC Writers"]
     personas = ["New Writer", "Consistent Writer", "Occasional Writer", "Emergers", "Lapsed Writer"]
     trx_classes = [
         "ANTINEOPLASTIC TARGETED THERAPY",
@@ -151,7 +153,8 @@ def main() -> None:
         top_tag = _choice_cycle(content_tags, idx)
         second_tag = _choice_cycle(content_tags, idx + 4)
         third_tag = _choice_cycle(content_tags, idx + 8)
-        segment = _choice_cycle(segments, idx)
+        # Weighted, not round-robin: cycling the list gave every segment an identical share.
+        segment = segment_labels.pick_segment(rng)
         persona = _choice_cycle(personas, idx + 2)
         product_score = rng.randint(25, 98)
         market_score = rng.randint(20, 95)

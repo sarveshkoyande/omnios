@@ -76,3 +76,48 @@ def to_raw(value: str | None) -> str:
 def criteria_for(raw: str | None) -> str:
     """Therapy-relative selection criteria for a stored segment value."""
     return CRITERIA.get(str(raw or ""), _GENERIC_CRITERIA)
+
+
+# --------------------------------------------------------------------------- #
+# Panel shape.
+# --------------------------------------------------------------------------- #
+# Share of the panel each segment holds. A real target list is a pyramid: a small tier of
+# high-volume writers over a broad base of low-engagement ones. The seed generators used to
+# round-robin the segment field, which produced six segments within 0.3 points of each other
+# -- so "the largest addressable segment" was decided by rounding noise, every segment looked
+# equally worth leading with, and the sizing carried no information at all.
+SEGMENT_MIX: dict[str, int] = {
+    "High Potentials": 9,
+    "Loyalists": 14,
+    "Switchers": 19,
+    "Emergers": 23,
+    "Other NSCLC Writers": 30,
+    "Non Writers": 5,
+}
+
+_MIX_SEED = 20260731
+
+
+def pick_segment(rng) -> str:
+    """One weighted segment draw. For row-at-a-time generators, where the total row count
+    is not known up front."""
+    return rng.choices(list(SEGMENT_MIX), weights=list(SEGMENT_MIX.values()), k=1)[0]
+
+
+def assign_segments(count: int, seed: int = _MIX_SEED) -> list[str]:
+    """Exactly `count` segment values matching SEGMENT_MIX, deterministically shuffled.
+
+    Exact rather than sampled: re-labelling a fixed panel should land on the intended shape
+    every time, not near it."""
+    import random
+
+    if count <= 0:
+        return []
+    counts = {name: count * share // 100 for name, share in SEGMENT_MIX.items()}
+    # Integer division loses a few rows; give the remainder to the broadest segment so the
+    # total is exact and the pyramid keeps its base.
+    broadest = max(SEGMENT_MIX, key=lambda name: SEGMENT_MIX[name])
+    counts[broadest] += count - sum(counts.values())
+    out = [name for name, n in counts.items() for _ in range(n)]
+    random.Random(seed).shuffle(out)
+    return out
