@@ -19,12 +19,16 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 import benchmarks  # noqa: E402  (addressable HCP universe sizing for segment evidence)
 import brief_summary  # noqa: E402  (≤14-word gists so asks never echo the deck verbatim)
+import channel_selection  # noqa: E402  (go-to-market postures + their MMx channel splits)
 import decision_spine  # noqa: E402  (SME-grounded stage registry + extra asks + decision records)
 import external_evidence  # noqa: E402  (live public-source datapoints, pulled per-section on demand)
 import hcp_360  # noqa: E402  (dummy HCP 360 panel -- real segment sizing for the audience ask + brief)
+import journey_design  # noqa: E402  (journey spec + SFMC-shaped flow built from the planner's answers)
 import llm_decisioning  # noqa: E402  (Foundry + Cognee question/brief synthesis)
 import plan_document  # noqa: E402  (renders one section via its _SECTION_TABLE entry)
 import process_knowledge  # noqa: E402  (Cognee-backed SME process grounding, pulled per-section)
+import message_flow as message_flow_mod  # noqa: E402  (brand-kit claim grounding for a rebuilt ladder)
+from message_flow import build_message_flow  # noqa: E402  (rebuilds the ladder from the user's rung picks)
 from orchestrator import AGENT_ROSTER, compute_plan_ctx  # noqa: E402
 from segment_profile import build_segment_profile, build_tcg_template  # noqa: E402
 
@@ -41,7 +45,7 @@ SEQUENCE = [
     {"num": 7,  "id": "msgflow",   "owner": "strategy",    "topics": ["journey_messaging", "competitive_positioning"], "ask": "message"},
     {"num": 8,  "id": "channels",  "owner": "activation",  "topics": ["channel_budget"],         "ask": "channel"},
     {"num": 9,  "id": "content",   "owner": "inspiration", "topics": ["creative_content"],       "ask": None},
-    {"num": 10, "id": "chflow",    "owner": "inspiration", "topics": ["journey_messaging"],      "ask": None},
+    {"num": 10, "id": "chflow",    "owner": "inspiration", "topics": ["journey_messaging"],      "ask": "journey"},
     {"num": 11, "id": "dmf",       "owner": "inspiration", "topics": ["creative_content"],       "ask": None},
     {"num": 12, "id": "metrics",   "owner": "activation",  "topics": ["measurement_kpi"],        "ask": None},
     {"num": 13, "id": "workplan",  "owner": "activation",  "topics": ["channel_budget"],         "ask": "timeline"},
@@ -306,6 +310,19 @@ def _attach_grounding_to_ask(ctx: dict, step: dict, ask: dict | None) -> dict | 
     # llm_decisioning.refine_studio_ask(): source=ai on success, deterministic-fallback
     # with exact diagnostics on failure.
     ask.setdefault("source", "draft")
+    # The step's SME process grounding already exists (grounding_items) but never reached
+    # the ask, which is why recommendations read as generic AI suggestions: the documented
+    # pharma workflow behind them was computed and then dropped. Lead the basis with it so
+    # the question rests on how campaign teams actually work.
+    items = grounding_items(ctx, step)
+    if not items:
+        return ask
+    ask["grounding"] = items
+    sme = next((item for item in items if item["source"] == "Omni OS process graph"), None)
+    if sme:
+        ask["sme_basis"] = sme["snippet"]
+        basis = (ask.get("evidence_basis") or "").strip()
+        ask["evidence_basis"] = f"SME process knowledge ({sme['label']}): {sme['snippet']} {basis}".strip()
     return ask
 
 
@@ -332,6 +349,59 @@ _SEGMENT_LIBRARY = [
 _SCOPE_WORD = {"specialty": "matched-specialty", "panel": "oncology panel"}
 
 
+_LIFECYCLE_KEYS = ("launch", "growth", "mature", "loe")
+
+
+def _lifecycle_key(ctx: dict) -> str:
+    """Benchmark lifecycle key for this plan. Defaults to growth -- the middle index -- so a
+    brand with no lifecycle captured is not scored against launch or LOE expectations."""
+    inferred = ctx.get("inferred") or {}
+    for candidate in (inferred.get("lifecycle_key"), inferred.get("lifecycle_label")):
+        text = str(candidate or "").lower()
+        for key in _LIFECYCLE_KEYS:
+            if key in text:
+                return key
+    return "growth"
+
+
+def _objective_default(ctx: dict) -> str:
+    """Brand-specific north star for when the brief states none.
+
+    "Boost HCP engagement above 35%" is unusable as an objective: it names no brand, no
+    audience and no behaviour change, so nothing downstream can trace back to it and every
+    plan gets the same one. Compose from what the plan actually knows instead."""
+    inferred = ctx.get("inferred") or {}
+    brand = (inferred.get("brand") or _brief_field(ctx, "brand") or "").strip()
+    therapy = (ctx.get("therapy_area") or "").strip()
+    chosen = ctx.get("chosen_segments") or []
+    segment = (chosen[0].get("segment") if chosen else "") or inferred.get("persona") or "the target segment"
+    where = f" in {therapy}" if therapy else ""
+    if _lifecycle_key(ctx) == "launch":
+        subject = brand or "this brand"
+        return f"Establish {subject} as a considered option for {segment}{where}"
+    # Without a brand name the possessive reads as nonsense ("routine the brand use"), so
+    # drop the brand clause entirely rather than papering over it with a placeholder.
+    what = f"routine {brand} use" if brand else "routine use"
+    return f"Move {segment}{where} from trial to {what}"
+
+
+def _objective_kpi(ctx: dict) -> str:
+    """Success measure tied to this campaign's anchor channel and lifecycle stage, rather
+    than a flat engagement percentage that means nothing without a baseline."""
+    mix = (ctx.get("strategy") or {}).get("channel_mix_pct") or {}
+    if not mix:
+        return ""
+    anchor = max(mix.items(), key=lambda kv: kv[1])[0]
+    try:
+        target = benchmarks.channel_targets(anchor, _lifecycle_key(ctx))
+    except Exception:  # noqa: BLE001 -- a missing benchmark must not block the ask
+        return ""
+    if not target or target.get("target_pct") is None:
+        return ""
+    return (f"{target['kpi']} {target['target_low_pct']}-{target['target_high_pct']}% on {anchor} "
+            f"(industry baseline {target['baseline_pct']}%, {_lifecycle_key(ctx)} index {target['index']}x)")
+
+
 def _segment_evidence(ctx: dict) -> tuple[list[dict], str, int]:
     """Per-segment sizing from the HCP 360 dummy panel -- the segments the user picks (and the
     numbers the final brief quotes) are the panel's real target-list segments, counted on the
@@ -351,8 +421,11 @@ def _segment_evidence(ctx: dict) -> tuple[list[dict], str, int]:
     spec_note = ""
     if sizing.get("scope") == "specialty" and sizing.get("specialties"):
         spec_note = " (" + ", ".join(sizing["specialties"][:3]) + ")"
-    note = (f"Measured on the HCP 360 dummy panel — {total:,} {scope_word} HCPs{spec_note} "
-            f"across {len(segs)} target-list segments.")
+    # The sourcing line is not decoration: without it a reader assumes a launch brand's
+    # segments came from its own script performance, which is the objection this answers.
+    note = (f"Measured on the HCP 360 dummy panel -- {total:,} {scope_word} HCPs{spec_note} "
+            f"across {len(segs)} therapy-area segments. "
+            + (sizing.get("sourcing") or ""))
     return segs, note, total
 
 
@@ -411,8 +484,9 @@ def _build_ask_draft(ctx: dict, step: dict) -> dict | None:
                 "multi_select": True,
                 "evidence_note": evidence_note,
                 "evidence_basis": _basis(ctx,
-                    "Segment sizes counted on the HCP 360 dummy panel (target-list segment field), filtered to the "
-                    "plan's therapy-area specialties with a whole-panel fallback; SME process grounding.",
+                    "Segment sizes counted on the HCP 360 dummy panel, filtered to the plan's therapy-area "
+                    "specialties with a whole-panel fallback. Segments describe therapy-area prescribing "
+                    "behaviour (syndicated scripts data), not this brand's performance.",
                     "audience", ("csfs", "positioning")),
                 "why": "The segment lock drives eligibility, message ladder, channel weighting and flow defaults.",
                 "recommendation": {**_seg_opt(rec, "HCP 360 panel — largest addressable segment")},
@@ -426,8 +500,9 @@ def _build_ask_draft(ctx: dict, step: dict) -> dict | None:
         if isinstance(positioning, list):
             positioning = next((str(v).strip() for v in positioning if str(v or "").strip()), "")
         rec = (_brief_field(ctx, "objective") or positioning
-               or bam.get("a_to_b_shift") or "Shift awareness into confident first use").strip()
+               or bam.get("a_to_b_shift") or _objective_default(ctx)).strip()
         rec = brief_summary.summarize_value(rec, 14)  # never the whole two-part deck paragraph
+        kpi = _objective_kpi(ctx)
         options = []
         if bam.get("a_to_b_shift") and bam.get("a_to_b_shift") != rec:
             options.append({"label": brief_summary.summarize_value(bam["a_to_b_shift"], 14), "source": "BAM framework default"})
@@ -436,53 +511,104 @@ def _build_ask_draft(ctx: dict, step: dict) -> dict | None:
                 options.append({"label": brief_summary.summarize_value(c, 14), "source": f"CSF from {_source_name(ctx)}"})
         return _attach_grounding_to_ask(ctx, step, {"ask_id": f"ask-{step['num']}", "section": step["num"],
                 "question_focus": "Choose the CX objective / north star that every KPI and tactic should trace back to.",
-                "text": f"North-star objective reads as **{rec}**. Lock this, or steer it another way?",
+                "text": f"North-star objective reads as **{rec}**."
+                        + (f" Measured as {kpi}." if kpi else "")
+                        + " Lock this, or steer it another way?",
+                "objective_kpi": kpi,
                 "evidence_basis": _basis(ctx,
-                    "Directional BAM objective from lifecycle-stage rules and SME process grounding; validate with brand strategy.",
+                    "Objective composed from this brand, its lifecycle stage and the locked segment; the success "
+                    "measure is the anchor channel's benchmark band, not a flat engagement percentage.",
                     "objective", ("positioning", "csfs")),
                 "why": "The CX Planning Questionnaire locks the objective; every KPI and downstream tactic traces back to it.",
-                "recommendation": {"label": rec, "source": "brief objective or strategic source; fallback = BAM framework default"},
+                "recommendation": {"label": rec, "source": "brief objective or strategic source; "
+                                                           "fallback = brand + segment + lifecycle composition"},
                 "options": options[:3],
                 "free_text": True})
     if kind == "message":
-        kms = (ctx.get("message_flow") or {}).get("key_messages") or []
-        if not kms:
+        mf = ctx.get("message_flow") or {}
+        sequence = mf.get("ladder_sequence") or [k["topic"] for k in (mf.get("key_messages") or [])]
+        if not sequence:
             return None
-        rec = kms[0]["topic"]
-        alts = [k["topic"] for k in kms[1:3]]
+        ladder = mf.get("message_ladder") or list(sequence)
+        optional = mf.get("optional_topics") or []
+        # Which rungs, not which order: the ladder sequence is a clinical convention, so the
+        # user picks scope and the plan always tells it MOA -> Efficacy -> Safety -> Dosing.
+        options = [{"label": topic, "source": "ladder rung outside this stage's default set"}
+                   for topic in ladder if topic not in sequence]
+        options += [{"label": topic,
+                     "source": "access message -- sits outside the clinical ladder, off by default"}
+                    for topic in optional if topic not in sequence]
         return _attach_grounding_to_ask(ctx, step, {"ask_id": f"ask-{step['num']}", "section": step["num"],
-                "question_focus": "Pick the lead message rung for the ladder.",
-                "text": f"Lead the message ladder with **{rec}**, or open on a different rung?",
+                "question_focus": "Choose which rungs the message ladder covers; the sequence itself is fixed.",
+                "text": f"Message ladder runs **{' -> '.join(sequence)}**. "
+                        "Keep these rungs, or add and drop any? You can pick more than one.",
+                "multi_select": True,
                 "evidence_basis": _basis(ctx,
-                    "Directional message-flow default from journey stage; brand-kit claims are used when available.",
+                    "Ladder rungs default from the journey stage; brand-kit claims are used where available. "
+                    "Sequence follows the clinical order a reviewer expects (mechanism before outcome).",
                     None, ("evidence", "positioning", "csfs")),
-                "why": "The first rung sets the tone of every asset; the rest of the ladder sequences behind it.",
-                "recommendation": {"label": rec, "source": "message-flow model" +
+                "why": "The rungs in scope set what every asset can say; the ladder order fixes how it is told.",
+                "recommendation": {"label": " -> ".join(sequence),
+                                   "source": "message-flow model" +
                                    (" + brand-kit claim library" if ctx.get("brand_kit") else "")},
-                "options": [{"label": a, "source": "next available message-flow topic"} for a in alts],
+                "recommendation_reason": f"{sequence[0]} opens the ladder because the stage's belief gap is "
+                                         f"closed by mechanism-first framing before outcome claims land.",
+                "options": options,
                 "free_text": True})
     if kind == "channel":
         mix = (ctx.get("strategy") or {}).get("channel_mix_pct") or {}
         if not mix:
             return None
-        ranked = sorted(mix.items(), key=lambda kv: -kv[1])
+        # Postures, not buckets: a planner picks how the campaign goes to market, and each
+        # option carries the MMx split underneath it so the trade-off is visible up front.
+        postures = channel_selection.build_posture_options(mix)
         preferred_full = _brief_field(ctx, "preferred_channels")
         preferred = brief_summary.summarize_value(preferred_full, 14) if preferred_full else ""
         broad = preferred or "the channel-affinity default mix"
-        rec = f"{ranked[0][0]}-led mix ({ranked[0][1]}%)"
-        alts = [f"{k}-led mix ({v}%)" for k, v in ranked[1:3]]
-        text = (f"Your brief leans to **{preferred}**. Which channel should anchor the budget and cadence?"
-                if preferred else "Which channel should anchor the budget and cadence for the journey?")
+        lead, alts = postures[0], postures[1:]
+
+        def _posture_opt(posture: dict, source: str) -> dict:
+            return {"label": posture["label"], "source": source, "size": posture["headline"],
+                    "criteria": posture["rationale"], "distribution": posture["distribution"]}
+
+        text = (f"Your brief leans to **{preferred}**. Which way should this campaign go to market?"
+                if preferred else "Which way should this campaign go to market?")
         return _attach_grounding_to_ask(ctx, step, {"ask_id": f"ask-{step['num']}", "section": step["num"],
-                "question_focus": f"Broad channel intent: {broad}. Ask which channel anchors budget and cadence.",
+                "question_focus": f"Broad channel intent: {broad}. Ask which go-to-market posture anchors the plan.",
                 "broad_group": broad,
                 "text": text,
                 "evidence_basis": _basis(ctx,
-                    "Directional channel-affinity mix from lifecycle/persona framework; replace with brand media plan if available.",
+                    "Channel-affinity mix for this segment and lifecycle stage, tilted to each posture's anchor. "
+                    "Directional -- replace with the brand's own MMx or media plan when one exists.",
                     "preferred_channels", ("csfs", "guardrails")),
-                "why": "The anchor channel takes the largest budget share and sets the cadence guardrails.",
-                "recommendation": {"label": rec, "source": "channel-affinity model top rank"},
-                "options": [{"label": a, "source": "channel-affinity model alternative"} for a in alts],
+                "why": "The posture sets the anchor channel, the budget split and the cadence guardrails.",
+                "recommendation": _posture_opt(lead, "channel-affinity model -- best-supported anchor"),
+                "recommendation_reason": f"{lead['label']} splits to {lead['headline']}; "
+                                         f"{lead['rationale'].lower()}",
+                "options": [_posture_opt(p, "alternative posture") for p in alts],
+                "free_text": True})
+    if kind == "journey":
+        spec = ctx.get("journey_spec") or journey_design.derive_spec(ctx)
+        current = journey_design.entry_mode(spec)
+        options = [{"label": mode["label"], "source": mode["detail"]}
+                   for mode in journey_design.ENTRY_MODES if mode["key"] != current["key"]]
+        return _attach_grounding_to_ask(ctx, step, {"ask_id": f"ask-{step['num']}", "section": step["num"],
+                "question_focus": "Establish how the journey runs before drawing it: entry trigger, "
+                                  "touchpoint count, cadence and the non-opener rule.",
+                "text": f"I'd run this as **{journey_design.spec_summary(spec)}**. "
+                        "Change the trigger, the number of touchpoints or the cadence?",
+                "journey_spec": spec,
+                "evidence_basis": _basis(ctx,
+                    "Journey shape defaults to a standard nurture cadence, with the window taken from the "
+                    "brief's duration where it states one. Entry trigger is an assumption until confirmed.",
+                    "duration", ("csfs", "guardrails")),
+                "why": "Entry trigger, touchpoint count and cadence decide the journey's shape -- drawing one "
+                       "before they are settled produces a diagram nobody can build.",
+                "recommendation": {"label": journey_design.spec_summary(spec),
+                                   "source": f"{current['label']} -- {current['trigger_hint']}"},
+                "recommendation_reason": "A three-touch fortnightly nurture is the standard shape; the "
+                                         "re-engagement arm catches non-openers before the journey closes.",
+                "options": options,
                 "free_text": True})
     if kind == "timeline":
         duration = _brief_field(ctx, "duration")
@@ -567,6 +693,22 @@ def apply_answer(ctx: dict, step: dict, value: str) -> str:
                 note = f"re-aimed the customer group at “{lead}”{extra} and rebuilt the profile"
             except Exception:  # noqa: BLE001 — fall back to recording the preference
                 pass
+    elif step["id"] == "chflow":
+        spec = journey_design.parse_answer(value, ctx.get("journey_spec") or journey_design.derive_spec(ctx))
+        ctx["journey_spec"] = spec
+        note = "journey shape set to " + journey_design.spec_summary(spec)
+    elif step["id"] == "msgflow":
+        # Multi-select arrives "; "-joined. The auto-assume path instead records the whole
+        # recommendation label, which is the ladder joined by "->" -- accept both shapes.
+        topics = [t.strip() for t in value.replace("->", ";").split(";") if t.strip()]
+        try:
+            flow = build_message_flow(ctx["inferred"]["stage_key"],
+                                      (ctx.get("strategy") or {}).get("kb_grounding") or {},
+                                      selected_topics=topics)
+            ctx["message_flow"] = message_flow_mod.ground_in_brand_kit(flow, ctx.get("brand_kit"))
+            note = "message ladder set to " + " -> ".join(flow.get("ladder_sequence") or topics)
+        except Exception:  # noqa: BLE001 — fall back to recording the preference
+            pass
     return note
 
 

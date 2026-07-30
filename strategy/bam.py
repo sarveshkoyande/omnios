@@ -13,18 +13,29 @@ import sys
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from rules import STAGE_BY_KEY, STAGES  # noqa: E402
 
-# The toolkit's / Rohan's "every brand has by default 4 message topics" rule.
-KEY_MESSAGE_TOPICS = ["Dosing", "Pricing", "Safety", "Efficacy & trial results"]
+# The toolkit's / Rohan's "every brand has by default 4 message topics" rule, ordered as the
+# clinical ladder a pharma reviewer expects to read: what the drug does (mechanism), what
+# that achieves (efficacy), what it costs the patient clinically (safety), then how to give
+# it (dosing). Order is the point -- the old pool had no mechanism rung at all and led on
+# dosing, which is the end of the argument presented as the start of it.
+MESSAGE_LADDER = ["Mechanism of action", "Efficacy & trial results", "Safety", "Dosing"]
 
-# Which of the 4 topics best close each stage's current->desired belief gap -- a
-# heuristic reading of the stage's messaging_type/proof_points, not a measured mapping.
+# Pricing is an access conversation, not a clinical one. Mixing it into the ladder is the
+# "different concepts" problem -- it stays selectable, but never ships by default.
+OPTIONAL_TOPICS = ["Pricing"]
+
+KEY_MESSAGE_TOPICS = MESSAGE_LADDER + OPTIONAL_TOPICS
+
+# Which rungs best close each stage's current->desired belief gap -- a heuristic reading of
+# the stage's messaging_type/proof_points, not a measured mapping. Selections are re-sorted
+# into MESSAGE_LADDER order downstream, so these lists express relevance, not sequence.
 _STAGE_TOPICS = {
-    "unaware": ["Efficacy & trial results"],
-    "aware": ["Efficacy & trial results", "Safety"],
+    "unaware": ["Mechanism of action", "Efficacy & trial results"],
+    "aware": ["Mechanism of action", "Efficacy & trial results", "Safety"],
     "interested": ["Efficacy & trial results", "Safety"],
-    "trial": ["Dosing", "Pricing"],
+    "trial": ["Safety", "Dosing"],
     "adoption": ["Safety", "Efficacy & trial results"],
-    "champion": ["Efficacy & trial results"],
+    "champion": ["Efficacy & trial results", "Mechanism of action"],
 }
 
 # Rohan's PP (Personal Promotion) / NPP (Non-Personal Promotion) / Hybrid construct,

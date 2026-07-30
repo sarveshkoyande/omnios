@@ -296,6 +296,14 @@ export interface CampaignArtifactsPayload {
     version: string;
     generated_at: string;
     header: { brand: string; therapy_area: string; lifecycle: string; owner: string };
+    /** The five lines a brand manager reads first. Rendered above everything else. */
+    snapshot?: {
+      objective: string;
+      brand: string;
+      therapy_area: string;
+      target_audience: string;
+      reason: string;
+    };
     source_summary?: StrategicSourceSummary;
     purpose: { program_context: string; trigger_logic: string[]; summary: string };
     objective: { pillar: string; statement: string; leading_indicators: string[] };
@@ -321,6 +329,11 @@ export interface CampaignArtifactsPayload {
     timeline: { window: string; note: string };
     approvals: { role: string; name: string }[];
     traceability: { brief_section: string; stage_id: string; stage_name: string; framework: string }[];
+    /** Audit detail: needed to check the brief, not to read it. Rendered last. */
+    technical_appendix?: {
+      review_and_pv: string[];
+      technical_decisions: { stage_id: string; stage_name: string; decision: string; framework: string }[];
+    };
   };
 }
 
@@ -394,7 +407,18 @@ export interface CampaignSegment {
   volume_exact?: boolean;
 }
 
-export type CampaignFlowNodeType = "send" | "wait" | "decision" | "exit" | "followup" | "closure";
+/** `entry` is the journey's trigger (ad-hoc / API / website sign-up) and `branch` is the
+ *  behavioural split on what the HCP clicked — both added with the Journey Builder-shaped
+ *  flow in strategy/journey_design.py. */
+export type CampaignFlowNodeType =
+  | "entry"
+  | "send"
+  | "wait"
+  | "decision"
+  | "branch"
+  | "exit"
+  | "followup"
+  | "closure";
 
 export interface CampaignFlowNode {
   id: string;

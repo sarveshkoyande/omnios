@@ -22,6 +22,7 @@ import sys
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import benchmarks  # noqa: E402
 import hcp_360  # noqa: E402  (real panel counts for the segments the user actually picked)
+import journey_design  # noqa: E402  (journey spec -> Journey Builder-shaped flow)
 
 BASE_DIR = pathlib.Path(__file__).resolve().parent.parent
 _SEGMENTS = json.loads((BASE_DIR / "config" / "audience_segments.json").read_text(encoding="utf-8"))
@@ -152,63 +153,34 @@ def _content_ref(content_library: dict, preferred_channels: list[str]) -> dict:
 
 
 def _flow_skeleton(ctx: dict, segments: list[dict], wait_days: int) -> dict:
+    """Journey Builder-shaped flow for this plan.
+
+    The shape comes from the journey spec the planner answered (entry trigger, touchpoint
+    count, cadence, non-opener rule) rather than being assumed, and the ladder decides the
+    behavioural branch off the first click. `segments` is no longer the branching axis: an
+    HCP's own click tells you more about what to send next than the segment they were
+    bucketed into up front."""
     journeys = (ctx.get("micro_journeys") or {}).get("journeys") or []
     primary = journeys[0] if journeys else {
-        "trigger": "Campaign entry", "primary_touchpoint": "Branded email", "content_readiness": "Existing stock content",
+        "trigger": "Campaign entry", "primary_touchpoint": "Branded email",
+        "content_readiness": "Existing stock content",
     }
-    non_opener = (ctx.get("message_flow") or {}).get("non_opener_branch") or {}
-    content_library = ctx.get("content_library") or {}
+    channel = primary["primary_touchpoint"]
+    spec = dict(ctx.get("journey_spec") or journey_design.derive_spec(ctx))
+    # The caller's wait window still wins when the spec has not been explicitly answered --
+    # it is derived from the same operational defaults the rest of this module uses.
+    if not (ctx.get("journey_spec") or {}).get("reengage_after_days"):
+        spec["reengage_after_days"] = wait_days
+    if not spec.get("trigger_logic"):
+        spec["trigger_logic"] = primary["trigger"]
 
-    nodes: list[dict] = []
-    edges: list[dict] = []
-
-    send_id = "send_primary"
-    nodes.append({
-        "id": send_id, "type": "send", "position": {"x": 260, "y": 0},
-        "data": {"label": primary["primary_touchpoint"], "day": 1, "channel": primary["primary_touchpoint"],
-                 "detail": primary["trigger"], "content_ref": _content_ref(content_library, [primary["primary_touchpoint"]])},
-    })
-
-    decision_id = "decision_engaged"
-    nodes.append({
-        "id": decision_id, "type": "decision", "position": {"x": 260, "y": 170},
-        "data": {"label": f"Engaged with {primary['primary_touchpoint']}?", "day": wait_days},
-    })
-    edges.append({"id": f"e_{send_id}_{decision_id}", "source": send_id, "target": decision_id})
-
-    exit_id = "exit_engaged"
-    nodes.append({
-        "id": exit_id, "type": "exit", "position": {"x": 40, "y": 350},
-        "data": {"label": "Mark engaged: exit journey", "day": wait_days},
-    })
-    edges.append({"id": f"e_{decision_id}_{exit_id}", "source": decision_id, "target": exit_id, "label": "Yes"})
-
-    n = max(len(segments), 1)
-    span = 240
-    start_x = 260 - span * (n - 1) / 2
-    followup_ids: list[str] = []
-    for i, seg in enumerate(segments):
-        fid = f"followup_{seg['key']}"
-        followup_ids.append(fid)
-        nodes.append({
-            "id": fid, "type": "followup", "position": {"x": start_x + i * span, "y": 350},
-            "data": {"label": seg["name"], "day": wait_days + 1, "segment_key": seg["key"],
-                     "channel": (seg.get("preferred_channels") or ["Email"])[0],
-                     "content_ref": _content_ref(content_library, seg.get("preferred_channels") or [])},
-        })
-        edges.append({"id": f"e_{decision_id}_{fid}", "source": decision_id, "target": fid,
-                      "label": "No" if i == 0 else ""})
-
-    closure_id = "closure"
-    nodes.append({
-        "id": closure_id, "type": "closure", "position": {"x": 260, "y": 520},
-        "data": {"label": "Journey closure", "day": wait_days + 2,
-                 "detail": non_opener.get("node", "Engagement metrics finalized")},
-    })
-    for fid in followup_ids:
-        edges.append({"id": f"e_{fid}_{closure_id}", "source": fid, "target": closure_id})
-
-    return {"nodes": nodes, "edges": edges}
+    flow = journey_design.build_flow(
+        spec,
+        ladder_topics=(ctx.get("message_flow") or {}).get("ladder_sequence"),
+        channel=channel,
+        content_ref=_content_ref(ctx.get("content_library") or {}, [channel]),
+    )
+    return {"nodes": flow["nodes"], "edges": flow["edges"]}
 
 
 def _operational_defaults(ctx: dict, segments: list[dict], wait_days: int, primary_channel: str) -> dict:
