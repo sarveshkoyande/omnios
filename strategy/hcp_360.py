@@ -25,6 +25,7 @@ from paths import data_path  # noqa: E402
 import db  # noqa: E402  (dual-dialect SQLite/Postgres connection factory)
 import benchmarks  # noqa: E402  (specialties_for() maps a therapy area to real specialties)
 import conversation_llm  # noqa: E402  (shared Anthropic Foundry client for ask())
+import segment_labels  # noqa: E402  (brand-relative segment__c -> therapy-relative display name)
 
 BASE_DIR = pathlib.Path(__file__).resolve().parent.parent
 CONFIG_DIR = BASE_DIR / "config" / "hcp_360"
@@ -272,7 +273,8 @@ def ground_segment(therapy_area: str = "", persona: str = "") -> dict:
         seg_rows = conn.execute(
             f"SELECT segment__c s, COUNT(*) n FROM tbl_tl_data__dlm "
             f"WHERE npi_id__c IN ({npi_ph}) GROUP BY s ORDER BY n DESC", npis).fetchall()
-        segment_breakdown = {r["s"]: round(100 * r["n"] / n, 1) for r in seg_rows if r["s"]}
+        segment_breakdown = {segment_labels.to_display(r["s"]): round(100 * r["n"] / n, 1)
+                             for r in seg_rows if r["s"]}
 
         onc_n = conn.execute(
             f"SELECT COUNT(*) n FROM tbl_tl_data__dlm WHERE npi_id__c IN ({npi_ph}) AND "
@@ -325,7 +327,14 @@ def segment_summary(group_by: str) -> list[dict]:
         rows = conn.execute(
             f"SELECT {col} AS value, COUNT(*) AS count FROM {table} "
             f"GROUP BY {col} ORDER BY count DESC").fetchall()
-        return [dict(r) for r in rows]
+        out = [dict(r) for r in rows]
+        # Reporting reads this for its by-segment breakdown, so the therapy-relative
+        # vocabulary has to apply here too -- otherwise Planning and Reporting name the
+        # same population differently in the same demo.
+        if group_by == "segment":
+            for row in out:
+                row["value"] = segment_labels.to_display(row.get("value"))
+        return out
     finally:
         conn.close()
 
@@ -358,12 +367,17 @@ def cross_tab(group_by: list[str] | str | None = None,
     to the demographic base on NPI, so you can combine dimensions freely without any
     pre-built combined filter:
 
-      * How many Digital-preferred HCPs are High Potentials?
-        cross_tab(filters={"preferred_channel": "Digital", "segment": "High Potentials"})
+      * How many Digital-preferred HCPs are high prescribers of the therapy?
+        cross_tab(filters={"preferred_channel": "Digital",
+                           "segment": "High prescribers of therapy"})
         -> [{"count": 19}]
       * Full channel x segment matrix:
         cross_tab(group_by=["preferred_channel", "segment"])
-        -> [{"preferred_channel": "Digital", "segment": "High Potentials", "count": 19}, ...]
+        -> [{"preferred_channel": "Digital", "segment": "High prescribers of therapy",
+             "count": 19}, ...]
+
+    Segment values are therapy-relative on the way out (segment_labels); filters accept
+    either the therapy-relative name or the panel's stored value.
 
     `group_by` accepts up to two dimensions. `filters` are exact, case-insensitive equality.
     Only allow-listed columns and parameterized values reach SQL -- no arbitrary SQL. Counts
@@ -391,7 +405,9 @@ def cross_tab(group_by: list[str] | str | None = None,
     for dim, value in filters.items():
         alias, col = _DIM_SQL[dim]
         where.append(f"LOWER({alias}.{col}) = LOWER(?)")
-        params.append(value)
+        # The caller only ever saw the therapy-relative name, so accept it and resolve back
+        # to the canonical `segment__c` the panel actually stores. Both vocabularies work.
+        params.append(segment_labels.to_raw(value) if dim == "segment" else value)
     if where:
         sql += " WHERE " + " AND ".join(where)
     if group_by:
@@ -399,21 +415,13 @@ def cross_tab(group_by: list[str] | str | None = None,
         sql += " ORDER BY count DESC"
     conn = _conn()
     try:
-        return [dict(r) for r in conn.execute(sql, params).fetchall()]
+        rows = [dict(r) for r in conn.execute(sql, params).fetchall()]
     finally:
         conn.close()
-
-
-# Human-readable criteria per known target-list segment, shown next to each option in the
-# planning audience ask. Generic fallback covers any segment not listed here.
-_SEGMENT_CRITERIA = {
-    "High Potentials": "High future-value writers with headroom to grow — priority for share of voice.",
-    "Switchers": "Actively moving between therapies — winnable with timely comparative evidence.",
-    "Loyalists": "Established brand writers — defend and deepen the relationship.",
-    "Emergers": "Newer / lower-volume writers building a practice — nurture toward adoption.",
-    "Other NSCLC Writers": "Write in the class but not engaged on this brand — broad awareness play.",
-    "Non Writers": "Not currently writing the class — long-horizon education.",
-}
+    if "segment" in group_by:
+        for row in rows:
+            row["segment"] = segment_labels.to_display(row.get("segment"))
+    return rows
 
 
 def segment_sizing(therapy_area: str = "") -> dict:
@@ -422,9 +430,15 @@ def segment_sizing(therapy_area: str = "") -> dict:
     planning 'audience' ask offers and what the final brief quotes -- the segments the user
     picks, and their sizing, come from the actual dummy population, not a hardcoded library.
 
+    Segments are named and described in therapy-area terms (segment_labels), never in terms
+    of this brand's own share: the panel's stored names are brand-relative and a launch brand
+    has no share for them to be relative to. `segment_raw` carries the canonical value so a
+    caller can still filter the panel with it.
+
     Returns {"scope": "specialty"|"panel", "specialties": [...], "total": N,
-             "segments": [{"segment": "High Potentials", "count": 198, "pct": 19.1,
-                           "criteria": "..."}, ...]} sorted by count desc. `total` is the
+             "sourcing": "...", "segments": [{"segment": "High prescribers of therapy",
+                          "segment_raw": "High Potentials", "count": 198, "pct": 19.1,
+                          "criteria": "..."}, ...]} sorted by count desc. `total` is the
     scoped HCP count -- the denominator behind every pct."""
     specialties = _map_specialties(benchmarks.specialties_for(therapy_area) if therapy_area else [])
     conn = _conn()
@@ -448,12 +462,14 @@ def segment_sizing(therapy_area: str = "") -> dict:
             scope = "panel"
         total = int(total or 0)
         segments = [
-            {"segment": r["s"], "count": int(r["n"]),
+            {"segment": segment_labels.to_display(r["s"]), "segment_raw": r["s"],
+             "count": int(r["n"]),
              "pct": round(100 * r["n"] / total, 1) if total else 0.0,
-             "criteria": _SEGMENT_CRITERIA.get(r["s"], "Target-list segment from the HCP 360 panel.")}
+             "criteria": segment_labels.criteria_for(r["s"])}
             for r in rows
         ]
-        return {"scope": scope, "specialties": specialties, "total": total, "segments": segments}
+        return {"scope": scope, "specialties": specialties, "total": total,
+                "sourcing": segment_labels.PROVENANCE, "segments": segments}
     finally:
         conn.close()
 

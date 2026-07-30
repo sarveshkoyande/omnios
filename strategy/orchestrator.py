@@ -36,7 +36,7 @@ from segment_profile import build_segment_profile, build_tcg_template  # noqa: E
 from questionnaire import build_cx_questionnaire  # noqa: E402
 from open_questions import build_open_questions  # noqa: E402
 from plan_document import compose_plan, compose_plan_partial  # noqa: E402
-from message_flow import build_message_flow  # noqa: E402
+from message_flow import build_message_flow, ground_in_brand_kit  # noqa: E402
 from channel_selection import build_channel_selection  # noqa: E402
 import campaign_store  # noqa: E402  (content library query for the plan's Phase-2/3 sections)
 import awards_store  # noqa: E402  (award-winning campaign matches for the precedent section)
@@ -413,19 +413,11 @@ def run_agents(brand: str, therapy_area: str, lifecycle_key: str, budget: float 
     segment_profile = build_segment_profile(inferred["persona"], inferred["stage_key"])
     tcg = build_tcg_template(inferred["persona"], segment_profile, strategy, bam,
                              agent_answers=ctx["audience_profile"]["answers"], agent_name="Market & Competitive Intelligence")
-    message_flow = build_message_flow(inferred["stage_key"], strategy["kb_grounding"])
     # Ground the message flow in the brand's OWN claims when an intelligence kit exists:
     # the pool becomes the hub's message pool, and each key message leads with the hub
     # claim (with its study citation) that substantiates it.
-    if kit:
-        if kit.get("message_pool"):
-            message_flow["brand_plan_key_message_pool"] = list(kit["message_pool"])
-        for km in message_flow["key_messages"]:
-            claim = brand_kit_mod.claim_for_topic(kit, km["topic"])
-            if claim and claim not in km["supporting_messages"]:
-                km["supporting_messages"] = [claim] + list(km["supporting_messages"])[:2]
-        message_flow["caveat"] = (message_flow.get("caveat", "") + " Key-message pool and lead supporting claims "
-                                  f"sourced verbatim from the {kit.get('source_label', 'brand intelligence hub')}.")
+    message_flow = ground_in_brand_kit(
+        build_message_flow(inferred["stage_key"], strategy["kb_grounding"]), kit)
     ctx["tcg"] = tcg
     ctx["bam"] = bam
     ctx["pp_npp"] = pp_npp
@@ -701,16 +693,8 @@ def fill_plan_ctx(ctx: dict, lazy_grounding: bool = False, fast: bool = False) -
     segment_profile = build_segment_profile(inferred["persona"], inferred["stage_key"])
     tcg = build_tcg_template(inferred["persona"], segment_profile, strategy, bam,
                              agent_answers=ctx["audience_profile"]["answers"], agent_name="Market & Competitive Intelligence")
-    message_flow = build_message_flow(inferred["stage_key"], strategy["kb_grounding"])
-    if kit:
-        if kit.get("message_pool"):
-            message_flow["brand_plan_key_message_pool"] = list(kit["message_pool"])
-        for km in message_flow["key_messages"]:
-            claim = brand_kit_mod.claim_for_topic(kit, km["topic"])
-            if claim and claim not in km["supporting_messages"]:
-                km["supporting_messages"] = [claim] + list(km["supporting_messages"])[:2]
-        message_flow["caveat"] = (message_flow.get("caveat", "") + " Key-message pool and lead supporting claims "
-                                  f"sourced verbatim from the {kit.get('source_label', 'brand intelligence hub')}.")
+    message_flow = ground_in_brand_kit(
+        build_message_flow(inferred["stage_key"], strategy["kb_grounding"]), kit)
     ctx["bam"] = bam
     ctx["pp_npp"] = classify_pp_npp(strategy["channel_mix_pct"])
     ctx["micro_journeys"] = micro_journeys

@@ -170,6 +170,11 @@ def _clean_option(value, fallback: dict | None = None) -> dict | None:
     return option
 
 
+# Alternatives offered alongside the recommendation. Two is the ceiling: with the
+# recommendation and the free-text box that is already four ways to answer.
+_MAX_ASK_OPTIONS = 2
+
+
 def _normalize_ask_payload(out: dict, draft: dict, step: dict) -> dict:
     """Accept only the defined StudioAsk JSON shape; fall back field-by-field to draft."""
     merged = copy.deepcopy(draft)
@@ -206,7 +211,10 @@ def _normalize_ask_payload(out: dict, draft: dict, step: dict) -> dict:
             continue
         seen.add(key)
         cleaned_options.append(option)
-    merged["options"] = cleaned_options[:3]
+    # Recommendation + 2 alternatives + free text is already four ways to answer one
+    # question. Anything beyond that reads as a survey, not a decision, so the cap is
+    # enforced here rather than trusted to the prompt.
+    merged["options"] = cleaned_options[:_MAX_ASK_OPTIONS]
 
     if "free_text" in out:
         merged["free_text"] = bool(out.get("free_text"))
@@ -272,6 +280,10 @@ def refine_studio_ask(ctx: dict, step: dict, draft: dict) -> dict:
                     "If the draft carries a 'broad_group', treat it as the broad audience/channel: name it briefly in the question (<=20 words), then ask which specific segment/channel within it to prioritise. Options must be concrete segments/channels, not the broad group restated.",
                     "Provide recommendation_reason as 1-2 short sentences explaining why the recommended option is the best grounded default.",
                     "Never invent facts not supported by the input context.",
+                    "When the draft carries sme_basis, the question and recommendation must follow that documented workflow rather than generic marketing advice.",
+                    "Write the way a brand manager speaks: plain campaign language, no framework names, no stage codes (S0-S11), no toolkit sheet numbers in the question text.",
+                    "Return at most 2 options alongside the recommendation. Fewer, clearly different choices beat an exhaustive list.",
+                    "Options must be meaningfully distinct decisions, not restatements of the recommendation with different wording.",
                 ],
             },
         }

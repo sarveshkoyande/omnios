@@ -341,29 +341,29 @@ export function CampaignArtifacts({
           <Chip size="small" variant="outlined" label={`v${b.version} · ${b.generated_at}`} sx={{ height: 20 }} />
         </Box>
 
-        {b.source_summary && (
+        {b.snapshot && (
           <Section>
-            <Eyebrow>Source basis</Eyebrow>
-            <Typography variant="body2" sx={{ mb: 0.75 }}>{b.source_summary.basis}</Typography>
-            {b.source_summary.captured_fields.length > 0 && (
-              <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap", mb: 0.75 }}>
-                {b.source_summary.captured_fields.map((f) => (
-                  <Chip key={`${f.label}-${f.value}`} size="small" variant="outlined" label={`${f.label}: ${f.value}`} sx={{ height: 22 }} />
-                ))}
-              </Box>
-            )}
-            {b.source_summary.evidence.length > 0 && (
-              <>
-                <Typography variant="caption" sx={{ fontWeight: 700 }}>Strategic evidence anchors</Typography>
-                <Rows items={b.source_summary.evidence} />
-              </>
-            )}
-            {b.source_summary.guardrails.length > 0 && (
-              <>
-                <Typography variant="caption" sx={{ fontWeight: 700 }}>Strategic guardrails</Typography>
-                <Rows items={b.source_summary.guardrails} />
-              </>
-            )}
+            {[
+              ["Campaign objective", b.snapshot.objective],
+              ["Brand", b.snapshot.brand],
+              ["Therapy area", b.snapshot.therapy_area],
+              ["Target audience", b.snapshot.target_audience],
+              ["Why this campaign", b.snapshot.reason],
+            ]
+              .filter(([, value]) => Boolean(value))
+              .map(([label, value]) => (
+                <Box key={label} sx={{ display: "flex", gap: 1.5, mb: 0.6, alignItems: "baseline" }}>
+                  <Typography
+                    variant="caption"
+                    sx={{ fontWeight: 700, color: "text.secondary", minWidth: 132, flexShrink: 0 }}
+                  >
+                    {label}
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: label === "Campaign objective" ? 700 : 400 }}>
+                    {value}
+                  </Typography>
+                </Box>
+              ))}
           </Section>
         )}
 
@@ -575,6 +575,49 @@ export function CampaignArtifacts({
               <Chip key={a.role} size="small" variant="outlined" label={`${a.role}: ${a.name || "unassigned"}`} sx={{ height: 20 }} />
             ))}
           </Box>
+        </Section>
+
+        {/* Technical detail lives after the campaign, not before it: sources, review path and
+            the decision trail are needed to audit the brief, not to read it. */}
+        <Section>
+          <Eyebrow>Technical detail</Eyebrow>
+          {b.technical_appendix && b.technical_appendix.review_and_pv.length > 0 && (
+            <Rows items={b.technical_appendix.review_and_pv} />
+          )}
+          {b.technical_appendix && b.technical_appendix.technical_decisions.length > 0 && (
+            <Rows
+              items={b.technical_appendix.technical_decisions.map(
+                (d) => `${d.stage_name}: ${d.decision}`,
+              )}
+            />
+          )}
+          {b.source_summary && (
+            <>
+              <Typography variant="caption" sx={{ fontWeight: 700, display: "block", mt: 1 }}>
+                Source basis
+              </Typography>
+              <Typography variant="body2" sx={{ mb: 0.75 }}>{b.source_summary.basis}</Typography>
+              {b.source_summary.captured_fields.length > 0 && (
+                <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap", mb: 0.75 }}>
+                  {b.source_summary.captured_fields.map((f) => (
+                    <Chip key={`${f.label}-${f.value}`} size="small" variant="outlined" label={`${f.label}: ${f.value}`} sx={{ height: 22 }} />
+                  ))}
+                </Box>
+              )}
+              {b.source_summary.evidence.length > 0 && (
+                <>
+                  <Typography variant="caption" sx={{ fontWeight: 700 }}>Strategic evidence anchors</Typography>
+                  <Rows items={b.source_summary.evidence} />
+                </>
+              )}
+              {b.source_summary.guardrails.length > 0 && (
+                <>
+                  <Typography variant="caption" sx={{ fontWeight: 700 }}>Strategic guardrails</Typography>
+                  <Rows items={b.source_summary.guardrails} />
+                </>
+              )}
+            </>
+          )}
         </Section>
 
         <Typography variant="caption" sx={{ color: "text.secondary", fontStyle: "italic" }}>

@@ -326,6 +326,17 @@ def compose_brief(ctx: dict, enrich: bool = False) -> dict:
         "title": "Campaign Brief",
         "version": "1.0",
         "generated_at": time.strftime("%Y-%m-%d"),
+        # The five lines a brand manager needs before anything else. Everything about how
+        # the plan was produced -- sources, extraction basis, traceability -- moved to the
+        # technical appendix: it was opening the brief with the machinery instead of the
+        # campaign, which is the first thing the review flagged.
+        "snapshot": {
+            "objective": answers.get("cxq") or s1.get("decision") or bam.get("a_to_b_shift") or "",
+            "brand": inferred.get("brand") or slots.get("brand") or "",
+            "therapy_area": inferred.get("therapy_area") or slots.get("therapy_area") or "",
+            "target_audience": answers.get("tcg") or persona,
+            "reason": slots.get("reason") or "",
+        },
         "header": {
             "brand": inferred.get("brand") or slots.get("brand") or "",
             "therapy_area": inferred.get("therapy_area") or slots.get("therapy_area") or "",
@@ -405,6 +416,21 @@ def compose_brief(ctx: dict, enrich: bool = False) -> dict:
         "traceability": [{"brief_section": ", ".join(r.get("feeds", [])), "stage_id": r.get("stage_id"),
                           "stage_name": r.get("stage_name"), "framework": r.get("framework")}
                          for r in recs],
+        # Everything a reviewer may need to audit the brief but nobody needs in order to
+        # read it. Rendered last, after approvals.
+        "technical_appendix": {
+            "review_and_pv": [
+                "MLR-approved content required for every asset in this brief.",
+                f"Assumed review path: {ladder}.",
+                "Any surface collecting drug-experience responses is an AE-capture surface "
+                "with a ~24h PV routing obligation.",
+            ],
+            "technical_decisions": [
+                {"stage_id": r.get("stage_id"), "stage_name": r.get("stage_name"),
+                 "decision": r.get("decision"), "framework": r.get("framework")}
+                for r in recs if r.get("technical")
+            ],
+        },
     }
     # Preserve the deterministic projection so the SME grounding, decision records, and
     # campaign-ops skeleton remain visible to the user instead of being reworded by an LLM.

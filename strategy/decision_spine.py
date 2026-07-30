@@ -88,7 +88,12 @@ SPINE: dict[str, dict] = {
     },
     "S4": {
         "name": "Compliance envelope",
-        "decision": "Branded/unbranded posture, review ladder (CRC rounds + CERT), consent + PV obligations",
+        # The brief states the requirement ("MLR-approved content required") and nothing
+        # more. The ladder, round counts and PV routing are process detail the compliance
+        # team owns; putting the workflow in a brand manager's brief buries the campaign
+        # under someone else's process. It stays derived and recorded -- it still sets the
+        # timeline's MLR buffer -- but it feeds the technical appendix, not the brief body.
+        "decision": "MLR-approved content required (review ladder + PV obligations recorded as technical assumptions)",
         "framework": {"name": "MLR risk-tier classifier + AE/MIR surface scan",
                       "how": "Audience type × content type sets the review rigor: patient-facing branded ⇒ full CRC1 (assume revise-resubmit) → CRC2 (approved-with-changes) → CERT; unbranded-first rule for patients. Any surface collecting patient drug-experience responses (surveys, replies) is flagged as an AE-capture surface with a ~24h PV routing obligation. MLR originates; agents only route."},
         "data_points": [
@@ -96,7 +101,7 @@ SPINE: dict[str, dict] = {
             {"label": "review-ladder assumption", "source": "user", "derivation": "confirm"},
             {"label": "AE/MIR capture surfaces", "source": "internal", "derivation": "derive"},
         ],
-        "feeds": ["Scope & Review Assumptions", "Risk Register"],
+        "feeds": ["Technical Appendix (review + PV assumptions)"],
     },
     "S5": {
         "name": "Message architecture",
@@ -177,6 +182,11 @@ SPINE: dict[str, dict] = {
     },
 }
 
+# Stages whose decisions are process/plumbing rather than campaign strategy. Their records
+# still exist and still feed the timeline and risk logic -- they just render in the
+# technical appendix instead of the brief body.
+TECHNICAL_STAGES = {"S4", "S10"}
+
 # SEQUENCE section id -> spine stage anchoring it (records are emitted for these).
 SEQ_TO_SPINE: dict[str, str] = {
     "tcg": "S2", "cxq": "S1", "feas": "S0", "msgflow": "S5", "channels": "S6",
@@ -243,68 +253,11 @@ def _basis(ctx: dict, fallback: str, direct_key: str | None = None,
 # --------------------------------------------------------------------------- #
 
 def spine_ask_extras(ctx: dict, step: dict) -> dict | None:
-    """Extra spine asks for steps that previously had none. Returns the same ask
-    shape as studio_run.build_ask, plus 'framework' and 'blocked' fields."""
-    inferred = ctx.get("inferred") or {}
-
-    if step["id"] == "feas":  # S0 — program placement
-        # Derivable only when an uploaded strategic source already names the program.
-        src = ctx.get("strategic_source")
-        if src and src.get("has_content") and any("program" in (c or "").lower() for c in (src.get("csfs") or [])):
-            return None
-        return {"ask_id": f"ask-{step['num']}", "section": step["num"],
-                "text": "Is this a **net-new journey**, or an **extension of an existing program** "
-                        "(existing CRM journey, existing templates and consent basis)? Extensions inherit "
-                        "the parent program's trigger logic and source assets — it changes eligibility, "
-                        "review scope, and timeline.",
-                "why": "Program placement (S0 · Campaign frame) drives eligibility rules, template reuse, and the review ladder.",
-                "framework": "Campaign archetype classifier",
-                "blocked": "Purpose (program context + trigger logic)",
-                "recommendation": {"label": "Net-new journey", "source": "no existing program detected for this brand in the journey inventory"},
-                "options": [{"label": "Extension of an existing program", "source": "inherits templates + consent basis + source-asset triggers"}],
-                "free_text": True}
-
-    if step["id"] == "content":  # S4 — compliance envelope
-        persona = (inferred.get("persona") or "").lower()
-        patient_facing = "patient" in persona or "caregiver" in persona
-        ladder = ("CRC1 (assume revise & resubmit) → CRC2 (approved with changes) → CERT"
-                  if patient_facing else "Full MLR review for claims content; light review for unbranded/disease-state")
-        ae_note = (" This plan touches patient-facing surfaces — any survey or reply channel collecting "
-                   "drug-experience responses is an **AE-capture surface** with a ~24h PV routing obligation."
-                   if patient_facing else "")
-        return {"ask_id": f"ask-{step['num']}", "section": step["num"],
-                "text": f"Compliance envelope: I'd assume **{ladder}** for this content set.{ae_note} "
-                        "Accept this review ladder, or is your pathway different?",
-                "why": "The review ladder (S4 · Compliance envelope) sets the timeline's MLR buffer and the scope's round-count assumptions — extra rounds become change requests.",
-                "framework": "MLR risk-tier classifier + AE/MIR surface scan",
-                "blocked": "Scope & Review Assumptions · Risk Register",
-                "recommendation": {"label": ladder, "source": "risk-tier classifier · audience × content type"},
-                "options": [{"label": "Single-round expedited review (pre-approved template reuse only)", "source": "reuse-first rule — no net-new claims"}],
-                "free_text": True}
-
-    if step["id"] == "dmf":  # S7 — deliverables variants
-        return {"ask_id": f"ask-{step['num']}", "section": step["num"],
-                "text": "Deliverables spec: I'd brief each email with **2–3 subject-line + preheader variants "
-                        "for A/B testing**, one hero image, and modular body blocks reused from approved assets. "
-                        "Keep that variant plan?",
-                "why": "Variant counts (S7 · Deliverables spec) belong in the brief, not improvised at build — they set manuscript scope and the test design in the measurement plan.",
-                "framework": "Modular decomposition + reuse-first rule",
-                "blocked": "Activities / Deliverables · Measurement Plan (test design)",
-                "recommendation": {"label": "2–3 SL/preheader variants per email, modular reuse-first", "source": "agency-brief convention (A/B at subject-line level)"},
-                "options": [{"label": "Single variant, no A/B (fastest path)", "source": "compressed timeline trade-off"}],
-                "free_text": True}
-
-    return None
-
-
-def spine_ask_extras(ctx: dict, step: dict) -> dict | None:
     """Extra spine asks with explicit basis labels.
 
     The ask text itself stays minimal so the LLM can write the actual question
     from context instead of reusing a static template sentence.
     """
-    inferred = ctx.get("inferred") or {}
-
     if step["id"] == "feas":  # S0 - program placement
         src = ctx.get("strategic_source")
         if src and src.get("has_content") and any("program" in (c or "").lower() for c in (src.get("csfs") or [])):
@@ -323,38 +276,19 @@ def spine_ask_extras(ctx: dict, step: dict) -> dict | None:
                 "free_text": True}
 
     if step["id"] == "content":  # S4 - compliance envelope
-        persona = (inferred.get("persona") or "").lower()
-        patient_facing = "patient" in persona or "caregiver" in persona
-        ladder = ("CRC1 (assume revise & resubmit) -> CRC2 (approved with changes) -> CERT"
-                  if patient_facing else "Full MLR review for claims content; light review for unbranded/disease-state")
-        return {"ask_id": f"ask-{step['num']}", "section": step["num"],
-                "text": "",
-                "question_focus": "Set the compliance review path for this content set.",
-                "evidence_basis": _basis(ctx,
-                    "Risk-tier default from audience type and content type; confirm against brand MLR rules.",
-                    "constraints", ("guardrails",)),
-                "why": "The review ladder (S4) sets the timeline's MLR buffer and scope round-count assumptions.",
-                "framework": "MLR risk-tier classifier + AE/MIR surface scan",
-                "blocked": "Scope & Review Assumptions ? Risk Register",
-                "recommendation": {"label": ladder, "source": "risk-tier classifier: audience x content type"},
-                "options": [{"label": "Single-round expedited review (pre-approved template reuse only)", "source": "reuse-first rule; no net-new claims"}],
-                "free_text": True}
+        # No ask. The review ladder is a process fact the compliance team owns, not a
+        # campaign decision a brand manager makes in a planning session -- asking them to
+        # confirm CRC rounds put an internal workflow in front of the wrong person. The
+        # envelope is still derived (it sets the timeline's MLR buffer) and still recorded,
+        # but it lands as a technical assumption rather than a gate or a brief section.
+        return None
 
     if step["id"] == "dmf":  # S7 - deliverables variants
-        existing_assets = _brief_field(ctx, "existing_assets")
-        _ = f" I captured existing assets: **{_clip(existing_assets, 110)}**." if existing_assets else ""
-        return {"ask_id": f"ask-{step['num']}", "section": step["num"],
-                "text": "",
-                "question_focus": "Confirm the deliverables and variant plan for the campaign assets.",
-                "evidence_basis": _basis(ctx,
-                    "Agency-brief convention plus reuse-first rule; confirm against actual asset inventory and timeline.",
-                    "existing_assets", ("guardrails", "csfs")),
-                "why": "Variant counts (S7) belong in the brief, not improvised at build; they set scope and test design.",
-                "framework": "Modular decomposition + reuse-first rule",
-                "blocked": "Activities / Deliverables ? Measurement Plan (test design)",
-                "recommendation": {"label": "2-3 SL/preheader variants per email, modular reuse-first", "source": "reuse-first deliverables model"},
-                "options": [{"label": "Single variant, no A/B (fastest path)", "source": "compressed timeline trade-off"}],
-                "free_text": True}
+        # No ask. "Two or three subject lines per email?" is a production convention, not a
+        # campaign decision -- it belongs in the brief as a stated assumption, and stopping
+        # a planning session to confirm it is the kind of low-value gate that made the flow
+        # feel like an interrogation. It still lands in Deliverables and the test design.
+        return None
 
     return None
 
@@ -463,6 +397,10 @@ def build_decision_record(ctx: dict, step: dict, answer: str | None,
         if mix:
             top = max(mix.items(), key=lambda kv: kv[1])
             decided = f"{top[0]}-led mix ({top[1]}%)"
+    if sid == "S4":
+        # S4 no longer asks, so it would otherwise render as "(derived - no ask needed)"
+        # in a brief. State the one line a brand manager needs instead.
+        decided = answer or "MLR-approved content required"
     by_user = bool(answer) if answered_by_user is None else bool(answered_by_user)
     if answer and by_user:
         alternatives.append({"label": "agent recommendation accepted or overridden by user",
@@ -483,4 +421,7 @@ def build_decision_record(ctx: dict, step: dict, answer: str | None,
         "alternatives": alternatives,
         "feeds": stage["feeds"],
         "answered_by_user": by_user,
+        # Renderers put technical records in the appendix rather than the brief body, so
+        # process detail stops being the first thing a brand manager reads.
+        "technical": sid in TECHNICAL_STAGES,
     }

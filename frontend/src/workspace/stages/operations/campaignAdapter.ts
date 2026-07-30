@@ -13,18 +13,24 @@ import { tokens, shade } from "../../../theme/tokens";
 // (see saveCampaignFlowDocument in ../../api) — there is no path back to CampaignFlow.
 
 const TYPE_MAP: Record<CampaignFlowNodeType, NodeType> = {
+  entry: "start",
   send: "process",
   wait: "delay",
   decision: "decision",
+  // The behavioural split is an exclusive gateway, not a yes/no diamond: exactly one
+  // message-ladder track is taken, chosen by what the HCP actually clicked.
+  branch: "gateway.exclusive",
   exit: "end",
   followup: "process",
   closure: "end",
 };
 
 const ACCENT: Record<CampaignFlowNodeType, string> = {
+  entry: tokens.color.success,
   send: tokens.color.primary,
   wait: tokens.color.secondary,
   decision: tokens.color.warning,
+  branch: tokens.color.warning,
   exit: tokens.color.success,
   followup: tokens.color.secondary,
   closure: shade(0.55),
