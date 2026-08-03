@@ -3,7 +3,7 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { styled } from "@mui/material/styles";
 import { AgentBubble } from "../workspace/ChatBubble";
-import { tokens } from "../theme/tokens";
+import { tokens, motion, hoverOnly } from "../theme/tokens";
 import type { Gap } from "./api";
 
 /**
@@ -41,7 +41,14 @@ const OptionBtn = styled("button")<{ rec?: boolean; picked?: boolean }>(({ rec, 
   background: picked ? tokens.color.primary : tokens.color.surface,
   border: `1px solid ${picked ? "transparent" : rec ? tokens.color.primary : tokens.color.outline}`,
   boxShadow: "none",
-  "&:hover": picked ? {} : { background: tokens.color.canvas },
+  transition: [
+    `background ${motion.duration.hover} ${motion.easeOut}`,
+    `border-color ${motion.duration.hover} ${motion.easeOut}`,
+    `color ${motion.duration.hover} ${motion.easeOut}`,
+    `transform ${motion.duration.press} ${motion.easeOut}`,
+  ].join(", "),
+  [hoverOnly]: { "&:hover": picked ? {} : { background: tokens.color.canvas } },
+  "&:active:not(:disabled)": { transform: "scale(0.98)" },
   "&:focus-visible": { outline: `2px solid ${tokens.color.primary}`, outlineOffset: 2 },
   "&:disabled": { cursor: "default", opacity: 0.8 },
 }));

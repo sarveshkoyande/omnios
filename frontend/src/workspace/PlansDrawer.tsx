@@ -8,7 +8,7 @@ import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
 import { styled } from "@mui/material/styles";
 import type { ProjectSummary } from "./types";
-import { tokens, indigoTint } from "../theme/tokens";
+import { tokens, indigoTint, motion, hoverOnly } from "../theme/tokens";
 
 /**
  * PlansDrawer — the metaphor is literal: MUI's Drawer already reads as a
@@ -26,7 +26,12 @@ const PlanRow = styled("button")<{ active?: boolean }>(({ theme, active }) => ({
   borderRadius: tokens.radius.sm,
   marginBottom: 4,
   background: active ? indigoTint(0.1) : "transparent",
-  "&:hover": { background: indigoTint(0.06) },
+  transition: [
+    `background ${motion.duration.hover} ${motion.easeOut}`,
+    `transform ${motion.duration.press} ${motion.easeOut}`,
+  ].join(", "),
+  [hoverOnly]: { "&:hover": { background: indigoTint(0.06) } },
+  "&:active": { transform: "scale(0.98)" },
   "&:focus-visible": { outline: `2px solid ${tokens.color.primary}`, outlineOffset: -2 },
 }));
 

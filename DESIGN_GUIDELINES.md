@@ -149,13 +149,45 @@ UI.
 
 - **Focus:** `2px solid primary`, `outlineOffset: 2` (`focusRing`). On a brand-coloured
   background use `focusRingOnBrand` (white ring). Never remove focus visibility.
-- **Hover:** `indigoTint(0.08)` wash on icon buttons; `canvas` on option rows.
-- **Pressed:** `translateY(1px)` on the send key. Buttons brighten via `filter: brightness(1.08)`.
+- **Hover:** `indigoTint(0.08)` wash on icon buttons; `canvas` on option rows. **Always gate
+  hover behind the `hoverOnly` media key** (`@media (hover: hover) and (pointer: fine)`) —
+  touch devices fire `:hover` on tap and leave it stuck.
+- **Pressed:** every pressable surface scales down. `0.97` buttons, `0.92` icon buttons,
+  `0.94` the primary send key, `0.98` rows and option buttons, `0.995` full-width cards.
+  Larger surface, smaller scale. Buttons also brighten via `filter: brightness(1.08)`.
 - **Selection:** `::selection` is `primaryContainer` on ink.
 - **Scrollbars:** thin, 12px, `outline` pill thumb with a 3px transparent border
   (`backgroundClip: content-box`), transparent track, `outlineStrong` on hover.
-- **Motion:** short and functional. `160ms ease` for state changes. The only ambient motion
-  in the app is the composer glow (§8) and the send-key gradient drift (15s linear).
+
+### Motion tokens
+
+`tokens.ts` exports `motion`. **Never write a bare `ease` or a raw duration** — the built-in
+CSS curves are too weak to read as intentional at these durations.
+
+| Token | Value | Use |
+|---|---|---|
+| `motion.easeOut` | `cubic-bezier(0.23, 1, 0.32, 1)` | Enter, exit, and anything the user triggered |
+| `motion.easeInOut` | `cubic-bezier(0.77, 0, 0.175, 1)` | Movement between two on-screen positions |
+| `motion.duration.press` | 120ms | `:active` transforms |
+| `motion.duration.hover` | 160ms | Colour, border, background |
+| `motion.duration.enter` | 220ms | Element entrances |
+| `motion.duration.panel` | 260ms | Panel collapse, larger surfaces |
+
+`ease-in` is banned for UI: it delays the first frame — the frame the user is watching — so
+it feels slower than `ease-out` at an identical duration. Nothing may exceed 300ms.
+
+**Always name the properties you transition; never `transition: all`.** Only `transform` and
+`opacity` are free (GPU, no layout or paint) — animating `height`, `width`, `padding` or
+`margin` triggers the full pipeline.
+
+**Prefer transitions over keyframes** for anything that can retrigger rapidly. A transition
+retargets from its current value; a keyframe restarts from zero. `SectionCard` collapses via
+a `grid-template-rows: 0fr → 1fr` transition for exactly this reason — note that its children
+stay mounted, so a collapsed section is held out of the a11y tree with `inert` + `aria-hidden`.
+
+Ambient (infinite) motion needs a purpose beyond decoration, because the user sees it every
+session. The two that qualify: the composer glow (§8, gated on `hasText`) and the status/agent
+pulse dots, which indicate live work. Decorative infinite loops on static icons were removed.
 
 ---
 
@@ -218,6 +250,8 @@ Three details that make it work — preserve them:
 - [ ] Type size from the 13/14/15/17/20/24/28 scale; weight 400 or 700
 - [ ] Spacing a multiple of 4
 - [ ] Focus ring intact and visible
+- [ ] Easing and duration from `motion`; no bare `ease`, no `transition: all`, nothing over 300ms
+- [ ] Hover gated behind `hoverOnly`; every pressable surface has an `:active` scale
 - [ ] Inside a stage, accents from `stageTheme` not raw brand blue
 - [ ] No empty placeholder panels — render nothing, or render `N/A`
 - [ ] Ambient motion justified; anything decorative respects `prefers-reduced-motion`

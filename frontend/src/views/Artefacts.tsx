@@ -19,7 +19,7 @@ import {
   type PharmaIntelSummary,
 } from "../api";
 import { ConsolePanel } from "../components/ConsolePanel";
-import { tokens, indigoTint } from "../theme/tokens";
+import { tokens, indigoTint, motion, hoverOnly } from "../theme/tokens";
 
 const fmt = new Intl.NumberFormat("en-US");
 type Drilldown = { kind: string; value?: string; title: string };
@@ -53,8 +53,15 @@ function clickableSx(enabled: boolean) {
   return enabled
     ? {
         cursor: "pointer",
-        transition: "border-color 120ms ease, background-color 120ms ease, transform 120ms ease",
-        "&:hover": { borderColor: tokens.color.primary, background: indigoTint(0.035), transform: "translateY(-1px)" },
+        transition: [
+          `border-color ${motion.duration.hover} ${motion.easeOut}`,
+          `background-color ${motion.duration.hover} ${motion.easeOut}`,
+          `transform ${motion.duration.press} ${motion.easeOut}`,
+        ].join(", "),
+        [hoverOnly]: {
+          "&:hover": { borderColor: tokens.color.primary, background: indigoTint(0.035) },
+        },
+        "&:active": { transform: "scale(0.98)" },
         "&:focus-visible": { outline: `2px solid ${tokens.color.primary}`, outlineOffset: 2 },
       }
     : {};

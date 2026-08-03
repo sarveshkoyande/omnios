@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { keyframes } from "@emotion/react";
 import Typography from "@mui/material/Typography";
 import { GlassPanel } from "../glass/primitives";
-import { tokens } from "../theme/tokens";
+import { tokens, motion } from "../theme/tokens";
 
 const settleIn = keyframes`
   from { opacity: 0; transform: translateY(8px); }
@@ -56,7 +56,7 @@ export function StatOdometer({ value, label, alert }: { value: number | string; 
         display: "flex",
         flexDirection: "column",
         gap: 0.5,
-        animation: `${settleIn} 420ms ease`,
+        animation: `${settleIn} ${motion.duration.panel} ${motion.easeOut}`,
       }}
     >
       <Typography

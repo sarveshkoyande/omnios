@@ -7,7 +7,7 @@ import Chip from "@mui/material/Chip";
 import type { ChipProps } from "@mui/material/Chip";
 import Typography from "@mui/material/Typography";
 import { styled } from "@mui/material/styles";
-import { tokens, glass, glassFallback } from "../theme/tokens";
+import { tokens, glass, glassFallback, motion } from "../theme/tokens";
 import { accent } from "../theme/stageTheme";
 
 type Tier = "A" | "B" | "0";
@@ -100,19 +100,42 @@ export function SectionCard({
               cursor: collapsible ? "pointer" : "default",
               color: tokens.color.onPrimaryContainer,
               borderRadius: 1,
+              transition: `transform ${motion.duration.press} ${motion.easeOut}`,
+              "&:active": collapsible ? { transform: "scale(0.9)" } : undefined,
               "&:focus-visible": { outline: `2px solid ${tokens.color.primary}`, outlineOffset: 2 },
             }}
           >
             <span
               className="material-symbols-outlined"
-              style={{ fontSize: 20, transform: open ? "none" : "rotate(180deg)", transition: "transform 160ms ease" }}
+              style={{
+                fontSize: 20,
+                transform: open ? "none" : "rotate(180deg)",
+                transition: `transform ${motion.duration.hover} ${motion.easeOut}`,
+              }}
             >
               {collapsible ? "keyboard_arrow_up" : ""}
             </span>
           </Box>
         </Box>
       )}
-      {open && <Box sx={{ p: 2 }}>{children}</Box>}
+      {/* Collapse via a 0fr/1fr grid row rather than unmounting: it animates height
+          without measuring the content, and because it is a transition (not a
+          keyframe) a double-click retargets from the current height instead of
+          restarting. The inner `minHeight: 0` is what lets the row actually
+          collapse -- grid items floor at their content size without it. */}
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateRows: open ? "1fr" : "0fr",
+          transition: `grid-template-rows ${motion.duration.panel} ${motion.easeOut}`,
+        }}
+      >
+        {/* Children now stay mounted so the height can animate, so a collapsed
+            section must be taken out of the tab order and the a11y tree by hand. */}
+        <Box sx={{ minHeight: 0, overflow: "hidden" }} inert={!open} aria-hidden={!open}>
+          <Box sx={{ p: 2 }}>{children}</Box>
+        </Box>
+      </Box>
     </GlassPanel>
   );
 }

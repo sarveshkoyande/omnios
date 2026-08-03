@@ -5,17 +5,12 @@ import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { GlassPanel, BrandButton } from "../glass/primitives";
-import { tokens, indigoTint } from "../theme/tokens";
+import { tokens, indigoTint, motion, hoverOnly } from "../theme/tokens";
 import { BRIEF_TEMPLATE } from "./types";
 
 const settleIn = keyframes`
-  from { opacity: 0; transform: translateY(14px); }
+  from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: none; }
-`;
-
-const iconFloat = keyframes`
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-3px); }
 `;
 
 const ACCEPTED_EXT = [".pdf", ".docx", ".txt", ".md"];
@@ -54,15 +49,15 @@ export function IntakeCard({
   };
 
   return (
-    <GlassPanel tier="A" sx={{ p: 4, mb: 3, minWidth: 0, animation: `${settleIn} 380ms ease` }}>
+    <GlassPanel tier="A" sx={{ p: 4, mb: 3, minWidth: 0, animation: `${settleIn} ${motion.duration.enter} ${motion.easeOut}` }}>
       <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, mb: 1.5 }}>
         <span
           className="material-symbols-outlined"
-          style={{ fontSize: 22, color: tokens.color.primary, animation: `${iconFloat} 2.8s ease-in-out infinite` }}
+          style={{ fontSize: 22, color: tokens.color.primary }}
         >
           edit_note
         </span>
-        <Typography sx={{ fontSize: 16, fontWeight: 600, color: "text.primary" }}>
+        <Typography sx={{ fontSize: tokens.fontSize.lg, fontWeight: 700, color: "text.primary" }}>
           Start with a quick brief
         </Typography>
       </Box>
@@ -112,8 +107,18 @@ export function IntakeCard({
           background: dragActive ? indigoTint(0.14) : indigoTint(0.04),
           transform: dragActive ? "scale(1.012)" : "none",
           boxShadow: dragActive ? `0 6px 20px ${indigoTint(0.28)}` : "none",
-          transition: "background 140ms ease, border-color 140ms ease, transform 140ms ease, box-shadow 140ms ease",
-          "&:hover": { background: indigoTint(0.08), borderColor: tokens.color.primary },
+          transition: [
+            `background ${motion.duration.hover} ${motion.easeOut}`,
+            `border-color ${motion.duration.hover} ${motion.easeOut}`,
+            `box-shadow ${motion.duration.hover} ${motion.easeOut}`,
+            `transform ${motion.duration.press} ${motion.easeOut}`,
+          ].join(", "),
+          [hoverOnly]: {
+            "&:hover": { background: indigoTint(0.08), borderColor: tokens.color.primary },
+          },
+          // Not applied while a file is being dragged over -- the drop zone is already
+          // scaled up in that state and the two transforms would fight.
+          "&:active": dragActive ? undefined : { transform: "scale(0.99)" },
           "&:focus-visible": { outline: `2px solid ${tokens.color.primary}`, outlineOffset: 2 },
         }}
       >

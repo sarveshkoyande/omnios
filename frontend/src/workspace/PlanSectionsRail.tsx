@@ -4,7 +4,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Typography from "@mui/material/Typography";
 import { styled } from "@mui/material/styles";
 import type { StudioState } from "./studio/studioTypes";
-import { indigoTint, tokens } from "../theme/tokens";
+import { indigoTint, tokens, motion, hoverOnly } from "../theme/tokens";
 
 /** Static, known-ahead-of-time titles for the Sequential Plan Studio sections
  * (strategy/studio_run.py's SEQUENCE, resolved against plan_document._SECTION_TABLE) --
@@ -42,7 +42,17 @@ const Row = styled(Box)<{ active?: boolean; clickable?: boolean }>(({ theme, act
   borderLeft: `3px solid ${active ? tokens.color.primary : "transparent"}`,
   background: active ? tokens.color.primaryContainer : "transparent",
   cursor: clickable ? "pointer" : "default",
-  "&:hover": clickable ? { background: indigoTint(0.08) } : undefined,
+  transition: [
+    `background ${motion.duration.hover} ${motion.easeOut}`,
+    `border-left-color ${motion.duration.hover} ${motion.easeOut}`,
+    `transform ${motion.duration.press} ${motion.easeOut}`,
+  ].join(", "),
+  ...(clickable
+    ? {
+        [hoverOnly]: { "&:hover": { background: indigoTint(0.08) } },
+        "&:active": { transform: "scale(0.98)" },
+      }
+    : {}),
 }));
 
 const Dot = styled(Box)<{ state: "done" | "active" | "pending" }>(({ state }) => ({

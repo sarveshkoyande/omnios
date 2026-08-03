@@ -3,7 +3,7 @@ import Chip from "@mui/material/Chip";
 import Typography from "@mui/material/Typography";
 import { styled } from "@mui/material/styles";
 import type { ProjectSummary } from "../workspace/types";
-import { tokens, indigoTint } from "../theme/tokens";
+import { tokens, indigoTint, motion, hoverOnly } from "../theme/tokens";
 
 /**
  * PlanCard — a wide, horizontal, clickable card for one saved plan on the Home
@@ -56,12 +56,17 @@ const Root = styled("button")({
   borderRadius: tokens.radius.lg,
   background: tokens.color.surface,
   border: `1px solid ${tokens.color.outline}`,
-  transition: "border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease",
-  "&:hover": {
-    borderColor: tokens.color.primary,
-    boxShadow: "0 6px 20px rgba(16,24,40,0.12)",
-    transform: "translateY(-1px)",
+  transition: [
+    `border-color ${motion.duration.hover} ${motion.easeOut}`,
+    `background-color ${motion.duration.hover} ${motion.easeOut}`,
+    `transform ${motion.duration.press} ${motion.easeOut}`,
+  ].join(", "),
+  [hoverOnly]: {
+    "&:hover": { borderColor: tokens.color.primary, background: indigoTint(0.035) },
   },
+  // The card is large, so the press scale is smaller than a button's -- 0.97 on a
+  // full-width row reads as the whole list flinching.
+  "&:active": { transform: "scale(0.995)" },
   "&:focus-visible": { outline: `2px solid ${tokens.color.primary}`, outlineOffset: 2 },
 });
 

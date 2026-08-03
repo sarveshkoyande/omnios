@@ -1,5 +1,5 @@
 import { createTheme } from "@mui/material/styles";
-import { tokens, focusRing } from "./tokens";
+import { tokens, focusRing, motion, hoverOnly } from "./tokens";
 
 const SEMANTIC: Record<string, { solid: string; soft: string; ink: string }> = {
   success: { solid: tokens.color.success, soft: tokens.color.successSoft, ink: tokens.color.successInk },
@@ -131,7 +131,17 @@ export const theme = createTheme({
           borderRadius: tokens.radius.sm,
           fontWeight: 700,
           textTransform: "none",
-          transition: "background-color 120ms ease, color 120ms ease, border-color 120ms ease, transform 120ms ease",
+          // Transform gets the shorter duration: press feedback has to land under the
+          // finger, colour can take its time.
+          transition: [
+            `background-color ${motion.duration.hover} ${motion.easeOut}`,
+            `color ${motion.duration.hover} ${motion.easeOut}`,
+            `border-color ${motion.duration.hover} ${motion.easeOut}`,
+            `transform ${motion.duration.press} ${motion.easeOut}`,
+          ].join(", "),
+          // Every pressable surface in the app scales down. This is the single most
+          // load-bearing detail for making the UI feel like it heard the click.
+          "&:active": { transform: "scale(0.97)" },
           "&.Mui-focusVisible": focusRing,
         },
         contained: ({ ownerState }) => {
@@ -143,8 +153,9 @@ export const theme = createTheme({
             color: textColor,
             border: "none",
             boxShadow: "none",
-            "&:hover": { backgroundColor: s ? s.ink : tokens.color.primaryDark, transform: "translateY(-1px)" },
-            "&:active": { transform: "translateY(1px)" },
+            [hoverOnly]: {
+              "&:hover": { backgroundColor: s ? s.ink : tokens.color.primaryDark },
+            },
             "&.Mui-disabled": { backgroundColor: tokens.color.outline, color: tokens.color.inkSecondary, boxShadow: "none" },
           };
         },
@@ -153,12 +164,30 @@ export const theme = createTheme({
           border: `1px solid ${tokens.color.outlineStrong}`,
           color: tokens.color.primary,
           boxShadow: "none",
-          "&:hover": { backgroundColor: tokens.color.primaryContainer, borderColor: tokens.color.primary },
+          [hoverOnly]: {
+            "&:hover": { backgroundColor: tokens.color.primaryContainer, borderColor: tokens.color.primary },
+          },
         },
         text: {
           color: tokens.color.primary,
           boxShadow: "none",
-          "&:hover": { backgroundColor: tokens.color.primaryContainer },
+          [hoverOnly]: {
+            "&:hover": { backgroundColor: tokens.color.primaryContainer },
+          },
+        },
+      },
+    },
+    MuiIconButton: {
+      defaultProps: { disableRipple: true },
+      styleOverrides: {
+        root: {
+          transition: [
+            `background-color ${motion.duration.hover} ${motion.easeOut}`,
+            `color ${motion.duration.hover} ${motion.easeOut}`,
+            `transform ${motion.duration.press} ${motion.easeOut}`,
+          ].join(", "),
+          "&:active": { transform: "scale(0.92)" },
+          "&.Mui-focusVisible": focusRing,
         },
       },
     },
@@ -185,8 +214,13 @@ export const theme = createTheme({
         root: {
           backgroundColor: tokens.color.surface,
           borderRadius: tokens.radius.sm,
-          "& .MuiOutlinedInput-notchedOutline": { borderColor: tokens.color.outlineStrong },
-          "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: tokens.color.primary },
+          "& .MuiOutlinedInput-notchedOutline": {
+            borderColor: tokens.color.outlineStrong,
+            transition: `border-color ${motion.duration.hover} ${motion.easeOut}`,
+          },
+          [hoverOnly]: {
+            "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: tokens.color.primary },
+          },
           "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: tokens.color.primary, borderWidth: 2 },
           "&.Mui-focused": focusRing,
           "&.Mui-disabled": { backgroundColor: tokens.color.canvas },

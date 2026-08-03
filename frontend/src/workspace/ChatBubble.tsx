@@ -3,7 +3,7 @@ import { styled } from "@mui/material/styles";
 // Aliased: TurnBubble below takes a styled-prop literally named `accent`, which would shadow
 // this import inside that callback.
 import { accent as stageAccent } from "../theme/stageTheme";
-import { tokens } from "../theme/tokens";
+import { tokens, motion } from "../theme/tokens";
 
 /** AgentBubble — a flat white surface with the stage agent's accent bar down its left edge. */
 export const AgentBubble = styled("div")(({ theme }) => ({
@@ -92,7 +92,7 @@ export const StatusLine = styled("div")(({ theme }) => ({
   color: tokens.color.inkSoft,
   fontSize: tokens.fontSize.sm,
   fontStyle: "italic",
-  animation: `${statusIn} 320ms ease`,
+  animation: `${statusIn} ${motion.duration.enter} ${motion.easeOut}`,
   "&::before": {
     content: '""',
     width: 6,

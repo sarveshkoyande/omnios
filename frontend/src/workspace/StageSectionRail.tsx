@@ -3,7 +3,7 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { styled } from "@mui/material/styles";
 import { accent } from "../theme/stageTheme";
-import { indigoTint, tokens } from "../theme/tokens";
+import { indigoTint, tokens, motion, hoverOnly } from "../theme/tokens";
 
 /**
  * StageSectionRail — the left-hand table of contents for Stages 2-4, mirroring Stage 1's
@@ -51,7 +51,13 @@ const Row = styled(Box)<{ active?: boolean }>(({ theme, active }) => ({
   borderLeft: `3px solid ${active ? accent.primary : "transparent"}`,
   background: active ? accent.container : "transparent",
   cursor: "pointer",
-  "&:hover": { background: active ? accent.container : indigoTint(0.08) },
+  transition: [
+    `background ${motion.duration.hover} ${motion.easeOut}`,
+    `border-left-color ${motion.duration.hover} ${motion.easeOut}`,
+    `transform ${motion.duration.press} ${motion.easeOut}`,
+  ].join(", "),
+  [hoverOnly]: { "&:hover": { background: active ? accent.container : indigoTint(0.08) } },
+  "&:active": { transform: "scale(0.98)" },
 }));
 
 /** Which of `sections` currently have an anchor element mounted, re-scanned on DOM changes. */

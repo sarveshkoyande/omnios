@@ -63,6 +63,33 @@ export const tokens = {
   radius: { sm: 4, md: 8, lg: 12, pill: 999 },
 } as const;
 
+/**
+ * Motion tokens. The built-in CSS easings are too weak to read as intentional at
+ * the short durations this app uses, so every transition should pull a curve from
+ * here rather than falling back to `ease`.
+ *
+ * `ease-in` is deliberately absent: it delays the first frame, which is the frame
+ * the user is watching, and makes the UI feel slower at an identical duration.
+ */
+export const motion = {
+  // Enter/exit and anything the user triggered — starts fast, feels responsive.
+  easeOut: "cubic-bezier(0.23, 1, 0.32, 1)",
+  // Movement between two on-screen positions.
+  easeInOut: "cubic-bezier(0.77, 0, 0.175, 1)",
+  duration: {
+    press: "120ms",
+    hover: "160ms",
+    enter: "220ms",
+    panel: "260ms",
+  },
+} as const;
+
+/**
+ * Hover effects must be gated behind this: touch devices fire `:hover` on tap and
+ * leave the state stuck after the finger lifts.
+ */
+export const hoverOnly = "@media (hover: hover) and (pointer: fine)";
+
 export const shade = (alpha: number) => `rgba(16, 24, 40, ${alpha})`;
 export const light = (alpha: number) => `rgba(255, 255, 255, ${alpha})`;
 export const indigoTint = (alpha: number) => `rgba(3, 78, 162, ${alpha})`;

@@ -4,16 +4,11 @@ import Box from "@mui/material/Box";
 import InputBase from "@mui/material/InputBase";
 import Typography from "@mui/material/Typography";
 import { GlassPanel } from "../glass/primitives";
-import { tokens, indigoTint, light } from "../theme/tokens";
+import { tokens, indigoTint, light, motion, hoverOnly } from "../theme/tokens";
 
 const settleIn = keyframes`
-  from { opacity: 0; transform: translateY(14px); }
+  from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: none; }
-`;
-
-const iconPulse = keyframes`
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.12); }
 `;
 
 const SUGGESTIONS = [
@@ -79,7 +74,7 @@ export function HomeIntakeCard({
         border: "none",
         boxShadow: "none",
         overflow: "visible",
-        animation: `${settleIn} 380ms ease`,
+        animation: `${settleIn} ${motion.duration.enter} ${motion.easeOut}`,
       }}
       onDragEnter={(e: React.DragEvent) => {
         e.preventDefault();
@@ -102,11 +97,11 @@ export function HomeIntakeCard({
       <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, mb: 2.5 }}>
         <span
           className="material-symbols-outlined"
-          style={{ fontSize: 22, color: tokens.color.primary, display: "inline-block", animation: `${iconPulse} 2.2s ease-in-out infinite` }}
+          style={{ fontSize: 22, color: tokens.color.primary, display: "inline-block" }}
         >
           bolt
         </span>
-        <Typography sx={{ fontSize: 16, fontWeight: 600, color: "text.primary" }}>
+        <Typography sx={{ fontSize: tokens.fontSize.lg, fontWeight: 700, color: "text.primary" }}>
           Start a new requirement
         </Typography>
       </Box>
@@ -177,12 +172,20 @@ export function HomeIntakeCard({
                   borderRadius: tokens.radius.pill,
                   cursor: "pointer",
                   color: "text.secondary",
-                  fontSize: 13,
-                  fontWeight: 600,
+                  fontSize: tokens.fontSize.xs,
+                  fontWeight: 700,
                   border: `1px solid ${tokens.color.outline}`,
                   background: tokens.color.surface,
-                  transition: "background 140ms ease, color 140ms ease, border-color 140ms ease",
-                  "&:hover": { background: tokens.color.canvas, color: "text.primary", borderColor: tokens.color.outlineStrong },
+                  transition: [
+                    `background ${motion.duration.hover} ${motion.easeOut}`,
+                    `color ${motion.duration.hover} ${motion.easeOut}`,
+                    `border-color ${motion.duration.hover} ${motion.easeOut}`,
+                    `transform ${motion.duration.press} ${motion.easeOut}`,
+                  ].join(", "),
+                  [hoverOnly]: {
+                    "&:hover": { background: tokens.color.canvas, color: "text.primary", borderColor: tokens.color.outlineStrong },
+                  },
+                  "&:active": { transform: "scale(0.96)" },
                   "&:focus-visible": { outline: `2px solid ${tokens.color.primary}`, outlineOffset: 2 },
                 }}
               >
@@ -208,12 +211,20 @@ export function HomeIntakeCard({
                   borderRadius: tokens.radius.pill,
                   cursor: "pointer",
                   color: "#fff",
-                  fontSize: 14,
+                  fontSize: tokens.fontSize.sm,
                   fontWeight: 700,
                   background: `linear-gradient(120deg, ${tokens.color.primary}, ${tokens.color.primaryDark})`,
                   boxShadow: `0 4px 14px ${indigoTint(0.32)}`,
-                  transition: "transform 140ms ease, box-shadow 140ms ease, filter 140ms ease",
-                  "&:hover": { filter: "brightness(1.06)", transform: "translateY(-1px)", boxShadow: `0 6px 18px ${indigoTint(0.4)}` },
+                  transition: [
+                    `filter ${motion.duration.hover} ${motion.easeOut}`,
+                    `transform ${motion.duration.press} ${motion.easeOut}`,
+                  ].join(", "),
+                  [hoverOnly]: {
+                    "&:hover": { filter: "brightness(1.06)" },
+                  },
+                  // This is the primary action on the dashboard, so it gets the full
+                  // press scale rather than the gentler card value.
+                  "&:active": { transform: "scale(0.94)" },
                   "&:focus-visible": { outline: `2px solid ${tokens.color.primary}`, outlineOffset: 2 },
                 }}
               >
@@ -254,13 +265,20 @@ export function HomeIntakeCard({
               py: 0.5,
               borderRadius: tokens.radius.pill,
               cursor: "pointer",
-              fontSize: 12.5,
-              fontWeight: 600,
+              fontSize: tokens.fontSize.xs,
+              fontWeight: 700,
               color: tokens.color.primary,
               background: tokens.color.infoSoft,
               border: `1px solid ${indigoTint(0.18)}`,
-              transition: "background 140ms ease, border-color 140ms ease",
-              "&:hover": { background: indigoTint(0.12), borderColor: tokens.color.primary },
+              transition: [
+                `background ${motion.duration.hover} ${motion.easeOut}`,
+                `border-color ${motion.duration.hover} ${motion.easeOut}`,
+                `transform ${motion.duration.press} ${motion.easeOut}`,
+              ].join(", "),
+              [hoverOnly]: {
+                "&:hover": { background: indigoTint(0.12), borderColor: tokens.color.primary },
+              },
+              "&:active": { transform: "scale(0.95)" },
               "&:focus-visible": { outline: `2px solid ${tokens.color.primary}`, outlineOffset: 2 },
             }}
           >
