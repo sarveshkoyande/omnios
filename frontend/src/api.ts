@@ -378,6 +378,30 @@ export async function postStudioAnswer(projectId: string, askId: string, value: 
   if (!res.ok) throw new Error(`POST /api/studio/answer -> ${res.status}`);
 }
 
+export interface StudioReviseResult {
+  from_section: string;
+  /** Spine stages that depend on the revised one — the blast radius, named before it happens. */
+  affected_stages: string[];
+  affected_sections: number;
+}
+
+/** Change a landed decision. The server rewinds the studio to that section; the caller then
+ *  reopens the stream, which re-drafts everything downstream and re-emits their records. */
+export async function postStudioRevise(
+  projectId: string,
+  sectionId: string,
+  value: string,
+  filters?: Record<string, string[]>,
+): Promise<StudioReviseResult> {
+  const res = await fetch("/api/studio/revise", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ project_id: projectId, section_id: sectionId, value, filters: filters ?? null }),
+  });
+  if (!res.ok) throw new Error(`POST /api/studio/revise -> ${res.status}`);
+  return res.json();
+}
+
 export interface StudioAutoAssumeResult {
   auto_assume: boolean;
   /** Set when an ask is already sitting on the gate — the caller answers it to get moving. */

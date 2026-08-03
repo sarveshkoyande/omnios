@@ -282,7 +282,7 @@ export function Workspace({
     {/* stageVars publishes the accent as CSS variables for the chrome that is styled with
         literal token strings rather than through the palette (section headers, stage icons,
         the top bar). Everything outside this subtree keeps the blue fallbacks. */}
-    <Box sx={{ ...stageVars(stageAgentId), display: "flex", flexDirection: "column", height: "calc(100vh - 56px)", minHeight: 0 }}>
+    <Box sx={{ ...stageVars(stageAgentId), display: "flex", flexDirection: "column", height: `calc(100vh - ${tokens.layout.topBarHeight}px)`, minHeight: 0 }}>
       <PlansDrawer
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
@@ -305,7 +305,8 @@ export function Workspace({
           alignItems: "stretch",
           gap: 3,
           px: 3,
-          pt: 0.75,
+          // Breathing room between the app bar above and the tops of the folder tabs.
+          pt: 2,
           pb: 0,
           backgroundColor: accent.primaryDark,
           position: "relative",
@@ -363,7 +364,7 @@ export function Workspace({
                   {!ws.studio.done && <AssemblyCanvas studio={ws.studio} onSkip={ws.skipStudioPacing} />}
                   {ws.studio.records.length > 0 && !ws.studio.done && (
                     <ConsolePanel id="decision-trail-anchor" title="Decision trail" icon="psychology" collapsible sx={{ mt: 3 }}>
-                      <DecisionTrail records={ws.studio.records} dense />
+                      <DecisionTrail records={ws.studio.records} dense onRevise={ws.reviseStudioDecision} />
                     </ConsolePanel>
                   )}
                   {ws.studio.done && (

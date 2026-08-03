@@ -11,8 +11,17 @@ export default defineConfig({
     emptyOutDir: true,
   },
   server: {
+    // FastAPI serves app/static at /static, so image paths like /static/home/... 404
+    // under `npm run dev` unless they are proxied — they only work in the built bundle.
+    // Proxy the asset directories individually and NOT `/static` wholesale: `base` is
+    // "/static/v2/", so a blanket /static rule would hijack Vite's own module requests
+    // and take the dev server down with it.
     proxy: {
       "/api": "http://127.0.0.1:8733",
+      "/static/home": "http://127.0.0.1:8733",
+      "/static/agent_avatars": "http://127.0.0.1:8733",
+      "/static/brand_assets": "http://127.0.0.1:8733",
+      "/static/agent_image": "http://127.0.0.1:8733",
     },
   },
 });

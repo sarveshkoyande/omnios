@@ -13,6 +13,7 @@ import {
   listProjects,
   postChat,
   postStudioAnswer,
+  postStudioRevise,
   postTabChat,
   renameProject,
   runPersonaReview,
@@ -266,8 +267,15 @@ export function useWorkspace() {
         setStudio((prev) => ({
           ...prev,
           slot: null,
+          // Replace in place on re-emit rather than ignoring it: revising a decision re-runs
+          // the stream from that section forward, so the second copy is the CURRENT one.
+          // Ignoring repeats would leave the canvas showing pre-revision drafts.
           sections: prev.sections.some((s) => s.section_id === ev.section_id)
-            ? prev.sections
+            ? prev.sections.map((s) =>
+                s.section_id === ev.section_id
+                  ? { ...s, num: ev.num, title: ev.title, owner: STAGE_AGENTS.planning.id, html: ev.html }
+                  : s,
+              )
             : [...prev.sections, { section_id: ev.section_id, num: ev.num, title: ev.title, owner: STAGE_AGENTS.planning.id, html: ev.html }],
         }));
         break;
@@ -278,7 +286,7 @@ export function useWorkspace() {
         const { type: _t, ...record } = ev;
         setStudio((prev) =>
           prev.records.some((r) => r.stage_id === record.stage_id)
-            ? prev
+            ? { ...prev, records: prev.records.map((r) => (r.stage_id === record.stage_id ? record : r)) }
             : { ...prev, records: [...prev.records, record] },
         );
         break;
@@ -378,6 +386,34 @@ export function useWorkspace() {
         startStudioRun(projectId); // resume: drafts this section, opens the next
       } catch {
         setItems((prev) => [...prev, { id: nextId(), kind: "agent", text: "⚠ Couldn't record that answer. Try picking it again." }]);
+      }
+    },
+    [projectId, startStudioRun],
+  );
+
+  /** Revise a decision that already landed. The server rewinds the studio to that section;
+   *  reopening the stream re-drafts every dependent section and re-emits their records, which
+   *  the reducer above overwrites in place. Returns the blast radius so the caller can say
+   *  what it just triggered. */
+  const reviseStudioDecision = useCallback(
+    async (sectionId: string, value: string, filters?: Record<string, string[]>) => {
+      if (!projectId) return null;
+      try {
+        const res = await postStudioRevise(projectId, sectionId, value, filters);
+        setItems((prev) => [
+          ...prev,
+          { id: nextId(), kind: "user", text: `Revised ${sectionId}: ${value}` },
+          {
+            id: nextId(),
+            kind: "agent",
+            text: `Rebuilding ${res.affected_sections} section${res.affected_sections === 1 ? "" : "s"} that depend on this decision.`,
+          },
+        ]);
+        startStudioRun(projectId);
+        return res;
+      } catch {
+        setItems((prev) => [...prev, { id: nextId(), kind: "agent", text: "⚠ Couldn't revise that decision. Try again." }]);
+        return null;
       }
     },
     [projectId, startStudioRun],
@@ -1046,6 +1082,7 @@ export function useWorkspace() {
     studio,
     typingAuthor,
     answerStudioAsk,
+    reviseStudioDecision,
     autoAssume,
     toggleAutoAssume,
     skipStudioPacing,

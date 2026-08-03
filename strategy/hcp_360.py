@@ -424,7 +424,55 @@ def cross_tab(group_by: list[str] | str | None = None,
     return rows
 
 
-def segment_sizing(therapy_area: str = "") -> dict:
+def _sizing_scope(therapy_area: str, filters: dict | None) -> tuple[list[str], list[str], list, str]:
+    """Resolve the population the sizing counts over.
+
+    Returns (specialties, where_fragments, params, scope). Specialties come from the therapy
+    area, narrowed further when the caller has picked a subset -- a filter may only ever shrink
+    the mapped scope, never widen it past the therapy area, or the shares would be counted
+    against a population the plan does not target."""
+    mapped = _map_specialties(benchmarks.specialties_for(therapy_area) if therapy_area else [])
+    picked = [s for s in ((filters or {}).get("specialties") or []) if s]
+    specialties = [s for s in mapped if s in picked] if (mapped and picked) else (picked or mapped)
+    where: list[str] = []
+    params: list = []
+    if specialties:
+        where.append(f"d.primary_specialty_description__c IN ({','.join('?' for _ in specialties)})")
+        params.extend(specialties)
+    states = [s for s in ((filters or {}).get("states") or []) if s]
+    if states:
+        where.append(f"d.state_code__c IN ({','.join('?' for _ in states)})")
+        params.extend(states)
+    return specialties, where, params, ("specialty" if specialties else "panel")
+
+
+def segment_filter_facets(therapy_area: str = "") -> dict:
+    """The filter dimensions the segmentation ask can offer, counted in the therapy area's
+    scope so the UI never shows a facet that would return zero HCPs."""
+    specialties, where, params, _ = _sizing_scope(therapy_area, None)
+    clause = (" WHERE " + " AND ".join(where)) if where else ""
+    conn = _conn()
+    try:
+        def facet(column: str) -> list[dict]:
+            rows = conn.execute(
+                f"SELECT d.{column} v, COUNT(*) n FROM hcp_demographic_data__dlm d{clause} "
+                f"{'AND' if where else 'WHERE'} d.{column} IS NOT NULL AND d.{column} != '' "
+                f"GROUP BY v ORDER BY n DESC LIMIT 12", params).fetchall()
+            return [{"value": r["v"], "count": int(r["n"])} for r in rows]
+
+        return {"states": facet("state_code__c"),
+                "specialties": facet("primary_specialty_description__c"),
+                "scoped_specialties": specialties}
+    except Exception as exc:  # noqa: BLE001 — a broken facet must never break the ask itself
+        # Reported rather than swallowed: an empty facet list and a mistyped column look
+        # identical from the caller's side, and the silent version hides schema drift.
+        return {"states": [], "specialties": [], "scoped_specialties": specialties,
+                "error": f"{type(exc).__name__}: {exc}"}
+    finally:
+        conn.close()
+
+
+def segment_sizing(therapy_area: str = "", filters: dict | None = None) -> dict:
     """Real HCP counts per target-list segment from the 360 panel, sized on the specialties
     `therapy_area` maps to (falls back to the whole panel when nothing maps). This is what the
     planning 'audience' ask offers and what the final brief quotes -- the segments the user
@@ -440,26 +488,20 @@ def segment_sizing(therapy_area: str = "") -> dict:
                           "segment_raw": "High Potentials", "count": 198, "pct": 19.1,
                           "criteria": "..."}, ...]} sorted by count desc. `total` is the
     scoped HCP count -- the denominator behind every pct."""
-    specialties = _map_specialties(benchmarks.specialties_for(therapy_area) if therapy_area else [])
+    specialties, where, params, scope = _sizing_scope(therapy_area, filters)
     conn = _conn()
     try:
-        if specialties:
-            spec_ph = ",".join("?" for _ in specialties)
-            total = conn.execute(
-                f"SELECT COUNT(*) n FROM hcp_demographic_data__dlm "
-                f"WHERE primary_specialty_description__c IN ({spec_ph})", specialties).fetchone()["n"]
-            rows = conn.execute(
-                f"SELECT tl.segment__c s, COUNT(*) n FROM tbl_tl_data__dlm tl "
-                f"JOIN hcp_demographic_data__dlm d ON d.npi_number__c = tl.npi_id__c "
-                f"WHERE d.primary_specialty_description__c IN ({spec_ph}) AND tl.segment__c IS NOT NULL "
-                f"GROUP BY s ORDER BY n DESC", specialties).fetchall()
-            scope = "specialty"
-        else:
-            total = conn.execute("SELECT COUNT(*) n FROM hcp_demographic_data__dlm").fetchone()["n"]
-            rows = conn.execute(
-                "SELECT segment__c s, COUNT(*) n FROM tbl_tl_data__dlm WHERE segment__c IS NOT NULL "
-                "GROUP BY s ORDER BY n DESC").fetchall()
-            scope = "panel"
+        # One parameterised WHERE drives both the denominator and the per-segment counts, so a
+        # filter can never narrow one without narrowing the other -- that mismatch would show
+        # up as shares that quietly stop summing to 100%.
+        total_clause = (" WHERE " + " AND ".join(where)) if where else ""
+        total = conn.execute(
+            f"SELECT COUNT(*) n FROM hcp_demographic_data__dlm d{total_clause}", params).fetchone()["n"]
+        seg_where = " AND ".join([*where, "tl.segment__c IS NOT NULL"])
+        rows = conn.execute(
+            f"SELECT tl.segment__c s, COUNT(*) n FROM tbl_tl_data__dlm tl "
+            f"JOIN hcp_demographic_data__dlm d ON d.npi_number__c = tl.npi_id__c "
+            f"WHERE {seg_where} GROUP BY s ORDER BY n DESC", params).fetchall()
         total = int(total or 0)
         segments = [
             {"segment": segment_labels.to_display(r["s"]), "segment_raw": r["s"],

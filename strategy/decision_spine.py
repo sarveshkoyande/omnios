@@ -187,6 +187,42 @@ SPINE: dict[str, dict] = {
 # technical appendix instead of the brief body.
 TECHNICAL_STAGES = {"S4", "S10"}
 
+# Which stages a stage's decision actually consumes. `feeds` already says which BRIEF
+# SECTIONS a decision writes into; this says which OTHER DECISIONS it depends on, which is
+# what makes the trail a graph rather than a list -- and what tells a revision which records
+# downstream have to be rebuilt. Kept beside SPINE rather than inside it so the registry
+# entries stay readable.
+DEPENDS_ON: dict[str, list[str]] = {
+    "S0": [],
+    "S1": ["S0"],
+    "S2": ["S0", "S1"],
+    "S3": ["S1", "S2"],
+    "S4": ["S2"],
+    "S5": ["S2", "S3"],
+    "S6": ["S2", "S5"],
+    "S7": ["S5", "S6"],
+    "S8": ["S1", "S6"],
+    "S9": ["S7", "S8"],
+    "S10": ["S4", "S9"],
+    "S11": ["S0", "S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "S9", "S10"],
+}
+
+
+def dependents_of(sid: str) -> list[str]:
+    """Stages whose decision consumes `sid`, directly or transitively, in spine order.
+
+    This is the blast radius of revising `sid`: every one of these has to be re-derived,
+    because its inputs just changed underneath it."""
+    out: list[str] = []
+    frontier = [sid]
+    while frontier:
+        current = frontier.pop()
+        for candidate, parents in DEPENDS_ON.items():
+            if current in parents and candidate not in out:
+                out.append(candidate)
+                frontier.append(candidate)
+    return sorted(out, key=lambda s: int(s[1:]))
+
 # SEQUENCE section id -> spine stage anchoring it (records are emitted for these).
 SEQ_TO_SPINE: dict[str, str] = {
     "tcg": "S2", "cxq": "S1", "feas": "S0", "msgflow": "S5", "channels": "S6",
@@ -371,6 +407,146 @@ def _inputs_for(ctx: dict, sid: str) -> list[dict]:
     return out
 
 
+def _ask_for(ctx: dict, step: dict) -> dict:
+    """The ask that produced this step's answer.
+
+    Read from ctx rather than passed in: the ask is posed on one pass of the stream and the
+    record is built on a later one (a reconnect re-enters mid-step), and campaign_artifacts
+    re-derives records from ctx alone with no ask in scope. studio_run stashes it under
+    `studio_asks` when it poses the gate."""
+    return (ctx.get("studio_asks") or {}).get(step["id"]) or {}
+
+
+def _split_answer(answer: str | None) -> list[str]:
+    """Multi-select answers travel as a '; '-joined string; msgflow's auto-assume path uses
+    '->' instead (it records the ladder label verbatim). Accept both."""
+    if not answer:
+        return []
+    parts = str(answer).replace("->", ";").split(";")
+    return [p.strip() for p in parts if p.strip()]
+
+
+def _ask_rows(ask: dict) -> dict[str, dict]:
+    """Every option the ask offered, keyed by lowercased label, recommendation included.
+    Carries the evidence the ask already computed (size, criteria) so the record can show
+    the same numbers without recomputing them."""
+    rows: dict[str, dict] = {}
+    rec = ask.get("recommendation") or {}
+    for opt in [rec, *(ask.get("options") or [])]:
+        label = str(opt.get("label") or "").strip()
+        if label:
+            rows[label.lower()] = opt
+    return rows
+
+
+def _decision_items(ctx: dict, sid: str, answer: str | None, ask: dict) -> list[dict]:
+    """The decision as objects rather than prose.
+
+    S2 reads the panel rows studio_run already matched and stashed on `chosen_segments`
+    (label, count, pct, criteria) so the card and the Reporting tab quote identical numbers.
+    Every other stage falls back to the answer's parts, enriched from the ask's own options."""
+    items: list[dict] = []
+    if sid == "S2":
+        for i, seg in enumerate(ctx.get("chosen_segments") or []):
+            items.append({
+                "label": seg.get("segment", ""),
+                "value": f"{int(seg.get('count') or 0):,} HCPs",
+                "share_pct": round(float(seg.get("pct") or 0), 1),
+                "criteria": seg.get("criteria", ""),
+                "source": "HCP 360 panel",
+                "lead": i == 0,
+            })
+    elif sid == "S6":
+        mix = (ctx.get("strategy") or {}).get("channel_mix_pct") or {}
+        for i, (channel, pct) in enumerate(sorted(mix.items(), key=lambda kv: -kv[1])):
+            items.append({"label": channel, "value": f"{pct}% of mix", "share_pct": round(float(pct), 1),
+                          "criteria": "", "source": "channel-affinity model", "lead": i == 0})
+    if items:
+        return items
+    rows = _ask_rows(ask)
+    for i, part in enumerate(_split_answer(answer)):
+        opt = rows.get(part.lower(), {})
+        items.append({"label": part, "value": opt.get("size", ""), "share_pct": None,
+                      "criteria": opt.get("criteria", ""),
+                      "source": opt.get("source", ""), "lead": i == 0})
+    return items
+
+
+def _real_alternatives(answer: str | None, ask: dict) -> list[dict]:
+    """What was genuinely set aside: the ask's own options minus what was picked, each keeping
+    the size/criteria evidence it was offered with. Replaces the old fixed sentence, which said
+    the same thing on every card regardless of what the choice actually was."""
+    picked = {p.lower() for p in _split_answer(answer)}
+    out: list[dict] = []
+    for label_key, opt in _ask_rows(ask).items():
+        if label_key in picked:
+            continue
+        detail = " · ".join(x for x in [opt.get("size"), opt.get("criteria")] if x)
+        out.append({"label": str(opt.get("label") or "").strip(),
+                    "why_rejected": detail or "offered but not selected"})
+    return out
+
+
+def _agent_recommendation(ask: dict) -> dict:
+    rec = ask.get("recommendation") or {}
+    label = str(rec.get("label") or "").strip()
+    if not label:
+        return {}
+    return {"label": label, "reason": str(ask.get("recommendation_reason") or rec.get("source") or "").strip()}
+
+
+def _rationale_dynamic(stage: dict, items: list[dict], agent_rec: dict, by_user: bool) -> str:
+    """Framework prose plus a sentence about THIS decision.
+
+    The framework line explains how the stage thinks in general; on its own it reads as
+    boilerplate because it is identical on every run. The appended sentence names what was
+    actually chosen, its measured share, and how it compares to what the agent proposed."""
+    base = stage["framework"]["how"]
+    if not items:
+        return base
+    lead = items[0]
+    share = f" ({lead['share_pct']:.0f}% of the panel, {lead['value']})" if lead.get("share_pct") else (
+        f" ({lead['value']})" if lead.get("value") else "")
+    who = "You led with" if by_user else "The agent led with"
+    line = f"{who} {lead['label']}{share}."
+    if len(items) > 1:
+        others = ", ".join(i["label"] for i in items[1:])
+        line += f" Also carried: {others}."
+    rec_label = (agent_rec.get("label") or "").strip()
+    if by_user and rec_label and rec_label.lower() != str(lead["label"]).lower():
+        line += f" That overrides the agent's recommendation, {rec_label}."
+    elif by_user and rec_label:
+        line += " That matches the agent's recommendation."
+    return f"{base}\n\n{line}"
+
+
+def _dependencies(sid: str) -> list[dict]:
+    """Both directions of the graph, so a card can say what it rests on and what rests on it."""
+    out = [{"stage_id": p, "stage_name": SPINE[p]["name"], "relation": "depends_on"}
+           for p in DEPENDS_ON.get(sid, []) if p in SPINE]
+    # Direct consumers only -- the full transitive set is the revision blast radius, which is
+    # a different question from "what does this card feed".
+    out += [{"stage_id": c, "stage_name": SPINE[c]["name"], "relation": "feeds_stage"}
+            for c, parents in DEPENDS_ON.items() if sid in parents and c in SPINE]
+    return out
+
+
+def _panel_scope(ctx: dict) -> dict:
+    """The sizing basis behind the shares, so the trail and the Reporting tab can be shown to
+    be counting the same population rather than merely looking similar."""
+    g = ctx.get("hcp_360_grounding") or {}
+    breakdown = g.get("segment_breakdown") or {}
+    active = {k: v for k, v in (ctx.get("segment_filters") or {}).items() if v}
+    if not breakdown and not g.get("headline"):
+        return {}
+    return {"headline": g.get("headline", ""), "confidence": g.get("confidence", ""),
+            "caveat": g.get("caveat", ""), "segment_breakdown": breakdown,
+            "sources": g.get("sources") or [],
+            # Without this the shares look like whole-panel numbers even when they were counted
+            # on a narrowed population -- the reader has no way to tell the difference.
+            "active_filters": active}
+
+
 def build_decision_record(ctx: dict, step: dict, answer: str | None,
                           answered_by_user: bool | None = None) -> dict | None:
     """The reasoning record for a landed step. None when the step anchors no spine stage.
@@ -383,8 +559,6 @@ def build_decision_record(ctx: dict, step: dict, answer: str | None,
     sid = stage["id"]
 
     decided = answer or "(derived — no ask needed)"
-    alternatives: list[dict] = []
-    rationale = stage["framework"]["how"]
 
     # Stage-specific decision text where ctx gives us something concrete.
     inferred = ctx.get("inferred") or {}
@@ -402,12 +576,21 @@ def build_decision_record(ctx: dict, step: dict, answer: str | None,
         # in a brief. State the one line a brand manager needs instead.
         decided = answer or "MLR-approved content required"
     by_user = bool(answer) if answered_by_user is None else bool(answered_by_user)
-    if answer and by_user:
-        alternatives.append({"label": "agent recommendation accepted or overridden by user",
-                             "why_rejected": "user call recorded verbatim; recommendation retained in the ask log"})
-    elif answer:
-        alternatives.append({"label": "options offered but not put to the user",
-                             "why_rejected": "auto-assume was on: the agent's recommendation was taken unreviewed"})
+
+    # The structured half of the record. Everything below is derived from what this run
+    # actually decided; before this existed the card's reasoning, alternatives and feeds were
+    # registry constants, so every plan's trail read identically.
+    ask = _ask_for(ctx, step)
+    items = _decision_items(ctx, sid, answer, ask)
+    agent_rec = _agent_recommendation(ask)
+    alternatives = _real_alternatives(answer, ask)
+    if not alternatives:
+        # No ask was posed (derived stage), so nothing was weighed and discarded. Say why the
+        # decision needed no gate rather than inventing a rejected option.
+        alternatives = [{"label": "no alternatives were put to the user",
+                         "why_rejected": "the stage derived this from context; auto-assume took the agent's"
+                                         " recommendation unreviewed" if answer and not by_user
+                                         else "the stage derived this from context without needing a gate"}]
 
     return {
         "type": "decision_record",
@@ -416,11 +599,16 @@ def build_decision_record(ctx: dict, step: dict, answer: str | None,
         "section_id": step["id"],
         "decision": decided,
         "framework": stage["framework"]["name"],
-        "rationale": rationale,
+        "rationale": _rationale_dynamic(stage, items, agent_rec, by_user),
         "inputs": _inputs_for(ctx, sid),
         "alternatives": alternatives,
         "feeds": stage["feeds"],
         "answered_by_user": by_user,
+        "decision_items": items,
+        "agent_recommendation": agent_rec,
+        "dependencies": _dependencies(sid),
+        "panel_scope": _panel_scope(ctx) if sid == "S2" else {},
+        "editable": bool(step.get("ask")),
         # Renderers put technical records in the appendix rather than the brief body, so
         # process detail stops being the first thing a brand manager reads.
         "technical": sid in TECHNICAL_STAGES,

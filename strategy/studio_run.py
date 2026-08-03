@@ -412,7 +412,9 @@ def _segment_evidence(ctx: dict) -> tuple[list[dict], str, int]:
     plan's therapy-area specialties (panel fallback). Returns (segments, note, total). Falls back
     to the benchmark-library sizing only if the panel is empty/unavailable."""
     try:
-        sizing = hcp_360.segment_sizing(ctx.get("therapy_area", "") or "")
+        # `segment_filters` is set when the user narrows the panel (state/specialty) from the
+        # segmentation ask or by revising the decision later. Absent on a first run.
+        sizing = hcp_360.segment_sizing(ctx.get("therapy_area", "") or "", ctx.get("segment_filters"))
     except Exception:  # noqa: BLE001 — sizing is best-effort
         sizing = {}
     seg_rows = (sizing or {}).get("segments") or []
@@ -431,6 +433,15 @@ def _segment_evidence(ctx: dict) -> tuple[list[dict], str, int]:
             f"across {len(segs)} therapy-area segments. "
             + (sizing.get("sourcing") or ""))
     return segs, note, total
+
+
+def _segment_facets(ctx: dict) -> dict:
+    """Filter dimensions offered alongside the segmentation ask. Best-effort: the ask must
+    still pose without them."""
+    try:
+        return hcp_360.segment_filter_facets(ctx.get("therapy_area", "") or "")
+    except Exception:  # noqa: BLE001
+        return {"states": [], "specialties": []}
 
 
 def _segment_evidence_fallback(ctx: dict) -> tuple[list[dict], str, int]:
@@ -488,6 +499,10 @@ def _build_ask_draft(ctx: dict, step: dict) -> dict | None:
                 "multi_select": True,
                 "select_noun": "segment",
                 "evidence_note": evidence_note,
+                # Facets the user can narrow the panel by. Sizes above recompute against the
+                # filtered population rather than being scaled client-side, so a filtered share
+                # is a real count and still sums to 100%.
+                "filters": {"available": _segment_facets(ctx), "active": ctx.get("segment_filters") or {}},
                 "evidence_basis": _basis(ctx,
                     "Segment sizes counted on the HCP 360 dummy panel, filtered to the plan's therapy-area "
                     "specialties with a whole-panel fallback. Segments describe therapy-area prescribing "
@@ -841,7 +856,7 @@ def _apply_chosen_segments(ctx: dict, segments: list[str]) -> None:
     if not segments:
         return
     try:
-        sizing = hcp_360.segment_sizing(ctx.get("therapy_area", "") or "")
+        sizing = hcp_360.segment_sizing(ctx.get("therapy_area", "") or "", ctx.get("segment_filters"))
     except Exception:  # noqa: BLE001
         return
     by_label = {s["segment"].lower(): s for s in (sizing.get("segments") or [])}
@@ -961,6 +976,11 @@ def stream(ctx: dict, studio: dict, auto_assume=None):
             if stage:
                 ask.setdefault("framework", stage["framework"]["name"])
                 ask.setdefault("blocked", " · ".join(stage["feeds"]))
+            # Keep the posed ask on ctx: the decision record is built on a LATER pass of this
+            # loop (and after a reconnect, in a different process), so the options and the
+            # agent's recommendation are long out of scope by then. Without this the record
+            # cannot say what was actually set aside -- decision_spine._ask_for reads it here.
+            ctx.setdefault("studio_asks", {})[step["id"]] = ask
         auto_value = ""
         # Auto-assume has to keep going on a step that asks more than one question, or it
         # would answer the first and draft with the rest still unset.
@@ -1015,13 +1035,30 @@ def stream(ctx: dict, studio: dict, auto_assume=None):
         # Decision record: the landed step explains itself — inputs, framework, decision,
         # rationale, what it feeds. Accumulated in ctx (campaign_artifacts re-derives them
         # deterministically if this list is ever lost, so persistence is a bonus not a need).
+        # A step that is ALREADY answered never builds its ask -- true on every resume,
+        # reconnect and post-revision replay. Without the ask the record cannot name what was
+        # set aside, so it falls back to "no alternatives were put to the user" on exactly the
+        # runs where the alternatives matter most. Rebuild the deterministic draft (no LLM) to
+        # recover them; historical plans with neither stashed ask nor rebuildable draft still
+        # degrade to the fallback rather than failing.
+        if step["id"] not in (ctx.get("studio_asks") or {}):
+            recovered = _safe_build_ask(ctx, step)
+            if recovered:
+                ctx.setdefault("studio_asks", {})[step["id"]] = recovered
         record = decision_spine.build_decision_record(
             ctx, step, studio["answers"].get(step["id"]),
             answered_by_user=None if not auto_value else False)
         if record:
             ctx.setdefault("decision_records", [])
-            if not any(r.get("stage_id") == record["stage_id"] for r in ctx["decision_records"]):
+            # Replace, don't skip. A revision replays this step, and skipping the re-emitted
+            # record would leave campaign_artifacts and the persisted brief quoting the
+            # PRE-revision decision while the live trail showed the new one.
+            existing = next((i for i, r in enumerate(ctx["decision_records"])
+                             if r.get("stage_id") == record["stage_id"]), None)
+            if existing is None:
                 ctx["decision_records"].append(record)
+            else:
+                ctx["decision_records"][existing] = record
             yield record
         banter = landed_banter(ctx, step)
         if banter:

@@ -97,7 +97,10 @@ export default function App() {
     <>
       <Box sx={{ position: "relative", zIndex: 1 }}>
         <AppBar position="sticky" sx={{ backgroundColor: topBarColor, transition: "background-color 220ms ease" }}>
-          <Toolbar sx={{ gap: 1.5, minHeight: 56 }}>
+          {/* Pinned at both breakpoints: a bare `minHeight` loses to MuiToolbar's own
+              `@media (min-width:600px)` rule, which is how the bar ended up 64px tall
+              while the workspace below was sized as if it were 56px. */}
+          <Toolbar sx={{ gap: 1.5, minHeight: { xs: tokens.layout.topBarHeight, sm: tokens.layout.topBarHeight } }}>
             <span className="material-symbols-outlined" style={{ fontSize: 26, color: "#fff" }}>
               hub
             </span>

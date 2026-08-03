@@ -54,6 +54,12 @@ export const tokens = {
     bgBase: "#F4F6F8",
     bgBaseChat: "#F4F6F8",
     topBar: "#000000",
+    /**
+     * Home hero panel. Doubles as the fallback fill when /static/home/home-hero-bg.png
+     * is absent, and as the base of the scrim painted over it — text contrast on the
+     * hero must not depend on what the artwork happens to contain.
+     */
+    heroInk: "#04214A",
   },
   fontSize: { xs: 13, sm: 14, md: 15, lg: 17, xl: 20, xxl: 24, display: 28 },
   font: {
@@ -61,6 +67,17 @@ export const tokens = {
   },
   spacingUnit: 4,
   radius: { sm: 4, md: 8, lg: 12, pill: 999 },
+  layout: {
+    /**
+     * Height of the sticky app bar, in px. Everything that sizes itself against
+     * the remaining viewport (`calc(100vh - topBarHeight)`) must read this rather
+     * than repeat the number: MUI's Toolbar defaults to 56px under 600px wide and
+     * 64px above it, so a hardcoded 56 silently left the workspace column 8px
+     * taller than the space available and put a small permanent scroll on the page.
+     * App.tsx pins the Toolbar to this value at every breakpoint.
+     */
+    topBarHeight: 64,
+  },
 } as const;
 
 /**

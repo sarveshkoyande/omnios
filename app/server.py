@@ -37,6 +37,7 @@ from strategy.conversation import (new_state, opening_message, interpret_message
                                    extract_brief_from_text)
 from strategy import orchestrator  # noqa: E402
 from strategy import studio_run  # noqa: E402  (Sequential Plan Studio: section-by-section run, SSE v2)
+from strategy import decision_spine  # noqa: E402  (spine registry + decision dependency graph)
 from strategy.orchestrator import run_agents  # noqa: E402
 from strategy import open_questions as open_questions_mod  # noqa: E402  (phase-gated reveal)
 from strategy.document_intake import extract_text  # noqa: E402
@@ -1927,6 +1928,12 @@ def api_studio_stream(project_id: str, auto_assume: bool = False):
                 _STUDIO_FILL.pop(project_id, None)
             # else: a fully-populated ctx is already cached -- use it as-is.
 
+            # Panel narrowing set by a decision revision lives on state (ctx is rebuilt or
+            # cached independently), so re-apply it to whichever ctx we ended up with. Without
+            # this a filtered revision would re-size against the whole panel again.
+            if state.get("segment_filters") is not None:
+                ctx["segment_filters"] = state["segment_filters"]
+
             # Persist a viewable brief + plan snapshot as soon as the FULL ctx exists (skipped while
             # _core_only, since the heavy sections aren't computed yet). Cheap + local, so it re-runs
             # on each ask-resume to keep the saved plan fresh even if the reveal never finishes.
@@ -2103,6 +2110,69 @@ def api_studio_answer(body: StudioAnswer):
     messages.append(_msg("user", body.value.strip()))
     pstore.save_project(body.project_id, state=state, messages=messages)
     return {"ok": True, "resume": True}
+
+
+class StudioRevise(BaseModel):
+    project_id: str
+    section_id: str
+    value: str
+    # Panel narrowing for the segmentation decision, e.g. {"states": ["TX"]}. Persisted on
+    # state so the next stream seeds ctx with it and every re-sized share is counted on the
+    # narrowed population.
+    filters: dict | None = None
+
+
+@app.post("/api/studio/revise")
+def api_studio_revise(body: StudioRevise):
+    """Change a decision that already landed, and rebuild everything that depended on it.
+
+    Implemented as a rewind rather than a new engine: the studio index moves back to the
+    revised step and the existing /api/studio/stream replays forward from there, so
+    apply_answer, compose_section and the decision records all run through their normal
+    paths. Sections and records are overwritten in place by id (no version history) --
+    the client reducer replaces on re-emit."""
+    proj = pstore.get_project(body.project_id)
+    if not proj:
+        raise HTTPException(404, "project not found")
+    idx = next((i for i, s in enumerate(studio_run.SEQUENCE) if s["id"] == body.section_id), None)
+    if idx is None:
+        raise HTTPException(404, f"unknown section '{body.section_id}'")
+    value = body.value.strip()
+    if not value:
+        raise HTTPException(400, "value is required")
+
+    state = proj["state"]
+    studio = state.get("studio") or {}
+    if not studio.get("answers"):
+        raise HTTPException(409, "this plan has no landed decisions to revise")
+
+    stage = decision_spine.stage_for(body.section_id)
+    affected = decision_spine.dependents_of(stage["id"]) if stage else []
+
+    studio["answers"][body.section_id] = value
+    studio["idx"] = idx
+    studio["await_ask"] = None
+    # Drop everything from the revised step forward so the replay rebuilds it. Sections keep
+    # their identity (the reducer replaces by id), but the persisted copies must go or a
+    # section that no longer applies would survive the rebuild.
+    keep_ids = {s["id"] for s in studio_run.SEQUENCE[:idx]}
+    studio["sections"] = [s for s in (studio.get("sections") or []) if s.get("section_id") in keep_ids]
+    state["studio_done"] = False
+    # Drop the records this revision invalidates. studio_run replaces them on replay anyway,
+    # but a run that is interrupted part-way would otherwise leave the brief quoting reasoning
+    # derived from the OLD decision, which is worse than leaving it visibly incomplete.
+    stale = {stage["id"], *affected} if stage else set()
+    ctx_cached = state.get("_plan_ctx") or {}
+    if stale and ctx_cached.get("decision_records"):
+        ctx_cached["decision_records"] = [r for r in ctx_cached["decision_records"]
+                                          if r.get("stage_id") not in stale]
+    if body.filters is not None:
+        ctx_cached["segment_filters"] = body.filters
+    if body.filters is not None:
+        state["segment_filters"] = body.filters
+    pstore.save_project(body.project_id, state=state, messages=proj["messages"])
+    return {"ok": True, "resume": True, "from_section": body.section_id,
+            "affected_stages": affected, "affected_sections": len(studio_run.SEQUENCE) - idx - 1}
 
 
 class StudioAutoAssume(BaseModel):

@@ -40,6 +40,39 @@ export interface DecisionRecord {
   alternatives: { label: string; why_rejected: string }[];
   feeds: string[];
   answered_by_user: boolean;
+  /** The decision as objects rather than a joined string — segments, channels, rungs — each
+   *  with the measured evidence it was chosen on. All fields below are optional so records
+   *  persisted before decision_spine started emitting them still parse. */
+  decision_items?: DecisionItem[];
+  /** What the agent proposed, kept even when the user overrode it — this is what lets the
+   *  card show "agent said X, you chose Y" without storing revision history. */
+  agent_recommendation?: { label: string; reason?: string };
+  /** Both directions of the spine graph: what this rests on, and what rests on it. */
+  dependencies?: { stage_id: string; stage_name: string; relation: "depends_on" | "feeds_stage" }[];
+  /** S2 only: the HCP 360 sizing basis, so the trail and Reporting can be shown to count the
+   *  same population. */
+  panel_scope?: {
+    headline?: string;
+    confidence?: string;
+    caveat?: string;
+    segment_breakdown?: Record<string, number>;
+    sources?: string[];
+  };
+  /** The stage posed an ask, so the decision can be revised in place. */
+  editable?: boolean;
+}
+
+export interface DecisionItem {
+  label: string;
+  /** Absolute measure, e.g. "2,376 HCPs" or "35% of mix". */
+  value?: string;
+  /** Share of the sizing population; drives the bar. Null when the stage has no sizing. */
+  share_pct?: number | null;
+  /** The behavioural definition of the segment — why these HCPs are one group. */
+  criteria?: string;
+  source?: string;
+  /** First item: the group the plan leads with. */
+  lead?: boolean;
 }
 
 export interface StudioAsk {
