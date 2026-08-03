@@ -31,6 +31,11 @@ node_modules/
 *.log
 plan_out.html
 
+# --- local agent tooling (installed per-developer via `npx skills add`, not app code) ---
+.agents/
+.claude/
+skills-lock.json
+
 # --- os ---
 .DS_Store
 Thumbs.db
