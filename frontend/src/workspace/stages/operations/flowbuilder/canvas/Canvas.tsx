@@ -14,6 +14,7 @@ import {
   type OnSelectionChangeFunc,
   type NodeChange,
   type EdgeChange,
+  type ReactFlowInstance,
 } from "@xyflow/react";
 import { useWorkflowStore } from "../store/useWorkflowStore";
 import { nodeTypes as workflowNodeTypes, type WorkflowRFNode } from "../nodes/WorkflowNode";
@@ -85,12 +86,14 @@ function CanvasInner() {
   const duplicateNodesCmd = useWorkflowStore((s) => s.duplicateNodesCmd);
   const selectAll = useWorkflowStore((s) => s.selectAll);
   const clearSelection = useWorkflowStore((s) => s.clearSelection);
-  const { screenToFlowPosition, setViewport } = useReactFlow();
+  const { screenToFlowPosition, setViewport, fitView } = useReactFlow();
 
   const page = document.pages.find((p) => p.id === activePageId) ?? document.pages[0];
 
   const [rfNodes, setRfNodes] = useState<AnyRFNode[]>([]);
   const [rfEdges, setRfEdges] = useState<WorkflowRFEdge[]>([]);
+  const [flowReady, setFlowReady] = useState(false);
+  const flowInstanceRef = useRef<ReactFlowInstance<AnyRFNode, WorkflowRFEdge> | null>(null);
   const lastFitSignatureRef = useRef("");
   const canvasRef = useRef<HTMLDivElement>(null);
 
@@ -102,6 +105,7 @@ function CanvasInner() {
   // Make the first real population always explicitly fit, once.
   useEffect(() => {
     const workflowNodes = rfNodes.filter((n) => n.type !== "lane");
+    if (!flowReady) return;
     if (workflowNodes.length === 0) return;
     const signature = workflowNodes
       .map((n) => `${n.id}:${Math.round(n.position.x)},${Math.round(n.position.y)},${Math.round(n.width ?? 0)},${Math.round(n.height ?? 0)}`)
@@ -142,10 +146,13 @@ function CanvasInner() {
           },
           { duration: 220 },
         );
+        window.setTimeout(() => {
+          void (flowInstanceRef.current ?? { fitView }).fitView({ padding: 0.16, minZoom: 0.2, maxZoom: 0.78, duration: 180 });
+        }, 260);
       });
     }, 80);
     return () => window.clearTimeout(timer);
-  }, [rfNodes, setViewport]);
+  }, [fitView, flowReady, rfNodes, setViewport]);
 
   // Resync from the store whenever the underlying document changes (undo/redo, data
   // edits, remote load). During an active drag React Flow's own onNodesChange keeps
@@ -358,6 +365,10 @@ function CanvasInner() {
         onConnectEnd={onConnectEnd}
         connectionMode={ConnectionMode.Loose}
         connectionRadius={32}
+        onInit={(instance) => {
+          flowInstanceRef.current = instance;
+          setFlowReady(true);
+        }}
         onSelectionChange={onSelectionChange}
         deleteKeyCode={null}
         snapToGrid
@@ -368,7 +379,7 @@ function CanvasInner() {
         multiSelectionKeyCode="Shift"
         minZoom={0.05}
         maxZoom={1}
-        defaultViewport={{ x: 0, y: 0, zoom: 0.25 }}
+        defaultViewport={{ x: 0, y: 0, zoom: 0.4 }}
         proOptions={{ hideAttribution: true }}
       >
         <Background variant={BackgroundVariant.Dots} gap={GRID} size={1.5} />

@@ -555,7 +555,8 @@ export function useWorkspace() {
     [closeStream, refreshProjects, maybeOfferPersonas],
   );
 
-  const openProject = useCallback(async (id: string) => {
+  const openProject = useCallback(async (id: string, initialStage = 1) => {
+    const requestedStage = Math.min(Math.max(initialStage, 1), 4);
     closeStream();
     pacerRef.current?.dispose();
     setStudio(STUDIO_IDLE);
@@ -564,6 +565,10 @@ export function useWorkspace() {
     setTabChatItems({ planning: [], orchestration: [], operations: [], reporting: [] });
     setKickoffAwaitingInput(null);
     setArtifactRefresh({ planning: 0, orchestration: 0, operations: 0, reporting: 0 });
+    // Route before the network round trip. This keeps a Home deep-link to
+    // Orchestration/Operations from rendering Planning for a frame while the
+    // project record is loading.
+    setStage(requestedStage);
     const proj = await getProject(id);
     setProjectId(proj.id);
     setProjectName(proj.name);
@@ -571,7 +576,6 @@ export function useWorkspace() {
     setPlanHtml(proj.plan_html);
     setPlanMarkdown(proj.plan_markdown);
     setSectionsProgress(null);
-    setStage(1);
     setResult(proj.result);
     // Projects built before phase-gating existed never persisted revealed_phases -- treat a
     // missing field (not an empty array, which means "genuinely only Align so far" under the
@@ -585,7 +589,7 @@ export function useWorkspace() {
     const existingReviews = proj.state.persona_reviews ?? null;
     personaOfferShownRef.current = !!existingReviews?.length;
     const fresh = proj.phase === "collecting" && !proj.messages.some((m) => m.role === "user");
-    setShowIntake(fresh);
+    setShowIntake(requestedStage === 1 && fresh);
     setItems(
       proj.messages.map((m): ChatItem => {
         // A persisted studio ask replays as the same AskCard it was answered on, locked to
@@ -630,16 +634,16 @@ export function useWorkspace() {
       setAgents([]);
     }
     if (proj.result && !hasOpenQuestionsRef.current) maybeOfferPersonas(proj.id);
-    // A studio build that was interrupted mid-phase resumes exactly where it
-    // stopped (the server re-poses the pending ask, or continues drafting).
+    // A studio build without a saved result resumes where it stopped. Once a
+    // result exists, the brief/plan snapshot is authoritative on reopen.
     const st = proj.state as {
       phase?: string;
       studio?: { idx: number; sections?: StudioSection[] };
       studio_done?: boolean;
     };
-    if (st.studio_done) {
-      // Already fully built: redisplay the finished sections as a static plan canvas
-      // instead of re-opening the SSE stream and replaying the whole paced reveal.
+    if (st.studio_done || proj.result) {
+      // Never replay the paced reveal when a persisted result already makes the
+      // campaign brief and plan available.
       const sections = st.studio?.sections ?? [];
       setStudio({
         active: false,
@@ -650,7 +654,7 @@ export function useWorkspace() {
         awaitingContinue: false,
         sections: sections.map((s) => ({ ...s, owner: STAGE_AGENTS.planning.id })),
       });
-    } else if ((st.studio && !st.studio_done) || (st.phase === "running" && !proj.result)) {
+    } else if (requestedStage === 1 && ((st.studio && !st.studio_done) || st.phase === "running")) {
       // Resume an unfinished studio build wherever it stopped (re-poses the pending ask or keeps
       // drafting). Keyed on `studio_done`, NOT on `!proj.result`: the plan/brief now persist as
       // soon as research finishes (see api_studio_stream early persist), so a result exists well
@@ -661,10 +665,10 @@ export function useWorkspace() {
     }
   }, [closeStream, maybeOfferPersonas, markPlanFrozen, startStudioRun]);
 
-  const newProject = useCallback(async () => {
+  const newProject = useCallback(async (initialStage = 1) => {
     const proj = await createProject("Untitled plan");
     await refreshProjects();
-    await openProject(proj.id);
+    await openProject(proj.id, initialStage);
   }, [openProject, refreshProjects]);
 
   const absorbProject = useCallback((proj: Awaited<ReturnType<typeof getProject>>) => {

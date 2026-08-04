@@ -69,12 +69,23 @@ export function StageOrchestration({
   const [activeTeam, setActiveTeam] = useState<string>("");
   const [detailTask, setDetailTask] = useState<OrchestrationTask | null>(null);
   const [hydratedResult, setHydratedResult] = useState<PlanResult | null>(null);
+  const [saveError, setSaveError] = useState(false);
+  const taskSaveChain = useRef<Promise<void>>(Promise.resolve());
   const effectiveResult = result ?? hydratedResult;
 
   const persist = useCallback(
     (next: OrchestrationTask[]) => {
       setTasks(next);
-      if (projectId) saveOrchestrationTasks(projectId, next).catch(() => {});
+      if (!projectId) return;
+      setSaveError(false);
+      // Task edits are full-board snapshots. Serialize them so rapid interactions
+      // cannot let an older request arrive last and overwrite a newer activity state.
+      taskSaveChain.current = taskSaveChain.current
+        .catch(() => undefined)
+        .then(() => saveOrchestrationTasks(projectId, next))
+        .catch(() => {
+          setSaveError(true);
+        });
     },
     [projectId],
   );
@@ -230,6 +241,11 @@ export function StageOrchestration({
           </Button>
         }
       >
+        {saveError && (
+          <Typography variant="caption" sx={{ display: "block", mb: 1, color: "error.main" }}>
+            The latest activity change could not be saved. Keep this tab open and try the edit again.
+          </Typography>
+        )}
         {loadingTasks && tasks === null ? (
           <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
             <CircularProgress size={22} />

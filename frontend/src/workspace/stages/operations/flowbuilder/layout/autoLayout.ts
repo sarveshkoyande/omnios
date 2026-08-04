@@ -102,7 +102,7 @@ function childScore(edge: WorkflowEdge, topology: Topology): number {
   if (isRecoveryBranch(edge)) score -= 60;
   if (kind === "send" || kind === "wait" || kind === "decision" || kind === "branch") score += 20;
   if (kind === "followup") score -= 10;
-  if (target?.type === "end") score -= 30;
+  if (target?.type === "end") score -= 140;
   return score;
 }
 
@@ -155,11 +155,12 @@ function assignCampaignLanes(layoutable: WorkflowNode[], topology: Topology): Ma
 
     if (nextMain) visit(nextMain.target.nodeId, lane);
 
-    sideBranches.forEach((edge, index) => {
+    const sideCounts = new Map<number, number>();
+    sideBranches.forEach((edge) => {
       const side = isRecoveryBranch(edge) ? -1 : 1;
-      const offset = Math.floor(index / 2) + 1;
-      const alternating = index % 2 === 0 ? side : -side;
-      visit(edge.target.nodeId, lane + alternating * offset);
+      const offset = (sideCounts.get(side) ?? 0) + 1;
+      sideCounts.set(side, offset);
+      visit(edge.target.nodeId, lane + side * offset);
     });
   };
 
@@ -168,6 +169,41 @@ function assignCampaignLanes(layoutable: WorkflowNode[], topology: Topology): Ma
     if (!lanes.has(node.id)) lanes.set(node.id, 0);
   }
   return lanes;
+}
+
+function assignCampaignRows(layoutable: WorkflowNode[], topology: Topology): Map<string, number> {
+  const start = findEntryNode(layoutable, topology);
+  const rows = new Map<string, number>();
+  if (!start) return rows;
+
+  rows.set(start.id, 0);
+  const queue = [start.id];
+  const iterations = Math.max(1, layoutable.length * Math.max(1, topology.outgoing.size));
+  let guard = 0;
+
+  while (queue.length > 0 && guard < iterations) {
+    guard += 1;
+    const nodeId = queue.shift()!;
+    const row = rows.get(nodeId) ?? 0;
+    for (const edge of topology.outgoing.get(nodeId) ?? []) {
+      if (!topology.nodeById.has(edge.target.nodeId)) continue;
+      const nextRow = row + 1;
+      if ((rows.get(edge.target.nodeId) ?? -1) >= nextRow) continue;
+      rows.set(edge.target.nodeId, nextRow);
+      queue.push(edge.target.nodeId);
+    }
+  }
+
+  const sortedByElkY = [...layoutable].sort((a, b) => a.position.y - b.position.y);
+  for (const node of sortedByElkY) {
+    if (rows.has(node.id)) continue;
+    const incomingRows = (topology.incoming.get(node.id) ?? [])
+      .map((edge) => rows.get(edge.source.nodeId))
+      .filter((row): row is number => row != null);
+    rows.set(node.id, incomingRows.length ? Math.max(...incomingRows) + 1 : rows.size);
+  }
+
+  return rows;
 }
 
 function sourceOrderScore(edge: WorkflowEdge, topology: Topology): number {
@@ -263,6 +299,7 @@ function optimizeCampaignReadability(page: Page, nodes: WorkflowNode[], edges: W
   const movable = layoutable.filter((n) => !n.pinned);
   const topology = buildTopology({ ...page, nodes, edges });
   const lanes = assignCampaignLanes(layoutable, topology);
+  const rows = assignCampaignRows(layoutable, topology);
   if (lanes.size === 0) return nodes;
 
   const laneValues = Array.from(lanes.values());
@@ -279,14 +316,16 @@ function optimizeCampaignReadability(page: Page, nodes: WorkflowNode[], edges: W
   const byY = [...movable].sort((a, b) => a.position.y - b.position.y);
   const occupied = new Map<number, WorkflowNode[]>();
   const optimized = new Map<string, WorkflowNode>();
+  const maxNodeH = Math.max(...layoutable.map((node) => node.size.h), 80);
+  const rowSpacing = Math.max(150, maxNodeH + spacing.layer * 0.36);
   for (const node of byY) {
     const lane = lanes.get(node.id) ?? 0;
     let x = (laneX.get(lane) ?? node.position.x) + Math.max(0, laneSpacing - node.size.w) / 2;
-    let y = node.position.y;
+    let y = 80 + (rows.get(node.id) ?? 0) * rowSpacing;
     const prior = occupied.get(lane) ?? [];
     for (const other of prior) {
-      if (y < other.position.y + other.size.h + spacing.layer * 0.55) {
-        y = other.position.y + other.size.h + spacing.layer * 0.55;
+      if (y < other.position.y + other.size.h + spacing.layer * 0.42) {
+        y = other.position.y + other.size.h + spacing.layer * 0.42;
       }
     }
     const next = { ...node, position: { x: snap(x), y: snap(y) } };
@@ -318,16 +357,14 @@ function routeEdge(source: WorkflowNode, target: WorkflowNode, spacing: LayoutSp
   ];
 }
 
-function applyReadableRoutes(edges: WorkflowEdge[], nodes: WorkflowNode[], elkEdgesById: Map<string, NonNullable<ElkNode["edges"]>[number]>, spacing: LayoutSpacing): WorkflowEdge[] {
+function applyReadableRoutes(edges: WorkflowEdge[], nodes: WorkflowNode[], _elkEdgesById: Map<string, NonNullable<ElkNode["edges"]>[number]>, spacing: LayoutSpacing): WorkflowEdge[] {
   const nodeById = new Map(nodes.map((n) => [n.id, n]));
   return edges.map((edge) => {
     const source = nodeById.get(edge.source.nodeId);
     const target = nodeById.get(edge.target.nodeId);
     if (!source || !target || edge.line.routing === "curved") return edge;
     const semanticWaypoints = routeEdge(source, target, spacing);
-    const section = elkEdgesById.get(edge.id)?.sections?.[0];
-    const elkWaypoints = section?.bendPoints?.map((p) => ({ x: p.x, y: p.y })) ?? [];
-    const waypoints = semanticWaypoints.length > 0 ? semanticWaypoints : elkWaypoints;
+    const waypoints = semanticWaypoints;
     return {
       ...edge,
       source: { ...edge.source, glue: "dynamic" as const },
@@ -386,11 +423,11 @@ function spacingFor(page: Page, attempt: number): LayoutSpacing {
   const large = nodeCount > 150;
   const multiplier = 1 + attempt * 0.22 + (large ? 0.25 : 0);
   return {
-    nodeNode: Math.round(90 * multiplier),
-    layer: Math.round(145 * multiplier),
-    edgeNode: Math.round(46 * multiplier),
-    edgeEdge: Math.round(54 * multiplier),
-    lane: Math.round(280 * multiplier),
+    nodeNode: Math.round(72 * multiplier),
+    layer: Math.round(120 * multiplier),
+    edgeNode: Math.round(38 * multiplier),
+    edgeEdge: Math.round(44 * multiplier),
+    lane: Math.round(240 * multiplier),
   };
 }
 

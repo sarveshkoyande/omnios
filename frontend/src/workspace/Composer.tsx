@@ -176,12 +176,14 @@ export function Composer({
   disabled,
   onSend,
   onUpload,
+  agentName = "Planning & Strategy Agent",
   autoAssume,
   onAutoAssumeChange,
 }: {
   disabled: boolean;
   onSend: (text: string) => void;
   onUpload: (file: File) => void;
+  agentName?: string;
   /** Planning tab only: when set, the auto-assume checkbox is shown under the input.
    *  Toggling it mid-chat applies from the next question onwards. */
   autoAssume?: boolean;
@@ -313,7 +315,7 @@ export function Composer({
         <TextArea
           ref={textAreaRef}
           rows={1}
-          placeholder="Message the planning agent…"
+          placeholder={`Message ${agentName}…`}
           value={value}
           disabled={disabled}
           onChange={(e) => setValue(e.target.value)}

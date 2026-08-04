@@ -380,6 +380,21 @@ function BuilderShell({
   const loadDocument = useWorkflowStore((s) => s.loadDocument);
   const loadedRef = useRef(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const documentRef = useRef(document);
+  const saveChain = useRef<Promise<void>>(Promise.resolve());
+  documentRef.current = document;
+
+  const queueSave = useCallback((next: WorkflowDocument) => {
+    if (!projectId || !loadedRef.current) return;
+    setSaving(true);
+    // Workflow saves are whole-document replacements. Queue them in edit order so
+    // a slower older autosave cannot overwrite a later manual or agent edit.
+    saveChain.current = saveChain.current
+      .catch(() => undefined)
+      .then(() => saveCampaignFlowDocument(projectId, next))
+      .catch(() => undefined)
+      .finally(() => setSaving(false));
+  }, [projectId]);
 
   // Seed from the base CampaignFlow synchronously before paint (useLayoutEffect, not
   // useEffect) so there's no empty-canvas flash, then async-fetch and override with a
@@ -399,8 +414,11 @@ function BuilderShell({
           const result = saved && parseDocument(saved);
           if (result && result.ok) next = result.document;
         }
-        const laidOut = await layoutCampaignDocument(next);
-        if (!cancelled) loadDocument(laidOut);
+        // A saved WorkflowDocument is the user's exact editable diagram. Only a
+        // new seed needs auto-layout; running the layout engine on every reopen
+        // changes positions and routes even when the user made no edit.
+        const documentToLoad = next === seed ? await layoutCampaignDocument(next) : next;
+        if (!cancelled) loadDocument(documentToLoad);
       } catch {
         if (!cancelled) loadDocument(seed);
       } finally {
@@ -418,10 +436,18 @@ function BuilderShell({
     if (saveTimer.current) clearTimeout(saveTimer.current);
     setSaving(true);
     saveTimer.current = setTimeout(() => {
-      saveCampaignFlowDocument(projectId, document).catch(() => {}).finally(() => setSaving(false));
+      saveTimer.current = null;
+      queueSave(document);
     }, 800);
     return () => { if (saveTimer.current) clearTimeout(saveTimer.current); };
-  }, [document, projectId]);
+  }, [document, projectId, queueSave]);
+
+  // The regular debounce intentionally cancels obsolete intermediate changes.
+  // On unmount, however, the current edit is the one we must retain.
+  useEffect(() => () => {
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    queueSave(documentRef.current);
+  }, [queueSave]);
 
   const regenerateDiagram = useCallback(async () => {
     if (!projectId || regenerating) return;
@@ -497,7 +523,7 @@ function BuilderShell({
       <Box sx={{ display: "flex", flex: 1, minHeight: 0 }}>
         {editMode && (paletteOpen ? <Palette /> : <Box className="wf-palette-collapsed" onClick={() => setPaletteOpen(true)} title="Show shapes" />)}
         <Canvas />
-        <Inspector />
+        {editMode && <Inspector />}
       </Box>
       <SfmcExportDialog open={sfmcOpen} projectId={projectId} onClose={() => setSfmcOpen(false)} />
     </Box>

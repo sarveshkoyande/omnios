@@ -258,17 +258,10 @@ export function Workspace({
   useEffect(() => {
     if (bootstrapped.current) return;
     bootstrapped.current = true;
-    if (openProjectId) ws.openProject(openProjectId);
-    else ws.newProject();
+    if (openProjectId) ws.openProject(openProjectId, initialStage ?? 1);
+    else ws.newProject(initialStage ?? 1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  useEffect(() => {
-    if (!ws.projectId || !initialStage || initialStage === 1) return;
-    ws.setStage(Math.min(Math.max(initialStage, 1), 4));
-    ws.setShowIntake(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ws.projectId, initialStage]);
 
   // Once the fresh project's id lands, auto-send the seed (a brand pick or a typed
   // one-line requirement) and drop the intake. With no seed the intake stays open.
@@ -578,6 +571,7 @@ export function Workspace({
                 disabled={ws.busy && !ws.studio.active}
                 onSend={ws.sendMessage}
                 onUpload={ws.handleUpload}
+                agentName={stageAgent.name}
                 {...(ws.stage === 1
                   ? { autoAssume: ws.autoAssume, onAutoAssumeChange: ws.toggleAutoAssume }
                   : {})}

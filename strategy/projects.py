@@ -201,31 +201,47 @@ def save_project(
     campaign_plan_layout: dict | None = None,
     orchestration_tasks: list | None = None,
 ) -> dict | None:
-    proj = get_project(pid)
-    if not proj:
-        return None
-    name = name if name is not None else proj["name"]
-    state = state if state is not None else proj["state"]
-    messages = messages if messages is not None else proj["messages"]
-    result = result if result is not None else proj["result"]
-    plan_markdown = plan_markdown if plan_markdown is not None else proj["plan_markdown"]
-    plan_html = plan_html if plan_html is not None else proj["plan_html"]
-    campaign_plan_layout = campaign_plan_layout if campaign_plan_layout is not None else proj["campaign_plan_layout"]
-    orchestration_tasks = orchestration_tasks if orchestration_tasks is not None else proj["orchestration_tasks"]
+    """Atomically persist only the fields supplied by the caller.
+
+    Project artifacts are saved independently: an activity-board edit, a diagram
+    autosave, and a planning/brief update can all arrive at once.  The previous
+    read-modify-write implementation copied every untouched field from an earlier
+    snapshot, so the last request could silently restore stale activities, layout,
+    or brief state.  Each save is now a column-level patch in one SQL update.
+    """
+    updates = ["updated_at=?"]
+    values: list[object] = [_now()]
+
+    if name is not None:
+        updates.append("name=?")
+        values.append(name)
+    if state is not None:
+        updates.append("state_json=?")
+        values.append(json.dumps(state))
+        if "phase" in state:
+            updates.append("phase=?")
+            values.append(state["phase"])
+    if messages is not None:
+        updates.append("messages_json=?")
+        values.append(json.dumps(messages))
+    if result is not None:
+        updates.append("result_json=?")
+        values.append(json.dumps(result))
+    if plan_markdown is not None:
+        updates.append("plan_markdown=?")
+        values.append(plan_markdown)
+    if plan_html is not None:
+        updates.append("plan_html=?")
+        values.append(plan_html)
+    if campaign_plan_layout is not None:
+        updates.append("campaign_plan_layout=?")
+        values.append(json.dumps(campaign_plan_layout))
+    if orchestration_tasks is not None:
+        updates.append("orchestration_tasks=?")
+        values.append(json.dumps(orchestration_tasks))
 
     conn = _conn()
-    conn.execute(
-        """UPDATE projects SET name=?, updated_at=?, phase=?, state_json=?, messages_json=?,
-           result_json=?, plan_markdown=?, plan_html=?, campaign_plan_layout=?, orchestration_tasks=? WHERE id=?""",
-        (
-            name, _now(), state["phase"], json.dumps(state), json.dumps(messages),
-            json.dumps(result) if result is not None else None,
-            plan_markdown, plan_html,
-            json.dumps(campaign_plan_layout) if campaign_plan_layout is not None else None,
-            json.dumps(orchestration_tasks) if orchestration_tasks is not None else None,
-            pid,
-        ),
-    )
+    conn.execute(f"UPDATE projects SET {', '.join(updates)} WHERE id=?", (*values, pid))
     conn.commit()
     conn.close()
     return get_project(pid)
