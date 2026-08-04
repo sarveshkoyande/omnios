@@ -15,12 +15,21 @@ import { tokens, motion, hoverOnly, light, focusRing, focusRingOnBrand } from ".
 const HERO_IMAGE = "/static/home/home-hero-bg.png";
 
 /**
- * Scrim over the artwork. The hero prints white text at 28px over a photo nobody has
- * validated for contrast, so the panel carries its own guaranteed floor: near-opaque
- * on the left where the copy sits, thinning to the right where only the stat tiles are.
+ * The artwork is left-weighted — dense dashboard illustration across its left third, near-empty
+ * navy through the middle. The copy is left-weighted too, so painted as-is the two collide and
+ * the scrim has to bury the best part of the image just to keep 28px white text legible.
+ * Mirroring puts the dense side under the translucent stat tiles, which read fine over detail,
+ * and leaves the quiet middle under the headline and composer.
+ */
+const HERO_IMAGE_TRANSFORM = "scaleX(-1)";
+
+/**
+ * Scrim over the artwork. Text contrast can't depend on what the image contains, so the panel
+ * keeps its own floor — heaviest under the copy, lightest across the middle where the mirrored
+ * illustration should actually show.
  */
 const HERO_SCRIM =
-  "linear-gradient(100deg, rgba(4,33,74,0.95) 0%, rgba(4,33,74,0.86) 42%, rgba(4,33,74,0.62) 100%)";
+  "linear-gradient(90deg, rgba(4,33,74,0.92) 0%, rgba(4,33,74,0.80) 34%, rgba(4,33,74,0.44) 62%, rgba(4,33,74,0.58) 100%)";
 
 /**
  * The four workspace stages, in workspace order. `stage` is the 1-based tab index the
@@ -271,10 +280,6 @@ export function Home({
             overflow: "hidden",
             borderRadius: `${tokens.radius.lg}px`,
             backgroundColor: tokens.color.heroInk,
-            backgroundImage: `${HERO_SCRIM}, url("${HERO_IMAGE}")`,
-            backgroundSize: "cover",
-            backgroundPosition: { xs: "center", md: "left center" },
-            backgroundRepeat: "no-repeat",
             p: { xs: 2.5, md: 4 },
             display: "grid",
             gridTemplateColumns: { xs: "1fr", lg: "minmax(0, 1fr) 392px" },
@@ -282,7 +287,27 @@ export function Home({
             alignItems: "center",
           }}
         >
-          <Box sx={{ minWidth: 0 }}>
+          {/* Artwork and scrim are absolutely positioned rather than background layers so the
+              image can be mirrored — background-image has no transform. Both are out of grid
+              flow, so the two content children below still lay out as the declared 2 columns. */}
+          <Box
+            component="img"
+            src={HERO_IMAGE}
+            alt=""
+            aria-hidden
+            sx={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              objectPosition: "center",
+              transform: HERO_IMAGE_TRANSFORM,
+            }}
+          />
+          <Box aria-hidden sx={{ position: "absolute", inset: 0, background: HERO_SCRIM }} />
+
+          <Box sx={{ position: "relative", zIndex: 1, minWidth: 0 }}>
             <Typography
               component="h1"
               sx={{
@@ -403,7 +428,7 @@ export function Home({
             />
           </Box>
 
-          <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 1.5 }}>
+          <Box sx={{ position: "relative", zIndex: 1, display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 1.5 }}>
             {heroStats.map((stat) => (
               <Box
                 key={stat.label}
@@ -411,8 +436,11 @@ export function Home({
                   minWidth: 0,
                   p: 2,
                   borderRadius: `${tokens.radius.md}px`,
-                  background: light(0.1),
-                  border: `1px solid ${light(0.18)}`,
+                  // Opaque enough to sit over the mirrored illustration without the
+                  // value and label competing with it. A light() wash was legible at
+                  // 1920 but went busy at 1280, where the art crowds the tile column.
+                  background: "rgba(4, 33, 74, 0.62)",
+                  border: `1px solid ${light(0.22)}`,
                 }}
               >
                 <Box
