@@ -50,7 +50,7 @@ export function ClaimCard({ claim }: { claim: Claim }) {
         {claim.material_number && (
           <Typography
             sx={{
-              fontSize: 10,
+              fontSize: 15,
               fontWeight: 600,
               letterSpacing: "0.02em",
               fontVariantNumeric: "tabular-nums",
@@ -66,7 +66,7 @@ export function ClaimCard({ claim }: { claim: Claim }) {
         {claim.indication && <Chip size="small" variant="outlined" label={claim.indication} />}
       </Box>
 
-      <Typography sx={{ fontSize: 13, lineHeight: 1.5, mb: 1.5 }}>{claim.text}</Typography>
+      <Typography sx={{ fontSize: 15, lineHeight: 1.5, mb: 1.5 }}>{claim.text}</Typography>
 
       <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
         {claim.references.length ? (
@@ -74,11 +74,11 @@ export function ClaimCard({ claim }: { claim: Claim }) {
             const label = CLAIM_SRC_LABEL[r.source_type] ?? r.source_type;
             const text = `${label}${r.external_id ? ` ${r.external_id}` : ""}`;
             return r.url ? (
-              <Link key={i} href={r.url} target="_blank" rel="noreferrer" title={r.citation} sx={{ fontSize: 10.5, fontWeight: 600 }}>
+              <Link key={i} href={r.url} target="_blank" rel="noreferrer" title={r.citation} sx={{ fontSize: 15, fontWeight: 600 }}>
                 {text}
               </Link>
             ) : (
-              <Typography key={i} sx={{ fontSize: 10.5, color: "text.secondary" }}>{text}</Typography>
+              <Typography key={i} sx={{ fontSize: 15, color: "text.secondary" }}>{text}</Typography>
             );
           })
         ) : (

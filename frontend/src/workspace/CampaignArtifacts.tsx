@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { MarkerType, ReactFlow, type Edge, type Node } from "@xyflow/react";
-import "@xyflow/react/dist/style.css";
+import { useCallback, useEffect, useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import ButtonGroup from "@mui/material/ButtonGroup";
 import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
@@ -15,8 +16,8 @@ import { styled } from "@mui/material/styles";
 import { ConsolePanel } from "../components/ConsolePanel";
 import { DecisionTrail } from "./studio/DecisionTrail";
 import { glass, indigoTint, tokens } from "../theme/tokens";
-import { generateOrchestrationTasks, getCampaignArtifacts } from "../api";
-import type { CampaignArtifactsPayload, JourneyMap } from "./types";
+import { campaignBriefDownloadUrl, generateOrchestrationTasks, getCampaignArtifacts } from "../api";
+import type { CampaignArtifactsPayload, JourneyDiagramPayload, JourneyMap } from "./types";
 
 /** The Planning stage's two linked artifacts, replacing the old hardcoded simplified
  * summary + 30-section plan as the default view: the Campaign Strategy (the decision
@@ -33,7 +34,7 @@ const Section = styled(Box)({
 });
 
 const Eyebrow = styled(Typography)({
-  fontSize: 11,
+  fontSize: 15,
   fontWeight: 700,
   letterSpacing: "0.07em",
   textTransform: "uppercase",
@@ -43,138 +44,127 @@ const Eyebrow = styled(Typography)({
 
 const SEV_COLOR: Record<string, "error" | "warning" | "default"> = { critical: "error", monitor: "warning" };
 
-/* ---------------------- High-level journey diagram ---------------------- *
- * A real flowchart (read-only React Flow, same engine as the ops canvas):
- * entry → primary send → engagement gate → YES/NO branch → closure.
- * Projected server-side from the campaign-ops flow, so it always matches
- * the operational skeleton. */
+/* ------------------------- The journey ------------------------- *
+ * Two views of the same server-side projection (strategy/journey_brief.py): the rendered
+ * flowchart, and the step table under it. The table is not a nicety — it is what survives
+ * when the image does not (see JourneyPicture), and it is the form the .docx/.pdf download
+ * carries, so the two must agree. */
 
-const NODE_W = 250;
-
-type Tone = "send" | "gate" | "yes" | "no" | "neutral";
-
-const TONE_STYLE: Record<Tone, { border: string; bg: string }> = {
-  send: { border: tokens.color.primary, bg: tokens.color.primaryContainer },
-  gate: { border: tokens.color.warning, bg: tokens.color.warningSoft },
-  yes: { border: tokens.color.success, bg: tokens.color.successSoft },
-  no: { border: tokens.color.outlineStrong, bg: tokens.color.surface },
-  neutral: { border: tokens.color.outline, bg: tokens.color.surface },
+/** Colour per step kind, matching the classDefs the backend puts in the Mermaid source so
+ *  the table and the picture read as one diagram. */
+const STEP_TONE: Record<string, { bg: string; ink: string }> = {
+  send: { bg: tokens.color.primaryContainer, ink: tokens.color.primary },
+  followup: { bg: tokens.color.surface, ink: tokens.color.inkSecondary },
+  decision: { bg: tokens.color.warningSoft, ink: tokens.color.warning },
+  branch: { bg: tokens.color.warningSoft, ink: tokens.color.warning },
+  wait: { bg: tokens.color.canvas, ink: tokens.color.inkSoft },
+  entry: { bg: tokens.color.canvas, ink: tokens.color.inkSecondary },
+  exit: { bg: tokens.color.successSoft, ink: tokens.color.successInk },
+  closure: { bg: tokens.color.canvas, ink: tokens.color.inkSecondary },
 };
 
-function jNode(id: string, x: number, y: number, tone: Tone, title: string, lines: string[] = [], width = NODE_W): Node {
-  return {
-    id,
-    position: { x, y },
-    data: {
-      label: (
-        <div style={{ textAlign: "left" }}>
-          <div style={{ fontWeight: 700, fontSize: 14 }}>{title}</div>
-          {lines.filter(Boolean).map((l, i) => (
-            <div key={i} style={{ fontSize: 13, color: tokens.color.inkSecondary, marginTop: 2 }}>{l}</div>
-          ))}
-        </div>
-      ),
-    },
-    style: {
-      width,
-      padding: "10px 12px",
-      borderRadius: 10,
-      border: `1.5px solid ${TONE_STYLE[tone].border}`,
-      background: TONE_STYLE[tone].bg,
-      color: tokens.color.text,
-      lineHeight: 1.45,
-      boxShadow: "0 1px 3px rgba(16,24,40,0.08)",
-    },
-    draggable: false,
-    connectable: false,
-    selectable: false,
-  };
+function JourneyPicture({ diagram }: { diagram?: JourneyDiagramPayload }) {
+  // mermaid.ink is a third-party host: it can be blocked by a corporate proxy, be down, or
+  // simply be slower than the brief. None of those may leave a blank hole where the journey
+  // should be, so a failed load falls through to the step table below rather than retrying.
+  const [failed, setFailed] = useState(false);
+  if (!diagram?.image_url || failed) {
+    return diagram?.image_url ? (
+      <Typography variant="caption" sx={{ color: "text.secondary", fontStyle: "italic", display: "block", my: 1 }}>
+        The journey diagram couldn't be fetched from mermaid.ink. The full step list is below.
+      </Typography>
+    ) : null;
+  }
+  return (
+    <Box
+      sx={{
+        my: 1.5,
+        p: 1.5,
+        border: `1px solid ${indigoTint(0.12)}`,
+        borderRadius: tokens.radius.md,
+        background: tokens.color.surface,
+        overflowX: "auto",
+      }}
+    >
+      <Box
+        component="img"
+        src={diagram.image_url}
+        alt="Engagement journey flowchart"
+        loading="lazy"
+        onError={() => setFailed(true)}
+        sx={{ display: "block", maxWidth: "100%", height: "auto", margin: "0 auto" }}
+      />
+    </Box>
+  );
 }
 
-function jEdge(source: string, target: string, label?: string, color: string = tokens.color.outlineStrong): Edge {
-  return {
-    id: `e_${source}_${target}`,
-    source,
-    target,
-    label,
-    type: "smoothstep",
-    style: { stroke: color, strokeWidth: 1.8 },
-    markerEnd: { type: MarkerType.ArrowClosed, color, width: 18, height: 18 },
-    labelStyle: { fontSize: 11, fontWeight: 800, fill: tokens.color.ink },
-    labelBgStyle: { fill: tokens.color.surface, stroke: tokens.color.outline },
-    labelBgPadding: [6, 3],
-    labelBgBorderRadius: 4,
-    focusable: false,
-  };
+function JourneySteps({ j }: { j?: JourneyMap }) {
+  const steps = j?.steps ?? [];
+  if (steps.length === 0) return null;
+  return (
+    <Table size="small" sx={{ mt: 1 }}>
+      <TableHead>
+        <TableRow>
+          <TableCell sx={{ width: 64 }}>Day</TableCell>
+          <TableCell sx={{ width: 96 }}>Step</TableCell>
+          <TableCell>What happens</TableCell>
+          <TableCell>Channel</TableCell>
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        {steps.map((s) => {
+          const tone = STEP_TONE[s.kind] ?? STEP_TONE.entry;
+          return (
+            <TableRow key={s.id}>
+              <TableCell sx={{ color: "text.secondary" }}>{s.day ?? "—"}</TableCell>
+              <TableCell>
+                <Chip
+                  size="small"
+                  label={s.kind_label}
+                  sx={{ height: 22, fontSize: 15, fontWeight: 700, background: tone.bg, color: tone.ink }}
+                />
+              </TableCell>
+              <TableCell>
+                <Typography variant="body2" sx={{ fontWeight: s.is_comms ? 700 : 400 }}>{s.label}</Typography>
+                {s.detail && (
+                  <Typography variant="caption" sx={{ color: "text.secondary" }}>{s.detail}</Typography>
+                )}
+              </TableCell>
+              <TableCell sx={{ color: "text.secondary", fontSize: 15 }}>{s.channel || "—"}</TableCell>
+            </TableRow>
+          );
+        })}
+      </TableBody>
+    </Table>
+  );
 }
 
-function JourneyDiagram({ j }: { j?: JourneyMap }) {
-  const graph = useMemo(() => {
-    if (!j?.send) return null;
-    const followups = j.no_path?.length ? j.no_path : [{ label: "Segment follow-up", channel: "", day: undefined }];
-    const n = followups.length;
-    const cx = 300;
-    const branchY = 480;
-    const nodes: Node[] = [
-      jNode("entry", cx - 45, 0, "neutral", "Audience enters", (j.entry ?? []).map((e) => `• ${e}`), 340),
-      jNode("send", cx, 180, "send", `Primary send — ${j.send.label}`, [j.send.detail]),
-      jNode("gate", cx, 330, "gate", `◇ ${j.gate?.label ?? "Engaged?"}`),
-      jNode("exit", 0, branchY, "yes", `✓ ${j.yes_path ?? "Exit journey"}`, ["Journey goal reached"]),
-      ...followups.map((f, i) =>
-        jNode(`fu_${i}`, cx + 40 + i * (NODE_W + 40), branchY, "no", `Follow-up — ${f.label}`,
-          [[f.channel, f.day ? `day ${f.day}` : ""].filter(Boolean).join(" · ")])),
-      jNode("closure", cx + 40 + ((n - 1) * (NODE_W + 40)) / 2, branchY + 170, "neutral",
-        `■ ${j.closure?.label ?? "Journey closure"}`, [j.closure?.detail ?? ""]),
-    ];
-    const edges: Edge[] = [
-      jEdge("entry", "send", `day ${j.send.day ?? 1}`),
-      jEdge("send", "gate", j.gate?.day ? `wait → day ${j.gate.day}` : "engagement window"),
-      jEdge("gate", "exit", "YES", tokens.color.success),
-      ...followups.map((_, i) => jEdge("gate", `fu_${i}`, i === 0 ? "NO" : undefined, tokens.color.warning)),
-      ...followups.map((_, i) => jEdge(`fu_${i}`, "closure")),
-    ];
-    return { nodes, edges };
-  }, [j]);
-
-  if (!graph) return null;
+function JourneyDiagram({ j, diagram }: { j?: JourneyMap; diagram?: JourneyDiagramPayload }) {
+  if (!j?.steps?.length) return null;
   return (
     <Box sx={{ my: 1.5 }}>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1, flexWrap: "wrap" }}>
         <Typography sx={{ fontSize: tokens.fontSize.sm, fontWeight: 700 }}>How the journey runs</Typography>
-        {j?.duration_days && <Chip size="small" variant="outlined" label={`${j.duration_days}-day journey`} sx={{ height: 20 }} />}
+        {j.touchpoint_count ? (
+          <Chip size="small" variant="outlined" label={`${j.touchpoint_count} touchpoints`} sx={{ height: 24 }} />
+        ) : null}
+        {j.duration_days ? (
+          <Chip size="small" variant="outlined" label={`${j.duration_days}-day journey`} sx={{ height: 24 }} />
+        ) : null}
       </Box>
 
-      <Box
-        sx={{
-          height: 640,
-          border: `1px solid ${indigoTint(0.12)}`,
-          borderRadius: tokens.radius.md,
-          background: tokens.color.canvas,
-          overflow: "hidden",
-          // Read-only diagram: hide the connection handles entirely.
-          "& .react-flow__handle": { opacity: 0, pointerEvents: "none" },
-        }}
-      >
-        <ReactFlow
-          nodes={graph.nodes}
-          edges={graph.edges}
-          fitView
-          fitViewOptions={{ padding: 0.08, maxZoom: 1 }}
-          nodesDraggable={false}
-          nodesConnectable={false}
-          nodesFocusable={false}
-          edgesFocusable={false}
-          elementsSelectable={false}
-          zoomOnScroll={false}
-          zoomOnPinch={false}
-          zoomOnDoubleClick={false}
-          panOnDrag={false}
-          preventScrolling={false}
-          proOptions={{ hideAttribution: true }}
-        />
-      </Box>
+      <JourneyPicture diagram={diagram} />
 
-      {j?.decision_logic && j.decision_logic.length > 0 && (
+      {(j.entry?.length ?? 0) > 0 && (
+        <Box sx={{ mt: 1 }}>
+          <Typography variant="caption" sx={{ fontWeight: 700 }}>Entry criteria</Typography>
+          <Rows items={j.entry ?? []} />
+        </Box>
+      )}
+
+      <JourneySteps j={j} />
+
+      {j.decision_logic && j.decision_logic.length > 0 && (
         <Box sx={{ mt: 1.5 }}>
           <Typography variant="caption" sx={{ fontWeight: 700 }}>Decision logic</Typography>
           {j.decision_logic.map((d, i) => (
@@ -185,7 +175,7 @@ function JourneyDiagram({ j }: { j?: JourneyMap }) {
           ))}
         </Box>
       )}
-      {j?.operational_rules && j.operational_rules.length > 0 && (
+      {j.operational_rules && j.operational_rules.length > 0 && (
         <Box sx={{ mt: 1 }}>
           <Typography variant="caption" sx={{ fontWeight: 700 }}>Operating rules</Typography>
           <Rows items={j.operational_rules} />
@@ -209,6 +199,50 @@ function Rows({ items }: { items: string[] }) {
 
 function audienceFilterLabel(rule: string) {
   return rule.replace(/^(Entry|Segment):\s*/i, "");
+}
+
+/** Download the brief as a document. Split control: the main button takes the common case
+ *  (.docx, editable by the brand team) and the caret offers PDF, so the default path is one
+ *  click and neither format is buried. */
+function DownloadBrief({ projectId }: { projectId: string }) {
+  const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
+
+  const download = (format: "docx" | "pdf") => {
+    setMenuAnchor(null);
+    // An <a download> rather than fetch+blob: the file is generated per request and can be
+    // megabytes, and this way a failed export surfaces as the server's own error page
+    // instead of a silent no-op in a promise.
+    const link = document.createElement("a");
+    link.href = campaignBriefDownloadUrl(projectId, format);
+    link.rel = "noopener";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  };
+
+  return (
+    <>
+      <ButtonGroup size="small" variant="outlined">
+        <Button
+          onClick={() => download("docx")}
+          startIcon={<span className="material-symbols-outlined" style={{ fontSize: 17 }}>download</span>}
+        >
+          Download brief
+        </Button>
+        <Button
+          onClick={(e) => setMenuAnchor(e.currentTarget)}
+          aria-label="Choose brief download format"
+          sx={{ px: 0.5, minWidth: 32 }}
+        >
+          <span className="material-symbols-outlined" style={{ fontSize: 17 }}>arrow_drop_down</span>
+        </Button>
+      </ButtonGroup>
+      <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={() => setMenuAnchor(null)}>
+        <MenuItem onClick={() => download("docx")}>Word (.docx)</MenuItem>
+        <MenuItem onClick={() => download("pdf")}>PDF</MenuItem>
+      </Menu>
+    </>
+  );
 }
 
 function StrategyDecisionTrailPanel({ data, sx }: { data: CampaignArtifactsPayload; sx?: object }) {
@@ -325,9 +359,12 @@ export function CampaignArtifacts({
         title={`Campaign Brief — ${b.header.brand || "brand"}`}
         icon="assignment_turned_in"
         action={
-          <Button size="small" variant="contained" onClick={approve} disabled={seeding || seeded}>
-            {seeding ? <CircularProgress size={16} sx={{ color: "#fff" }} /> : seeded ? "Sent to Orchestration ✓" : "Approve → Orchestration"}
-          </Button>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <DownloadBrief projectId={projectId} />
+            <Button size="small" variant="contained" onClick={approve} disabled={seeding || seeded}>
+              {seeding ? <CircularProgress size={16} sx={{ color: "#fff" }} /> : seeded ? "Sent to Orchestration ✓" : "Approve → Orchestration"}
+            </Button>
+          </Box>
         }
       >
         {approveErr && (
@@ -336,9 +373,9 @@ export function CampaignArtifacts({
           </Typography>
         )}
         <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap", mb: 2 }}>
-          {b.header.therapy_area && <Chip size="small" label={b.header.therapy_area} sx={{ height: 20 }} />}
-          {b.header.lifecycle && <Chip size="small" variant="outlined" label={b.header.lifecycle} sx={{ height: 20 }} />}
-          <Chip size="small" variant="outlined" label={`v${b.version} · ${b.generated_at}`} sx={{ height: 20 }} />
+          {b.header.therapy_area && <Chip size="small" label={b.header.therapy_area} sx={{ height: 24 }} />}
+          {b.header.lifecycle && <Chip size="small" variant="outlined" label={b.header.lifecycle} sx={{ height: 24 }} />}
+          <Chip size="small" variant="outlined" label={`v${b.version} · ${b.generated_at}`} sx={{ height: 24 }} />
         </Box>
 
         {b.snapshot && (
@@ -379,7 +416,7 @@ export function CampaignArtifacts({
 
         <Section>
           <Eyebrow>Objective</Eyebrow>
-          {b.objective.pillar && <Chip size="small" color="primary" variant="outlined" label={`pillar · ${b.objective.pillar}`} sx={{ height: 20, mb: 0.75 }} />}
+          {b.objective.pillar && <Chip size="small" color="primary" variant="outlined" label={`pillar · ${b.objective.pillar}`} sx={{ height: 24, mb: 0.75 }} />}
           <Typography variant="body2" sx={{ mb: 0.75 }}>{b.objective.statement}</Typography>
           <Rows items={b.objective.leading_indicators.map((k) => `Leading indicator: ${k}`)} />
         </Section>
@@ -402,7 +439,7 @@ export function CampaignArtifacts({
                   background: tokens.color.primaryContainer,
                   borderColor: indigoTint(0.18),
                   color: tokens.color.ink,
-                  fontSize: 12,
+                  fontSize: 15,
                   fontWeight: 600,
                   "& .MuiChip-label": { px: 1 },
                 }}
@@ -453,7 +490,7 @@ export function CampaignArtifacts({
                         flex: "0 0 auto",
                         background: tokens.color.successSoft,
                         color: tokens.color.successInk,
-                        fontSize: 11,
+                        fontSize: 15,
                         fontWeight: 800,
                       }}
                     />
@@ -469,7 +506,7 @@ export function CampaignArtifacts({
                           size="small"
                           variant="outlined"
                           label={k}
-                          sx={{ height: 20, maxWidth: "100%", fontSize: 11, "& .MuiChip-label": { overflow: "hidden", textOverflow: "ellipsis" } }}
+                          sx={{ height: 24, maxWidth: "100%", fontSize: 15, "& .MuiChip-label": { overflow: "hidden", textOverflow: "ellipsis" } }}
                         />
                       ))}
                     </Box>
@@ -516,7 +553,7 @@ export function CampaignArtifacts({
                 <TableRow key={i}>
                   <TableCell sx={{ fontWeight: 600 }}>{d.asset}</TableCell>
                   <TableCell>{d.variants}</TableCell>
-                  <TableCell sx={{ color: "text.secondary", fontSize: 12 }}>{d.notes}</TableCell>
+                  <TableCell sx={{ color: "text.secondary", fontSize: 15 }}>{d.notes}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -528,13 +565,13 @@ export function CampaignArtifacts({
           {b.channel_journey.anchor && <Typography variant="body2" sx={{ mb: 0.5 }}>Anchor: <b>{b.channel_journey.anchor}</b></Typography>}
           <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap", mb: 0.75 }}>
             {b.channel_journey.mix.map((m) => (
-              <Chip key={m.channel} size="small" variant="outlined" label={`${m.channel} ${m.pct}%`} sx={{ height: 20 }} />
+              <Chip key={m.channel} size="small" variant="outlined" label={`${m.channel} ${m.pct}%`} sx={{ height: 24 }} />
             ))}
           </Box>
           {b.channel_journey.journey?.summary && (
             <Typography variant="body2" sx={{ mb: 0.5 }}>{b.channel_journey.journey.summary}</Typography>
           )}
-          <JourneyDiagram j={b.channel_journey.journey} />
+          <JourneyDiagram j={b.channel_journey.journey} diagram={b.journey_diagram} />
           <Typography variant="caption" sx={{ color: "text.secondary" }}>{b.channel_journey.cadence_note}</Typography>
         </Section>
 
@@ -556,7 +593,7 @@ export function CampaignArtifacts({
           <Eyebrow>Risk register</Eyebrow>
           {b.risk_register.map((r, i) => (
             <Box key={i} sx={{ display: "flex", gap: 1, alignItems: "baseline", mb: 0.75 }}>
-              <Chip size="small" color={SEV_COLOR[r.severity] ?? "default"} label={r.severity} sx={{ height: 18, fontSize: 10, flex: "0 0 auto" }} />
+              <Chip size="small" color={SEV_COLOR[r.severity] ?? "default"} label={r.severity} sx={{ height: 24, fontSize: 15, flex: "0 0 auto" }} />
               <Typography variant="body2"><b>{r.risk}</b> — <span style={{ color: tokens.color.inkSoft }}>{r.mitigation}</span></Typography>
             </Box>
           ))}
@@ -572,7 +609,7 @@ export function CampaignArtifacts({
           <Typography variant="body2" sx={{ mb: 0.5 }}><b>{b.timeline.window}</b> — {b.timeline.note}</Typography>
           <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
             {b.approvals.map((a) => (
-              <Chip key={a.role} size="small" variant="outlined" label={`${a.role}: ${a.name || "unassigned"}`} sx={{ height: 20 }} />
+              <Chip key={a.role} size="small" variant="outlined" label={`${a.role}: ${a.name || "unassigned"}`} sx={{ height: 24 }} />
             ))}
           </Box>
         </Section>
@@ -600,7 +637,7 @@ export function CampaignArtifacts({
               {b.source_summary.captured_fields.length > 0 && (
                 <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap", mb: 0.75 }}>
                   {b.source_summary.captured_fields.map((f) => (
-                    <Chip key={`${f.label}-${f.value}`} size="small" variant="outlined" label={`${f.label}: ${f.value}`} sx={{ height: 22 }} />
+                    <Chip key={`${f.label}-${f.value}`} size="small" variant="outlined" label={`${f.label}: ${f.value}`} sx={{ height: 24 }} />
                   ))}
                 </Box>
               )}

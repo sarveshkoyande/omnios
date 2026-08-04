@@ -129,7 +129,7 @@ export function IntakeCard({
           {dragActive ? "file_download" : "upload_file"}
         </span>
         <Box sx={{ minWidth: 0 }}>
-          <Typography sx={{ fontSize: 14, fontWeight: 600, color: "text.primary" }}>
+          <Typography sx={{ fontSize: 15, fontWeight: 600, color: "text.primary" }}>
             {dragActive ? "Drop it here" : "Import a brand plan"}
           </Typography>
           <Typography variant="caption" sx={{ color: "text.secondary", display: "block", lineHeight: 1.45 }}>
@@ -160,7 +160,7 @@ export function IntakeCard({
         fullWidth
         value={text}
         onChange={(e) => setText(e.target.value)}
-        slotProps={{ input: { sx: { fontSize: 14, lineHeight: 1.6 } } }}
+        slotProps={{ input: { sx: { fontSize: 15, lineHeight: 1.6 } } }}
       />
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 2 }}>
         <Button variant="text" onClick={onSkip}>

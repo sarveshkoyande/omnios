@@ -33,7 +33,7 @@ export function LibraryBrandCard({ brand, onOpen }: { brand: LibraryBrandSummary
       <Typography variant="body2" sx={{ color: "text.secondary" }}>{brand.therapy_area}</Typography>
 
       <Box>
-        <Box sx={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "text.secondary", mb: 0.5 }}>
+        <Box sx={{ display: "flex", justifyContent: "space-between", fontSize: 15, color: "text.secondary", mb: 0.5 }}>
           <span>MLR-approved claims</span>
           <span>{brand.approved}/{brand.claims}</span>
         </Box>

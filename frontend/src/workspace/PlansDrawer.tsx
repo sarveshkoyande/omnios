@@ -118,15 +118,15 @@ export function PlansDrawer({
             {selectedCount > 0 && (
               bulkConfirm ? (
                 <Box sx={{ display: "flex", gap: 0.5 }}>
-                  <Button size="small" color="error" variant="contained" onClick={deleteSelected} sx={{ minWidth: 0, px: 1, fontSize: 10 }}>
+                  <Button size="small" color="error" variant="contained" onClick={deleteSelected} sx={{ minWidth: 0, px: 1, fontSize: 15 }}>
                     Delete
                   </Button>
-                  <Button size="small" variant="outlined" onClick={() => setBulkConfirm(false)} sx={{ minWidth: 0, px: 1, fontSize: 10 }}>
+                  <Button size="small" variant="outlined" onClick={() => setBulkConfirm(false)} sx={{ minWidth: 0, px: 1, fontSize: 15 }}>
                     Cancel
                   </Button>
                 </Box>
               ) : (
-                <Button size="small" color="error" variant="outlined" onClick={() => setBulkConfirm(true)} sx={{ minWidth: 0, px: 1, fontSize: 10 }}>
+                <Button size="small" color="error" variant="outlined" onClick={() => setBulkConfirm(true)} sx={{ minWidth: 0, px: 1, fontSize: 15 }}>
                   Delete {selectedCount}
                 </Button>
               )
@@ -153,7 +153,7 @@ export function PlansDrawer({
                   <Typography sx={{ fontWeight: 600, fontSize: tokens.fontSize.sm, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                     {p.name}
                   </Typography>
-                  <Chip size="small" label={p.phase} sx={{ mt: 0.5, height: 18, fontSize: 10 }} />
+                  <Chip size="small" label={p.phase} sx={{ mt: 0.5, height: 24, fontSize: 15 }} />
                 </PlanRow>
               </Box>
               {confirmId === p.id ? (
@@ -163,7 +163,7 @@ export function PlansDrawer({
                     color="error"
                     variant="contained"
                     onClick={(e) => { e.stopPropagation(); setConfirmId(null); onDeleteProject(p.id); }}
-                    sx={{ minWidth: 0, px: 1, fontSize: 10 }}
+                    sx={{ minWidth: 0, px: 1, fontSize: 15 }}
                   >
                     Delete
                   </Button>
@@ -171,7 +171,7 @@ export function PlansDrawer({
                     size="small"
                     variant="outlined"
                     onClick={(e) => { e.stopPropagation(); setConfirmId(null); }}
-                    sx={{ minWidth: 0, px: 1, fontSize: 10 }}
+                    sx={{ minWidth: 0, px: 1, fontSize: 15 }}
                   >
                     Cancel
                   </Button>

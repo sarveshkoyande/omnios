@@ -19,7 +19,7 @@ export const AgentBubble = styled("div")(({ theme }) => ({
   borderLeft: `4px solid ${stageAccent.primary}`,
   boxShadow: "none",
   color: tokens.color.text,
-  fontSize: 13,
+  fontSize: 15,
   lineHeight: 1.6,
   overflowWrap: "break-word",
   wordBreak: "break-word",
@@ -36,7 +36,7 @@ export const UserBubble = styled("div")(({ theme }) => ({
   background: stageAccent.primary,
   color: "#fff",
   boxShadow: "none",
-  fontSize: 13,
+  fontSize: 15,
   lineHeight: 1.6,
   overflowWrap: "break-word",
   wordBreak: "break-word",
@@ -50,7 +50,7 @@ export const NarrationLine = styled("div")(({ theme }) => ({
   borderBottom: `1px dashed ${tokens.color.outline}`,
   color: tokens.color.inkSoft,
   fontStyle: "italic",
-  fontSize: 13,
+  fontSize: 15,
 }));
 
 /** TurnBubble — a teammate's turn: flat panel with a left accent edge. */
@@ -68,7 +68,7 @@ export const TurnBubble = styled("div")<{ accent: string }>(({ theme, accent }) 
   borderLeft: `4px solid ${accent}`,
   boxShadow: "none",
   color: tokens.color.text,
-  fontSize: 13,
+  fontSize: 15,
   lineHeight: 1.6,
   overflowWrap: "break-word",
   wordBreak: "break-word",

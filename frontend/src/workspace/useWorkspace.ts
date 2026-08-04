@@ -586,12 +586,26 @@ export function useWorkspace() {
     const fresh = proj.phase === "collecting" && !proj.messages.some((m) => m.role === "user");
     setShowIntake(fresh);
     setItems(
-      proj.messages.map((m) => ({
-        id: nextId(),
-        kind: m.role,
-        text: m.text,
-        clarify: m.meta?.kind === "clarify" ? m.meta.clarify ?? undefined : undefined,
-      })),
+      proj.messages.map((m): ChatItem => {
+        // A persisted studio ask replays as the same AskCard it was answered on, locked to
+        // the recorded value -- otherwise the history is a column of answers to invisible
+        // questions. Older projects have no such messages and simply render as before.
+        if (m.meta?.kind === "studio_ask" && m.meta.ask) {
+          return {
+            id: nextId(),
+            kind: "studio-ask",
+            ask: m.meta.ask as StudioAsk,
+            askOwnerName: STAGE_AGENTS.planning.name,
+            askAnswered: m.meta.answer ?? "",
+          };
+        }
+        return {
+          id: nextId(),
+          kind: m.role,
+          text: m.text,
+          clarify: m.meta?.kind === "clarify" ? m.meta.clarify ?? undefined : undefined,
+        };
+      }),
     );
     if (existingReviews?.length) {
       setItems((prev) => [

@@ -103,7 +103,7 @@ function DecisionItemCard({ item }: { item: DecisionItem }) {
           {item.label}
         </Typography>
         {item.lead && (
-          <Box component="span" sx={{ fontSize: 11, fontWeight: 700, px: 0.75, borderRadius: 1, flex: "0 0 auto", background: tokens.color.primaryContainer, color: tokens.color.onPrimaryContainer }}>
+          <Box component="span" sx={{ fontSize: 15, fontWeight: 700, px: 0.75, borderRadius: 1, flex: "0 0 auto", background: tokens.color.primaryContainer, color: tokens.color.onPrimaryContainer }}>
             lead
           </Box>
         )}
@@ -247,7 +247,7 @@ function ReviseBox({
 function SourceTag({ source_class }: { source_class: string }) {
   const c = SOURCE_COLOR[source_class] ?? SOURCE_COLOR.internal;
   return (
-    <Box component="span" sx={{ fontSize: 11, fontWeight: 700, px: 0.75, py: 0.2, borderRadius: 1, background: c.bg, color: c.ink, flex: "0 0 auto" }}>
+    <Box component="span" sx={{ fontSize: 15, fontWeight: 700, px: 0.75, py: 0.2, borderRadius: 1, background: c.bg, color: c.ink, flex: "0 0 auto" }}>
       {source_class}
     </Box>
   );
@@ -298,7 +298,7 @@ export function DecisionTrail({
           title: "How we reasoned",
           body: (
             <Box>
-              <Chip size="small" variant="outlined" label={r.framework} sx={{ height: 22, fontSize: tokens.fontSize.xs, mb: 0.75 }} />
+              <Chip size="small" variant="outlined" label={r.framework} sx={{ height: 24, fontSize: tokens.fontSize.xs, mb: 0.75 }} />
               {/* pre-line: the record appends a decision-specific sentence after a blank
                   line, and HTML would otherwise collapse it into the framework prose. */}
               <Typography variant="body2" sx={{ color: tokens.color.text, lineHeight: 1.65, whiteSpace: "pre-line" }}>
@@ -339,13 +339,13 @@ export function DecisionTrail({
           <RecordCard key={r.stage_id} id={`decision-${r.stage_id}`} defaultExpanded={!dense}>
             <AccordionSummary expandIcon={<span className="material-symbols-outlined">expand_more</span>}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap", minWidth: 0 }}>
-                <Chip size="small" label={r.stage_id} sx={{ height: 22, fontWeight: 700, fontSize: tokens.fontSize.xs }} />
+                <Chip size="small" label={r.stage_id} sx={{ height: 24, fontWeight: 700, fontSize: tokens.fontSize.xs }} />
                 <Typography sx={{ fontWeight: 700, fontSize: tokens.fontSize.sm }}>{r.stage_name}</Typography>
                 <Typography sx={{ fontSize: tokens.fontSize.sm, color: "text.secondary", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 360 }}>
                   {r.decision}
                 </Typography>
                 {r.answered_by_user && (
-                  <Chip size="small" color="secondary" variant="outlined" label="your call" sx={{ height: 20, fontSize: 11 }} />
+                  <Chip size="small" color="secondary" variant="outlined" label="your call" sx={{ height: 24, fontSize: 15 }} />
                 )}
               </Box>
             </AccordionSummary>
@@ -397,7 +397,7 @@ export function DecisionTrail({
                     Shapes in the brief →
                   </Typography>
                   {r.feeds.map((f) => (
-                    <Chip key={f} size="small" variant="outlined" color="primary" label={f} sx={{ height: 22, fontSize: tokens.fontSize.xs }} />
+                    <Chip key={f} size="small" variant="outlined" color="primary" label={f} sx={{ height: 24, fontSize: tokens.fontSize.xs }} />
                   ))}
                 </Box>
               )}

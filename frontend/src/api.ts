@@ -548,6 +548,13 @@ export async function simulateExternalChange(
   if (!res.ok) throw new Error(`POST orchestration/simulate-external -> ${res.status}`);
 }
 
+/** Download URL for the composed Campaign Brief as a document. Plain link, not a fetch:
+ *  the browser's own downloader handles the Content-Disposition and the file never has to
+ *  sit in JS memory. */
+export function campaignBriefDownloadUrl(projectId: string, format: "docx" | "pdf"): string {
+  return `/api/projects/${encodeURIComponent(projectId)}/campaign-brief.${format}`;
+}
+
 export async function getCampaignArtifacts(projectId: string): Promise<CampaignArtifactsPayload> {
   const res = await fetch(`/api/projects/${encodeURIComponent(projectId)}/campaign-artifacts`);
   if (!res.ok) throw new Error(`GET campaign-artifacts -> ${res.status}`);

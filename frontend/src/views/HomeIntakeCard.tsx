@@ -127,7 +127,7 @@ export function HomeIntakeCard({
             <span className="material-symbols-outlined" style={{ fontSize: 24, color: tokens.color.primary }}>
               file_download
             </span>
-            <Typography sx={{ fontSize: 14, fontWeight: 600, color: "text.primary" }}>
+            <Typography sx={{ fontSize: 15, fontWeight: 600, color: "text.primary" }}>
               Drop it here — I'll read it and fill the brief for you.
             </Typography>
           </Box>

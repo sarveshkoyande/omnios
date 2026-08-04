@@ -13,17 +13,17 @@ export function ModuleCard({ module: m }: { module: ContentModule }) {
         <Chip size="small" variant="outlined" label={m.module_type.replace("_", " ")} />
         <Chip size="small" label={m.status.replace("_", " ")} />
         {m.material_number && (
-          <Typography sx={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.02em", fontVariantNumeric: "tabular-nums", color: "text.secondary" }}>
+          <Typography sx={{ fontSize: 15, fontWeight: 600, letterSpacing: "0.02em", fontVariantNumeric: "tabular-nums", color: "text.secondary" }}>
             {m.material_number}
           </Typography>
         )}
       </Box>
-      <Typography sx={{ fontWeight: 700, fontSize: 13 }}>{m.name}</Typography>
+      <Typography sx={{ fontWeight: 700, fontSize: 15 }}>{m.name}</Typography>
       {m.business_rules && (
         <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 0.5 }}>{m.business_rules}</Typography>
       )}
       {m.claims.length > 0 && (
-        <Box component="details" sx={{ mt: 1, fontSize: 11 }}>
+        <Box component="details" sx={{ mt: 1, fontSize: 15 }}>
           <Box component="summary" sx={{ cursor: "pointer", color: "primary.main", fontWeight: 700 }}>
             {m.claims.length} claim{m.claims.length === 1 ? "" : "s"}
           </Box>
@@ -41,7 +41,7 @@ export function AssetRow({ asset }: { asset: ContentAsset }) {
     <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, background: glass.content, border: `1px solid ${indigoTint(0.12)}`, borderRadius: 2, p: 1.5 }}>
       <Chip size="small" label={asset.asset_format} sx={{ background: tokens.color.secondary, color: "#fff", fontWeight: 700 }} />
       <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography sx={{ fontWeight: 700, fontSize: 12 }}>{asset.title}</Typography>
+        <Typography sx={{ fontWeight: 700, fontSize: 15 }}>{asset.title}</Typography>
         {asset.description && (
           <Typography variant="caption" sx={{ color: "text.secondary", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {asset.description}
@@ -50,12 +50,12 @@ export function AssetRow({ asset }: { asset: ContentAsset }) {
       </Box>
       <Chip size="small" variant="outlined" label={asset.branded ? "Branded" : "Unbranded"} />
       {asset.id_code && (
-        <Typography sx={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.02em", fontVariantNumeric: "tabular-nums", color: "text.secondary" }}>
+        <Typography sx={{ fontSize: 15, fontWeight: 600, letterSpacing: "0.02em", fontVariantNumeric: "tabular-nums", color: "text.secondary" }}>
           {asset.id_code}
         </Typography>
       )}
       {asset.blob_key && (
-        <Link href={`/api/blob/${asset.blob_key}`} target="_blank" rel="noreferrer" sx={{ fontSize: 11, fontWeight: 700 }}>
+        <Link href={`/api/blob/${asset.blob_key}`} target="_blank" rel="noreferrer" sx={{ fontSize: 15, fontWeight: 700 }}>
           Open
         </Link>
       )}

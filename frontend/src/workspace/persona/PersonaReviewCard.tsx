@@ -10,7 +10,7 @@ import type { PersonaReview } from "../types";
 import { indigoTint, tokens } from "../../theme/tokens";
 
 const ColHead = styled(Typography)({
-  fontSize: 10,
+  fontSize: 15,
   fontWeight: 700,
   textTransform: "uppercase",
   letterSpacing: "0.06em",
@@ -20,7 +20,7 @@ const ColHead = styled(Typography)({
 
 const ReactionPill = styled(Chip)<{ reaction: string }>(({ reaction }) => ({
   height: 20,
-  fontSize: 10,
+  fontSize: 15,
   ...(reaction === "love it" && { background: "#DFF2E1", color: "#1B7A34" }),
   ...(reaction === "wasted on me" && { background: "#FDEAEA", color: "#A83232" }),
 }));

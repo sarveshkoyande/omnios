@@ -125,7 +125,7 @@ export function PlanCard({ plan, onOpen }: { plan: ProjectSummary; onOpen: (id: 
           size="small"
           icon={<span className="material-symbols-outlined" style={{ fontSize: 15, color: status.color }}>{status.icon}</span>}
           label={status.label}
-          sx={{ height: 24, fontWeight: 700, fontSize: 12, color: status.color, background: status.bg, border: `1px solid ${status.color}22`, "& .MuiChip-icon": { ml: 0.75 } }}
+          sx={{ height: 24, fontWeight: 700, fontSize: 15, color: status.color, background: status.bg, border: `1px solid ${status.color}22`, "& .MuiChip-icon": { ml: 0.75 } }}
         />
         <Typography sx={{ fontSize: tokens.fontSize.xs, color: "text.secondary", fontVariantNumeric: "tabular-nums" }}>
           {relativeTime(plan.updated_at)}

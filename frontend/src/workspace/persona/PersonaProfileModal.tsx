@@ -21,7 +21,7 @@ const Fact = styled(Box)(({ theme }) => ({
 const ChanRow = styled(Box)(({ theme }) => ({
   display: "flex",
   justifyContent: "space-between",
-  fontSize: 12,
+  fontSize: 15,
   padding: theme.spacing(0.5, 0),
 }));
 
@@ -96,13 +96,13 @@ export function PersonaProfileModal({ personaId, onClose }: { personaId: string 
           <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1.5, mb: 1.5 }}>
             <Box>
               <Typography variant="overline" sx={{ display: "block", mb: 0.5 }}>Decision drivers</Typography>
-              <Box component="ul" sx={{ m: 0, pl: 2, fontSize: 12 }}>
+              <Box component="ul" sx={{ m: 0, pl: 2, fontSize: 15 }}>
                 {detail.decision_drivers?.map((x, i) => <li key={i}>{x}</li>)}
               </Box>
             </Box>
             <Box>
               <Typography variant="overline" sx={{ display: "block", mb: 0.5 }}>Frustrations</Typography>
-              <Box component="ul" sx={{ m: 0, pl: 2, fontSize: 12 }}>
+              <Box component="ul" sx={{ m: 0, pl: 2, fontSize: 15 }}>
                 {detail.frustrations?.map((x, i) => <li key={i}>{x}</li>)}
               </Box>
             </Box>

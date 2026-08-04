@@ -429,7 +429,7 @@ def _segment_evidence(ctx: dict) -> tuple[list[dict], str, int]:
         spec_note = " (" + ", ".join(sizing["specialties"][:3]) + ")"
     # The sourcing line is not decoration: without it a reader assumes a launch brand's
     # segments came from its own script performance, which is the objection this answers.
-    note = (f"Measured on the HCP 360 dummy panel -- {total:,} {scope_word} HCPs{spec_note} "
+    note = (f"Measured on the HCP 360 panel -- {total:,} {scope_word} HCPs{spec_note} "
             f"across {len(segs)} therapy-area segments. "
             + (sizing.get("sourcing") or ""))
     return segs, note, total
@@ -504,7 +504,7 @@ def _build_ask_draft(ctx: dict, step: dict) -> dict | None:
                 # is a real count and still sums to 100%.
                 "filters": {"available": _segment_facets(ctx), "active": ctx.get("segment_filters") or {}},
                 "evidence_basis": _basis(ctx,
-                    "Segment sizes counted on the HCP 360 dummy panel, filtered to the plan's therapy-area "
+                    "Segment sizes counted on the HCP 360 panel, filtered to the plan's therapy-area "
                     "specialties with a whole-panel fallback. Segments describe therapy-area prescribing "
                     "behaviour (syndicated scripts data), not this brand's performance.",
                     "audience", ("csfs", "positioning")),

@@ -61,7 +61,14 @@ export const tokens = {
      */
     heroInk: "#04214A",
   },
-  fontSize: { xs: 13, sm: 14, md: 15, lg: 17, xl: 20, xxl: 24, display: 28 },
+  /**
+   * 15px is the floor. Nothing in the product may render text below it — the old 13/14 rungs
+   * (and a long tail of 8.5-12px literals in chips, badges and table cells) were unreadable
+   * and failed accessibility guidance, so `xs` and `sm` now resolve to the same 15 as `md`.
+   * They are kept as distinct names only so the hundreds of existing call sites keep working;
+   * prefer `md` in new code, and use weight or colour for hierarchy instead of smaller text.
+   */
+  fontSize: { xs: 15, sm: 15, md: 15, lg: 17, xl: 20, xxl: 24, display: 28 },
   font: {
     primary: `'Nunito Sans', 'Segoe UI', system-ui, sans-serif`,
   },
@@ -77,6 +84,13 @@ export const tokens = {
      * App.tsx pins the Toolbar to this value at every breakpoint.
      */
     topBarHeight: 64,
+    /**
+     * Width of the right-hand chat pane. Shared, because the sub-bar above it has to
+     * reserve exactly this much on its right so the folder tabs stop at the workspace
+     * edge instead of running on over the chat. Two places, one number.
+     */
+    chatPaneWidth: "30vw",
+    chatPaneMinWidth: 320,
   },
 } as const;
 

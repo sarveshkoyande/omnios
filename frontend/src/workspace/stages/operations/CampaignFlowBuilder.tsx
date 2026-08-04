@@ -128,7 +128,7 @@ function Toolbar({
     >
       <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap", minWidth: 0 }}>
         {projectId && (
-          <Box sx={{ fontSize: 11, color: "text.secondary", px: 0.5, minWidth: 46, textAlign: "center" }}>
+          <Box sx={{ fontSize: 15, color: "text.secondary", px: 0.5, minWidth: 46, textAlign: "center" }}>
             {saving ? "Savingâ€¦" : "Saved"}
           </Box>
         )}

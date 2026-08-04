@@ -83,7 +83,7 @@ const StepNumber = styled("span")<{ active: boolean }>(({ active }) => ({
 }));
 
 const SubChip = styled("span")({
-  fontSize: 10,
+  fontSize: 15,
   fontWeight: 700,
   letterSpacing: "0.06em",
   color: "inherit",

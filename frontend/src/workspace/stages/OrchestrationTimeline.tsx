@@ -153,7 +153,7 @@ export function OrchestrationTimeline({
             <Box>
               <Typography variant="overline" sx={{ color: "text.secondary" }}>Orchestrated timeline</Typography>
               <Typography sx={{ fontSize: 26, fontWeight: 800, lineHeight: 1.1 }}>
-                {sched.elapsed.pre_launch_days}<span style={{ fontSize: 14, fontWeight: 600 }}> business days</span>
+                {sched.elapsed.pre_launch_days}<span style={{ fontSize: 15, fontWeight: 600 }}> business days</span>
               </Typography>
             </Box>
             <span className="material-symbols-outlined" style={{ color: "#1B7A34" }}>trending_down</span>
@@ -209,7 +209,7 @@ export function OrchestrationTimeline({
                   zIndex: 2,
                 }}
               >
-                <Chip size="small" color="error" label="Go-live" sx={{ position: "absolute", top: 2, left: 4, height: 18, fontSize: 10 }} />
+                <Chip size="small" color="error" label="Go-live" sx={{ position: "absolute", top: 2, left: 4, height: 24, fontSize: 15 }} />
               </Box>
             )}
             {teamsOrdered.map((team) => {
@@ -230,7 +230,7 @@ export function OrchestrationTimeline({
                         <Tooltip
                           key={a.id}
                           title={
-                            <Box sx={{ fontSize: 12 }}>
+                            <Box sx={{ fontSize: 15 }}>
                               <b>{a.title}</b><br />
                               {fmt(a.planned_start)} → {fmt(a.planned_due)} · {st.label}<br />
                               SLA {a.sla_meta?.target_days ?? "?"}d (was {a.sla_meta?.baseline_days ?? "?"}d)
@@ -257,7 +257,7 @@ export function OrchestrationTimeline({
                               overflow: "hidden",
                             }}
                           >
-                            <Typography sx={{ fontSize: 10, color: "#fff", whiteSpace: "nowrap", textOverflow: "ellipsis", overflow: "hidden" }}>
+                            <Typography sx={{ fontSize: 15, color: "#fff", whiteSpace: "nowrap", textOverflow: "ellipsis", overflow: "hidden" }}>
                               {a.title}
                             </Typography>
                           </Box>

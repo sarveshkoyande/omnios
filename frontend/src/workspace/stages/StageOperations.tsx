@@ -83,7 +83,7 @@ export function StageOperations({
 
       {!lib.found && (
         <ConsolePanel sx={{ mb: 3 }}>
-          <Typography sx={{ fontSize: 12, color: "text.secondary", background: "#FFF8E6", border: "1px solid #F0E0A8", borderRadius: 2, p: 1.5 }}>
+          <Typography sx={{ fontSize: 15, color: "text.secondary", background: "#FFF8E6", border: "1px solid #F0E0A8", borderRadius: 2, p: 1.5 }}>
             No content library indexed for this brand. The diagram shows tactics only. Run <code>scripts/build_content_library.py</code> to populate assets.
           </Typography>
         </ConsolePanel>

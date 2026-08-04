@@ -33,7 +33,7 @@ export function Lightbox({ image, onClose }: { image: LightboxImage | null; onCl
             alt={image.caption}
             sx={{ maxWidth: "88vw", maxHeight: "78vh", objectFit: "contain", background: "#fff", borderRadius: 2, p: 1.5 }}
           />
-          <Typography sx={{ color: "#fff", fontSize: 12, textAlign: "center" }}>
+          <Typography sx={{ color: "#fff", fontSize: 15, textAlign: "center" }}>
             {image.caption}
             {image.sourceUrl && (
               <>

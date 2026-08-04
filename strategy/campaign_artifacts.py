@@ -20,14 +20,13 @@ from __future__ import annotations
 
 import sys
 import time
-import subprocess
-import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
 import campaign_ops  # noqa: E402
 import decision_spine  # noqa: E402
+import journey_brief  # noqa: E402  (journey step list + Mermaid projection of the ops flow)
 import llm_decisioning  # noqa: E402
 import studio_run  # noqa: E402  (SEQUENCE — to re-derive records when not persisted)
 
@@ -111,129 +110,9 @@ def compose_strategy(ctx: dict) -> dict:
 # --------------------------------------------------------------------------- #
 
 def _journey(plan: dict) -> dict:
-    """High-level journey map projected from the campaign-ops flow skeleton —
-    the agency-brief style 'how the journey runs' diagram (entry → primary send →
-    engagement gate → branch → closure), kept schematic on purpose."""
-    flow = plan.get("flow") or {}
-    by_type: dict[str, list[dict]] = {}
-    for n in flow.get("nodes") or []:
-        by_type.setdefault(n.get("type", ""), []).append(n)
-    if not by_type.get("send"):
-        return {}
-    send = by_type["send"][0].get("data", {})
-    decision = (by_type.get("decision") or [{}])[0].get("data", {})
-    exit_n = (by_type.get("exit") or [{}])[0].get("data", {})
-    closure = (by_type.get("closure") or [{}])[0].get("data", {})
-    overview = plan.get("overview") or {}
-    return {
-        "summary": plan.get("summary") or "",
-        "duration_days": overview.get("duration_days"),
-        "entry": (plan.get("entry_criteria") or [])[:4],
-        "send": {"label": send.get("channel") or send.get("label") or "Primary send",
-                 "detail": send.get("detail") or "", "day": send.get("day", 1)},
-        "gate": {"label": decision.get("label") or "Engaged?", "day": decision.get("day")},
-        "yes_path": exit_n.get("label") or "Mark engaged: exit journey",
-        "no_path": [{"label": f.get("data", {}).get("label", ""),
-                     "channel": f.get("data", {}).get("channel", ""),
-                     "day": f.get("data", {}).get("day")}
-                    for f in by_type.get("followup") or []],
-        "closure": {"label": closure.get("label") or "Journey closure",
-                    "detail": closure.get("detail") or "", "day": closure.get("day")},
-        "decision_logic": plan.get("decision_logic_summary") or [],
-        "operational_rules": (plan.get("operational_rules") or [])[:4],
-    }
-
-
-def _journey_mermaid(plan: dict) -> str:
-    journey = _journey(plan)
-    if not journey:
-        return ""
-    flow = plan.get("flow") or {}
-    nodes = flow.get("nodes") or []
-    by_type: dict[str, list[dict]] = {}
-    for node in nodes:
-        by_type.setdefault(node.get("type", ""), []).append(node)
-    send_node = (by_type.get("send") or [{}])[0].get("data", {})
-    decision_node = (by_type.get("decision") or [{}])[0].get("data", {})
-    closure_node = (by_type.get("closure") or [{}])[0].get("data", {})
-    followup_nodes = [n.get("data", {}) for n in by_type.get("followup") or []]
-    entry_lines = journey.get("entry") or ["No entry criteria"]
-    send_day = send_node.get("day") or 1
-    gate_day = decision_node.get("day") or 6
-    send_label = send_node.get("label") or send_node.get("channel") or "Branded email/nurture flows"
-    send_detail = send_node.get("detail") or ""
-    gate_label = decision_node.get("label") or f"Engaged with {send_label}?"
-    closure_label = closure_node.get("label") or "Journey closure"
-    closure_detail = closure_node.get("detail") or "Campaign summary for non-openers"
-    lines = [
-        "flowchart TD",
-        f'  A["Audience enters<br/><small>{"<br/>".join(entry_lines)}</small>"]',
-        f'  B["Primary send — {send_label}<br/><small>{send_detail}</small>"]',
-        f'  C{{"{gate_label}"}}',
-        '  D["Mark engaged: exit journey<br/><small>Journey goal reached</small>"]',
-    ]
-    followup_ids: list[str] = []
-    for i, f in enumerate(followup_nodes):
-        fid = chr(ord("E") + i)
-        followup_ids.append(fid)
-        channel = f.get("channel") or ""
-        day = f.get("day")
-        detail = " · ".join(x for x in [channel, f"day {day}" if day else ""] if x)
-        lines.append(f'  {fid}["Follow-up — {f.get("label", "Segment follow-up")}<br/><small>{detail}</small>"]')
-    lines.append(f'  H["{closure_label}<br/><small>{closure_detail}</small>"]')
-    lines.append("")
-    lines.append(f"  A -->|day {send_day}| B")
-    lines.append(f"  B -->|wait → day {gate_day}| C")
-    lines.append("  C -->|YES| D")
-    for fid in followup_ids:
-        lines.append(f"  C -->|NO| {fid}")
-        lines.append(f"  {fid} --> H")
-    lines.extend([
-        "",
-        "  classDef entry fill:#ffffff,stroke:#cbd5e1,stroke-width:1px,color:#0f172a;",
-        "  classDef send fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#0f172a;",
-        "  classDef gate fill:#ffedd5,stroke:#f97316,stroke-width:1.5px,color:#0f172a;",
-        "  classDef yes fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#0f172a;",
-        "  classDef no fill:#ffffff,stroke:#94a3b8,stroke-width:1px,color:#0f172a;",
-        "  classDef close fill:#ffffff,stroke:#cbd5e1,stroke-width:1px,color:#0f172a;",
-        "",
-        "  class A entry",
-        "  class B send",
-        "  class C gate",
-        "  class D yes",
-    ])
-    if followup_ids:
-        lines.append(f"  class {','.join(followup_ids)} no")
-    lines.append("  class H close")
-    return "\n".join(lines)
-
-def _render_mermaid_png(plan: dict, out_path: Path) -> dict:
-    mermaid = _journey_mermaid(plan)
-    if not mermaid:
-        return {"ok": False, "detail": "No journey data available"}
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    with tempfile.NamedTemporaryFile("w", suffix=".mmd", delete=False, encoding="utf-8") as tmp:
-        tmp.write(mermaid)
-        tmp_path = Path(tmp.name)
-    try:
-        cmd = [
-            "cmd", "/c",
-            "npx", "-y", "@mermaid-js/mermaid-cli",
-            "-i", str(tmp_path),
-            "-o", str(out_path),
-            "-w", "1600",
-            "-H", "650",
-            "-b", "transparent",
-        ]
-        proc = subprocess.run(cmd, capture_output=True, text=True, check=False)
-        ok = proc.returncode == 0 and out_path.exists()
-        detail = proc.stderr.strip() or proc.stdout.strip() or ("rendered" if ok else "Mermaid render failed")
-        return {"ok": ok, "detail": detail[:300]}
-    finally:
-        try:
-            tmp_path.unlink(missing_ok=True)
-        except Exception:
-            pass
+    """The journey the brief prints: every touchpoint, wait, split and branch the ops flow
+    actually contains. See journey_brief for why this is no longer a hand-collapsed summary."""
+    return journey_brief.project(plan)
 
 
 def compose_brief(ctx: dict, enrich: bool = False) -> dict:
@@ -247,29 +126,19 @@ def compose_brief(ctx: dict, enrich: bool = False) -> dict:
 
     try:
         plan = campaign_ops.build_campaign_plan(ctx)
-    except Exception:  # noqa: BLE001 — brief must compose even if the ops skeleton can't
+    except Exception as exc:  # noqa: BLE001 — brief must compose even if the ops skeleton can't
+        # Loud on the way down. This degradation is not cosmetic: without a plan the brief
+        # loses the audience segments, the journey map and the deliverables table at once,
+        # and a silent `plan = {}` made that look like a composition choice rather than a bug.
+        print(f"[campaign_artifacts] campaign plan failed, brief degrades to no journey/segments: {exc!r}")
         plan = {}
-    diagram = {}
-    if plan:
-        out_path = Path(__file__).resolve().parent.parent / "app" / "static" / "v2" / "assets" / "campaign-brief-journey.png"
-        # Rendering shells out to `npx -y @mermaid-js/mermaid-cli`, which resolves a package and
-        # launches headless Chromium -- tens of seconds at best, minutes on a cold npx cache. That
-        # must never sit inside a request the UI is blocking on: it was the reason a finished
-        # Stage 1 still reported "Artifacts unavailable -- run Stage 1 first" (the client gave up
-        # retrying long before this returned). Reuse an already-rendered PNG; only render when a
-        # caller explicitly opts in.
-        if out_path.exists():
-            diagram = {"ok": True, "detail": "cached render"}
-        elif enrich:
-            diagram = _render_mermaid_png(plan, out_path)
-        else:
-            diagram = {"ok": False, "detail": "journey diagram not rendered yet"}
-        ctx["campaign_brief_diagram"] = {
-            "ok": diagram.get("ok", False),
-            "detail": diagram.get("detail", ""),
-            "path": str(out_path),
-            "image_url": "/static/v2/assets/campaign-brief-journey.png",
-        }
+    # The diagram is now a URL derived from the flow, not a file this process renders: no
+    # subprocess, no Chromium, nothing cached on disk. The previous local render wrote every
+    # project's journey to ONE shared PNG path, so whichever project rendered first became
+    # the picture every other project showed.
+    diagram = journey_brief.diagram(plan) if plan else {}
+    if diagram:
+        ctx["campaign_brief_diagram"] = diagram
 
     kms = (ctx.get("message_flow") or {}).get("key_messages") or []
     mix = (ctx.get("strategy") or {}).get("channel_mix_pct") or {}
@@ -344,7 +213,7 @@ def compose_brief(ctx: dict, enrich: bool = False) -> dict:
             "owner": "Planning & Strategy agent (draft — assign a human owner)",
         },
         "source_summary": source_summary,
-        "journey_diagram": ctx.get("campaign_brief_diagram") or {},
+        "journey_diagram": diagram,
         "purpose": {
             "program_context": answers.get("feas") or _decided("S0") or "Net-new journey (no existing program named)",
             "trigger_logic": (plan.get("entry_criteria") or [])[:4],

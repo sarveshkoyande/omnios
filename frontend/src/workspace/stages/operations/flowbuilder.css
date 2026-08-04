@@ -49,14 +49,14 @@
   background: transparent;
   color: var(--text-muted);
   padding: 8px 4px;
-  font-size: 11px;
+  font-size: 15px;
   cursor: pointer;
   border-bottom: 2px solid transparent;
   font-family: inherit;
 }
 .wf-inspector-tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
-.wf-inspector-body { flex: 1; overflow-y: auto; padding: 10px; font-size: 12px; }
-.wf-inspector-empty { color: var(--text-muted); font-size: 12px; }
+.wf-inspector-body { flex: 1; overflow-y: auto; padding: 10px; font-size: 15px; }
+.wf-inspector-empty { color: var(--text-muted); font-size: 15px; }
 
 .wf-tab-data, .wf-tab-style { display: flex; flex-direction: column; gap: 10px; }
 .wf-dataset-apply { display: flex; gap: 6px; }
@@ -72,11 +72,11 @@
   background: rgba(255, 255, 255, 0.5);
 }
 .wf-field-head { display: flex; align-items: center; gap: 6px; }
-.wf-field-label { font-weight: 600; flex: 1; font-size: 11px; }
-.wf-field-type { font-size: 10px; color: var(--text-muted); background: var(--bg); border: 1px solid var(--border); border-radius: 4px; }
-.wf-field-delete { border: none; background: transparent; color: var(--text-muted); cursor: pointer; font-size: 14px; line-height: 1; }
+.wf-field-label { font-weight: 600; flex: 1; font-size: 15px; }
+.wf-field-type { font-size: 15px; color: var(--text-muted); background: var(--bg); border: 1px solid var(--border); border-radius: 4px; }
+.wf-field-delete { border: none; background: transparent; color: var(--text-muted); cursor: pointer; font-size: 15px; line-height: 1; }
 .wf-field-delete:hover { color: #DC2626; }
-.wf-field-name { font-size: 10px; color: var(--text-muted); border: 1px dashed var(--border); border-radius: 4px; padding: 2px 4px; }
+.wf-field-name { font-size: 15px; color: var(--text-muted); border: 1px dashed var(--border); border-radius: 4px; padding: 2px 4px; }
 .wf-field-inline { display: flex; gap: 6px; }
 .wf-currency-code { width: 48px; text-transform: uppercase; }
 .wf-add-field {
@@ -86,7 +86,7 @@
   border-radius: 8px;
   padding: 6px;
   cursor: pointer;
-  font-size: 11px;
+  font-size: 15px;
   font-family: inherit;
 }
 
@@ -96,11 +96,11 @@
   padding: 4px 6px;
   background: var(--panel-bg);
   color: var(--text);
-  font-size: 12px;
+  font-size: 15px;
   font-family: inherit;
 }
 .wf-toggle { display: flex; align-items: center; gap: 6px; }
-.wf-style-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; }
+.wf-style-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 15px; }
 .wf-style-row select, .wf-style-row input[type="text"], .wf-style-row input[type="number"] { flex: 1; max-width: 140px; }
 .wf-datagraphics { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
 .wf-datagraphics input[type="color"] { width: 28px; padding: 0; }
@@ -108,7 +108,7 @@
 
 /* --- validation panel --- */
 .wf-tab-validation { display: flex; flex-direction: column; gap: 6px; }
-.wf-palette-heading { font-size: 10px; font-weight: 700; letter-spacing: 0.04em; color: var(--text-muted); text-transform: uppercase; margin-top: 8px; }
+.wf-palette-heading { font-size: 15px; font-weight: 700; letter-spacing: 0.04em; color: var(--text-muted); text-transform: uppercase; margin-top: 8px; }
 .wf-issue {
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -121,12 +121,12 @@
 }
 .wf-issue:hover { border-color: var(--accent); }
 .wf-issue-head { display: flex; align-items: center; gap: 6px; }
-.wf-badge { font-size: 9px; font-weight: 700; text-transform: uppercase; border-radius: 3px; padding: 1px 5px; }
+.wf-badge { font-size: 15px; font-weight: 700; text-transform: uppercase; border-radius: 3px; padding: 1px 5px; }
 .wf-badge-error { background: #fee2e2; color: #b91c1c; }
 .wf-badge-warning { background: #fef3c7; color: #92400e; }
-.wf-issue-rule { font-size: 10px; color: var(--text-muted); }
-.wf-issue-message { font-size: 12px; }
-.wf-issue-fix { align-self: flex-start; font-size: 10px; border: 1px solid var(--accent); color: var(--accent); background: transparent; border-radius: 6px; padding: 2px 6px; cursor: pointer; font-family: inherit; }
+.wf-issue-rule { font-size: 15px; color: var(--text-muted); }
+.wf-issue-message { font-size: 15px; }
+.wf-issue-fix { align-self: flex-start; font-size: 15px; border: 1px solid var(--accent); color: var(--accent); background: transparent; border-radius: 6px; padding: 2px 6px; cursor: pointer; font-family: inherit; }
 
 /* --- lanes / containers --- */
 .wf-lane {
@@ -142,14 +142,14 @@
   padding: 4px 8px;
   cursor: grab;
   border-bottom: 1px solid rgba(18, 22, 43,0.12);
-  font-size: 11px;
+  font-size: 15px;
   border-radius: 10px 10px 0 0;
   background: rgba(255, 255, 255, 0.5);
 }
 .wf-lane-header:active { cursor: grabbing; }
-.wf-lane-kind { text-transform: uppercase; font-size: 9px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.04em; }
+.wf-lane-kind { text-transform: uppercase; font-size: 15px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.04em; }
 .wf-lane-label { flex: 1; font-weight: 600; color: var(--text); }
-.wf-lane-delete { border: none; background: transparent; cursor: pointer; color: var(--text-muted); font-size: 14px; line-height: 1; }
+.wf-lane-delete { border: none; background: transparent; cursor: pointer; color: var(--text-muted); font-size: 15px; line-height: 1; }
 .wf-lane-delete:hover { color: #DC2626; }
 
 /* --- layers tab --- */
@@ -162,7 +162,7 @@
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 4px 6px;
-  font-size: 11px;
+  font-size: 15px;
   cursor: pointer;
   background: rgba(255, 255, 255, 0.5);
 }
@@ -173,13 +173,13 @@
   border: 1px solid transparent;
   background: transparent;
   color: var(--text);
-  font-size: 11px;
+  font-size: 15px;
   border-radius: 4px;
   padding: 2px 4px;
   font-family: inherit;
 }
 .wf-layer-name-input:hover, .wf-layer-name-input:focus { border-color: var(--border); }
-.wf-layer-membership-row { display: flex; align-items: center; gap: 6px; font-size: 12px; padding: 2px 0; }
+.wf-layer-membership-row { display: flex; align-items: center; gap: 6px; font-size: 15px; padding: 2px 0; }
 
 /* --- IO menu + mermaid modal --- */
 .wf-io-menu { display: flex; gap: 6px; position: relative; }
@@ -190,7 +190,7 @@
   border-radius: 999px;
   padding: 4px 10px;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 15px;
   font-family: inherit;
 }
 .wf-io-menu button:hover { background: var(--bg); }
@@ -203,7 +203,7 @@
   border: 1px solid #fca5a5;
   border-radius: 8px;
   padding: 6px 10px;
-  font-size: 11px;
+  font-size: 15px;
   max-width: 320px;
   white-space: pre-wrap;
   cursor: pointer;
@@ -230,7 +230,7 @@
   gap: 10px;
   box-shadow: 0 16px 48px rgba(36, 81, 196,0.18);
 }
-.wf-modal-header { display: flex; align-items: center; justify-content: space-between; font-weight: 600; font-size: 13px; }
+.wf-modal-header { display: flex; align-items: center; justify-content: space-between; font-weight: 600; font-size: 15px; }
 .wf-modal button {
   border: 1px solid var(--border);
   background: var(--panel-bg);
@@ -238,14 +238,14 @@
   border-radius: 999px;
   padding: 5px 12px;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 15px;
   font-family: inherit;
 }
 .wf-modal-textarea {
   flex: 1;
   min-height: 320px;
   font-family: ui-monospace, "SF Mono", Consolas, monospace;
-  font-size: 12px;
+  font-size: 15px;
   background: var(--panel-bg);
   color: var(--text);
   border: 1px solid var(--border);
@@ -253,7 +253,7 @@
   padding: 8px;
   resize: vertical;
 }
-.wf-modal-lossy { max-height: 120px; overflow-y: auto; font-size: 11px; color: var(--text-muted); }
+.wf-modal-lossy { max-height: 120px; overflow-y: auto; font-size: 15px; color: var(--text-muted); }
 .wf-modal-lossy ul { margin: 4px 0 0; padding-left: 18px; }
 .wf-modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
 
@@ -269,7 +269,7 @@
   max-width: 360px;
 }
 .wf-empty-state p:first-child { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
-.wf-empty-state p { font-size: 12px; margin: 0; }
+.wf-empty-state p { font-size: 15px; margin: 0; }
 
 /* --- palette --- */
 .wf-palette {
@@ -286,14 +286,14 @@
   border: 1px solid var(--border);
   border-radius: 999px;
   padding: 6px 10px;
-  font-size: 12px;
+  font-size: 15px;
   background: var(--panel-bg);
   color: var(--text);
   font-family: inherit;
 }
 .wf-palette-section { display: flex; flex-direction: column; gap: 2px; }
 .wf-palette-item {
-  font-size: 12px;
+  font-size: 15px;
   padding: 5px 8px;
   border: 1px solid transparent;
   border-radius: 6px;
@@ -303,7 +303,7 @@
 .wf-palette-item:hover { background: rgba(36, 81, 196,0.08); border-color: var(--border); }
 .wf-quickshapes-strip { display: flex; flex-wrap: wrap; gap: 4px; }
 .wf-quickshape {
-  font-size: 11px;
+  font-size: 15px;
   padding: 4px 8px;
   border: 1px solid var(--accent);
   color: var(--accent);
@@ -312,7 +312,7 @@
   background: rgba(36, 81, 196,0.08);
 }
 .wf-save-master {
-  font-size: 11px;
+  font-size: 15px;
   padding: 6px 8px;
   border: 1px dashed var(--border);
   border-radius: 8px;
@@ -341,7 +341,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 15px;
   outline: none;
 }
 .wf-node-svg { position: absolute; inset: 0; overflow: visible; }
@@ -354,14 +354,14 @@
   pointer-events: none;
   color: var(--text);
 }
-.wf-node-rich { font-size: 11px; opacity: 0.8; margin-top: 2px; }
+.wf-node-rich { font-size: 15px; opacity: 0.8; margin-top: 2px; }
 .wf-node-selected { outline: 2px solid #2451C4; outline-offset: 2px; border-radius: 4px; }
 .wf-node-badge {
   position: absolute;
   top: -6px;
   right: -6px;
   z-index: 2;
-  font-size: 10px;
+  font-size: 15px;
   color: #DC2626;
 }
 
@@ -392,7 +392,7 @@
   border: 1px solid var(--accent);
   background: var(--panel-bg);
   color: var(--accent);
-  font-size: 11px;
+  font-size: 15px;
   line-height: 1;
   display: flex;
   align-items: center;
@@ -421,7 +421,7 @@
 .wf-edge-label {
   position: absolute;
   z-index: 4;
-  font-size: 11px;
+  font-size: 15px;
   color: var(--text);
   background: rgba(255, 255, 255, 0.96);
   border: 1px solid rgba(18, 22, 43, 0.12);

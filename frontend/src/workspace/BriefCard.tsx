@@ -11,13 +11,12 @@ const PREVIEW_WORDS = 10;
 
 /** Sub-section label inside the brief (small caps, indigo). */
 const GroupLabel = styled("div")(({ theme }) => ({
-  borderTop: `1px solid ${indigoTint(0.12)}`,
-  marginTop: theme.spacing(1.5),
-  paddingTop: theme.spacing(1.5),
-  fontSize: tokens.fontSize.xs,
-  fontWeight: 700,
-  textTransform: "uppercase",
-  letterSpacing: "0.08em",
+  marginTop: theme.spacing(2.5),
+  marginBottom: theme.spacing(1),
+  paddingBottom: theme.spacing(0.75),
+  borderBottom: `1px solid ${indigoTint(0.12)}`,
+  fontSize: tokens.fontSize.md,
+  fontWeight: 600,
   color: tokens.color.primary,
 }));
 
@@ -127,13 +126,7 @@ export function BriefCard({ slots, inferred, columns = 2 }: { slots: Slots; infe
     { label: "Therapy area", value: orNA(slots.therapy_area), span: 1 },
     ...(slots.indication ? [{ label: "Indication", value: slots.indication, span: 1 as const }] : []),
     { label: "Lifecycle", value: orNA(inferred.lifecycle_label || slots.lifecycle_key), span: 1 },
-    {
-      label: "Budget",
-      value: budget || (
-        <Box component="span" sx={{ fontWeight: 400, color: tokens.color.inkSecondary }}>percentages only</Box>
-      ),
-      span: 2,
-    },
+    { label: "Budget", value: budget || orNA(""), span: 2 },
   ];
 
   const fromBrief: BriefField[] = extras.map(([label, key, span]) => {
@@ -164,6 +157,7 @@ export function BriefCard({ slots, inferred, columns = 2 }: { slots: Slots; infe
 
   return (
     <Box>
+      <GroupLabel sx={{ mt: 0 }}>Campaign details</GroupLabel>
       <BriefFields fields={core} columns={columns} />
 
       {fromBrief.length > 0 && (

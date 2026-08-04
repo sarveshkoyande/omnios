@@ -112,13 +112,13 @@ export function OrchestrationNudge({
             <Box sx={{ flex: 1, minWidth: 0 }}>
               <Box sx={{ display: "flex", gap: 0.75, alignItems: "center", flexWrap: "wrap" }}>
                 <Typography variant="body2" sx={{ fontWeight: 700 }}>{n.title}</Typography>
-                {n.escalated ? <Chip size="small" color="error" label="escalated" sx={{ height: 18, fontSize: 10 }} /> : null}
-                {n.gate ? <Chip size="small" color="error" variant="outlined" label={`gate: ${n.gate}`} sx={{ height: 18, fontSize: 10 }} /> : null}
-                {n.fire_count > 1 ? <Chip size="small" variant="outlined" label={`×${n.fire_count}`} sx={{ height: 18, fontSize: 10 }} /> : null}
+                {n.escalated ? <Chip size="small" color="error" label="escalated" sx={{ height: 24, fontSize: 15 }} /> : null}
+                {n.gate ? <Chip size="small" color="error" variant="outlined" label={`gate: ${n.gate}`} sx={{ height: 24, fontSize: 15 }} /> : null}
+                {n.fire_count > 1 ? <Chip size="small" variant="outlined" label={`×${n.fire_count}`} sx={{ height: 24, fontSize: 15 }} /> : null}
               </Box>
               <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 0.25 }}>{n.body}</Typography>
               <Box sx={{ display: "flex", gap: 0.5, alignItems: "center", mt: 0.5 }}>
-                <span className="material-symbols-outlined" style={{ fontSize: 14, color: accent.primary }}>
+                <span className="material-symbols-outlined" style={{ fontSize: 15, color: accent.primary }}>
                   {CHANNEL_ICON[n.channel] ?? "send"}
                 </span>
                 <Typography variant="caption" sx={{ color: "text.secondary" }}>

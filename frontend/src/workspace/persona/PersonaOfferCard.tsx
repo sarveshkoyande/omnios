@@ -62,9 +62,9 @@ export function PersonaOfferCard({
             <Checkbox size="small" checked={selected.has(p.id)} onChange={() => toggle(p.id)} sx={{ p: 0 }} />
             <PersonaAvatar name={p.name} />
             <Box sx={{ flex: 1, minWidth: 0 }}>
-              <Typography sx={{ fontWeight: 700, fontSize: 13 }}>
+              <Typography sx={{ fontWeight: 700, fontSize: 15 }}>
                 {p.name}
-                {matchedIds.has(p.id) && <Chip size="small" label="match" sx={{ ml: 1, height: 16, fontSize: 9 }} />}
+                {matchedIds.has(p.id) && <Chip size="small" label="match" sx={{ ml: 1, height: 24, fontSize: 15 }} />}
               </Typography>
               <Typography variant="caption" sx={{ color: "text.secondary" }}>
                 {p.who} · {p.age ? `${p.age} · ` : ""}{p.segment_name}

@@ -64,6 +64,7 @@ from strategy import orchestration_sync  # noqa: E402  (two-way sync: inbound re
 from strategy import orchestration_nudge  # noqa: E402  (Nudge agent: notify + auto-escalate)
 from strategy import orchestration_gates  # noqa: E402  (Veeva/SFMC read/gate context: AFU expiry, send state)
 from strategy import campaign_artifacts  # noqa: E402  (Campaign Strategy + Brief â€” the planning stage's two linked artifacts)
+from strategy import brief_document  # noqa: E402  (the Campaign Brief as export markdown, for the Word/PDF download)
 from strategy import campaign_ops  # noqa: E402  (Stage 3 on-demand campaign-flow (re)generation)
 from strategy import process_knowledge  # noqa: E402  (Cognee-backed SME process grounding)
 from strategy import cognee_feedback  # noqa: E402  (human feedback overlay for Cognee grounding)
@@ -1486,6 +1487,41 @@ def api_export_pdf(pid: str):
                     headers={"Content-Disposition": f'attachment; filename="{filename}"'})
 
 
+def _brief_markdown(pid: str) -> tuple[str, str]:
+    """(markdown, base filename) for the composed Campaign Brief of this project."""
+    proj = pstore.get_project(pid)
+    if not proj:
+        raise HTTPException(404, "project not found")
+    ctx = proj["state"].get("_plan_ctx")
+    if not ctx:
+        raise HTTPException(404, "no campaign brief yet — run Stage 1 first")
+    brief = campaign_artifacts.compose_brief(ctx)
+    name = _safe_filename(proj["name"]) + "-campaign-brief"
+    return brief_document.brief_markdown(brief, proj["name"]), name
+
+
+@app.get("/api/projects/{pid}/campaign-brief.docx")
+def api_campaign_brief_docx(pid: str):
+    """The Campaign Brief as a Word document — same converter as the plan export, so the two
+    downloads read alike."""
+    markdown, name = _brief_markdown(pid)
+    data = plan_export.markdown_to_docx(markdown, name)
+    return Response(content=data,
+                    media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    headers={"Content-Disposition": f'attachment; filename="{name}.docx"'})
+
+
+@app.get("/api/projects/{pid}/campaign-brief.pdf")
+def api_campaign_brief_pdf(pid: str):
+    """The Campaign Brief as a PDF. Unlike the plan export there is no Chromium path here:
+    the brief has no standalone HTML document to render, only React components, so the
+    markdown renderer is the only renderer."""
+    markdown, name = _brief_markdown(pid)
+    data = plan_export.markdown_to_pdf(markdown, name)
+    return Response(content=data, media_type="application/pdf",
+                    headers={"Content-Disposition": f'attachment; filename="{name}.pdf"'})
+
+
 @app.get("/api/projects/{pid}/export.sfmc.json")
 def api_export_sfmc(pid: str):
     proj = pstore.get_project(pid)
@@ -2107,6 +2143,13 @@ def api_studio_answer(body: StudioAnswer):
     # key its answer belongs under; the section id is the default for single-ask steps.
     studio["answers"][pending.get("answer_key") or step["id"]] = body.value.strip()
     messages = proj["messages"]
+    # Persist the QUESTION, not just the answer. Only the user's reply used to be written
+    # here, so reopening a finished plan showed a column of bare answers with nothing to say
+    # what had been asked. The full ask payload is already on `await_ask`, and the chosen
+    # value rides along in the same meta so rehydration can render the card locked without
+    # having to pair it with the message that follows.
+    messages.append(_msg("agent", pending.get("text") or "",
+                         {"kind": "studio_ask", "ask": pending, "answer": body.value.strip()}))
     messages.append(_msg("user", body.value.strip()))
     pstore.save_project(body.project_id, state=state, messages=messages)
     return {"ok": True, "resume": True}

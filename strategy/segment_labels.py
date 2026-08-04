@@ -47,8 +47,7 @@ _GENERIC_CRITERIA = "Therapy-area target-list segment from the HCP 360 panel."
 # implied it. State the source explicitly instead.
 PROVENANCE = (
     "Segmentation is built on therapy-area prescribing behaviour from syndicated scripts "
-    "data (IQVIA-class panel), not on this brand's own performance -- a launch brand has "
-    "none yet."
+    "data (IQVIA-class panel), not on this brand's own performance."
 )
 
 # Both vocabularies resolve back to the canonical value, so a filter written against either

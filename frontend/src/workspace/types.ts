@@ -43,7 +43,13 @@ export interface ClarifyPayload {
 export interface ChatMessage {
   role: "agent" | "user";
   text: string;
-  meta?: { kind: "clarify"; clarify: ClarifyPayload | null } | null;
+  meta?:
+    | { kind: "clarify"; clarify: ClarifyPayload | null }
+    // A studio ask, stored with the answer it was closed on, so reopening a plan replays the
+    // question and not just the reply. `ask` is the StudioAsk payload (typed loosely here to
+    // keep studioTypes out of this module's imports).
+    | { kind: "studio_ask"; ask: unknown; answer?: string }
+    | null;
 }
 
 export interface ProjectSummary {
@@ -62,6 +68,10 @@ export interface ProjectSummary {
   has_result?: boolean;
   /** Furthest workspace stage the plan sits in (strategy/projects.py::_plan_stage). */
   stage?: "planning" | "orchestration" | "operations" | "reporting";
+  /** Sections completed in the Stage 1 studio run (strategy/projects.py::_planning_progress).
+   *  PLANNING-stage progress only -- never render it as overall campaign completion.
+   *  Absent on plans that have not started a studio run. */
+  planning_progress?: { done: number; total: number; pct: number };
 }
 
 export interface ProjectDetail {
@@ -267,18 +277,41 @@ export interface NotificationsResponse {
   policy: { lead_time_days?: number; escalate_after_fires?: number; escalation_recipient?: string };
 }
 
-/** High-level journey map projected from the campaign-ops flow (strategy/campaign_artifacts.py::_journey). */
+/** One node of the engagement journey, as the brief prints it (strategy/journey_brief.py). */
+export interface JourneyStep {
+  id: string;
+  /** Raw node type: entry | send | wait | decision | branch | followup | exit | closure. */
+  kind: string;
+  /** That type in words — "Send", "Follow-up", "Decision". */
+  kind_label: string;
+  /** True for the steps that actually contact an HCP (send / follow-up). */
+  is_comms: boolean;
+  day?: number | null;
+  label: string;
+  channel?: string;
+  detail?: string;
+}
+
+/** The engagement journey projected from the campaign-ops flow (strategy/journey_brief.py).
+ *  Every touchpoint, wait window, split and branch — not a collapsed summary of the first one. */
 export interface JourneyMap {
   summary?: string;
   duration_days?: number;
   entry?: string[];
-  send?: { label: string; detail: string; day: number };
-  gate?: { label: string; day?: number };
-  yes_path?: string;
-  no_path?: { label: string; channel: string; day?: number }[];
-  closure?: { label: string; detail: string; day?: number };
+  touchpoint_count?: number;
+  steps?: JourneyStep[];
+  comms_steps?: JourneyStep[];
+  gates?: JourneyStep[];
   decision_logic?: { condition: string; outcome: string }[];
   operational_rules?: string[];
+}
+
+/** The journey picture: Mermaid source + the mermaid.ink URL that renders it. */
+export interface JourneyDiagramPayload {
+  ok: boolean;
+  detail: string;
+  mermaid: string;
+  image_url: string;
 }
 
 /** Campaign Strategy + Brief payload (strategy/campaign_artifacts.py). */
@@ -305,6 +338,7 @@ export interface CampaignArtifactsPayload {
       reason: string;
     };
     source_summary?: StrategicSourceSummary;
+    journey_diagram?: JourneyDiagramPayload;
     purpose: { program_context: string; trigger_logic: string[]; summary: string };
     objective: { pillar: string; statement: string; leading_indicators: string[] };
     audience: {

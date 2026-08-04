@@ -330,7 +330,7 @@ export function SimplePlanSummary() {
                   sx={{
                     width: 22, height: 22, borderRadius: "50%", flex: "0 0 auto",
                     display: "flex", alignItems: "center", justifyContent: "center",
-                    background: c.color.soft, color: c.color.ink, fontSize: 12, fontWeight: 700,
+                    background: c.color.soft, color: c.color.ink, fontSize: 15, fontWeight: 700,
                   }}
                 >
                   {c.n}

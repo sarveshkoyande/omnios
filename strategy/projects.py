@@ -112,6 +112,35 @@ def _plan_stage(has_layout: bool, has_tasks: bool, has_result: bool) -> str:
     return "planning"
 
 
+def _planning_progress(state: dict) -> dict | None:
+    """How far the Stage 1 studio run has got: sections completed out of the sequence.
+
+    This measures the PLANNING stage only, and callers must label it that way. It is not
+    a proxy for overall campaign completion -- the other three stages are marked by the
+    artifacts they produce (`_plan_stage` above), not by a percentage, and presenting this
+    number as "progress" full stop is how the Home cards ended up implying a plan was 90%
+    finished when only its brief existed.
+
+    Returns None when the plan has no studio state yet, so the caller can render nothing
+    rather than a fabricated zero.
+    """
+    studio = (state or {}).get("studio") or {}
+    if not studio:
+        return None
+    try:
+        # Imported lazily: studio_run pulls in the whole planning stack, and projects.py is
+        # imported early enough that a module-level import risks a cycle.
+        from strategy import studio_run
+
+        total = len(studio_run.SEQUENCE)
+    except Exception:
+        return None
+    if not total:
+        return None
+    done = max(0, min(int(studio.get("idx") or 0), total))
+    return {"done": done, "total": total, "pct": round(done * 100 / total)}
+
+
 def list_projects() -> list[dict]:
     """Project list for the Home dashboard + workspace drawer.
 
@@ -133,11 +162,12 @@ def list_projects() -> list[dict]:
     conn.close()
     out: list[dict] = []
     for r in rows:
-        slots: dict = {}
+        state: dict = {}
         try:
-            slots = (json.loads(r["state_json"]) or {}).get("slots", {}) or {}
+            state = json.loads(r["state_json"]) or {}
         except (ValueError, TypeError):
-            slots = {}
+            state = {}
+        slots: dict = state.get("slots", {}) or {}
         has_result = bool(r["result_json"])
         out.append(
             {
@@ -153,6 +183,7 @@ def list_projects() -> list[dict]:
                 "objective": slots.get("objective") or "",
                 "has_result": has_result,
                 "stage": _plan_stage(bool(r["has_layout"]), bool(r["has_tasks"]), has_result),
+                "planning_progress": _planning_progress(state),
             }
         )
     return out

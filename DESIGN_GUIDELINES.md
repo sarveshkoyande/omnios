@@ -83,11 +83,11 @@ Single family: **`'Nunito Sans', 'Segoe UI', system-ui, sans-serif`**.
 
 | Token | px | Applied to |
 |---|---|---|
-| `xs` | 13 | Captions, chips, table cells, rail rows |
-| `sm` | 14 | Body 2, buttons, option labels |
+| `xs` | 15 | Captions, chips, table cells, rail rows |
+| `sm` | 15 | Body 2, buttons, option labels |
 | `md` | 15 | Body 1, textarea input |
 | `lg` | 17 | h3, panel titles |
-| `xl` | 20 | — |
+| `xl` | 20 | Chat pane header |
 | `xxl` | 24 | h2 |
 | `display` | 28 | h1 |
 
@@ -97,8 +97,20 @@ in the scale — if something needs emphasis it goes to 700.
 `h1` carries `letterSpacing: -0.01em`. **Overline** is the section-label style: 13px, 700,
 `0.6px` tracking, uppercase, primary blue, `lineHeight: 1.4`.
 
-**Density rule:** the app deliberately runs small — 13/14/15/17 does almost all the work.
-Do not introduce intermediate sizes.
+**15px is a hard floor (2026-08-04).** Nothing in the product may render text below it. The app
+used to run at 13/14 with a long tail of 8.5–12px literals in chips, badges, table cells and the
+plan-document skin; that text was unreadable and failed accessibility guidance, so 291 literals
+were raised in one pass and `xs`/`sm` were collapsed onto 15.
+
+Consequences worth knowing:
+
+- `xs`, `sm` and `md` are now the **same size**. They survive as names only so existing call
+  sites keep compiling — prefer `md` in new code.
+- **Hierarchy comes from weight and colour, not size.** 400 vs 700, ink vs `inkSecondary`. Do
+  not reach for a smaller size to demote something.
+- Chips and badges holding text need **`height: 24` minimum**; 18–20px chips clip a 15px line.
+- Do not add a literal `fontSize` below 15 anywhere, including inside CSS-in-string blocks
+  (`planDocSkinCss.ts`) and plain `.css` files.
 
 ---
 

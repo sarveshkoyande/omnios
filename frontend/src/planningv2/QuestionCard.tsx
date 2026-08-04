@@ -16,7 +16,7 @@ const SectionChip = styled("span")({
   display: "inline-flex",
   alignItems: "center",
   gap: 5,
-  fontSize: 10.5,
+  fontSize: 15,
   fontWeight: 600,
   color: tokens.color.primary,
   background: tokens.color.primaryContainer,
@@ -92,7 +92,7 @@ export function QuestionCard({
 
   return (
     <AgentBubble sx={{ maxWidth: 640 }}>
-      <Typography sx={{ fontSize: 11, fontWeight: 700, color: "primary.main", mb: 0.75 }}>
+      <Typography sx={{ fontSize: 15, fontWeight: 700, color: "primary.main", mb: 0.75 }}>
         Question {rank} of {total} · unblocks {gap.tactical_section_blocked}
       </Typography>
       <Box sx={{ mb: 0.75 }}>
@@ -109,7 +109,7 @@ export function QuestionCard({
         <OptionBtn rec picked={picked === recommended} disabled={locked} onClick={() => choose(recommended)}>
           {recommended}
           {picked !== recommended && (
-            <Typography component="span" sx={{ fontSize: 10.5, color: "primary.main", fontWeight: 700 }}>
+            <Typography component="span" sx={{ fontSize: 15, color: "primary.main", fontWeight: 700 }}>
               {" "}
               · recommended default
             </Typography>

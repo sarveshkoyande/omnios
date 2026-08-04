@@ -48,7 +48,7 @@ const DetailRow = styled(Box)(({ theme }) => ({
   justifyContent: "space-between",
   padding: theme.spacing(1, 0),
   borderBottom: `1px dashed ${shade(0.1)}`,
-  fontSize: 13,
+  fontSize: 15,
 }));
 
 export function StageOrchestration({
@@ -254,10 +254,10 @@ export function StageOrchestration({
                   label={
                     <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
                       <span>{team.replace(/\s+team$/i, "")}</span>
-                      <Chip size="small" label={grouped[team].length} sx={{ height: 18, "& .MuiChip-label": { px: 0.75, fontSize: 11 } }} />
+                      <Chip size="small" label={grouped[team].length} sx={{ height: 24, "& .MuiChip-label": { px: 0.75, fontSize: 15 } }} />
                     </Box>
                   }
-                  sx={{ textTransform: "none", fontWeight: 700, fontSize: 13, minHeight: 40 }}
+                  sx={{ textTransform: "none", fontWeight: 700, fontSize: 15, minHeight: 40 }}
                 />
               ))}
             </Tabs>
@@ -282,17 +282,17 @@ export function StageOrchestration({
                       </Typography>
                       <Box sx={{ display: "flex", gap: 0.75, mt: 0.25, flexWrap: "wrap", alignItems: "center" }}>
                         <Typography variant="caption" sx={{ color: "text.secondary" }}>{t.category}</Typography>
-                        {t.channel && <Chip size="small" variant="outlined" label={t.channel} sx={{ height: 18, fontSize: 11 }} />}
+                        {t.channel && <Chip size="small" variant="outlined" label={t.channel} sx={{ height: 24, fontSize: 15 }} />}
                         {t.gate && (
                           <Tooltip title="Hard compliance gate — routed & tracked, never auto-closed by an agent">
-                            <Chip size="small" color="error" label={`Gate: ${t.gate}`} sx={{ height: 18, fontSize: 11 }} />
+                            <Chip size="small" color="error" label={`Gate: ${t.gate}`} sx={{ height: 24, fontSize: 15 }} />
                           </Tooltip>
                         )}
                         {t.compliance_tier && t.compliance_tier !== "none" && (
-                          <Chip size="small" color="warning" variant="outlined" label={t.compliance_tier} sx={{ height: 18, fontSize: 11 }} />
+                          <Chip size="small" color="warning" variant="outlined" label={t.compliance_tier} sx={{ height: 24, fontSize: 15 }} />
                         )}
                         {t.automation_class && (
-                          <Chip size="small" variant="outlined" label={t.automation_class} sx={{ height: 18, fontSize: 11, opacity: 0.8 }} />
+                          <Chip size="small" variant="outlined" label={t.automation_class} sx={{ height: 24, fontSize: 15, opacity: 0.8 }} />
                         )}
                       </Box>
                     </Box>
@@ -306,7 +306,7 @@ export function StageOrchestration({
                       {/* Activity id + link to the tracked item in the routed system of work. */}
                       <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 0.15, mt: 0.4 }}>
                         <Tooltip title="Activity ID">
-                          <Typography variant="caption" sx={{ fontFamily: "monospace", fontSize: 10.5, color: "text.disabled" }}>
+                          <Typography variant="caption" sx={{ fontFamily: "monospace", fontSize: 15, color: "text.disabled" }}>
                             {t.id}
                           </Typography>
                         </Tooltip>
@@ -319,12 +319,12 @@ export function StageOrchestration({
                               rel="noopener noreferrer"
                               sx={{
                                 display: "inline-flex", alignItems: "center", gap: 0.25,
-                                fontFamily: "monospace", fontSize: 10.5, color: accent.primary,
+                                fontFamily: "monospace", fontSize: 15, color: accent.primary,
                                 textDecoration: "none", "&:hover": { textDecoration: "underline" },
                               }}
                             >
                               {bindingByActivity[t.id].external_id}
-                              <span className="material-symbols-outlined" style={{ fontSize: 12 }}>open_in_new</span>
+                              <span className="material-symbols-outlined" style={{ fontSize: 15 }}>open_in_new</span>
                             </Box>
                           </Tooltip>
                         )}

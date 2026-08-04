@@ -457,10 +457,31 @@ def _decision_items(ctx: dict, sid: str, answer: str | None, ask: dict) -> list[
                 "lead": i == 0,
             })
     elif sid == "S6":
-        mix = (ctx.get("strategy") or {}).get("channel_mix_pct") or {}
-        for i, (channel, pct) in enumerate(sorted(mix.items(), key=lambda kv: -kv[1])):
-            items.append({"label": channel, "value": f"{pct}% of mix", "share_pct": round(float(pct), 1),
-                          "criteria": "", "source": "channel-affinity model", "lead": i == 0})
+        # The posture the user picked carries its OWN channel split -- the same Field 31 /
+        # Paid media 22 / Email 21 ... chips the option showed in chat. Quote that, so the
+        # trail states the mix that was chosen.
+        #
+        # The old behaviour read ctx["strategy"]["channel_mix_pct"], which is the audience's
+        # channel-affinity benchmark in bucket terms (Owned digital / Reach / Field / Events /
+        # Peer). That is a different axis measured on a different vocabulary: it never changed
+        # when the user picked a different posture, so choosing "Field-led" still rendered
+        # "Owned digital 39.5%". It is evidence that informs the choice, not the choice.
+        chosen = _split_answer(answer)
+        picked = _ask_rows(ask).get(chosen[0].lower(), {}) if chosen else {}
+        distribution = picked.get("distribution") or []
+        for i, slice_ in enumerate(sorted(distribution, key=lambda d: -float(d.get("pct") or 0))):
+            pct = round(float(slice_.get("pct") or 0), 1)
+            items.append({"label": slice_.get("channel", ""), "value": f"{pct}% of mix",
+                          "share_pct": pct, "criteria": "",
+                          "source": f"{picked.get('label', 'selected posture')} channel split",
+                          "lead": i == 0})
+        if not items:
+            # No distribution on the option (older runs, or a free-text answer): fall back to
+            # the benchmark mix rather than showing nothing.
+            mix = (ctx.get("strategy") or {}).get("channel_mix_pct") or {}
+            for i, (channel, pct) in enumerate(sorted(mix.items(), key=lambda kv: -kv[1])):
+                items.append({"label": channel, "value": f"{pct}% of mix", "share_pct": round(float(pct), 1),
+                              "criteria": "", "source": "channel-affinity model", "lead": i == 0})
     if items:
         return items
     rows = _ask_rows(ask)
@@ -495,25 +516,36 @@ def _agent_recommendation(ask: dict) -> dict:
     return {"label": label, "reason": str(ask.get("recommendation_reason") or rec.get("source") or "").strip()}
 
 
-def _rationale_dynamic(stage: dict, items: list[dict], agent_rec: dict, by_user: bool) -> str:
+def _rationale_dynamic(stage: dict, items: list[dict], agent_rec: dict, by_user: bool,
+                       subject: str = "") -> str:
     """Framework prose plus a sentence about THIS decision.
 
     The framework line explains how the stage thinks in general; on its own it reads as
     boilerplate because it is identical on every run. The appended sentence names what was
-    actually chosen, its measured share, and how it compares to what the agent proposed."""
+    actually chosen, its measured share, and how it compares to what the agent proposed.
+
+    `subject` is for stages where the items are a BREAKDOWN of the choice rather than the
+    choice itself. At S6 the decision is a posture ("Field-led") and the items are the channel
+    split it implies; without this the prose would announce "You led with Field" and then
+    compare that channel against the recommended *posture*, which is a different axis."""
     base = stage["framework"]["how"]
     if not items:
         return base
     lead = items[0]
-    share = f" ({lead['share_pct']:.0f}% of the panel, {lead['value']})" if lead.get("share_pct") else (
-        f" ({lead['value']})" if lead.get("value") else "")
-    who = "You led with" if by_user else "The agent led with"
-    line = f"{who} {lead['label']}{share}."
-    if len(items) > 1:
-        others = ", ".join(i["label"] for i in items[1:])
-        line += f" Also carried: {others}."
+    chosen = subject.strip() or str(lead["label"])
+    if subject.strip():
+        # Items describe the mix, so lead with the posture and summarise the split behind it.
+        split = ", ".join(f"{i['label']} {i['value']}" for i in items[:3])
+        line = f"{'You chose' if by_user else 'The agent chose'} {chosen} — {split}."
+    else:
+        share = f" ({lead['share_pct']:.0f}% of the panel, {lead['value']})" if lead.get("share_pct") else (
+            f" ({lead['value']})" if lead.get("value") else "")
+        line = f"{'You led with' if by_user else 'The agent led with'} {chosen}{share}."
+        if len(items) > 1:
+            others = ", ".join(i["label"] for i in items[1:])
+            line += f" Also carried: {others}."
     rec_label = (agent_rec.get("label") or "").strip()
-    if by_user and rec_label and rec_label.lower() != str(lead["label"]).lower():
+    if by_user and rec_label and rec_label.lower() != chosen.lower():
         line += f" That overrides the agent's recommendation, {rec_label}."
     elif by_user and rec_label:
         line += " That matches the agent's recommendation."
@@ -599,7 +631,9 @@ def build_decision_record(ctx: dict, step: dict, answer: str | None,
         "section_id": step["id"],
         "decision": decided,
         "framework": stage["framework"]["name"],
-        "rationale": _rationale_dynamic(stage, items, agent_rec, by_user),
+        # S6's items are the chosen posture's channel split, not the choice itself.
+        "rationale": _rationale_dynamic(stage, items, agent_rec, by_user,
+                                        subject=(_split_answer(answer) or [""])[0] if sid == "S6" else ""),
         "inputs": _inputs_for(ctx, sid),
         "alternatives": alternatives,
         "feeds": stage["feeds"],

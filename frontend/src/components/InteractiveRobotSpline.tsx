@@ -43,7 +43,7 @@ export function InteractiveRobotSpline({ scene, className, style }: InteractiveR
               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l2-2.647z"
             />
           </svg>
-          <span style={{ fontSize: 14, fontWeight: 600 }}>Loading 3D scene…</span>
+          <span style={{ fontSize: 15, fontWeight: 600 }}>Loading 3D scene…</span>
           <style>{"@keyframes spline-spin { to { transform: rotate(360deg); } }"}</style>
         </div>
       }

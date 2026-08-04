@@ -115,11 +115,11 @@ export function PromptLibrary() {
                     <Box sx={{ minWidth: 0 }}>
                       <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5, flexWrap: "wrap" }}>
                         <Typography sx={{ fontWeight: 700, fontSize: tokens.fontSize.md }}>{entry.name}</Typography>
-                        <Chip size="small" label={entry.stage} sx={{ height: 20, fontSize: 11, background: tokens.color.canvas }} />
+                        <Chip size="small" label={entry.stage} sx={{ height: 24, fontSize: 15, background: tokens.color.canvas }} />
                         <Chip
                           size="small"
                           label={entry.kind === "prompt" ? "system prompt" : "function source"}
-                          sx={{ height: 20, fontSize: 11, color: tokens.color.inkSoft, background: "transparent", border: `1px solid ${indigoTint(0.2)}` }}
+                          sx={{ height: 24, fontSize: 15, color: tokens.color.inkSoft, background: "transparent", border: `1px solid ${indigoTint(0.2)}` }}
                         />
                       </Box>
                       <Typography variant="body2" sx={{ color: "text.secondary", mb: 0.5 }}>{entry.blurb}</Typography>
@@ -138,7 +138,7 @@ export function PromptLibrary() {
                         borderTop: `1px solid ${indigoTint(0.12)}`,
                         background: light(0.5),
                         fontFamily: "'JetBrains Mono', ui-monospace, monospace",
-                        fontSize: 12.5,
+                        fontSize: 15,
                         lineHeight: 1.6,
                         whiteSpace: "pre-wrap",
                         wordBreak: "break-word",

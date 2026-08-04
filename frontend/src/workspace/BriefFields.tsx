@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import Box from "@mui/material/Box";
 import { tokens } from "../theme/tokens";
+import { accent } from "../theme/stageTheme";
 
 /**
  * The brief as a label-over-value grid rather than a stack of label-left/value-right rows.
@@ -46,34 +47,37 @@ export function BriefFields({
   if (!fields.length) return null;
   const meta = layout(fields, columns);
   return (
-    <Box sx={{ display: "grid", gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
+    // Discrete cards rather than a ruled table. The ruled version leaned on a shared grid line
+    // to separate fields, which meant a long value in one column dragged its neighbour's cell
+    // taller and the eye had to work out where one field ended. A card has its own edges.
+    <Box sx={{ display: "grid", gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`, gap: 1.5 }}>
       {fields.map((field, i) => {
-        const { rowStart, span } = meta[i];
+        const { span } = meta[i];
         return (
           <Box
             key={field.label}
             sx={{
               minWidth: 0,
               gridColumn: span === 2 ? "1 / -1" : "auto",
+              px: 2,
               py: 1.5,
-              // The divider between columns hangs off the cell that is NOT starting the row,
-              // so it never draws at the left edge of the panel.
-              pl: rowStart ? 0 : 3,
-              borderTop: `1px solid ${tokens.color.outline}`,
-              borderLeft: rowStart ? "none" : `1px solid ${tokens.color.outline}`,
+              borderRadius: `${tokens.radius.md}px`,
+              border: `1px solid ${tokens.color.outline}`,
+              background: tokens.color.surface,
             }}
           >
+            {/* Label in the stage accent, value in ink: colour carries the label/value
+                distinction now that every size in the app is the same 15px. */}
             <Box
               component="div"
-              sx={{ fontSize: tokens.fontSize.xs, color: tokens.color.inkSecondary, mb: 0.5, lineHeight: 1.4 }}
+              sx={{ fontSize: tokens.fontSize.md, fontWeight: 600, color: accent.primary, mb: 0.5, lineHeight: 1.4 }}
             >
               {field.label}
             </Box>
             <Box
               component="div"
               sx={{
-                fontSize: tokens.fontSize.sm,
-                fontWeight: 700,
+                fontSize: tokens.fontSize.md,
                 color: tokens.color.text,
                 lineHeight: 1.5,
                 minWidth: 0,

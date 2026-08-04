@@ -131,11 +131,11 @@ function statusOf(project: ProjectSummary): StatusKey {
   return "drafting";
 }
 
-function progressFor(project: ProjectSummary, index: number) {
-  if (project.phase === "done" || project.has_result) return 90;
-  if (project.phase === "running") return 48;
-  return [76, 58, 34][index % 3];
-}
+// `progressFor` used to live here. It returned 90 / 48 / [76, 58, 34][index % 3] -- the
+// last branch keyed off the card's POSITION in the grid, so the same plan showed a
+// different percentage depending on where it landed, and none of the three numbers
+// measured anything. Progress now comes from `project.planning_progress`, which the
+// backend computes from the studio run's real section cursor.
 
 type BriefItem = { agent: string; text: string; action: string; icon: string; accent: string; stage: number };
 
@@ -789,7 +789,7 @@ function AgentCard({ stage, onOpen }: { stage: Stage; onOpen: () => void }) {
 function WorkCard({ project, index, onOpen }: { project: ProjectSummary; index: number; onOpen: () => void }) {
   const stage = stageOf(project);
   const status = STATUS_META[statusOf(project)];
-  const progress = progressFor(project, index);
+  const planning = project.planning_progress;
   const title = project.campaign_name || project.name || `CMP-${String(index + 1).padStart(4, "0")}`;
   const objective = project.objective || project.brand || "Campaign work in progress";
 
@@ -883,21 +883,48 @@ function WorkCard({ project, index, onOpen }: { project: ProjectSummary; index: 
       {/* Spacer keeps the footer pinned to the bottom so the three cards' CTAs line up. */}
       <Box sx={{ flex: 1, minHeight: 16 }} />
 
-      <Box sx={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto", gap: 1.5, alignItems: "center" }}>
-        <Box
-          role="progressbar"
-          aria-valuenow={progress}
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-label={`${title} progress`}
-          sx={{ height: 6, borderRadius: `${tokens.radius.pill}px`, background: tokens.color.canvas, overflow: "hidden" }}
-        >
-          <Box sx={{ width: `${progress}%`, height: "100%", borderRadius: `${tokens.radius.pill}px`, background: stage.accent }} />
+      {/* Deliberately labelled "Planning progress", not "progress": this bar measures the
+          Stage 1 studio run only. It says nothing about orchestration, operations or
+          reporting, and a card sitting in a later stage still shows its planning figure.
+          Rendered only when the backend has a real cursor -- no bar beats a made-up one. */}
+      {planning && planning.done > 0 && (
+        <Box>
+          <Box sx={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 1 }}>
+            <Typography sx={{ fontSize: tokens.fontSize.xs, fontWeight: 700, color: tokens.color.inkSecondary }}>
+              Planning progress
+            </Typography>
+            <Typography
+              sx={{ fontSize: tokens.fontSize.xs, color: tokens.color.inkSecondary, fontVariantNumeric: "tabular-nums" }}
+            >
+              {planning.done} of {planning.total} steps
+            </Typography>
+          </Box>
+          <Box sx={{ mt: 1, display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto", gap: 1.5, alignItems: "center" }}>
+            <Box
+              role="progressbar"
+              aria-valuenow={planning.pct}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label={`${title} planning progress`}
+              sx={{ height: 6, borderRadius: `${tokens.radius.pill}px`, background: tokens.color.canvas, overflow: "hidden" }}
+            >
+              <Box
+                sx={{
+                  width: `${planning.pct}%`,
+                  height: "100%",
+                  borderRadius: `${tokens.radius.pill}px`,
+                  // Planning's accent regardless of the card's stage -- the bar measures
+                  // planning, so it should wear planning's colour and not the card's.
+                  background: STAGE_BY_ID.planning.accent,
+                }}
+              />
+            </Box>
+            <Typography sx={{ fontSize: tokens.fontSize.xs, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>
+              {planning.pct}%
+            </Typography>
+          </Box>
         </Box>
-        <Typography sx={{ fontSize: tokens.fontSize.xs, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>
-          {progress}%
-        </Typography>
-      </Box>
+      )}
 
       <Box sx={{ mt: 2, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1.5 }}>
         <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.75, color: tokens.color.inkSecondary, fontSize: tokens.fontSize.xs }}>

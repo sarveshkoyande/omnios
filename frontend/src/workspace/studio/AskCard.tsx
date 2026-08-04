@@ -11,7 +11,7 @@ const SourceChip = styled("span")({
   display: "inline-flex",
   alignItems: "center",
   gap: 5,
-  fontSize: 10.5,
+  fontSize: 15,
   fontWeight: 600,
   color: tokens.color.primary,
   background: tokens.color.primaryContainer,
@@ -39,7 +39,7 @@ const RecommendedBadge = styled("span")({
   background: accent.primary,
   color: "#fff",
   border: "none",
-  fontSize: 10,
+  fontSize: 15,
   fontWeight: 800,
   textTransform: "uppercase",
 });
@@ -130,7 +130,7 @@ const EvidenceNote = styled("div")({
   display: "flex",
   alignItems: "flex-start",
   gap: 6,
-  fontSize: 11.5,
+  fontSize: 15,
   lineHeight: 1.45,
   color: tokens.color.inkSecondary,
   background: accent.tint04,
@@ -267,12 +267,12 @@ export function AskCard({
               {isRec && !chosen && <RecommendedBadge>Recommended</RecommendedBadge>}
             </Box>
             {opt.size && (
-              <Typography component="span" sx={{ display: "block", fontSize: 11, fontWeight: 700, mt: 0.25, color: chosen ? "#fff" : "primary.main" }}>
+              <Typography component="span" sx={{ display: "block", fontSize: 15, fontWeight: 700, mt: 0.25, color: chosen ? "#fff" : "primary.main" }}>
                 {opt.size}
               </Typography>
             )}
             {opt.criteria && (
-              <Typography component="span" sx={{ display: "block", fontSize: 10.5, lineHeight: 1.4, mt: 0.15, color: chosen ? "rgba(255,255,255,0.9)" : "text.secondary" }}>
+              <Typography component="span" sx={{ display: "block", fontSize: 15, lineHeight: 1.4, mt: 0.15, color: chosen ? "rgba(255,255,255,0.9)" : "text.secondary" }}>
                 {opt.criteria}
               </Typography>
             )}
@@ -283,7 +283,7 @@ export function AskCard({
                     key={slice.channel}
                     component="span"
                     sx={{
-                      fontSize: 10,
+                      fontSize: 15,
                       fontWeight: 700,
                       lineHeight: 1.6,
                       px: 0.6,
@@ -328,7 +328,7 @@ export function AskCard({
     // has moved into the reasoning popover behind the single psychology icon.
     <Box sx={{ maxWidth: 640, width: "100%", minWidth: 0 }}>
       <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mb: 0.75 }}>
-        <Typography sx={{ fontSize: 11, fontWeight: 700, color: accent.primary }}>
+        <Typography sx={{ fontSize: 15, fontWeight: 700, color: accent.primary }}>
           {ownerName} - {autoAssumed ? "decided for you (auto-assume)" : "needs your call"}
         </Typography>
         {hasGroundingDetails && (
@@ -393,7 +393,7 @@ export function AskCard({
         anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
       >
         <PopoverBody>
-          <Typography sx={{ fontSize: 12, fontWeight: 800, mb: 1 }}>Reasoning and grounding</Typography>
+          <Typography sx={{ fontSize: 15, fontWeight: 800, mb: 1 }}>Reasoning and grounding</Typography>
           {/* This is now the only home for provenance. The best-practice / model / library
               labels that used to sit as chips on the card body land here instead. */}
           {recommendationSource && (
@@ -421,7 +421,7 @@ export function AskCard({
               were AI-generated is a misread worth being able to check. */}
           {llmStatus?.ok !== true && (
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 1, pt: 1, borderTop: `1px solid ${tokens.color.outline}` }}>
-              <span className="material-symbols-outlined" style={{ fontSize: 14, color: tokens.color.inkSecondary }}>{llmIcon}</span>
+              <span className="material-symbols-outlined" style={{ fontSize: 15, color: tokens.color.inkSecondary }}>{llmIcon}</span>
               <Typography variant="caption" sx={{ color: "text.secondary" }}>
                 {llmState}
                 {llmFailed && llmStatus?.detail ? ` - ${llmStatus.detail}` : ""}
@@ -439,7 +439,7 @@ export function AskCard({
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
       >
         <PopoverBody>
-          <Typography sx={{ fontSize: 12, fontWeight: 800, mb: 0.75 }}>Why this recommendation</Typography>
+          <Typography sx={{ fontSize: 15, fontWeight: 800, mb: 0.75 }}>Why this recommendation</Typography>
           <Typography variant="body2" sx={{ color: "text.secondary", lineHeight: 1.45 }}>
             {recommendationReason}
           </Typography>

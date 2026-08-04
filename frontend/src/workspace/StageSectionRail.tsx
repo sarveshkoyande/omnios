@@ -111,7 +111,7 @@ export function StageSectionRail({ sections, title = "Sections" }: { sections: R
   return (
     <Box sx={{ width: 240, flex: "0 0 240px", borderRight: `1px solid ${indigoTint(0.1)}`, overflowY: "auto", py: 2 }}>
       <Box sx={{ px: 2, mb: 1.5 }}>
-        <Typography sx={{ fontWeight: 700, fontSize: 13 }}>{title}</Typography>
+        <Typography sx={{ fontWeight: 700, fontSize: 15 }}>{title}</Typography>
       </Box>
       <Box sx={{ px: 1.25 }}>
         {visible.map((s) => (
@@ -119,7 +119,7 @@ export function StageSectionRail({ sections, title = "Sections" }: { sections: R
             <span className="material-symbols-outlined" style={{ fontSize: 18, flex: "0 0 auto", color: accent.primary }}>
               {s.icon}
             </span>
-            <Typography sx={{ fontSize: 13, fontWeight: s.id === activeId ? 700 : 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            <Typography sx={{ fontSize: 15, fontWeight: s.id === activeId ? 700 : 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               {s.label}
             </Typography>
           </Row>

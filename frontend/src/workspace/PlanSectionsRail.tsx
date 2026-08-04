@@ -57,12 +57,13 @@ const Row = styled(Box)<{ active?: boolean; clickable?: boolean }>(({ theme, act
 
 const Dot = styled(Box)<{ state: "done" | "active" | "pending" }>(({ state }) => ({
   flex: "0 0 auto",
-  width: 20,
-  height: 20,
+  // 24 rather than 20: the numeral inside is 15px now and was touching the circle.
+  width: 24,
+  height: 24,
   borderRadius: "50%",
   display: "grid",
   placeItems: "center",
-  fontSize: 12,
+  fontSize: 15,
   color: state === "pending" ? tokens.color.inkSoft : "#fff",
   background: state === "done" ? tokens.color.success : "transparent",
   border: state === "pending" ? `1.5px solid ${indigoTint(0.3)}` : "none",
@@ -72,6 +73,17 @@ const Dot = styled(Box)<{ state: "done" | "active" | "pending" }>(({ state }) =>
  * every title shown upfront, checked off as each lands; the in-progress one shows
  * a spinner instead of a tick. Completed rows are clickable and jump the main pane
  * to that section. */
+/**
+ * How many section rows a plan actually has.
+ *
+ * NOT `studio.total` -- that is the length of the studio SEQUENCE (19), which counts the
+ * ask-only steps that pose a question and emit no section. Showing it as a section count
+ * told the user "19 sections" next to a list of 11, and made a finished plan look two-thirds
+ * done. Anything that renders "x of y sections" must use this.
+ */
+export const sectionTotal = (studio: StudioState) =>
+  Math.max(SECTION_TITLES.length, studio.sections.length);
+
 export function PlanSectionsRail({ studio }: { studio: StudioState }) {
   const doneCount = studio.sections.length;
   const rows = SECTION_TITLES.map((title, i) => {
@@ -97,17 +109,25 @@ export function PlanSectionsRail({ studio }: { studio: StudioState }) {
   return (
     <Box sx={{ width: 280, flex: "0 0 280px", borderRight: `1px solid ${indigoTint(0.1)}`, overflowY: "auto", py: 2 }}>
       <Box sx={{ px: 1.25, mb: 2 }}>
+        {/* The PLAN brief -- the inputs -- exists from the moment the workspace opens, so this
+            row is never gated. The CAMPAIGN brief below it is the run's output and waits. */}
+        <Row clickable onClick={() => goToAnchor("plan-brief-anchor")}>
+          <Box sx={{ flex: "0 0 auto", width: 20, display: "grid", placeItems: "center" }}>
+            <span className="material-symbols-outlined" style={{ fontSize: 17, color: tokens.color.primary }}>assignment</span>
+          </Box>
+          <Typography sx={{ fontSize: 15, fontWeight: 700, flex: 1 }}>Plan brief</Typography>
+        </Row>
         <Row clickable={briefReady} onClick={briefReady ? () => goToAnchor("campaign-brief-anchor") : undefined}>
           <Box sx={{ flex: "0 0 auto", width: 20, display: "grid", placeItems: "center" }}>
             <span className="material-symbols-outlined" style={{ fontSize: 17, color: tokens.color.primary }}>assignment_turned_in</span>
           </Box>
-          <Typography sx={{ fontSize: 13, fontWeight: 700, flex: 1 }}>Campaign brief</Typography>
+          <Typography sx={{ fontSize: 15, fontWeight: 700, flex: 1 }}>Campaign brief</Typography>
           <Chip
             size="small"
             label={briefReady ? "Ready" : "Drafting"}
             sx={{
-              height: 18,
-              fontSize: 10,
+              height: 24,
+              fontSize: 15,
               fontWeight: 700,
               color: briefReady ? "#fff" : tokens.color.inkSoft,
               background: briefReady ? tokens.color.success : indigoTint(0.1),
@@ -118,14 +138,14 @@ export function PlanSectionsRail({ studio }: { studio: StudioState }) {
           <Box sx={{ flex: "0 0 auto", width: 20, display: "grid", placeItems: "center" }}>
             <span className="material-symbols-outlined" style={{ fontSize: 17, color: tokens.color.primary }}>psychology</span>
           </Box>
-          <Typography sx={{ fontSize: 13, fontWeight: 700, flex: 1 }}>Decision trail</Typography>
+          <Typography sx={{ fontSize: 15, fontWeight: 700, flex: 1 }}>Decision trail</Typography>
         </Row>
       </Box>
 
       <Box sx={{ px: 2, mb: 1.5, display: "flex", alignItems: "baseline", gap: 1 }}>
-        <Typography sx={{ fontWeight: 700, fontSize: 13 }}>Plan sections</Typography>
+        <Typography sx={{ fontWeight: 700, fontSize: 15 }}>Plan sections</Typography>
         <Typography variant="caption" sx={{ color: "text.secondary" }}>
-          {studio.total} sections · {doneCount} completed
+          {doneCount}/{sectionTotal(studio)} completed
         </Typography>
       </Box>
       {rows.map((r) => (
@@ -137,7 +157,7 @@ export function PlanSectionsRail({ studio }: { studio: StudioState }) {
         >
           <Dot state={r.state}>
             {r.state === "done" ? (
-              <span className="material-symbols-outlined" style={{ fontSize: 13 }}>check</span>
+              <span className="material-symbols-outlined" style={{ fontSize: 15 }}>check</span>
             ) : r.state === "active" ? (
               <CircularProgress size={13} thickness={6} />
             ) : (
@@ -146,7 +166,7 @@ export function PlanSectionsRail({ studio }: { studio: StudioState }) {
           </Dot>
           <Typography
             sx={{
-              fontSize: 13,
+              fontSize: 15,
               fontWeight: r.state === "active" ? 700 : 400,
               color: r.state === "pending" ? "text.secondary" : "text.primary",
               overflow: "hidden",

@@ -18,7 +18,7 @@ import { Composer } from "./Composer";
 import { IntakeCard } from "./IntakeCard";
 import { PersonaProfileModal } from "./persona/PersonaProfileModal";
 import { PlanSectionsRail } from "./PlanSectionsRail";
-import { SECTION_TITLES } from "./PlanSectionsRail";
+import { SECTION_TITLES, sectionTotal } from "./PlanSectionsRail";
 import { StageSectionRail, ORCH_SECTIONS, OPS_SECTIONS, REPORT_SECTIONS } from "./StageSectionRail";
 import { PlansDrawer } from "./PlansDrawer";
 import { PlanDocument } from "./PlanDocument";
@@ -68,7 +68,7 @@ function ArchivedPlanViews({ children }: { children: React.ReactNode }) {
       }}
     >
       <AccordionSummary expandIcon={<span className="material-symbols-outlined">expand_more</span>}>
-        <Typography sx={{ fontWeight: 700, fontSize: 13 }}>Previous plan views (archived)</Typography>
+        <Typography sx={{ fontWeight: 700, fontSize: 15 }}>Previous plan views (archived)</Typography>
       </AccordionSummary>
       <AccordionDetails>{children}</AccordionDetails>
     </Accordion>
@@ -76,9 +76,27 @@ function ArchivedPlanViews({ children }: { children: React.ReactNode }) {
 }
 
 function FinalPlanSections({ studio }: { studio: StudioState }) {
-  const sectionsByNum = new Map(studio.sections.map((section) => [section.num, section]));
+  /*
+   * Rows are positional, matching PlanSectionsRail. The previous version keyed a Map on
+   * `section.num` and then looked rows up by `index + 1`, which are two unrelated numbering
+   * schemes: `num` is the position in the master plan template (a real run stores
+   * 7, 8, 9, 10, 11, 12, 13, 14, 26, 27, 28, 33), while `index + 1` just counts rows 1..N.
+   * Only the handful of `num`s that happened to fall under N matched, and they matched the
+   * wrong row -- so fully generated sections rendered "This section has not been generated
+   * for this plan", two titles appeared twice, and the rail (which indexes positionally, and
+   * was right all along) disagreed with the document.
+   *
+   * The row count follows whichever is longer so a section can never be generated-but-hidden:
+   * SECTION_TITLES supplies placeholder titles for sections not yet drafted, and anything the
+   * studio emits beyond that list still gets a row under its own title.
+   */
   const completeCount = studio.sections.length;
-  const total = Math.max(studio.total || SECTION_TITLES.length, SECTION_TITLES.length);
+  const total = Math.max(SECTION_TITLES.length, completeCount);
+  const rows = Array.from({ length: total }, (_, index) => ({
+    num: index + 1,
+    section: studio.sections[index],
+    title: studio.sections[index]?.title || SECTION_TITLES[index] || `Section ${index + 1}`,
+  }));
 
   return (
     <ConsolePanel
@@ -91,9 +109,7 @@ function FinalPlanSections({ studio }: { studio: StudioState }) {
         {completeCount}/{total} generated. Sections are minimized by default.
       </Typography>
       <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-        {SECTION_TITLES.map((title, index) => {
-          const num = index + 1;
-          const section = sectionsByNum.get(num);
+        {rows.map(({ num, section, title }) => {
           return (
             <Accordion
               key={`${num}-${title}`}
@@ -119,7 +135,7 @@ function FinalPlanSections({ studio }: { studio: StudioState }) {
                       flex: "0 0 auto",
                       background: section ? tokens.color.primaryContainer : tokens.color.canvas,
                       color: section ? tokens.color.primary : "text.secondary",
-                      fontSize: 11,
+                      fontSize: 15,
                       fontWeight: 800,
                     }}
                   >
@@ -304,7 +320,10 @@ export function Workspace({
           display: "flex",
           alignItems: "stretch",
           gap: 3,
-          px: 3,
+          pl: 3,
+          // No right padding: the spacer below reserves the chat pane's width instead, so
+          // the tab strip ends exactly on the workspace/chat seam.
+          pr: 0,
           // Breathing room between the app bar above and the tops of the folder tabs.
           pt: 2,
           pb: 0,
@@ -331,12 +350,21 @@ export function Workspace({
               onSelect={ws.setStage}
               subLabel={
                 ws.studio.active || (ws.studio.sections.length > 0 && !ws.studio.done)
-                  ? `SECTION ${Math.min(ws.studio.sections.length + 1, ws.studio.total)}/${ws.studio.total}`
+                  ? `SECTION ${Math.min(ws.studio.sections.length + 1, sectionTotal(ws.studio))}/${sectionTotal(ws.studio)}`
                   : undefined
               }
             />
           </Box>
         )}
+        {/* Dead space over the chat pane, sized identically to it, so the tabs span the
+            workspace column only — a tab that overhung the chat pointed at the wrong pane. */}
+        <Box
+          aria-hidden
+          sx={{
+            flex: `0 0 ${tokens.layout.chatPaneWidth}`,
+            minWidth: `${tokens.layout.chatPaneMinWidth}px`,
+          }}
+        />
       </Box>
 
       <Box sx={{ display: "flex", flex: 1, minHeight: 0 }}>
@@ -396,14 +424,22 @@ export function Workspace({
                   )}
                 </>
               )}
-              {ws.stage === 1 && !(ws.studio.active || ws.studio.sections.length > 0 || ws.studio.done) && (
-                <>
-                  <ConsolePanel title="Campaign brief" icon="assignment" collapsible sx={{ mb: 3 }}>
-                    <Typography variant="body2" sx={{ color: "text.secondary", mb: 1 }}>
-                      Overview of the campaign goals, audience, and strategy.
+              {/* PLAN brief -- what you gave us, as opposed to the CAMPAIGN brief the run
+                  produces (CampaignArtifacts, #campaign-brief-anchor). It renders for the whole
+                  of stage 1, not just before the run starts: the inputs stay worth re-reading
+                  while the plan is being built, and the left rail links here from the outset. */}
+              {ws.stage === 1 && (
+                <Box id="plan-brief-anchor">
+                  <ConsolePanel title="Plan brief" icon="assignment" collapsible sx={{ mb: 3 }}>
+                    <Typography variant="body2" sx={{ color: "text.secondary", mb: 1.5 }}>
+                      What you asked for — the inputs this plan is being built from.
                     </Typography>
                     <BriefCard slots={ws.slots} inferred={ws.inferred} />
                   </ConsolePanel>
+                </Box>
+              )}
+              {ws.stage === 1 && !(ws.studio.active || ws.studio.sections.length > 0 || ws.studio.done) && (
+                <>
                   {/* Nothing to say before the brief completes — no placeholder card. */}
                   {ws.agents.length > 0 && (
                     <ConsolePanel title="Agent" icon="smart_toy" collapsible>
@@ -462,7 +498,7 @@ export function Workspace({
       {/* White pane against the grey workspace canvas: the conversation is a different kind of
           surface from the document being built, and the colour break is what says so. Bubbles
           carry a canvas-grey fill (ChatBubble.tsx) so they still read against it. */}
-      <Box component="main" sx={{ flex: "0 0 30vw", minWidth: 320, display: "flex", flexDirection: "column", borderLeft: `1px solid ${tokens.color.outline}`, position: "relative", backgroundColor: tokens.color.surface }}>
+      <Box component="main" sx={{ flex: `0 0 ${tokens.layout.chatPaneWidth}`, minWidth: `${tokens.layout.chatPaneMinWidth}px`, display: "flex", flexDirection: "column", borderLeft: `1px solid ${tokens.color.outline}`, position: "relative", backgroundColor: tokens.color.surface }}>
         {!ws.projectId ? (
           <EmptyState>
             <span className="material-symbols-outlined" style={{ fontSize: 46, color: tokens.color.primary }}>hub</span>
@@ -477,12 +513,24 @@ export function Workspace({
           </EmptyState>
         ) : (
           <>
-            <Box sx={{ p: 2, pb: 1.5, borderBottom: `1px solid ${indigoTint(0.1)}`, display: "flex", alignItems: "center" }}>
-              {/* The stage's agent identity lives here, directly above its conversation --
-                  the window you are in tells you who you are talking to. */}
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 0 }}>
-                <AgentAvatar id={stageAgent.id} size={26} />
-                <Typography sx={{ fontWeight: 700, fontSize: 13, lineHeight: 1.25 }}>
+            {/* The stage's agent identity, stated once, directly above its conversation --
+                the transcript below carries no avatars at all. Given its own tinted surface
+                and a heavier bottom rule so it reads as the pane's header rather than as the
+                first message in the thread. */}
+            <Box
+              sx={{
+                px: 2.5,
+                py: 2,
+                borderBottom: `2px solid ${indigoTint(0.16)}`,
+                backgroundColor: accent.container,
+                display: "flex",
+                alignItems: "center",
+                flex: "0 0 auto",
+              }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, minWidth: 0 }}>
+                <AgentAvatar id={stageAgent.id} size={40} />
+                <Typography sx={{ fontWeight: 700, fontSize: tokens.fontSize.xl, lineHeight: 1.25 }}>
                   {stageAgent.name}
                 </Typography>
               </Box>

@@ -42,7 +42,7 @@ export function StudioContinueCard({
 
   if (resolved) {
     return (
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1, color: "text.secondary", fontSize: 12, pl: 1 }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1, color: "text.secondary", fontSize: 15, pl: 1 }}>
         <span className="material-symbols-outlined" style={{ fontSize: 15, color: tokens.color.success }}>check_circle</span>
         <Typography variant="caption" sx={{ color: "text.secondary" }}>
           {sectionTitle ? `"${sectionTitle}" complete — continued.` : "Section complete — continued."}
@@ -53,7 +53,7 @@ export function StudioContinueCard({
 
   return (
     <AgentBubble sx={{ maxWidth: 480 }}>
-      <Typography sx={{ fontSize: 13, fontWeight: 700, mb: 0.5 }}>
+      <Typography sx={{ fontSize: 15, fontWeight: 700, mb: 0.5 }}>
         {sectionTitle ? `"${sectionTitle}" is done.` : "Section complete."}
       </Typography>
       <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1 }}>

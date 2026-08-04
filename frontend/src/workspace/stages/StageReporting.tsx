@@ -298,12 +298,17 @@ export function StageReporting({ result, projectId }: { result: PlanResult | nul
     return () => { cancelled = true; };
   }, [projectId, result, months, specialty]);
 
+  const demo = insights?.demographics;
+  // Hoisted above the early return below, and it must stay there. A hook placed after a
+  // conditional return runs on some renders and not others; the moment the branch flips --
+  // which it does as soon as the insights fetch resolves and `insights` goes non-null --
+  // React sees a different hook count, throws "Rendered more hooks than during the previous
+  // render" (#310), and unmounts the entire app rather than just this tab.
+  const specialtyOptions = useMemo(() => (demo?.by_specialty ?? []).map((r) => r.value), [demo]);
+
   if (!result && !insights) {
     return <ConsolePanel><Typography sx={{ color: "text.secondary", fontStyle: "italic" }}>Complete Stage 1 to see the measurement framework.</Typography></ConsolePanel>;
   }
-
-  const demo = insights?.demographics;
-  const specialtyOptions = useMemo(() => (demo?.by_specialty ?? []).map((r) => r.value), [demo]);
 
   return (
     <Box>
@@ -322,13 +327,13 @@ export function StageReporting({ result, projectId }: { result: PlanResult | nul
               <Typography variant="caption" sx={{ fontWeight: 700, color: "text.secondary" }}>Filters</Typography>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <Typography variant="caption" sx={{ color: "text.secondary" }}>Time</Typography>
-                <Select size="small" value={months} onChange={(e) => setMonths(Number(e.target.value))} sx={{ minWidth: 150, fontSize: 13 }}>
+                <Select size="small" value={months} onChange={(e) => setMonths(Number(e.target.value))} sx={{ minWidth: 150, fontSize: 15 }}>
                   {TIME_WINDOWS.map((w) => <MenuItem key={w.months} value={w.months}>{w.label}</MenuItem>)}
                 </Select>
               </Box>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <Typography variant="caption" sx={{ color: "text.secondary" }}>Specialty</Typography>
-                <Select size="small" value={specialty} onChange={(e) => setSpecialty(e.target.value)} displayEmpty sx={{ minWidth: 170, fontSize: 13 }}>
+                <Select size="small" value={specialty} onChange={(e) => setSpecialty(e.target.value)} displayEmpty sx={{ minWidth: 170, fontSize: 15 }}>
                   <MenuItem value="">All specialties</MenuItem>
                   {specialtyOptions.map((s) => <MenuItem key={s} value={s}>{s}</MenuItem>)}
                 </Select>
@@ -438,7 +443,7 @@ export function StageReporting({ result, projectId }: { result: PlanResult | nul
                     <Typography variant="caption" sx={{ fontWeight: 700 }}>{s.label}</Typography>
                     <Typography sx={{ fontSize: 22, fontWeight: 800, color: s.primary ? accent.primary : "text.primary", lineHeight: 1.1 }}>{metricHeadline(s)}</Typography>
                     <Typography variant="caption" sx={{ color: "text.secondary" }}>{s.note}</Typography>
-                    {s.primary && <Chip size="small" label="primary promotion signal" sx={{ mt: 0.5, height: 18, fontSize: 10, alignSelf: "flex-start", bgcolor: `${accent.primary}18`, color: accent.primary }} />}
+                    {s.primary && <Chip size="small" label="primary promotion signal" sx={{ mt: 0.5, height: 24, fontSize: 15, alignSelf: "flex-start", bgcolor: `${accent.primary}18`, color: accent.primary }} />}
                   </InsightCard>
                   {i < insights.funnel.signals.length - 1 && (
                     <span className="material-symbols-outlined" style={{ fontSize: 20, color: indigoTint(0.4) }}>arrow_forward</span>
@@ -455,7 +460,7 @@ export function StageReporting({ result, projectId }: { result: PlanResult | nul
                 <InsightCard key={k.label} primary={k.primary}>
                   <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 1 }}>
                     <Typography variant="caption" sx={{ fontWeight: 700 }}>{k.label}</Typography>
-                    <Chip size="small" label={k.kind === "volume" ? "volume" : "rate"} variant="outlined" sx={{ height: 18, fontSize: 10 }} />
+                    <Chip size="small" label={k.kind === "volume" ? "volume" : "rate"} variant="outlined" sx={{ height: 24, fontSize: 15 }} />
                   </Box>
                   <Typography sx={{ fontSize: 24, fontWeight: 800, color: k.primary ? accent.primary : "text.primary", lineHeight: 1.1 }}>{metricHeadline(k)}</Typography>
                   {k.sub && <Typography variant="caption" sx={{ color: "text.secondary" }}>{k.sub}</Typography>}
@@ -489,9 +494,9 @@ export function StageReporting({ result, projectId }: { result: PlanResult | nul
                 <tbody>
                   {insights.tagging.rows.map((r) => (
                     <tr key={r.parameter}>
-                      <td style={{ fontFamily: "monospace", fontSize: 12 }}>{r.parameter}</td>
+                      <td style={{ fontFamily: "monospace", fontSize: 15 }}>{r.parameter}</td>
                       <td>{r.convention}</td>
-                      <td style={{ fontFamily: "monospace", fontSize: 12, color: accent.primary }}>{r.example}</td>
+                      <td style={{ fontFamily: "monospace", fontSize: 15, color: accent.primary }}>{r.example}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -510,7 +515,7 @@ export function StageReporting({ result, projectId }: { result: PlanResult | nul
                     <td><b>{r.test}</b></td>
                     <td>{r.variants}</td>
                     <td>{r.measure}</td>
-                    <td>{r.primary && <Chip size="small" label="primary" sx={{ height: 18, fontSize: 10, bgcolor: `${accent.primary}18`, color: accent.primary }} />}</td>
+                    <td>{r.primary && <Chip size="small" label="primary" sx={{ height: 24, fontSize: 15, bgcolor: `${accent.primary}18`, color: accent.primary }} />}</td>
                   </tr>
                 ))}
               </tbody>
@@ -538,22 +543,22 @@ function MeasurementPlan({ result }: { result: PlanResult }) {
       <ConsolePanel id="rep-kpi" title="KPI scorecard (measurement plan)" sx={{ mb: 3 }}>
         <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 2 }}>
           <KpiCol accent={tokens.color.success}>
-            <Typography sx={{ display: "flex", alignItems: "center", gap: 1, fontWeight: 700, fontSize: 12, mb: 1 }}>
+            <Typography sx={{ display: "flex", alignItems: "center", gap: 1, fontWeight: 700, fontSize: 15, mb: 1 }}>
               <span className="material-symbols-outlined" style={{ fontSize: 15 }}>trending_up</span>Leading<Box component="span" sx={{ ml: "auto" }}>{kpi.leading_indicators.length}</Box>
             </Typography>
-            <Box component="ul" sx={{ m: 0, pl: 2, fontSize: 11 }}>{leads.map((i, k) => <li key={k}>{i}</li>)}</Box>
+            <Box component="ul" sx={{ m: 0, pl: 2, fontSize: 15 }}>{leads.map((i, k) => <li key={k}>{i}</li>)}</Box>
           </KpiCol>
           <KpiCol accent="#0B6FA8">
-            <Typography sx={{ display: "flex", alignItems: "center", gap: 1, fontWeight: 700, fontSize: 12, mb: 1 }}>
+            <Typography sx={{ display: "flex", alignItems: "center", gap: 1, fontWeight: 700, fontSize: 15, mb: 1 }}>
               <span className="material-symbols-outlined" style={{ fontSize: 15 }}>flag</span>Lagging<Box component="span" sx={{ ml: "auto" }}>{kpi.lagging_indicators.length}</Box>
             </Typography>
-            <Box component="ul" sx={{ m: 0, pl: 2, fontSize: 11 }}>{kpi.lagging_indicators.map((i, k) => <li key={k}>{i}</li>)}</Box>
+            <Box component="ul" sx={{ m: 0, pl: 2, fontSize: 15 }}>{kpi.lagging_indicators.map((i, k) => <li key={k}>{i}</li>)}</Box>
           </KpiCol>
           <KpiCol accent="#5A32E0">
-            <Typography sx={{ display: "flex", alignItems: "center", gap: 1, fontWeight: 700, fontSize: 12, mb: 1 }}>
+            <Typography sx={{ display: "flex", alignItems: "center", gap: 1, fontWeight: 700, fontSize: 15, mb: 1 }}>
               <span className="material-symbols-outlined" style={{ fontSize: 15 }}>settings</span>Operational<Box component="span" sx={{ ml: "auto" }}>{kpi.operational_kpis.length}</Box>
             </Typography>
-            <Box component="ul" sx={{ m: 0, pl: 2, fontSize: 11 }}>{kpi.operational_kpis.map((i, k) => <li key={k}>{i}</li>)}</Box>
+            <Box component="ul" sx={{ m: 0, pl: 2, fontSize: 15 }}>{kpi.operational_kpis.map((i, k) => <li key={k}>{i}</li>)}</Box>
           </KpiCol>
         </Box>
         {kpi.cadence_note && <Typography variant="caption" sx={{ color: "text.secondary", fontStyle: "italic", display: "block", mt: 1.5 }}>Review cadence: {kpi.cadence_note}</Typography>}
@@ -565,10 +570,10 @@ function MeasurementPlan({ result }: { result: PlanResult }) {
           <tbody>
             {chRows.map(([ch, v], i) => (
               <tr key={ch}>
-                <td><span className="material-symbols-outlined" style={{ fontSize: 14, verticalAlign: "-3px", marginRight: 4 }}>{LANE_ICON[ch] ?? "donut_small"}</span>{ch}</td>
+                <td><span className="material-symbols-outlined" style={{ fontSize: 15, verticalAlign: "-3px", marginRight: 4 }}>{LANE_ICON[ch] ?? "donut_small"}</span>{ch}</td>
                 <td>{v.pct}%</td>
                 <td>{leads[i % (leads.length || 1)] ?? "N/A"}</td>
-                <td><Typography component="span" sx={{ fontSize: 10, color: "warning.dark", background: "#FEF3C7", px: 1, borderRadius: 999 }}>Baseline needed</Typography></td>
+                <td><Typography component="span" sx={{ fontSize: 15, color: "warning.dark", background: "#FEF3C7", px: 1, borderRadius: 999 }}>Baseline needed</Typography></td>
               </tr>
             ))}
           </tbody>

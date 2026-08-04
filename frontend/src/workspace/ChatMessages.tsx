@@ -23,24 +23,22 @@ function renderMarkup(text: string) {
   return esc.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/\*(.+?)\*/g, "<em>$1</em>").replace(/\n/g, "<br>");
 }
 
-/** Avatar (38) + the row's gap (16). A block that suppresses its avatar pads by this instead,
- *  so its bubble still lines up with the one above it. */
-const AVATAR_LANE = 54;
-
-/** Kinds that are attributed to the agent and therefore carry an avatar. */
+/** Kinds that are attributed to the agent and carry its name. */
 const AGENT_ATTRIBUTED = new Set(["turn", "studio-ask"]);
 
-type Row = { item: ChatItem; texts: string[]; showAvatar: boolean };
+type Row = { item: ChatItem; texts: string[]; showName: boolean };
 
 /**
  * Collapse the transcript before rendering.
  *
- * Two things were making a single agent turn look like four separate speakers: consecutive
- * `turn` messages from the same agent each opened their own bubble with its own avatar and
- * name, and the ask that followed them opened yet another. Now consecutive turns from one
- * agent merge into a single bubble, and any agent-attributed block that follows another drops
- * its avatar. Since a stage has exactly one agent, "the previous block was also the agent" is
- * a sufficient test — there is no second speaker to disambiguate against.
+ * Consecutive `turn` messages from one agent used to each open their own bubble, and the ask
+ * that followed opened yet another — one agent reading as four speakers. Now those turns merge
+ * into a single bubble and only the first block in a run is captioned with the agent's name.
+ * Since a stage has exactly one agent, "the previous block was also the agent" is a sufficient
+ * test; there is no second speaker to disambiguate against.
+ *
+ * There is no avatar anywhere in the transcript: the pane header states who you are talking to
+ * once, and repeating that face beside every message added nothing.
  */
 function buildRows(items: ChatItem[]): Row[] {
   const rows: Row[] = [];
@@ -52,7 +50,7 @@ function buildRows(items: ChatItem[]): Row[] {
       continue;
     }
     const isAgent = AGENT_ATTRIBUTED.has(item.kind);
-    rows.push({ item, texts: [item.text ?? ""], showAvatar: isAgent && !prevWasAgent });
+    rows.push({ item, texts: [item.text ?? ""], showName: isAgent && !prevWasAgent });
     prevWasAgent = isAgent;
   }
   return rows;
@@ -85,7 +83,7 @@ export function ChatMessages({
 }) {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 4, py: 2.5 }}>
-      {buildRows(items).map(({ item, texts, showAvatar }) => {
+      {buildRows(items).map(({ item, texts, showName }) => {
         switch (item.kind) {
           case "user":
             return (
@@ -133,10 +131,9 @@ export function ChatMessages({
           case "turn": {
             const p = AGENT_PEOPLE[item.agentId ?? ""] ?? { c1: tokens.color.primary, name: item.agentId ?? "Agent" };
             return (
-              <Box key={item.id} sx={{ display: "flex", gap: 2, minWidth: 0, justifyContent: "flex-start" }}>
-                {showAvatar ? <AgentAvatar id={item.agentId ?? ""} /> : <Box sx={{ flex: `0 0 ${AVATAR_LANE - 16}px` }} />}
+              <Box key={item.id} sx={{ display: "flex", minWidth: 0, justifyContent: "flex-start" }}>
                 <TurnBubble accent={p.c1}>
-                  {showAvatar && (
+                  {showName && (
                     <Typography variant="caption" sx={{ fontWeight: 700, color: p.c1, display: "block", mb: 0.5 }}>
                       {p.name}
                     </Typography>
@@ -196,8 +193,7 @@ export function ChatMessages({
             // The ask is the agent speaking, so it sits in the same lane and the same bubble
             // as its turns -- it just happens to be a question with options rather than prose.
             return item.ask ? (
-              <Box key={item.id} sx={{ display: "flex", gap: 2, minWidth: 0, justifyContent: "flex-start" }}>
-                {showAvatar ? <AgentAvatar id="planning" /> : <Box sx={{ flex: `0 0 ${AVATAR_LANE - 16}px` }} />}
+              <Box key={item.id} sx={{ display: "flex", minWidth: 0, justifyContent: "flex-start" }}>
                 {/* TurnBubble is fit-content by default, which would shrink-wrap the option
                     rows; the ask needs the full lane so the options span it. */}
                 <TurnBubble accent={accent.primary} sx={{ flex: "1 1 auto", minWidth: 0, width: "100%", maxWidth: "100%" }}>

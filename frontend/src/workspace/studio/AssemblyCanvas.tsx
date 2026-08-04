@@ -10,7 +10,7 @@ import { styled } from "@mui/material/styles";
 import { tokens } from "../../theme/tokens";
 import { AgentAvatar } from "../Avatar";
 import { PlanDocument } from "../PlanDocument";
-import { SCROLL_TO_SECTION_EVENT } from "../PlanSectionsRail";
+import { SCROLL_TO_SECTION_EVENT, sectionTotal } from "../PlanSectionsRail";
 import { STAGE_AGENTS } from "../types";
 import type { StudioState } from "./studioTypes";
 
@@ -39,7 +39,7 @@ const GroundChip = styled("span")({
   display: "inline-flex",
   alignItems: "center",
   gap: 5,
-  fontSize: 10.5,
+  fontSize: 15,
   fontWeight: 600,
   color: tokens.color.primary,
   background: tokens.color.primaryContainer,
@@ -69,7 +69,10 @@ const ProgressFill = styled("div")({
 export function AssemblyCanvas({ studio, onSkip }: { studio: StudioState; onSkip: () => void }) {
   const built = studio.sections.length;
   const activeDisplayNum = built + 1;
-  const pct = studio.total > 0 ? Math.round((built / studio.total) * 100) : 0;
+  // Section count, not `studio.total` (the 19-step SEQUENCE, 8 of which are ask-only and
+  // emit no section) -- see sectionTotal in PlanSectionsRail.
+  const total = sectionTotal(studio);
+  const pct = total > 0 ? Math.round((built / total) * 100) : 0;
   const latestSection = built > 0 ? studio.sections[built - 1] : null;
 
   // null = "follow live" (whatever's currently drafting, or the most recently landed section).
@@ -127,7 +130,7 @@ export function AssemblyCanvas({ studio, onSkip }: { studio: StudioState; onSkip
                 flex: 1,
               }}
             >
-              {studio.done ? "Plan canvas" : "Building your plan — live"} · {built}/{studio.total}
+              {studio.done ? "Plan canvas" : "Building your plan — live"} · {built}/{total}
             </Typography>
             {viewingPinned && !showingLatestWhilePinned && (
               <Button
@@ -188,7 +191,7 @@ export function AssemblyCanvas({ studio, onSkip }: { studio: StudioState; onSkip
                 <Box
                   component="span"
                   sx={{
-                    fontSize: 10,
+                    fontSize: 15,
                     fontWeight: 700,
                     letterSpacing: "0.07em",
                     color: "#fff",
@@ -252,7 +255,7 @@ export function AssemblyCanvas({ studio, onSkip }: { studio: StudioState; onSkip
 
           {studio.done && !viewingPinned && (
             <Typography variant="body2" sx={{ color: "success.main", fontWeight: 600, textAlign: "center", mt: 1 }}>
-              ✓ All {studio.total} sections assembled.
+              ✓ All {total} sections assembled.
             </Typography>
           )}
         </Box>

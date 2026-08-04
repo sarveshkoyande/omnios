@@ -112,13 +112,13 @@ function BarList({ rows, onOpen }: { rows: Array<{ label: string; count: number 
           }}
           sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "220px 1fr 74px" }, gap: 1, alignItems: "center", borderRadius: 1, px: 0.75, py: 0.25, ...clickableSx(Boolean(onOpen)) }}
         >
-          <Typography sx={{ fontSize: 13, color: "text.secondary", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          <Typography sx={{ fontSize: 15, color: "text.secondary", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {row.label}
           </Typography>
           <Box sx={{ height: 12, borderRadius: 999, background: indigoTint(0.08), overflow: "hidden" }}>
             <Box sx={{ width: `${Math.max(3, (row.count / max) * 100)}%`, height: "100%", background: tokens.color.primary }} />
           </Box>
-          <Typography sx={{ fontSize: 13, fontWeight: 800, textAlign: { xs: "left", md: "right" } }}>{fmt.format(row.count)}</Typography>
+          <Typography sx={{ fontSize: 15, fontWeight: 800, textAlign: { xs: "left", md: "right" } }}>{fmt.format(row.count)}</Typography>
         </Box>
       ))}
     </Box>
@@ -133,7 +133,7 @@ function CoverageTable({ rows, onOpen }: { rows: PharmaIntelSummary["top_brands"
         <Box component="thead">
           <Box component="tr" sx={{ borderBottom: `1px solid ${tokens.color.outline}` }}>
             {["Brand", "Total", "Labels", "Trials", "PubMed", "ASCO", "Awards", "SEC", "OpenPay", "FAERS", "Shortage", "Recall", "NDC", "RxNorm", "SrLC", "NCI", "NCI use"].map((h) => (
-              <Box component="th" key={h} sx={{ textAlign: h === "Brand" ? "left" : "right", py: 1, px: 1, fontSize: 12, color: "text.secondary" }}>
+              <Box component="th" key={h} sx={{ textAlign: h === "Brand" ? "left" : "right", py: 1, px: 1, fontSize: 15, color: "text.secondary" }}>
                 {h}
               </Box>
             ))}
@@ -164,7 +164,7 @@ function CoverageTable({ rows, onOpen }: { rows: PharmaIntelSummary["top_brands"
                     <Box sx={{ flex: 1, height: 10, borderRadius: 999, background: indigoTint(0.08), overflow: "hidden" }}>
                       <Box sx={{ width: `${Math.max(4, (total / max) * 100)}%`, height: "100%", background: tokens.color.secondary }} />
                     </Box>
-                    <Typography sx={{ fontSize: 13, fontWeight: 800, width: 42, textAlign: "right" }}>{fmt.format(total)}</Typography>
+                    <Typography sx={{ fontSize: 15, fontWeight: 800, width: 42, textAlign: "right" }}>{fmt.format(total)}</Typography>
                   </Box>
                 </Box>
                 {[
@@ -184,7 +184,7 @@ function CoverageTable({ rows, onOpen }: { rows: PharmaIntelSummary["top_brands"
                   row.nci_drug_dictionary_count,
                   row.nci_drug_info_summary_count,
                 ].map((value, idx) => (
-                  <Box component="td" key={idx} sx={{ py: 1.1, px: 1, textAlign: "right", fontSize: 13, fontWeight: 700 }}>
+                  <Box component="td" key={idx} sx={{ py: 1.1, px: 1, textAlign: "right", fontSize: 15, fontWeight: 700 }}>
                     {fmt.format(Number(value || 0))}
                   </Box>
                 ))}
@@ -214,7 +214,7 @@ function ArtifactViewer({
     <Dialog open={Boolean(drilldown)} onClose={onClose} fullWidth maxWidth="lg">
       <Box sx={{ p: 3, pb: 2, borderBottom: `1px solid ${tokens.color.outline}`, position: "relative" }}>
         <Typography variant="h2" sx={{ pr: 5 }}>{data?.title || drilldown?.title || "Artifacts"}</Typography>
-        <Typography sx={{ color: "text.secondary", mt: 0.75, fontSize: 13 }}>
+        <Typography sx={{ color: "text.secondary", mt: 0.75, fontSize: 15 }}>
           Representative scraped records from the pharma intelligence warehouse.
         </Typography>
         <IconButton onClick={onClose} aria-label="Close" sx={{ position: "absolute", top: 14, right: 14 }}>
@@ -235,10 +235,10 @@ function ArtifactViewer({
             <Box sx={{ display: "flex", gap: 1.5, alignItems: "flex-start", justifyContent: "space-between" }}>
               <Box sx={{ minWidth: 0 }}>
                 <Typography sx={{ fontWeight: 800, overflowWrap: "anywhere" }}>{item.title}</Typography>
-                {item.subtitle && <Typography sx={{ color: "text.secondary", fontSize: 12, mt: 0.5, overflowWrap: "anywhere" }}>{item.subtitle}</Typography>}
+                {item.subtitle && <Typography sx={{ color: "text.secondary", fontSize: 15, mt: 0.5, overflowWrap: "anywhere" }}>{item.subtitle}</Typography>}
               </Box>
               {item.url && (
-                <Link href={item.url} target="_blank" rel="noreferrer" sx={{ flex: "0 0 auto", fontSize: 12, fontWeight: 700 }}>
+                <Link href={item.url} target="_blank" rel="noreferrer" sx={{ flex: "0 0 auto", fontSize: 15, fontWeight: 700 }}>
                   Source
                 </Link>
               )}
@@ -247,8 +247,8 @@ function ArtifactViewer({
               <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, mt: 1.5 }}>
                 {Object.entries(item.metadata).map(([key, value]) => (
                   <Box key={key} sx={{ border: `1px solid ${indigoTint(0.14)}`, background: indigoTint(0.045), borderRadius: 1, px: 1, py: 0.5 }}>
-                    <Typography component="span" sx={{ fontSize: 11, color: "text.secondary", mr: 0.5 }}>{key}</Typography>
-                    <Typography component="span" sx={{ fontSize: 11, fontWeight: 800 }}>{String(value)}</Typography>
+                    <Typography component="span" sx={{ fontSize: 15, color: "text.secondary", mr: 0.5 }}>{key}</Typography>
+                    <Typography component="span" sx={{ fontSize: 15, fontWeight: 800 }}>{String(value)}</Typography>
                   </Box>
                 ))}
               </Box>
@@ -261,7 +261,7 @@ function ArtifactViewer({
                 whiteSpace: "pre-wrap",
                 overflowWrap: "anywhere",
                 fontFamily: "Consolas, 'Courier New', monospace",
-                fontSize: 12,
+                fontSize: 15,
                 lineHeight: 1.55,
                 maxHeight: 340,
                 overflowY: "auto",
@@ -348,20 +348,20 @@ function CogneeQaPanel() {
         <Box>
           <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 1.5 }}>
             <Box sx={{ border: `1px solid ${tokens.color.outline}`, borderRadius: 1, px: 1, py: 0.5, background: status?.health.enabled ? indigoTint(0.05) : "#fff" }}>
-              <Typography sx={{ fontSize: 12, fontWeight: 800 }}>Enabled: {String(status?.health.enabled ?? false)}</Typography>
+              <Typography sx={{ fontSize: 15, fontWeight: 800 }}>Enabled: {String(status?.health.enabled ?? false)}</Typography>
             </Box>
             <Box sx={{ border: `1px solid ${tokens.color.outline}`, borderRadius: 1, px: 1, py: 0.5, background: status?.health.graph_ready ? "rgba(16,185,129,0.08)" : "rgba(245,158,11,0.08)" }}>
-              <Typography sx={{ fontSize: 12, fontWeight: 800 }}>Graph ready: {String(status?.health.graph_ready ?? false)}</Typography>
+              <Typography sx={{ fontSize: 15, fontWeight: 800 }}>Graph ready: {String(status?.health.graph_ready ?? false)}</Typography>
             </Box>
           </Box>
-          <Typography sx={{ color: "text.secondary", fontSize: 13, mb: 2 }}>
+          <Typography sx={{ color: "text.secondary", fontSize: 15, mb: 2 }}>
             {status?.health.note ?? "Checking Cognee status..."}
           </Typography>
           <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1, mb: 1.5 }}>
             <Box component="input" value={brand} onChange={(event) => setBrand(event.target.value)} placeholder="Brand" style={{ padding: 10, border: `1px solid ${tokens.color.outline}`, borderRadius: 8 }} />
             <Box component="input" value={therapyArea} onChange={(event) => setTherapyArea(event.target.value)} placeholder="Therapy area" style={{ padding: 10, border: `1px solid ${tokens.color.outline}`, borderRadius: 8 }} />
           </Box>
-          <Typography sx={{ fontSize: 12, fontWeight: 800, mb: 1 }}>Topics to probe</Typography>
+          <Typography sx={{ fontSize: 15, fontWeight: 800, mb: 1 }}>Topics to probe</Typography>
           <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap", mb: 2 }}>
             {(status?.topics ?? []).map((topic) => {
               const checked = selectedTopics.includes(topic.key);
@@ -371,7 +371,7 @@ function CogneeQaPanel() {
                   role="button"
                   tabIndex={0}
                   onClick={() => toggleTopic(topic.key)}
-                  sx={{ px: 1, py: 0.5, borderRadius: 999, border: `1px solid ${checked ? tokens.color.primary : tokens.color.outline}`, background: checked ? indigoTint(0.08) : "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
+                  sx={{ px: 1, py: 0.5, borderRadius: 999, border: `1px solid ${checked ? tokens.color.primary : tokens.color.outline}`, background: checked ? indigoTint(0.08) : "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer" }}
                 >
                   {topic.key}
                 </Box>
@@ -381,7 +381,7 @@ function CogneeQaPanel() {
           <Box component="button" disabled={busy || selectedTopics.length === 0} onClick={runProbe} style={{ padding: "9px 14px", borderRadius: 8, border: 0, background: tokens.color.primary, color: "#fff", fontWeight: 800, cursor: "pointer" }}>
             {busy ? "Running..." : "Run request probe"}
           </Box>
-          {probe && <Typography sx={{ fontSize: 12, color: "text.secondary", mt: 1 }}>Probe finished in {probe.elapsed_ms} ms.</Typography>}
+          {probe && <Typography sx={{ fontSize: 15, color: "text.secondary", mt: 1 }}>Probe finished in {probe.elapsed_ms} ms.</Typography>}
           {error && <Typography sx={{ color: tokens.color.danger, mt: 1 }}>{error}</Typography>}
         </Box>
 
@@ -391,20 +391,20 @@ function CogneeQaPanel() {
             <>
               <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap", mb: 1.5 }}>
                 {probe.topics.map((topic) => (
-                  <Box key={topic.topic} role="button" tabIndex={0} onClick={() => setActiveTopic(topic.topic)} sx={{ px: 1, py: 0.5, borderRadius: 1, border: `1px solid ${active?.topic === topic.topic ? tokens.color.primary : tokens.color.outline}`, background: topic.has_guidance ? indigoTint(0.05) : "rgba(245,158,11,0.06)", cursor: "pointer", fontSize: 12, fontWeight: 800 }}>
+                  <Box key={topic.topic} role="button" tabIndex={0} onClick={() => setActiveTopic(topic.topic)} sx={{ px: 1, py: 0.5, borderRadius: 1, border: `1px solid ${active?.topic === topic.topic ? tokens.color.primary : tokens.color.outline}`, background: topic.has_guidance ? indigoTint(0.05) : "rgba(245,158,11,0.06)", cursor: "pointer", fontSize: 15, fontWeight: 800 }}>
                     {topic.topic} {topic.has_guidance ? "" : "(empty)"}
                   </Box>
                 ))}
               </Box>
               {active && (
                 <Box>
-                  <Typography sx={{ fontSize: 12, fontWeight: 800, mb: 0.5 }}>Request query</Typography>
-                  <Typography sx={{ fontSize: 12, color: "text.secondary", mb: 1.25 }}>{active.query}</Typography>
-                  <Typography sx={{ fontSize: 12, fontWeight: 800, mb: 0.5 }}>Extracted guidance</Typography>
-                  <Box component="pre" sx={{ whiteSpace: "pre-wrap", fontSize: 12, lineHeight: 1.5, maxHeight: 240, overflow: "auto", border: `1px solid ${tokens.color.outline}`, borderRadius: 1, p: 1.25, background: "#fff" }}>
+                  <Typography sx={{ fontSize: 15, fontWeight: 800, mb: 0.5 }}>Request query</Typography>
+                  <Typography sx={{ fontSize: 15, color: "text.secondary", mb: 1.25 }}>{active.query}</Typography>
+                  <Typography sx={{ fontSize: 15, fontWeight: 800, mb: 0.5 }}>Extracted guidance</Typography>
+                  <Box component="pre" sx={{ whiteSpace: "pre-wrap", fontSize: 15, lineHeight: 1.5, maxHeight: 240, overflow: "auto", border: `1px solid ${tokens.color.outline}`, borderRadius: 1, p: 1.25, background: "#fff" }}>
                     {active.guidance || "No Cognee guidance returned for this topic/request."}
                   </Box>
-                  <Typography sx={{ fontSize: 12, fontWeight: 800, mt: 1.5, mb: 0.75 }}>Feedback for future requests</Typography>
+                  <Typography sx={{ fontSize: 15, fontWeight: 800, mt: 1.5, mb: 0.75 }}>Feedback for future requests</Typography>
                   <Box component="textarea" value={feedback} onChange={(event) => setFeedback(event.target.value)} placeholder="What is wrong or missing in this extraction?" style={{ width: "100%", minHeight: 68, padding: 10, border: `1px solid ${tokens.color.outline}`, borderRadius: 8, resize: "vertical" }} />
                   <Box component="textarea" value={expected} onChange={(event) => setExpected(event.target.value)} placeholder="Expected correction / better guidance" style={{ width: "100%", minHeight: 68, padding: 10, marginTop: 8, border: `1px solid ${tokens.color.outline}`, borderRadius: 8, resize: "vertical" }} />
                   <Box sx={{ display: "flex", gap: 1, alignItems: "center", mt: 1 }}>
@@ -425,9 +425,9 @@ function CogneeQaPanel() {
       </Box>
       {(status?.feedback ?? []).length > 0 && (
         <Box sx={{ mt: 2.5, pt: 2, borderTop: `1px solid ${tokens.color.outline}` }}>
-          <Typography sx={{ fontSize: 12, fontWeight: 800, mb: 1 }}>Recent feedback overlay</Typography>
+          <Typography sx={{ fontSize: 15, fontWeight: 800, mb: 1 }}>Recent feedback overlay</Typography>
           {(status?.feedback ?? []).slice(0, 5).map((item) => (
-            <Typography key={item.id} sx={{ fontSize: 12, color: "text.secondary", mb: 0.5 }}>
+            <Typography key={item.id} sx={{ fontSize: 15, color: "text.secondary", mb: 0.5 }}>
               <b>{item.topic}</b>: {item.feedback}
             </Typography>
           ))}
@@ -494,7 +494,7 @@ function TableSkeleton({ rows = 6 }: { rows?: number }) {
 }
 
 function SectionError({ error }: { error: string }) {
-  return <Typography sx={{ color: tokens.color.danger, fontSize: 13 }}>{error}</Typography>;
+  return <Typography sx={{ color: tokens.color.danger, fontSize: 15 }}>{error}</Typography>;
 }
 
 export function Artefacts() {

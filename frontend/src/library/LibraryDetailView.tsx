@@ -33,7 +33,7 @@ const GalleryTile = styled("figure")(({ theme }) => ({
   "&:hover": { transform: "translateY(-2px)", boxShadow: glass.shadowElevated },
   "& img": { display: "block", width: "100%", height: 120, objectFit: "contain", background: "#fff", padding: theme.spacing(1.5) },
   "& figcaption": {
-    fontSize: 10.5,
+    fontSize: 15,
     color: tokens.color.inkSoft,
     padding: theme.spacing(1, 1.5),
     borderTop: `1px solid ${indigoTint(0.1)}`,
@@ -75,7 +75,7 @@ export function LibraryDetailView({
         <Button variant="outlined" onClick={onBack}>← All brands</Button>
         <Box sx={{ flex: 1, minWidth: 220 }}>
           <Typography variant="h1" sx={{ fontSize: 24 }}>
-            {detail.brand} <Typography component="span" sx={{ fontSize: 14, color: "text.secondary", fontWeight: 400 }}>{detail.generic}</Typography>
+            {detail.brand} <Typography component="span" sx={{ fontSize: 15, color: "text.secondary", fontWeight: 400 }}>{detail.generic}</Typography>
           </Typography>
           <Typography variant="body2" sx={{ color: "text.secondary" }}>
             {detail.client} · {detail.therapy_area} · {detail.indications.length} indication{detail.indications.length === 1 ? "" : "s"}
@@ -85,7 +85,7 @@ export function LibraryDetailView({
           {[["claims", c.claims], ["approved", c.approved], ["modules", c.modules], ["images", c.images]].map(([label, n]) => (
             <Box key={label as string} sx={{ textAlign: "center" }}>
               <Typography sx={{ fontSize: 19, fontWeight: 800, color: "primary.dark" }}>{n}</Typography>
-              <Typography sx={{ fontSize: 10, color: "text.secondary", textTransform: "uppercase" }}>{label}</Typography>
+              <Typography sx={{ fontSize: 15, color: "text.secondary", textTransform: "uppercase" }}>{label}</Typography>
             </Box>
           ))}
         </Box>

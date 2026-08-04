@@ -183,6 +183,20 @@ def _flow_skeleton(ctx: dict, segments: list[dict], wait_days: int) -> dict:
     return {"nodes": flow["nodes"], "edges": flow["edges"]}
 
 
+def _primary_channel(flow: dict, fallback: str = "Email") -> str:
+    """The journey's own send channel: the first node that actually carries one.
+
+    Not `nodes[0]` — the flow opens with an entry node, which has no channel. Reading
+    position 0 blind raised KeyError inside build_campaign_plan, and every caller wraps
+    that in a bare except, so the whole plan silently collapsed to {}: the brief lost the
+    user's audience segments, the journey map and the deliverables table in one go."""
+    for node in flow.get("nodes") or []:
+        channel = (node.get("data") or {}).get("channel")
+        if channel:
+            return channel
+    return fallback
+
+
 def _operational_defaults(ctx: dict, segments: list[dict], wait_days: int, primary_channel: str) -> dict:
     persona = (ctx.get("inferred") or {}).get("persona", "the target persona")
     entry_criteria = [
@@ -223,7 +237,7 @@ def _llm_fill_operational_detail(ctx: dict, skeleton: dict, segments: list[dict]
         client = conversation_llm._get_client()
         brand = ctx.get("brand", "the brand")
         therapy_area = ctx.get("therapy_area", "")
-        primary_channel = skeleton["nodes"][0]["data"]["channel"]
+        primary_channel = _primary_channel(skeleton, _panel_channel(ctx))
         seg_names = ", ".join(s["name"] for s in segments) or "no named segments"
         sys_prompt = (
             "You write operational copy for a pharma omnichannel engagement-journey diagram, in the "
@@ -270,7 +284,7 @@ def build_campaign_plan(ctx: dict, use_llm: bool = True) -> dict:
 
     wait_days = _DEFAULT_WAIT_DAYS
     flow = _flow_skeleton(ctx, segments_raw, wait_days)
-    primary_channel = flow["nodes"][0]["data"]["channel"]
+    primary_channel = _primary_channel(flow, _panel_channel(ctx))
     op = _operational_defaults(ctx, segments_raw, wait_days, primary_channel)
 
     if use_llm:
