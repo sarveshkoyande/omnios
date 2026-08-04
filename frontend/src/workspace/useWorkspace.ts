@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   applyPersonaFeedback,
+  bootstrapAgentBrief,
   closeUpdates,
   createProject,
   deleteProject,
@@ -39,7 +40,7 @@ import { campaignFlowToDocument } from "./stages/operations/campaignAdapter";
 // instructions first. `artifactRefresh` is a per-stage counter Stage components watch to
 // know when to refetch after a kickoff-triggered generation (they own their own fetch, this
 // just tells them "go again").
-const KICKOFF_STAGES = new Set<StageAgentId>(["orchestration", "operations"]);
+const KICKOFF_STAGES = new Set<StageAgentId>(["orchestration", "operations", "reporting"]);
 
 // Stage 1 (Planning & Strategy) keeps the existing global `items` thread (the automated
 // run's live narration + interactive chat, unchanged). Stages 2-4 are new: each gets its
@@ -666,6 +667,46 @@ export function useWorkspace() {
     await openProject(proj.id);
   }, [openProject, refreshProjects]);
 
+  const absorbProject = useCallback((proj: Awaited<ReturnType<typeof getProject>>) => {
+    setSlots(proj.state.slots);
+    setResult(proj.result);
+    setPlanHtml(proj.plan_html);
+    setPlanMarkdown(proj.plan_markdown);
+    if (proj.name && proj.name !== projectName) setProjectName(proj.name);
+    hasResultRef.current = !!proj.result;
+  }, [projectName]);
+
+  const applyDirectBrief = useCallback(
+    async (stageId: StageAgentId, briefText: string, sourceName?: string | null) => {
+      if (!projectId) return;
+      const appendAgentMsg = (text: string) =>
+        setTabChatItems((prev) => ({
+          ...prev,
+          [stageId]: [...(prev[stageId] || []), { id: nextId(), kind: "agent", agentId: stageId, text }],
+        }));
+      try {
+        const data = await bootstrapAgentBrief(projectId, stageId, briefText, sourceName);
+        absorbProject(data.project);
+        if (stageId === "operations" && data.flow) {
+          const doc = campaignFlowToDocument(data.flow);
+          await saveCampaignFlowDocument(projectId, doc);
+          useWorkflowStore.getState().loadDocument(doc);
+        }
+        appendAgentMsg(data.reply);
+        setArtifactRefresh((prev) => ({
+          ...prev,
+          planning: prev.planning + 1,
+          [stageId]: (prev[stageId] ?? 0) + 1,
+        }));
+        refreshProjects();
+      } catch (err) {
+        console.error("direct brief kickoff failed", err);
+        appendAgentMsg("Couldn't build from that brief. Add the brand, audience, objective and channel context, then try again.");
+      }
+    },
+    [absorbProject, projectId, refreshProjects],
+  );
+
   // Builds Stage 2's task checklist or Stage 3's campaign flow on demand -- called from the
   // kickoff card ("Use the Stage 1 plan", extra === null) or after the user follows up with
   // typed instructions / an uploaded document while a kickoff is awaiting input (extra is
@@ -714,6 +755,38 @@ export function useWorkspace() {
     [projectId],
   );
 
+  const runSequentialFlow = useCallback(async () => {
+    if (!projectId || !hasResultRef.current) return;
+    setBusy(true);
+    try {
+      setStage(2);
+      setTypingAuthor("orchestration");
+      await applyKickoffContext("orchestration", null);
+      setStage(3);
+      setTypingAuthor("operations");
+      await applyKickoffContext("operations", null);
+      setStage(4);
+      setTypingAuthor("reporting");
+      setTabChatItems((prev) => ({
+        ...prev,
+        reporting: [
+          ...(prev.reporting || []),
+          {
+            id: nextId(),
+            kind: "agent",
+            agentId: "reporting",
+            text: "Measurement and reporting are ready from the completed plan.",
+          },
+        ],
+      }));
+      setArtifactRefresh((prev) => ({ ...prev, reporting: prev.reporting + 1 }));
+      refreshProjects();
+    } finally {
+      setBusy(false);
+      setTypingAuthor(null);
+    }
+  }, [applyKickoffContext, projectId, refreshProjects]);
+
   const onKickoffUsePlan = useCallback(
     async (itemId: string, stageId: StageAgentId) => {
       setTabChatItems((prev) => ({
@@ -743,6 +816,10 @@ export function useWorkspace() {
       setBusy(true);
       setTypingAuthor(stageId);
       try {
+        if (!hasResultRef.current) {
+          await applyDirectBrief(stageId, text);
+          return;
+        }
         if (kickoffAwaitingInput === stageId) {
           setTabChatItems((prev) => ({
             ...prev,
@@ -795,7 +872,7 @@ export function useWorkspace() {
         setTypingAuthor(null);
       }
     },
-    [projectId, stage, kickoffAwaitingInput, applyKickoffContext],
+    [projectId, stage, kickoffAwaitingInput, applyKickoffContext, applyDirectBrief],
   );
 
   const sendMessage = useCallback(
@@ -878,6 +955,10 @@ export function useWorkspace() {
       setTypingAuthor(stageId);
       try {
         const { text } = await extractProjectText(projectId, file);
+        if (!hasResultRef.current) {
+          await applyDirectBrief(stageId, text, file.name);
+          return;
+        }
         if (kickoffAwaitingInput === stageId) {
           setTabChatItems((prev) => ({
             ...prev,
@@ -907,7 +988,7 @@ export function useWorkspace() {
         setTypingAuthor(null);
       }
     },
-    [projectId, busy, kickoffAwaitingInput, applyKickoffContext],
+    [projectId, busy, kickoffAwaitingInput, applyKickoffContext, applyDirectBrief],
   );
 
   // Composer's single upload button is shared across all four stage tabs -- Stage 1 fills
@@ -1081,6 +1162,7 @@ export function useWorkspace() {
     kickoffAwaitingStage: kickoffAwaitingInput,
     onKickoffUsePlan,
     onKickoffWantUpload,
+    runSequentialFlow,
     artifactRefresh,
     submitIntake,
     setShowIntake,

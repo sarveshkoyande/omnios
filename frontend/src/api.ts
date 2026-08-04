@@ -309,6 +309,27 @@ export async function postTabChat(
   return res.json();
 }
 
+export async function bootstrapAgentBrief(
+  projectId: string,
+  stageId: string,
+  briefText: string,
+  sourceName?: string | null,
+): Promise<{
+  reply: string;
+  project: ProjectDetail;
+  tasks?: OrchestrationTask[] | null;
+  flow?: CampaignFlow | null;
+  extracted?: BriefExtractItem[];
+}> {
+  const res = await fetch(`/api/projects/${encodeURIComponent(projectId)}/agent-brief`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ stage_id: stageId, brief_text: briefText, source_name: sourceName ?? null }),
+  });
+  if (!res.ok) throw new Error(`POST agent-brief -> ${res.status}`);
+  return res.json();
+}
+
 export async function fetchPersonaOffer(projectId: string): Promise<PersonaOffer> {
   const res = await fetch(`/api/personas?project_id=${encodeURIComponent(projectId)}`);
   if (!res.ok) throw new Error(`GET /api/personas -> ${res.status}`);

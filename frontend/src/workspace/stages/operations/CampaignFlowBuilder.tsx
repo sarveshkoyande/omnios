@@ -20,8 +20,13 @@ import { AgentWorkingOverlay } from "./flowbuilder/AgentWorkingOverlay";
 import { exportCanvasImage } from "./flowbuilder/io/image";
 import { useWorkflowStore } from "./flowbuilder/store/useWorkflowStore";
 import { parseDocument } from "./flowbuilder/schema";
+import { autoLayoutPage } from "./flowbuilder/layout/autoLayout";
 import { tokens, glassFallback, indigoTint } from "../../../theme/tokens";
 import { accent } from "../../../theme/stageTheme";
+import { getProject, pushSfmcJourney, regenerateCampaignFlowDocument, saveCampaignFlowDocument } from "../../../api";
+import { applyCampaignNodeVisuals, campaignFlowToDocument } from "./campaignAdapter";
+import type { CampaignFlow } from "../../types";
+import type { WorkflowDocument } from "./flowbuilder/schema/document";
 
 // The two primary toolbar actions follow the stage accent (red on Campaign Operations) rather
 // than the app blue. This toolbar renders inside the workspace subtree where stageVars() sets
@@ -31,9 +36,14 @@ const STAGE_ACTION_SX = {
   backgroundColor: accent.primary,
   "&:hover": { backgroundColor: accent.primaryDark },
 } as const;
-import { getProject, pushSfmcJourney, regenerateCampaignFlowDocument, saveCampaignFlowDocument } from "../../../api";
-import { campaignFlowToDocument } from "./campaignAdapter";
-import type { CampaignFlow } from "../../types";
+
+async function layoutCampaignDocument(doc: WorkflowDocument): Promise<WorkflowDocument> {
+  const page = doc.pages[0];
+  if (!page) return doc;
+  const normalizedPage = { ...page, nodes: page.nodes.map(applyCampaignNodeVisuals) };
+  const laidOutPage = await autoLayoutPage(normalizedPage, doc.direction);
+  return { ...doc, pages: doc.pages.map((p, i) => (i === 0 ? laidOutPage : p)) };
+}
 
 // Replaces the old CampaignFlowCanvas.tsx. Same public contract (projectId + base
 // flow); internally it's the general-purpose Section-3 workflow builder (see
@@ -376,16 +386,30 @@ function BuilderShell({
   // previously-saved WorkflowDocument if one exists for this project.
   useLayoutEffect(() => {
     loadedRef.current = false;
-    loadDocument(campaignFlowToDocument(flow));
-    if (!projectId) { loadedRef.current = true; return; }
-    getProject(projectId).then((proj) => {
-      const saved = proj.campaign_plan_layout;
-      const result = saved && parseDocument(saved);
-      if (result && result.ok) {
-        loadDocument(result.document);
+    let cancelled = false;
+    const seed = campaignFlowToDocument(flow);
+    loadDocument(seed);
+
+    const loadLaidOutDocument = async () => {
+      try {
+        let next = seed;
+        if (projectId) {
+          const proj = await getProject(projectId);
+          const saved = proj.campaign_plan_layout;
+          const result = saved && parseDocument(saved);
+          if (result && result.ok) next = result.document;
+        }
+        const laidOut = await layoutCampaignDocument(next);
+        if (!cancelled) loadDocument(laidOut);
+      } catch {
+        if (!cancelled) loadDocument(seed);
+      } finally {
+        if (!cancelled) loadedRef.current = true;
       }
-      loadedRef.current = true;
-    }).catch(() => { loadedRef.current = true; });
+    };
+
+    void loadLaidOutDocument();
+    return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId]);
 
@@ -409,8 +433,9 @@ function BuilderShell({
       if (data.document) {
         const parsed = parseDocument(data.document);
         if (parsed.ok) {
-          loadDocument(parsed.document);
-          await saveCampaignFlowDocument(projectId, parsed.document);
+          const laidOut = await layoutCampaignDocument(parsed.document);
+          loadDocument(laidOut);
+          await saveCampaignFlowDocument(projectId, laidOut);
           applied = true;
         }
       }
@@ -418,7 +443,7 @@ function BuilderShell({
         // The backend always supplies this complete plan-derived fallback when the AI
         // redraw cannot return a valid WorkflowDocument. Convert it through the same
         // adapter used by the initial Stage 3 generation, then persist the result now.
-        const regenerated = campaignFlowToDocument(data.flow);
+        const regenerated = await layoutCampaignDocument(campaignFlowToDocument(data.flow));
         loadDocument(regenerated);
         await saveCampaignFlowDocument(projectId, regenerated);
         applied = true;

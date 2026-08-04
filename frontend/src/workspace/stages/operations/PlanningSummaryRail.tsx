@@ -106,39 +106,18 @@ export function PlanningSummaryRail({ plan }: { plan: CampaignPlan }) {
   const liveNodes = page && page.nodes.length > 0 ? journeyOrder(page) : null;
   const docDescription = document.description.trim();
 
-  const primarySegment = plan.segments[0];
-  const liveTrigger = liveNodes?.find((n) => fieldValue(n, "campaignStepKind") === "send");
-  const staticTrigger = plan.flow.nodes.find((n) => n.type === "send");
   const liveGoal = findMatchingText(page, /\b(goal|objective)\b/i) ?? (docDescription || plan.overview.objective);
-  const liveAudienceNote = findMatchingText(page, /\b(audience|segment)\b/i);
   const liveSummary = findMatchingText(page, /\bsummary\b/i) ?? (docDescription || plan.summary);
-  const triggerText = liveTrigger
-    ? `${fieldValue(liveTrigger, "detail") || liveTrigger.label} via ${fieldValue(liveTrigger, "channel") || plan.overview.primary_channel}.`
-    : staticTrigger
-      ? `${staticTrigger.data.detail || staticTrigger.data.label} via ${plan.overview.primary_channel}.`
-      : "N/A";
 
-  const audienceSegments = liveNodes?.length
-    ? liveNodes
-        .filter((n) => fieldValue(n, "campaignStepKind") === "followup")
-        .map((n) => {
-          const segmentKey = String(fieldValue(n, "segment_key") ?? "");
-          const matched = plan.segments.find((s) => s.key === segmentKey || s.name === n.label);
-          return {
-            key: n.id,
-            name: n.label,
-            volume: matched?.volume ?? null,
-            volume_note: matched?.volume_note ?? null,
-            volume_exact: matched?.volume_exact ?? false,
-          };
-        })
-    : plan.segments.map((s) => ({
-        key: s.key,
-        name: s.name,
-        volume: s.volume,
-        volume_note: s.volume_note ?? null,
-        volume_exact: s.volume_exact ?? false,
-      }));
+  const audienceSegments = plan.segments.map((s) => ({
+    key: s.key,
+    name: s.name,
+    profile: s.profile,
+    key_characteristics: s.key_characteristics ?? [],
+    volume: s.volume,
+    volume_note: s.volume_note ?? null,
+    volume_exact: s.volume_exact ?? false,
+  }));
 
   return (
     <ConsolePanel title="Planning summary" icon="fact_check" collapsible>
@@ -148,7 +127,7 @@ export function PlanningSummaryRail({ plan }: { plan: CampaignPlan }) {
           gridTemplateColumns: {
             xs: "1fr",
             md: "repeat(2, minmax(0, 1fr))",
-            xl: "1.05fr 1.05fr 0.9fr 1.2fr",
+            xl: "1fr 1.35fr",
           },
           gap: 2,
           alignItems: "start",
@@ -166,34 +145,51 @@ export function PlanningSummaryRail({ plan }: { plan: CampaignPlan }) {
               {audienceSegments.map((s) => (
                 <Box key={s.key} sx={{ borderLeft: `3px solid ${indigoTint(0.45)}`, pl: 1.25, minWidth: 0 }}>
                   <Typography variant="body2" sx={{ fontWeight: 700, lineHeight: 1.3, overflowWrap: "anywhere" }}>
-                    {s.name}{s.volume ? ` Â· ${s.volume_exact ? "" : "~"}${s.volume.toLocaleString()}` : ""}
+                    {s.name}{s.volume ? ` - ${s.volume_exact ? "" : "~"}${s.volume.toLocaleString()}` : ""}
                   </Typography>
+                  {s.profile && (
+                    <Typography variant="caption" sx={{ color: "text.secondary", display: "block", lineHeight: 1.45, overflowWrap: "anywhere" }}>
+                      {s.profile}
+                    </Typography>
+                  )}
                   {s.volume_note && (
                     <Typography variant="caption" sx={{ color: "text.secondary", display: "block", lineHeight: 1.45, overflowWrap: "anywhere" }}>
                       {s.volume_note}
                     </Typography>
                   )}
+                  {s.key_characteristics.length > 0 && (
+                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mt: 0.75 }}>
+                      {s.key_characteristics.slice(0, 4).map((tag) => (
+                        <Box
+                          key={tag}
+                          component="span"
+                          sx={{
+                            px: 0.75,
+                            py: 0.25,
+                            borderRadius: 999,
+                            border: `1px solid ${indigoTint(0.12)}`,
+                            background: "rgba(255,255,255,0.74)",
+                            color: "text.secondary",
+                            fontSize: tokens.fontSize.xs,
+                            lineHeight: 1.35,
+                          }}
+                        >
+                          {tag}
+                        </Box>
+                      ))}
+                    </Box>
+                  )}
                 </Box>
               ))}
-              {liveAudienceNote && (
-                <Typography variant="caption" sx={{ color: "text.secondary", lineHeight: 1.45, overflowWrap: "anywhere" }}>
-                  {liveAudienceNote}
-                </Typography>
-              )}
             </Box>
           ) : (
             <Typography variant="body2" sx={{ color: "text.secondary", fontStyle: "italic" }}>
-              {primarySegment ? primarySegment.name : "No segments selected."}
+              No segments selected.
             </Typography>
           )}
         </Panel>
 
-        <Panel>
-          <Label>Trigger concept</Label>
-          <Typography variant="body2" sx={{ lineHeight: 1.7, overflowWrap: "anywhere" }}>{triggerText}</Typography>
-        </Panel>
-
-        <Panel sx={{ bgcolor: "rgba(11,61,145,0.03)" }}>
+        <Panel sx={{ gridColumn: "1 / -1", bgcolor: "rgba(11,61,145,0.03)" }}>
           <Label>Expected steps</Label>
           <Box
             component="ul"

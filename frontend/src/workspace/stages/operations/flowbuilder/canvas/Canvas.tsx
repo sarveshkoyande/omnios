@@ -85,13 +85,14 @@ function CanvasInner() {
   const duplicateNodesCmd = useWorkflowStore((s) => s.duplicateNodesCmd);
   const selectAll = useWorkflowStore((s) => s.selectAll);
   const clearSelection = useWorkflowStore((s) => s.clearSelection);
-  const { screenToFlowPosition, fitView } = useReactFlow();
+  const { screenToFlowPosition, setViewport } = useReactFlow();
 
   const page = document.pages.find((p) => p.id === activePageId) ?? document.pages[0];
 
   const [rfNodes, setRfNodes] = useState<AnyRFNode[]>([]);
   const [rfEdges, setRfEdges] = useState<WorkflowRFEdge[]>([]);
-  const hasFitRef = useRef(false);
+  const lastFitSignatureRef = useRef("");
+  const canvasRef = useRef<HTMLDivElement>(null);
 
   // React Flow's `fitView` prop only fits whatever nodes were present at its own first
   // measured render. A consumer that seeds nodes synchronously right at mount (e.g. an
@@ -100,11 +101,51 @@ function CanvasInner() {
   // fitView normally reacts to — so the viewport can settle on an empty/arbitrary frame.
   // Make the first real population always explicitly fit, once.
   useEffect(() => {
-    if (!hasFitRef.current && rfNodes.length > 0) {
-      hasFitRef.current = true;
-      requestAnimationFrame(() => fitView({ duration: 200 }));
-    }
-  }, [rfNodes, fitView]);
+    const workflowNodes = rfNodes.filter((n) => n.type !== "lane");
+    if (workflowNodes.length === 0) return;
+    const signature = workflowNodes
+      .map((n) => `${n.id}:${Math.round(n.position.x)},${Math.round(n.position.y)},${Math.round(n.width ?? 0)},${Math.round(n.height ?? 0)}`)
+      .join("|");
+    if (signature === lastFitSignatureRef.current) return;
+    lastFitSignatureRef.current = signature;
+    const timer = window.setTimeout(() => {
+      requestAnimationFrame(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const graph = workflowNodes.reduce(
+          (acc, node) => {
+            const schemaSize = "schemaNode" in node.data ? node.data.schemaNode.size : null;
+            const w = node.width ?? schemaSize?.w ?? 160;
+            const h = node.height ?? schemaSize?.h ?? 80;
+            return {
+              minX: Math.min(acc.minX, node.position.x),
+              minY: Math.min(acc.minY, node.position.y),
+              maxX: Math.max(acc.maxX, node.position.x + w),
+              maxY: Math.max(acc.maxY, node.position.y + h),
+            };
+          },
+          { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity },
+        );
+        const graphW = Math.max(1, graph.maxX - graph.minX);
+        const graphH = Math.max(1, graph.maxY - graph.minY);
+        const padding = 0.18;
+        const zoom = Math.min(
+          1,
+          canvas.clientWidth / (graphW * (1 + padding * 2)),
+          canvas.clientHeight / (graphH * (1 + padding * 2)),
+        );
+        void setViewport(
+          {
+            x: (canvas.clientWidth - graphW * zoom) / 2 - graph.minX * zoom,
+            y: (canvas.clientHeight - graphH * zoom) / 2 - graph.minY * zoom,
+            zoom,
+          },
+          { duration: 220 },
+        );
+      });
+    }, 80);
+    return () => window.clearTimeout(timer);
+  }, [rfNodes, setViewport]);
 
   // Resync from the store whenever the underlying document changes (undo/redo, data
   // edits, remote load). During an active drag React Flow's own onNodesChange keeps
@@ -303,7 +344,7 @@ function CanvasInner() {
   }, [deleteSelection, undo, redo, copySelection, pasteClipboard, duplicateNodesCmd, selectAll, clearSelection, selection.nodeIds, page.nodes, moveNodeCmd]);
 
   return (
-    <div className="wf-canvas" onDragOver={onDragOver} onDrop={onDrop}>
+    <div ref={canvasRef} className="wf-canvas" onDragOver={onDragOver} onDrop={onDrop}>
       <EdgeMarkerDefs />
       <ReactFlow<AnyRFNode, WorkflowRFEdge>
         nodes={rfNodes}

@@ -1054,7 +1054,22 @@ def stream(ctx: dict, studio: dict, auto_assume=None):
         studio["idx"] = idx + 1
 
     # All sections landed: the full document (incl. supporting analysis) exists now.
-    md, html_out = plan_document.compose_plan(ctx)
+    #
+    # compose_plan is guarded because `run_done` is the ONLY thing that sets
+    # state["studio_done"], and everything downstream keys off that flag: the rail's brief chip
+    # stays on "Drafting", and every reopen takes the `not studio_done` branch and replays this
+    # tail again. An exception here therefore did not fail loudly -- it stranded the plan at
+    # "12/12, still drafting" permanently. The sections are already persisted and are the real
+    # output, so a compose failure must still close the run.
+    try:
+        md, html_out = plan_document.compose_plan(ctx)
+    except Exception as exc:  # noqa: BLE001 -- see above: closing the run matters more
+        print(f"[studio] compose_plan failed after all sections landed: {exc!r}")
+        yield {"type": "chat", "author": "planner", "kind": "turn", "reply_to": "",
+               "text": "Every section is built. I hit a problem assembling the combined document — "
+                       "the sections above are complete and exports may be incomplete until it is re-run."}
+        yield {"type": "run_done", "compose_failed": True}
+        return
     yield {"type": "chat", "author": "planner", "kind": "turn", "reply_to": "",
            "text": "That's every section — the full Brand Engagement Plan is assembled, including the "
                    "supporting analysis. Exports are live; persona pressure-testing is available whenever you want it."}

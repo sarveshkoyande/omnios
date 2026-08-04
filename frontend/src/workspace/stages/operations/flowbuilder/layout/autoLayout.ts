@@ -2,13 +2,8 @@ import ELK from "elkjs/lib/elk.bundled.js";
 import type { ElkNode } from "elkjs/lib/elk-api";
 import type { Page } from "../schema/document";
 import type { Direction } from "../schema/document";
-
-// Section 4: "Auto-layout button (layered/Dagre-style for TB/LR...) that respects lanes;
-// manual positions preserved otherwise (hybrid: 'pin' flag per node)." Implemented with
-// elkjs's layered algorithm. Lanes become ELK partitions: activating
-// elk.partitioning.activate constrains nodes to ranks in ascending partition order along
-// the main layout axis, which for a TB document renders as horizontal bands stacked in
-// lane.order — i.e. exactly a lane arrangement — and for LR renders as side-by-side pools.
+import type { WorkflowEdge } from "../schema/edge";
+import type { WorkflowNode } from "../schema/node";
 
 const elk = new ELK();
 
@@ -20,102 +15,207 @@ const DIRECTION_MAP: Record<Direction, string> = {
 };
 
 const GRID = 40;
+const NODE_CLEARANCE = 28;
+const LANE_KINDS = new Set(["lane", "pool", "container", "list", "subgraph", "phase"]);
+
+type Pt = { x: number; y: number };
+type LayoutSpacing = {
+  nodeNode: number;
+  layer: number;
+  edgeNode: number;
+  edgeEdge: number;
+  lane: number;
+};
+type Topology = {
+  incoming: Map<string, WorkflowEdge[]>;
+  outgoing: Map<string, WorkflowEdge[]>;
+  nodeById: Map<string, WorkflowNode>;
+};
+
 const snap = (v: number) => Math.round(v / GRID) * GRID;
+const centerOf = (n: WorkflowNode): Pt => ({ x: n.position.x + n.size.w / 2, y: n.position.y + n.size.h / 2 });
+const fieldValue = (n: WorkflowNode, key: string): unknown => {
+  const field = n.data?.[key];
+  return field && typeof field === "object" && "value" in field ? field.value : null;
+};
+const campaignKind = (n: WorkflowNode): string => String(fieldValue(n, "campaignStepKind") ?? "");
 
-// ELK port ids must be globally unique across the whole graph, so each schema
-// port id (stable but only unique per-node, e.g. "yes"/"no") is namespaced
-// under its owning node.
-const elkPortId = (nodeId: string, portId: string) => `${nodeId}::${portId}`;
+function boundsOf(n: WorkflowNode, pad = 0) {
+  return {
+    left: n.position.x - pad,
+    top: n.position.y - pad,
+    right: n.position.x + n.size.w + pad,
+    bottom: n.position.y + n.size.h + pad,
+  };
+}
 
-const PORT_SIDE_TO_ELK: Record<string, string> = { top: "NORTH", right: "EAST", bottom: "SOUTH", left: "WEST" };
-const MIN_NODE_GAP = 36;
+function overlaps(a: WorkflowNode, b: WorkflowNode, pad = NODE_CLEARANCE): boolean {
+  const ab = boundsOf(a, pad);
+  const bb = boundsOf(b, pad);
+  return !(ab.right <= bb.left || bb.right <= ab.left || ab.bottom <= bb.top || bb.bottom <= ab.top);
+}
 
-type PageNode = Page["nodes"][number];
+function buildTopology(page: Page): Topology {
+  const nodeById = new Map(page.nodes.map((n) => [n.id, n]));
+  const incoming = new Map<string, WorkflowEdge[]>();
+  const outgoing = new Map<string, WorkflowEdge[]>();
+  for (const node of page.nodes) {
+    incoming.set(node.id, []);
+    outgoing.set(node.id, []);
+  }
+  for (const edge of page.edges) {
+    if (!nodeById.has(edge.source.nodeId) || !nodeById.has(edge.target.nodeId)) continue;
+    incoming.get(edge.target.nodeId)?.push(edge);
+    outgoing.get(edge.source.nodeId)?.push(edge);
+  }
+  return { incoming, outgoing, nodeById };
+}
 
-function overlapsWithPadding(a: PageNode, b: PageNode): boolean {
-  return !(
-    a.position.x + a.size.w + MIN_NODE_GAP <= b.position.x ||
-    b.position.x + b.size.w + MIN_NODE_GAP <= a.position.x ||
-    a.position.y + a.size.h + MIN_NODE_GAP <= b.position.y ||
-    b.position.y + b.size.h + MIN_NODE_GAP <= a.position.y
+function labelOf(edge: WorkflowEdge): string {
+  return `${edge.label ?? edge.labels?.map((l) => l.text).join(" ") ?? ""}`.toLowerCase();
+}
+
+function isRecoveryBranch(edge: WorkflowEdge): boolean {
+  const label = labelOf(edge);
+  return /\b(no|not|unopened|unengaged|didn'?t|non-open|non-click|false)\b/.test(label);
+}
+
+function isPositiveBranch(edge: WorkflowEdge): boolean {
+  const label = labelOf(edge);
+  return /\b(yes|opened|clicked|engaged|true)\b/.test(label);
+}
+
+function findEntryNode(layoutable: WorkflowNode[], topology: Topology): WorkflowNode | undefined {
+  return (
+    layoutable.find((n) => campaignKind(n) === "entry") ??
+    layoutable.find((n) => n.type === "start" || n.type.startsWith("event.start")) ??
+    layoutable.find((n) => (topology.incoming.get(n.id)?.length ?? 0) === 0) ??
+    layoutable[0]
   );
 }
 
-function separateOverlappingNodes(nodes: Page["nodes"]): { nodes: Page["nodes"]; movedIds: Set<string> } {
-  const placed: PageNode[] = [];
-  const movedIds = new Set<string>();
-
-  for (const node of nodes) {
-    let current = node;
-    if (!node.pinned && node.type !== "comment" && node.type !== "text") {
-      let guard = 0;
-      let shifted = true;
-      while (shifted && guard < 200) {
-        shifted = false;
-        for (const other of placed) {
-          if (other.type === "comment" || other.type === "text") continue;
-          if (!overlapsWithPadding(current, other)) continue;
-          current = {
-            ...current,
-            position: {
-              ...current.position,
-              y: Math.max(current.position.y, other.position.y + other.size.h + MIN_NODE_GAP),
-            },
-          };
-          movedIds.add(current.id);
-          shifted = true;
-        }
-        guard += 1;
-      }
-    }
-    placed.push(current);
-  }
-
-  return { nodes: placed, movedIds };
+function childScore(edge: WorkflowEdge, topology: Topology): number {
+  const target = topology.nodeById.get(edge.target.nodeId);
+  const kind = target ? campaignKind(target) : "";
+  let score = 0;
+  if (isPositiveBranch(edge)) score += 80;
+  if (isRecoveryBranch(edge)) score -= 60;
+  if (kind === "send" || kind === "wait" || kind === "decision" || kind === "branch") score += 20;
+  if (kind === "followup") score -= 10;
+  if (target?.type === "end") score -= 30;
+  return score;
 }
 
-export async function autoLayoutPage(page: Page, direction: Direction): Promise<Page> {
-  const laneKinds = new Set(["lane", "pool", "container", "list", "subgraph", "phase"]);
-  const lanes = page.groups.filter((g) => laneKinds.has(g.kind));
+function primaryPath(layoutable: WorkflowNode[], topology: Topology): string[] {
+  const start = findEntryNode(layoutable, topology);
+  if (!start) return [];
+  const path: string[] = [];
+  const seen = new Set<string>();
+  let current: WorkflowNode | undefined = start;
+
+  while (current && !seen.has(current.id) && path.length <= layoutable.length) {
+    seen.add(current.id);
+    path.push(current.id);
+    const choices = [...(topology.outgoing.get(current.id) ?? [])]
+      .filter((e) => topology.nodeById.has(e.target.nodeId))
+      .sort((a, b) => childScore(b, topology) - childScore(a, topology));
+    current = choices.length ? topology.nodeById.get(choices[0].target.nodeId) : undefined;
+  }
+  return path;
+}
+
+function assignCampaignLanes(layoutable: WorkflowNode[], topology: Topology): Map<string, number> {
+  const path = primaryPath(layoutable, topology);
+  const pathIndex = new Map(path.map((id, i) => [id, i]));
+  const lanes = new Map<string, number>();
+  const start = path[0] ?? findEntryNode(layoutable, topology)?.id;
+  if (!start) return lanes;
+
+  const visit = (nodeId: string, lane: number) => {
+    const currentLane = lanes.get(nodeId);
+    if (currentLane != null) {
+      if (Math.abs(lane) < Math.abs(currentLane)) lanes.set(nodeId, lane);
+      return;
+    }
+    lanes.set(nodeId, lane);
+
+    const outgoing = [...(topology.outgoing.get(nodeId) ?? [])].filter((e) => topology.nodeById.has(e.target.nodeId));
+    if (outgoing.length === 0) return;
+
+    const nextMain = pathIndex.has(nodeId)
+      ? outgoing.find((e) => pathIndex.get(e.target.nodeId) === (pathIndex.get(nodeId) ?? -1) + 1)
+      : undefined;
+    const sideBranches = outgoing
+      .filter((e) => e !== nextMain)
+      .sort((a, b) => {
+        const recoveryDelta = Number(isRecoveryBranch(b)) - Number(isRecoveryBranch(a));
+        if (recoveryDelta !== 0) return recoveryDelta;
+        return childScore(a, topology) - childScore(b, topology);
+      });
+
+    if (nextMain) visit(nextMain.target.nodeId, lane);
+
+    sideBranches.forEach((edge, index) => {
+      const side = isRecoveryBranch(edge) ? -1 : 1;
+      const offset = Math.floor(index / 2) + 1;
+      const alternating = index % 2 === 0 ? side : -side;
+      visit(edge.target.nodeId, lane + alternating * offset);
+    });
+  };
+
+  visit(start, 0);
+  for (const node of layoutable) {
+    if (!lanes.has(node.id)) lanes.set(node.id, 0);
+  }
+  return lanes;
+}
+
+function sourceOrderScore(edge: WorkflowEdge, topology: Topology): number {
+  const target = topology.nodeById.get(edge.target.nodeId);
+  const kind = target ? campaignKind(target) : "";
+  if (isRecoveryBranch(edge)) return -2;
+  if (kind === "followup") return -1;
+  if (isPositiveBranch(edge)) return 1;
+  return 0;
+}
+
+const elkPortId = (nodeId: string, portId: string) => `${nodeId}::${portId}`;
+const PORT_SIDE_TO_ELK: Record<string, string> = { top: "NORTH", right: "EAST", bottom: "SOUTH", left: "WEST" };
+
+function buildElkGraph(page: Page, layoutable: WorkflowNode[], topology: Topology, direction: Direction, spacing: LayoutSpacing): ElkNode {
+  const lanes = page.groups.filter((g) => LANE_KINDS.has(g.kind));
   const laneOrder = new Map(lanes.map((g, i) => [g.id, g.order ?? i]));
   const partitioningActive = lanes.length > 0;
+  const laneByNode = assignCampaignLanes(layoutable, topology);
 
-  const layoutable = page.nodes.filter((n) => n.type !== "comment" && n.type !== "text");
-
-  // A "static"-glued edge is hard-pinned to a specific side of its node (e.g. a
-  // decision's "yes" port always exits its right side) -- if ELK is left free to
-  // place the target anywhere, that fixed exit side combined with orthogonal edge
-  // routing produces long loop-around paths. Telling ELK about each node's real
-  // ports (elk.portConstraints: FIXED_SIDE) makes it rank/order nodes consistent
-  // with the side they must actually connect through. Dynamic-glue edges legitimately
-  // re-pick their best-facing port after layout (glue.ts's pickDynamicPort), so they
-  // aren't given a fixed port here.
-  const children = layoutable.map((n) => {
-    const hasPorts = n.ports.length > 0;
-    return {
-      id: n.id,
-      width: n.size.w,
-      height: n.size.h,
-      ports: hasPorts
-        ? n.ports.map((p) => ({
-            id: elkPortId(n.id, p.id),
-            layoutOptions: { "elk.port.side": PORT_SIDE_TO_ELK[p.side] },
-          }))
-        : undefined,
-      layoutOptions: {
-        ...(hasPorts ? { "elk.portConstraints": "FIXED_SIDE" } : {}),
-        ...(partitioningActive ? { "elk.partitioning.partition": String(n.groupId ? (laneOrder.get(n.groupId) ?? 0) + 1 : 0) } : {}),
-      },
-    };
-  });
+  const children = [...layoutable]
+    .sort((a, b) => (laneByNode.get(a.id) ?? 0) - (laneByNode.get(b.id) ?? 0))
+    .map((n) => {
+      const hasPorts = n.ports.length > 0;
+      return {
+        id: n.id,
+        width: n.size.w,
+        height: n.size.h,
+        ports: hasPorts
+          ? n.ports.map((p) => ({
+              id: elkPortId(n.id, p.id),
+              layoutOptions: { "elk.port.side": PORT_SIDE_TO_ELK[p.side] },
+            }))
+          : undefined,
+        layoutOptions: {
+          ...(hasPorts ? { "elk.portConstraints": "FIXED_SIDE" } : {}),
+          ...(partitioningActive ? { "elk.partitioning.partition": String(n.groupId ? (laneOrder.get(n.groupId) ?? 0) + 1 : 0) } : {}),
+        },
+      };
+    });
 
   const layoutableIds = new Set(layoutable.map((n) => n.id));
-  const nodeById = new Map(layoutable.map((n) => [n.id, n]));
   const elkInputEdges = page.edges
     .filter((e) => layoutableIds.has(e.source.nodeId) && layoutableIds.has(e.target.nodeId))
+    .sort((a, b) => sourceOrderScore(a, topology) - sourceOrderScore(b, topology))
     .map((e) => {
-      const sourceNode = nodeById.get(e.source.nodeId);
-      const targetNode = nodeById.get(e.target.nodeId);
+      const sourceNode = topology.nodeById.get(e.source.nodeId);
+      const targetNode = topology.nodeById.get(e.target.nodeId);
       const sourcePort =
         e.source.glue === "static" && e.source.portId && sourceNode?.ports.some((p) => p.id === e.source.portId)
           ? elkPortId(e.source.nodeId, e.source.portId)
@@ -124,108 +224,181 @@ export async function autoLayoutPage(page: Page, direction: Direction): Promise<
         e.target.glue === "static" && e.target.portId && targetNode?.ports.some((p) => p.id === e.target.portId)
           ? elkPortId(e.target.nodeId, e.target.portId)
           : undefined;
-      // Tell ELK about the edge's own label geometry (it has no idea otherwise --
-      // WorkflowEdge.tsx renders labels independently at render time). Without
-      // this, ELK only keeps bare lines from touching, which isn't enough
-      // clearance for a full pill label sitting just off the edge midpoint --
-      // several edges fanning out of the same node then get close enough that
-      // their labels stack and overlap even though the lines themselves don't.
       const labelText = e.label ?? e.labels?.[0]?.text;
       return {
         id: e.id,
         sources: [sourcePort ?? e.source.nodeId],
         targets: [targetPort ?? e.target.nodeId],
-        ...(labelText ? { labels: [{ text: labelText, width: labelText.length * 7.5 + 24, height: 24 }] } : {}),
+        ...(labelText ? { labels: [{ text: labelText, width: labelText.length * 7.5 + 30, height: 28 }] } : {}),
       };
     });
 
-  const graph: ElkNode = {
+  return {
     id: "root",
     layoutOptions: {
       "elk.algorithm": "layered",
       "elk.direction": DIRECTION_MAP[direction],
-      // Route edges as orthogonal polylines during layout itself (not left to each
-      // edge to guess independently at render time) -- this is what actually keeps
-      // lines from criss-crossing through boxes and each other; see the bend-point
-      // capture below.
       "elk.edgeRouting": "ORTHOGONAL",
       "elk.layered.unnecessaryBendpoints": "false",
-      "elk.spacing.nodeNode": "72",
-      "elk.layered.spacing.nodeNodeBetweenLayers": "120",
-      // elk.spacing.edgeEdge/edgeEdgeBetweenLayers is how far apart two
-      // near-parallel edge tracks sit -- it needs to clear a full label's
-      // height (our labels render as 24px-ish pills offset off the midpoint), not just
-      // enough to keep the lines themselves from touching. The bunched-up
-      // fan-out + overlapping label text was this being too tight, not the
-      // earlier (now-fixed) grid-snap mismatch, which was a separate bug.
-      "elk.spacing.edgeNode": "34",
-      "elk.spacing.edgeEdge": "42",
-      "elk.layered.spacing.edgeNodeBetweenLayers": "38",
-      "elk.layered.spacing.edgeEdgeBetweenLayers": "42",
+      "elk.layered.crossingMinimization.strategy": "LAYER_SWEEP",
+      "elk.layered.nodePlacement.strategy": "NETWORK_SIMPLEX",
       "elk.layered.considerModelOrder.strategy": "NODES_AND_EDGES",
+      "elk.layered.mergeEdges": "false",
+      "elk.spacing.nodeNode": String(spacing.nodeNode),
+      "elk.layered.spacing.nodeNodeBetweenLayers": String(spacing.layer),
+      "elk.spacing.edgeNode": String(spacing.edgeNode),
+      "elk.spacing.edgeEdge": String(spacing.edgeEdge),
+      "elk.layered.spacing.edgeNodeBetweenLayers": String(spacing.edgeNode + 8),
+      "elk.layered.spacing.edgeEdgeBetweenLayers": String(spacing.edgeEdge),
       "elk.edgeLabels.placement": "CENTER",
       ...(partitioningActive ? { "elk.partitioning.activate": "true" } : {}),
     },
     children,
     edges: elkInputEdges,
   };
+}
 
-  const result = await elk.layout(graph);
-  const posById = new Map((result.children ?? []).map((c) => [c.id, { x: c.x ?? 0, y: c.y ?? 0 }]));
+function optimizeCampaignReadability(page: Page, nodes: WorkflowNode[], edges: WorkflowEdge[], spacing: LayoutSpacing): WorkflowNode[] {
+  const layoutable = nodes.filter((n) => n.type !== "comment" && n.type !== "text");
+  const movable = layoutable.filter((n) => !n.pinned);
+  const topology = buildTopology({ ...page, nodes, edges });
+  const lanes = assignCampaignLanes(layoutable, topology);
+  if (lanes.size === 0) return nodes;
 
-  // Not grid-snapped, for the same reason the waypoints above aren't: ELK's
-  // node positions and its edge routing were computed together as one
-  // consistent layout. Snapping only the node afterward -- independent of the
-  // edges already routed against its real position -- shifts it by up to
-  // half a grid cell away from where its own edges assume it sits, which is
-  // exactly what produced the little jogs right at the box boundary. Manual
-  // drags still snap to grid (Canvas.tsx's own snapGrid); this is layout-only.
-  const laidOutNodes = page.nodes.map((n) => {
-    if (n.pinned) return n; // manual positions preserved for pinned nodes
-    const pos = posById.get(n.id);
-    if (!pos) return n;
-    return { ...n, position: { x: pos.x, y: pos.y } };
-  });
-  const { nodes, movedIds } = separateOverlappingNodes(laidOutNodes);
+  const laneValues = Array.from(lanes.values());
+  const minLane = Math.min(...laneValues);
+  const maxLane = Math.max(...laneValues);
+  if (minLane === 0 && maxLane === 0) return nodes;
 
-  // ELK already worked out a clean bend-point route per edge that keeps clear of
-  // node bodies and (as much as the layered algorithm can) other edges. Previously
-  // this route was thrown away and every edge re-routed itself independently at
-  // render time -- exactly what produced the criss-crossed, label-hiding tangle.
-  // Thread ELK's interior bend points through as the edge's waypoints so the
-  // rendered path follows the same route the layout engine actually computed.
-  //
-  // Deliberately NOT grid-snapped: ELK computed these against the node's
-  // pre-snap position, and snapping each point independently could round two
-  // points that were meant to share an X or Y (a clean straight run) onto
-  // different grid cells -- reintroducing a tiny diagonal jog that then forced
-  // an extra dogleg right where the edge meets its node. Waypoints are a
-  // rendering hint, not something the user drags square to the grid, so they
-  // don't need it.
-  const elkEdgeById = new Map((result.edges ?? []).map((e) => [e.id, e]));
-  const edges = page.edges.map((e) => {
-    const elkEdge = elkEdgeById.get(e.id);
-    const section = elkEdge?.sections?.[0];
-    const bendPoints = section?.bendPoints ?? [];
-    if (movedIds.has(e.source.nodeId) || movedIds.has(e.target.nodeId)) {
-      return { ...e, line: { ...e.line, routing: "step" as const, waypoints: [] } };
+  const laneSpacing = spacing.lane;
+  const laneX = new Map<number, number>();
+  for (let lane = minLane; lane <= maxLane; lane++) {
+    laneX.set(lane, (lane - minLane) * laneSpacing + 80);
+  }
+
+  const byY = [...movable].sort((a, b) => a.position.y - b.position.y);
+  const occupied = new Map<number, WorkflowNode[]>();
+  const optimized = new Map<string, WorkflowNode>();
+  for (const node of byY) {
+    const lane = lanes.get(node.id) ?? 0;
+    let x = (laneX.get(lane) ?? node.position.x) + Math.max(0, laneSpacing - node.size.w) / 2;
+    let y = node.position.y;
+    const prior = occupied.get(lane) ?? [];
+    for (const other of prior) {
+      if (y < other.position.y + other.size.h + spacing.layer * 0.55) {
+        y = other.position.y + other.size.h + spacing.layer * 0.55;
+      }
     }
-    if (bendPoints.length === 0 || e.line.routing === "curved") return e;
+    const next = { ...node, position: { x: snap(x), y: snap(y) } };
+    optimized.set(node.id, next);
+    occupied.set(lane, [...prior, next]);
+  }
+
+  return nodes.map((node) => optimized.get(node.id) ?? node);
+}
+
+function endpointFor(node: WorkflowNode, other: WorkflowNode, source: boolean): Pt {
+  const c = centerOf(node);
+  const oc = centerOf(other);
+  if (Math.abs(oc.x - c.x) > Math.abs(oc.y - c.y) * 1.25) {
+    return { x: oc.x > c.x ? node.position.x + node.size.w : node.position.x, y: c.y };
+  }
+  return { x: c.x, y: source ? node.position.y + node.size.h : node.position.y };
+}
+
+function routeEdge(source: WorkflowNode, target: WorkflowNode, spacing: LayoutSpacing): Pt[] {
+  const start = endpointFor(source, target, true);
+  const end = endpointFor(target, source, false);
+  const laneGap = Math.abs(centerOf(source).x - centerOf(target).x);
+  if (laneGap < 10) return [];
+  const midY = Math.max(start.y + spacing.layer * 0.42, (start.y + end.y) / 2);
+  return [
+    { x: start.x, y: midY },
+    { x: end.x, y: midY },
+  ];
+}
+
+function applyReadableRoutes(edges: WorkflowEdge[], nodes: WorkflowNode[], elkEdgesById: Map<string, NonNullable<ElkNode["edges"]>[number]>, spacing: LayoutSpacing): WorkflowEdge[] {
+  const nodeById = new Map(nodes.map((n) => [n.id, n]));
+  return edges.map((edge) => {
+    const source = nodeById.get(edge.source.nodeId);
+    const target = nodeById.get(edge.target.nodeId);
+    if (!source || !target || edge.line.routing === "curved") return edge;
+    const semanticWaypoints = routeEdge(source, target, spacing);
+    const section = elkEdgesById.get(edge.id)?.sections?.[0];
+    const elkWaypoints = section?.bendPoints?.map((p) => ({ x: p.x, y: p.y })) ?? [];
+    const waypoints = semanticWaypoints.length > 0 ? semanticWaypoints : elkWaypoints;
     return {
-      ...e,
-      line: {
-        ...e.line,
-        routing: "step" as const,
-        waypoints: bendPoints.map((p) => ({ x: p.x, y: p.y })),
-      },
+      ...edge,
+      source: { ...edge.source, glue: "dynamic" as const },
+      target: { ...edge.target, glue: "dynamic" as const },
+      line: { ...edge.line, routing: "step" as const, waypoints },
     };
   });
+}
 
-  // Auto-resize each lane's bounds to encompass its (now repositioned) members.
-  const PAD = 40;
-  const HEADER = 32;
-  const groups = page.groups.map((g) => {
-    if (!laneKinds.has(g.kind) || g.memberBehavior?.autoResize === false) return g;
+function segmentIntersectsRect(a: Pt, b: Pt, rect: ReturnType<typeof boundsOf>): boolean {
+  if (Math.abs(a.x - b.x) < 0.5) {
+    const x = a.x;
+    const top = Math.min(a.y, b.y);
+    const bottom = Math.max(a.y, b.y);
+    return x > rect.left && x < rect.right && bottom > rect.top && top < rect.bottom;
+  }
+  if (Math.abs(a.y - b.y) < 0.5) {
+    const y = a.y;
+    const left = Math.min(a.x, b.x);
+    const right = Math.max(a.x, b.x);
+    return y > rect.top && y < rect.bottom && right > rect.left && left < rect.right;
+  }
+  return false;
+}
+
+function routePoints(edge: WorkflowEdge, nodes: Map<string, WorkflowNode>): Pt[] {
+  const source = nodes.get(edge.source.nodeId);
+  const target = nodes.get(edge.target.nodeId);
+  if (!source || !target) return [];
+  return [endpointFor(source, target, true), ...edge.line.waypoints, endpointFor(target, source, false)];
+}
+
+function hasQualityIssues(nodes: WorkflowNode[], edges: WorkflowEdge[]): boolean {
+  const layoutable = nodes.filter((n) => n.type !== "comment" && n.type !== "text");
+  for (let i = 0; i < layoutable.length; i++) {
+    for (let j = i + 1; j < layoutable.length; j++) {
+      if (overlaps(layoutable[i], layoutable[j])) return true;
+    }
+  }
+
+  const nodeById = new Map(nodes.map((n) => [n.id, n]));
+  for (const edge of edges) {
+    const points = routePoints(edge, nodeById);
+    for (let i = 0; i < points.length - 1; i++) {
+      for (const node of layoutable) {
+        if (node.id === edge.source.nodeId || node.id === edge.target.nodeId) continue;
+        if (segmentIntersectsRect(points[i], points[i + 1], boundsOf(node, 10))) return true;
+      }
+    }
+  }
+  return false;
+}
+
+function spacingFor(page: Page, attempt: number): LayoutSpacing {
+  const nodeCount = page.nodes.length;
+  const large = nodeCount > 150;
+  const multiplier = 1 + attempt * 0.22 + (large ? 0.25 : 0);
+  return {
+    nodeNode: Math.round(90 * multiplier),
+    layer: Math.round(145 * multiplier),
+    edgeNode: Math.round(46 * multiplier),
+    edgeEdge: Math.round(54 * multiplier),
+    lane: Math.round(280 * multiplier),
+  };
+}
+
+function resizeGroups(page: Page, nodes: WorkflowNode[]): Page["groups"] {
+  const PAD = 48;
+  const HEADER = 36;
+  return page.groups.map((g) => {
+    if (!LANE_KINDS.has(g.kind) || g.memberBehavior?.autoResize === false) return g;
     const members = nodes.filter((n) => n.groupId === g.id);
     if (members.length === 0) return g;
     const minX = Math.min(...members.map((n) => n.position.x));
@@ -242,6 +415,31 @@ export async function autoLayoutPage(page: Page, direction: Direction): Promise<
       },
     };
   });
+}
 
-  return { ...page, nodes, edges, groups };
+export async function autoLayoutPage(page: Page, direction: Direction): Promise<Page> {
+  const layoutable = page.nodes.filter((n) => n.type !== "comment" && n.type !== "text" && !n.pinned);
+  if (layoutable.length === 0) return page;
+
+  let best = page;
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const spacing = spacingFor(page, attempt);
+    const topology = buildTopology(page);
+    const graph = buildElkGraph(page, layoutable, topology, direction, spacing);
+    const result = await elk.layout(graph);
+    const posById = new Map((result.children ?? []).map((c) => [c.id, { x: c.x ?? 0, y: c.y ?? 0 }]));
+
+    const elkNodes = page.nodes.map((node) => {
+      if (node.pinned) return node;
+      const pos = posById.get(node.id);
+      return pos ? { ...node, position: { x: pos.x, y: pos.y } } : node;
+    });
+    const optimizedNodes = optimizeCampaignReadability(page, elkNodes, page.edges, spacing);
+    const elkEdgeById = new Map((result.edges ?? []).map((edge) => [edge.id, edge]));
+    const optimizedEdges = applyReadableRoutes(page.edges, optimizedNodes, elkEdgeById, spacing);
+    best = { ...page, nodes: optimizedNodes, edges: optimizedEdges, groups: resizeGroups(page, optimizedNodes) };
+    if (!hasQualityIssues(optimizedNodes, optimizedEdges)) return best;
+  }
+
+  return best;
 }

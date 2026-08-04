@@ -20,6 +20,7 @@ import type { StageAgentId } from "./workspace/types";
 // (strategy/prompt_library.py) -- remove the nav entry below (and this view) once no
 // longer needed; the backend endpoint is harmless to leave either way.
 type View = "home" | "workspace" | "library" | "artefacts" | "prompts";
+type WorkspaceStartMode = "flow" | "direct";
 
 const NavList = styled("ul")({
   display: "flex",
@@ -55,6 +56,7 @@ export default function App() {
   const [seedMessage, setSeedMessage] = useState<string | null>(null);
   const [seedFile, setSeedFile] = useState<File | null>(null);
   const [initialWorkspaceStage, setInitialWorkspaceStage] = useState(1);
+  const [workspaceStartMode, setWorkspaceStartMode] = useState<WorkspaceStartMode>("direct");
   // The top bar wears the active stage's accent. Only the Workspace has stages, so every other
   // view (Home / Artefacts / Library) falls back to planning — i.e. the original blue bar.
   const [workspaceAgent, setWorkspaceAgent] = useState<StageAgentId>("planning");
@@ -68,18 +70,20 @@ export default function App() {
     setSeedMessage(null);
     setSeedFile(null);
     setInitialWorkspaceStage(1);
+    setWorkspaceStartMode("direct");
     setOpenProjectId(id);
     setView("workspace");
   };
 
   // Start a fresh plan — lands directly on the briefing intake (optionally seeded
   // with a one-line requirement typed on Home). No "click to begin" gate.
-  const goStartNew = (seed?: string, initialStage = 1) => {
+  const goStartNew = (seed?: string, initialStage = 1, mode: WorkspaceStartMode = "flow") => {
     setPrefillBrand(null);
     setOpenProjectId(null);
     setSeedFile(null);
     setSeedMessage(seed ?? null);
     setInitialWorkspaceStage(initialStage);
+    setWorkspaceStartMode(mode);
     setView("workspace");
   };
 
@@ -90,6 +94,7 @@ export default function App() {
     setSeedMessage(null);
     setSeedFile(file);
     setInitialWorkspaceStage(1);
+    setWorkspaceStartMode("flow");
     setView("workspace");
   };
 
@@ -113,7 +118,7 @@ export default function App() {
             <NavList>
               {([
                 { key: "home", label: "Home", icon: "home", onSelect: () => setView("home") },
-                { key: "workspace", label: "Workspace", icon: "space_dashboard", onSelect: () => goStartNew() },
+                { key: "workspace", label: "Workspace", icon: "space_dashboard", onSelect: () => goStartNew(undefined, 1, "direct") },
                 // "Artefacts" tab hidden 2026-07-27 (per request). The <Artefacts /> view and its
                 // /api/pharma-intel routes still exist and render if `view` is set to "artefacts"
                 // some other way, but it's no longer reachable from the nav.
@@ -171,7 +176,7 @@ export default function App() {
           </Toolbar>
         </AppBar>
         {view === "home" && <Home onOpenPlan={goOpenPlan} onStartNew={goStartNew} onImportFile={goImportFile} />}
-        {view === "workspace" && <Workspace prefillBrand={prefillBrand} openProjectId={openProjectId} seedMessage={seedMessage} seedFile={seedFile} initialStage={initialWorkspaceStage} onStageAgentChange={setWorkspaceAgent} />}
+        {view === "workspace" && <Workspace prefillBrand={prefillBrand} openProjectId={openProjectId} seedMessage={seedMessage} seedFile={seedFile} initialStage={initialWorkspaceStage} startMode={workspaceStartMode} onStageAgentChange={setWorkspaceAgent} />}
         {view === "library" && <Library />}
         {view === "artefacts" && <Artefacts />}
         {view === "prompts" && <PromptLibrary />}

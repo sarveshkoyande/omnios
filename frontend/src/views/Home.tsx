@@ -184,7 +184,7 @@ export function Home({
   onImportFile,
 }: {
   onOpenPlan: (id: string) => void;
-  onStartNew: (seed?: string, initialStage?: number) => void;
+  onStartNew: (seed?: string, initialStage?: number, mode?: "flow" | "direct") => void;
   onImportFile: (file: File) => void;
 }) {
   const [data, setData] = useState<HomePayload | null>(null);
@@ -412,7 +412,7 @@ export function Home({
             <Box sx={{ mt: 2, display: "flex", flexWrap: "wrap", gap: 1 }}>
               <HeroChip icon="upload_file" label="Import brand plan" onClick={pickBrandPlan} />
               <HeroChip icon="edit_note" label="Create brief" onClick={() => onStartNew(undefined, 1)} />
-              <HeroChip icon="monitoring" label="Analyse performance" onClick={() => onStartNew(undefined, 4)} />
+              <HeroChip icon="monitoring" label="Analyse performance" onClick={() => onStartNew(undefined, 4, "direct")} />
             </Box>
 
             <input
@@ -487,7 +487,7 @@ export function Home({
             }}
           >
             {STAGES.map((stage) => (
-              <AgentCard key={stage.id} stage={stage} onOpen={() => onStartNew(undefined, stage.stage)} />
+              <AgentCard key={stage.id} stage={stage} onOpen={() => onStartNew(undefined, stage.stage, "direct")} />
             ))}
           </Box>
         </Box>
@@ -540,7 +540,7 @@ export function Home({
             brands={brands}
             clients={totals.clients ?? clients.length}
             campaigns={totals.campaigns ?? 0}
-            onOpenStage={(stage) => onStartNew(undefined, stage)}
+            onOpenStage={(stage) => onStartNew(undefined, stage, "direct")}
           />
         </Box>
 
@@ -587,8 +587,8 @@ export function Home({
                     <Box
                       role="button"
                       tabIndex={0}
-                      onClick={() => onStartNew(undefined, item.stage)}
-                      onKeyDown={onActivate(() => onStartNew(undefined, item.stage))}
+                      onClick={() => onStartNew(undefined, item.stage, "direct")}
+                      onKeyDown={onActivate(() => onStartNew(undefined, item.stage, "direct"))}
                       sx={{
                         mt: 1.25,
                         display: "inline-flex",

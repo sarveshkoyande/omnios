@@ -7,6 +7,7 @@ import { AgentBubble } from "./ChatBubble";
 const LABEL: Record<string, string> = {
   orchestration: "the Activities & setup-task checklist",
   operations: "the campaign engagement flow",
+  reporting: "the reporting and insights view",
 };
 
 export function KickoffCard({

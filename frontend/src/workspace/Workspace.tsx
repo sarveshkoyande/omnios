@@ -228,6 +228,7 @@ export function Workspace({
   seedMessage,
   seedFile,
   initialStage,
+  startMode = "direct",
   onStageAgentChange,
 }: {
   prefillBrand?: string | null;
@@ -235,6 +236,7 @@ export function Workspace({
   seedMessage?: string | null;
   seedFile?: File | null;
   initialStage?: number;
+  startMode?: "flow" | "direct";
   /** Reports the on-screen stage's agent up to App so the top bar can wear its accent. */
   onStageAgentChange?: (agent: StageAgentId) => void;
 }) {
@@ -249,6 +251,7 @@ export function Workspace({
   const scrollRef = useRef<HTMLDivElement>(null);
   const bootstrapped = useRef(false);
   const seeded = useRef(false);
+  const sequentialStarted = useRef(false);
 
   // Entry routing: open the requested plan, or spin up a fresh one that lands
   // straight on the briefing intake — no "click to begin" empty state.
@@ -291,6 +294,12 @@ export function Workspace({
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [ws.items]);
+
+  useEffect(() => {
+    if (startMode !== "flow" || sequentialStarted.current || !ws.projectId || !ws.studio.done) return;
+    sequentialStarted.current = true;
+    ws.runSequentialFlow();
+  }, [startMode, ws.projectId, ws.studio.done, ws.runSequentialFlow]);
 
   return (
     // Each stage wears its own agent's accent; planning resolves to the base theme unchanged.

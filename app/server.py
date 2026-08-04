@@ -1404,6 +1404,12 @@ class TabChatRequest(BaseModel):
     document: dict | None = None
 
 
+class AgentBriefRequest(BaseModel):
+    stage_id: str
+    brief_text: str
+    source_name: str | None = None
+
+
 class SfmcPushRequest(BaseModel):
     auth_base_uri: str
     client_id: str
@@ -1441,6 +1447,108 @@ def api_tab_chat_ask(pid: str, stage_id: str, req: TabChatRequest):
     if not proj:
         raise HTTPException(404, "project not found")
     return tab_chat.ask(pid, stage_id, req.message, document=req.document)
+
+
+@app.post("/api/projects/{pid}/agent-brief")
+def api_agent_brief(pid: str, req: AgentBriefRequest):
+    """Direct-agent kickoff from a pasted/uploaded brief.
+
+    Stage 1's Studio remains the full sequential planning experience. This endpoint is the
+    direct navigation path: when a user opens Orchestration, Operations, or Reporting first,
+    the agent can still accept an initial brief and create the same persisted planning ctx
+    that downstream generators already consume.
+    """
+    if req.stage_id not in tab_chat.STAGE_AGENTS:
+        raise HTTPException(404, f"unknown tab '{req.stage_id}'")
+    proj = pstore.get_project(pid)
+    if not proj:
+        raise HTTPException(404, "project not found")
+    brief_text = (req.brief_text or "").strip()
+    if not brief_text:
+        raise HTTPException(400, "brief_text is required")
+
+    state = proj["state"]
+    slots = state.setdefault("slots", {})
+    extracted = extract_brief_from_text(brief_text)
+    for key, val in (extracted.get("fields") or {}).items():
+        if val not in (None, "", 0, False) and not slots.get(key):
+            slots[key] = val
+    slots["tactical_source_text"] = brief_text[:24000]
+    slots["tactical_source_name"] = req.source_name or "Direct agent brief"
+    if req.source_name:
+        slots["notes"] = (slots.get("notes") or f"Source brief: {req.source_name}")
+
+    brand = str(slots.get("brand") or "Brand").strip()
+    therapy_area = str(slots.get("therapy_area") or slots.get("indication") or "oncology").strip()
+    lifecycle_key = str(slots.get("lifecycle_key") or "growth").strip()
+    try:
+        budget = float(slots.get("budget") or 0)
+    except (TypeError, ValueError):
+        budget = 0.0
+    indication = str(slots.get("indication") or "").strip()
+    maturity_notes = str(slots.get("maturity_notes") or slots.get("notes") or "").strip()
+
+    try:
+        ctx = orchestrator.compute_core_ctx(
+            brand,
+            therapy_area,
+            lifecycle_key,
+            budget=budget,
+            maturity_notes=maturity_notes,
+            indication=indication,
+            brief=slots,
+        )
+        ctx = orchestrator.fill_plan_ctx(ctx, lazy_grounding=True, fast=True)
+        result, plan_markdown, plan_html = orchestrator.recompose_plan(ctx)
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(500, f"Could not build planning context from that brief: {exc}") from exc
+
+    state["_plan_ctx"] = ctx
+    state["phase"] = "done"
+    state["studio_done"] = True
+    state["revealed_phases"] = list(open_questions_mod.PHASE_ORDER)
+    messages = proj["messages"]
+    if req.stage_id == "planning":
+        messages.append(_msg("user", brief_text))
+        messages.append(_msg("agent", "Built the campaign strategy and brief from your direct brief."))
+    else:
+        tab_chat.append(pid, req.stage_id, "user", None, brief_text, kind="brief")
+
+    tasks = None
+    flow = None
+    if req.stage_id == "orchestration":
+        tasks = orchestration_tasks.generate_tasks(ctx, extra_context=brief_text)
+        pstore.save_project(pid, orchestration_tasks=tasks)
+        tab_chat.append(pid, req.stage_id, "assistant", req.stage_id,
+                        "Built the setup-task checklist from your direct brief.", kind="brief")
+    elif req.stage_id == "operations":
+        plan = campaign_ops.build_campaign_plan(ctx)
+        flow = plan.get("flow")
+        tab_chat.append(pid, req.stage_id, "assistant", req.stage_id,
+                        "Built the campaign engagement flow from your direct brief.", kind="brief")
+    elif req.stage_id == "reporting":
+        tab_chat.append(pid, req.stage_id, "assistant", req.stage_id,
+                        "Built the measurement and reporting view from your direct brief.", kind="brief")
+
+    name = proj["name"]
+    if name in ("Untitled plan", "New plan"):
+        name = _campaign_id_name(pid)
+    pstore.save_project(pid, name=name, state=state, messages=messages,
+                        result=result, plan_markdown=plan_markdown, plan_html=plan_html,
+                        orchestration_tasks=tasks if tasks is not None else proj.get("orchestration_tasks"))
+    brief_summary.attach(slots)
+    return {
+        "reply": {
+            "planning": "Built the campaign strategy and brief from your direct brief.",
+            "orchestration": "Built the setup-task checklist from your direct brief.",
+            "operations": "Built the campaign engagement flow from your direct brief.",
+            "reporting": "Built the measurement and reporting view from your direct brief.",
+        }.get(req.stage_id, "Built from your brief."),
+        "project": pstore.get_project(pid),
+        "tasks": tasks,
+        "flow": flow,
+        "extracted": extracted.get("items") or [],
+    }
 
 
 @app.get("/api/projects/{pid}/reporting-insights")
@@ -2467,4 +2575,3 @@ def root_legacy():
 
 
 app.mount("/static", StaticFiles(directory=APP_DIR / "static"), name="static")
-

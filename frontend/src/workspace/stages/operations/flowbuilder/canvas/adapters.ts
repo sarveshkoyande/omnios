@@ -80,7 +80,7 @@ export function pageToRFEdges(page: Page, selection: Selection): WorkflowRFEdge[
         target: e.target.nodeId,
         sourceHandle,
         targetHandle,
-        data: { schemaEdge: e, forceAutoRoute: !!dynamicSource },
+        data: { schemaEdge: e, forceAutoRoute: !!dynamicSource && e.line.waypoints.length === 0 },
         selected: selection.edgeIds.includes(e.id),
         selectable: !gate.locked,
         deletable: !(e.locks?.delete ?? false),
