@@ -366,7 +366,9 @@ function CanvasInner() {
         panOnDrag={[1, 2]}
         selectionKeyCode={null}
         multiSelectionKeyCode="Shift"
-        fitView
+        minZoom={0.05}
+        maxZoom={1}
+        defaultViewport={{ x: 0, y: 0, zoom: 0.25 }}
         proOptions={{ hideAttribution: true }}
       >
         <Background variant={BackgroundVariant.Dots} gap={GRID} size={1.5} />
