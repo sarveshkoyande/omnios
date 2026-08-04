@@ -886,26 +886,18 @@ def _apply_chosen_segments(ctx: dict, segments: list[str]) -> None:
 # ------------------------------------------------------------------ #
 # Per-section chat lines (handoff + landed banter), grounded in ctx.
 # ------------------------------------------------------------------ #
-def handoff_chat(ctx: dict, step: dict, idx: int) -> dict:
-    # No hand-off to a named sub-agent: one agent, addressing the human directly.
-    title = section_title(step["num"])
-    return {"type": "chat", "author": "planner", "kind": "turn", "reply_to": "",
-            "text": f"Section {idx + 1} — **{title}**."}
+# The "Section N -- <title>." chat line was removed 2026-08-04. It restated what the
+# phase_open event already puts on the canvas and in the section rail, and because it arrived
+# as its own agent turn it opened a second avatar+name block immediately above whatever the
+# section actually had to say. phase_open still carries num/title, so nothing downstream lost
+# information -- only the duplicate chat message went away.
 
 
-def landed_banter(ctx: dict, step: dict) -> dict | None:
-    inferred = ctx.get("inferred") or {}
-    lines = {
-        "tcg": ("intel", f"That group sizes at {ctx.get('audience_profile', {}).get('headline', 'a defined audience')} — "
-                         "worth every downstream dollar being aimed at it."),
-        "channels": ("strategy", "With that anchor set I'll keep the message ladder's first rung native to it."),
-        "msgflow": ("activation", "Ladder locked — I'll sequence the channel cadence to hit rung one first."),
-        "workplan": ("planner", "Bands are on the timeline with the MLR buffer honoured — reporting lands after wave one."),
-    }
-    pair = lines.get(step["id"])
-    if not pair:
-        return None
-    return {"type": "chat", "author": pair[0], "kind": "banter", "reply_to": step["owner"], "text": pair[1]}
+# Post-section banter was removed 2026-08-04: four canned lines (tcg / channels / msgflow /
+# workplan) that fired after a section landed. They restated what the section had just said,
+# in a voice that read as filler, and the tcg one leaked a broken sizing headline
+# ("≈not sized addressable US HCPs") into the chat. The section itself and its decision record
+# already carry this information. Do not reintroduce as static strings.
 
 
 # ------------------------------------------------------------------ #
@@ -944,9 +936,7 @@ def stream(ctx: dict, studio: dict, auto_assume=None):
         # canvas slot from them); the handoff chat line is emitted exactly once.
         yield {"type": "phase_open", "idx": idx, "section_id": step["id"], "num": step["num"],
                "title": title, "owner": step["owner"], "owner_name": _AGENT_NAME[step["owner"]]}
-        if studio.get("opened_num") != step["num"]:
-            studio["opened_num"] = step["num"]
-            yield handoff_chat(ctx, step, idx)
+        studio["opened_num"] = step["num"]
         try:
             ensure_grounding(ctx, step)  # lazy: pull only THIS section's grounding, now
             grounding = grounding_items(ctx, step)
@@ -1060,9 +1050,6 @@ def stream(ctx: dict, studio: dict, auto_assume=None):
             else:
                 ctx["decision_records"][existing] = record
             yield record
-        banter = landed_banter(ctx, step)
-        if banter:
-            yield banter
         yield {"type": "phase_done", "section_id": step["id"], "idx": idx}
         studio["idx"] = idx + 1
 

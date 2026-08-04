@@ -3,8 +3,8 @@ import Box from "@mui/material/Box";
 import Popover from "@mui/material/Popover";
 import Typography from "@mui/material/Typography";
 import { styled } from "@mui/material/styles";
-import { AgentBubble } from "../ChatBubble";
-import { indigoTint, tokens } from "../../theme/tokens";
+import { indigoTint, tokens, motion, hoverOnly } from "../../theme/tokens";
+import { accent } from "../../theme/stageTheme";
 import type { AskOption, StudioAsk } from "./studioTypes";
 
 const SourceChip = styled("span")({
@@ -28,29 +28,17 @@ const SourceChip = styled("span")({
   },
 });
 
-const StatusChip = styled("span")({
-  display: "inline-flex",
-  alignItems: "center",
-  gap: 5,
-  fontSize: 10.5,
-  fontWeight: 700,
-  borderRadius: tokens.radius.pill,
-  padding: "2px 9px",
-  marginRight: 6,
-  border: `1px solid ${tokens.color.warning}`,
-  background: tokens.color.warningSoft,
-  color: tokens.color.warningInk,
-});
-
 const RecommendedBadge = styled("span")({
   display: "inline-flex",
   alignItems: "center",
   marginLeft: 8,
   padding: "1px 7px",
   borderRadius: tokens.radius.pill,
-  background: tokens.color.primaryContainer,
-  color: tokens.color.primary,
-  border: `1px solid ${tokens.color.outline}`,
+  // Solid accent on the already-tinted recommended row: the badge has to stay legible against
+  // the deeper wash behind it, which a container-tinted badge would not.
+  background: accent.primary,
+  color: "#fff",
+  border: "none",
   fontSize: 10,
   fontWeight: 800,
   textTransform: "uppercase",
@@ -73,6 +61,15 @@ const IconAction = styled("span")({
   "&:focus-visible": { outline: `2px solid ${tokens.color.primary}`, outlineOffset: 1 },
 });
 
+/**
+ * Three states, three depths of the SAME stage accent, so the card reads as one family and
+ * still tells you what is what at a glance:
+ *   plain option  — faintest wash (tint 0.04)
+ *   recommended   — deeper wash + accent border (tint 0.12); emphasis, not selection
+ *   picked        — solid accent, white text
+ * Recommended deliberately stops short of the solid fill: if "recommended" already looked
+ * selected, there would be no way to see that you had actually chosen it.
+ */
 const OptionBtn = styled("button")<{ rec?: boolean; picked?: boolean }>(({ rec, picked }) => ({
   display: "flex",
   alignItems: "center",
@@ -82,16 +79,20 @@ const OptionBtn = styled("button")<{ rec?: boolean; picked?: boolean }>(({ rec, 
   textAlign: "left",
   font: "inherit",
   fontSize: tokens.fontSize.sm,
-  marginTop: 6,
-  padding: "8px 12px",
+  marginTop: 8,
+  padding: "10px 12px",
   borderRadius: 10,
   cursor: "pointer",
   color: picked ? "#fff" : tokens.color.text,
-  background: picked ? tokens.color.primary : tokens.color.surface,
-  border: `1px solid ${picked ? "transparent" : rec ? tokens.color.primary : tokens.color.outline}`,
+  background: picked ? accent.primary : rec ? accent.container : accent.tint04,
+  border: `1px solid ${picked ? "transparent" : rec ? accent.primary : tokens.color.outline}`,
   boxShadow: "none",
-  "&:hover": picked ? {} : { background: tokens.color.canvas },
-  "&:focus-visible": { outline: `2px solid ${tokens.color.primary}`, outlineOffset: 2 },
+  transition: `background ${motion.duration.hover} ${motion.easeOut}, border-color ${motion.duration.hover} ${motion.easeOut}, transform ${motion.duration.press} ${motion.easeOut}`,
+  [hoverOnly]: {
+    "&:hover": picked ? {} : { background: accent.tint12 },
+  },
+  "&:active:not(:disabled)": { transform: "scale(0.99)" },
+  "&:focus-visible": { outline: `2px solid ${accent.primary}`, outlineOffset: 2 },
   "&:disabled": { cursor: "default", opacity: 0.8 },
 }));
 
@@ -99,13 +100,13 @@ const FreeText = styled("input")({
   width: "100%",
   font: "inherit",
   fontSize: tokens.fontSize.sm,
-  marginTop: 6,
-  padding: "8px 12px",
+  marginTop: 8,
+  padding: "10px 12px",
   borderRadius: 10,
-  border: `1px solid ${tokens.color.outline}`,
+  border: `1px dashed ${tokens.color.outlineStrong}`,
   background: tokens.color.surface,
   color: tokens.color.text,
-  "&:focus-visible": { outline: `2px solid ${tokens.color.primary}`, outlineOffset: 0 },
+  "&:focus-visible": { outline: `2px solid ${accent.primary}`, outlineOffset: 0 },
 });
 
 const ConfirmBtn = styled("button")({
@@ -117,11 +118,11 @@ const ConfirmBtn = styled("button")({
   borderRadius: 10,
   cursor: "pointer",
   color: "#fff",
-  background: tokens.color.primary,
+  background: accent.primary,
   border: "none",
-  "&:hover": { background: tokens.color.primaryDark },
+  "&:hover": { background: accent.primaryDark },
   "&:disabled": { opacity: 0.5, cursor: "default" },
-  "&:focus-visible": { outline: `2px solid ${tokens.color.primary}`, outlineOffset: 2 },
+  "&:focus-visible": { outline: `2px solid ${accent.primary}`, outlineOffset: 2 },
 });
 
 /** The data-analysis line above the options: what the sizing is based on. */
@@ -132,7 +133,7 @@ const EvidenceNote = styled("div")({
   fontSize: 11.5,
   lineHeight: 1.45,
   color: tokens.color.inkSecondary,
-  background: tokens.color.primaryContainer,
+  background: accent.tint04,
   border: `1px solid ${tokens.color.outline}`,
   borderRadius: 8,
   padding: "6px 9px",
@@ -257,14 +258,13 @@ export function AskCard({
             </span>
           )}
           <Box component="span" sx={{ minWidth: 0 }}>
+            {/* The option's `source` ("alternative cadence", "claim library", "channel-affinity
+                model") is deliberately not shown: it labelled where the option came from, which
+                is provenance the reasoning popover already carries, and on the option row it
+                just competed with the option itself. */}
             <Box component="span">
               {label}
               {isRec && !chosen && <RecommendedBadge>Recommended</RecommendedBadge>}
-              {!isRec && opt.source?.trim() && !opt.size && (
-                <Typography component="span" sx={{ fontSize: 10.5, color: chosen ? "rgba(255,255,255,0.85)" : "text.secondary" }}>
-                  {" - "}{opt.source.trim()}
-                </Typography>
-              )}
             </Box>
             {opt.size && (
               <Typography component="span" sx={{ display: "block", fontSize: 11, fontWeight: 700, mt: 0.25, color: chosen ? "#fff" : "primary.main" }}>
@@ -322,20 +322,15 @@ export function AskCard({
     t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
 
   return (
-    <AgentBubble sx={{ maxWidth: 640 }}>
-      <Typography sx={{ fontSize: 11, fontWeight: 700, color: "primary.main", mb: 0.75 }}>
-        {ownerName} - {autoAssumed ? "decided for you (auto-assume)" : "needs your call"}
-      </Typography>
-      <Box sx={{ mb: 0.75, display: "flex", flexWrap: "wrap", gap: 0.5, alignItems: "center" }}>
-        {recommendationSource && <SourceChip>{recommendationSource}</SourceChip>}
-        {/* Only surface this status chip when something's actually wrong or still pending --
-            a routine successful generation doesn't need a "Claude generated this" badge. */}
-        {llmStatus?.ok !== true && (
-          <StatusChip title={llmStatus?.detail ?? undefined}>
-            <span className="material-symbols-outlined" style={{ fontSize: 14 }}>{llmIcon}</span>
-            {llmState}
-          </StatusChip>
-        )}
+    // No chat bubble: the question and its options are the thing being acted on, so they sit
+    // on the pane rather than inside a message. Every provenance tag that used to sit above
+    // the question ("best practice", the recommendation's source, "Claude generation pending")
+    // has moved into the reasoning popover behind the single psychology icon.
+    <Box sx={{ maxWidth: 640, width: "100%", minWidth: 0 }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mb: 0.75 }}>
+        <Typography sx={{ fontSize: 11, fontWeight: 700, color: accent.primary }}>
+          {ownerName} - {autoAssumed ? "decided for you (auto-assume)" : "needs your call"}
+        </Typography>
         {hasGroundingDetails && (
           <IconAction
             role="button"
@@ -347,17 +342,10 @@ export function AskCard({
             <span className="material-symbols-outlined" style={{ fontSize: 16 }}>psychology</span>
           </IconAction>
         )}
-        {llmFailed && (
-          <Typography variant="caption" sx={{ color: "text.secondary", display: "block", flexBasis: "100%" }}>
-            {llmStatus?.detail ?? "No LLM failure detail returned."}
-            {diagnostics.length ? ` (${diagnostics.join(" | ")})` : ""}
-          </Typography>
-        )}
       </Box>
 
       <Typography
-        variant="body2"
-        sx={{ lineHeight: 1.55, mb: 1 }}
+        sx={{ fontSize: tokens.fontSize.md, lineHeight: 1.55, mb: 1.25, color: tokens.color.text }}
         dangerouslySetInnerHTML={{ __html: renderMarkup(ask.text) }}
       />
 
@@ -406,6 +394,13 @@ export function AskCard({
       >
         <PopoverBody>
           <Typography sx={{ fontSize: 12, fontWeight: 800, mb: 1 }}>Reasoning and grounding</Typography>
+          {/* This is now the only home for provenance. The best-practice / model / library
+              labels that used to sit as chips on the card body land here instead. */}
+          {recommendationSource && (
+            <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1 }}>
+              <b>Recommendation drawn from:</b> {recommendationSource}
+            </Typography>
+          )}
           {ask.evidence_basis && (
             <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1 }}>
               <b>Basis:</b> {ask.evidence_basis}
@@ -420,6 +415,18 @@ export function AskCard({
             <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap", mt: 0.5 }}>
               {ask.framework && <SourceChip>framework - {ask.framework}</SourceChip>}
               {ask.blocked && <SourceChip>unblocks - {ask.blocked}</SourceChip>}
+            </Box>
+          )}
+          {/* Kept, but demoted out of the card body: a deterministic fallback shown as if it
+              were AI-generated is a misread worth being able to check. */}
+          {llmStatus?.ok !== true && (
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 1, pt: 1, borderTop: `1px solid ${tokens.color.outline}` }}>
+              <span className="material-symbols-outlined" style={{ fontSize: 14, color: tokens.color.inkSecondary }}>{llmIcon}</span>
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                {llmState}
+                {llmFailed && llmStatus?.detail ? ` - ${llmStatus.detail}` : ""}
+                {llmFailed && diagnostics.length ? ` (${diagnostics.join(" | ")})` : ""}
+              </Typography>
             </Box>
           )}
         </PopoverBody>
@@ -438,6 +445,6 @@ export function AskCard({
           </Typography>
         </PopoverBody>
       </Popover>
-    </AgentBubble>
+    </Box>
   );
 }

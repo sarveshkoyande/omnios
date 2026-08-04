@@ -13,7 +13,8 @@ export const AgentBubble = styled("div")(({ theme }) => ({
   minWidth: 0,
   padding: theme.spacing(1, 1.5),
   borderRadius: tokens.radius.md,
-  background: tokens.color.surface,
+  // See TurnBubble: the chat pane is white, so bubbles take the canvas grey.
+  background: tokens.color.canvas,
   border: `1px solid ${tokens.color.outline}`,
   borderLeft: `4px solid ${stageAccent.primary}`,
   boxShadow: "none",
@@ -60,7 +61,9 @@ export const TurnBubble = styled("div")<{ accent: string }>(({ theme, accent }) 
   minWidth: 0,
   padding: theme.spacing(1, 1.5),
   borderRadius: tokens.radius.md,
-  background: tokens.color.surface,
+  // Canvas grey, not white: the chat pane itself is white now, so a white bubble would be
+  // invisible apart from its outline.
+  background: tokens.color.canvas,
   border: `1px solid ${tokens.color.outline}`,
   borderLeft: `4px solid ${accent}`,
   boxShadow: "none",

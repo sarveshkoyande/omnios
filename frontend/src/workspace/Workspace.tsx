@@ -398,7 +398,10 @@ export function Workspace({
               )}
               {ws.stage === 1 && !(ws.studio.active || ws.studio.sections.length > 0 || ws.studio.done) && (
                 <>
-                  <ConsolePanel title="Brief" icon="assignment" collapsible sx={{ mb: 3 }}>
+                  <ConsolePanel title="Campaign brief" icon="assignment" collapsible sx={{ mb: 3 }}>
+                    <Typography variant="body2" sx={{ color: "text.secondary", mb: 1 }}>
+                      Overview of the campaign goals, audience, and strategy.
+                    </Typography>
                     <BriefCard slots={ws.slots} inferred={ws.inferred} />
                   </ConsolePanel>
                   {/* Nothing to say before the brief completes — no placeholder card. */}
@@ -456,7 +459,10 @@ export function Workspace({
 
       {/* Right rail: the AI Assistant. Same conversation/composer as before -- moved from
           the left to the right so the middle column (plan content) reads first. */}
-      <Box component="main" sx={{ flex: "0 0 30vw", minWidth: 320, display: "flex", flexDirection: "column", borderLeft: `1px solid ${indigoTint(0.1)}`, position: "relative", backgroundColor: tokens.color.bgBaseChat }}>
+      {/* White pane against the grey workspace canvas: the conversation is a different kind of
+          surface from the document being built, and the colour break is what says so. Bubbles
+          carry a canvas-grey fill (ChatBubble.tsx) so they still read against it. */}
+      <Box component="main" sx={{ flex: "0 0 30vw", minWidth: 320, display: "flex", flexDirection: "column", borderLeft: `1px solid ${tokens.color.outline}`, position: "relative", backgroundColor: tokens.color.surface }}>
         {!ws.projectId ? (
           <EmptyState>
             <span className="material-symbols-outlined" style={{ fontSize: 46, color: tokens.color.primary }}>hub</span>

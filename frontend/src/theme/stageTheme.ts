@@ -130,6 +130,9 @@ export function stageVars(agent: StageAgentId): Record<string, string> {
       "--stage-primary-container": tokens.color.primaryContainer,
       "--stage-on-primary-container": tokens.color.onPrimaryContainer,
       "--stage-tint-12": alpha(tokens.color.primary, 0.12),
+      // The faintest wash: enough to tie a surface to the stage without competing with the
+      // 0.12 container tint used for emphasis within the same group.
+      "--stage-tint-04": alpha(tokens.color.primary, 0.04),
     };
   }
   const { c1, c2 } = STAGE_AGENTS[agent];
@@ -142,6 +145,7 @@ export function stageVars(agent: StageAgentId): Record<string, string> {
     // Readable ink on that tint.
     "--stage-on-primary-container": darken(c1, 0.45),
     "--stage-tint-12": alpha(c1, 0.12),
+    "--stage-tint-04": alpha(c1, 0.04),
   };
 }
 
@@ -155,4 +159,5 @@ export const accent = {
   container: stageVar("--stage-primary-container", tokens.color.primaryContainer),
   onContainer: stageVar("--stage-on-primary-container", tokens.color.onPrimaryContainer),
   tint12: stageVar("--stage-tint-12", "rgba(3, 78, 162, 0.12)"),
+  tint04: stageVar("--stage-tint-04", "rgba(3, 78, 162, 0.04)"),
 } as const;

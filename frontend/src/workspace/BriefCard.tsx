@@ -3,7 +3,8 @@ import Box from "@mui/material/Box";
 import { styled } from "@mui/material/styles";
 import type { Slots } from "./types";
 import { tokens, indigoTint } from "../theme/tokens";
-import { DefinitionRow, PillChip } from "../glass/primitives";
+import { PillChip } from "../glass/primitives";
+import { BriefFields, type BriefField } from "./BriefFields";
 
 /** Words shown on the single collapsed line before "See more" takes over. */
 const PREVIEW_WORDS = 10;
@@ -82,19 +83,21 @@ export function ExpandableValue({ short, full }: { short: string; full: string }
   );
 }
 
-const EXTRA_FIELDS: [string, keyof Slots][] = [
-  ["Campaign", "campaign_name"],
-  ["Molecule", "molecule"],
-  ["Audience", "audience"],
-  ["Geography", "geography"],
-  ["Duration", "duration"],
-  ["Objective", "objective"],
-  ["Target KPI", "kpi"],
-  ["Preferred channels", "preferred_channels"],
-  ["Existing assets", "existing_assets"],
-  ["Constraints", "constraints"],
-  ["Reason", "reason"],
-  ["Notes", "notes"],
+/** label, slot key, and how many columns the field wants. Short scalars pair up; captured
+ *  prose takes the full width, since a paragraph in a half column wraps to five lines. */
+const EXTRA_FIELDS: [string, keyof Slots, 1 | 2][] = [
+  ["Campaign", "campaign_name", 1],
+  ["Molecule", "molecule", 1],
+  ["Audience", "audience", 1],
+  ["Geography", "geography", 1],
+  ["Duration", "duration", 1],
+  ["Objective", "objective", 2],
+  ["Target KPI", "kpi", 2],
+  ["Preferred channels", "preferred_channels", 2],
+  ["Existing assets", "existing_assets", 2],
+  ["Constraints", "constraints", 2],
+  ["Reason", "reason", 2],
+  ["Notes", "notes", 2],
 ];
 
 export interface Inferred {
@@ -105,7 +108,12 @@ export interface Inferred {
   cx_maturity?: string;
 }
 
-export function BriefCard({ slots, inferred }: { slots: Slots; inferred: Inferred }) {
+/** An unset value renders as N/A in secondary ink rather than an empty cell — an empty cell
+ *  reads as a rendering bug, not as "we don't know this yet". */
+const orNA = (v?: string) =>
+  v && v.trim() ? v : <Box component="span" sx={{ fontWeight: 400, color: tokens.color.inkSecondary }}>N/A</Box>;
+
+export function BriefCard({ slots, inferred, columns = 2 }: { slots: Slots; inferred: Inferred; columns?: 1 | 2 }) {
   const extras = EXTRA_FIELDS.filter(([, key]) => {
     const v = slots[key];
     return v && v !== "(not specified)";
@@ -114,53 +122,63 @@ export function BriefCard({ slots, inferred }: { slots: Slots; inferred: Inferre
     inferred.persona || inferred.stage_label || inferred.cx_maturity || (inferred.competitors?.length ?? 0) > 0;
   const budget = fmtBudget(slots.budget);
 
+  const core: BriefField[] = [
+    { label: "Brand", value: orNA(slots.brand), span: 1 },
+    { label: "Therapy area", value: orNA(slots.therapy_area), span: 1 },
+    ...(slots.indication ? [{ label: "Indication", value: slots.indication, span: 1 as const }] : []),
+    { label: "Lifecycle", value: orNA(inferred.lifecycle_label || slots.lifecycle_key), span: 1 },
+    {
+      label: "Budget",
+      value: budget || (
+        <Box component="span" sx={{ fontWeight: 400, color: tokens.color.inkSecondary }}>percentages only</Box>
+      ),
+      span: 2,
+    },
+  ];
+
+  const fromBrief: BriefField[] = extras.map(([label, key, span]) => {
+    const full = String(slots[key]);
+    // Show the server's ≤15-word gist, not the whole paragraph from the deck.
+    const short = slots.brief_summary?.[key as string] || full;
+    return { label, value: <ExpandableValue short={short} full={full} />, span };
+  });
+
+  const agentInferred: BriefField[] = [
+    ...(inferred.persona ? [{ label: "Persona", value: inferred.persona, span: 1 as const }] : []),
+    ...(inferred.stage_label ? [{ label: "Journey stage", value: inferred.stage_label, span: 1 as const }] : []),
+    ...(inferred.cx_maturity ? [{ label: "CX maturity", value: inferred.cx_maturity, span: 1 as const }] : []),
+    ...(inferred.competitors?.length
+      ? [{
+          label: "Competitors",
+          span: 2 as const,
+          value: (
+            <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
+              {inferred.competitors.map((c) => (
+                <PillChip key={c} label={c} />
+              ))}
+            </Box>
+          ),
+        }]
+      : []),
+  ];
+
   return (
     <Box>
-      <DefinitionRow label="Brand" value={slots.brand} />
-      <DefinitionRow label="Therapy area" value={slots.therapy_area} />
-      {slots.indication && <DefinitionRow label="Indication" value={slots.indication} />}
-      <DefinitionRow label="Lifecycle" value={inferred.lifecycle_label || slots.lifecycle_key} />
-      <DefinitionRow label="Budget" value={budget || undefined} hint={budget ? undefined : "percentages only"} />
+      <BriefFields fields={core} columns={columns} />
 
-      {extras.length > 0 && (
+      {fromBrief.length > 0 && (
         <>
           <GroupLabel>From your brief</GroupLabel>
-          {extras.map(([label, key]) => {
-            const full = String(slots[key]);
-            // Show the server's ≤15-word gist, not the whole paragraph from the deck.
-            const short = slots.brief_summary?.[key as string] || full;
-            return (
-              <DefinitionRow
-                key={key}
-                label={label}
-                value={<ExpandableValue short={short} full={full} />}
-              />
-            );
-          })}
+          <BriefFields fields={fromBrief} columns={columns} />
         </>
       )}
 
       {hasInferred && (
         <>
           <GroupLabel>Inferred by agent</GroupLabel>
-          {inferred.persona && <DefinitionRow label="Persona" value={inferred.persona} />}
-          {inferred.stage_label && <DefinitionRow label="Journey stage" value={inferred.stage_label} />}
-          {inferred.cx_maturity && <DefinitionRow label="CX maturity" value={inferred.cx_maturity} />}
-          {inferred.competitors?.length > 0 && (
-            <DefinitionRow
-              label="Competitors"
-              value={
-                <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap", justifyContent: "flex-end" }}>
-                  {inferred.competitors.map((c) => (
-                    <PillChip key={c} label={c} />
-                  ))}
-                </Box>
-              }
-            />
-          )}
+          <BriefFields fields={agentInferred} columns={columns} />
         </>
       )}
-
     </Box>
   );
 }

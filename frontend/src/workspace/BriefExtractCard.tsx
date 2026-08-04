@@ -1,14 +1,15 @@
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import { GlassPanel, DefinitionRow } from "../glass/primitives";
-import { ExpandableValue } from "./BriefCard";
-import { tokens } from "../theme/tokens";
+import { GlassPanel } from "../glass/primitives";
+import { tokens, indigoTint } from "../theme/tokens";
 import type { BriefExtractItem } from "./types";
 
 /**
- * BriefExtractCard — shown after a brand plan is imported. Lists exactly which brief fields
- * the agent read out of the document, so the user can see what was captured (and what wasn't)
- * before the run. Mirrors the brief panel's DefinitionRow styling.
+ * BriefExtractCard — shown after a brand plan is imported. Names WHICH brief fields the agent
+ * read out of the document, as tags. Deliberately not the values: the captured values are
+ * whole paragraphs lifted from the deck, and rendering them here duplicated the brief panel
+ * while pushing the chat rail into a wall of text. The brief panel is where you read them;
+ * this card only answers "what did it find?".
  */
 export function BriefExtractCard({ items }: { items: BriefExtractItem[] }) {
   return (
@@ -17,7 +18,7 @@ export function BriefExtractCard({ items }: { items: BriefExtractItem[] }) {
         <span className="material-symbols-outlined" style={{ fontSize: 22, color: tokens.color.primary }}>
           description
         </span>
-        <Typography sx={{ fontSize: 15, fontWeight: 600, color: "text.primary" }}>
+        <Typography sx={{ fontSize: tokens.fontSize.md, fontWeight: 700, color: "text.primary" }}>
           Imported from your brand plan
         </Typography>
       </Box>
@@ -25,15 +26,26 @@ export function BriefExtractCard({ items }: { items: BriefExtractItem[] }) {
         {items.length} detail{items.length === 1 ? "" : "s"} pulled from your document. These are now on
         the brief. I'll ask about anything important that's still missing.
       </Typography>
-      <Box>
+      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75 }}>
         {items.map((it) => (
-          <DefinitionRow
+          <Box
             key={it.key}
-            label={it.label}
-            // Same one-line + "See more" treatment as the workspace brief panel: these values
-            // are whole paragraphs lifted from the deck, and this card sits in the narrow chat rail.
-            value={<ExpandableValue short={String(it.value ?? "")} full={String(it.value ?? "")} />}
-          />
+            component="span"
+            sx={{
+              fontSize: tokens.fontSize.xs,
+              fontWeight: 700,
+              color: tokens.color.primary,
+              background: tokens.color.infoSoft,
+              border: `1px solid ${indigoTint(0.18)}`,
+              borderRadius: tokens.radius.pill,
+              px: 1.5,
+              py: 0.5,
+              lineHeight: 1.4,
+              whiteSpace: "nowrap",
+            }}
+          >
+            {it.label}
+          </Box>
         ))}
       </Box>
     </GlassPanel>
