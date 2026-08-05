@@ -28,9 +28,9 @@ import { applyCampaignNodeVisuals, campaignFlowToDocument } from "./campaignAdap
 import type { CampaignFlow } from "../../types";
 import type { WorkflowDocument } from "./flowbuilder/schema/document";
 
-// The two primary toolbar actions follow the stage accent (red on Campaign Operations) rather
-// than the app blue. This toolbar renders inside the workspace subtree where stageVars() sets
-// --stage-primary, so accent.* resolves to the stage colour; the fallback keeps blue elsewhere.
+// The two primary toolbar actions are Omni blue, like every other button in the product. They
+// used to take the stage's magenta; a control that changes colour with the tab it sits in reads
+// as a different application rather than a different section (see theme/stageTheme.ts).
 const STAGE_ACTION_SX = {
   borderRadius: tokens.radius.pill,
   backgroundColor: accent.primary,

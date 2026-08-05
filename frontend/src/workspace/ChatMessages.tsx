@@ -17,7 +17,7 @@ import type { StudioAsk } from "./studio/studioTypes";
 import type { StageAgentId } from "./types";
 import { AGENT_PEOPLE } from "./types";
 import { tokens } from "../theme/tokens";
-import { accent } from "../theme/stageTheme";
+import { stageMark } from "../theme/stageTheme";
 
 function renderMarkup(text: string) {
   const esc = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -199,7 +199,7 @@ export function ChatMessages({
               <Box key={item.id} sx={{ display: "flex", minWidth: 0, justifyContent: "flex-start" }}>
                 {/* TurnBubble is fit-content by default, which would shrink-wrap the option
                     rows; the ask needs the full lane so the options span it. */}
-                <TurnBubble accent={accent.primary} sx={{ flex: "1 1 auto", minWidth: 0, width: "100%", maxWidth: "100%" }}>
+                <TurnBubble accent={stageMark.primary} sx={{ flex: "1 1 auto", minWidth: 0, width: "100%", maxWidth: "100%" }}>
                   <AskCard
                     ask={item.ask}
                     ownerName={item.askOwnerName || "The team"}

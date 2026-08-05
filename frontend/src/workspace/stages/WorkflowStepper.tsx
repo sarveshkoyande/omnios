@@ -1,6 +1,6 @@
 import { styled } from "@mui/material/styles";
 import { tokens, focusRingOnBrand, motion, hoverOnly } from "../../theme/tokens";
-import { accent } from "../../theme/stageTheme";
+import { stageMark } from "../../theme/stageTheme";
 
 export const WORKFLOW_STAGES = [
   { id: 1, name: "Planning & Strategy", icon: "strategy", blurb: "Brief, multi-agent research and the Brand Engagement Plan." },
@@ -40,6 +40,9 @@ const Tab = styled("button")<{ active: boolean }>(({ active }) => ({
   whiteSpace: "nowrap",
   borderRadius: `${R}px ${R}px 0 0`,
   background: active ? FILL : "transparent",
+  // Marker slot 2: the active tab is the only tab that carries the stage's colour, and it
+  // carries it as a 3px top edge rather than a fill. Inset so it follows the tab's radius.
+  boxShadow: active ? `inset 0 3px 0 0 ${stageMark.primary}` : "none",
   color: active ? tokens.color.text : "rgba(255,255,255,0.78)",
   fontWeight: active ? 700 : 600,
   fontSize: tokens.fontSize.sm,
@@ -89,7 +92,7 @@ const StepNumber = styled("span")<{ active: boolean }>(({ active }) => ({
   justifyContent: "center",
   fontSize: tokens.fontSize.xs,
   fontWeight: 700,
-  background: active ? accent.primary : "transparent",
+  background: active ? stageMark.primary : "transparent",
   border: active ? "none" : "1.5px solid rgba(255,255,255,0.5)",
   color: active ? "#fff" : "rgba(255,255,255,0.85)",
   transition: [

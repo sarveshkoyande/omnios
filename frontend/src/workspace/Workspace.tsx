@@ -4,7 +4,7 @@ import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
-import { styled, ThemeProvider } from "@mui/material/styles";
+import { styled } from "@mui/material/styles";
 import Accordion from "@mui/material/Accordion";
 import AccordionSummary from "@mui/material/AccordionSummary";
 import AccordionDetails from "@mui/material/AccordionDetails";
@@ -30,11 +30,11 @@ import { StageReporting } from "./stages/StageReporting";
 import type { StudioState } from "./studio/studioTypes";
 import { WorkflowStepper } from "./stages/WorkflowStepper";
 import { useWorkspace } from "./useWorkspace";
-import { STAGE_AGENTS, agentForStage, type StageAgentId } from "./types";
+import { STAGE_AGENTS, agentForStage } from "./types";
 import { ConsolePanel } from "../components/ConsolePanel";
 import { tokens, indigoTint, light } from "../theme/tokens";
 import { enterRise, enterWith } from "../theme/motionPresets";
-import { stageTheme, stageVars, accent } from "../theme/stageTheme";
+import { stageVars, accent, stageMark } from "../theme/stageTheme";
 
 // All four stages are freely accessible at any time — there is no unlock gating.
 // The legacy /api/run-stream flow and its revealed_phases tracking stay in the
@@ -229,7 +229,6 @@ export function Workspace({
   seedFile,
   initialStage,
   startMode = "direct",
-  onStageAgentChange,
 }: {
   prefillBrand?: string | null;
   openProjectId?: string | null;
@@ -237,15 +236,12 @@ export function Workspace({
   seedFile?: File | null;
   initialStage?: number;
   startMode?: "flow" | "direct";
-  /** Reports the on-screen stage's agent up to App so the top bar can wear its accent. */
-  onStageAgentChange?: (agent: StageAgentId) => void;
 }) {
   const ws = useWorkspace();
-  // Who owns the window currently on screen — drives both the chat header identity and the
-  // accent colour the stage is themed with.
+  // Who owns the window currently on screen — drives the chat header identity and the stage
+  // marker hue. It does NOT drive the chrome: the top bar, sub-bar and every control stay blue.
   const stageAgentId = agentForStage(ws.stage);
   const stageAgent = STAGE_AGENTS[stageAgentId];
-  useEffect(() => { onStageAgentChange?.(stageAgentId); }, [stageAgentId, onStageAgentChange]);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [showFullPlan, setShowFullPlan] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -295,11 +291,9 @@ export function Workspace({
   }, [startMode, ws.projectId, ws.studio.done, ws.runSequentialFlow]);
 
   return (
-    // Each stage wears its own agent's accent; planning resolves to the base theme unchanged.
-    <ThemeProvider theme={stageTheme(stageAgentId)}>
-    {/* stageVars publishes the accent as CSS variables for the chrome that is styled with
-        literal token strings rather than through the palette (section headers, stage icons,
-        the top bar). Everything outside this subtree keeps the blue fallbacks. */}
+    // stageVars publishes the stage's marker hue as CSS variables for the six sanctioned marker
+    // slots (stageTheme.ts). Nothing structural reads them: buttons, links, inputs, panel
+    // headers and both bars resolve to Omni blue in every stage.
     <Box sx={{ ...stageVars(stageAgentId), display: "flex", flexDirection: "column", height: `calc(100vh - ${tokens.layout.topBarHeight}px)`, minHeight: 0 }}>
       <PlansDrawer
         open={drawerOpen}
@@ -519,15 +513,15 @@ export function Workspace({
         ) : (
           <>
             {/* The stage's agent identity, stated once, directly above its conversation --
-                the transcript below carries no avatars at all. Given its own tinted surface
-                and a heavier bottom rule so it reads as the pane's header rather than as the
-                first message in the thread. */}
+                the transcript below carries no avatars at all. White surface: the colour is
+                carried by the avatar ring and the 2px rule under it, not by a filled band.
+                A tinted panel behind the name made each stage read as a different product. */}
             <Box
               sx={{
                 px: 2.5,
                 py: 2,
-                borderBottom: `2px solid ${indigoTint(0.16)}`,
-                backgroundColor: accent.container,
+                borderBottom: `2px solid ${stageMark.primary}`,
+                backgroundColor: tokens.color.surface,
                 display: "flex",
                 alignItems: "center",
                 flex: "0 0 auto",
@@ -586,6 +580,5 @@ export function Workspace({
       </Box>
       <PersonaProfileModal personaId={ws.profileOpen} onClose={ws.closePersonaProfile} />
     </Box>
-    </ThemeProvider>
   );
 }

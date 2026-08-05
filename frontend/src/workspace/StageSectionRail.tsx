@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { styled } from "@mui/material/styles";
-import { accent } from "../theme/stageTheme";
+import { stageMark } from "../theme/stageTheme";
 import { indigoTint, tokens, motion, hoverOnly } from "../theme/tokens";
 
 /**
@@ -48,15 +48,17 @@ const Row = styled(Box)<{ active?: boolean }>(({ theme, active }) => ({
   gap: theme.spacing(1.25),
   padding: theme.spacing(1, 1.25),
   borderRadius: tokens.radius.sm,
-  borderLeft: `3px solid ${active ? accent.primary : "transparent"}`,
-  background: active ? accent.container : "transparent",
+  // Marker slot 5: the active row is marked by a 3px coloured edge, not by a coloured panel.
+  // The fill stays neutral so a rail of eight rows never turns the column into a block of hue.
+  borderLeft: `3px solid ${active ? stageMark.primary : "transparent"}`,
+  background: active ? tokens.color.canvas : "transparent",
   cursor: "pointer",
   transition: [
     `background ${motion.duration.hover} ${motion.easeOut}`,
     `border-left-color ${motion.duration.hover} ${motion.easeOut}`,
     `transform ${motion.duration.press} ${motion.easeOut}`,
   ].join(", "),
-  [hoverOnly]: { "&:hover": { background: active ? accent.container : indigoTint(0.08) } },
+  [hoverOnly]: { "&:hover": { background: active ? tokens.color.canvas : indigoTint(0.08) } },
   "&:active": { transform: "scale(0.98)" },
 }));
 
@@ -116,7 +118,14 @@ export function StageSectionRail({ sections, title = "Sections" }: { sections: R
       <Box sx={{ px: 1.25 }}>
         {visible.map((s) => (
           <Row key={s.id} active={s.id === activeId} onClick={() => go(s.id)}>
-            <span className="material-symbols-outlined" style={{ fontSize: 18, flex: "0 0 auto", color: accent.primary }}>
+            <span
+              className="material-symbols-outlined"
+              style={{
+                fontSize: 18,
+                flex: "0 0 auto",
+                color: s.id === activeId ? stageMark.primary : tokens.color.inkSecondary,
+              }}
+            >
               {s.icon}
             </span>
             <Typography sx={{ fontSize: 15, fontWeight: s.id === activeId ? 700 : 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>

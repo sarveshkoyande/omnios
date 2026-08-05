@@ -1,605 +1,230 @@
-import { useEffect, useMemo, useState } from "react";
+/**
+ * Reporting & Insights — the executive analytics workspace.
+ *
+ * Layout, top to bottom: filter bar → KPI rail → single-metric trend chart beside the agent's
+ * insight rail → funnel / geography / channel mix → journey + top assets → send windows +
+ * audience composition → collapsible deep-dive shelf.
+ *
+ * Two rules this screen is built on:
+ *  1. Every number is counted from the HCP 360 panel for the *current filter combination*
+ *     (server-side, `strategy/hcp_panel_metrics.py`) — filters are a real drill-down, so any
+ *     selection made anywhere on the page refetches and re-derives the whole dashboard.
+ *  2. The trend chart shows one metric at a time, chosen from the drop-down or by clicking a
+ *     KPI card, so a rate and a volume are never forced onto a shared axis.
+ */
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Box from "@mui/material/Box";
-import Chip from "@mui/material/Chip";
-import MenuItem from "@mui/material/MenuItem";
-import Select from "@mui/material/Select";
 import Typography from "@mui/material/Typography";
-import { styled } from "@mui/material/styles";
-import { ComposableMap, Geographies, Geography } from "react-simple-maps";
 import { ConsolePanel } from "../../components/ConsolePanel";
-import { PlanTable } from "./PlanTable";
 import { StageHead } from "./StageHead";
-import { indigoTint, tokens } from "../../theme/tokens";
-import { accent } from "../../theme/stageTheme";
+import { AssetsCard } from "./reporting/AssetsCard";
+import { AudienceCard } from "./reporting/AudienceCard";
+import { ChannelCard } from "./reporting/ChannelCard";
+import { DeepDivePanels } from "./reporting/DeepDivePanels";
+import { FilterBar } from "./reporting/FilterBar";
+import { FunnelCard } from "./reporting/FunnelCard";
+import { GeoCard } from "./reporting/GeoCard";
+import { InsightsRail } from "./reporting/InsightsRail";
+import { JourneyCard } from "./reporting/JourneyCard";
+import { MeasurementPlan } from "./reporting/MeasurementPlan";
+import { MetricRail } from "./reporting/MetricRail";
+import { SendWindowCard } from "./reporting/SendWindowCard";
+import { TrendChart } from "./reporting/TrendChart";
+import { Shimmer } from "./reporting/dashboardKit";
+import { motion, tokens } from "../../theme/tokens";
 import { fetchReportingInsights } from "../../api";
-import type { PlanResult, ReportingInsights, ReportingKpi, ReportingSignal, SegmentRow } from "../types";
+import type { PlanResult, ReportingFilterKey, ReportingFilters, ReportingInsights } from "../types";
 
-// A public, static US-states topology -- react-simple-maps' documented example source.
-const US_STATES_GEO_URL = "https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json";
-
-const TIME_WINDOWS = [
-  { label: "Last 3 months", months: 3 },
-  { label: "Last 6 months", months: 6 },
-  { label: "Last 12 months", months: 12 },
-];
-
-/** A single email-funnel metric card: label + exact current-period percentage. */
-const EmailMetricCard = styled(Box)(({ theme }) => ({
-  flex: "1 1 150px",
-  minWidth: 140,
-  borderRadius: tokens.radius.md,
-  border: `1px solid ${indigoTint(0.14)}`,
-  background: "rgba(255,255,255,0.55)",
-  padding: theme.spacing(1.5),
-  display: "flex",
-  flexDirection: "column",
-  gap: 2,
-}));
-
-const LANE_ICON: Record<string, string> = {
-  Field: "groups",
-  Events: "event",
-  "Owned digital": "language",
-  Reach: "campaign",
-  "Patient-adjacent": "favorite",
-  Peer: "diversity_3",
-};
-
-const KpiCol = styled(Box)<{ accent: string }>(({ theme, accent }) => ({
-  borderLeft: `3px solid ${accent}`,
-  borderRadius: tokens.radius.sm,
-  border: `1px solid ${indigoTint(0.12)}`,
-  padding: theme.spacing(2),
-  background: "rgba(255,255,255,0.4)",
-}));
-
-// A measurement card: big target headline + band + context. Primary cards get an accent ring.
-const InsightCard = styled(Box)<{ primary?: boolean }>(({ theme, primary }) => ({
-  borderRadius: tokens.radius.md,
-  border: `1px solid ${primary ? accent.primary : indigoTint(0.14)}`,
-  boxShadow: primary ? `0 0 0 1px ${accent.primary}22` : "none",
-  padding: theme.spacing(1.75),
-  background: "rgba(255,255,255,0.55)",
-  display: "flex",
-  flexDirection: "column",
-  gap: theme.spacing(0.25),
-  minWidth: 0,
-}));
-
-function metricHeadline(m: ReportingKpi | ReportingSignal): string {
-  if ("value_display" in m && m.value_display) return m.value_display;
-  if (m.band) return m.band;
-  if (m.value_pct != null) return `${m.value_pct}%`;
-  return "—";
-}
-
-/** Horizontal count bars for a demographic dimension (counts are comparable within a dim). */
-function SegmentBars({ rows }: { rows: SegmentRow[] }) {
-  const max = Math.max(1, ...rows.map((r) => r.count));
-  return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 0.6 }}>
-      {rows.map((r) => (
-        <Box key={r.value} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <Typography variant="caption" sx={{ flex: "0 0 42%", minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={r.value}>
-            {r.value}
-          </Typography>
-          <Box sx={{ flex: 1, height: 8, borderRadius: 4, background: indigoTint(0.08), overflow: "hidden" }}>
-            <Box sx={{ width: `${(r.count / max) * 100}%`, height: "100%", background: accent.primary, borderRadius: 4 }} />
-          </Box>
-          <Typography variant="caption" sx={{ flex: "0 0 auto", fontWeight: 700, color: "text.secondary" }}>{r.count}</Typography>
-        </Box>
-      ))}
-    </Box>
-  );
-}
-
-function DemoBlock({ title, rows }: { title: string; rows?: SegmentRow[] }) {
-  if (!rows?.length) return null;
-  return (
-    <Box sx={{ flex: 1, minWidth: 200 }}>
-      <Typography variant="caption" sx={{ fontWeight: 700, display: "block", mb: 0.75, color: "text.secondary" }}>{title}</Typography>
-      <SegmentBars rows={rows} />
-    </Box>
-  );
-}
-
-/** Day × hour-of-day open-rate heatmap — cell shade intensity on the current stage accent. */
-function OpensHeatmap({ hours, rows }: { hours: string[]; rows: { day: string; cells: number[] }[] }) {
-  const max = Math.max(0.01, ...rows.flatMap((r) => r.cells));
-  return (
-    <Box sx={{ overflowX: "auto" }}>
-      <PlanTable>
-        <thead>
-          <tr>
-            <th>Day</th>
-            {hours.map((h) => <th key={h}>{h}</th>)}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r) => (
-            <tr key={r.day}>
-              <td><b>{r.day}</b></td>
-              {r.cells.map((v, i) => (
-                <td key={i} style={{ background: v > 0 ? `color-mix(in srgb, ${accent.primary} ${Math.round((v / max) * 85 + 5)}%, white)` : undefined, fontVariantNumeric: "tabular-nums" }}>
-                  {v > 0 ? `${v}%` : ""}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </PlanTable>
-    </Box>
-  );
-}
-
-/** Ranked horizontal bar list (state-level CTR) — a lighter-weight substitute for a full
- * choropleth map, same information (relative ranking + exact value) without a mapping library. */
-/** Real US state-boundary choropleth (react-simple-maps + a public states topology),
- * shaded on the current stage accent from light (low CTR) to full (high CTR). */
-function StateCtrMap({ rows }: { rows: { state: string; ctr_pct: number }[] }) {
-  const byName = useMemo(() => Object.fromEntries(rows.map((r) => [r.state, r.ctr_pct])), [rows]);
-  const max = Math.max(0.01, ...rows.map((r) => r.ctr_pct));
-  const [hover, setHover] = useState<{ name: string; value: number } | null>(null);
-
-  const colorFor = (value: number | undefined) => {
-    if (value == null) return indigoTint(0.08);
-    const pct = Math.round(12 + 88 * (value / max)); // never fully white, even at the low end
-    return `color-mix(in srgb, ${accent.primary} ${pct}%, white)`;
-  };
-
-  return (
-    <Box>
-      <Typography variant="caption" sx={{ display: "block", mb: 0.5, color: "text.secondary", minHeight: 18 }}>
-        {hover ? <><b>{hover.name}</b> — {hover.value}% CTR</> : "Hover a state for its CTR"}
-      </Typography>
-      <ComposableMap projection="geoAlbersUsa" width={480} height={300} style={{ width: "100%", height: "auto" }}>
-        <Geographies geography={US_STATES_GEO_URL}>
-          {({ geographies }) =>
-            geographies.map((geo) => {
-              const name = geo.properties.name as string;
-              const value = byName[name];
-              return (
-                <Geography
-                  key={geo.rsmKey}
-                  geography={geo}
-                  onMouseEnter={() => setHover({ name, value: value ?? 0 })}
-                  onMouseLeave={() => setHover(null)}
-                  style={{
-                    default: { fill: colorFor(value), stroke: tokens.color.surface, strokeWidth: 0.75, outline: "none" },
-                    hover: { fill: accent.primary, stroke: tokens.color.surface, strokeWidth: 0.75, outline: "none" },
-                    pressed: { fill: accent.primary, stroke: tokens.color.surface, strokeWidth: 0.75, outline: "none" },
-                  }}
-                />
-              );
-            })
-          }
-        </Geographies>
-      </ComposableMap>
-    </Box>
-  );
-}
-
-/** Small SVG multi-line chart for the monthly split -- one line per metric, in the requested
- * metric order, shaded in steps of the current stage accent. */
-function MonthlyTrendChart({ months, metrics }: { months: string[]; metrics: { label: string; monthly: { value_pct: number }[] }[] }) {
-  const W = 640, H = 220, PAD_L = 40, PAD_R = 12, PAD_T = 12, PAD_B = 28;
-  const innerW = W - PAD_L - PAD_R, innerH = H - PAD_T - PAD_B;
-  const max = Math.max(1, ...metrics.flatMap((m) => m.monthly.map((p) => p.value_pct)));
-  const n = months.length;
-  const x = (i: number) => PAD_L + (n <= 1 ? 0 : (i / (n - 1)) * innerW);
-  const y = (v: number) => PAD_T + innerH - (v / max) * innerH;
-  const shadeFor = (i: number) => {
-    const pct = metrics.length <= 1 ? 100 : Math.round((0.35 + 0.65 * (1 - i / (metrics.length - 1))) * 100);
-    return `color-mix(in srgb, ${accent.primary} ${pct}%, white)`;
-  };
-
-  return (
-    <Box>
-      <Box component="svg" viewBox={`0 0 ${W} ${H}`} sx={{ width: "100%", height: "auto", display: "block" }}>
-        {[0, 0.25, 0.5, 0.75, 1].map((f) => (
-          <line key={f} x1={PAD_L} x2={W - PAD_R} y1={PAD_T + innerH * (1 - f)} y2={PAD_T + innerH * (1 - f)} stroke={indigoTint(0.1)} strokeWidth={1} />
-        ))}
-        {[0, 0.25, 0.5, 0.75, 1].map((f) => (
-          <text key={f} x={PAD_L - 6} y={PAD_T + innerH * (1 - f) + 3} fontSize={9} textAnchor="end" fill={tokens.color.inkSoft}>
-            {(max * f).toFixed(1)}%
-          </text>
-        ))}
-        {months.map((m, i) => (
-          <text key={m} x={x(i)} y={H - 8} fontSize={9} textAnchor="middle" fill={tokens.color.inkSoft}>{m.slice(5)}</text>
-        ))}
-        {metrics.map((metric, mi) => {
-          const d = metric.monthly.map((p, i) => `${i === 0 ? "M" : "L"} ${x(i)} ${y(p.value_pct)}`).join(" ");
-          const color = shadeFor(mi);
-          return (
-            <g key={metric.label}>
-              <path d={d} fill="none" stroke={color} strokeWidth={2} />
-              {metric.monthly.map((p, i) => <circle key={i} cx={x(i)} cy={y(p.value_pct)} r={2.5} fill={color} />)}
-            </g>
-          );
-        })}
-      </Box>
-      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, mt: 1 }}>
-        {metrics.map((metric, mi) => (
-          <Box key={metric.label} sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-            <Box sx={{ width: 10, height: 10, borderRadius: "2px", background: shadeFor(mi) }} />
-            <Typography variant="caption" sx={{ color: "text.secondary" }}>{metric.label}</Typography>
-          </Box>
-        ))}
-      </Box>
-    </Box>
-  );
-}
-
-const DONUT_SHADES = [1, 0.6, 0.28]; // opacity steps on the stage accent, darkest -> lightest
-
-/** CSS conic-gradient donut (no chart library) shaded in steps of the current stage accent. */
-function _donutShade(i: number): string {
-  const pct = Math.round(DONUT_SHADES[i % DONUT_SHADES.length] * 100);
-  return `color-mix(in srgb, ${accent.primary} ${pct}%, white)`;
-}
-
-function SegmentDonut({ rows }: { rows: { segment: string; pct: number }[] }) {
-  let acc = 0;
-  const stops = rows.map((r, i) => {
-    const start = acc;
-    acc += r.pct;
-    return `${_donutShade(i)} ${start}% ${acc}%`;
-  });
-  return (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 3, flexWrap: "wrap" }}>
-      <Box
-        sx={{
-          width: 150,
-          height: 150,
-          borderRadius: "50%",
-          background: `conic-gradient(${stops.join(", ")})`,
-          display: "grid",
-          placeItems: "center",
-          flex: "0 0 auto",
-        }}
-      >
-        <Box sx={{ width: 84, height: 84, borderRadius: "50%", background: tokens.color.surface }} />
-      </Box>
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-        {rows.map((r, i) => (
-          <Box key={r.segment} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Box sx={{ width: 12, height: 12, borderRadius: "3px", background: _donutShade(i), flex: "0 0 auto" }} />
-            <Typography variant="caption">{r.segment} — <b>{r.pct}%</b></Typography>
-          </Box>
-        ))}
-      </Box>
-    </Box>
-  );
-}
-
-const StatTile = styled(Box)(({ theme }) => ({
-  flex: "1 1 180px",
-  minWidth: 160,
-  borderRadius: tokens.radius.md,
-  background: accent.primary,
-  color: "#fff",
-  padding: theme.spacing(2),
-  display: "flex",
-  flexDirection: "column",
-  gap: 4,
-}));
+const DEFAULT_METRIC = "open";
 
 export function StageReporting({ result, projectId }: { result: PlanResult | null; projectId: string | null }) {
   const [insights, setInsights] = useState<ReportingInsights | null>(null);
+  const [filters, setFilters] = useState<ReportingFilters>({});
   const [months, setMonths] = useState(6);
-  const [specialty, setSpecialty] = useState<string>("");
+  const [metricKey, setMetricKey] = useState(DEFAULT_METRIC);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  // Distinguishes "first load, nothing to show" from "refetching, keep the old numbers up".
+  const loadedOnce = useRef(false);
 
   useEffect(() => {
     if (!projectId) return;
     let cancelled = false;
-    fetchReportingInsights(projectId, { months, specialty: specialty || null })
-      .then((d) => { if (!cancelled) setInsights(d); })
-      .catch(() => { if (!cancelled) setInsights(null); });
+    setBusy(true);
+    fetchReportingInsights(projectId, { ...filters, months })
+      .then((data) => {
+        if (cancelled) return;
+        setInsights(data);
+        setError(data.available === false ? (data.message ?? "No data for this filter combination.") : null);
+        loadedOnce.current = true;
+      })
+      .catch(() => {
+        if (!cancelled) setError("Could not load the reporting data.");
+      })
+      .finally(() => {
+        if (!cancelled) setBusy(false);
+      });
     return () => { cancelled = true; };
-  }, [projectId, result, months, specialty]);
+  }, [projectId, result, filters, months]);
 
-  const demo = insights?.demographics;
-  // Hoisted above the early return below, and it must stay there. A hook placed after a
-  // conditional return runs on some renders and not others; the moment the branch flips --
-  // which it does as soon as the insights fetch resolves and `insights` goes non-null --
-  // React sees a different hook count, throws "Rendered more hooks than during the previous
-  // render" (#310), and unmounts the entire app rather than just this tab.
-  const specialtyOptions = useMemo(() => (demo?.by_specialty ?? []).map((r) => r.value), [demo]);
+  const metrics = useMemo(() => insights?.metrics ?? [], [insights]);
 
-  if (!result && !insights) {
-    return <ConsolePanel><Typography sx={{ color: "text.secondary", fontStyle: "italic" }}>Complete Stage 1 to see the measurement framework.</Typography></ConsolePanel>;
+  // A metric the payload no longer carries (or the very first render) falls back rather than
+  // leaving the chart empty.
+  useEffect(() => {
+    if (metrics.length && !metrics.some((m) => m.key === metricKey)) setMetricKey(metrics[0].key);
+  }, [metrics, metricKey]);
+
+  const setFilter = useCallback((key: ReportingFilterKey, value: string) => {
+    setFilters((prev) => {
+      const next = { ...prev };
+      if (!value || prev[key] === value) delete next[key];  // clicking the active value clears it
+      else next[key] = value;
+      return next;
+    });
+  }, []);
+
+  const resetFilters = useCallback(() => setFilters({}), []);
+
+  if (!projectId) {
+    return (
+      <ConsolePanel>
+        <Typography sx={{ color: "text.secondary", fontStyle: "italic" }}>
+          Open or create a project to see the reporting dashboard.
+        </Typography>
+      </ConsolePanel>
+    );
   }
+
+  const headlineKeys = insights?.headline_keys ?? [];
+  const headlineMetrics = headlineKeys.length
+    ? headlineKeys.map((k) => metrics.find((m) => m.key === k)).filter(Boolean) as typeof metrics
+    : metrics.slice(0, 6);
 
   return (
     <Box>
       <StageHead
         icon="insights"
         title="Reporting & Insights"
-        blurb="The closed-loop scorecard: the KPIs that prove the plan worked, the audience they measure, and how every touch is tagged and tested."
+        blurb="The closed-loop scorecard, counted live off the HCP 360 panel: what the audience is, what it is likely to do, and what to change next."
         agent="reporting"
       />
 
-      {insights && (
+      <FilterBar
+        insights={insights}
+        filters={filters}
+        months={months}
+        busy={busy}
+        onChange={setFilter}
+        onMonthsChange={setMonths}
+        onReset={resetFilters}
+      />
+
+      {error && (
+        <Box sx={{
+          border: `1px solid ${tokens.color.outline}`, borderRadius: tokens.radius.lg,
+          background: tokens.color.surface, p: 2, mb: 2.5,
+        }}>
+          <Typography sx={{ fontSize: 15, fontWeight: 700, mb: 0.5 }}>{error}</Typography>
+          <Typography sx={{ fontSize: 15, color: "text.secondary" }}>
+            Widen or clear a filter — the cohort has to contain at least one HCP for the dashboard
+            to have anything to count.
+          </Typography>
+        </Box>
+      )}
+
+      {insights?.available && (
         <>
-          {/* Filters — apply to the email metrics funnel below. */}
-          <ConsolePanel id="rep-filters" sx={{ mb: 3 }}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
-              <Typography variant="caption" sx={{ fontWeight: 700, color: "text.secondary" }}>Filters</Typography>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Typography variant="caption" sx={{ color: "text.secondary" }}>Time</Typography>
-                <Select size="small" value={months} onChange={(e) => setMonths(Number(e.target.value))} sx={{ minWidth: 150, fontSize: 15 }}>
-                  {TIME_WINDOWS.map((w) => <MenuItem key={w.months} value={w.months}>{w.label}</MenuItem>)}
-                </Select>
-              </Box>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Typography variant="caption" sx={{ color: "text.secondary" }}>Specialty</Typography>
-                <Select size="small" value={specialty} onChange={(e) => setSpecialty(e.target.value)} displayEmpty sx={{ minWidth: 170, fontSize: 15 }}>
-                  <MenuItem value="">All specialties</MenuItem>
-                  {specialtyOptions.map((s) => <MenuItem key={s} value={s}>{s}</MenuItem>)}
-                </Select>
-              </Box>
+          <MetricRail
+            metrics={headlineMetrics}
+            selectedKey={metricKey}
+            loading={busy && !loadedOnce.current}
+            onSelect={setMetricKey}
+          />
+
+          {/* Chart + agent rail. The rail is a sidebar on wide screens and stacks under the
+              chart on narrow ones — it is commentary on the chart, so it must follow it.
+              `alignItems: start` matters: the feed is much taller than the chart, and a
+              stretched chart card would sit in a field of dead white space. */}
+          <Box sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", lg: "minmax(0, 2.1fr) minmax(300px, 1fr)" },
+            gap: 2, mb: 2, alignItems: "start",
+          }}>
+            <TrendChartSlot metrics={metrics} metricKey={metricKey} onSelect={setMetricKey} busy={busy} />
+            <InsightsRail insights={insights} loading={busy && !loadedOnce.current} onSelectMetric={setMetricKey} />
+          </Box>
+
+          <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 2, alignItems: "stretch" }}>
+            <FunnelCard steps={insights.funnel?.steps ?? []} />
+            <GeoCard
+              rows={insights.geo ?? []}
+              activeState={filters.state}
+              onSelectState={(code) => setFilter("state", code)}
+            />
+            <ChannelCard
+              rows={insights.channels ?? []}
+              activeChannel={filters.channel}
+              onSelectChannel={(channel) => setFilter("channel", channel)}
+            />
+          </Box>
+
+          {/* The journey takes the full width on its own: five nodes plus their drop-off
+              branches do not survive being squeezed into half a column. */}
+          <Box sx={{ display: "flex", mb: 2 }}>
+            <JourneyCard steps={insights.journey ?? []} />
+          </Box>
+
+          <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 2, alignItems: "stretch" }}>
+            <AssetsCard rows={insights.assets ?? []} />
+            <AudienceCard
+              breakdowns={{
+                segment: insights.breakdowns?.segment ?? [],
+                specialty: insights.breakdowns?.specialty ?? [],
+              }}
+              filters={filters}
+              onSelect={setFilter}
+            />
+          </Box>
+
+          {insights.send_windows && (
+            <Box sx={{ display: "flex", mb: 2 }}>
+              <SendWindowCard windows={insights.send_windows} />
             </Box>
-          </ConsolePanel>
-
-          {/* Email metrics funnel — exact current-period percentage, in delivery order, plus a
-              monthly split for every metric. */}
-          {insights.email_metrics && (
-            <ConsolePanel id="rep-email-metrics" title="Email metrics" sx={{ mb: 3 }}>
-              <Box sx={{ display: "flex", gap: 1.25, flexWrap: "wrap", mb: 2.5 }}>
-                {insights.email_metrics.metrics.map((m) => (
-                  <EmailMetricCard key={m.key}>
-                    <Typography variant="caption" sx={{ fontWeight: 700 }}>{m.label}</Typography>
-                    <Typography sx={{ fontSize: 24, fontWeight: 800, color: "text.primary", lineHeight: 1.1 }}>{m.value_pct}%</Typography>
-                  </EmailMetricCard>
-                ))}
-              </Box>
-
-              <Typography variant="caption" sx={{ fontWeight: 700, color: "text.secondary", display: "block", mb: 1 }}>
-                Split by month
-              </Typography>
-              <MonthlyTrendChart months={insights.email_metrics.months} metrics={insights.email_metrics.metrics} />
-              <Typography variant="caption" sx={{ color: "text.secondary", fontStyle: "italic", display: "block", mt: 1.5 }}>
-                {insights.email_metrics.note} Showing: {insights.email_metrics.specialty}.
-              </Typography>
-            </ConsolePanel>
           )}
 
-          {/* Email deep-dive: open-time heatmap + CTR by state, delivered-by-segment + subject
-              line performance, and reach tiles — all on the current stage accent. */}
-          {insights.email_deepdive && (
-            <>
-              <Box sx={{ display: "flex", gap: 3, flexWrap: "wrap", mb: 3, alignItems: "stretch" }}>
-                <ConsolePanel title="Opens — by time of day" sx={{ flex: "1 1 420px", minWidth: 0 }}>
-                  <OpensHeatmap hours={insights.email_deepdive.opens_by_time.hours} rows={insights.email_deepdive.opens_by_time.rows} />
-                </ConsolePanel>
-                <ConsolePanel title="CTR by state" sx={{ flex: "1 1 320px", minWidth: 0 }}>
-                  <StateCtrMap rows={insights.email_deepdive.ctr_by_state} />
-                </ConsolePanel>
-              </Box>
-
-              <Box sx={{ display: "flex", gap: 3, flexWrap: "wrap", mb: 3, alignItems: "stretch" }}>
-                <ConsolePanel title="Delivered by segment" sx={{ flex: "1 1 320px", minWidth: 0 }}>
-                  <SegmentDonut rows={insights.email_deepdive.delivered_by_segment} />
-                </ConsolePanel>
-                <ConsolePanel title="Subject line performance" sx={{ flex: "2 1 480px", minWidth: 0 }}>
-                  <Box sx={{ overflowX: "auto" }}>
-                    <PlanTable>
-                      <thead>
-                        <tr>
-                          <th>Asset name</th><th>Segment</th><th>Subject line</th><th>A/B testing</th><th>Wave type</th>
-                          <th>Emails sent</th><th>Deliveries</th><th>Opens</th><th>Clicks</th><th>Open rate</th><th>CTR</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {insights.email_deepdive.subject_lines.map((r, i) => (
-                          <tr key={i}>
-                            <td>{r.asset_name}</td>
-                            <td>{r.segment || "—"}</td>
-                            <td>{r.subject_line}</td>
-                            <td>{r.ab_testing}</td>
-                            <td>{r.wave_type}</td>
-                            <td>{r.emails_sent}</td>
-                            <td>{r.deliveries}</td>
-                            <td>{r.opens}</td>
-                            <td>{r.clicks}</td>
-                            <td>{r.open_rate_pct}%</td>
-                            <td>{r.ctr_pct}%</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </PlanTable>
-                  </Box>
-                </ConsolePanel>
-              </Box>
-
-              <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap", mb: 3 }}>
-                <StatTile>
-                  <Typography variant="caption" sx={{ opacity: 0.85 }}>Unique HCP reached</Typography>
-                  <Typography sx={{ fontSize: 26, fontWeight: 800 }}>{insights.email_deepdive.tiles.unique_hcp_reached.toLocaleString()}</Typography>
-                </StatTile>
-                <StatTile>
-                  <Typography variant="caption" sx={{ opacity: 0.85 }}>Unique HCP engaged</Typography>
-                  <Typography sx={{ fontSize: 26, fontWeight: 800 }}>{insights.email_deepdive.tiles.unique_hcp_engaged.toLocaleString()}</Typography>
-                </StatTile>
-                <StatTile>
-                  <Typography variant="caption" sx={{ opacity: 0.85 }}>Unique HCP deep engaged</Typography>
-                  <Typography sx={{ fontSize: 26, fontWeight: 800 }}>{insights.email_deepdive.tiles.unique_hcp_deep_engaged.toLocaleString()}</Typography>
-                </StatTile>
-                <StatTile>
-                  <Typography variant="caption" sx={{ opacity: 0.85 }}>Unique subject lines</Typography>
-                  <Typography sx={{ fontSize: 26, fontWeight: 800 }}>{insights.email_deepdive.tiles.unique_subject_lines}</Typography>
-                </StatTile>
-              </Box>
-            </>
-          )}
-
-          {/* Stage-promotion funnel — the signals that move an HCP to the next journey stage. */}
-          <ConsolePanel id="rep-funnel" title={`Stage-promotion signals — ${insights.funnel.stage}`} sx={{ mb: 3 }}>
-            <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1.5 }}>{insights.funnel.note}</Typography>
-            <Box sx={{ display: "flex", gap: 1, alignItems: "stretch", flexWrap: "wrap" }}>
-              {insights.funnel.signals.map((s, i) => (
-                <Box key={s.label} sx={{ display: "flex", alignItems: "center", gap: 1, flex: "1 1 200px" }}>
-                  <InsightCard primary={s.primary} sx={{ flex: 1 }}>
-                    <Typography variant="caption" sx={{ fontWeight: 700 }}>{s.label}</Typography>
-                    <Typography sx={{ fontSize: 22, fontWeight: 800, color: s.primary ? accent.primary : "text.primary", lineHeight: 1.1 }}>{metricHeadline(s)}</Typography>
-                    <Typography variant="caption" sx={{ color: "text.secondary" }}>{s.note}</Typography>
-                    {s.primary && <Chip size="small" label="primary promotion signal" sx={{ mt: 0.5, height: 24, fontSize: 15, alignSelf: "flex-start", bgcolor: `${accent.primary}18`, color: accent.primary }} />}
-                  </InsightCard>
-                  {i < insights.funnel.signals.length - 1 && (
-                    <span className="material-symbols-outlined" style={{ fontSize: 20, color: indigoTint(0.4) }}>arrow_forward</span>
-                  )}
-                </Box>
-              ))}
-            </Box>
-          </ConsolePanel>
-
-          {/* Delivery & engagement KPI cards. */}
-          <ConsolePanel id="rep-kpicards" title="Delivery & engagement KPIs" sx={{ mb: 3 }}>
-            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 1.5 }}>
-              {insights.kpis.map((k) => (
-                <InsightCard key={k.label} primary={k.primary}>
-                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 1 }}>
-                    <Typography variant="caption" sx={{ fontWeight: 700 }}>{k.label}</Typography>
-                    <Chip size="small" label={k.kind === "volume" ? "volume" : "rate"} variant="outlined" sx={{ height: 24, fontSize: 15 }} />
-                  </Box>
-                  <Typography sx={{ fontSize: 24, fontWeight: 800, color: k.primary ? accent.primary : "text.primary", lineHeight: 1.1 }}>{metricHeadline(k)}</Typography>
-                  {k.sub && <Typography variant="caption" sx={{ color: "text.secondary" }}>{k.sub}</Typography>}
-                  {k.note && <Typography variant="caption" sx={{ color: "text.disabled", fontStyle: "italic" }}>{k.note}</Typography>}
-                </InsightCard>
-              ))}
-            </Box>
-            <Typography variant="caption" sx={{ color: "text.secondary", fontStyle: "italic", display: "block", mt: 1.5 }}>{insights.caveat}</Typography>
-          </ConsolePanel>
-
-          {/* Real HCP-panel demographics. */}
-          {demo?.available && (
-            <ConsolePanel id="rep-demographics" title={`HCP audience — ${demo.total_hcps?.toLocaleString()} in panel`} sx={{ mb: 3 }}>
-              <Box sx={{ display: "flex", gap: 3, flexWrap: "wrap" }}>
-                <DemoBlock title="By specialty" rows={demo.by_specialty} />
-                <DemoBlock title="By preferred channel" rows={demo.by_preferred_channel} />
-                <DemoBlock title="By segment" rows={demo.by_segment} />
-              </Box>
-              <Typography variant="caption" sx={{ color: "text.secondary", fontStyle: "italic", display: "block", mt: 1.5 }}>
-                Live counts from the HCP 360 panel. Ask the Reporting agent (left) to segment or list specific HCPs.
-              </Typography>
-            </ConsolePanel>
-          )}
-
-          {/* Link/tagging (UTM) matrix deliverable. */}
-          <ConsolePanel id="rep-tagging" title="Link & tagging matrix (UTM taxonomy)" sx={{ mb: 3 }}>
-            <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1 }}>{insights.tagging.note}</Typography>
-            <Box sx={{ overflowX: "auto" }}>
-              <PlanTable>
-                <thead><tr>{insights.tagging.columns.map((c) => <th key={c}>{c}</th>)}</tr></thead>
-                <tbody>
-                  {insights.tagging.rows.map((r) => (
-                    <tr key={r.parameter}>
-                      <td style={{ fontFamily: "monospace", fontSize: 15 }}>{r.parameter}</td>
-                      <td>{r.convention}</td>
-                      <td style={{ fontFamily: "monospace", fontSize: 15, color: accent.primary }}>{r.example}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </PlanTable>
-            </Box>
-          </ConsolePanel>
-
-          {/* A/B test design. */}
-          <ConsolePanel id="rep-test" title="Test design" sx={{ mb: 3 }}>
-            <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1 }}>{insights.test_design.approach}</Typography>
-            <PlanTable>
-              <thead><tr><th>Test</th><th>Variants</th><th>Measure</th><th></th></tr></thead>
-              <tbody>
-                {insights.test_design.rows.map((r) => (
-                  <tr key={r.test}>
-                    <td><b>{r.test}</b></td>
-                    <td>{r.variants}</td>
-                    <td>{r.measure}</td>
-                    <td>{r.primary && <Chip size="small" label="primary" sx={{ height: 24, fontSize: 15, bgcolor: `${accent.primary}18`, color: accent.primary }} />}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </PlanTable>
-            <Typography variant="caption" sx={{ color: "text.secondary", fontStyle: "italic", display: "block", mt: 1 }}>{insights.test_design.note}</Typography>
-          </ConsolePanel>
+          <Box sx={{ mb: 3 }}>
+            <DeepDivePanels insights={insights} />
+          </Box>
         </>
       )}
 
-      {result && <MeasurementPlan result={result} />}
+      {!insights && busy && (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <Shimmer sx={{ height: 132, borderRadius: `${tokens.radius.lg}px` }} />
+          <Shimmer sx={{ height: 340, borderRadius: `${tokens.radius.lg}px` }} />
+        </Box>
+      )}
+
+      {result && (
+        <Box sx={{ mt: 1, transition: `opacity ${motion.duration.panel} ${motion.easeOut}` }}>
+          <MeasurementPlan result={result} />
+        </Box>
+      )}
     </Box>
   );
 }
 
-/** The plan-derived measurement framework (KPI scorecard, channel measurement, test·measure·learn). */
-function MeasurementPlan({ result }: { result: PlanResult }) {
-  const kpi = result.stage_7_kpi ?? { leading_indicators: [], lagging_indicators: [], operational_kpis: [] };
-  const tml = result.stage_9_test_measure_learn?.rows ?? [];
-  const alloc = result.stage_5_budget?.allocation ?? {};
-  const leads = kpi.leading_indicators;
-  const chRows = Object.entries(alloc).sort((a, b) => b[1].pct - a[1].pct);
-
-  return (
-    <>
-      <ConsolePanel id="rep-kpi" title="KPI scorecard (measurement plan)" sx={{ mb: 3 }}>
-        <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 2 }}>
-          <KpiCol accent={tokens.color.success}>
-            <Typography sx={{ display: "flex", alignItems: "center", gap: 1, fontWeight: 700, fontSize: 15, mb: 1 }}>
-              <span className="material-symbols-outlined" style={{ fontSize: 15 }}>trending_up</span>Leading<Box component="span" sx={{ ml: "auto" }}>{kpi.leading_indicators.length}</Box>
-            </Typography>
-            <Box component="ul" sx={{ m: 0, pl: 2, fontSize: 15 }}>{leads.map((i, k) => <li key={k}>{i}</li>)}</Box>
-          </KpiCol>
-          <KpiCol accent="#0B6FA8">
-            <Typography sx={{ display: "flex", alignItems: "center", gap: 1, fontWeight: 700, fontSize: 15, mb: 1 }}>
-              <span className="material-symbols-outlined" style={{ fontSize: 15 }}>flag</span>Lagging<Box component="span" sx={{ ml: "auto" }}>{kpi.lagging_indicators.length}</Box>
-            </Typography>
-            <Box component="ul" sx={{ m: 0, pl: 2, fontSize: 15 }}>{kpi.lagging_indicators.map((i, k) => <li key={k}>{i}</li>)}</Box>
-          </KpiCol>
-          <KpiCol accent="#5A32E0">
-            <Typography sx={{ display: "flex", alignItems: "center", gap: 1, fontWeight: 700, fontSize: 15, mb: 1 }}>
-              <span className="material-symbols-outlined" style={{ fontSize: 15 }}>settings</span>Operational<Box component="span" sx={{ ml: "auto" }}>{kpi.operational_kpis.length}</Box>
-            </Typography>
-            <Box component="ul" sx={{ m: 0, pl: 2, fontSize: 15 }}>{kpi.operational_kpis.map((i, k) => <li key={k}>{i}</li>)}</Box>
-          </KpiCol>
-        </Box>
-        {kpi.cadence_note && <Typography variant="caption" sx={{ color: "text.secondary", fontStyle: "italic", display: "block", mt: 1.5 }}>Review cadence: {kpi.cadence_note}</Typography>}
-      </ConsolePanel>
-
-      <ConsolePanel id="rep-channels" title="Channel measurement framework" sx={{ mb: 3 }}>
-        <PlanTable>
-          <thead><tr><th>Channel</th><th>Share</th><th>Primary leading KPI</th><th>Target</th></tr></thead>
-          <tbody>
-            {chRows.map(([ch, v], i) => (
-              <tr key={ch}>
-                <td><span className="material-symbols-outlined" style={{ fontSize: 15, verticalAlign: "-3px", marginRight: 4 }}>{LANE_ICON[ch] ?? "donut_small"}</span>{ch}</td>
-                <td>{v.pct}%</td>
-                <td>{leads[i % (leads.length || 1)] ?? "N/A"}</td>
-                <td><Typography component="span" sx={{ fontSize: 15, color: "warning.dark", background: "#FEF3C7", px: 1, borderRadius: 999 }}>Baseline needed</Typography></td>
-              </tr>
-            ))}
-          </tbody>
-        </PlanTable>
-      </ConsolePanel>
-
-      <ConsolePanel id="rep-tml" title="Test · Measure · Learn">
-        {tml.length > 0 ? (
-          <Box sx={{ overflowX: "auto" }}>
-            <PlanTable>
-              <thead><tr><th>Test</th><th>Measure</th><th>Channels</th><th>Frequency</th><th>What good looks like</th></tr></thead>
-              <tbody>
-                {tml.map((t, i) => (
-                  <tr key={i}>
-                    <td><b>{t.test}</b></td><td>{t.measure}</td><td>{t.channels}</td><td>{t.frequency}</td><td>{t.what_good_looks_like}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </PlanTable>
-          </Box>
-        ) : (
-          <Typography sx={{ color: "text.secondary", fontStyle: "italic" }}>
-            No test · measure · learn cycles defined yet.
-          </Typography>
-        )}
-      </ConsolePanel>
-    </>
-  );
+/** Holds the chart's place while the first payload is still in flight, so the page does not
+ *  reflow when it lands. */
+function TrendChartSlot({
+  metrics, metricKey, onSelect, busy,
+}: {
+  metrics: ReportingInsights["metrics"];
+  metricKey: string;
+  onSelect: (key: string) => void;
+  busy: boolean;
+}) {
+  if (!metrics?.length) return <Shimmer sx={{ height: 380, borderRadius: `${tokens.radius.lg}px` }} />;
+  return <TrendChart metrics={metrics} selectedKey={metricKey} onSelect={onSelect} busy={busy} />;
 }

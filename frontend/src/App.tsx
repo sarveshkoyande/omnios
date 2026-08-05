@@ -10,8 +10,6 @@ import { Home } from "./views/Home";
 import { PromptLibrary } from "./views/PromptLibrary";
 import { Workspace } from "./workspace/Workspace";
 import { tokens } from "./theme/tokens";
-import { stageAccent } from "./theme/stageTheme";
-import type { StageAgentId } from "./workspace/types";
 
 // "planning-v2" retired 2026-07-19: the planning_v2 engine now powers the Workspace
 // Planning & Strategy stage (decision spine + Campaign Strategy/Brief artifacts); the
@@ -57,12 +55,10 @@ export default function App() {
   const [seedFile, setSeedFile] = useState<File | null>(null);
   const [initialWorkspaceStage, setInitialWorkspaceStage] = useState(1);
   const [workspaceStartMode, setWorkspaceStartMode] = useState<WorkspaceStartMode>("direct");
-  // The top bar wears the active stage's accent. Only the Workspace has stages, so every other
-  // view (Home / Artefacts / Library) falls back to planning — i.e. the original blue bar.
-  const [workspaceAgent, setWorkspaceAgent] = useState<StageAgentId>("planning");
-  const topBarAgent: StageAgentId = view === "workspace" ? workspaceAgent : "planning";
-  // A shade lighter than the stage sub-bar below it (which uses the darker primaryDark).
-  const topBarColor = stageAccent(topBarAgent).primary;
+  // The top bar is Omni blue in every view and every stage — it is the one thing on screen that
+  // says "you are in Omni OS". It used to wear the active stage's colour, which made moving from
+  // Planning to Reporting read as switching applications. Stage identity now lives in the marker
+  // slots (theme/stageTheme.ts), never in the chrome.
 
   // Open an existing plan straight from a Home card.
   const goOpenPlan = (id: string) => {
@@ -101,7 +97,7 @@ export default function App() {
   return (
     <>
       <Box sx={{ position: "relative", zIndex: 1 }}>
-        <AppBar position="sticky" sx={{ backgroundColor: topBarColor, transition: "background-color 220ms ease" }}>
+        <AppBar position="sticky" sx={{ backgroundColor: tokens.color.primary }}>
           {/* Pinned at both breakpoints: a bare `minHeight` loses to MuiToolbar's own
               `@media (min-width:600px)` rule, which is how the bar ended up 64px tall
               while the workspace below was sized as if it were 56px. */}
@@ -176,7 +172,7 @@ export default function App() {
           </Toolbar>
         </AppBar>
         {view === "home" && <Home onOpenPlan={goOpenPlan} onStartNew={goStartNew} onImportFile={goImportFile} />}
-        {view === "workspace" && <Workspace prefillBrand={prefillBrand} openProjectId={openProjectId} seedMessage={seedMessage} seedFile={seedFile} initialStage={initialWorkspaceStage} startMode={workspaceStartMode} onStageAgentChange={setWorkspaceAgent} />}
+        {view === "workspace" && <Workspace prefillBrand={prefillBrand} openProjectId={openProjectId} seedMessage={seedMessage} seedFile={seedFile} initialStage={initialWorkspaceStage} startMode={workspaceStartMode} />}
         {view === "library" && <Library />}
         {view === "artefacts" && <Artefacts />}
         {view === "prompts" && <PromptLibrary />}

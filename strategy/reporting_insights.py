@@ -1,40 +1,39 @@
 """Reporting & Insights payload for the Reporting tab (and the Reporting agent's grounding).
 
-Assembles, for one project:
-  * funnel      -- the stage-promotion signal funnel for the priority journey stage
-                   (email open -> site visit -> first rep meeting accepted), the last being
-                   the primary promotion signal.
-  * kpis        -- delivery & engagement KPI cards (impressions, CTR, unbranded content
-                   completion, email open rate) with benchmark target bands.
-  * demographics-- real aggregates from the HCP 360 panel (by specialty / channel / segment).
-  * tagging     -- the link/tagging (UTM) matrix deliverable: every URL carries campaign +
-                   job-code tagging.
-  * test_design -- the A/B test design (2-3 subject-line/preheader variants per email,
-                   modular reuse-first).
+Everything in this payload is counted out of the real HCP 360 panel for the exact filter
+combination the user picked, then scaled by the researched benchmarks:
 
-Rate targets are grounded in config/omnichannel_benchmarks.json (industry baselines) scaled by
-the plan's lifecycle index; volumes are grounded in the HCP panel size. Everything is a
-measurement TARGET/benchmark, not observed performance -- no live performance feed is wired.
-Degrades gracefully: returns what it can even with a thin plan or an unloaded panel.
+  * `hcp_panel_metrics`  -- counts the cohort (sizes, affinities, send windows, content
+                            demand, per-state and per-segment breakdowns) straight from
+                            hcp_360.db. Nothing there is generated.
+  * `reporting_metrics`  -- turns those counts into rates with one rule:
+                            benchmark x lifecycle index x (cohort affinity / panel affinity),
+                            so an unfiltered view sits on the benchmark and every filter moves
+                            the numbers by exactly what that population measures.
+  * this module          -- assembles the dashboard: metric registry (which drives both the
+                            KPI cards and the single-metric trend chart), funnel, journey,
+                            channel/geo/asset breakdowns, the derived insight feed, and the
+                            plan deliverables (UTM matrix, test design).
+
+Caveat that travels with the payload: the panel is synthetic reference data and no live ESP
+feed is connected, so these are grounded targets, not observed sends.
 """
 from __future__ import annotations
 
-import hashlib
 import pathlib
 import sys
-import time
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-import benchmarks  # noqa: E402
-import hcp_360  # noqa: E402
+import hcp_panel_metrics as panel  # noqa: E402
 import projects as pstore  # noqa: E402
+import reporting_metrics as rmx  # noqa: E402
 
-# lifecycle label/keyword -> benchmark lifecycle key (config/omnichannel_benchmarks.json)
 _LIFECYCLE_KEY = {
     "launch": "launch", "growth": "growth", "mature": "mature",
     "loe": "loe", "defend": "loe", "decline": "loe", "exclusivity": "loe",
 }
-_AVG_FREQUENCY = 8  # impressions per targeted HCP over a flight -- for the volume target
+# The six metrics the KPI rail shows by default; the drop-down offers the full registry.
+HEADLINE_KEYS = ["delivery", "open", "ctr", "conversion", "engagement_score", "unsubscribe"]
 
 
 def _lifecycle_key(label: str, fallback: str = "growth") -> str:
@@ -43,42 +42,6 @@ def _lifecycle_key(label: str, fallback: str = "growth") -> str:
         if frag in low:
             return key
     return fallback
-
-
-def _band(base_pct: float, idx: float) -> dict:
-    """A rate KPI's target band: baseline x lifecycle index, +/-15% working band."""
-    target = base_pct * idx
-    return {
-        "value_pct": round(target, 1),
-        "low_pct": round(target * 0.85, 1),
-        "high_pct": round(target * 1.15, 1),
-        "band": f"{round(target * 0.85, 1)}–{round(target * 1.15, 1)}%",
-    }
-
-
-def _demographics() -> dict:
-    """Real HCP-panel aggregates. Empty (available False) if the panel isn't loaded."""
-    try:
-        hcp_360.load_hcp_360()  # idempotent: no-op once loaded
-        stats = hcp_360.stats()
-        total = next((v for k, v in stats.items() if k.endswith("demographic_data__dlm")), 0)
-        if not total:
-            return {"available": False}
-        def top(dim: str, n: int = 6) -> list:
-            try:
-                return [r for r in hcp_360.segment_summary(dim) if r.get("value")][:n]
-            except Exception:  # noqa: BLE001
-                return []
-        return {
-            "available": True,
-            "total_hcps": total,
-            "by_specialty": top("specialty"),
-            "by_preferred_channel": top("preferred_channel"),
-            "by_segment": top("segment"),
-            "by_state": top("state"),
-        }
-    except Exception:  # noqa: BLE001
-        return {"available": False}
 
 
 def _tagging_matrix(brand: str) -> dict:
@@ -98,220 +61,260 @@ def _tagging_matrix(brand: str) -> dict:
     }
 
 
-def _test_design(brand: str) -> dict:
+def _test_design(brand: str, cohort_size: int) -> dict:
+    """A/B design sized against the real cohort — variant cells are that cohort split."""
+    cell = max(1, cohort_size // 2)
     return {
         "approach": "2–3 subject-line / preheader variants per email; modular, reuse-first "
                     "(shared content blocks recombined per segment rather than net-new builds).",
+        "active": 4,
         "rows": [
-            {"test": "Subject line", "variants": "2–3 per send", "measure": "Open rate", "primary": True},
-            {"test": "Preheader", "variants": "2–3 per send", "measure": "Open rate", "primary": False},
-            {"test": "CTA / hero module", "variants": "2 per send", "measure": "Click-through rate", "primary": False},
-            {"test": "Send time", "variants": "day/time cohorts", "measure": "Open rate", "primary": False},
+            {"test": "Subject line", "variants": "2–3 per send", "measure": "Open rate",
+             "cell_size": cell, "primary": True},
+            {"test": "Preheader", "variants": "2–3 per send", "measure": "Open rate",
+             "cell_size": cell, "primary": False},
+            {"test": "CTA / hero module", "variants": "2 per send", "measure": "Click-through rate",
+             "cell_size": cell, "primary": False},
+            {"test": "Send time", "variants": "day/session cohorts from the panel's own preferences",
+             "measure": "Open rate", "cell_size": max(1, cohort_size // 4), "primary": False},
         ],
-        "note": "Modular reuse-first: win variants get promoted into the shared block library so "
-                "learnings compound across sends instead of being one-off.",
+        "note": f"Cell sizes are the live cohort ({cohort_size:,} HCPs) split evenly. Win variants "
+                "get promoted into the shared block library so learnings compound across sends.",
     }
 
 
-# Industry-standard constants not present in config/omnichannel_benchmarks.json (no cited
-# source for these three, unlike open/CTR/CTOR which come from the researched benchmark
-# file) -- reasonable healthcare-email norms, clearly caveated below as illustrative.
-_DELIVERY_RATE_PCT = 98.7
-_BOUNCE_RATE_PCT = 1.3
-_UNSUBSCRIBE_RATE_PCT = 0.18
-
-_EMAIL_METRIC_ORDER = [
-    ("delivery", "E-delivery rate"),
-    ("open", "Email open rate"),
-    ("ctr", "Click-through rate (CTR)"),
-    ("ctor", "Click-to-open rate (CTOR)"),
-    ("bounce", "Bounce rate"),
-    ("unsubscribe", "Unsubscribe rate"),
-]
+def _top_window(windows: dict) -> dict | None:
+    """The panel's single most-preferred (day, session) email window in this cohort."""
+    best = None
+    for row in windows.get("rows", []):
+        for i, share in enumerate(row["cells"]):
+            if best is None or share > best["share_pct"]:
+                best = {"day": row["day"], "session": windows["sessions"][i],
+                        "share_pct": share, "hcps": row["counts"][i]}
+    return best
 
 
-def _stable_wave(key: str, i: int, spread: float) -> float:
-    """Deterministic -spread..+spread wobble, stable across reloads (seeded by key+i), so a
-    month-over-month trend / specialty split reads as a real series instead of visibly
-    re-randomizing on every request."""
-    h = int(hashlib.md5(f"{key}:{i}".encode()).hexdigest(), 16)
-    return ((h % 2000) / 1000.0 - 1.0) * spread
+def _insights(cohort, base, metrics, channels, geo, windows, assets, segments) -> list[dict]:
+    """The Reporting agent's feed: recommendations, anomalies and wins, each derived from a
+    specific panel fact so the number in the card can always be traced back to a query."""
+    out: list[dict] = []
+    by_key = {m["key"]: m for m in metrics}
 
-
-def _month_labels(months: int) -> list[str]:
-    now = time.gmtime()
-    labels = []
-    y, m = now.tm_year, now.tm_mon
-    for _ in range(months):
-        labels.append(f"{y:04d}-{m:02d}")
-        m -= 1
-        if m == 0:
-            m, y = 12, y - 1
-    return list(reversed(labels))
-
-
-def _email_metrics(idx: float, ct: dict, specialty: str | None, months: int) -> dict:
-    """E-delivery / open / CTR / CTOR / bounce / unsubscribe, as an exact current-period
-    percentage plus a monthly trend, for the requested specialty filter. No live send data is
-    connected -- values are industry-baseline targets (delivery/bounce/unsubscribe) or the
-    researched channel_tactics benchmarks (open/CTR/CTOR), scaled by the lifecycle index and a
-    stable per-specialty variation; NOT observed campaign performance."""
-    email = (ct.get("email_hcp_triggered", {}) or {})
-    base = {
-        "delivery": _DELIVERY_RATE_PCT,
-        "open": float(email.get("open_rate_pct", 18.26)) * idx,
-        "ctr": float(email.get("ctr_pct", 3.0)) * idx,
-        "ctor": float(email.get("click_to_open_pct", 3.43)) * idx,
-        "bounce": _BOUNCE_RATE_PCT,
-        "unsubscribe": _UNSUBSCRIBE_RATE_PCT,
-    }
-    spec_key = (specialty or "all").strip().lower()
-    spec_shift = _stable_wave(f"spec:{spec_key}", 0, 0.12) if spec_key != "all" else 0.0
-
-    def _clamp_pct(v: float) -> float:
-        return round(min(100.0, max(0.0, v)), 2)
-
-    metrics = []
-    month_labels = _month_labels(months)
-    for key, label in _EMAIL_METRIC_ORDER:
-        current = _clamp_pct(base[key] * (1 + spec_shift))
-        monthly = []
-        for i, m_label in enumerate(month_labels):
-            wobble = _stable_wave(f"{spec_key}:{key}", i, 0.08)
-            monthly.append({"month": m_label, "value_pct": _clamp_pct(current * (1 + wobble))})
-        metrics.append({
-            "key": key,
-            "label": label,
-            "value_pct": round(current, 2),
-            "monthly": monthly,
+    window = _top_window(windows)
+    if window and window["share_pct"] > 0:
+        avg = 100 / max(1, sum(len(r["cells"]) for r in windows["rows"]))
+        out.append({
+            "id": "send-window", "kind": "recommendation", "severity": "info",
+            "title": f"Send into {window['day']} {window['session'].lower()}",
+            "detail": f"{window['share_pct']}% of this cohort ({window['hcps']:,} HCPs) name it their "
+                      f"most-preferred email window — {round(window['share_pct'] / avg, 1)}× the average slot.",
+            "action": "Move wave 1 of the flight into this window and hold the rest as the control.",
+            "evidence": "global_day_time_preference_data",
         })
 
-    return {
-        "note": "E-delivery/bounce/unsubscribe are industry-baseline targets; open/CTR/CTOR "
-                "are the researched channel_tactics benchmarks (config/omnichannel_benchmarks.json) "
-                "scaled by the lifecycle index. The monthly trend and specialty split are an "
-                "illustrative simulated series, not observed send data -- no live performance "
-                "feed is connected yet. Replace with real ESP/Veeva send reports once available.",
-        "specialty": specialty or "All specialties",
-        "months": month_labels,
-        "metrics": metrics,
-    }
+    risk = [m for m in metrics if m["status"] == "risk" and m["benchmark"]]
+    for m in risk[:2]:
+        out.append({
+            "id": f"below-benchmark-{m['key']}", "kind": "anomaly", "severity": "warning",
+            "title": f"{m['label']} is under benchmark",
+            "detail": f"{m['value']}{'%' if m['unit'] == '%' else ''} against a {m['benchmark']}% "
+                      f"benchmark for this lifecycle stage.",
+            "action": "Re-check targeting depth before adding volume — the audience mix is the driver.",
+            "evidence": "omnichannel_benchmarks.json × cohort affinity",
+            "metric_key": m["key"],
+        })
 
+    if channels:
+        best, worst = channels[0], channels[-1]
+        under_used = min(channels, key=lambda c: c["preferred_pct"] / max(c["affinity"], 0.01))
+        out.append({
+            "id": "channel-mix", "kind": "recommendation", "severity": "info",
+            "title": f"{under_used['label']} is under-weighted for its affinity",
+            "detail": f"Affinity {round(under_used['affinity'] * 100)}/100 but only "
+                      f"{under_used['preferred_pct']}% of the cohort ({under_used['hcps']:,} HCPs) "
+                      f"name it their preferred channel. {best['label']} leads on engagement at "
+                      f"{best['engagement_pct']}%, {worst['label']} trails at {worst['engagement_pct']}%.",
+            "action": f"Shift a test cell of the {worst['label'].lower()} budget into {under_used['label'].lower()}.",
+            "evidence": "global_channel_affinity_and_preference",
+        })
 
-_DOW = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
-_HOUR_BUCKETS = ["3 AM", "6 AM", "9 AM", "12 PM", "3 PM", "6 PM", "9 PM", "12 AM"]
-# Relative weekday/weekend and hour-of-day weighting -- HCPs open email in short bursts
-# around clinic downtime (mid-morning, lunch), weekdays >> weekend, matching the shape of
-# real triggered-email open-time distributions (not a flat/random spread).
-_HOUR_WEIGHT = [0.02, 0.35, 1.0, 1.9, 0.55, 0.12, 0.09, 0.07]
-_DOW_WEIGHT = [0.05, 1.0, 1.35, 1.15, 1.5, 1.7, 0.06]
+    sized = [g for g in geo if g["hcps"] >= 20]
+    if len(sized) >= 2:
+        low = min(sized, key=lambda g: g["index"])
+        high = max(sized, key=lambda g: g["index"])
+        out.append({
+            "id": "geo-spread", "kind": "anomaly", "severity": "warning" if low["index"] < 92 else "info",
+            "title": f"{low['state']} runs {round(high['index'] - low['index'])} points behind {high['state']}",
+            "detail": f"{low['state']}: {low['hcps']:,} HCPs at {low['open_pct']}% open. "
+                      f"{high['state']}: {high['hcps']:,} HCPs at {high['open_pct']}%.",
+            "action": f"Route {low['state']} through the field/EHR mix instead of adding email frequency.",
+            "evidence": "hcp_demographic_data__dlm × channel affinity",
+        })
 
-# A representative subset of US states (not all 50) for the CTR-by-state ranked list.
-_STATES = [
-    "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut",
-    "Delaware", "District of Columbia", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois",
-    "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland",
-    "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri", "Montana",
-    "Nebraska", "Nevada", "New Hampshire", "New Jersey", "New Mexico", "New York",
-    "North Carolina", "North Dakota", "Ohio", "Oklahoma", "Oregon", "Pennsylvania",
-    "Rhode Island", "South Carolina", "South Dakota", "Tennessee", "Texas", "Utah",
-    "Vermont", "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming",
-]
+    if assets:
+        top = assets[0]
+        out.append({
+            "id": "content-demand", "kind": "recommendation", "severity": "info",
+            "title": f"{top['tag']} is the cohort's top content demand",
+            "detail": f"{top['audience']:,} HCPs name it their most-preferred content tag; the matching "
+                      f"{top['type'].lower()} models {top['open_pct']}% open / {top['ctr_pct']}% click.",
+            "action": "Lead the flight with this module and reuse it across segments before building net-new.",
+            "evidence": "global_content_affinity_score_data",
+        })
 
-_SEGMENT_BUCKETS = ["High Awareness", "Growing Awareness", "Low Awareness"]
+    if segments:
+        lead = segments[0]
+        share = round(100 * lead["count"] / max(1, cohort["size"]), 1)
+        out.append({
+            "id": "segment-concentration", "kind": "win" if share < 55 else "anomaly",
+            "severity": "positive" if share < 55 else "warning",
+            "title": f"{lead['value']} carries {share}% of the cohort",
+            "detail": f"{lead['count']:,} of {cohort['size']:,} HCPs, engagement affinity "
+                      f"{round(lead['email_affinity'] * 100)}/100.",
+            "action": "Keep a segment-level read on every KPI — a single segment moving will move the headline.",
+            "evidence": "tbl_tl_data__dlm",
+        })
 
-_SUBJECT_LINE_TEMPLATES = [
-    ("Explore clinical trial data of {brand}", "A/B Test — Not Concluded", "FW"),
-    ("Explore {brand} videos on clinical data", "A/B Winner — B", "FW"),
-    ("New patient support resources for {brand}", "A/B — B", "FW"),
-]
+    mover = max(metrics, key=lambda m: abs(m["delta"]) if m["unit"] == "%" else 0)
+    if abs(mover["delta"]) > 0:
+        good = (mover["delta"] > 0) == mover["higher_is_better"]
+        out.append({
+            "id": "trend-mover", "kind": "win" if good else "anomaly",
+            "severity": "positive" if good else "warning",
+            "title": f"{mover['label']} moved {abs(mover['delta'])}pp month-over-month",
+            "detail": f"Latest wave {mover['monthly'][-1]['value']}% vs {mover['monthly'][-2]['value']}% "
+                      f"the month before." if len(mover["monthly"]) > 1 else "Single period in view.",
+            "action": "Open the trend chart on this metric to see which wave drove it.",
+            "evidence": "wave rotation over the panel",
+            "metric_key": mover["key"],
+        })
 
+    if cohort["deliverable_pct"] < 100:
+        out.append({
+            "id": "deliverability", "kind": "anomaly", "severity": "critical",
+            "title": f"{round(100 - cohort['deliverable_pct'], 1)}% of the cohort has no deliverable record",
+            "detail": f"{cohort['size'] - cohort['with_email']:,} HCPs cannot be reached by email at all.",
+            "action": "Route them to field/EHR and open a data-quality ticket on the panel records.",
+            "evidence": "hcp_demographic_data__dlm.email__c",
+        })
 
-def _opens_by_time(spec_key: str, open_rate_pct: float) -> dict:
-    """Day-of-week x hour-of-day open-rate heatmap. Illustrative shape (weekday/mid-morning
-    peak) scaled to roughly sum to the metric's own open rate -- not observed send-time data."""
-    rows = []
-    for d, dow in enumerate(_DOW):
-        cells = []
-        for h, hour in enumerate(_HOUR_BUCKETS):
-            base = open_rate_pct * _DOW_WEIGHT[d] * _HOUR_WEIGHT[h] / 12.0
-            wobble = _stable_wave(f"{spec_key}:opens:{dow}", h, 0.25)
-            cells.append(round(max(0.0, base * (1 + wobble)), 2))
-        rows.append({"day": dow, "cells": cells})
-    return {"hours": _HOUR_BUCKETS, "rows": rows}
-
-
-def _ctr_by_state(spec_key: str, ctr_pct: float) -> list[dict]:
-    out = []
-    for i, state in enumerate(_STATES):
-        wobble = _stable_wave(f"{spec_key}:state", i, 0.9)  # wide spread -- state volumes vary a lot
-        out.append({"state": state, "ctr_pct": round(max(0.0, ctr_pct * (1 + wobble) * 1.8), 2)})
-    out.sort(key=lambda r: -r["ctr_pct"])
+    # Only worth a card when there is actual headroom: on an unfiltered view the cohort *is*
+    # the panel, so the lift is 0 by construction and "0.0pp above benchmark" says nothing.
+    open_m = by_key.get("open")
+    headroom = round(open_m["value"] - (open_m["benchmark"] or 0), 2) if open_m else 0
+    if open_m and open_m["status"] == "good" and headroom >= 0.3:
+        out.append({
+            "id": "open-strength", "kind": "win", "severity": "positive",
+            "title": f"Open rate is running {headroom}pp above benchmark",
+            "detail": f"{open_m['value']}% against {open_m['benchmark']}% — the cohort's measured email "
+                      f"affinity is carrying it.",
+            "action": "Bank the headroom in frequency, not in subject-line testing.",
+            "evidence": "cohort affinity lift",
+            "metric_key": "open",
+        })
     return out
 
 
-def _delivered_by_segment(spec_key: str) -> list[dict]:
-    weights = {b: 20 + abs(_stable_wave(f"{spec_key}:segdist", i, 30)) for i, b in enumerate(_SEGMENT_BUCKETS)}
-    total = sum(weights.values()) or 1.0
-    return [{"segment": b, "pct": round(w / total * 100, 2)} for b, w in weights.items()]
+def _optimizations(windows, channels, geo, metrics, cohort) -> list[dict]:
+    """Ranked optimisation opportunities with the panel fact that sizes each one."""
+    out = []
+    window = _top_window(windows)
+    if window:
+        out.append({"title": f"Concentrate wave 1 into {window['day']} {window['session'].lower()}",
+                    "impact": "High", "metric": f"{window['hcps']:,} HCPs in window",
+                    "detail": "The cohort's own most-preferred email window."})
+    if channels:
+        under = min(channels, key=lambda c: c["preferred_pct"] / max(c["affinity"], 0.01))
+        out.append({"title": f"Add a {under['label'].lower()} cell to the flight",
+                    "impact": "High", "metric": f"affinity {round(under['affinity'] * 100)}/100",
+                    "detail": f"Only {under['preferred_pct']}% of the cohort is served there today."})
+    weak = [g for g in geo if g["hcps"] >= 20 and g["index"] < 96][:2]
+    for g in weak:
+        out.append({"title": f"Re-mix {g['state']} away from email-only",
+                    "impact": "Medium", "metric": f"index {g['index']}",
+                    "detail": f"{g['hcps']:,} HCPs running below the cohort's engagement index."})
+    for m in [m for m in metrics if m["status"] == "watch"][:2]:
+        out.append({"title": f"Close the gap on {m['label'].lower()}",
+                    "impact": "Medium", "metric": f"{m['value']}% vs {m['benchmark']}%",
+                    "detail": m["description"]})
+    if cohort["deliverable_pct"] < 100:
+        out.append({"title": "Repair non-deliverable panel records", "impact": "High",
+                    "metric": f"{cohort['size'] - cohort['with_email']:,} HCPs",
+                    "detail": "Unreachable by email until the record is fixed."})
+    return out
 
 
-def _subject_line_performance(brand: str, spec_key: str, target_hcps: int, email: dict, idx: float) -> list[dict]:
-    open_rate = float(email.get("open_rate_pct", 18.26)) * idx
-    ctr = float(email.get("ctr_pct", 3.0)) * idx
-    rows = []
-    for i, (tmpl, ab_testing, wave_type) in enumerate(_SUBJECT_LINE_TEMPLATES):
-        sent = max(20, int(target_hcps * (0.08 + abs(_stable_wave(f"{spec_key}:sl:sent", i, 0.05)))))
-        deliveries = int(sent * (_DELIVERY_RATE_PCT / 100.0))
-        row_open_rate = round(max(0.0, open_rate * (1 + _stable_wave(f"{spec_key}:sl:open", i, 0.4))), 1)
-        row_ctr = round(max(0.0, ctr * (1 + _stable_wave(f"{spec_key}:sl:ctr", i, 0.5))), 1)
-        opens = int(deliveries * row_open_rate / 100.0)
-        clicks = int(opens * row_ctr / max(row_open_rate, 0.1))
-        rows.append({
-            "asset_name": f"{brand or 'Brand'} — Wave {i + 1}",
-            "segment": "High Awareness" if i >= 2 else "",
-            "subject_line": tmpl.format(brand=brand or "the brand"),
-            "ab_testing": ab_testing,
-            "wave_type": wave_type,
-            "emails_sent": sent,
-            "deliveries": deliveries,
-            "opens": opens,
-            "clicks": clicks,
-            "open_rate_pct": row_open_rate,
-            "ctr_pct": row_ctr,
-        })
-    return rows
-
-
-def _email_deepdive(brand: str, specialty: str | None, idx: float, ct: dict, target_hcps: int) -> dict:
-    """The four extra Email metrics widgets: opens-by-time-of-day heatmap, CTR-by-state ranked
-    list, delivered-by-segment split, and per-subject-line performance table + reach tiles.
-    Same illustrative-simulated-series caveat as _email_metrics -- no live ESP feed connected."""
-    spec_key = (specialty or "all").strip().lower()
-    email = ct.get("email_hcp_triggered", {}) or {}
-    open_rate = float(email.get("open_rate_pct", 18.26)) * idx
-    ctr = float(email.get("ctr_pct", 3.0)) * idx
-
-    subject_lines = _subject_line_performance(brand, spec_key, target_hcps, email, idx)
-    total_deliveries = sum(r["deliveries"] for r in subject_lines) or 1
-    total_opens = sum(r["opens"] for r in subject_lines)
-    total_clicks = sum(r["clicks"] for r in subject_lines)
-
+def _scorecard(metrics: list[dict]) -> dict:
+    tracked = [m for m in metrics if m["benchmark"] is not None]
+    on_track = [m for m in tracked if m["status"] == "good"]
     return {
-        "opens_by_time": _opens_by_time(spec_key, open_rate),
-        "ctr_by_state": _ctr_by_state(spec_key, ctr),
-        "delivered_by_segment": _delivered_by_segment(spec_key),
-        "subject_lines": subject_lines,
-        "tiles": {
-            "unique_hcp_reached": total_deliveries,
-            "unique_hcp_engaged": total_opens,
-            "unique_hcp_deep_engaged": total_clicks,
-            "unique_subject_lines": len(subject_lines),
-        },
+        "on_track": len(on_track), "tracked": len(tracked),
+        "rows": [{"label": m["label"], "value": m["value"], "unit": m["unit"],
+                  "benchmark": m["benchmark"], "status": m["status"], "key": m["key"]}
+                 for m in tracked],
     }
 
 
-def build(project_id: str, specialty: str | None = None, months: int = 6) -> dict:
+def _framework(cohort: dict, metrics: list[dict], tagging: dict) -> dict:
+    """Measurement-framework coverage: which reads have a grounded source wired today."""
+    rows = [
+        {"area": "Audience sizing", "source": "hcp_360 demographic panel", "status": "live",
+         "detail": f"{cohort['size']:,} HCPs in the current cohort"},
+        {"area": "Channel affinity", "source": "global_channel_affinity_and_preference", "status": "live",
+         "detail": "Per-HCP 0–10 scores across five channels"},
+        {"area": "Send-time optimisation", "source": "global_day_time_preference_data", "status": "live",
+         "detail": "Day × session preference per HCP"},
+        {"area": "Content demand", "source": "global_content_affinity_score_data", "status": "live",
+         "detail": "Top-3 preferred content tags per HCP"},
+        {"area": "Segment / writer status", "source": "tbl_tl_data__dlm", "status": "live",
+         "detail": "Target-list segment, persona and TRx tier"},
+        {"area": "Rate benchmarks", "source": "config/omnichannel_benchmarks.json", "status": "live",
+         "detail": "Cited industry baselines scaled by the lifecycle index"},
+        {"area": "Link tagging", "source": "UTM matrix (this tab)", "status": "live",
+         "detail": f"{len(tagging['rows'])} parameters enforced at asset build"},
+        {"area": "Observed sends", "source": "ESP / Veeva send reports", "status": "pending",
+         "detail": "No live performance feed connected — rates are grounded targets"},
+    ]
+    live = sum(1 for r in rows if r["status"] == "live")
+    return {"rows": rows, "coverage_pct": round(100 * live / len(rows)),
+            "live": live, "total": len(rows),
+            "note": f"{len(metrics)} metrics are derived from the live sources above."}
+
+
+def _learnings(cohort, channels, windows, assets, segments) -> list[dict]:
+    out = []
+    if channels:
+        out.append({"title": "Affinity, not creative, is moving the rates",
+                    "detail": f"The cohort's measured channel affinity spread runs from "
+                              f"{round(min(c['affinity'] for c in channels) * 100)} to "
+                              f"{round(max(c['affinity'] for c in channels) * 100)} out of 100."})
+    window = _top_window(windows)
+    if window:
+        out.append({"title": "Send windows are concentrated, not flat",
+                    "detail": f"{window['day']} {window['session'].lower()} alone holds "
+                              f"{window['share_pct']}% of the cohort's stated preference."})
+    if assets:
+        out.append({"title": "Content demand is broad",
+                    "detail": f"The top tag ({assets[0]['tag']}) covers {assets[0]['audience']:,} HCPs — "
+                              f"modular reuse beats a single hero asset."})
+    if segments:
+        out.append({"title": "Segments read differently on the same send",
+                    "detail": ", ".join(f"{s['value']} {round(s['email_affinity'] * 100)}/100"
+                                        for s in segments[:3]) + " on email affinity."})
+    out.append({"title": "Targets, not results",
+                "detail": "Every rate here is a benchmark scaled by a measured cohort — replace it "
+                          "with the brand's own numbers after one in-market period."})
+    return out
+
+
+def build(project_id: str, specialty: str | None = None, months: int = 6,
+          filters: dict | None = None) -> dict:
+    """Assemble the Reporting tab payload for `project_id` under the given filters.
+
+    `filters` accepts any of hcp_panel_metrics.DIMENSIONS (specialty / state / segment /
+    channel / brand); the legacy `specialty` kwarg folds into it."""
+    applied = panel.clean_filters({**(filters or {}), **({"specialty": specialty} if specialty else {})})
+
     proj = pstore.get_project(project_id) or {}
     result = proj.get("result") or {}
     slots = ((proj.get("state") or {}).get("slots") or {})
@@ -323,50 +326,30 @@ def build(project_id: str, specialty: str | None = None, months: int = 6) -> dic
     lifecycle_key = slots.get("lifecycle_key") or _lifecycle_key(lifecycle_label)
     stage_label = inferred.get("stage_label") or "Aware"
 
-    b = benchmarks.load()
-    ct = b.get("channel_tactics", {})
-    idx = float(((b.get("lifecycle_kpi_targets", {}) or {}).get(lifecycle_key, {}) or {}).get("index", 1.0))
+    months = max(1, min(int(months or 6), 24))
+    anc = rmx.anchors(lifecycle_key)
+    base = panel.panel_baseline()
+    cohort = panel.cohort_profile(applied)
 
-    email_open = (ct.get("email_hcp_triggered", {}) or {}).get("open_rate_pct", 18.26)
-    email_ctr = (ct.get("email_hcp_triggered", {}) or {}).get("ctr_pct", 3.0)
-    rep_access = (ct.get("field_rep_detail", {}) or {}).get("hcp_access_rate_pct", 45.0)
+    if cohort["size"] == 0:  # a filter combination with nobody in it
+        return {"available": False, "brand": brand, "therapy_area": therapy_area,
+                "filters": {"applied": applied, "facets": panel.facets({}), "months": months,
+                            "month_labels": rmx.month_labels(months)},
+                "message": "No HCPs in the panel match this filter combination."}
 
-    demo = _demographics()
-    target_hcps = demo.get("total_hcps") or 1000
-    impressions_target = target_hcps * _AVG_FREQUENCY
-    months_clamped = max(1, min(months, 24))
-    email_metrics = _email_metrics(idx, ct, specialty, months_clamped)
-    email_deepdive = _email_deepdive(brand, specialty, idx, ct, target_hcps)
-
-    # Funnel: stage-promotion signals for the priority journey stage.
-    funnel = {
-        "stage": stage_label,
-        "note": f"Signals that promote a {stage_label.lower()} HCP to the next journey stage. "
-                f"Bands = industry baseline × {lifecycle_key} lifecycle index ({idx}×).",
-        "signals": [
-            {"label": "Email open", "kind": "rate", **_band(email_open, idx),
-             "note": "top-of-funnel engagement signal", "primary": False},
-            {"label": "Site visit", "kind": "rate", **_band(email_ctr, idx),
-             "note": "click-through to owned site (mid-funnel intent)", "primary": False},
-            {"label": "First rep meeting accepted", "kind": "rate", **_band(rep_access, idx),
-             "note": "primary stage-promotion signal", "primary": True},
-        ],
-    }
-
-    # Delivery & engagement KPI cards.
-    kpis = [
-        {"label": "Impressions delivered", "kind": "volume",
-         "value": impressions_target, "value_display": f"{impressions_target:,}",
-         "sub": f"{target_hcps:,} target HCPs × ~{_AVG_FREQUENCY} avg frequency",
-         "note": "reach/delivery target — volume, no rate band", "primary": False},
-        {"label": "Click-through rate", "kind": "rate", **_band(email_ctr, idx),
-         "sub": "email, triggered", "note": "engagement quality", "primary": False},
-        {"label": "Unbranded content completion rate", "kind": "rate",
-         "value_pct": 60.0, "low_pct": 55.0, "high_pct": 65.0, "band": "55–65%",
-         "sub": "disease-state / MOA content", "note": "depth-of-engagement target (derived)", "primary": False},
-        {"label": "Email open rate", "kind": "rate", **_band(email_open, idx),
-         "sub": "triggered HCP email", "note": "reach into the inbox", "primary": True},
-    ]
+    labels = rmx.month_labels(months)
+    waves = panel.wave_profile(applied, months)
+    metrics = rmx.build_metrics(cohort, base, anc, waves, labels)
+    rates = rmx.rates_for(cohort, base, anc)
+    funnel = rmx.build_funnel(cohort, rates)
+    channels = rmx.build_channels(applied, base, anc)
+    geo = rmx.build_geo(applied, base, anc)
+    assets = rmx.build_assets(applied, base, anc, brand)
+    windows = panel.send_windows(applied)
+    segments = panel.dimension_counts("segment", applied)
+    specialties = panel.dimension_counts("specialty", applied, limit=12)
+    tagging = _tagging_matrix(brand)
+    trx = panel.prescribing_volume(applied)
 
     return {
         "available": True,
@@ -375,47 +358,74 @@ def build(project_id: str, specialty: str | None = None, months: int = 6) -> dic
         "lifecycle_label": lifecycle_label,
         "lifecycle_key": lifecycle_key,
         "stage_label": stage_label,
-        "caveat": "Targets/benchmarks, not observed results — no live performance feed is "
-                  "connected. Rate bands are industry baselines scaled by the lifecycle index; "
-                  "replace with the brand's own numbers once one in-market period exists.",
+        "caveat": "Grounded targets, not observed sends. Audience counts, affinities, send windows "
+                  "and content demand are real aggregates from the HCP 360 panel for the current "
+                  "filters; rates are cited industry benchmarks scaled by the lifecycle index and "
+                  "that cohort's measured affinity. No live ESP/Veeva feed is connected yet.",
+        "grounding": {
+            "panel_size": base["size"],
+            "cohort_size": cohort["size"],
+            "cohort_share_pct": round(100 * cohort["size"] / max(1, base["size"]), 1),
+            "deliverable_pct": cohort["deliverable_pct"],
+            "trx_total": trx["trx_total"],
+            "writers": trx["writers"],
+            "lifecycle_index": anc["index"],
+            "sources": ["hcp_360.db", "config/omnichannel_benchmarks.json"],
+        },
+        "filters": {
+            "applied": applied,
+            "facets": panel.facets(applied),
+            "months": months,
+            "month_labels": labels,
+        },
+        "headline_keys": HEADLINE_KEYS,
+        "metrics": metrics,
         "funnel": funnel,
-        "kpis": kpis,
-        "email_metrics": email_metrics,
-        "email_deepdive": email_deepdive,
-        "demographics": demo,
-        "tagging": _tagging_matrix(brand),
-        "test_design": _test_design(brand),
+        "journey": rmx.build_journey(funnel["volumes"]),
+        "channels": channels,
+        "geo": geo,
+        "assets": assets,
+        "send_windows": windows,
+        "breakdowns": {"segment": segments, "specialty": specialties,
+                       "channel": panel.dimension_counts("channel", applied),
+                       "state": geo[:12]},
+        "insights": _insights(cohort, base, metrics, channels, geo, windows, assets, segments),
+        "optimizations": _optimizations(windows, channels, geo, metrics, cohort),
+        "scorecard": _scorecard(metrics),
+        "framework": _framework(cohort, metrics, tagging),
+        "learnings": _learnings(cohort, channels, windows, assets, segments),
+        "tagging": tagging,
+        "test_design": _test_design(brand, cohort["size"]),
     }
 
 
 def summary_text(project_id: str) -> str:
     """Compact text digest of the insights payload, for grounding the Reporting agent."""
     d = build(project_id)
+    if not d.get("available"):
+        return "No reporting insights available for this project yet."
+    g = d["grounding"]
     lines = [f"Reporting insights for {d.get('brand') or 'the brand'} ({d.get('therapy_area') or 'n/a'}), "
-             f"lifecycle {d.get('lifecycle_key')}, priority stage {d.get('stage_label')}."]
-    lines.append("Stage-promotion funnel:")
-    for s in d["funnel"]["signals"]:
-        star = " [primary]" if s.get("primary") else ""
-        lines.append(f"  - {s['label']}: target {s.get('band', s.get('value_pct'))}{star}")
-    lines.append("Delivery & engagement KPIs:")
-    for k in d["kpis"]:
-        val = k.get("value_display") or k.get("band") or (f"{k.get('value_pct')}%" if k.get("value_pct") else "")
-        lines.append(f"  - {k['label']}: {val} ({k.get('sub', '')})")
-    demo = d["demographics"]
-    if demo.get("available"):
-        lines.append(f"HCP 360 panel: {demo['total_hcps']} HCPs.")
-        if demo.get("by_specialty"):
-            top = ", ".join(f"{r['value']} ({r['count']})" for r in demo["by_specialty"][:5])
-            lines.append(f"  Top specialties: {top}")
-        if demo.get("by_preferred_channel"):
-            top = ", ".join(f"{r['value']} ({r['count']})" for r in demo["by_preferred_channel"][:5])
-            lines.append(f"  Preferred channel: {top}")
+             f"lifecycle {d['lifecycle_key']} (index {g['lifecycle_index']}×), priority stage {d['stage_label']}.",
+             f"Cohort: {g['cohort_size']:,} of {g['panel_size']:,} HCPs in the panel "
+             f"({g['cohort_share_pct']}%), {g['deliverable_pct']}% deliverable, {g['trx_total']:,} TRx.",
+             "Metrics (value vs benchmark):"]
+    for m in d["metrics"]:
+        bench = f" vs {m['benchmark']}" if m["benchmark"] is not None else ""
+        lines.append(f"  - {m['label']}: {m['value']}{'%' if m['unit'] == '%' else ''}{bench} [{m['status']}]")
+    f = d["funnel"]["steps"]
+    lines.append("Funnel: " + " -> ".join(f"{s['stage']} {s['count']:,}" for s in f))
+    lines.append("Channels (engagement rate, HCPs preferring): " +
+                 ", ".join(f"{c['label']} {c['engagement_pct']}% ({c['hcps']:,})" for c in d["channels"]))
+    top = d["assets"][0] if d["assets"] else None
+    if top:
+        lines.append(f"Top content demand: {top['tag']} ({top['audience']:,} HCPs).")
+    lines.append("Insights: " + "; ".join(i["title"] for i in d["insights"][:5]))
     lines.append("Tagging: UTM matrix (utm_source/medium/campaign/content/term + job_code on every URL).")
-    lines.append("Test design: 2-3 subject-line/preheader variants per email, modular reuse-first.")
     lines.append(d["caveat"])
     return "\n".join(lines)
 
 
 if __name__ == "__main__":
     import json
-    print(json.dumps(build("_demo_"), indent=2, default=str)[:2000])
+    print(json.dumps(build("_demo_"), indent=2, default=str)[:3000])

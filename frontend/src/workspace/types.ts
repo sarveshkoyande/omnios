@@ -547,101 +547,178 @@ export interface PlanResult {
   };
 }
 
-/** Reporting & Insights tab payload (GET /api/projects/{pid}/reporting-insights). */
-export interface ReportingSignal {
+/** Reporting & Insights tab payload (GET /api/projects/{pid}/reporting-insights).
+ *
+ *  Every number below is counted out of the HCP 360 panel for the *current filter
+ *  combination* (strategy/hcp_panel_metrics.py) and scaled by the cited benchmarks
+ *  (strategy/reporting_metrics.py) — so changing a filter refetches and genuinely changes
+ *  the population behind the chart, rather than relabelling a fixed series. */
+
+/** The dimensions the filter bar can drill on — 1:1 with hcp_panel_metrics.DIMENSIONS. */
+export type ReportingFilterKey = "specialty" | "state" | "segment" | "channel" | "brand";
+export type ReportingFilters = Partial<Record<ReportingFilterKey, string>>;
+
+export type MetricStatus = "good" | "watch" | "risk" | "neutral";
+
+export interface MetricPoint {
+  month: string;
+  value: number;
+}
+
+/** One selectable metric. Drives both a KPI card and (when selected) the trend chart. */
+export interface ReportingMetric {
+  key: string;
   label: string;
-  kind: string;
-  value_pct?: number;
-  low_pct?: number;
-  high_pct?: number;
-  band?: string;
-  note?: string;
-  primary?: boolean;
+  unit: "%" | "count" | "index";
+  value: number;
+  benchmark: number | null;
+  band: [number, number] | null;
+  delta: number;
+  delta_unit: string;
+  direction: "up" | "down" | "flat";
+  higher_is_better: boolean;
+  status: MetricStatus;
+  description: string;
+  monthly: MetricPoint[];
 }
-export interface ReportingKpi extends ReportingSignal {
-  value?: number;
-  value_display?: string;
-  sub?: string;
+
+export interface FunnelStep {
+  stage: string;
+  count: number;
+  pct_of_audience: number;
+  pct_of_prior: number;
 }
-export interface SegmentRow {
+
+/** One node of the reporting journey view — distinct from the brief's JourneyStep above. */
+export interface ReportingJourneyStep {
+  id: string;
+  label: string;
+  count: number;
+  pct: number;
+  kind: "send" | "step" | "decision" | "outcome";
+  branch?: { label: string; count: number; pct: number };
+}
+
+export interface ChannelRow {
+  channel: string;
+  label: string;
+  icon: string;
+  hcps: number;
+  preferred_pct: number;
+  affinity: number;
+  engagement_pct: number;
+}
+
+export interface GeoRow {
+  state_code: string;
+  state: string;
+  hcps: number;
+  open_pct: number;
+  ctr_pct: number;
+  index: number;
+}
+
+export interface AssetRow {
+  name: string;
+  tag: string;
+  type: string;
+  audience: number;
+  open_pct: number;
+  ctr_pct: number;
+  conversion_pct: number;
+}
+
+export interface SendWindows {
+  sessions: string[];
+  total: number;
+  rows: { day: string; cells: number[]; counts: number[] }[];
+}
+
+export interface ReportingInsight {
+  id: string;
+  kind: "recommendation" | "anomaly" | "win";
+  severity: "info" | "positive" | "warning" | "critical";
+  title: string;
+  detail: string;
+  action: string;
+  evidence: string;
+  metric_key?: string;
+}
+
+export interface FacetValue {
   value: string;
   count: number;
 }
-export interface EmailMetricMonth {
-  month: string;
-  value_pct: number;
+
+/** A dimension breakdown row (segment / specialty / channel), with its own measured affinity. */
+export interface BreakdownRow {
+  value: string;
+  count: number;
+  email_affinity: number;
+  digital_affinity: number;
 }
-export interface EmailMetric {
-  key: "delivery" | "open" | "ctr" | "ctor" | "bounce" | "unsubscribe";
-  label: string;
-  value_pct: number;
-  monthly: EmailMetricMonth[];
-}
-export interface EmailMetrics {
-  note: string;
-  specialty: string;
-  months: string[];
-  metrics: EmailMetric[];
-}
-export interface OpensByTimeRow {
-  day: string;
-  cells: number[];
-}
-export interface StateCtrRow {
-  state: string;
-  ctr_pct: number;
-}
-export interface SegmentDeliveryRow {
-  segment: string;
-  pct: number;
-}
-export interface SubjectLineRow {
-  asset_name: string;
-  segment: string;
-  subject_line: string;
-  ab_testing: string;
-  wave_type: string;
-  emails_sent: number;
-  deliveries: number;
-  opens: number;
-  clicks: number;
-  open_rate_pct: number;
-  ctr_pct: number;
-}
-export interface EmailDeepdive {
-  opens_by_time: { hours: string[]; rows: OpensByTimeRow[] };
-  ctr_by_state: StateCtrRow[];
-  delivered_by_segment: SegmentDeliveryRow[];
-  subject_lines: SubjectLineRow[];
-  tiles: {
-    unique_hcp_reached: number;
-    unique_hcp_engaged: number;
-    unique_hcp_deep_engaged: number;
-    unique_subject_lines: number;
-  };
-}
+
 export interface ReportingInsights {
   available: boolean;
   brand: string;
   therapy_area: string;
-  lifecycle_label: string;
-  lifecycle_key: string;
-  stage_label: string;
-  caveat: string;
-  funnel: { stage: string; note: string; signals: ReportingSignal[] };
-  kpis: ReportingKpi[];
-  email_metrics: EmailMetrics;
-  email_deepdive: EmailDeepdive;
-  demographics: {
-    available: boolean;
-    total_hcps?: number;
-    by_specialty?: SegmentRow[];
-    by_preferred_channel?: SegmentRow[];
-    by_segment?: SegmentRow[];
-    by_state?: SegmentRow[];
+  lifecycle_label?: string;
+  lifecycle_key?: string;
+  stage_label?: string;
+  caveat?: string;
+  message?: string;
+  grounding?: {
+    panel_size: number;
+    cohort_size: number;
+    cohort_share_pct: number;
+    deliverable_pct: number;
+    trx_total: number;
+    writers: number;
+    lifecycle_index: number;
+    sources: string[];
   };
-  tagging: { note: string; columns: string[]; rows: { parameter: string; convention: string; example: string }[] };
-  test_design: { approach: string; note: string; rows: { test: string; variants: string; measure: string; primary: boolean }[] };
+  filters: {
+    applied: ReportingFilters;
+    facets: Record<ReportingFilterKey, FacetValue[]>;
+    months: number;
+    month_labels: string[];
+  };
+  headline_keys?: string[];
+  metrics?: ReportingMetric[];
+  funnel?: { steps: FunnelStep[]; volumes: Record<string, number> };
+  journey?: ReportingJourneyStep[];
+  channels?: ChannelRow[];
+  geo?: GeoRow[];
+  assets?: AssetRow[];
+  send_windows?: SendWindows;
+  breakdowns?: {
+    segment: BreakdownRow[];
+    specialty: BreakdownRow[];
+    channel: BreakdownRow[];
+    state: GeoRow[];
+  };
+  insights?: ReportingInsight[];
+  optimizations?: { title: string; impact: string; metric: string; detail: string }[];
+  scorecard?: {
+    on_track: number;
+    tracked: number;
+    rows: { label: string; value: number; unit: string; benchmark: number | null; status: MetricStatus; key: string }[];
+  };
+  framework?: {
+    rows: { area: string; source: string; status: string; detail: string }[];
+    coverage_pct: number;
+    live: number;
+    total: number;
+    note: string;
+  };
+  learnings?: { title: string; detail: string }[];
+  tagging?: { note: string; columns: string[]; rows: { parameter: string; convention: string; example: string }[] };
+  test_design?: {
+    approach: string;
+    note: string;
+    active: number;
+    rows: { test: string; variants: string; measure: string; cell_size: number; primary: boolean }[];
+  };
 }
 
 export interface ChatResponse {

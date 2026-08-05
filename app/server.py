@@ -1552,14 +1552,21 @@ def api_agent_brief(pid: str, req: AgentBriefRequest):
 
 
 @app.get("/api/projects/{pid}/reporting-insights")
-def api_reporting_insights(pid: str, specialty: str | None = None, months: int = 6):
-    """Reporting tab payload: stage-promotion funnel, delivery/engagement KPI cards, the
-    email metrics funnel (e-delivery/open/CTR/CTOR/bounce/unsubscribe) with an exact current
-    percentage and a monthly trend, real HCP-panel demographics, the UTM link/tagging matrix,
-    and the A/B test design. `specialty` and `months` filter the email metrics block."""
+def api_reporting_insights(pid: str, months: int = 6, specialty: str | None = None,
+                           state: str | None = None, segment: str | None = None,
+                           channel: str | None = None, brand: str | None = None):
+    """Reporting tab payload for one filter combination: metric registry (KPI cards + the
+    single-metric trend chart), engagement funnel, journey, channel/geo/asset breakdowns, the
+    derived insight feed, and the plan deliverables (UTM matrix, test design).
+
+    Every filter here re-counts the HCP 360 cohort behind the numbers — the drop-downs are a
+    real drill-down, not a client-side relabel. `months` sets how many monthly waves the
+    cohort is rotated through for the trend series."""
     if not pstore.get_project(pid):
         raise HTTPException(404, "project not found")
-    return reporting_insights.build(pid, specialty=specialty, months=months)
+    filters = {"specialty": specialty, "state": state, "segment": segment,
+               "channel": channel, "brand": brand}
+    return reporting_insights.build(pid, months=months, filters=filters)
 
 
 @app.get("/api/projects/{pid}/export.docx")

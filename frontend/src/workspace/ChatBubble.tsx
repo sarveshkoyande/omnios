@@ -1,8 +1,9 @@
 import { keyframes } from "@emotion/react";
 import { styled } from "@mui/material/styles";
-// Aliased: TurnBubble below takes a styled-prop literally named `accent`, which would shadow
-// this import inside that callback.
-import { accent as stageAccent } from "../theme/stageTheme";
+// `accent` is the product's Omni blue (chrome); `stageMark` is the stage agent's own hue, used
+// only as a marker. Aliased because TurnBubble below takes a styled-prop literally named
+// `accent`, which would shadow the import inside that callback.
+import { accent as brandAccent, stageMark } from "../theme/stageTheme";
 import { tokens, motion } from "../theme/tokens";
 import { enterFromLeft, enterFromRight, enterWith } from "../theme/motionPresets";
 
@@ -28,7 +29,8 @@ export const AgentBubble = styled("div")(({ theme }) => ({
   // See TurnBubble: the chat pane is white, so bubbles take the canvas grey.
   background: tokens.color.canvas,
   border: `1px solid ${tokens.color.outline}`,
-  borderLeft: `4px solid ${stageAccent.primary}`,
+  // Marker slot 4: who is speaking, as a 4px edge on an otherwise neutral bubble.
+  borderLeft: `4px solid ${stageMark.primary}`,
   boxShadow: "none",
   color: tokens.color.text,
   fontSize: 15,
@@ -46,7 +48,8 @@ export const UserBubble = styled("div")(({ theme }) => ({
   padding: theme.spacing(1, 1.5),
   borderTopRightRadius: 4,
   borderRadius: tokens.radius.md,
-  background: stageAccent.primary,
+  // The user is not a stage: their bubble is the product's blue in every window.
+  background: brandAccent.primary,
   color: "#fff",
   boxShadow: "none",
   fontSize: 15,
@@ -130,8 +133,8 @@ export const ClarifyBadge = styled("span")({
   fontWeight: 700,
   letterSpacing: "0.04em",
   textTransform: "uppercase",
-  color: stageAccent.primary,
-  background: stageAccent.container,
+  color: brandAccent.primary,
+  background: brandAccent.container,
   border: `1px solid ${tokens.color.outline}`,
   borderRadius: tokens.radius.pill,
   padding: "3px 11px",

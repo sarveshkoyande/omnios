@@ -207,6 +207,7 @@ import type {
   PersonaReview,
   ProjectDetail,
   ProjectSummary,
+  ReportingFilters,
   ReportingInsights,
 } from "./workspace/types";
 import type { WorkflowDocument } from "./workspace/stages/operations/flowbuilder/schema/document";
@@ -234,13 +235,18 @@ export async function getProject(id: string): Promise<ProjectDetail> {
   return res.json();
 }
 
+/** Reporting dashboard payload. Every filter is applied server-side against the HCP 360
+ *  panel, so a drill-down re-counts the cohort rather than re-slicing a cached series. */
 export async function fetchReportingInsights(
   projectId: string,
-  filters?: { specialty?: string | null; months?: number },
+  filters?: ReportingFilters & { months?: number },
 ): Promise<ReportingInsights> {
   const params = new URLSearchParams();
-  if (filters?.specialty) params.set("specialty", filters.specialty);
-  if (filters?.months) params.set("months", String(filters.months));
+  const { months, ...dims } = filters ?? {};
+  for (const [key, value] of Object.entries(dims)) {
+    if (value) params.set(key, String(value));
+  }
+  if (months) params.set("months", String(months));
   const qs = params.toString();
   const res = await fetch(`/api/projects/${encodeURIComponent(projectId)}/reporting-insights${qs ? `?${qs}` : ""}`);
   if (!res.ok) throw new Error(`GET reporting-insights -> ${res.status}`);

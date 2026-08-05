@@ -1,105 +1,38 @@
 /**
- * Per-stage accent theming.
+ * Stage colour — one product identity, four stage personalities.
  *
- * Each workspace stage is owned by one agent (STAGE_AGENTS), and each agent already carries
- * its own two-tone identity: `c1` (primary) and `c2` (the lighter shade). This turns that
- * identity into the stage's actual theme, so the Engagement Orchestration window reads green,
- * Campaign Operations red, and Reporting & Insights orange — matching the agent you are
- * talking to in that window's chat pane.
+ * The product is Omni blue. Always. Top bar, sub-bar, buttons, links, inputs, focus rings,
+ * panel headers, section labels, rails — none of them change when you move between stages.
+ * The user must never be able to mistake a stage for a different application.
  *
- * Planning & Strategy is deliberately NOT re-themed: the app's blue already belongs to it, so
- * `stageTheme("planning")` returns the base theme untouched and stage 1 renders exactly as before.
+ * A stage's own colour is a *marker*, not a paint job. It appears in a fixed, small set of
+ * places (see `stageMark` below) and nowhere else. Everything that used to repaint the chrome
+ * now resolves to blue by construction: `accent.*` carries the brand values and has no stage
+ * variable behind it any more.
  *
- * Why a derived theme rather than a palette override alone: theme.ts bakes the literal
- * `tokens.color.primary` into its component styleOverrides (buttons, links, inputs, progress),
- * so those do not follow `palette.primary`. The overrides below re-state that same set against
- * the stage accent — anything reading `primary.main` from the palette follows automatically.
+ * Two exports, two meanings — pick deliberately:
+ *
+ *   accent      product chrome. Always Omni blue. The default for anything structural.
+ *   stageMark   the stage's own hue. Only for the sanctioned marker slots.
+ *
+ * The sanctioned marker slots (this list is the budget — adding to it is a design change):
+ *   1. the stage icon in the page head
+ *   2. the active workspace tab (its number chip + top edge)
+ *   3. the agent avatar ring and the 2px rule under the chat-pane header
+ *   4. the 4px left edge of an agent's chat bubble
+ *   5. the active row indicator in the left section rail
+ *   6. highlight / recommendation badges on content the agent is pointing at
+ *
+ * Charts are NOT on that list. Data visualisation uses the semantic palette in
+ * `stages/reporting/dashboardKit.tsx` (`dataColor`), where hue means status — painting a series
+ * in the agent's brand colour would make an identity read as a measurement.
  */
-import { createTheme, alpha, darken } from "@mui/material/styles";
-import { theme } from "./theme";
+import { alpha, darken } from "@mui/material/styles";
 import { tokens } from "./tokens";
 import { STAGE_AGENTS, type StageAgentId } from "../workspace/types";
 
-const cache = new Map<StageAgentId, typeof theme>();
-
-export function stageTheme(agent: StageAgentId) {
-  // Stage 1 keeps the house blue — nothing to derive.
-  if (agent === "planning") return theme;
-
-  const cached = cache.get(agent);
-  if (cached) return cached;
-
-  const { c1, c2 } = STAGE_AGENTS[agent];
-  const dark = darken(c1, 0.2);
-  // Stand-ins for the blue-derived container tokens, tinted from the stage accent.
-  const container = alpha(c1, 0.1);
-  const focusRing = `0 0 0 3px ${alpha(c1, 0.35)}`;
-
-  const derived = createTheme(theme, {
-    palette: {
-      primary: { main: c1, light: c2, dark, contrastText: "#FFFFFF" },
-    },
-    components: {
-      MuiCssBaseline: {
-        styleOverrides: {
-          "::selection": { background: container, color: tokens.color.text },
-        },
-      },
-      MuiButton: {
-        styleOverrides: {
-          containedPrimary: {
-            backgroundColor: c1,
-            "&:hover": { backgroundColor: dark },
-          },
-          outlinedPrimary: {
-            color: c1,
-            borderColor: c1,
-            "&:hover": { backgroundColor: container, borderColor: c1 },
-          },
-          textPrimary: {
-            color: c1,
-            "&:hover": { backgroundColor: container },
-          },
-        },
-      },
-      MuiLink: {
-        styleOverrides: {
-          root: { color: c1, "&:focus-visible": { boxShadow: focusRing } },
-        },
-      },
-      MuiLinearProgress: {
-        styleOverrides: {
-          root: { backgroundColor: container },
-          bar: { backgroundColor: c1 },
-        },
-      },
-      MuiOutlinedInput: {
-        styleOverrides: {
-          root: {
-            "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: c1 },
-            "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: c1, borderWidth: 2 },
-          },
-        },
-      },
-      MuiTab: {
-        styleOverrides: {
-          root: { "&.Mui-selected": { color: c1 } },
-        },
-      },
-      MuiTabs: {
-        styleOverrides: {
-          indicator: { backgroundColor: c1 },
-        },
-      },
-    },
-  });
-
-  cache.set(agent, derived);
-  return derived;
-}
-
-/** The accent pair for a stage, for the handful of places that style with raw token strings
- *  (CSS variables, inline SVG) rather than through the MUI palette. */
+/** The raw stage hue pair, for the handful of call sites that style with literal strings
+ *  (inline SVG, CSS variables) rather than through a token. */
 export function stageAccent(agent: StageAgentId) {
   if (agent === "planning") {
     return { primary: tokens.color.primary, light: tokens.color.primaryContainer };
@@ -109,50 +42,32 @@ export function stageAccent(agent: StageAgentId) {
 }
 
 /**
- * CSS custom properties carrying the stage accent.
+ * CSS custom properties carrying the stage marker hue, published on the workspace subtree.
  *
- * A large amount of this app's chrome is styled with the *literal* strings from tokens.ts
- * (`tokens.color.primary`, `primaryContainer`, `onPrimaryContainer`) rather than through the
- * MUI palette — section-card headers, section labels, stage icons. Those cannot follow a
- * ThemeProvider palette override, which is why stage 2 stayed blue after the palette work.
- * Emitting the accent as CSS variables lets those call sites opt in one at a time by swapping
- * a literal for `var(--stage-x, <the original literal>)`: inside a stage the variable wins,
- * and anywhere else in the app the fallback keeps today's colours exactly.
- *
- * Planning resolves to the existing blue tokens, so stage 1 is unchanged by construction.
+ * Only the marker vars are emitted. The chrome variables this module used to publish
+ * (`--stage-primary`, `--stage-primary-container`, ...) are deliberately gone: `accent.*`
+ * below still reads them with `var(name, blue)`, so with nothing setting them every piece of
+ * chrome falls back to brand blue in every stage — including Planning, which never differed.
  */
 export function stageVars(agent: StageAgentId): Record<string, string> {
-  if (agent === "planning") {
-    return {
-      "--stage-primary": tokens.color.primary,
-      "--stage-primary-dark": tokens.color.primaryDark,
-      "--stage-primary-light": tokens.color.primaryContainer,
-      "--stage-primary-container": tokens.color.primaryContainer,
-      "--stage-on-primary-container": tokens.color.onPrimaryContainer,
-      "--stage-tint-12": alpha(tokens.color.primary, 0.12),
-      // The faintest wash: enough to tie a surface to the stage without competing with the
-      // 0.12 container tint used for emphasis within the same group.
-      "--stage-tint-04": alpha(tokens.color.primary, 0.04),
-    };
-  }
-  const { c1, c2 } = STAGE_AGENTS[agent];
+  const { primary } = stageAccent(agent);
   return {
-    "--stage-primary": c1,
-    "--stage-primary-dark": darken(c1, 0.2),
-    "--stage-primary-light": c2,
-    // Soft header/---container tint derived from the accent, standing in for primaryContainer.
-    "--stage-primary-container": alpha(c1, 0.12),
-    // Readable ink on that tint.
-    "--stage-on-primary-container": darken(c1, 0.45),
-    "--stage-tint-12": alpha(c1, 0.12),
-    "--stage-tint-04": alpha(c1, 0.04),
+    "--stage-mark": primary,
+    // Soft wash for a badge or highlight chip sitting on white.
+    "--stage-mark-soft": alpha(primary, 0.12),
+    // Readable ink on that wash.
+    "--stage-mark-ink": darken(primary, 0.45),
   };
 }
 
-/** `var(--name, fallback)` helper so call sites stay readable and always degrade to today's colour. */
+/** `var(--name, fallback)` helper so call sites stay readable and always degrade to blue. */
 export const stageVar = (name: string, fallback: string) => `var(${name}, ${fallback})`;
 
-/** The four accents most call sites need, pre-wrapped with their current-blue fallbacks. */
+/**
+ * Product chrome. Reads the (no longer emitted) stage chrome variables, so it always resolves
+ * to its Omni-blue fallback. Kept as an indirection rather than inlined so there is exactly one
+ * place to look if the product identity ever needs to shift again.
+ */
 export const accent = {
   primary: stageVar("--stage-primary", tokens.color.primary),
   primaryDark: stageVar("--stage-primary-dark", tokens.color.primaryDark),
@@ -160,4 +75,15 @@ export const accent = {
   onContainer: stageVar("--stage-on-primary-container", tokens.color.onPrimaryContainer),
   tint12: stageVar("--stage-tint-12", "rgba(3, 78, 162, 0.12)"),
   tint04: stageVar("--stage-tint-04", "rgba(3, 78, 162, 0.04)"),
+} as const;
+
+/**
+ * The stage's own hue — for the marker slots listed at the top of this file only.
+ * Outside the workspace subtree the variables are unset and this is blue, which is correct:
+ * Home, Library and Prompt Library belong to no stage.
+ */
+export const stageMark = {
+  primary: stageVar("--stage-mark", tokens.color.primary),
+  soft: stageVar("--stage-mark-soft", tokens.color.primaryContainer),
+  ink: stageVar("--stage-mark-ink", tokens.color.onPrimaryContainer),
 } as const;

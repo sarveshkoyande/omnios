@@ -36,8 +36,9 @@ const Row = styled(Box)<{ active?: boolean; clickable?: boolean }>(({ theme, act
   gap: theme.spacing(1.5),
   padding: theme.spacing(1, 1.25),
   borderRadius: tokens.radius.sm,
+  // Coloured edge, neutral fill — same rule as StageSectionRail, so both rails read alike.
   borderLeft: `3px solid ${active ? tokens.color.primary : "transparent"}`,
-  background: active ? tokens.color.primaryContainer : "transparent",
+  background: active ? tokens.color.canvas : "transparent",
   cursor: clickable ? "pointer" : "default",
   transition: [
     `background ${motion.duration.hover} ${motion.easeOut}`,

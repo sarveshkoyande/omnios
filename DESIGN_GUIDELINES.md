@@ -1,6 +1,7 @@
 # OmniOS — Design Guidelines
 
-Extracted from the running code on 2026-08-03. **`frontend/src/theme/tokens.ts` is
+Extracted from the running code on 2026-08-03; §2.5 (stage colour) rewritten 2026-08-05.
+**`frontend/src/theme/tokens.ts` is
 authoritative.** Where this document and the code disagree, the code wins — this is a
 description of the system, not a specification for it.
 
@@ -15,12 +16,15 @@ A **flat, high-contrast Material language**. Opaque white surfaces on a cool gre
 separated by 1px outlines rather than shadows. Colour is used for meaning — never for
 decoration. Depth is expressed with borders and containment, not elevation.
 
-Three rules that explain most of the system:
+Four rules that explain most of the system:
 
-1. **Every runtime colour comes from `tokens.color`.** No literal hex in components.
-2. **Borders, not shadows.** `glass.shadow` is `"none"`. Only overlays that genuinely float
+1. **One product identity, four stage personalities.** The application is Omni blue
+   everywhere. A stage's colour is a *marker* in a fixed handful of places, never a repaint
+   of the chrome — see §2.5, which is the rule this system is most likely to be broken by.
+2. **Every runtime colour comes from `tokens.color`.** No literal hex in components.
+3. **Borders, not shadows.** `glass.shadow` is `"none"`. Only overlays that genuinely float
    (popovers, modals) may use `glass.shadowElevated`.
-3. **Surfaces are opaque.** No translucency, no backdrop blur — see §7 for why.
+4. **Surfaces are opaque.** No translucency, no backdrop blur — see §7 for why.
 
 ---
 
@@ -74,6 +78,67 @@ violetTint(a)  // rgba(4, 120, 87, a)   — secondary at alpha (name is historic
 ```
 
 `indigoTint(0.08)` is the standard hover wash; `indigoTint(0.1)` the standard hairline.
+
+### 2.5 Stage colour — the marker budget
+
+Each workspace stage is owned by one agent, and each agent has a hue (`STAGE_AGENTS` in
+`workspace/types.ts`):
+
+| Stage | Agent | Hue |
+|---|---|---|
+| 1 Planning & Strategy | Campaign Planning & Strategy | `#1768D1` blue |
+| 2 Engagement Orchestration | Engagement Orchestration | `#047857` green |
+| 3 Campaign Operations | Campaign Operations | `#cc0047` magenta |
+| 4 Reporting & Insights | Reporting & Insights | `#e14b1e` orange |
+
+**The product has one identity; the stages have four personalities.** Until 2026-08-05 the
+stage hue was pushed through the whole MUI palette and the chrome: the top bar, the sub-bar,
+every button, link, input, focus ring, panel header, section label and rail turned green in
+stage 2 and orange in stage 4. Moving between tabs read as switching applications rather than
+moving between sections of one, and the title + subheader bar changing colour per tab was the
+loudest part of it. That is gone.
+
+A stage hue may now appear in exactly these places — this list **is** the budget, and adding
+to it is a design decision, not an implementation detail:
+
+1. the stage icon in `StageHead`
+2. the active `WorkflowStepper` tab — its number chip and its 3px top edge
+3. the agent avatar ring, and the 2px rule under the chat-pane header
+4. the 4px left edge of an agent chat bubble
+5. the active row indicator in `PlanSectionsRail` / `StageSectionRail`
+6. highlight / recommendation badges on content the agent is pointing at
+
+Everything else — including every control the user can press — is brand blue.
+
+**Charts are not on the list.** Data visualisation uses the semantic palette in
+`stages/reporting/dashboardKit.tsx` (`dataColor`): blue is information, green at-or-above
+benchmark, amber drifting, red breakage. A series painted in the agent's hue makes an identity
+read as a status.
+
+Two exports in `theme/stageTheme.ts` carry this split — pick deliberately:
+
+```ts
+accent      // product chrome. Always Omni blue. The default for anything structural.
+stageMark   // the stage's own hue. Marker slots only.
+```
+
+Both are `var(--name, blue)` strings. `stageVars(agent)` publishes only the marker variables
+(`--stage-mark`, `--stage-mark-soft`, `--stage-mark-ink`) on the workspace subtree; nothing
+sets the chrome variables any more, so `accent.*` resolves to its blue fallback by
+construction — in every stage, and on Home / Library, which belong to no stage.
+
+There is no per-stage MUI theme. `stageTheme()` and its palette/component overrides were
+deleted; `<ThemeProvider>` no longer wraps the workspace.
+
+**Three patterns to reach for instead of colour:**
+
+- *A coloured 4px left edge, not a coloured panel.* The Home stage cards are the reference:
+  white surface, hairline border, coloured left edge, coloured avatar, blue button.
+- *A rule, not a band.* A heading is closed by a 1px outline rule; the icon beside it carries
+  the hue. No filled title bar.
+- *Different imagery, not different paint.* Stages are told apart faster by their iconography
+  — blueprint/nodes for planning, journey/touchpoints for orchestration, workflow/automation
+  for operations, charts/analytics for reporting — than by being repainted.
 
 ---
 
@@ -150,10 +215,16 @@ Consequences worth knowing:
 
 ### Stage accents
 
-`src/theme/stageTheme.ts` exposes an `accent` object (`container`, `onContainer`) so a
-component inside a workspace stage picks up that stage's colour automatically, falling back
-to brand blue everywhere else. Prefer `accent.*` over `tokens.color.primary*` inside stage
-UI.
+`src/theme/stageTheme.ts` exposes `accent` (product blue chrome) and `stageMark` (the stage
+hue, marker slots only). Prefer `accent.*` over `tokens.color.primary*` inside stage UI — it
+is the single seam to change if the product identity ever shifts. Reach for `stageMark.*`
+only when the thing you are colouring is on the §2.5 list.
+
+### Page heads
+
+`StageHead` is the one page title per stage: coloured icon, ink title, secondary blurb, closed
+by a 1px `outline` rule. It is not repeated — the agent's name is stated once more, in the chat
+pane header directly above that agent's conversation, and nowhere else.
 
 ---
 
@@ -264,6 +335,7 @@ Three details that make it work — preserve them:
 - [ ] Focus ring intact and visible
 - [ ] Easing and duration from `motion`; no bare `ease`, no `transition: all`, nothing over 300ms
 - [ ] Hover gated behind `hoverOnly`; every pressable surface has an `:active` scale
-- [ ] Inside a stage, accents from `stageTheme` not raw brand blue
+- [ ] Chrome (bars, buttons, links, inputs, panel headers, rails) is `accent.*` — blue in every stage
+- [ ] `stageMark.*` used only for a slot on the §2.5 list; charts use `dataColor`, never the stage hue
 - [ ] No empty placeholder panels — render nothing, or render `N/A`
 - [ ] Ambient motion justified; anything decorative respects `prefers-reduced-motion`
