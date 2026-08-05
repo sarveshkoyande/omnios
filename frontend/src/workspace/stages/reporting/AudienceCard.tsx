@@ -8,7 +8,7 @@ import { useState } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { hoverOnly, motion, tokens } from "../../../theme/tokens";
-import { CardTitle, DashCard, dataColor } from "./dashboardKit";
+import { radius, CardTitle, DashCard, dataColor } from "./dashboardKit";
 import type { BreakdownRow, ReportingFilterKey } from "../../types";
 
 const TABS: { key: ReportingFilterKey; label: string }[] = [
@@ -32,7 +32,7 @@ function Row({
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(); } }}
       sx={{
         display: "flex", alignItems: "center", gap: 1.25, cursor: "pointer",
-        px: 0.75, py: 0.6, mx: -0.75, borderRadius: tokens.radius.sm,
+        px: 0.75, py: 0.6, mx: -0.75, borderRadius: radius.sm,
         background: selected ? dataColor.info.soft : "transparent",
         transition: `background ${motion.duration.hover} ${motion.easeOut}`,
         [hoverOnly]: { "&:hover": { background: selected ? dataColor.info.soft : "#F7F9FC" } },
@@ -76,7 +76,7 @@ export function AudienceCard({
         title="Audience composition"
         hint="Size and measured email affinity per group"
         action={
-          <Box sx={{ display: "flex", gap: 0.5, background: "#F2F4F7", borderRadius: tokens.radius.pill, p: 0.25 }}>
+          <Box sx={{ display: "flex", gap: 0.5, background: "#F2F4F7", borderRadius: radius.sm, p: 0.25 }}>
             {TABS.map((t) => (
               <Box
                 key={t.key}
@@ -85,7 +85,7 @@ export function AudienceCard({
                 onClick={() => setTab(t.key)}
                 onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setTab(t.key); } }}
                 sx={{
-                  px: 1.25, py: 0.4, borderRadius: tokens.radius.pill, fontSize: 15, fontWeight: 700, cursor: "pointer",
+                  px: 1.25, py: 0.4, borderRadius: radius.sm, fontSize: 15, fontWeight: 700, cursor: "pointer",
                   background: tab === t.key ? tokens.color.surface : "transparent",
                   color: tab === t.key ? tokens.color.ink : tokens.color.inkSecondary,
                   boxShadow: tab === t.key ? "0 1px 3px rgba(16,24,40,0.14)" : "none",

@@ -20,11 +20,11 @@ import { AgentWorkingOverlay } from "./flowbuilder/AgentWorkingOverlay";
 import { exportCanvasImage } from "./flowbuilder/io/image";
 import { useWorkflowStore } from "./flowbuilder/store/useWorkflowStore";
 import { parseDocument } from "./flowbuilder/schema";
-import { autoLayoutPage } from "./flowbuilder/layout/autoLayout";
 import { tokens, glassFallback, indigoTint } from "../../../theme/tokens";
 import { accent } from "../../../theme/stageTheme";
 import { getProject, pushSfmcJourney, regenerateCampaignFlowDocument, saveCampaignFlowDocument } from "../../../api";
-import { applyCampaignNodeVisuals, campaignFlowToDocument } from "./campaignAdapter";
+import { campaignFlowToDocument } from "./campaignAdapter";
+import { layoutCampaignDocument, layoutIfUnlaidOut } from "./campaignLayout";
 import type { CampaignFlow } from "../../types";
 import type { WorkflowDocument } from "./flowbuilder/schema/document";
 
@@ -36,14 +36,6 @@ const STAGE_ACTION_SX = {
   backgroundColor: accent.primary,
   "&:hover": { backgroundColor: accent.primaryDark },
 } as const;
-
-async function layoutCampaignDocument(doc: WorkflowDocument): Promise<WorkflowDocument> {
-  const page = doc.pages[0];
-  if (!page) return doc;
-  const normalizedPage = { ...page, nodes: page.nodes.map(applyCampaignNodeVisuals) };
-  const laidOutPage = await autoLayoutPage(normalizedPage, doc.direction);
-  return { ...doc, pages: doc.pages.map((p, i) => (i === 0 ? laidOutPage : p)) };
-}
 
 // Replaces the old CampaignFlowCanvas.tsx. Same public contract (projectId + base
 // flow); internally it's the general-purpose Section-3 workflow builder (see
@@ -119,6 +111,15 @@ function Toolbar({
     void exportCanvasImage(rf, "png", "campaign-journey.png");
   }, [rf]);
 
+  // Re-framing is deliberate here rather than automatic. The canvas only auto-fits when
+  // the set of shapes changes (canvas/Canvas.tsx), so a re-layout — which can move the
+  // whole diagram well outside the current viewport without adding or removing a single
+  // node — has to ask for the new frame itself.
+  const autoLayout = useCallback(async () => {
+    await runAutoLayoutCmd();
+    void rf.fitView({ padding: 0.16, minZoom: 0.2, maxZoom: 0.78, duration: 240 });
+  }, [rf, runAutoLayoutCmd]);
+
   return (
     <Box
       sx={{
@@ -139,7 +140,7 @@ function Toolbar({
       <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap", minWidth: 0 }}>
         {projectId && (
           <Box sx={{ fontSize: 15, color: "text.secondary", px: 0.5, minWidth: 46, textAlign: "center" }}>
-            {saving ? "Savingâ€¦" : "Saved"}
+            {saving ? "Saving" : "Saved"}
           </Box>
         )}
         {!editMode ? (
@@ -148,7 +149,7 @@ function Toolbar({
           </Button>
         ) : (
           <>
-            <Button size="small" variant="text" onClick={() => void runAutoLayoutCmd()}>Auto-layout</Button>
+            <Button size="small" variant="text" onClick={() => void autoLayout()}>Auto-layout</Button>
             <Button size="small" variant="text" onClick={undo} disabled={!canUndo}>Undo</Button>
             <Button size="small" variant="text" onClick={redo} disabled={!canRedo}>Redo</Button>
             <Button size="small" variant="text" onClick={onTogglePalette}>
@@ -414,11 +415,16 @@ function BuilderShell({
           const result = saved && parseDocument(saved);
           if (result && result.ok) next = result.document;
         }
-        // A saved WorkflowDocument is the user's exact editable diagram. Only a
-        // new seed needs auto-layout; running the layout engine on every reopen
-        // changes positions and routes even when the user made no edit.
-        const documentToLoad = next === seed ? await layoutCampaignDocument(next) : next;
+        // A saved WorkflowDocument is the user's exact editable diagram, so reopening it
+        // must not re-run the layout engine and move everything. The one exception is a
+        // document that was persisted before anything laid it out (the Operations agent
+        // and the first adapter conversion both save flat coordinates) — that is not an
+        // arrangement to preserve, it is the pile of overlapping boxes this heals.
+        const documentToLoad = next === seed ? await layoutCampaignDocument(next) : await layoutIfUnlaidOut(next);
         if (!cancelled) loadDocument(documentToLoad);
+        if (projectId && documentToLoad !== next && next !== seed) {
+          await saveCampaignFlowDocument(projectId, documentToLoad);
+        }
       } catch {
         if (!cancelled) loadDocument(seed);
       } finally {

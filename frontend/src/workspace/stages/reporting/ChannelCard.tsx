@@ -10,7 +10,7 @@
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { hoverOnly, motion, tokens } from "../../../theme/tokens";
-import { CardTitle, DashCard, dataColor } from "./dashboardKit";
+import { radius, CardTitle, DashCard, dataColor } from "./dashboardKit";
 import type { ChannelRow } from "../../types";
 
 export function ChannelCard({
@@ -40,7 +40,7 @@ export function ChannelCard({
               }}
               sx={{
                 display: "flex", alignItems: "center", gap: 1.25, cursor: "pointer",
-                borderRadius: tokens.radius.sm, px: 0.75, py: 0.5, mx: -0.75,
+                borderRadius: radius.sm, px: 0.75, py: 0.5, mx: -0.75,
                 background: selected ? dataColor.info.soft : "transparent",
                 transition: `background ${motion.duration.hover} ${motion.easeOut}`,
                 [hoverOnly]: { "&:hover": { background: selected ? dataColor.info.soft : "#F7F9FC" } },

@@ -12,7 +12,7 @@ import { useState } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { hoverOnly, motion, tokens } from "../../../theme/tokens";
-import { StatusBadge, dataColor, statusColor } from "./dashboardKit";
+import { radius, StatusBadge, dataColor, statusColor } from "./dashboardKit";
 import type { ReportingInsights } from "../../types";
 
 function CollapsibleCard({
@@ -32,7 +32,7 @@ function CollapsibleCard({
     <Box sx={{
       background: tokens.color.surface,
       border: `1px solid ${tokens.color.outline}`,
-      borderRadius: tokens.radius.lg,
+      borderRadius: radius.md,
       overflow: "hidden",
       boxShadow: "0 1px 2px rgba(16,24,40,0.04)",
       transition: `box-shadow ${motion.duration.hover} ${motion.easeOut}`,
@@ -50,7 +50,7 @@ function CollapsibleCard({
         }}
       >
         <Box sx={{
-          width: 32, height: 32, borderRadius: tokens.radius.md, background: c.soft, color: c.ink,
+          width: 32, height: 32, borderRadius: radius.sm, background: c.soft, color: c.ink,
           display: "grid", placeItems: "center", flex: "0 0 auto",
         }}>
           <span className="material-symbols-outlined" style={{ fontSize: 18 }}>{icon}</span>
@@ -205,7 +205,7 @@ export function DeepDivePanels({ insights }: { insights: ReportingInsights }) {
                   {r.primary && (
                     <Box component="span" sx={{
                       ml: 1, fontSize: 15, color: dataColor.info.ink, background: dataColor.info.soft,
-                      borderRadius: tokens.radius.pill, px: 0.75,
+                      borderRadius: radius.sm, px: 0.75,
                     }}>primary</Box>
                   )}
                 </Box>

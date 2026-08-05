@@ -16,6 +16,20 @@ import { keyframes } from "@emotion/react";
 import { hoverOnly, motion, tokens } from "../../../theme/tokens";
 import type { MetricStatus, ReportingMetric } from "../../types";
 
+/**
+ * Corner radii as CSS strings.
+ *
+ * MUI's `sx` treats a *number* on `borderRadius` as a multiple of `theme.shape.borderRadius`
+ * (4 here) — so `borderRadius: tokens.radius.md` silently rendered 32px, not 8px, and this
+ * tab came out visibly rounder than every other screen. Always use these strings inside `sx`;
+ * raw token numbers are only correct inside `styled()`, where they mean px.
+ */
+export const radius = {
+  sm: `${tokens.radius.sm}px`,
+  md: `${tokens.radius.md}px`,
+  pill: `${tokens.radius.pill}px`,
+} as const;
+
 /** Semantic data palette. `ink`/`soft` pair for text-on-tint chips. */
 export const dataColor = {
   info: { ink: "#034EA2", soft: "#E3EDFA", line: "#1768D1" },
@@ -33,11 +47,13 @@ export function statusColor(status: MetricStatus | string) {
   return dataColor.neutral;
 }
 
-/** The dashboard's one card surface: white, hairline border, one soft elevation step. */
+/** The dashboard's one card surface: white, hairline border, one soft elevation step.
+ *  Radius is `md` — the same corner every SectionCard in the product uses, so this tab does
+ *  not read as a rounder island inside the app. */
 export const DashCard = styled(Box)({
   background: tokens.color.surface,
   border: `1px solid ${tokens.color.outline}`,
-  borderRadius: tokens.radius.lg,
+  borderRadius: tokens.radius.md,
   boxShadow: "0 1px 2px rgba(16,24,40,0.04)",
   padding: 20,
   minWidth: 0,
@@ -157,7 +173,7 @@ export function DeltaPill({ metric }: { metric: ReportingMetric }) {
       sx={{
         display: "inline-flex", alignItems: "center", gap: 0.25,
         color: c.ink, background: c.soft,
-        borderRadius: tokens.radius.pill, px: 0.75, py: 0.25,
+        borderRadius: tokens.radius.sm, px: 0.75, py: 0.25,
         fontSize: 15, fontWeight: 700, whiteSpace: "nowrap",
       }}
     >
@@ -176,7 +192,7 @@ export function StatusBadge({ status, label }: { status: MetricStatus | string; 
   return (
     <Box component="span" sx={{
       display: "inline-flex", alignItems: "center", gap: 0.75, background: c.soft, color: c.ink,
-      borderRadius: tokens.radius.pill, px: 1, py: 0.25, fontSize: 15, fontWeight: 700,
+      borderRadius: tokens.radius.sm, px: 1, py: 0.25, fontSize: 15, fontWeight: 700,
     }}>
       <Box component="span" sx={{ width: 7, height: 7, borderRadius: "50%", background: c.line }} />
       {label}

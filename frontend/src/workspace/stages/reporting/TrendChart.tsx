@@ -16,7 +16,7 @@ import Select from "@mui/material/Select";
 import Typography from "@mui/material/Typography";
 import { keyframes } from "@emotion/react";
 import { motion, tokens } from "../../../theme/tokens";
-import { CardTitle, DashCard, dataColor, formatCompact, formatMetricValue, formatMonth, spansYears, statusColor } from "./dashboardKit";
+import { radius, CardTitle, DashCard, dataColor, formatCompact, formatMetricValue, formatMonth, spansYears, statusColor } from "./dashboardKit";
 import type { ReportingMetric } from "../../types";
 
 const W = 900;
@@ -238,7 +238,7 @@ export function TrendChart({
               top: `${(active.cy / H) * 100}%`,
               transform: "translate(-50%, calc(-100% - 14px))",
               background: tokens.color.ink, color: "#fff",
-              borderRadius: tokens.radius.md, px: 1.25, py: 0.75, minWidth: 132,
+              borderRadius: radius.md, px: 1.25, py: 0.75, minWidth: 132,
               boxShadow: "0 10px 24px -12px rgba(16,24,40,0.6)",
               animation: `${fadeUp} 140ms ${motion.easeOut} both`,
             }}

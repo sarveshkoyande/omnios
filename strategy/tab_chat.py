@@ -5,11 +5,12 @@ state, which stays exactly as-is for the automated run's streamed narration.
 
 Two agent behaviors, dispatched by stage_id in ask():
   - "operations": the Campaign Operations agent can edit the project's campaign_plan_layout
-    WorkflowDocument. It sees the live document, replies, and (when the request calls for a
-    structural change) returns a full replacement document -- validated against a Python
-    port of a subset of the flow-builder's "strict-flowchart" rules
-    (frontend/.../flowbuilder/validation/engine.ts rules 1-4) before being persisted via the
-    same full-overwrite path the UI itself already uses (projects.save_project).
+    WorkflowDocument. It never sees or writes that document directly -- it works on a
+    compact graph spec (see _doc_to_spec), and the full document is rebuilt from what it
+    returns (_spec_to_doc), then validated against a Python port of a subset of the
+    flow-builder's "strict-flowchart" rules (frontend/.../flowbuilder/validation/engine.ts
+    rules 1-4) before being persisted via the same full-overwrite path the UI itself
+    already uses (projects.save_project).
   - "orchestration": the Engagement Orchestration agent manages the activity board —
     status answers grounded in the live board/schedule/notifications/sync state, plus
     add/edit/remove activity and manual nudge/follow-up actions (JSON envelope
@@ -240,67 +241,253 @@ def validate_document(doc: dict) -> list[str]:
 
 # ----------------------------------------------------------------- operations agent ---
 
-_WORKFLOWDOC_SCHEMA_SUMMARY = """WorkflowDocument JSON shape (fields you may set; anything
-you omit keeps its previous value if you're returning a partial-looking object -- but you
-must always return the FULL document, not a diff):
-{
-  "schemaVersion": "1.0", "id": str, "name": str, "description": str,
-  "direction": "TB"|"BT"|"LR"|"RL",
-  "pages": [{
-    "id": str, "name": str,
-    "nodes": [{
-      "id": str (unique), "type": one of the node types below, "label": str,
-      "position": {"x": number, "y": number}, "size": {"w": number, "h": number},
-      "ports": [], "data": {<field name>: {"type": "string"|"number"|"boolean"|"fixedList",
-        "value": ..., "label": str, "options"?: [str]}},
-      "style": {"stroke": "#hex", "fill": "#hex"}, "layerIds": [], "groupId": null
-    }],
-    "edges": [{
-      "id": str (unique), "source": {"nodeId": str, "portId"?: "yes"|"no", "glue": "static"|"dynamic"},
-      "target": {"nodeId": str, "glue": "static"|"dynamic"},
-      "type": "sequence", "label"?: str,
-      "line": {"style": "solid", "weight": 2, "color": "#333333", "arrowStart": "none",
-        "arrowEnd": "arrow", "routing": "orthogonal", "curve": "step", "lineJumps": "none", "waypoints": []},
-      "data": {}, "layerIds": []
-    }],
-    "groups": [], "layers": []
-  }],
-  "stencils": [...], "dataSets": [...], "theme": {...}, "validationProfile": "strict-flowchart",
-  "meta": {...}, "customMasters": [...]
+# ------------------------------------------------------------------- graph spec ---
+# The agent talks in a compact graph spec, never in WorkflowDocuments.
+#
+# It used to be handed the whole document and asked to return a whole document. A
+# WorkflowDocument spends most of its bytes on things an editing agent has no opinion
+# about -- four ports per node, a ten-field line object per edge, per-node style, data
+# records, layer ids, coordinates -- so a perfectly ordinary journey (20 steps) could not
+# be echoed back inside the response limit at all, and every edit request died on
+# "the diagram is too large for the model to return in one response". The same journey is
+# roughly a twentieth of the size as a spec.
+#
+# It also removes a second problem: coordinates. The model has no way to know how the
+# diagram is drawn, so anything it invented for "position" was noise that the frontend had
+# to lay out again anyway (frontend/.../operations/campaignLayout.ts).
+
+_KIND_TO_TYPE = {
+    "entry": "start",
+    "send": "process",
+    "wait": "delay",
+    "decision": "decision",
+    "branch": "gateway.exclusive",
+    "followup": "process",
+    "exit": "end",
+    "closure": "end",
+}
+_TYPE_TO_KIND = {
+    "start": "entry", "process": "send", "delay": "wait", "decision": "decision",
+    "gateway.exclusive": "branch", "end": "closure", "terminal": "closure",
+}
+_SPEC_DATA_FIELDS = {
+    "day": "number", "channel": "string", "detail": "string", "segment_key": "string",
 }
 
-Node types you'll realistically use for a campaign journey: start, end, terminal, process,
-decision, delay, prepare, event, manual-operation, priority-action, summary.
-Campaign-specific node.data fields (all optional, use fixedList/string/number/boolean shape
-above): campaignStepKind (fixedList, options ["send","wait","decision","exit","followup",
-"closure"]), day (number), channel (string), detail (string), segment_key (string).
+# Mirrors frontend/.../flowbuilder/schema/nodeDefaults.ts defaultPortsFor for the handful of
+# types a campaign journey uses. Ports are what a connector glues to; a node without them
+# cannot be wired up in the editor.
+_PORTS_BY_TYPE = {
+    "start": [{"id": "out", "side": "bottom", "offset": 0.5, "direction": "out", "name": "out"}],
+    "end": [{"id": "in", "side": "top", "offset": 0.5, "direction": "in", "name": "in"}],
+    "decision": [
+        {"id": "in", "side": "top", "offset": 0.5, "direction": "in", "name": "input"},
+        {"id": "yes", "side": "right", "offset": 0.5, "direction": "out", "name": "yes"},
+        {"id": "no", "side": "bottom", "offset": 0.5, "direction": "out", "name": "no"},
+        {"id": "alt", "side": "left", "offset": 0.5, "direction": "out", "name": "alt"},
+    ],
+    "gateway.exclusive": [
+        {"id": "in", "side": "top", "offset": 0.5, "direction": "in", "name": "in"},
+        {"id": "out1", "side": "right", "offset": 0.5, "direction": "out", "name": "out1"},
+        {"id": "out2", "side": "bottom", "offset": 0.5, "direction": "out", "name": "out2"},
+    ],
+}
+_DEFAULT_PORTS = [
+    {"id": "in", "side": "top", "offset": 0.5, "direction": "in", "name": "in"},
+    {"id": "out", "side": "bottom", "offset": 0.5, "direction": "out", "name": "out"},
+    {"id": "in-left", "side": "left", "offset": 0.5, "direction": "in", "name": "in"},
+    {"id": "out-right", "side": "right", "offset": 0.5, "direction": "out", "name": "out"},
+]
+_DEFAULT_LINE = {
+    "style": "solid", "weight": 2, "color": "#333333", "arrowStart": "none",
+    "arrowEnd": "arrow", "routing": "step", "curve": "step", "lineJumps": "arc",
+    "waypoints": [],
+}
 
-Decision nodes: each outgoing edge needs a distinct "label" (e.g. "Yes"/"No") and, when it's
-a binary branch, source.portId "yes"/"no" with source.glue "static" (non-decision edges use
-glue "dynamic" and no portId).
+
+def _field_value(node: dict, key: str):
+    field = (node.get("data") or {}).get(key)
+    return field.get("value") if isinstance(field, dict) else None
+
+
+def _kind_of(node: dict) -> str:
+    kind = _field_value(node, "campaignStepKind")
+    if isinstance(kind, str) and kind in _KIND_TO_TYPE:
+        return kind
+    return _TYPE_TO_KIND.get(node.get("type", ""), "send")
+
+
+def _doc_to_spec(doc: dict) -> dict:
+    """The document as the agent sees it: what the steps are and how they connect."""
+    page = (doc.get("pages") or [{}])[0]
+    nodes = []
+    for node in page.get("nodes") or []:
+        entry = {"id": node.get("id", ""), "kind": _kind_of(node), "label": node.get("label", "")}
+        for key in _SPEC_DATA_FIELDS:
+            value = _field_value(node, key)
+            if value not in (None, ""):
+                entry[key] = value
+        nodes.append(entry)
+    edges = []
+    for edge in page.get("edges") or []:
+        entry = {
+            "source": (edge.get("source") or {}).get("nodeId", ""),
+            "target": (edge.get("target") or {}).get("nodeId", ""),
+        }
+        label = edge.get("label") or ((edge.get("labels") or [{}])[0].get("text"))
+        if label:
+            entry["label"] = label
+        edges.append(entry)
+    return {"direction": doc.get("direction", "TB"), "nodes": nodes, "edges": edges}
+
+
+def _coerce_field(value, field_type: str):
+    """A spec value as the document's typed data field needs it, or None if it can't be."""
+    if field_type == "number":
+        if isinstance(value, bool):
+            return None
+        if isinstance(value, (int, float)):
+            return value
+        try:
+            return float(str(value).strip())
+        except ValueError:
+            return None
+    return str(value)
+
+
+def _spec_to_doc(spec: dict, base: dict) -> dict:
+    """Rebuild the full document from a spec, on top of the one already saved.
+
+    A step the spec still names keeps everything the spec has no opinion about -- its
+    size, its styling, its own data fields, where it currently sits. A new step is built
+    from the type defaults at the origin: positions are the layout engine's job, and the
+    frontend redraws any agent-authored document before it shows it.
+    """
+    base_page = (base.get("pages") or [{}])[0]
+    existing = {n.get("id"): n for n in (base_page.get("nodes") or []) if n.get("id")}
+    existing_edges = {
+        ((e.get("source") or {}).get("nodeId"), (e.get("target") or {}).get("nodeId")): e
+        for e in (base_page.get("edges") or [])
+    }
+
+    nodes = []
+    for index, item in enumerate(spec.get("nodes") or []):
+        node_id = str(item.get("id") or f"step_{index + 1}")
+        kind = item.get("kind") if item.get("kind") in _KIND_TO_TYPE else "send"
+        node_type = _KIND_TO_TYPE[kind]
+        prior = existing.get(node_id)
+        node = dict(prior) if prior else {
+            "id": node_id,
+            "position": {"x": 0, "y": 0},
+            "size": {"w": 160, "h": 80, "resizable": True},
+            "ports": _PORTS_BY_TYPE.get(node_type, _DEFAULT_PORTS),
+            "layerIds": [],
+        }
+        node["type"] = node_type
+        node["label"] = str(item.get("label") or node.get("label") or kind.title())
+        data = dict(node.get("data") or {})
+        data.setdefault("owner", {"type": "string", "value": None, "label": "Owner"})
+        data.setdefault("sla", {"type": "duration", "value": None, "label": "SLA"})
+        data.setdefault("status", {"type": "fixedList", "value": "Draft",
+                                    "options": ["Draft", "Active", "Deprecated"], "label": "Status"})
+        data["campaignStepKind"] = {
+            "type": "fixedList", "value": kind,
+            "options": list(_KIND_TO_TYPE), "label": "Campaign step kind",
+        }
+        for key, field_type in _SPEC_DATA_FIELDS.items():
+            if key not in item or item[key] in (None, ""):
+                continue
+            # The frontend validates these field values by type (schema/dataField.ts), and a
+            # single mistyped one rejects the whole document -- so a "day" the model wrote
+            # as "3" is coerced, and one it wrote as "day 3" is dropped rather than saved.
+            value = _coerce_field(item[key], field_type)
+            if value is None:
+                continue
+            data[key] = {"type": field_type, "value": value, "label": key.replace("_", " ").title()}
+        node["data"] = data
+        nodes.append(node)
+
+    known = {n["id"] for n in nodes}
+    edges = []
+    for index, item in enumerate(spec.get("edges") or []):
+        source, target = str(item.get("source") or ""), str(item.get("target") or "")
+        if source not in known or target not in known:
+            continue  # an edge to a step the spec dropped would leave a dangling connector
+        prior = existing_edges.get((source, target))
+        edge = dict(prior) if prior else {
+            "id": f"edge_{index + 1}_{source}_{target}"[:120],
+            "type": "sequence",
+            "line": dict(_DEFAULT_LINE),
+            "data": {},
+            "layerIds": [],
+        }
+        # Glue stays dynamic: the renderer picks the facing sides from live geometry, and a
+        # port pinned by the agent would fight the layout it cannot see.
+        edge["source"] = {"nodeId": source, "glue": "dynamic"}
+        edge["target"] = {"nodeId": target, "glue": "dynamic"}
+        label = item.get("label")
+        if label:
+            edge["label"] = str(label)
+        else:
+            edge.pop("label", None)
+        edge.pop("labels", None)
+        edges.append(edge)
+
+    doc = json.loads(json.dumps(base))  # deep copy; keeps id/name/theme/meta/stencils
+    direction = spec.get("direction")
+    if direction in ("TB", "BT", "LR", "RL"):
+        doc["direction"] = direction
+    page = dict(base_page)
+    page["nodes"] = nodes
+    page["edges"] = edges
+    doc["pages"] = [page] + list(doc.get("pages") or [])[1:]
+    return doc
+
+
+_GRAPH_SPEC_SUMMARY = """The diagram is given to you, and must be returned by you, as a
+compact graph spec -- not as the app's internal document format:
+{
+  "direction": "TB",
+  "nodes": [{"id": str (unique, stable -- reuse the existing id for a step you are
+             keeping), "kind": one of "entry"|"send"|"wait"|"decision"|"branch"|
+             "followup"|"exit"|"closure", "label": str,
+             "day"?: number, "channel"?: str, "detail"?: str, "segment_key"?: str}],
+  "edges": [{"source": <node id>, "target": <node id>, "label"?: str}]
+}
+
+What each kind means: entry = the journey's single start; send = a message going out to
+the HCP; wait = a delay window; decision = a yes/no gate; branch = an exclusive split into
+named tracks; followup = a re-engagement or segment-specific message; exit = leaving the
+journey early; closure = the journey's end.
+
+You never set positions, sizes, colours, ports or connector styling -- the app draws the
+diagram from this structure. Do not invent an internal document format.
 
 Structural rules that WILL be validated after you respond (violating these gets your edit
-rejected and you'll be asked to fix it): every page needs >=1 start node; every non-end node
-must have a forward path to an end/terminal node; start nodes have no inbound edges; end
-nodes have no outbound edges; every decision node has >=2 outbound edges, each labeled;
-every non-start/non-end node has >=1 inbound AND >=1 outbound edge (no orphans, no dead ends)."""
+rejected and you'll be asked to fix it): there must be >=1 entry node; every node that is
+not an exit/closure must have a forward path to one; entry nodes have no inbound edges;
+exit/closure nodes have no outbound edges; every decision/branch node has >=2 outbound
+edges, each with its own distinct label; every other node has >=1 inbound AND >=1 outbound
+edge (no orphans, no dead ends)."""
 
 _OPS_SYSTEM = f"""You are the Campaign Operations Agent for a pharma omnichannel campaign
 planning tool. You help the user edit an engagement-journey flow diagram by describing
-changes in plain English. You see the diagram's current JSON (a WorkflowDocument) and the
-conversation so far.
+changes in plain English. You see the diagram's current structure and the conversation so
+far.
 
-{_WORKFLOWDOC_SCHEMA_SUMMARY}
+{_GRAPH_SPEC_SUMMARY}
 
 Respond with ONLY a single raw JSON object, no markdown fences, no prose outside it:
 {{"reply": "<your natural-language reply to the user>",
-  "document": <the FULL updated WorkflowDocument if the user asked for a structural change,
-              or null if you're just answering a question / no change is needed>}}
+  "graph": <the FULL updated graph spec if the user asked for a structural change, or null
+           if you're just answering a question / no change is needed>}}
+"graph" is always the whole graph, never a diff -- but it is small, so return every node
+and edge, including the ones you did not touch, with their existing ids.
 Keep "reply" conversational and short. Never invent nodes/edges the user didn't ask for
 beyond what's needed to keep the diagram structurally valid (e.g. adding a label to a new
 branch). If the user explicitly requests FULL REGENERATION, this rule is superseded: use
-the brief and conversation to replace the entire graph, including its node set, edge set,
-labels, and positions, while preserving only supported campaign logic."""
+the brief and conversation to replace the entire graph, including its node set, edge set
+and labels, while preserving only supported campaign logic."""
 
 
 def _strip_json_fence(text: str) -> str:
@@ -341,7 +528,8 @@ def _parse_ops_response(text: str) -> tuple[str, dict | None]:
             parsed = json.loads(candidate)
             if not isinstance(parsed, dict):
                 raise ValueError("workflow editor response must be a JSON object")
-            return parsed.get("reply", ""), parsed.get("document")
+            graph = parsed.get("graph")
+            return parsed.get("reply", ""), graph if isinstance(graph, dict) else None
         except Exception as exc:  # noqa: BLE001 -- recovery path only
             last_error = exc
 
@@ -368,6 +556,14 @@ def _ask_operations(project_id: str, message: str, document: dict | None = None)
     stage1_convo = _recent_lines(proj.get("messages") or [], 14, 2500)
     cross_stage = _cross_stage_context(project_id)
 
+    spec = _doc_to_spec(doc)
+    # Only hold the agent to what its own edit changed. Diagrams generated upstream can
+    # already break a rule -- a behavioural branch with a single realised track is the
+    # common one -- and judging the whole result against the rule set rejected every edit
+    # to such a diagram, including edits nowhere near the offending node, with a message
+    # that read as if the agent had produced something broken.
+    baseline_errors = set(validate_document(doc))
+
     def _call(extra: str = "") -> tuple[str, dict | None]:
         client = conversation_llm._get_client()
         user_payload = (
@@ -375,7 +571,7 @@ def _ask_operations(project_id: str, message: str, document: dict | None = None)
             f"Stage 1 planning conversation:\n{stage1_convo}\n\n"
             f"Saved plan snapshot:\n{plan_snapshot}\n\n"
             f"Relevant tab-chat history:\n{cross_stage}\n\n"
-            f"Current diagram JSON:\n{json.dumps(doc)}\n\n"
+            f"Current diagram:\n{json.dumps(spec)}\n\n"
             f"Operations conversation so far:\n{convo}\n\n"
             f"User: {message}{extra}"
         )
@@ -384,38 +580,43 @@ def _ask_operations(project_id: str, message: str, document: dict | None = None)
                                        messages=[{"role": "user", "content": user_payload}])
         text = next((b.text for b in resp.content if b.type == "text"), "")
         if resp.stop_reason == "max_tokens":
-            raise ValueError("the diagram is too large for the model to return in one "
-                              "response -- try a smaller edit")
+            raise ValueError("the reply was cut off before it finished -- try again, or "
+                              "split the change into two steps")
         return _parse_ops_response(text)
+
+    def _expand(graph: dict | None) -> tuple[dict | None, list[str]]:
+        if not graph:
+            return None, []
+        candidate = _spec_to_doc(graph, doc)
+        return candidate, [e for e in validate_document(candidate) if e not in baseline_errors]
 
     try:
         try:
-            reply, new_doc = _call()
+            reply, graph = _call()
         except ValueError as first_error:
             msg = str(first_error).lower()
             if "empty response" in msg or "invalid json" in msg:
                 retry_note = (
                     "\n\nYour previous response was not valid JSON. "
                     "Return only one raw JSON object with exactly two keys: "
-                    '"reply" and "document". Do not use markdown fences or prose.'
+                    '"reply" and "graph". Do not use markdown fences or prose.'
                 )
-                reply, new_doc = _call(retry_note)
+                reply, graph = _call(retry_note)
             else:
                 raise
-        if new_doc:
-            errors = validate_document(new_doc)
-            if errors:
-                err_note = ("\n\nYour previous proposed document failed validation:\n- "
-                             + "\n- ".join(errors[:8]) + "\nPlease fix and return the full "
-                             "corrected document (or return document=null and explain if you "
-                             "can't).")
-                reply2, new_doc2 = _call(err_note)
-                if new_doc2 and not validate_document(new_doc2):
-                    reply, new_doc = reply2, new_doc2
-                else:
-                    reply = reply2 or (reply + " (I couldn't produce a structurally valid "
-                                                "edit for that -- no change was made.)")
-                    new_doc = None
+        new_doc, errors = _expand(graph)
+        if new_doc and errors:
+            err_note = ("\n\nYour previous proposed graph failed validation:\n- "
+                         + "\n- ".join(errors[:8]) + "\nPlease fix and return the full "
+                         "corrected graph (or return graph=null and explain if you can't).")
+            reply2, graph2 = _call(err_note)
+            new_doc2, errors2 = _expand(graph2)
+            if new_doc2 and not errors2:
+                reply, new_doc = reply2, new_doc2
+            else:
+                reply = reply2 or (reply + " (I couldn't produce a structurally valid "
+                                            "edit for that -- no change was made.)")
+                new_doc = None
         if new_doc:
             pstore.save_project(project_id, campaign_plan_layout=new_doc)
         return {"reply": reply or "Done.", "document": new_doc}
@@ -451,7 +652,7 @@ def regenerate_operations(project_id: str, document: dict | None = None) -> dict
         "FULL REGENERATION, not an incremental edit: redraw the campaign operations diagram "
         "completely from scratch. Ground the new journey in the campaign brief, the full "
         "Stage 1 planning conversation, the saved plan, and every relevant tab-chat "
-        "instruction so far. Return a full replacement WorkflowDocument with a newly "
+        "instruction so far. Return a full replacement graph spec with a newly "
         "considered node and edge structure. Do not copy the current graph just because it "
         "is present in the context. Preserve only decisions that are still supported by "
         "the brief and conversation. Keep it concise, structurally valid, and fully wired "

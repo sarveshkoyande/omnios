@@ -95,6 +95,7 @@ function CanvasInner() {
   const [flowReady, setFlowReady] = useState(false);
   const flowInstanceRef = useRef<ReactFlowInstance<AnyRFNode, WorkflowRFEdge> | null>(null);
   const lastFitSignatureRef = useRef("");
+  const draggingRef = useRef(false);
   const canvasRef = useRef<HTMLDivElement>(null);
 
   // React Flow's `fitView` prop only fits whatever nodes were present at its own first
@@ -103,13 +104,20 @@ function CanvasInner() {
   // from the very first frame RF measures, without ever producing the 0->N transition
   // fitView normally reacts to — so the viewport can settle on an empty/arbitrary frame.
   // Make the first real population always explicitly fit, once.
+  //
+  // "Once" is the whole point, and it hangs on this signature. It used to include every
+  // node's position and size, which quietly turned a one-shot framing into a refit on
+  // every geometry change: each drag tick rewrote it, so pausing mid-drag re-framed the
+  // canvas under the cursor, and dropping a node re-framed it again — the viewport
+  // lurching and re-zooming while the user was still holding the shape. Only the set of
+  // shapes present decides whether this is a different diagram that needs framing; where
+  // the user has since put them does not.
   useEffect(() => {
     const workflowNodes = rfNodes.filter((n) => n.type !== "lane");
     if (!flowReady) return;
     if (workflowNodes.length === 0) return;
-    const signature = workflowNodes
-      .map((n) => `${n.id}:${Math.round(n.position.x)},${Math.round(n.position.y)},${Math.round(n.width ?? 0)},${Math.round(n.height ?? 0)}`)
-      .join("|");
+    if (draggingRef.current) return;
+    const signature = workflowNodes.map((n) => n.id).sort().join("|");
     if (signature === lastFitSignatureRef.current) return;
     lastFitSignatureRef.current = signature;
     const timer = window.setTimeout(() => {
@@ -186,8 +194,13 @@ function CanvasInner() {
     setRfEdges((eds) => applyEdgeChanges(changes, eds));
   }, []);
 
+  const onNodeDragStart = useCallback(() => {
+    draggingRef.current = true;
+  }, []);
+
   const onNodeDragStop = useCallback(
     (_: unknown, node: AnyRFNode) => {
+      draggingRef.current = false;
       const snapped = { x: Math.round(node.position.x / GRID) * GRID, y: Math.round(node.position.y / GRID) * GRID };
 
       if (node.type === "lane") {
@@ -360,6 +373,7 @@ function CanvasInner() {
         edgeTypes={edgeTypes}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
+        onNodeDragStart={onNodeDragStart}
         onNodeDragStop={onNodeDragStop}
         onConnect={onConnect}
         onConnectEnd={onConnectEnd}

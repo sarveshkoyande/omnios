@@ -1,9 +1,9 @@
 /**
  * Reporting & Insights — the executive analytics workspace.
  *
- * Layout, top to bottom: filter bar → KPI rail → single-metric trend chart beside the agent's
- * insight rail → funnel / geography / channel mix → journey + top assets → send windows +
- * audience composition → collapsible deep-dive shelf.
+ * Layout, top to bottom: filter bar → the agent's insight ticker → collapsible deep-dive
+ * shelf → KPI rail → single-metric trend chart → funnel / geography / channel mix → journey
+ * → top assets + audience composition → send windows.
  *
  * Two rules this screen is built on:
  *  1. Every number is counted from the HCP 360 panel for the *current filter combination*
@@ -24,7 +24,7 @@ import { DeepDivePanels } from "./reporting/DeepDivePanels";
 import { FilterBar } from "./reporting/FilterBar";
 import { FunnelCard } from "./reporting/FunnelCard";
 import { GeoCard } from "./reporting/GeoCard";
-import { InsightsRail } from "./reporting/InsightsRail";
+import { InsightsTicker } from "./reporting/InsightsTicker";
 import { JourneyCard } from "./reporting/JourneyCard";
 import { MeasurementPlan } from "./reporting/MeasurementPlan";
 import { MetricRail } from "./reporting/MetricRail";
@@ -120,9 +120,11 @@ export function StageReporting({ result, projectId }: { result: PlanResult | nul
         onReset={resetFilters}
       />
 
+      <InsightsTicker insights={insights} onSelectMetric={setMetricKey} />
+
       {error && (
         <Box sx={{
-          border: `1px solid ${tokens.color.outline}`, borderRadius: tokens.radius.lg,
+          border: `1px solid ${tokens.color.outline}`, borderRadius: tokens.radius.md,
           background: tokens.color.surface, p: 2, mb: 2.5,
         }}>
           <Typography sx={{ fontSize: 15, fontWeight: 700, mb: 0.5 }}>{error}</Typography>
@@ -135,6 +137,12 @@ export function StageReporting({ result, projectId }: { result: PlanResult | nul
 
       {insights?.available && (
         <>
+          {/* The deep-dive shelf sits directly under the agent's ticker: these are the
+              summaries a reader wants before the charts, not a footer. */}
+          <Box sx={{ mb: 2 }}>
+            <DeepDivePanels insights={insights} />
+          </Box>
+
           <MetricRail
             metrics={headlineMetrics}
             selectedKey={metricKey}
@@ -142,17 +150,11 @@ export function StageReporting({ result, projectId }: { result: PlanResult | nul
             onSelect={setMetricKey}
           />
 
-          {/* Chart + agent rail. The rail is a sidebar on wide screens and stacks under the
-              chart on narrow ones — it is commentary on the chart, so it must follow it.
-              `alignItems: start` matters: the feed is much taller than the chart, and a
-              stretched chart card would sit in a field of dead white space. */}
-          <Box sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "1fr", lg: "minmax(0, 2.1fr) minmax(300px, 1fr)" },
-            gap: 2, mb: 2, alignItems: "start",
-          }}>
-            <TrendChartSlot metrics={metrics} metricKey={metricKey} onSelect={setMetricKey} busy={busy} />
-            <InsightsRail insights={insights} loading={busy && !loadedOnce.current} onSelectMetric={setMetricKey} />
+          {/* Chart runs the full width now that the agent feed is a ticker above. */}
+          <Box sx={{ display: "flex", mb: 2 }}>
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <TrendChartSlot metrics={metrics} metricKey={metricKey} onSelect={setMetricKey} busy={busy} />
+            </Box>
           </Box>
 
           <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 2, alignItems: "stretch" }}>
@@ -188,21 +190,17 @@ export function StageReporting({ result, projectId }: { result: PlanResult | nul
           </Box>
 
           {insights.send_windows && (
-            <Box sx={{ display: "flex", mb: 2 }}>
+            <Box sx={{ display: "flex", mb: 3 }}>
               <SendWindowCard windows={insights.send_windows} />
             </Box>
           )}
-
-          <Box sx={{ mb: 3 }}>
-            <DeepDivePanels insights={insights} />
-          </Box>
         </>
       )}
 
       {!insights && busy && (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          <Shimmer sx={{ height: 132, borderRadius: `${tokens.radius.lg}px` }} />
-          <Shimmer sx={{ height: 340, borderRadius: `${tokens.radius.lg}px` }} />
+          <Shimmer sx={{ height: 132, borderRadius: `${tokens.radius.md}px` }} />
+          <Shimmer sx={{ height: 340, borderRadius: `${tokens.radius.md}px` }} />
         </Box>
       )}
 
@@ -225,6 +223,6 @@ function TrendChartSlot({
   onSelect: (key: string) => void;
   busy: boolean;
 }) {
-  if (!metrics?.length) return <Shimmer sx={{ height: 380, borderRadius: `${tokens.radius.lg}px` }} />;
+  if (!metrics?.length) return <Shimmer sx={{ height: 380, borderRadius: `${tokens.radius.md}px` }} />;
   return <TrendChart metrics={metrics} selectedKey={metricKey} onSelect={onSelect} busy={busy} />;
 }

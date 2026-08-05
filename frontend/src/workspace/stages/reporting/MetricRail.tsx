@@ -9,7 +9,7 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { enterWith, enterRise, stagger } from "../../../theme/motionPresets";
 import { hoverOnly, motion, tokens } from "../../../theme/tokens";
-import { DeltaPill, Shimmer, formatMetricValue, statusColor, useCountUp } from "./dashboardKit";
+import { radius, DeltaPill, Shimmer, formatMetricValue, statusColor, useCountUp } from "./dashboardKit";
 import type { ReportingMetric } from "../../types";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -47,7 +47,7 @@ function MetricCard({
         background: tokens.color.surface,
         border: `1px solid ${selected ? c.line : tokens.color.outline}`,
         boxShadow: selected ? `0 0 0 3px ${c.soft}` : "0 1px 2px rgba(16,24,40,0.04)",
-        borderRadius: tokens.radius.lg,
+        borderRadius: radius.md,
         p: 2,
         animation: enterWith(enterRise, stagger(index)),
         transition: `box-shadow ${motion.duration.hover} ${motion.easeOut}, border-color ${motion.duration.hover} ${motion.easeOut}, transform ${motion.duration.hover} ${motion.easeOut}`,
@@ -109,7 +109,7 @@ export function MetricRail({
     return (
       <Box sx={gridSx}>
         {[0, 1, 2, 3, 4, 5].map((i) => (
-          <Shimmer key={i} sx={{ height: 132, borderRadius: `${tokens.radius.lg}px` }} />
+          <Shimmer key={i} sx={{ height: 132, borderRadius: radius.md }} />
         ))}
       </Box>
     );

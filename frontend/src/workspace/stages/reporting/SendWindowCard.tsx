@@ -7,12 +7,15 @@
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { motion, tokens } from "../../../theme/tokens";
-import { CardTitle, DashCard, dataColor } from "./dashboardKit";
+import { radius, CardTitle, DashCard, dataColor } from "./dashboardKit";
 import type { SendWindows } from "../../types";
 
 export function SendWindowCard({ windows }: { windows: SendWindows }) {
   if (!windows?.rows?.length) return null;
   const max = Math.max(...windows.rows.flatMap((r) => r.cells), 0.01);
+  // Stated back on the card because this grid is a full split of the cohort: the server
+  // apportions the shares so they land on exactly 100%, and the footnote is the proof.
+  const gridTotal = windows.rows.flatMap((r) => r.cells).reduce((sum, v) => sum + v, 0);
   const best = windows.rows.reduce<{ day: string; session: string; share: number; count: number } | null>(
     (acc, row) => {
       row.cells.forEach((share, i) => {
@@ -55,7 +58,7 @@ export function SendWindowCard({ windows }: { windows: SendWindows }) {
                     key={i}
                     title={`${row.day} ${windows.sessions[i]} — ${row.counts[i].toLocaleString()} HCPs (${share}%)`}
                     sx={{
-                      borderRadius: tokens.radius.sm,
+                      borderRadius: radius.sm,
                       background: share > 0
                         ? `color-mix(in srgb, ${dataColor.info.line} ${Math.round(10 + 80 * t)}%, white)`
                         : "#F7F9FC",
@@ -78,7 +81,8 @@ export function SendWindowCard({ windows }: { windows: SendWindows }) {
         </Box>
       </Box>
       <Typography sx={{ fontSize: 15, color: "text.secondary", mt: 1.5 }}>
-        {windows.total.toLocaleString()} stated preferences in this cohort · source
+        {windows.total.toLocaleString()} stated preferences in this cohort, split across the grid —
+        cells total {gridTotal.toFixed(2)}% · source
         <Box component="span" sx={{ fontFamily: "monospace", ml: 0.5 }}>global_day_time_preference_data</Box>
       </Typography>
     </DashCard>

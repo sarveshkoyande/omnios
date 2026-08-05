@@ -34,6 +34,11 @@ import type { StudioAsk, StudioEvent, StudioSection, StudioState } from "./studi
 import { parseDocument } from "./stages/operations/flowbuilder/schema";
 import { useWorkflowStore } from "./stages/operations/flowbuilder/store/useWorkflowStore";
 import { campaignFlowToDocument } from "./stages/operations/campaignAdapter";
+// Every campaign diagram that arrives from a generator (the CampaignFlow adapter, or the
+// Operations agent's rewrite) arrives without a usable arrangement. campaignLayout.ts is
+// the single place that draws one; skipping it here is what stacked the whole journey on
+// one point of the canvas.
+import { layoutCampaignDocument } from "./stages/operations/campaignLayout";
 
 // Stages 2 (Orchestration) and 3 (Operations) don't build anything until the user says so:
 // the first time either tab's chat is opened with nothing generated yet, a "kickoff-choice"
@@ -721,7 +726,7 @@ export function useWorkspace() {
         const data = await bootstrapAgentBrief(projectId, stageId, briefText, sourceName);
         absorbProject(data.project);
         if (stageId === "operations" && data.flow) {
-          const doc = campaignFlowToDocument(data.flow);
+          const doc = await layoutCampaignDocument(campaignFlowToDocument(data.flow));
           await saveCampaignFlowDocument(projectId, doc);
           useWorkflowStore.getState().loadDocument(doc);
         }
@@ -762,14 +767,18 @@ export function useWorkspace() {
           );
         } else if (stageId === "operations") {
           const plan = await generateCampaignPlan(projectId);
-          const doc = campaignFlowToDocument(plan.flow);
+          const doc = await layoutCampaignDocument(campaignFlowToDocument(plan.flow));
           await saveCampaignFlowDocument(projectId, doc);
           if (extra) {
             const data = await postTabChat(projectId, "operations", extra, doc);
             appendAgentMsg(data.reply);
-            const finalDoc = data.document ?? doc;
-            const parsed = parseDocument(finalDoc);
-            if (parsed.ok) useWorkflowStore.getState().loadDocument(parsed.document);
+            const parsed = parseDocument(data.document ?? doc);
+            if (parsed.ok) {
+              // The agent's reply carries its own node coordinates, and they are guesses.
+              const drawn = data.document ? await layoutCampaignDocument(parsed.document) : parsed.document;
+              useWorkflowStore.getState().loadDocument(drawn);
+              if (data.document) await saveCampaignFlowDocument(projectId, drawn);
+            }
           } else {
             useWorkflowStore.getState().loadDocument(doc);
             appendAgentMsg("Built the campaign engagement flow from the Stage 1 plan — see the diagram below.");
@@ -873,11 +882,18 @@ export function useWorkspace() {
           }));
           if (data.document) {
             const parsed = parseDocument(data.document);
-            if (parsed.ok) useWorkflowStore.getState().loadDocument(parsed.document);
+            if (parsed.ok) {
+              // tab_chat.py persists the model's own coordinates as-is. Redraw before
+              // showing it, and write the drawn version back — otherwise the next reload
+              // reads the model's guesses straight out of campaign_plan_layout again.
+              const drawn = await layoutCampaignDocument(parsed.document);
+              useWorkflowStore.getState().loadDocument(drawn);
+              await saveCampaignFlowDocument(projectId as string, drawn);
+            }
           }
           const refreshed = await getProject(projectId as string);
           if (refreshed.result) setResult(refreshed.result);
-          if (refreshed.campaign_plan_layout) {
+          if (!data.document && refreshed.campaign_plan_layout) {
             const parsed = parseDocument(refreshed.campaign_plan_layout);
             if (parsed.ok) useWorkflowStore.getState().loadDocument(parsed.document);
           }
@@ -1011,7 +1027,11 @@ export function useWorkspace() {
           }));
           if (data.document) {
             const parsed = parseDocument(data.document);
-            if (parsed.ok) useWorkflowStore.getState().loadDocument(parsed.document);
+            if (parsed.ok) {
+              const drawn = await layoutCampaignDocument(parsed.document);
+              useWorkflowStore.getState().loadDocument(drawn);
+              await saveCampaignFlowDocument(projectId, drawn);
+            }
           }
         }
       } catch (e) {

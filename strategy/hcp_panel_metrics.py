@@ -225,15 +225,37 @@ def send_windows(filters: dict[str, str] | None = None) -> dict:
                 grid[(day, session)] = grid.get((day, session), 0) + int(r["n"])
                 total += int(r["n"])
     days = [d for d in _DAY_ORDER if any((d, s) in grid for s in _SESSION_ORDER)]
+    counts = [[grid.get((day, s), 0) for s in _SESSION_ORDER] for day in days]
+    flat = [c for row in counts for c in row]
+    shares = _shares_to_100(flat, total)
+    width = len(_SESSION_ORDER)
     return {
         "sessions": [SESSION_LABELS[s] for s in _SESSION_ORDER],
         "total": total,
         "rows": [{"day": day,
-                  "cells": [round(100 * grid.get((day, s), 0) / total, 2) if total else 0.0
-                            for s in _SESSION_ORDER],
-                  "counts": [grid.get((day, s), 0) for s in _SESSION_ORDER]}
-                 for day in days],
+                  "cells": shares[i * width:(i + 1) * width],
+                  "counts": counts[i]}
+                 for i, day in enumerate(days)],
     }
+
+
+def _shares_to_100(counts: list[int], total: int) -> list[float]:
+    """Percentages that add up to exactly 100.00.
+
+    Rounding each cell independently leaves the grid summing to 99.4-ish, which reads as a
+    bug on a matrix that is by definition a full split of the cohort. Largest-remainder
+    apportionment instead: floor every cell at 2dp, then hand the leftover hundredths to the
+    cells with the biggest truncated fractions.
+    """
+    if not counts or total <= 0:
+        return [0.0 for _ in counts]
+    exact = [c * 10000 / total for c in counts]  # hundredths of a percent
+    floors = [int(v) for v in exact]
+    leftover = 10000 - sum(floors)
+    order = sorted(range(len(counts)), key=lambda i: exact[i] - floors[i], reverse=True)
+    for i in order[:max(0, leftover)]:
+        floors[i] += 1
+    return [round(v / 100, 2) for v in floors]
 
 
 def content_demand(filters: dict[str, str] | None = None, limit: int = 8) -> list[dict]:

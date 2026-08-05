@@ -9,7 +9,7 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { enterRise, enterWith, stagger } from "../../../theme/motionPresets";
 import { tokens } from "../../../theme/tokens";
-import { CardTitle, DashCard, dataColor } from "./dashboardKit";
+import { radius, CardTitle, DashCard, dataColor } from "./dashboardKit";
 import type { ReportingJourneyStep } from "../../types";
 
 const KIND_STYLE: Record<ReportingJourneyStep["kind"], { bg: string; ink: string; border: string }> = {
@@ -31,7 +31,7 @@ export function JourneyCard({ steps }: { steps: ReportingJourneyStep[] }) {
             <Box key={step.id} sx={{ display: "flex", alignItems: "stretch", gap: 1, flex: "1 1 0", minWidth: 128 }}>
               <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 0.75, animation: enterWith(enterRise, stagger(i, 60)) }}>
                 <Box sx={{
-                  background: s.bg, border: `1px solid ${s.border}`, borderRadius: tokens.radius.md,
+                  background: s.bg, border: `1px solid ${s.border}`, borderRadius: radius.sm,
                   px: 1.5, py: 1.25, minWidth: 0,
                 }}>
                   <Typography sx={{ fontSize: 15, fontWeight: 700, color: s.ink, lineHeight: 1.25 }}>
@@ -45,7 +45,7 @@ export function JourneyCard({ steps }: { steps: ReportingJourneyStep[] }) {
 
                 {step.branch && (
                   <Box sx={{
-                    border: `1px dashed ${tokens.color.outline}`, borderRadius: tokens.radius.md,
+                    border: `1px dashed ${tokens.color.outline}`, borderRadius: radius.sm,
                     px: 1.5, py: 0.75, background: "#FAFBFC",
                   }}>
                     <Typography sx={{ fontSize: 15, color: "text.secondary", lineHeight: 1.3 }}>

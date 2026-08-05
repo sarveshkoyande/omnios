@@ -1,43 +1,59 @@
-import ELK from "elkjs/lib/elk.bundled.js";
-import type { ElkNode } from "elkjs/lib/elk-api";
+import dagre from "@dagrejs/dagre";
 import type { Page } from "../schema/document";
 import type { Direction } from "../schema/document";
 import type { WorkflowEdge } from "../schema/edge";
 import type { WorkflowNode } from "../schema/node";
 
-const elk = new ELK();
+/**
+ * Layered layout for the flow builder, on dagre.
+ *
+ * Why dagre and not ELK (what this file used before): the campaign brief's journey picture
+ * (strategy/journey_brief.py -> mermaid.ink) is a Mermaid flowchart, and Mermaid lays its
+ * flowcharts out with dagre. Running the same engine here is what makes the editable
+ * diagram come out looking like the picture on the brief instead of a second, unrelated
+ * drawing of the same graph. The old implementation ran ELK and then overwrote every
+ * coordinate it produced with a hand-rolled lane/row grid, which is what made branches
+ * pile up on top of each other.
+ *
+ * Three things are layered on top of plain dagre, all of them shape-preserving:
+ *  1. model order — a node's outgoing edges are handed to dagre recovery-branch first,
+ *     main-path second, everything else last, so dagre's initial ordering puts
+ *     "didn't open / didn't click" arms on the left and the positive arms on the right.
+ *  2. edge weight — the main path is weighted heavily, which is dagre's own lever for
+ *     "keep this chain short and vertically aligned".
+ *  3. a trunk pass — the main path is then snapped to one exact x, and each rank is
+ *     repacked outwards from it. This is a local nudge on dagre's result, not a
+ *     replacement for it: rank assignment and left-to-right order stay dagre's.
+ *
+ * Edges carry no waypoints. The renderer (edges/WorkflowEdge.tsx) already draws an
+ * orthogonal stub-bridge-stub path between the glued sides, and stored waypoints only go
+ * stale the moment a node moves.
+ */
 
-const DIRECTION_MAP: Record<Direction, string> = {
-  TB: "DOWN",
-  BT: "UP",
-  LR: "RIGHT",
-  RL: "LEFT",
-};
-
-const GRID = 40;
-const NODE_CLEARANCE = 28;
 const LANE_KINDS = new Set(["lane", "pool", "container", "list", "subgraph", "phase"]);
+/** Clearance two boxes must keep before the layout counts as unreadable and retries wider. */
+const NODE_CLEARANCE = 20;
+/** Must match the stub length in edges/WorkflowEdge.tsx, or the quality check tests a
+ *  different path from the one the user sees. */
+const EDGE_STUB = 34;
+const MARGIN = 48;
 
 type Pt = { x: number; y: number };
-type LayoutSpacing = {
-  nodeNode: number;
-  layer: number;
-  edgeNode: number;
-  edgeEdge: number;
-  lane: number;
-};
+type Side = "top" | "right" | "bottom" | "left";
+type LayoutSpacing = { nodeSep: number; rankSep: number; edgeSep: number };
 type Topology = {
   incoming: Map<string, WorkflowEdge[]>;
   outgoing: Map<string, WorkflowEdge[]>;
   nodeById: Map<string, WorkflowNode>;
 };
 
-const snap = (v: number) => Math.round(v / GRID) * GRID;
 const centerOf = (n: WorkflowNode): Pt => ({ x: n.position.x + n.size.w / 2, y: n.position.y + n.size.h / 2 });
+
 const fieldValue = (n: WorkflowNode, key: string): unknown => {
   const field = n.data?.[key];
   return field && typeof field === "object" && "value" in field ? field.value : null;
 };
+
 const campaignKind = (n: WorkflowNode): string => String(fieldValue(n, "campaignStepKind") ?? "");
 
 function boundsOf(n: WorkflowNode, pad = 0) {
@@ -71,18 +87,18 @@ function buildTopology(page: Page): Topology {
   return { incoming, outgoing, nodeById };
 }
 
+/* ------------------------------------------------------------------ main path --- */
+
 function labelOf(edge: WorkflowEdge): string {
   return `${edge.label ?? edge.labels?.map((l) => l.text).join(" ") ?? ""}`.toLowerCase();
 }
 
 function isRecoveryBranch(edge: WorkflowEdge): boolean {
-  const label = labelOf(edge);
-  return /\b(no|not|unopened|unengaged|didn'?t|non-open|non-click|false)\b/.test(label);
+  return /\b(no|not|unopened|unengaged|didn'?t|non-open|non-click|false)\b/.test(labelOf(edge));
 }
 
 function isPositiveBranch(edge: WorkflowEdge): boolean {
-  const label = labelOf(edge);
-  return /\b(yes|opened|clicked|engaged|true)\b/.test(label);
+  return /\b(yes|opened|clicked|engaged|true)\b/.test(labelOf(edge));
 }
 
 function findEntryNode(layoutable: WorkflowNode[], topology: Topology): WorkflowNode | undefined {
@@ -94,6 +110,7 @@ function findEntryNode(layoutable: WorkflowNode[], topology: Topology): Workflow
   );
 }
 
+/** How much a branch looks like the journey's spine rather than a side arm. */
 function childScore(edge: WorkflowEdge, topology: Topology): number {
   const target = topology.nodeById.get(edge.target.nodeId);
   const kind = target ? campaignKind(target) : "";
@@ -106,6 +123,7 @@ function childScore(edge: WorkflowEdge, topology: Topology): number {
   return score;
 }
 
+/** The trunk: entry, then the highest-scoring child at every step, until it repeats or ends. */
 function primaryPath(layoutable: WorkflowNode[], topology: Topology): string[] {
   const start = findEntryNode(layoutable, topology);
   if (!start) return [];
@@ -124,277 +142,303 @@ function primaryPath(layoutable: WorkflowNode[], topology: Topology): string[] {
   return path;
 }
 
-function assignCampaignLanes(layoutable: WorkflowNode[], topology: Topology): Map<string, number> {
-  const path = primaryPath(layoutable, topology);
-  const pathIndex = new Map(path.map((id, i) => [id, i]));
-  const lanes = new Map<string, number>();
-  const start = path[0] ?? findEntryNode(layoutable, topology)?.id;
-  if (!start) return lanes;
+/* ---------------------------------------------------------------- dagre graph --- */
 
-  const visit = (nodeId: string, lane: number) => {
-    const currentLane = lanes.get(nodeId);
-    if (currentLane != null) {
-      if (Math.abs(lane) < Math.abs(currentLane)) lanes.set(nodeId, lane);
-      return;
-    }
-    lanes.set(nodeId, lane);
-
-    const outgoing = [...(topology.outgoing.get(nodeId) ?? [])].filter((e) => topology.nodeById.has(e.target.nodeId));
-    if (outgoing.length === 0) return;
-
-    const nextMain = pathIndex.has(nodeId)
-      ? outgoing.find((e) => pathIndex.get(e.target.nodeId) === (pathIndex.get(nodeId) ?? -1) + 1)
-      : undefined;
-    const sideBranches = outgoing
-      .filter((e) => e !== nextMain)
-      .sort((a, b) => {
-        const recoveryDelta = Number(isRecoveryBranch(b)) - Number(isRecoveryBranch(a));
-        if (recoveryDelta !== 0) return recoveryDelta;
-        return childScore(a, topology) - childScore(b, topology);
-      });
-
-    if (nextMain) visit(nextMain.target.nodeId, lane);
-
-    const sideCounts = new Map<number, number>();
-    sideBranches.forEach((edge) => {
-      const side = isRecoveryBranch(edge) ? -1 : 1;
-      const offset = (sideCounts.get(side) ?? 0) + 1;
-      sideCounts.set(side, offset);
-      visit(edge.target.nodeId, lane + side * offset);
-    });
-  };
-
-  visit(start, 0);
-  for (const node of layoutable) {
-    if (!lanes.has(node.id)) lanes.set(node.id, 0);
-  }
-  return lanes;
-}
-
-function assignCampaignRows(layoutable: WorkflowNode[], topology: Topology): Map<string, number> {
-  const start = findEntryNode(layoutable, topology);
-  const rows = new Map<string, number>();
-  if (!start) return rows;
-
-  rows.set(start.id, 0);
-  const queue = [start.id];
-  const iterations = Math.max(1, layoutable.length * Math.max(1, topology.outgoing.size));
-  let guard = 0;
-
-  while (queue.length > 0 && guard < iterations) {
-    guard += 1;
-    const nodeId = queue.shift()!;
-    const row = rows.get(nodeId) ?? 0;
-    for (const edge of topology.outgoing.get(nodeId) ?? []) {
-      if (!topology.nodeById.has(edge.target.nodeId)) continue;
-      const nextRow = row + 1;
-      if ((rows.get(edge.target.nodeId) ?? -1) >= nextRow) continue;
-      rows.set(edge.target.nodeId, nextRow);
-      queue.push(edge.target.nodeId);
-    }
-  }
-
-  const sortedByElkY = [...layoutable].sort((a, b) => a.position.y - b.position.y);
-  for (const node of sortedByElkY) {
-    if (rows.has(node.id)) continue;
-    const incomingRows = (topology.incoming.get(node.id) ?? [])
-      .map((edge) => rows.get(edge.source.nodeId))
-      .filter((row): row is number => row != null);
-    rows.set(node.id, incomingRows.length ? Math.max(...incomingRows) + 1 : rows.size);
-  }
-
-  return rows;
-}
-
-function sourceOrderScore(edge: WorkflowEdge, topology: Topology): number {
-  const target = topology.nodeById.get(edge.target.nodeId);
-  const kind = target ? campaignKind(target) : "";
+/** Left-to-right intent for a node's outgoing edges. dagre seeds its first ordering from
+ *  insertion order, so this is what decides which side a fan-out lands on. */
+function fanOrder(edge: WorkflowEdge, isTrunk: boolean, topology: Topology): number {
   if (isRecoveryBranch(edge)) return -2;
-  if (kind === "followup") return -1;
-  if (isPositiveBranch(edge)) return 1;
-  return 0;
+  if (isTrunk) return 0;
+  if (isPositiveBranch(edge)) return 2;
+  const target = topology.nodeById.get(edge.target.nodeId);
+  return target && campaignKind(target) === "followup" ? -1 : 1;
 }
 
-const elkPortId = (nodeId: string, portId: string) => `${nodeId}::${portId}`;
-const PORT_SIDE_TO_ELK: Record<string, string> = { top: "NORTH", right: "EAST", bottom: "SOUTH", left: "WEST" };
+/** Edges in the order dagre should see them: breadth-first from the entry node, and within
+ *  each node ordered left arm -> trunk -> right arm. */
+function orderedEdges(layoutable: WorkflowNode[], topology: Topology, trunkEdges: Set<string>): WorkflowEdge[] {
+  const start = findEntryNode(layoutable, topology);
+  const out: WorkflowEdge[] = [];
+  const emitted = new Set<string>();
+  const visited = new Set<string>();
+  const queue = start ? [start.id] : [];
 
-function buildElkGraph(page: Page, layoutable: WorkflowNode[], topology: Topology, direction: Direction, spacing: LayoutSpacing): ElkNode {
-  const lanes = page.groups.filter((g) => LANE_KINDS.has(g.kind));
-  const laneOrder = new Map(lanes.map((g, i) => [g.id, g.order ?? i]));
-  const partitioningActive = lanes.length > 0;
-  const laneByNode = assignCampaignLanes(layoutable, topology);
-
-  const children = [...layoutable]
-    .sort((a, b) => (laneByNode.get(a.id) ?? 0) - (laneByNode.get(b.id) ?? 0))
-    .map((n) => {
-      const hasPorts = n.ports.length > 0;
-      return {
-        id: n.id,
-        width: n.size.w,
-        height: n.size.h,
-        ports: hasPorts
-          ? n.ports.map((p) => ({
-              id: elkPortId(n.id, p.id),
-              layoutOptions: { "elk.port.side": PORT_SIDE_TO_ELK[p.side] },
-            }))
-          : undefined,
-        layoutOptions: {
-          ...(hasPorts ? { "elk.portConstraints": "FIXED_SIDE" } : {}),
-          ...(partitioningActive ? { "elk.partitioning.partition": String(n.groupId ? (laneOrder.get(n.groupId) ?? 0) + 1 : 0) } : {}),
-        },
-      };
-    });
-
-  const layoutableIds = new Set(layoutable.map((n) => n.id));
-  const elkInputEdges = page.edges
-    .filter((e) => layoutableIds.has(e.source.nodeId) && layoutableIds.has(e.target.nodeId))
-    .sort((a, b) => sourceOrderScore(a, topology) - sourceOrderScore(b, topology))
-    .map((e) => {
-      const sourceNode = topology.nodeById.get(e.source.nodeId);
-      const targetNode = topology.nodeById.get(e.target.nodeId);
-      const sourcePort =
-        e.source.glue === "static" && e.source.portId && sourceNode?.ports.some((p) => p.id === e.source.portId)
-          ? elkPortId(e.source.nodeId, e.source.portId)
-          : undefined;
-      const targetPort =
-        e.target.glue === "static" && e.target.portId && targetNode?.ports.some((p) => p.id === e.target.portId)
-          ? elkPortId(e.target.nodeId, e.target.portId)
-          : undefined;
-      const labelText = e.label ?? e.labels?.[0]?.text;
-      return {
-        id: e.id,
-        sources: [sourcePort ?? e.source.nodeId],
-        targets: [targetPort ?? e.target.nodeId],
-        ...(labelText ? { labels: [{ text: labelText, width: labelText.length * 7.5 + 30, height: 28 }] } : {}),
-      };
-    });
-
-  return {
-    id: "root",
-    layoutOptions: {
-      "elk.algorithm": "layered",
-      "elk.direction": DIRECTION_MAP[direction],
-      "elk.edgeRouting": "ORTHOGONAL",
-      "elk.layered.unnecessaryBendpoints": "false",
-      "elk.layered.crossingMinimization.strategy": "LAYER_SWEEP",
-      "elk.layered.nodePlacement.strategy": "NETWORK_SIMPLEX",
-      "elk.layered.considerModelOrder.strategy": "NODES_AND_EDGES",
-      "elk.layered.mergeEdges": "false",
-      "elk.spacing.nodeNode": String(spacing.nodeNode),
-      "elk.layered.spacing.nodeNodeBetweenLayers": String(spacing.layer),
-      "elk.spacing.edgeNode": String(spacing.edgeNode),
-      "elk.spacing.edgeEdge": String(spacing.edgeEdge),
-      "elk.layered.spacing.edgeNodeBetweenLayers": String(spacing.edgeNode + 8),
-      "elk.layered.spacing.edgeEdgeBetweenLayers": String(spacing.edgeEdge),
-      "elk.edgeLabels.placement": "CENTER",
-      ...(partitioningActive ? { "elk.partitioning.activate": "true" } : {}),
-    },
-    children,
-    edges: elkInputEdges,
-  };
-}
-
-function optimizeCampaignReadability(page: Page, nodes: WorkflowNode[], edges: WorkflowEdge[], spacing: LayoutSpacing): WorkflowNode[] {
-  const layoutable = nodes.filter((n) => n.type !== "comment" && n.type !== "text");
-  const movable = layoutable.filter((n) => !n.pinned);
-  const topology = buildTopology({ ...page, nodes, edges });
-  const lanes = assignCampaignLanes(layoutable, topology);
-  const rows = assignCampaignRows(layoutable, topology);
-  if (lanes.size === 0) return nodes;
-
-  const laneValues = Array.from(lanes.values());
-  const minLane = Math.min(...laneValues);
-  const maxLane = Math.max(...laneValues);
-  if (minLane === 0 && maxLane === 0) return nodes;
-
-  const laneSpacing = spacing.lane;
-  const laneX = new Map<number, number>();
-  for (let lane = minLane; lane <= maxLane; lane++) {
-    laneX.set(lane, (lane - minLane) * laneSpacing + 80);
-  }
-
-  const byY = [...movable].sort((a, b) => a.position.y - b.position.y);
-  const occupied = new Map<number, WorkflowNode[]>();
-  const optimized = new Map<string, WorkflowNode>();
-  const maxNodeH = Math.max(...layoutable.map((node) => node.size.h), 80);
-  const rowSpacing = Math.max(150, maxNodeH + spacing.layer * 0.36);
-  for (const node of byY) {
-    const lane = lanes.get(node.id) ?? 0;
-    let x = (laneX.get(lane) ?? node.position.x) + Math.max(0, laneSpacing - node.size.w) / 2;
-    let y = 80 + (rows.get(node.id) ?? 0) * rowSpacing;
-    const prior = occupied.get(lane) ?? [];
-    for (const other of prior) {
-      if (y < other.position.y + other.size.h + spacing.layer * 0.42) {
-        y = other.position.y + other.size.h + spacing.layer * 0.42;
+  const emitFrom = (nodeId: string) => {
+    const edges = [...(topology.outgoing.get(nodeId) ?? [])]
+      .filter((e) => topology.nodeById.has(e.target.nodeId))
+      .sort((a, b) => fanOrder(a, trunkEdges.has(a.id), topology) - fanOrder(b, trunkEdges.has(b.id), topology));
+    for (const edge of edges) {
+      if (emitted.has(edge.id)) continue;
+      emitted.add(edge.id);
+      out.push(edge);
+      if (!visited.has(edge.target.nodeId)) {
+        visited.add(edge.target.nodeId);
+        queue.push(edge.target.nodeId);
       }
     }
-    const next = { ...node, position: { x: snap(x), y: snap(y) } };
-    optimized.set(node.id, next);
-    occupied.set(lane, [...prior, next]);
+  };
+
+  if (start) visited.add(start.id);
+  while (queue.length > 0) emitFrom(queue.shift()!);
+  // Anything unreachable from the entry node still has to be laid out.
+  for (const node of layoutable) emitFrom(node.id);
+  return out;
+}
+
+function edgeLabelBox(edge: WorkflowEdge): { width: number; height: number } | null {
+  const text = edge.label ?? edge.labels?.[0]?.text ?? "";
+  if (!text) return null;
+  return { width: Math.min(220, text.length * 7 + 16), height: 22 };
+}
+
+type Placement = Map<string, Pt>;
+type DagreResult = { placement: Placement; bends: Map<string, Pt[]> };
+
+function runDagre(
+  layoutable: WorkflowNode[],
+  topology: Topology,
+  direction: Direction,
+  spacing: LayoutSpacing,
+  trunkEdges: Set<string>,
+): DagreResult {
+  const graph = new dagre.graphlib.Graph({ multigraph: true });
+  graph.setGraph({
+    rankdir: direction,
+    nodesep: spacing.nodeSep,
+    ranksep: spacing.rankSep,
+    edgesep: spacing.edgeSep,
+    marginx: MARGIN,
+    marginy: MARGIN,
+    ranker: "network-simplex",
+  });
+  graph.setDefaultEdgeLabel(() => ({}));
+
+  for (const node of layoutable) {
+    graph.setNode(node.id, { width: node.size.w, height: node.size.h });
   }
 
-  return nodes.map((node) => optimized.get(node.id) ?? node);
-}
-
-function endpointFor(node: WorkflowNode, other: WorkflowNode, source: boolean): Pt {
-  const c = centerOf(node);
-  const oc = centerOf(other);
-  if (Math.abs(oc.x - c.x) > Math.abs(oc.y - c.y) * 1.25) {
-    return { x: oc.x > c.x ? node.position.x + node.size.w : node.position.x, y: c.y };
+  for (const edge of orderedEdges(layoutable, topology, trunkEdges)) {
+    const box = edgeLabelBox(edge);
+    const fansOut = (topology.outgoing.get(edge.source.nodeId)?.length ?? 0) > 1;
+    graph.setEdge(
+      edge.source.nodeId,
+      edge.target.nodeId,
+      {
+        // dagre keeps heavy edges short and, in its x-coordinate pass, prefers to align
+        // them. Heaviest on the trunk is "the trunk runs straight down"; heavy on the arms
+        // of a fan-out is "the arms sit on the row directly under their gate, side by
+        // side" — without it an arm whose own next step is far downstream slides down the
+        // page and stops reading as one of the choices at that gate.
+        weight: trunkEdges.has(edge.id) ? 16 : fansOut ? 8 : 2,
+        minlen: 1,
+        ...(box ? { ...box, labelpos: "c" as const, labeloffset: 8 } : {}),
+      },
+      edge.id,
+    );
   }
-  return { x: c.x, y: source ? node.position.y + node.size.h : node.position.y };
+
+  dagre.layout(graph);
+
+  const placement: Placement = new Map();
+  for (const node of layoutable) {
+    const laid = graph.node(node.id) as { x?: number; y?: number } | undefined;
+    if (!laid || laid.x == null || laid.y == null) continue;
+    placement.set(node.id, { x: laid.x, y: laid.y });
+  }
+
+  // dagre threads an edge that skips ranks through a chain of dummy nodes, and reserves
+  // the horizontal space for it. Those are the bend points that let a long connector pass
+  // between the boxes on the ranks it crosses instead of straight through them; the first
+  // and last are on the node borders, which the renderer computes itself.
+  const bends = new Map<string, Pt[]>();
+  for (const key of graph.edges()) {
+    if (!key.name) continue;
+    const laid = graph.edge(key) as { points?: Pt[] } | undefined;
+    const points = laid?.points;
+    if (!points || points.length <= 2) continue;
+    bends.set(key.name, points.slice(1, -1).map((p) => ({ x: p.x, y: p.y })));
+  }
+
+  return { placement, bends };
 }
 
-function routeEdge(source: WorkflowNode, target: WorkflowNode, spacing: LayoutSpacing): Pt[] {
-  const start = endpointFor(source, target, true);
-  const end = endpointFor(target, source, false);
-  const laneGap = Math.abs(centerOf(source).x - centerOf(target).x);
-  if (laneGap < 10) return [];
-  const midY = Math.max(start.y + spacing.layer * 0.42, (start.y + end.y) / 2);
-  return [
-    { x: start.x, y: midY },
-    { x: end.x, y: midY },
-  ];
+/* ----------------------------------------------------------------- trunk pass --- */
+
+const isVertical = (direction: Direction) => direction === "TB" || direction === "BT";
+
+/** Snap the main path onto one line and repack every rank outwards from it, so side
+ *  branches sit beside the trunk instead of nudging it off-centre. */
+function straightenTrunk(
+  placement: Placement,
+  layoutable: WorkflowNode[],
+  path: string[],
+  direction: Direction,
+  spacing: LayoutSpacing,
+): Placement {
+  const vertical = isVertical(direction);
+  const cross = (p: Pt) => (vertical ? p.x : p.y);
+  const along = (p: Pt) => (vertical ? p.y : p.x);
+  const sizeCross = (n: WorkflowNode) => (vertical ? n.size.w : n.size.h);
+
+  const onPath = path.filter((id) => placement.has(id));
+  if (onPath.length < 2) return placement;
+
+  const trunkCoords = onPath.map((id) => cross(placement.get(id)!)).sort((a, b) => a - b);
+  const trunkCoord = trunkCoords[Math.floor(trunkCoords.length / 2)];
+  const trunkSet = new Set(onPath);
+
+  const ranks = new Map<number, WorkflowNode[]>();
+  for (const node of layoutable) {
+    const pos = placement.get(node.id);
+    if (!pos) continue;
+    const key = Math.round(along(pos));
+    ranks.set(key, [...(ranks.get(key) ?? []), node]);
+  }
+
+  const next: Placement = new Map(placement);
+  for (const members of ranks.values()) {
+    const trunkMember = members.find((n) => trunkSet.has(n.id));
+    if (!trunkMember) continue;
+
+    const row = [...members].sort((a, b) => cross(placement.get(a.id)!) - cross(placement.get(b.id)!));
+    const coords = row.map((n) => cross(placement.get(n.id)!));
+    const pivot = row.indexOf(trunkMember);
+    coords[pivot] = trunkCoord;
+
+    for (let i = pivot - 1; i >= 0; i--) {
+      const ceiling = coords[i + 1] - sizeCross(row[i + 1]) / 2 - spacing.nodeSep - sizeCross(row[i]) / 2;
+      coords[i] = Math.min(coords[i], ceiling);
+    }
+    for (let i = pivot + 1; i < row.length; i++) {
+      const floor = coords[i - 1] + sizeCross(row[i - 1]) / 2 + spacing.nodeSep + sizeCross(row[i]) / 2;
+      coords[i] = Math.max(coords[i], floor);
+    }
+
+    row.forEach((node, i) => {
+      const pos = next.get(node.id)!;
+      next.set(node.id, vertical ? { x: coords[i], y: pos.y } : { x: pos.x, y: coords[i] });
+    });
+  }
+
+  return next;
 }
 
-function applyReadableRoutes(edges: WorkflowEdge[], nodes: WorkflowNode[], _elkEdgesById: Map<string, NonNullable<ElkNode["edges"]>[number]>, spacing: LayoutSpacing): WorkflowEdge[] {
-  const nodeById = new Map(nodes.map((n) => [n.id, n]));
-  return edges.map((edge) => {
-    const source = nodeById.get(edge.source.nodeId);
-    const target = nodeById.get(edge.target.nodeId);
-    if (!source || !target || edge.line.routing === "curved") return edge;
-    const semanticWaypoints = routeEdge(source, target, spacing);
-    const waypoints = semanticWaypoints;
+/** dagre centres; the document stores top-left. Also re-origins the drawing at the margin
+ *  so the trunk pass can't leave the diagram sitting at negative coordinates. */
+function applyPlacement(nodes: WorkflowNode[], placement: Placement): { nodes: WorkflowNode[]; shift: Pt } {
+  const placed = nodes.filter((n) => placement.has(n.id));
+  if (placed.length === 0) return { nodes, shift: { x: 0, y: 0 } };
+
+  const lefts = placed.map((n) => placement.get(n.id)!.x - n.size.w / 2);
+  const tops = placed.map((n) => placement.get(n.id)!.y - n.size.h / 2);
+  const shift = { x: MARGIN - Math.min(...lefts), y: MARGIN - Math.min(...tops) };
+
+  const positioned = nodes.map((node) => {
+    const center = placement.get(node.id);
+    if (!center) return node;
     return {
-      ...edge,
-      source: { ...edge.source, glue: "dynamic" as const },
-      target: { ...edge.target, glue: "dynamic" as const },
-      line: { ...edge.line, routing: "step" as const, waypoints },
+      ...node,
+      position: {
+        x: Math.round(center.x - node.size.w / 2 + shift.x),
+        y: Math.round(center.y - node.size.h / 2 + shift.y),
+      },
     };
   });
+  return { nodes: positioned, shift };
+}
+
+/* -------------------------------------------------------------- quality check --- */
+
+/** The side canvas/glue.ts will glue this end of the connector to. */
+function gluedSide(node: WorkflowNode, other: WorkflowNode): Side {
+  const a = boundsOf(node);
+  const b = boundsOf(other);
+  if (b.top >= a.bottom) return "bottom";
+  if (b.bottom <= a.top) return "top";
+  if (b.left >= a.right) return "right";
+  if (b.right <= a.left) return "left";
+  const ca = centerOf(node);
+  const cb = centerOf(other);
+  return Math.abs(cb.x - ca.x) > Math.abs(cb.y - ca.y) ? (cb.x > ca.x ? "right" : "left") : cb.y > ca.y ? "bottom" : "top";
+}
+
+function anchorOn(node: WorkflowNode, side: Side): Pt {
+  const c = centerOf(node);
+  const b = boundsOf(node);
+  if (side === "top") return { x: c.x, y: b.top };
+  if (side === "bottom") return { x: c.x, y: b.bottom };
+  if (side === "left") return { x: b.left, y: c.y };
+  return { x: b.right, y: c.y };
+}
+
+const SIDE_VECTOR: Record<Side, Pt> = {
+  top: { x: 0, y: -1 },
+  bottom: { x: 0, y: 1 },
+  left: { x: -1, y: 0 },
+  right: { x: 1, y: 0 },
+};
+
+/** Squares off a run of points the way edges/WorkflowEdge.tsx does before drawing it. */
+function orthogonalize(points: Pt[]): Pt[] {
+  if (points.length <= 2) return points;
+  const out: Pt[] = [points[0]];
+  for (let i = 1; i < points.length; i++) {
+    const a = out[out.length - 1];
+    const b = points[i];
+    if (Math.abs(a.x - b.x) < 0.5 || Math.abs(a.y - b.y) < 0.5) {
+      out.push(b);
+      continue;
+    }
+    out.push({ x: a.x, y: b.y }, b);
+  }
+  return out;
+}
+
+/** The polyline edges/WorkflowEdge.tsx will draw for this edge. */
+function renderedPolyline(source: WorkflowNode, target: WorkflowNode, waypoints: Pt[] = []): Pt[] {
+  const sourceSide = gluedSide(source, target);
+  const targetSide = gluedSide(target, source);
+  const start = anchorOn(source, sourceSide);
+  const end = anchorOn(target, targetSide);
+  const sv = SIDE_VECTOR[sourceSide];
+  const tv = SIDE_VECTOR[targetSide];
+  const startStub = { x: start.x + sv.x * EDGE_STUB, y: start.y + sv.y * EDGE_STUB };
+  const endStub = { x: end.x + tv.x * EDGE_STUB, y: end.y + tv.y * EDGE_STUB };
+
+  if (waypoints.length > 0) return orthogonalize([start, startStub, ...waypoints, endStub, end]);
+
+  const bridge: Pt[] = [];
+  const aligned = Math.abs(startStub.x - endStub.x) < 0.5 || Math.abs(startStub.y - endStub.y) < 0.5;
+  if (!aligned) {
+    const sourceVertical = sv.y !== 0;
+    const targetVertical = tv.y !== 0;
+    if (sourceVertical && targetVertical) {
+      const midY = (startStub.y + endStub.y) / 2;
+      bridge.push({ x: startStub.x, y: midY }, { x: endStub.x, y: midY });
+    } else if (!sourceVertical && !targetVertical) {
+      const midX = (startStub.x + endStub.x) / 2;
+      bridge.push({ x: midX, y: startStub.y }, { x: midX, y: endStub.y });
+    } else if (sourceVertical) {
+      bridge.push({ x: startStub.x, y: endStub.y });
+    } else {
+      bridge.push({ x: endStub.x, y: startStub.y });
+    }
+  }
+  return [start, startStub, ...bridge, endStub, end];
 }
 
 function segmentIntersectsRect(a: Pt, b: Pt, rect: ReturnType<typeof boundsOf>): boolean {
   if (Math.abs(a.x - b.x) < 0.5) {
-    const x = a.x;
     const top = Math.min(a.y, b.y);
     const bottom = Math.max(a.y, b.y);
-    return x > rect.left && x < rect.right && bottom > rect.top && top < rect.bottom;
+    return a.x > rect.left && a.x < rect.right && bottom > rect.top && top < rect.bottom;
   }
   if (Math.abs(a.y - b.y) < 0.5) {
-    const y = a.y;
     const left = Math.min(a.x, b.x);
     const right = Math.max(a.x, b.x);
-    return y > rect.top && y < rect.bottom && right > rect.left && left < rect.right;
+    return a.y > rect.top && a.y < rect.bottom && right > rect.left && left < rect.right;
   }
   return false;
-}
-
-function routePoints(edge: WorkflowEdge, nodes: Map<string, WorkflowNode>): Pt[] {
-  const source = nodes.get(edge.source.nodeId);
-  const target = nodes.get(edge.target.nodeId);
-  if (!source || !target) return [];
-  return [endpointFor(source, target, true), ...edge.line.waypoints, endpointFor(target, source, false)];
 }
 
 function hasQualityIssues(nodes: WorkflowNode[], edges: WorkflowEdge[]): boolean {
@@ -407,28 +451,60 @@ function hasQualityIssues(nodes: WorkflowNode[], edges: WorkflowEdge[]): boolean
 
   const nodeById = new Map(nodes.map((n) => [n.id, n]));
   for (const edge of edges) {
-    const points = routePoints(edge, nodeById);
+    const source = nodeById.get(edge.source.nodeId);
+    const target = nodeById.get(edge.target.nodeId);
+    if (!source || !target) continue;
+    const points = renderedPolyline(source, target, edge.line.waypoints);
     for (let i = 0; i < points.length - 1; i++) {
       for (const node of layoutable) {
         if (node.id === edge.source.nodeId || node.id === edge.target.nodeId) continue;
-        if (segmentIntersectsRect(points[i], points[i + 1], boundsOf(node, 10))) return true;
+        if (segmentIntersectsRect(points[i], points[i + 1], boundsOf(node, 8))) return true;
       }
     }
   }
   return false;
 }
 
-function spacingFor(page: Page, attempt: number): LayoutSpacing {
-  const nodeCount = page.nodes.length;
-  const large = nodeCount > 150;
-  const multiplier = 1 + attempt * 0.22 + (large ? 0.25 : 0);
-  return {
-    nodeNode: Math.round(72 * multiplier),
-    layer: Math.round(120 * multiplier),
-    edgeNode: Math.round(38 * multiplier),
-    edgeEdge: Math.round(44 * multiplier),
-    lane: Math.round(240 * multiplier),
-  };
+/* --------------------------------------------------------------------- output --- */
+
+/**
+ * An edge between neighbouring ranks stores no bend points at all: the renderer's own
+ * stub-bridge-stub route through the empty band between the two ranks is already the right
+ * line, and a stored point would only go stale as soon as a node moved. An edge that skips
+ * ranks does store dagre's bend points, because the straight route would cut through
+ * whatever sits on the ranks in between.
+ */
+function routeEdges(
+  edges: WorkflowEdge[],
+  bends: Map<string, Pt[]>,
+  rankIndex: Map<string, number>,
+  shift: Pt,
+): WorkflowEdge[] {
+  return edges.map((edge) => {
+    if (edge.line.routing === "curved") return edge;
+    const from = rankIndex.get(edge.source.nodeId);
+    const to = rankIndex.get(edge.target.nodeId);
+    const skipsRanks = from != null && to != null && Math.abs(to - from) > 1;
+    const waypoints = skipsRanks
+      ? (bends.get(edge.id) ?? []).map((p) => ({ x: Math.round(p.x + shift.x), y: Math.round(p.y + shift.y) }))
+      : [];
+    return {
+      ...edge,
+      source: { ...edge.source, glue: "dynamic" as const },
+      target: { ...edge.target, glue: "dynamic" as const },
+      line: { ...edge.line, routing: "step" as const, waypoints },
+    };
+  });
+}
+
+/** Which layer of the drawing a node landed on, counting from the entry rank. */
+function rankIndexOf(placement: Placement, direction: Direction): Map<string, number> {
+  const along = (p: Pt) => (isVertical(direction) ? p.y : p.x);
+  const coords = [...new Set([...placement.values()].map((p) => Math.round(along(p))))].sort((a, b) => a - b);
+  const order = new Map(coords.map((c, i) => [c, i]));
+  const index = new Map<string, number>();
+  for (const [id, point] of placement) index.set(id, order.get(Math.round(along(point))) ?? 0);
+  return index;
 }
 
 function resizeGroups(page: Page, nodes: WorkflowNode[]): Page["groups"] {
@@ -445,37 +521,51 @@ function resizeGroups(page: Page, nodes: WorkflowNode[]): Page["groups"] {
     return {
       ...g,
       bounds: {
-        x: snap(minX - PAD),
-        y: snap(minY - PAD - HEADER),
-        w: snap(maxX - minX + PAD * 2),
-        h: snap(maxY - minY + PAD * 2 + HEADER),
+        x: Math.round(minX - PAD),
+        y: Math.round(minY - PAD - HEADER),
+        w: Math.round(maxX - minX + PAD * 2),
+        h: Math.round(maxY - minY + PAD * 2 + HEADER),
       },
     };
   });
+}
+
+function spacingFor(page: Page, attempt: number): LayoutSpacing {
+  const dense = page.nodes.length > 80;
+  const multiplier = 1 + attempt * 0.28 + (dense ? 0.2 : 0);
+  return {
+    nodeSep: Math.round(72 * multiplier),
+    rankSep: Math.round(104 * multiplier),
+    edgeSep: Math.round(26 * multiplier),
+  };
 }
 
 export async function autoLayoutPage(page: Page, direction: Direction): Promise<Page> {
   const layoutable = page.nodes.filter((n) => n.type !== "comment" && n.type !== "text" && !n.pinned);
   if (layoutable.length === 0) return page;
 
-  let best = page;
+  const topology = buildTopology(page);
+  const path = primaryPath(layoutable, topology);
+  const trunkEdges = new Set(
+    page.edges
+      .filter((e) => {
+        const from = path.indexOf(e.source.nodeId);
+        return from >= 0 && path[from + 1] === e.target.nodeId;
+      })
+      .map((e) => e.id),
+  );
+
+  let best: Page = page;
+
   for (let attempt = 0; attempt < 4; attempt++) {
     const spacing = spacingFor(page, attempt);
-    const topology = buildTopology(page);
-    const graph = buildElkGraph(page, layoutable, topology, direction, spacing);
-    const result = await elk.layout(graph);
-    const posById = new Map((result.children ?? []).map((c) => [c.id, { x: c.x ?? 0, y: c.y ?? 0 }]));
-
-    const elkNodes = page.nodes.map((node) => {
-      if (node.pinned) return node;
-      const pos = posById.get(node.id);
-      return pos ? { ...node, position: { x: pos.x, y: pos.y } } : node;
-    });
-    const optimizedNodes = optimizeCampaignReadability(page, elkNodes, page.edges, spacing);
-    const elkEdgeById = new Map((result.edges ?? []).map((edge) => [edge.id, edge]));
-    const optimizedEdges = applyReadableRoutes(page.edges, optimizedNodes, elkEdgeById, spacing);
-    best = { ...page, nodes: optimizedNodes, edges: optimizedEdges, groups: resizeGroups(page, optimizedNodes) };
-    if (!hasQualityIssues(optimizedNodes, optimizedEdges)) return best;
+    const { placement, bends } = runDagre(layoutable, topology, direction, spacing, trunkEdges);
+    if (placement.size === 0) return page;
+    const straightened = straightenTrunk(placement, layoutable, path, direction, spacing);
+    const { nodes, shift } = applyPlacement(page.nodes, straightened);
+    const edges = routeEdges(page.edges, bends, rankIndexOf(placement, direction), shift);
+    best = { ...page, nodes, edges, groups: resizeGroups(page, nodes) };
+    if (!hasQualityIssues(nodes, edges)) return best;
   }
 
   return best;

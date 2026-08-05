@@ -12,7 +12,7 @@ import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 import Typography from "@mui/material/Typography";
 import { tokens } from "../../../theme/tokens";
-import { dataColor } from "./dashboardKit";
+import { radius, dataColor } from "./dashboardKit";
 import type { FacetValue, ReportingFilterKey, ReportingFilters, ReportingInsights } from "../../types";
 
 const TIME_WINDOWS = [3, 6, 12, 24];
@@ -73,8 +73,8 @@ export function FilterBar({
         display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap",
         background: tokens.color.surface,
         border: `1px solid ${tokens.color.outline}`,
-        borderRadius: tokens.radius.lg,
-        px: 1.5, py: 1.25, mb: 2.5,
+        borderRadius: radius.md,
+        px: 1.5, py: 1.25, mb: 2,
         boxShadow: "0 1px 2px rgba(16,24,40,0.04)",
       }}
     >
@@ -132,7 +132,7 @@ export function FilterBar({
             sx={{
               display: "inline-flex", alignItems: "center", gap: 0.75,
               background: dataColor.info.soft, color: dataColor.info.ink,
-              borderRadius: tokens.radius.pill, px: 1.25, py: 0.5,
+              borderRadius: radius.sm, px: 1.25, py: 0.5,
               fontSize: 15, fontWeight: 700,
               opacity: busy ? 0.55 : 1,
               transition: "opacity 160ms ease",

@@ -7,8 +7,8 @@
  */
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import { motion, tokens } from "../../../theme/tokens";
-import { CardTitle, DashCard, dataColor, useCountUp } from "./dashboardKit";
+import { motion } from "../../../theme/tokens";
+import { radius, CardTitle, DashCard, dataColor, useCountUp } from "./dashboardKit";
 import type { FunnelStep } from "../../types";
 
 const STEP_TINT = [0.16, 0.32, 0.5, 0.72, 1]; // pale at the top of the funnel, solid at the outcome
@@ -26,12 +26,12 @@ function StepRow({ step, index, total }: { step: FunnelStep; index: number; tota
             {Math.round(count).toLocaleString()}
           </Typography>
         </Box>
-        <Box sx={{ height: 26, borderRadius: tokens.radius.sm, background: "#F2F4F7", overflow: "hidden" }}>
+        <Box sx={{ height: 26, borderRadius: radius.sm, background: "#F2F4F7", overflow: "hidden" }}>
           <Box
             sx={{
               width: `${Math.max(step.pct_of_audience, 1.5)}%`,
               height: "100%",
-              borderRadius: tokens.radius.sm,
+              borderRadius: radius.sm,
               background: isOutcome
                 ? dataColor.positive.line
                 : `color-mix(in srgb, ${dataColor.info.line} ${Math.round(tint * 100)}%, white)`,

@@ -11,7 +11,7 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { ComposableMap, Geographies, Geography } from "react-simple-maps";
 import { motion, tokens } from "../../../theme/tokens";
-import { CardTitle, DashCard, dataColor } from "./dashboardKit";
+import { radius, CardTitle, DashCard, dataColor } from "./dashboardKit";
 import type { GeoRow } from "../../types";
 
 const US_STATES_GEO_URL = "https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json";
@@ -49,7 +49,7 @@ export function GeoCard({
               {readout.hcps.toLocaleString()} HCPs · {readout.open_pct}% open · {readout.ctr_pct}% click
             </Typography>
             <Box sx={{
-              fontSize: 15, fontWeight: 700, borderRadius: tokens.radius.pill, px: 0.75,
+              fontSize: 15, fontWeight: 700, borderRadius: radius.sm, px: 0.75,
               color: readout.index >= 100 ? dataColor.positive.ink : dataColor.warning.ink,
               background: readout.index >= 100 ? dataColor.positive.soft : dataColor.warning.soft,
             }}>
