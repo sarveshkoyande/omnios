@@ -12,6 +12,8 @@
     "@emotion/react": "^11.13.0",
     "@emotion/styled": "^11.13.0",
     "@mui/material": "^9.0.0",
+    "@mui/x-charts": "^9.10.1",
+    "@mui/x-data-grid": "^9.10.1",
     "@splinetool/react-spline": "^4.1.0",
     "@splinetool/runtime": "^1.12.98",
     "@xyflow/react": "^12.11.2",

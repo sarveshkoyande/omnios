@@ -272,12 +272,46 @@ export async function postChat(projectId: string, message: string): Promise<Chat
   return res.json();
 }
 
+/** A column of a DataBlock table. `type` drives alignment + whether it can be charted. */
+export interface DataBlockColumn {
+  key: string;
+  label: string;
+  type: "text" | "number";
+}
+
+/**
+ * A renderable result the agent pulled from the HCP 360 panel (strategy/data_blocks.py).
+ *
+ * It carries the query that produced it — `group_by` + `filters` — so the UI can build the
+ * next, narrower query without knowing the panel's schema: post these filters plus the
+ * clicked row's dimension values to /api/hcp360/cross-tab, grouped by one of `drill_dims`.
+ */
+export interface DataBlock {
+  id: string;
+  kind: "breakdown" | "roster" | "stat";
+  title: string;
+  source?: string;
+  columns?: DataBlockColumn[];
+  rows?: Record<string, string | number | null>[];
+  group_by?: string[];
+  filters?: Record<string, string>;
+  /** Dimensions still free to group by — the drill-down menu, computed server-side. */
+  drill_dims?: string[];
+  /** Roster blocks only: the column holding the NPI, for the per-HCP 360 drill-down. */
+  row_key?: string;
+  total?: number;
+  /** `stat` blocks only. */
+  label?: string;
+  value?: number;
+}
+
 export interface TabChatMessage {
   role: "user" | "assistant";
   agent_id: string | null;
   text: string;
   kind: string;
   ts: string;
+  data_blocks?: DataBlock[] | null;
 }
 
 export interface TabChatAskResponse {
@@ -286,6 +320,37 @@ export interface TabChatAskResponse {
   flow?: CampaignFlow | null;
   /** Orchestration agent: it changed the activity board / sent a nudge — refetch. */
   changed?: boolean;
+  /** Reporting agent: the panel results behind the reply, rendered as tables + charts. */
+  data_blocks?: DataBlock[] | null;
+}
+
+export interface CrossTabResult {
+  group_by: string[];
+  filters: Record<string, string>;
+  rows: Record<string, string | number | null>[];
+  /** The same filtered population without the grouping — the denominator for each row. */
+  total: number;
+}
+
+/** Drill-down query behind a DataBlock row. Dimensions/filters are allow-listed server-side. */
+export async function fetchHcpCrossTab(
+  groupBy: string[],
+  filters: Record<string, string>,
+): Promise<CrossTabResult> {
+  const res = await fetch("/api/hcp360/cross-tab", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ group_by: groupBy, filters }),
+  });
+  if (!res.ok) throw new Error(`POST /api/hcp360/cross-tab -> ${res.status}`);
+  return res.json();
+}
+
+/** One HCP's full 360 record — the roster block's per-row drill-down. */
+export async function fetchHcpDetail(npi: number): Promise<Record<string, unknown>> {
+  const res = await fetch(`/api/hcp360/hcps/${npi}`);
+  if (!res.ok) throw new Error(`GET /api/hcp360/hcps/${npi} -> ${res.status}`);
+  return res.json();
 }
 
 export async function getTabChat(projectId: string, stageId: string): Promise<TabChatMessage[]> {

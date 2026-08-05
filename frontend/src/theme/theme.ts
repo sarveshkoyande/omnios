@@ -1,5 +1,5 @@
 import { createTheme } from "@mui/material/styles";
-import { tokens, focusRing, motion, hoverOnly } from "./tokens";
+import { tokens, focusRing, motion, motionMs, hoverOnly } from "./tokens";
 
 const SEMANTIC: Record<string, { solid: string; soft: string; ink: string }> = {
   success: { solid: tokens.color.success, soft: tokens.color.successSoft, ink: tokens.color.successInk },
@@ -42,6 +42,33 @@ export const theme = createTheme({
     },
   },
   shape: { borderRadius: tokens.radius.sm },
+  /**
+   * Every MUI transition component (Dialog, Drawer, Menu, Tooltip, Collapse, Fade, Grow,
+   * Snackbar) reads its curve and timing from here. Without this block they all ran on
+   * MUI's stock `cubic-bezier(0.4, 0, 0.2, 1)` at 225/195ms while everything hand-written
+   * in the app used the motion tokens — two motion languages in one product.
+   *
+   * `easeIn` is mapped to the ease-OUT curve on purpose. MUI uses `easeIn` for things
+   * leaving the screen, but a curve that starts slow makes a dismissal feel stuck; there
+   * is no ease-in anywhere in this app by design (see tokens.ts).
+   */
+  transitions: {
+    easing: {
+      easeInOut: motion.easeInOut,
+      easeOut: motion.easeOut,
+      easeIn: motion.easeOut,
+      sharp: motion.easeOut,
+    },
+    duration: {
+      shortest: motionMs.press,
+      shorter: motionMs.hover,
+      short: 200,
+      standard: motionMs.enter,
+      complex: motionMs.panel,
+      enteringScreen: motionMs.enter,
+      leavingScreen: motionMs.exit,
+    },
+  },
   components: {
     MuiCssBaseline: {
       styleOverrides: {
@@ -238,10 +265,51 @@ export const theme = createTheme({
       },
     },
     MuiDrawer: {
-      styleOverrides: { paper: { borderRadius: 0, backgroundColor: tokens.color.surface, border: `1px solid ${tokens.color.outline}` } },
+      // A drawer travels its own full width, so it gets the long-throw curve and a bit more
+      // time than a dialog; leaving is still the shorter of the two.
+      defaultProps: { transitionDuration: { enter: motionMs.panel, exit: motionMs.exit } },
+      styleOverrides: {
+        paper: {
+          borderRadius: 0,
+          backgroundColor: tokens.color.surface,
+          border: `1px solid ${tokens.color.outline}`,
+          transitionTimingFunction: `${motion.easeDrawer} !important`,
+        },
+      },
     },
     MuiDialog: {
+      // Centred, not anchored to a trigger, so MUI's Grow from scale(0.75) at the centre is
+      // the right origin -- only the timing needed pulling onto the token scale.
+      defaultProps: { transitionDuration: { enter: motionMs.enter, exit: motionMs.exit } },
       styleOverrides: { paper: { borderRadius: tokens.radius.lg, backgroundColor: tokens.color.surface, boxShadow: `0 8px 24px rgba(16,24,40,0.18)`, border: "none" } },
+    },
+    MuiTooltip: {
+      /**
+       * The delay exists so a cursor crossing a toolbar does not fire tooltips it never asked
+       * for. Once one IS open the user has declared intent, so the next one opens instantly
+       * (`enterNextDelay: 0`) -- the whole toolbar then feels immediate without losing the
+       * accidental-hover protection.
+       */
+      defaultProps: {
+        enterDelay: 400,
+        enterNextDelay: 0,
+        leaveDelay: 0,
+        disableInteractive: true,
+        slotProps: { transition: { timeout: { enter: 150, exit: 100 } } },
+      },
+      styleOverrides: {
+        tooltip: {
+          // 15px floor applies here too; MUI's default 11px is unreadable and off-system.
+          fontSize: tokens.fontSize.xs,
+          fontWeight: 600,
+          lineHeight: 1.4,
+          padding: "6px 10px",
+          borderRadius: tokens.radius.sm,
+          backgroundColor: tokens.color.ink,
+          maxWidth: 320,
+        },
+        arrow: { color: tokens.color.ink },
+      },
     },
     MuiBackdrop: { styleOverrides: { root: { backgroundColor: "rgba(16,24,40,0.5)" } } },
     MuiLink: { styleOverrides: { root: { color: tokens.color.primary, "&:focus-visible": focusRing } } },

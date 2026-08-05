@@ -107,12 +107,29 @@ export const motion = {
   easeOut: "cubic-bezier(0.23, 1, 0.32, 1)",
   // Movement between two on-screen positions.
   easeInOut: "cubic-bezier(0.77, 0, 0.175, 1)",
+  // Sheets and drawers that travel a long distance (Ionic's curve).
+  easeDrawer: "cubic-bezier(0.32, 0.72, 0, 1)",
   duration: {
     press: "120ms",
     hover: "160ms",
     enter: "220ms",
     panel: "260ms",
+    /**
+     * Exits are deliberately shorter than enters. On the way in the user is being shown
+     * something and the motion carries meaning; on the way out they have already decided
+     * and are waiting on the app, so anything slower than this reads as lag.
+     */
+    exit: "150ms",
   },
+} as const;
+
+/** Same numbers as `motion.duration`, unitless, for APIs that want ms as a number (MUI). */
+export const motionMs = {
+  press: 120,
+  hover: 160,
+  enter: 220,
+  panel: 260,
+  exit: 150,
 } as const;
 
 /**

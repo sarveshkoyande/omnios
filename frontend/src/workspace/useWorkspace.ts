@@ -23,6 +23,7 @@ import {
   setStudioAutoAssume,
   uploadBriefFile,
 } from "../api";
+import type { DataBlock } from "../api";
 import type { AgentEntry } from "./AgentTeamPanel";
 import type { Inferred } from "./BriefCard";
 import type { BriefExtractItem, ClarifyPayload, PersonaApplyChange, PersonaOffer, PersonaReview, PlanResult, ProjectSummary, RunEvent, Slots, StageAgentId } from "./types";
@@ -85,6 +86,9 @@ export interface ChatItem {
    * continued past (so the card can show a resolved/quiet state instead of disappearing). */
   continueSectionTitle?: string;
   continueResolved?: boolean;
+  /** Panel results behind an agent answer, rendered as sortable tables + charts with
+   * drill-down instead of a markdown table in the prose (strategy/data_blocks.py). */
+  dataBlocks?: DataBlock[] | null;
 }
 
 let seq = 0;
@@ -164,6 +168,9 @@ export function useWorkspace() {
           kind: m.role === "user" ? "user" : "agent",
           agentId: m.agent_id ?? undefined,
           text: m.text,
+          // Persisted with the message, so reopening the tab shows the same tables and
+          // charts the live answer did rather than degrading to prose.
+          dataBlocks: m.data_blocks ?? null,
         }));
         const artifactExists =
           stageId === "orchestration"
@@ -572,6 +579,28 @@ export function useWorkspace() {
     const proj = await getProject(id);
     setProjectId(proj.id);
     setProjectName(proj.name);
+    // Rehydrate the studio run from the persisted state. Without this the sections the
+    // backend has already written are invisible on reopen: `studio` was reset to
+    // STUDIO_IDLE above and then only ever refilled by the live SSE stream, so a finished
+    // 12-section plan came back as "0/11 completed" with an empty document, and the only
+    // way to see your own plan again was to re-run it.
+    const savedStudio = proj.state.studio;
+    const savedSections = savedStudio?.sections ?? [];
+    if (savedSections.length) {
+      setStudio({
+        ...STUDIO_IDLE,
+        sections: savedSections,
+        records: savedStudio?.records ?? [],
+        // The run is not streaming right now, and a reopened plan must not look live:
+        // `active` stays false so the pacer and the "Building your plan" header stay off.
+        // `done` is true only when nothing is still waiting on the user.
+        done: !savedStudio?.await_ask,
+        total: savedSections.length,
+      });
+      // Section titles feed the assembly canvas' scroll-to-section jumps; rebuild the
+      // lookup so those still resolve after a reload.
+      sectionTitleRef.current = Object.fromEntries(savedSections.map((s) => [s.section_id, s.title]));
+    }
     setSlots(proj.state.slots);
     setPlanHtml(proj.plan_html);
     setPlanMarkdown(proj.plan_markdown);
@@ -857,7 +886,10 @@ export function useWorkspace() {
         const data = await postTabChat(projectId as string, stageId, text);
         setTabChatItems((prev) => ({
           ...prev,
-          [stageId]: [...(prev[stageId] || []), { id: nextId(), kind: "agent", agentId: stageId, text: data.reply }],
+          [stageId]: [...(prev[stageId] || []), {
+            id: nextId(), kind: "agent", agentId: stageId, text: data.reply,
+            dataBlocks: data.data_blocks ?? null,
+          }],
         }));
         if (data.document) {
           const parsed = parseDocument(data.document);

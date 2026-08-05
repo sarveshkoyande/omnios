@@ -2535,6 +2535,30 @@ def api_hcp360_segment(group_by: str):
         raise HTTPException(400, str(e))
 
 
+class HcpCrossTabRequest(BaseModel):
+    group_by: list[str] = []
+    filters: dict[str, str] = {}
+
+
+@app.post("/api/hcp360/cross-tab")
+def api_hcp360_cross_tab(req: HcpCrossTabRequest):
+    """Cross-tabulate panel counts across up to two allow-listed dimensions, with any
+    combination of allow-listed equality filters.
+
+    This is the drill-down behind the Reporting agent's answer tables (strategy/data_blocks.py):
+    the frontend posts the block's own filters plus the clicked row's dimension values, and
+    picks the next dimension to group by. `total` is the same filtered population without
+    the grouping, so a partial breakdown still shows what it's a share of.
+    """
+    try:
+        rows = hcp_360.cross_tab(group_by=req.group_by, filters=req.filters)
+        total_rows = hcp_360.cross_tab(filters=req.filters) if req.group_by else rows
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    total = int(total_rows[0].get("count") or 0) if total_rows else 0
+    return {"group_by": req.group_by, "filters": req.filters, "rows": rows, "total": total}
+
+
 class HcpAskRequest(BaseModel):
     question: str
 

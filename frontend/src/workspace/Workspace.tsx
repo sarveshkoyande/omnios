@@ -27,13 +27,13 @@ import { SimplePlanSummary } from "./SimplePlanSummary";
 import { StageOperations } from "./stages/StageOperations";
 import { StageOrchestration } from "./stages/StageOrchestration";
 import { StageReporting } from "./stages/StageReporting";
-import { AssemblyCanvas } from "./studio/AssemblyCanvas";
 import type { StudioState } from "./studio/studioTypes";
 import { WorkflowStepper } from "./stages/WorkflowStepper";
 import { useWorkspace } from "./useWorkspace";
 import { STAGE_AGENTS, agentForStage, type StageAgentId } from "./types";
 import { ConsolePanel } from "../components/ConsolePanel";
 import { tokens, indigoTint, light } from "../theme/tokens";
+import { enterRise, enterWith } from "../theme/motionPresets";
 import { stageTheme, stageVars, accent } from "../theme/stageTheme";
 
 // All four stages are freely accessible at any time — there is no unlock gating.
@@ -386,12 +386,15 @@ export function Workspace({
       <Box component="aside" sx={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 380, minHeight: 0, backgroundColor: tokens.color.canvas }}>
         {ws.projectId && (
           <>
-            <Box sx={{ flex: 1, overflowY: "auto", p: 3, pt: 3 }}>
+            {/* Keyed on the stage so switching tabs replays the entrance: the four stages are
+                different documents, and swapping one for another on a single frame read as a
+                glitch. The stage's own content already unmounts on switch, so the key costs
+                nothing extra. */}
+            <Box key={ws.stage} sx={{ flex: 1, overflowY: "auto", p: 3, pt: 3, animation: enterWith(enterRise) }}>
               {ws.stage === 1 && (ws.studio.active || ws.studio.sections.length > 0 || ws.studio.done) && (
                 <>
-                  {/* Sequential Plan Studio: the canvas replaces the rail during a build.
-                      Only the active section exists; the rest are folded or a whisper. */}
-                  {!ws.studio.done && <AssemblyCanvas studio={ws.studio} onSkip={ws.skipStudioPacing} />}
+                  {/* Sequential Plan Studio: no live section canvas during a build -- the left
+                      rail carries build progress, and the plan itself renders once done. */}
                   {ws.studio.records.length > 0 && !ws.studio.done && (
                     <ConsolePanel id="decision-trail-anchor" title="Decision trail" icon="psychology" collapsible sx={{ mt: 3 }}>
                       <DecisionTrail records={ws.studio.records} dense onRevise={ws.reviseStudioDecision} />

@@ -4,6 +4,17 @@ import { styled } from "@mui/material/styles";
 // this import inside that callback.
 import { accent as stageAccent } from "../theme/stageTheme";
 import { tokens, motion } from "../theme/tokens";
+import { enterFromLeft, enterFromRight, enterWith } from "../theme/motionPresets";
+
+/**
+ * Message bubbles enter from the side they are aligned to -- agent from the left, user from
+ * the right -- so the transcript has a consistent spatial grammar rather than everything
+ * fading in from nowhere. It is a one-shot entrance on mount: a bubble whose text is still
+ * streaming re-renders in place and must NOT restart the animation, which is why the offset
+ * is on the mount keyframe and not on a transition of the text container.
+ */
+const bubbleEnterLeft = enterWith(enterFromLeft);
+const bubbleEnterRight = enterWith(enterFromRight);
 
 /** AgentBubble — a flat white surface with the stage agent's accent bar down its left edge. */
 export const AgentBubble = styled("div")(({ theme }) => ({
@@ -11,6 +22,7 @@ export const AgentBubble = styled("div")(({ theme }) => ({
   width: "fit-content",
   maxWidth: "90%",
   minWidth: 0,
+  animation: bubbleEnterLeft,
   padding: theme.spacing(1, 1.5),
   borderRadius: tokens.radius.md,
   // See TurnBubble: the chat pane is white, so bubbles take the canvas grey.
@@ -30,6 +42,7 @@ export const UserBubble = styled("div")(({ theme }) => ({
   width: "fit-content",
   maxWidth: "90%",
   marginLeft: "auto",
+  animation: bubbleEnterRight,
   padding: theme.spacing(1, 1.5),
   borderTopRightRadius: 4,
   borderRadius: tokens.radius.md,
@@ -45,6 +58,7 @@ export const UserBubble = styled("div")(({ theme }) => ({
 /** NarrationLine — quiet dashed aside for scene-setting text. */
 export const NarrationLine = styled("div")(({ theme }) => ({
   maxWidth: 640,
+  animation: bubbleEnterLeft,
   padding: theme.spacing(2, 0),
   borderTop: `1px dashed ${tokens.color.outline}`,
   borderBottom: `1px dashed ${tokens.color.outline}`,
@@ -59,6 +73,7 @@ export const TurnBubble = styled("div")<{ accent: string }>(({ theme, accent }) 
   width: "fit-content",
   maxWidth: "90%",
   minWidth: 0,
+  animation: bubbleEnterLeft,
   padding: theme.spacing(1, 1.5),
   borderRadius: tokens.radius.md,
   // Canvas grey, not white: the chat pane itself is white now, so a white bubble would be

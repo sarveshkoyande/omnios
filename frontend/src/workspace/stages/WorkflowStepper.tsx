@@ -1,5 +1,5 @@
 import { styled } from "@mui/material/styles";
-import { tokens, focusRingOnBrand } from "../../theme/tokens";
+import { tokens, focusRingOnBrand, motion, hoverOnly } from "../../theme/tokens";
 import { accent } from "../../theme/stageTheme";
 
 export const WORKFLOW_STAGES = [
@@ -43,9 +43,22 @@ const Tab = styled("button")<{ active: boolean }>(({ active }) => ({
   color: active ? tokens.color.text : "rgba(255,255,255,0.78)",
   fontWeight: active ? 700 : 600,
   fontSize: tokens.fontSize.sm,
-  transition: "color 160ms ease, background 160ms ease",
+  transition: [
+    `color ${motion.duration.hover} ${motion.easeOut}`,
+    `background ${motion.duration.hover} ${motion.easeOut}`,
+    // The tab is a button, so it owes the same press feedback as every other pressable
+    // surface -- and it has to land under the finger, hence the shorter press duration.
+    `transform ${motion.duration.press} ${motion.easeOut}`,
+  ].join(", "),
   "& .tab-name": { overflow: "hidden", textOverflow: "ellipsis" },
-  "&:hover": active ? undefined : { color: "#fff", background: "rgba(255,255,255,0.10)" },
+  // Ungated, a tap on a touch device left the hover fill stuck on the tab it just left.
+  [hoverOnly]: {
+    "&:hover": active ? undefined : { color: "#fff", background: "rgba(255,255,255,0.10)" },
+  },
+  // Only the inactive tabs press: pressing the tab you are already on would animate a
+  // no-op. Origin is the foot of the tab so it stays hinged to the workspace sheet.
+  "&:active": active ? undefined : { transform: "scale(0.98)" },
+  transformOrigin: "50% 100%",
   "&:focus-visible": { ...focusRingOnBrand, zIndex: 2 },
   // Concave flares where the active tab meets the workspace, for the folder look.
   "&::before, &::after": active
@@ -79,7 +92,11 @@ const StepNumber = styled("span")<{ active: boolean }>(({ active }) => ({
   background: active ? accent.primary : "transparent",
   border: active ? "none" : "1.5px solid rgba(255,255,255,0.5)",
   color: active ? "#fff" : "rgba(255,255,255,0.85)",
-  transition: "background 160ms ease, color 160ms ease, border-color 160ms ease",
+  transition: [
+    `background ${motion.duration.hover} ${motion.easeOut}`,
+    `color ${motion.duration.hover} ${motion.easeOut}`,
+    `border-color ${motion.duration.hover} ${motion.easeOut}`,
+  ].join(", "),
 }));
 
 const SubChip = styled("span")({

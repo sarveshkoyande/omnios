@@ -1,6 +1,7 @@
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { AgentAvatar } from "./Avatar";
+import { AnswerBody, answerNeedsFullWidth } from "../components/data/AnswerBody";
 import { BriefExtractCard } from "./BriefExtractCard";
 import { AgentBubble, ClarifyBadge, NarrationLine, StatusLine, TurnBubble, UserBubble } from "./ChatBubble";
 import { ClarifyCard } from "./ClarifyCard";
@@ -22,6 +23,10 @@ function renderMarkup(text: string) {
   const esc = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   return esc.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/\*(.+?)\*/g, "<em>$1</em>").replace(/\n/g, "<br>");
 }
+
+/** A bubble holding a table has to take the whole lane — AgentBubble/TurnBubble are
+ *  `width: fit-content`, which would shrink-wrap a data grid down to its narrowest column. */
+const fullWidthSx = { flex: "1 1 auto", width: "100%", maxWidth: "100%" } as const;
 
 /** Kinds that are attributed to the agent and carry its name. */
 const AGENT_ATTRIBUTED = new Set(["turn", "studio-ask"]);
@@ -94,8 +99,8 @@ export function ChatMessages({
           case "agent":
             return (
               <Box key={item.id} sx={{ display: "flex", gap: 2, minWidth: 0, justifyContent: "flex-start" }}>
-                <AgentBubble>
-                  <span dangerouslySetInnerHTML={{ __html: renderMarkup(item.text ?? "") }} />
+                <AgentBubble sx={answerNeedsFullWidth(item.text ?? "", item.dataBlocks) ? fullWidthSx : undefined}>
+                  <AnswerBody text={item.text ?? ""} dataBlocks={item.dataBlocks} />
                   {item.clarify && (
                     <Box sx={{ mt: 2, pt: 2, borderTop: `1px dashed rgba(17,24,39,0.16)` }}>
                       <ClarifyCard clarify={item.clarify} />
@@ -130,9 +135,10 @@ export function ChatMessages({
             return <NarrationLine key={item.id}>{item.text}</NarrationLine>;
           case "turn": {
             const p = AGENT_PEOPLE[item.agentId ?? ""] ?? { c1: tokens.color.primary, name: item.agentId ?? "Agent" };
+            const wide = texts.some((t) => answerNeedsFullWidth(t));
             return (
               <Box key={item.id} sx={{ display: "flex", minWidth: 0, justifyContent: "flex-start" }}>
-                <TurnBubble accent={p.c1}>
+                <TurnBubble accent={p.c1} sx={wide ? fullWidthSx : undefined}>
                   {showName && (
                     <Typography variant="caption" sx={{ fontWeight: 700, color: p.c1, display: "block", mb: 0.5 }}>
                       {p.name}
@@ -141,12 +147,9 @@ export function ChatMessages({
                   {/* Merged consecutive turns: one bubble, each line its own paragraph, so a
                       run of work-steps reads as one agent speaking rather than several. */}
                   {texts.filter(Boolean).map((text, i) => (
-                    <Box
-                      key={i}
-                      component="span"
-                      sx={{ display: "block", mt: i === 0 ? 0 : 1 }}
-                      dangerouslySetInnerHTML={{ __html: renderMarkup(text) }}
-                    />
+                    <Box key={i} sx={{ mt: i === 0 ? 0 : 1 }}>
+                      <AnswerBody text={text} />
+                    </Box>
                   ))}
                 </TurnBubble>
               </Box>

@@ -1,4 +1,6 @@
-$port = 8731
+# Must match the proxy target in frontend/vite.config.ts. This said 8731 while the config
+# said 8733 and the server actually bound 8000, so `npm run dev` could not reach the API.
+$port = 8000
 
 # 1. Kill the entire uvicorn family — parent launcher AND workers —
 #    by matching the command line, not a remembered PID

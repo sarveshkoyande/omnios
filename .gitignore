@@ -40,3 +40,6 @@ skills-lock.json
 .DS_Store
 Thumbs.db
 *.pem
+
+# Ad-hoc Playwright/CDP debug screenshots written into frontend/ during UI verification.
+frontend/playwright-*.png

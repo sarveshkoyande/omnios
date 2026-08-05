@@ -8,6 +8,7 @@ import type { ChipProps } from "@mui/material/Chip";
 import Typography from "@mui/material/Typography";
 import { styled } from "@mui/material/styles";
 import { tokens, glass, glassFallback, motion } from "../theme/tokens";
+import { enterRise, enterWith } from "../theme/motionPresets";
 import { accent } from "../theme/stageTheme";
 
 type Tier = "A" | "B" | "0";
@@ -68,7 +69,11 @@ export function SectionCard({
   const [open, setOpen] = useState(defaultOpen);
   const hasHeader = Boolean(label || icon || action || collapsible);
   return (
-    <GlassPanel tier="A" sx={{ p: 0, ...sx }} {...rest}>
+    // A panel arriving mid-session (a stage's data landing, a section the run just produced)
+    // used to blink into existence and shove everything below it down with no warning. The
+    // rise is deliberately small and lives on the SectionCard root only, not on GlassPanel,
+    // so bare panels used as static chrome stay still.
+    <GlassPanel tier="A" sx={{ p: 0, animation: enterWith(enterRise), ...sx }} {...rest}>
       {hasHeader && (
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, px: 2, py: 1.5, backgroundColor: accent.container, borderBottom: `1px solid ${tokens.color.outline}` }}>
           {icon && (

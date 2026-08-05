@@ -6,7 +6,7 @@ import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
 import { styled } from "@mui/material/styles";
 import { keyframes } from "@emotion/react";
-import { tokens, glass, indigoTint, shade, focusRing } from "../theme/tokens";
+import { tokens, glass, indigoTint, shade, focusRing, motion, hoverOnly } from "../theme/tokens";
 
 /** The traveling glow's two colour stops: the brand gradient's blue and violet. */
 const GLOW_A = tokens.color.primary;
@@ -111,7 +111,9 @@ const IconBtn = styled(IconButton)({
   width: 34,
   height: 34,
   alignSelf: "center",
-  "&:hover": { background: indigoTint(0.08), color: tokens.color.primary },
+  // Gated: on a touch device an ungated :hover stays lit after the tap, so the attach and
+  // mic buttons both read as permanently "on".
+  [hoverOnly]: { "&:hover": { background: indigoTint(0.08), color: tokens.color.primary } },
 });
 
 const SendKey = styled(IconButton, { shouldForwardProp: (prop) => prop !== "active" })<{ active?: boolean }>(
@@ -124,8 +126,16 @@ const SendKey = styled(IconButton, { shouldForwardProp: (prop) => prop !== "acti
     backgroundSize: "300% 300%",
     boxShadow: `0 3px 10px ${indigoTint(0.32)}`,
     animation: active ? `${slideGradient} 15s linear infinite` : "none",
-    "&:hover": { filter: "brightness(1.08)" },
-    "&:active": { transform: "translateY(1px)" },
+    // Send is the most-pressed control in the product. It gets the same scale-down as every
+    // other pressable surface (a 1px nudge is too small to register as feedback), plus a
+    // brightness lift on the way in so the enabled state is visibly live.
+    transition: [
+      `transform ${motion.duration.press} ${motion.easeOut}`,
+      `filter ${motion.duration.hover} ${motion.easeOut}`,
+      `box-shadow ${motion.duration.hover} ${motion.easeOut}`,
+    ].join(", "),
+    [hoverOnly]: { "&:hover": { filter: "brightness(1.08)", boxShadow: `0 4px 14px ${indigoTint(0.4)}` } },
+    "&:active": { transform: "scale(0.94)" },
     "&.Mui-disabled": {
       backgroundImage: "none",
       background: indigoTint(0.14),

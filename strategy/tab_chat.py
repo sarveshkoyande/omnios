@@ -35,6 +35,7 @@ import db  # noqa: E402  (dual-dialect SQLite/Postgres connection factory)
 import projects as pstore  # noqa: E402
 import conversation_llm  # noqa: E402
 import hcp_360  # noqa: E402  (Reporting agent tools: list_hcps / segment_summary / get_hcp)
+import data_blocks  # noqa: E402  (tool results -> renderable table/chart/drill-down blocks)
 import reporting_insights  # noqa: E402  (Reporting agent grounding: KPIs / funnel / demographics)
 
 DB_PATH = data_path("tab_chat.db")
@@ -62,6 +63,16 @@ def _conn():
         ts         TEXT NOT NULL,
         PRIMARY KEY (project_id, stage_id, seq)
     )""")
+    # Lightweight migration for the renderable data blocks attached to an answer (see
+    # data_blocks.py): existing tab_chat.db files predate this column, and CREATE TABLE IF
+    # NOT EXISTS won't add one. Same attempt-and-swallow idiom as projects.py -- SQLite has
+    # no ADD COLUMN IF NOT EXISTS, and the rollback() is what keeps a Postgres transaction
+    # from staying aborted after the duplicate-column error.
+    try:
+        conn.execute("ALTER TABLE messages ADD COLUMN data_json TEXT")
+        conn.commit()
+    except Exception:  # noqa: BLE001  (SQLite: OperationalError; Postgres: DuplicateColumn)
+        conn.rollback()
     return conn
 
 
@@ -73,25 +84,37 @@ def get_history(project_id: str, stage_id: str) -> list[dict]:
     conn = _conn()
     try:
         rows = conn.execute(
-            "SELECT role, agent_id, text, kind, ts FROM messages "
+            "SELECT role, agent_id, text, kind, ts, data_json FROM messages "
             "WHERE project_id=? AND stage_id=? ORDER BY seq", (project_id, stage_id)
         ).fetchall()
-        return [dict(r) for r in rows]
+        out = []
+        for row in rows:
+            item = dict(row)
+            raw = item.pop("data_json", None)
+            # Reloading the tab has to give back the same tables/charts the live answer
+            # showed, so the blocks travel with the message rather than being recomputed.
+            try:
+                item["data_blocks"] = json.loads(raw) if raw else None
+            except Exception:  # noqa: BLE001 -- a corrupt payload degrades to a text-only turn
+                item["data_blocks"] = None
+            out.append(item)
+        return out
     finally:
         conn.close()
 
 
 def append(project_id: str, stage_id: str, role: str, agent_id: str | None, text: str,
-           kind: str = "chat") -> None:
+           kind: str = "chat", blocks: list[dict] | None = None) -> None:
     conn = _conn()
     try:
         nxt = conn.execute(
             "SELECT COALESCE(MAX(seq), 0) + 1 n FROM messages WHERE project_id=? AND stage_id=?",
             (project_id, stage_id)).fetchone()["n"]
         conn.execute(
-            "INSERT INTO messages (project_id, stage_id, seq, role, agent_id, text, kind, ts) "
-            "VALUES (?,?,?,?,?,?,?,?)",
-            (project_id, stage_id, nxt, role, agent_id, text, kind, _now()))
+            "INSERT INTO messages (project_id, stage_id, seq, role, agent_id, text, kind, ts, data_json) "
+            "VALUES (?,?,?,?,?,?,?,?,?)",
+            (project_id, stage_id, nxt, role, agent_id, text, kind, _now(),
+             json.dumps(blocks) if blocks else None))
         conn.commit()
     finally:
         conn.close()
@@ -707,7 +730,13 @@ _REPORTING_SYSTEM = (
     "segment_summary, get_hcp) for anything about specific HCPs or panel breakdowns. Be concise. "
     "The KPI numbers are TARGETS/benchmarks (industry baselines scaled by the lifecycle index), "
     "not observed results — say so when you cite a rate. Never invent panel numbers; only report "
-    "what the tools return.\n\nREPORTING INSIGHTS:\n{insights}\n\nPLAN (excerpt):\n{plan}"
+    "what the tools return.\n\n"
+    "Every breakdown you pull back from a tool is rendered for the user as a live, sortable "
+    "table with its own chart and drill-down, directly under your reply — so do NOT paste a "
+    "markdown table of those same rows. Answer in prose: the headline number, what it means "
+    "for the plan, and any caveat. If you point at it, call it 'the table below' — it is "
+    "rendered after your text, never above it.\n\n"
+    "REPORTING INSIGHTS:\n{insights}\n\nPLAN (excerpt):\n{plan}"
 )
 
 
@@ -728,6 +757,25 @@ def _ask_reporting(project_id: str, message: str) -> dict:
     system = _REPORTING_SYSTEM.format(insights=insights[:4000], plan=plan_content)
     history = get_history(project_id, "reporting")[-8:]
     convo = "\n".join(f"{m['role']}: {m['text']}" for m in history)
+    # Every tool result the loop sees is also shaped into a renderable block, so the answer
+    # carries the actual rows the model reasoned over rather than a markdown table it typed
+    # out from them. Deduped by (tool, arguments): the model re-running an identical query in
+    # a later turn of the loop shouldn't stack a duplicate table under the reply.
+    blocks: list[dict] = []
+    seen_calls: set[str] = set()
+
+    def _collect(tool_name: str, tool_input, result) -> None:
+        key = f"{tool_name}:{json.dumps(tool_input, sort_keys=True, default=str)}"
+        if key in seen_calls:
+            return
+        seen_calls.add(key)
+        try:
+            block = data_blocks.from_tool_call(tool_name, tool_input, result, f"blk{len(blocks) + 1}")
+        except Exception:  # noqa: BLE001 -- a block is a bonus; never let shaping break the answer
+            block = None
+        if block:
+            blocks.append(block)
+
     try:
         client = conversation_llm._get_client()
         messages: list[dict] = [{"role": "user", "content": f"Conversation so far:\n{convo}\n\nUser: {message}"}]
@@ -738,7 +786,7 @@ def _ask_reporting(project_id: str, message: str) -> dict:
             tool_uses = [b for b in resp.content if b.type == "tool_use"]
             if not tool_uses:
                 text = next((b.text for b in resp.content if b.type == "text"), "").strip()
-                return {"reply": text or "No answer produced."}
+                return {"reply": text or "No answer produced.", "data_blocks": blocks}
             tool_results = []
             for tu in tool_uses:
                 try:
@@ -746,10 +794,13 @@ def _ask_reporting(project_id: str, message: str) -> dict:
                     out = fn(**tu.input) if fn else {"error": f"unknown tool {tu.name}"}
                 except Exception as e:  # noqa: BLE001
                     out = {"error": str(e)}
+                else:
+                    _collect(tu.name, tu.input, out)
                 tool_results.append({"type": "tool_result", "tool_use_id": tu.id,
                                       "content": json.dumps(out, default=str)[:4000]})
             messages.append({"role": "user", "content": tool_results})
-        return {"reply": "Couldn't settle on an answer within the tool-call budget — try a narrower question."}
+        return {"reply": "Couldn't settle on an answer within the tool-call budget — try a narrower question.",
+                "data_blocks": blocks}
     except Exception as e:  # noqa: BLE001
         return {"reply": f"Couldn't reach the LLM ({e})."}
 
@@ -771,5 +822,6 @@ def ask(project_id: str, stage_id: str, message: str, document: dict | None = No
         result = _ask_reporting(project_id, message)
     else:
         result = _ask_generic(project_id, stage_id, message)
-    append(project_id, stage_id, "assistant", stage_id, result.get("reply", ""))
+    append(project_id, stage_id, "assistant", stage_id, result.get("reply", ""),
+           blocks=result.get("data_blocks"))
     return result

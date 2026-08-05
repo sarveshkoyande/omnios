@@ -5,6 +5,7 @@ import Typography from "@mui/material/Typography";
 import { styled } from "@mui/material/styles";
 import type { StudioState } from "./studio/studioTypes";
 import { indigoTint, tokens, motion, hoverOnly } from "../theme/tokens";
+import { enterRise, enterWith, popIn, stagger } from "../theme/motionPresets";
 
 /** Static, known-ahead-of-time titles for the Sequential Plan Studio sections
  * (strategy/studio_run.py's SEQUENCE, resolved against plan_document._SECTION_TABLE) --
@@ -28,10 +29,6 @@ export const SECTION_TITLES = [
   "Field approach & targeting",
   "Omnichannel & media tactics",
 ];
-
-/** Fired by a row's onClick; AssemblyCanvas listens for this to expand (if
- * collapsed) and scroll to the matching rendered section. */
-export const SCROLL_TO_SECTION_EVENT = "omni:scroll-to-section";
 
 const Row = styled(Box)<{ active?: boolean; clickable?: boolean }>(({ theme, active, clickable }) => ({
   display: "flex",
@@ -67,12 +64,22 @@ const Dot = styled(Box)<{ state: "done" | "active" | "pending" }>(({ state }) =>
   color: state === "pending" ? tokens.color.inkSoft : "#fff",
   background: state === "done" ? tokens.color.success : "transparent",
   border: state === "pending" ? `1.5px solid ${indigoTint(0.3)}` : "none",
+  // The fill has to catch up with the tick landing inside it, or the green appears a beat
+  // before the mark it belongs to.
+  transition: `background-color ${motion.duration.hover} ${motion.easeOut}, border-color ${motion.duration.hover} ${motion.easeOut}`,
+  /**
+   * Completing a section is the single event this rail exists to report, and during a run it
+   * was the one thing that happened with no motion at all. The tick overshoots slightly on
+   * the way in -- the only place in the app that overshoots, which is what makes it register
+   * as an event rather than a repaint.
+   */
+  "& .rail-tick": { animation: enterWith(popIn, "0ms", motion.duration.enter) },
 }));
 
 /** Left-rail table of contents for the Sequential Plan Studio build (Stage 1) --
  * every title shown upfront, checked off as each lands; the in-progress one shows
- * a spinner instead of a tick. Completed rows are clickable and jump the main pane
- * to that section. */
+ * a spinner instead of a tick. Section rows are status only: there is no live
+ * section canvas to jump to during a build. */
 /**
  * How many section rows a plan actually has.
  *
@@ -90,14 +97,10 @@ export function PlanSectionsRail({ studio }: { studio: StudioState }) {
     const num = i + 1;
     const completed = studio.sections[i];
     const isActive = !completed && studio.slot && num === doneCount + 1;
-    if (completed) return { num, title, state: "done" as const, sectionId: completed.section_id };
-    if (isActive) return { num, title, state: "active" as const, sectionId: null };
-    return { num, title, state: "pending" as const, sectionId: null };
+    if (completed) return { num, title, state: "done" as const };
+    if (isActive) return { num, title, state: "active" as const };
+    return { num, title, state: "pending" as const };
   });
-
-  const goToSection = (sectionId: string) => {
-    window.dispatchEvent(new CustomEvent(SCROLL_TO_SECTION_EVENT, { detail: { sectionId } }));
-  };
 
   const goToAnchor = (domId: string) => {
     document.getElementById(domId)?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -148,16 +151,13 @@ export function PlanSectionsRail({ studio }: { studio: StudioState }) {
           {doneCount}/{sectionTotal(studio)} completed
         </Typography>
       </Box>
-      {rows.map((r) => (
-        <Row
-          key={r.num}
-          active={r.state === "active"}
-          clickable={r.state === "done"}
-          onClick={r.state === "done" && r.sectionId ? () => goToSection(r.sectionId!) : undefined}
-        >
+      {rows.map((r, i) => (
+        // The rail arrives as one list, so its rows cascade in rather than all landing on the
+        // same frame. Capped inside `stagger`, so eleven sections do not turn into a wait.
+        <Row key={r.num} active={r.state === "active"} sx={{ animation: enterWith(enterRise, stagger(i, 35)) }}>
           <Dot state={r.state}>
             {r.state === "done" ? (
-              <span className="material-symbols-outlined" style={{ fontSize: 15 }}>check</span>
+              <span className="material-symbols-outlined rail-tick" style={{ fontSize: 15 }}>check</span>
             ) : r.state === "active" ? (
               <CircularProgress size={13} thickness={6} />
             ) : (

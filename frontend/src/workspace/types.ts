@@ -1,5 +1,6 @@
 /** Contracts for the existing FastAPI project/chat/run-stream endpoints (server.py). */
 import type { WorkflowDocument } from "./stages/operations/flowbuilder/schema/document";
+import type { DecisionRecord, StudioAsk, StudioSection } from "./studio/studioTypes";
 
 export interface Slots {
   brand: string;
@@ -86,6 +87,16 @@ export interface ProjectDetail {
     persona_reviews?: PersonaReview[] | null;
     revealed_phases?: string[];
     current_phase?: string;
+    /** Persisted Stage 1 studio run. Every other slice of `state` was already rehydrated on
+     *  open; this one was not, so reopening a finished plan showed an empty section list and
+     *  "0/11 completed" while the sections sat in the database. Shape mirrors what
+     *  studio_run.py writes -- `sections` is exactly StudioSection[]. */
+    studio?: {
+      idx?: number;
+      sections?: StudioSection[];
+      records?: DecisionRecord[];
+      await_ask?: StudioAsk | null;
+    };
   };
   messages: ChatMessage[];
   plan_markdown: string | null;
