@@ -26,6 +26,16 @@ export const ORCH_SECTIONS: RailSection[] = [
   { id: "orch-agent", label: "Nudge agent", icon: "smart_toy" },
 ];
 
+/** Campaign Ops (2) sandbox — anchors set in stages/campaignops2/StageCampaignOps2.tsx. */
+export const OPS2_SECTIONS: RailSection[] = [
+  { id: "ops2-status", label: "Launch status", icon: "flag" },
+  { id: "ops2-deliverables", label: "Deliverables & coverage", icon: "inventory_2" },
+  { id: "ops2-waves", label: "Launch sequence", icon: "stacked_line_chart" },
+  { id: "ops2-risks", label: "Risks & issues", icon: "report" },
+  { id: "ops2-run", label: "The setup run", icon: "conveyor_belt" },
+  { id: "ops2-gaps", label: "Open questions", icon: "help" },
+];
+
 export const OPS_SECTIONS: RailSection[] = [
   { id: "ops-summary", label: "Planning summary", icon: "summarize" },
   { id: "ops-flow", label: "Engagement flow", icon: "account_tree" },

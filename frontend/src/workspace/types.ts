@@ -777,8 +777,10 @@ export type StageAgentId = keyof typeof STAGE_AGENTS;
 /** Workspace stage number -> owning agent. The stage tabs are 1-based, so index 0 is unused.
  *  Single source of truth for "whose window am I looking at" — the chat header identity and
  *  the per-stage accent colour both resolve through this. */
+/** Index is the stage id, not tab position — id 5 is the Campaign Ops (2) sandbox, which
+ *  renders between ids 3 and 4 in the stepper but keeps its own id here. */
 export const STAGE_AGENT_BY_INDEX: readonly StageAgentId[] = [
-  "planning", "planning", "orchestration", "operations", "reporting",
+  "planning", "planning", "orchestration", "operations", "reporting", "operations",
 ] as const;
 
 export function agentForStage(stage: number): StageAgentId {

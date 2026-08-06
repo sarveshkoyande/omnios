@@ -52,7 +52,12 @@ const KICKOFF_STAGES = new Set<StageAgentId>(["orchestration", "operations", "re
 // run's live narration + interactive chat, unchanged). Stages 2-4 are new: each gets its
 // own agent identity and its own persisted thread (strategy/tab_chat.py), fetched/posted
 // via getTabChat/postTabChat and cached per stage in `tabChatItems` below.
-const STAGE_ORDER: StageAgentId[] = ["planning", "orchestration", "operations", "reporting"];
+// Indexed by `stage - 1`, so this is keyed by stage *id*, not by tab position. Id 5 is the
+// Campaign Ops (2) sandbox: it shares the Campaign Operations agent and therefore that tab's
+// chat thread, rather than needing a fifth entry in tab_chat.STAGE_AGENTS on the backend
+// (which validates stage_id against a fixed roster). Because both stages resolve to the same
+// id, loadedTabChatRef dedupes the fetch and the kickoff card is never offered twice.
+const STAGE_ORDER: StageAgentId[] = ["planning", "orchestration", "operations", "reporting", "operations"];
 
 export interface ChatItem {
   id: string;

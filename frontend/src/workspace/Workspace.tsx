@@ -19,13 +19,14 @@ import { IntakeCard } from "./IntakeCard";
 import { PersonaProfileModal } from "./persona/PersonaProfileModal";
 import { PlanSectionsRail } from "./PlanSectionsRail";
 import { SECTION_TITLES, sectionTotal } from "./PlanSectionsRail";
-import { StageSectionRail, ORCH_SECTIONS, OPS_SECTIONS, REPORT_SECTIONS } from "./StageSectionRail";
+import { StageSectionRail, ORCH_SECTIONS, OPS2_SECTIONS, OPS_SECTIONS, REPORT_SECTIONS } from "./StageSectionRail";
 import { PlansDrawer } from "./PlansDrawer";
 import { PlanDocument } from "./PlanDocument";
 import { PlanSummaryCard } from "./PlanSummaryCard";
 import { SimplePlanSummary } from "./SimplePlanSummary";
 import { StageOperations } from "./stages/StageOperations";
 import { StageOrchestration } from "./stages/StageOrchestration";
+import { StageCampaignOps2 } from "./stages/campaignops2/StageCampaignOps2";
 import { StageReporting } from "./stages/StageReporting";
 import type { StudioState } from "./studio/studioTypes";
 import { WorkflowStepper } from "./stages/WorkflowStepper";
@@ -375,6 +376,7 @@ export function Workspace({
       {ws.projectId && ws.stage === 2 && <StageSectionRail sections={ORCH_SECTIONS} />}
       {ws.projectId && ws.stage === 3 && <StageSectionRail sections={OPS_SECTIONS} />}
       {ws.projectId && ws.stage === 4 && <StageSectionRail sections={REPORT_SECTIONS} />}
+      {ws.projectId && ws.stage === 5 && <StageSectionRail sections={OPS2_SECTIONS} />}
 
       {/* Same canvas as the chat pane: the folder-tab seam must be uniform across both panes. */}
       <Box component="aside" sx={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 380, minHeight: 0, backgroundColor: tokens.color.canvas }}>
@@ -487,6 +489,13 @@ export function Workspace({
                 />
               )}
               {ws.stage === 4 && <StageReporting result={ws.result} projectId={ws.projectId} />}
+              {ws.stage === 5 && (
+                <StageCampaignOps2
+                  result={ws.result}
+                  projectId={ws.projectId}
+                  refreshToken={ws.artifactRefresh.operations}
+                />
+              )}
             </Box>
           </>
         )}
