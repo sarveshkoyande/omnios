@@ -541,8 +541,18 @@ h1, h2, h3 { font-family: "Plus Jakarta Sans", "DM Sans", sans-serif; letter-spa
 .kit-update-rail-status.status-awaiting_review { color: var(--tone-warning-ink); }
 .kit-update-rail-status.status-published { color: var(--tone-success-ink); }
 
-.kit-update-body { display: grid; grid-template-columns: minmax(280px, 1fr) minmax(320px, 1fr); gap: 22px; align-items: stretch; flex: 1; min-height: 0; padding-bottom: 32px; }
-@media (max-width: 900px) { .kit-update-body { grid-template-columns: 1fr; height: auto; } }
+.kit-update-body {
+  display: grid; grid-template-columns: minmax(280px, 1fr) minmax(320px, 1fr);
+  /* Without an explicit row track, grid's implicit "auto" row sizes to fit its tallest
+     item's own content (max-content) rather than clamping to the container's height --
+     which is exactly what let a long chat history grow the whole row instead of
+     scrolling inside it. minmax(0, 1fr) forces the row to fill the flex parent's
+     computed height instead, so .kit-chat/.kit-update-diff-pane's min-height:0 below can
+     actually take effect and their own overflow-y:auto areas scroll internally. */
+  grid-template-rows: minmax(0, 1fr);
+  gap: 22px; align-items: stretch; flex: 1; min-height: 0; padding-bottom: 32px;
+}
+@media (max-width: 900px) { .kit-update-body { grid-template-columns: 1fr; grid-template-rows: none; height: auto; } }
 
 /* Each half scrolls on its own; the scrollbar itself is hidden (still scrollable via
    wheel/trackpad/keyboard) so the two panes read as clean, edgeless surfaces. */
@@ -561,7 +571,8 @@ h1, h2, h3 { font-family: "Plus Jakarta Sans", "DM Sans", sans-serif; letter-spa
 .kit-diff-empty { flex: 1; }
 
 .kit-chat { display: flex; flex-direction: column; height: 100%; min-height: 0; }
-.kit-chat-messages { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding-right: 4px; }
+.kit-chat-messages { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding-right: 4px; }
+.kit-chat-input-row { flex: 0 0 auto; }
 .kit-chat-empty { color: var(--muted); font-size: 13px; font-style: italic; }
 .kit-chat-msg { border-radius: 18px; padding: 10px 14px; max-width: 88%; box-shadow: var(--neu-flat-sm); }
 .kit-chat-msg-user { align-self: flex-end; background: rgba(108,99,255,0.10); }

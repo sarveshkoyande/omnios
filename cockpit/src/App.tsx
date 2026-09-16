@@ -42,6 +42,10 @@ export default function App() {
   const selectBrand = (b: BrandSummary) => {
     setSelected(b.brand);
     setTerritory(b.territories[0] ?? null);
+    // The brand switcher is now reachable from every view (including kit-update); picking
+    // a different brand always lands on that brand's workspace rather than leaving a
+    // kit-update session open for the brand you just navigated away from.
+    setView("workspace");
   };
 
   const openKitUpdate = (section: KitUpdateSection) => {
@@ -76,48 +80,46 @@ export default function App() {
           Agent Library
         </button>
 
-        {view === "workspace" && (
-          <>
-            <div className="rail-section-label" style={{ marginTop: 24 }}>Brands</div>
-            {brands?.map((b) => {
-              const isSelected = selected === b.brand;
-              const activeTerritory = isSelected ? territory : b.territories[0];
-              return (
-                <div key={b.brand} className="rail-brand-block">
-                  <button
-                    type="button"
-                    className={`rail-item rail-brand-item ${isSelected ? "active" : ""}`}
-                    onClick={() => selectBrand(b)}
-                  >
-                    {b.brand}{activeTerritory ? ` (${activeTerritory})` : ""}
-                    <span className="rail-brand-sub">{b.indication || b.therapy_area}</span>
-                  </button>
-                  {isSelected && (
-                    <div className="territory-row">
-                      {knownTerritories.map((t) => {
-                        const configured = b.territories.includes(t);
-                        return (
-                          <button
-                            key={t}
-                            type="button"
-                            disabled={!configured}
-                            className={`territory-pill ${territory === t ? "active" : ""} ${!configured ? "disabled" : ""}`}
-                            title={configured ? `Switch to ${t}` : `Not configured for ${t} yet`}
-                            onClick={() => configured && setTerritory(t)}
-                          >
-                            {t}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
+        {/* Persistent across every view, including the kit-update ("agent") screen --
+            the brand switcher is app-level context, not workspace-view-specific chrome. */}
+        <div className="rail-section-label" style={{ marginTop: 24 }}>Brands</div>
+        {brands?.map((b) => {
+          const isSelected = selected === b.brand;
+          const activeTerritory = isSelected ? territory : b.territories[0];
+          return (
+            <div key={b.brand} className="rail-brand-block">
+              <button
+                type="button"
+                className={`rail-item rail-brand-item ${isSelected ? "active" : ""}`}
+                onClick={() => selectBrand(b)}
+              >
+                {b.brand}{activeTerritory ? ` (${activeTerritory})` : ""}
+                <span className="rail-brand-sub">{b.indication || b.therapy_area}</span>
+              </button>
+              {isSelected && view === "workspace" && (
+                <div className="territory-row">
+                  {knownTerritories.map((t) => {
+                    const configured = b.territories.includes(t);
+                    return (
+                      <button
+                        key={t}
+                        type="button"
+                        disabled={!configured}
+                        className={`territory-pill ${territory === t ? "active" : ""} ${!configured ? "disabled" : ""}`}
+                        title={configured ? `Switch to ${t}` : `Not configured for ${t} yet`}
+                        onClick={() => configured && setTerritory(t)}
+                      >
+                        {t}
+                      </button>
+                    );
+                  })}
                 </div>
-              );
-            })}
-            {brands && brands.length === 0 && (
-              <div className="rail-empty">No brand kits configured yet.</div>
-            )}
-          </>
+              )}
+            </div>
+          );
+        })}
+        {brands && brands.length === 0 && (
+          <div className="rail-empty">No brand kits configured yet.</div>
         )}
       </aside>
 
