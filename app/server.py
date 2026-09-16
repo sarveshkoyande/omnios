@@ -905,8 +905,11 @@ def api_kit_update_ask(pid: str, brand: str, section: str, payload: dict):
     if section not in kit_chat.KIT_SECTIONS:
         raise HTTPException(404, f"unknown kit-update section '{section}'")
     stage = _kit_chat_stage(brand, section)
-    tab_chat.append(pid, stage, "user", None, message)
+    # Read history BEFORE appending this turn's user message -- kit_chat.ask() already
+    # appends `message` itself as "User: {message}" in its prompt, so including it a
+    # second time via history would duplicate the current turn for the LLM.
     history = tab_chat.get_history(pid, stage)
+    tab_chat.append(pid, stage, "user", None, message)
     result = kit_chat.ask(pid, brand, section, message, history=history)
     tab_chat.append(pid, stage, "assistant", section, result.get("reply", ""), kind="chat")
     return result
