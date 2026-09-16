@@ -1,5 +1,6 @@
 import type { BrandKit, KitUpdateSection } from "../types";
 import { Expandable } from "./BrandWorkspace";
+import { Icon } from "./Icon";
 
 /** HCP Intelligence -- four subsections. Only two are groundable from this kit today:
  *  Personas (kit.personas.hcp, real) and Needs (each persona's own `voice` quote, which
@@ -18,7 +19,7 @@ export function HcpIntelligence({ kit, onUpdate }: {
 
   return (
     <div className="expandable-stack">
-      <Expandable title="HCP Personas" icon="&#128100;" kit={kit} section="kit-hcp-persona" onUpdate={onUpdate} subtitle={`${hcps.length} primary/secondary personas from the kit`}>
+      <Expandable title="HCP Personas" icon={<Icon name="persona" />} kit={kit} section="kit-hcp-persona" onUpdate={onUpdate} subtitle={`${hcps.length} primary/secondary personas from the kit`}>
         <div className="persona-groups">
           {hcps.map((p) => (
             <div className="persona-card" key={p.name}>
@@ -33,7 +34,7 @@ export function HcpIntelligence({ kit, onUpdate }: {
         </div>
       </Expandable>
 
-      <Expandable title="HCP Segmentation" icon="&#128202;" kit={kit} subtitle="Not available in this kit">
+      <Expandable title="HCP Segmentation" icon={<Icon name="barChart" />} kit={kit} subtitle="Not available in this kit">
         <p className="hcp-unavailable">
           Not available. No segmentation data exists in this brand kit -- audience segments live in a
           separate part of the app (behavioural HCP-panel segments, not brand-specific) and aren't
@@ -41,14 +42,14 @@ export function HcpIntelligence({ kit, onUpdate }: {
         </p>
       </Expandable>
 
-      <Expandable title="HCP Behaviours" icon="&#128064;" kit={kit} subtitle="Not available in this kit">
+      <Expandable title="HCP Behaviours" icon={<Icon name="eye" />} kit={kit} subtitle="Not available in this kit">
         <p className="hcp-unavailable">
           Not available. The kit has no behavioural field on a persona -- only who they are and what
           they ask for (below).
         </p>
       </Expandable>
 
-      <Expandable title="HCP Needs / Barriers" icon="&#128172;" kit={kit} subtitle="In each persona's own words">
+      <Expandable title="HCP Needs / Barriers" icon={<Icon name="message" />} kit={kit} subtitle="In each persona's own words">
         <div className="persona-groups">
           {hcps.map((p) => (
             <div className="persona-card" key={p.name}>

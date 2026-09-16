@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { AGENTS, PHASES, type AgentEntry, type Phase } from "../agents";
+import { Icon } from "./Icon";
 
 /** Per-phase accent ink only -- the neumorphic system keeps one flat page background
  *  throughout (no gradients on the root surface), so the phase "feel" comes from this one
@@ -15,7 +16,7 @@ function AgentDetail({ agent, phase, onBack }: { agent: AgentEntry; phase: Phase
   const tint = PHASE_TINT[phase];
   return (
     <div className="agent-library" style={{ ["--phase-ink" as string]: tint.ink }}>
-      <button type="button" className="agent-detail-back" onClick={onBack}>&#8592; Back to Agent library</button>
+      <button type="button" className="agent-detail-back" onClick={onBack}><Icon name="arrowLeft" size={15} /> Back to Agent library</button>
 
       <div className="agent-detail-head">
         <h1>{agent.name}</h1>
@@ -98,7 +99,7 @@ export function AgentLibrary() {
                 className={`access-pill access-pill-btn ${a.access === "write" ? "access-write" : "access-read"}`}
                 onClick={() => setSelected(a)}
               >
-                Read more &#8594;
+                Read more <Icon name="arrowRight" size={13} />
               </button>
             </div>
             <h3>{a.name}</h3>

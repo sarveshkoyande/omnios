@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { BrandKit, KitUpdateSection } from "../types";
+import { Icon } from "./Icon";
 
 /** The brand-details section, leading the workspace -- everything below (claims, identity,
  *  guardrails) is detail; this is the "what is this brand, in one glance" answer, so it has
@@ -127,7 +128,7 @@ function BrandStatusBadges({ kit, onUpdate }: {
   return (
     <div className="overview-badges">
       <span className="pill tone-success overview-ingested">
-        <span aria-hidden>&#10003;</span> Brand plan ingested
+        <Icon name="check" size={13} aria-hidden="true" /> Brand plan ingested
       </span>
       <div className="section-meta">
         <button
@@ -137,7 +138,7 @@ function BrandStatusBadges({ kit, onUpdate }: {
           title="When this was last updated"
           onClick={() => setOpen((o) => !o)}
         >
-          &#9888;
+          <Icon name="alertTriangle" size={15} />
         </button>
         {open && (
           <div className="section-meta-popover">

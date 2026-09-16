@@ -4,6 +4,7 @@ import type { BrandKit, BrandSummary, KitUpdateSection } from "./types";
 import { BrandWorkspace } from "./components/BrandWorkspace";
 import { AgentLibrary } from "./components/AgentLibrary";
 import { KitUpdateScreen } from "./components/KitUpdateScreen";
+import { Icon } from "./components/Icon";
 import "./cockpit.css";
 
 type View = "workspace" | "agents" | "kit-update";
@@ -58,7 +59,7 @@ export default function App() {
       <header className="top-bar">
         <div className="top-bar-brand">Omni OS Cockpit</div>
         <button type="button" className="top-bar-user" title="Signed in as you" aria-label="User account">
-          <span aria-hidden>&#128100;</span>
+          <Icon name="user" size={17} />
         </button>
       </header>
 

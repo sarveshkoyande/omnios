@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import type { KitDraft } from "../../types";
+import { Icon } from "../Icon";
 
 function formatValue(v: unknown): string {
   if (v === null || v === undefined) return "(empty)";
@@ -41,7 +42,7 @@ export function DiffReview({ draft, onPublish, publishing }: {
           <div className="kit-diff-field">{field}</div>
           <div className="kit-diff-values">
             <div className="kit-diff-current">{formatValue(draft.diff[field].current)}</div>
-            <div className="kit-diff-arrow" aria-hidden>&#8594;</div>
+            <div className="kit-diff-arrow" aria-hidden><Icon name="arrowRight" size={13} /></div>
             <div className="kit-diff-proposed">{formatValue(draft.diff[field].proposed)}</div>
           </div>
           <div className="kit-diff-toggle">

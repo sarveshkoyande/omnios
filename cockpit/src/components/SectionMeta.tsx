@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { BrandKit, KitUpdateSection } from "../types";
+import { Icon } from "./Icon";
 
 function formatWhen(iso?: string): string {
   if (!iso) return "unknown";
@@ -38,7 +39,7 @@ export function SectionMeta({ kit, section, onUpdate }: {
         title="When this was last updated"
         onClick={(e) => { e.stopPropagation(); setOpen((o) => !o); }}
       >
-        &#9888;
+        <Icon name="alertTriangle" size={15} />
       </button>
       {open && (
         <div className="section-meta-popover" onClick={(e) => e.stopPropagation()}>

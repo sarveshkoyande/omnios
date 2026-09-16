@@ -10,6 +10,7 @@ import { StrategicOverview } from "./StrategicOverview";
 import { BrandPersonaTable } from "./BrandPersonaTable";
 import { HcpIntelligence } from "./HcpIntelligence";
 import { SectionMeta } from "./SectionMeta";
+import { Icon } from "./Icon";
 
 /** Top-level page section wrapper -- "Brand Intelligence" and "HCP Intelligence" are a
  *  step above the Panel/Expandable cards below them: they group several cards under one
@@ -36,7 +37,7 @@ function NotCaptured({ note }: { note: string }) {
  *  instead of each section inventing its own card chrome. */
 function Panel({ title, icon, kit, section, onUpdate, action, children }: {
   title: string;
-  icon: string;
+  icon: React.ReactNode;
   kit?: BrandKit;
   section?: KitUpdateSection;
   onUpdate?: (section: KitUpdateSection) => void;
@@ -62,7 +63,7 @@ function Panel({ title, icon, kit, section, onUpdate, action, children }: {
  *  HcpIntelligence.tsx uses the identical shell rather than a second copy. */
 export function Expandable({ title, icon, subtitle, kit, section, onUpdate, children, defaultOpen = false }: {
   title: string;
-  icon: string;
+  icon: React.ReactNode;
   subtitle: string;
   kit?: BrandKit;
   section?: KitUpdateSection;
@@ -80,7 +81,7 @@ export function Expandable({ title, icon, subtitle, kit, section, onUpdate, chil
           <span className="expandable-subtitle">{subtitle}</span>
         </span>
         {kit && <SectionMeta kit={kit} section={section} onUpdate={onUpdate} />}
-        <span className={`chevron ${open ? "open" : ""}`} aria-hidden>&#9662;</span>
+        <span className={`chevron ${open ? "open" : ""}`}><Icon name="chevronDown" size={16} /></span>
       </button>
       {open && <div className="expandable-body">{children}</div>}
     </div>
@@ -276,11 +277,11 @@ export function BrandWorkspace({ brand, kit, onUpdate }: {
 
       <PageSection title="Brand Intelligence">
         <div className="expandable-stack">
-          <Expandable title="Brand persona" icon="&#127917;" kit={kit} section="kit-brand-persona" onUpdate={onUpdate} subtitle="Role, promise, tone, territories -- what's captured and what isn't">
+          <Expandable title="Brand persona" icon={<Icon name="persona" />} kit={kit} section="kit-brand-persona" onUpdate={onUpdate} subtitle="Role, promise, tone, territories -- what's captured and what isn't">
             <BrandPersonaTable kit={kit} />
           </Expandable>
 
-          <Expandable title="Communication guardrails" icon="&#128737;" kit={kit} section="kit-guardrails" onUpdate={onUpdate} subtitle="Brand dos &amp; don'ts">
+          <Expandable title="Communication guardrails" icon={<Icon name="shield" />} kit={kit} section="kit-guardrails" onUpdate={onUpdate} subtitle="Brand dos &amp; don'ts">
             <GuardrailsPanel kit={kit} />
           </Expandable>
         </div>
@@ -334,13 +335,13 @@ export function BrandWorkspace({ brand, kit, onUpdate }: {
 
       <PageSection title="Channel Mix">
         <div className="expandable-stack">
-          <Expandable title="HCP channels" icon="&#128231;" subtitle="Not available in this kit" kit={kit}>
+          <Expandable title="HCP channels" icon={<Icon name="mail" />} subtitle="Not available in this kit" kit={kit}>
             <NotCaptured note="Channel-mix planning (rep, email, web, paid media, congress) isn't part of this kit's data model yet." />
           </Expandable>
-          <Expandable title="Patient channels" icon="&#128241;" subtitle="Not available in this kit" kit={kit}>
+          <Expandable title="Patient channels" icon={<Icon name="smartphone" />} subtitle="Not available in this kit" kit={kit}>
             <NotCaptured note="Patient-facing channel mix isn't captured in this kit yet." />
           </Expandable>
-          <Expandable title="Channel weighting" icon="&#9878;" subtitle="Not available in this kit" kit={kit}>
+          <Expandable title="Channel weighting" icon={<Icon name="scale" />} subtitle="Not available in this kit" kit={kit}>
             <NotCaptured note="Budget/effort weighting across channels isn't captured in this kit yet." />
           </Expandable>
         </div>
@@ -348,28 +349,28 @@ export function BrandWorkspace({ brand, kit, onUpdate }: {
 
       <PageSection title="Journeys &amp; Flows">
         <div className="expandable-stack">
-          <Expandable title="HCP journey" icon="&#128506;" subtitle="Not available in this kit" kit={kit}>
+          <Expandable title="HCP journey" icon={<Icon name="map" />} subtitle="Not available in this kit" kit={kit}>
             <NotCaptured note="A defined HCP engagement journey isn't captured in this kit yet." />
           </Expandable>
-          <Expandable title="Patient journey" icon="&#129658;" subtitle="Not available in this kit" kit={kit}>
+          <Expandable title="Patient journey" icon={<Icon name="heartPulse" />} subtitle="Not available in this kit" kit={kit}>
             <NotCaptured note="A defined patient journey isn't captured in this kit yet." />
           </Expandable>
-          <Expandable title="Trigger flows" icon="&#9889;" subtitle="Not available in this kit" kit={kit}>
+          <Expandable title="Trigger flows" icon={<Icon name="zap" />} subtitle="Not available in this kit" kit={kit}>
             <NotCaptured note="Automated trigger/response flows aren't captured in this kit yet." />
           </Expandable>
         </div>
       </PageSection>
 
-      <Panel title="Budget" icon="&#128176;" kit={kit}>
+      <Panel title="Budget" icon={<Icon name="wallet" />} kit={kit}>
         <NotCaptured note="No budget or spend allocation is captured in this kit yet." />
       </Panel>
 
       <PageSection title="Content">
         <div className="expandable-stack">
-          <Expandable title="Content library" icon="&#128196;" subtitle="Not available in this kit" kit={kit}>
+          <Expandable title="Content library" icon={<Icon name="document" />} subtitle="Not available in this kit" kit={kit}>
             <NotCaptured note="A structured content/asset library isn't captured in this kit yet." />
           </Expandable>
-          <Expandable title="Content-to-channel mapping" icon="&#128279;" subtitle="Not available in this kit" kit={kit}>
+          <Expandable title="Content-to-channel mapping" icon={<Icon name="link" />} subtitle="Not available in this kit" kit={kit}>
             <NotCaptured note="Which content plays on which channel isn't captured in this kit yet." />
           </Expandable>
         </div>
