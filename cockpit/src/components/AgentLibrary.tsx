@@ -18,13 +18,6 @@ function AgentDetail({ agent, phase, onBack }: { agent: AgentEntry; phase: Phase
       <button type="button" className="agent-detail-back" onClick={onBack}>&#8592; Back to Agent library</button>
 
       <div className="agent-detail-head">
-        <div className="agent-card-top">
-          {agent.access === "write" ? (
-            <span className="access-pill access-write">Can edit</span>
-          ) : (
-            <span className="access-pill access-read">Read only</span>
-          )}
-        </div>
         <h1>{agent.name}</h1>
         <p className="agent-detail-job">{agent.job}</p>
         <p className="agent-detail-body">{agent.detail}</p>
