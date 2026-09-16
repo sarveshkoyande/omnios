@@ -95,6 +95,7 @@ export function KitUpdateScreen({ brand, initialSection, onClose }: {
         <button type="button" className="kit-update-close" onClick={onClose}>Close</button>
       </div>
 
+      <div className="kit-update-scroll">
       {error && <div className="error-banner">{error}</div>}
 
       {sections && !hasAnyProgress && (
@@ -154,6 +155,7 @@ export function KitUpdateScreen({ brand, initialSection, onClose }: {
       )}
 
       {!sections && !error && <div className="loading">Loading update session&hellip;</div>}
+      </div>
     </div>
   );
 }

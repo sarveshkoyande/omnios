@@ -490,7 +490,12 @@ h1, h2, h3 { font-family: "Plus Jakarta Sans", "DM Sans", sans-serif; letter-spa
    diff review. Same neumorphic system as the rest of the app; the tab rail reuses the
    phase-switcher pill shape above, and each section's status is a tinted variant of the
    same pill token set the claims/status pills already use elsewhere. */
-.kit-update-screen { padding: 40px 40px 60px; max-width: 1180px; margin: 0 auto; min-height: 100%; }
+.kit-update-screen {
+  position: fixed; inset: 0; z-index: 50; background: var(--bg);
+  display: flex; flex-direction: column; height: 100vh; overflow: hidden;
+  padding: 32px 48px 40px;
+}
+.kit-update-scroll { flex: 1; min-height: 0; overflow-y: auto; max-width: 1400px; width: 100%; margin: 0 auto; }
 
 .kit-update-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
 .kit-update-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
@@ -535,15 +540,16 @@ h1, h2, h3 { font-family: "Plus Jakarta Sans", "DM Sans", sans-serif; letter-spa
 .kit-update-rail-status.status-awaiting_review { color: var(--tone-warning-ink); }
 .kit-update-rail-status.status-published { color: var(--tone-success-ink); }
 
-.kit-update-body { display: grid; grid-template-columns: minmax(280px, 1fr) minmax(320px, 1fr); gap: 22px; align-items: start; }
-@media (max-width: 900px) { .kit-update-body { grid-template-columns: 1fr; } }
+.kit-update-body { display: grid; grid-template-columns: minmax(280px, 1fr) minmax(320px, 1fr); gap: 22px; align-items: stretch; height: calc(100vh - 260px); min-height: 420px; }
+@media (max-width: 900px) { .kit-update-body { grid-template-columns: 1fr; height: auto; } }
+.kit-update-diff-pane { overflow-y: auto; }
 
 .kit-chat, .kit-update-diff-pane {
   background: var(--bg); border-radius: 28px; box-shadow: var(--neu-flat); padding: 20px 22px;
 }
 .kit-update-diff-title { font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); margin: 0 0 14px; }
 
-.kit-chat { display: flex; flex-direction: column; height: 480px; }
+.kit-chat { display: flex; flex-direction: column; height: 100%; min-height: 0; }
 .kit-chat-messages { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding-right: 4px; }
 .kit-chat-empty { color: var(--muted); font-size: 13px; font-style: italic; }
 .kit-chat-msg { border-radius: 18px; padding: 10px 14px; max-width: 88%; box-shadow: var(--neu-flat-sm); }

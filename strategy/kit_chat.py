@@ -79,6 +79,19 @@ def _parse_envelope(text: str) -> dict:
     return json.loads(cleaned)
 
 
+def _short_error(e: Exception) -> str:
+    """A user-facing summary of an LLM/parse failure -- never the raw exception text.
+
+    Some providers (Azure's DefaultAzureCredential in particular) raise multi-paragraph
+    messages listing every credential type they tried, which is meaningless to a brand-kit
+    reviewer and was leaking straight into the chat reply. The real exception is still
+    available server-side (the caller logs it); this only shortens what the user sees."""
+    text = str(e).strip().splitlines()[0] if str(e).strip() else e.__class__.__name__
+    if len(text) > 140:
+        text = text[:140].rstrip() + "..."
+    return text
+
+
 def _current_values(kit: dict, fields: list[str]) -> dict:
     return {f: kit.get(f) for f in fields}
 
@@ -141,8 +154,9 @@ def kickoff(project_id: str, brand: str, section: str, pdf_text: str) -> dict:
         draft = kit_drafts.upsert_draft(project_id, brand, section, status, diff)
         return {**draft, "reply": reply}
     except Exception as e:  # noqa: BLE001 -- never raise on an LLM/parse failure
+        print(f"[kit_chat] kickoff failed for {brand}/{section}: {e!r}")  # full detail server-side only
         draft = kit_drafts.upsert_draft(project_id, brand, section, "drafting", {})
-        return {**draft, "reply": f"Couldn't draft this section automatically ({e}). "
+        return {**draft, "reply": f"Couldn't draft this section automatically ({_short_error(e)}). "
                                    "Nothing was changed -- tell me what to update instead."}
 
 
@@ -178,4 +192,5 @@ def ask(project_id: str, brand: str, section: str, message: str, history: list[d
             kit_drafts.upsert_draft(project_id, brand, section, "awaiting_review", diff)
         return {"reply": reply, "diff": diff}
     except Exception as e:  # noqa: BLE001
-        return {"reply": f"Couldn't process that ({e})."}
+        print(f"[kit_chat] ask failed for {brand}/{section}: {e!r}")  # full detail server-side only
+        return {"reply": f"Couldn't process that ({_short_error(e)})."}
