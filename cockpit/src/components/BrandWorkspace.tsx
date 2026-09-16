@@ -1,8 +1,11 @@
-import { useMemo, useState } from "react";
-import type { BrandKit, Claim, KitUpdateSection } from "../types";
-import { RISK_TONE, STATUS_TONE, inkSoft } from "../tokens";
-import { DispatchBoard } from "./DispatchBoard";
-import { VoiceLinter } from "./VoiceLinter";
+import { useState } from "react";
+import type { BrandKit, KitUpdateSection } from "../types";
+import { inkSoft } from "../tokens";
+// DispatchBoard / VoiceLinter / useMemo / Claim / RISK_TONE / STATUS_TONE: only used by
+// the commented-out section block below (ClaimsLibrary needs useMemo/Claim/RISK_TONE/
+// STATUS_TONE too).
+// import { DispatchBoard } from "./DispatchBoard";
+// import { VoiceLinter } from "./VoiceLinter";
 import { StrategicOverview } from "./StrategicOverview";
 import { BrandPersonaTable } from "./BrandPersonaTable";
 import { HcpIntelligence } from "./HcpIntelligence";
@@ -19,6 +22,14 @@ function PageSection({ title, children }: { title: string; children: React.React
       {children}
     </section>
   );
+}
+
+/** Honest empty state for a section this kit's data model doesn't cover yet -- same
+ *  discipline as HcpIntelligence's Segmentation/Behaviours subsections: say plainly that
+ *  nothing exists here rather than inventing channel/journey/budget/content data no kit
+ *  field backs. */
+function NotCaptured({ note }: { note: string }) {
+  return <p className="hcp-unavailable">Not available. {note}</p>;
 }
 
 /** Section shell shared by every panel below -- gives the page one consistent rhythm
@@ -76,9 +87,9 @@ export function Expandable({ title, icon, subtitle, kit, section, onUpdate, chil
   );
 }
 
-/** Proof-point tiles: the kit has no dedicated "proof point" entity (grounding confirmed
- *  this), so the closest honest read is the top of the message hierarchy -- each pillar's
- *  claim, headlined. Capped at 3 to match the reference UI's tile count. */
+// Only used by the commented-out section block in BrandWorkspace() below -- kept, not
+// deleted, so re-enabling that block doesn't also mean reconstructing these.
+/*
 function ProofPoints({ kit }: { kit: BrandKit }) {
   const pillars = kit.message_hierarchy.slice(0, 3);
   return (
@@ -123,9 +134,9 @@ function ClinicalStats({ kit }: { kit: BrandKit }) {
   );
 }
 
-/** Claims library -- the axis the reference UI didn't cover at all, and per the brand
- *  workspace ideation the single richest entity in the kit. Grouped by status so the
- *  something-is-unapproved signal reads before any single claim's text does. */
+// Claims library -- the axis the reference UI didn't cover at all, and per the brand
+// workspace ideation the single richest entity in the kit. Grouped by status so the
+// something-is-unapproved signal reads before any single claim's text does.
 function ClaimsLibrary({ kit }: { kit: BrandKit }) {
   const [filter, setFilter] = useState<string>("all");
   const refById = useMemo(
@@ -197,6 +208,7 @@ function IdentitySystem({ kit }: { kit: BrandKit }) {
     </div>
   );
 }
+*/
 
 function GuardrailsPanel({ kit }: { kit: BrandKit }) {
   return (
@@ -221,9 +233,8 @@ function GuardrailsPanel({ kit }: { kit: BrandKit }) {
   );
 }
 
-/** Patient & payer personas -- HCP personas now have their own dedicated "HCP Intelligence"
- *  section above, so this covers the other two persona groups only rather than repeating
- *  HCP content in two places. */
+// Only used by the commented-out section block in BrandWorkspace() below.
+/*
 function PersonasPanel({ kit }: { kit: BrandKit }) {
   const groups: { label: string; items: typeof kit.personas.hcp }[] = [
     { label: "Patient", items: kit.personas.patient },
@@ -249,6 +260,7 @@ function PersonasPanel({ kit }: { kit: BrandKit }) {
     </div>
   );
 }
+*/
 
 export function BrandWorkspace({ brand, kit, onUpdate }: {
   brand: string;
@@ -277,6 +289,12 @@ export function BrandWorkspace({ brand, kit, onUpdate }: {
       <PageSection title="HCP Intelligence">
         <HcpIntelligence kit={kit} onUpdate={onUpdate} />
       </PageSection>
+
+      {/* Everything below HCP Intelligence down to the closing comment is on hold --
+          replaced on-page by Channel Mix / Journeys & Flows / Budget / Content below.
+          Left in place (not deleted) since the kit still carries this data and the
+          Update flow's Patient & payer personas / Identity / Voice-check entry points
+          live here; re-enable by uncommenting whenever these should return to the page.
 
       <DispatchBoard kit={kit} />
 
@@ -311,6 +329,51 @@ export function BrandWorkspace({ brand, kit, onUpdate }: {
           <PersonasPanel kit={kit} />
         </Expandable>
       </div>
+
+      */}
+
+      <PageSection title="Channel Mix">
+        <div className="expandable-stack">
+          <Expandable title="HCP channels" icon="&#128231;" subtitle="Not available in this kit" kit={kit}>
+            <NotCaptured note="Channel-mix planning (rep, email, web, paid media, congress) isn't part of this kit's data model yet." />
+          </Expandable>
+          <Expandable title="Patient channels" icon="&#128241;" subtitle="Not available in this kit" kit={kit}>
+            <NotCaptured note="Patient-facing channel mix isn't captured in this kit yet." />
+          </Expandable>
+          <Expandable title="Channel weighting" icon="&#9878;" subtitle="Not available in this kit" kit={kit}>
+            <NotCaptured note="Budget/effort weighting across channels isn't captured in this kit yet." />
+          </Expandable>
+        </div>
+      </PageSection>
+
+      <PageSection title="Journeys &amp; Flows">
+        <div className="expandable-stack">
+          <Expandable title="HCP journey" icon="&#128506;" subtitle="Not available in this kit" kit={kit}>
+            <NotCaptured note="A defined HCP engagement journey isn't captured in this kit yet." />
+          </Expandable>
+          <Expandable title="Patient journey" icon="&#129658;" subtitle="Not available in this kit" kit={kit}>
+            <NotCaptured note="A defined patient journey isn't captured in this kit yet." />
+          </Expandable>
+          <Expandable title="Trigger flows" icon="&#9889;" subtitle="Not available in this kit" kit={kit}>
+            <NotCaptured note="Automated trigger/response flows aren't captured in this kit yet." />
+          </Expandable>
+        </div>
+      </PageSection>
+
+      <Panel title="Budget" icon="&#128176;" kit={kit}>
+        <NotCaptured note="No budget or spend allocation is captured in this kit yet." />
+      </Panel>
+
+      <PageSection title="Content">
+        <div className="expandable-stack">
+          <Expandable title="Content library" icon="&#128196;" subtitle="Not available in this kit" kit={kit}>
+            <NotCaptured note="A structured content/asset library isn't captured in this kit yet." />
+          </Expandable>
+          <Expandable title="Content-to-channel mapping" icon="&#128279;" subtitle="Not available in this kit" kit={kit}>
+            <NotCaptured note="Which content plays on which channel isn't captured in this kit yet." />
+          </Expandable>
+        </div>
+      </PageSection>
 
       <p className="footnote" style={{ color: inkSoft }}>
         Source: {kit.source_label} &middot; {kit.source_note}
