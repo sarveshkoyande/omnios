@@ -49,18 +49,6 @@ export default function App() {
     setView("kit-update");
   };
 
-  if (view === "kit-update" && selected && kitUpdateSection) {
-    // Full-screen, not nested inside the rail/top-bar shell -- the guided update flow is
-    // its own focused surface, not another panel squeezed into .main's content column.
-    return (
-      <KitUpdateScreen
-        brand={selected}
-        initialSection={kitUpdateSection}
-        onClose={() => setView("workspace")}
-      />
-    );
-  }
-
   return (
     <div className="app-frame">
       <header className="top-bar">
@@ -141,6 +129,13 @@ export default function App() {
             {!error && !kit && <div className="loading">Loading brand workspace&hellip;</div>}
             {kit && selected && <BrandWorkspace brand={selected} kit={kit} onUpdate={openKitUpdate} />}
           </>
+        )}
+        {view === "kit-update" && selected && kitUpdateSection && (
+          <KitUpdateScreen
+            brand={selected}
+            initialSection={kitUpdateSection}
+            onClose={() => setView("workspace")}
+          />
         )}
       </main>
       </div>
