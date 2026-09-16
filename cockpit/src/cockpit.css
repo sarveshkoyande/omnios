@@ -1,0 +1,594 @@
+/* ==================================================================================
+   Neumorphism (Soft UI) -- cool monochromatic system. Every surface is molded from the
+   same #E0E5EC clay; depth comes entirely from dual opposing shadows (light top-left,
+   dark bottom-right), never from borders or flat colour fills. Two exceptions, both
+   deliberate: (1) risk/status/coverage pills carry real semantic colour because a claim's
+   risk tier is regulatory information, not decoration -- rendered as a tinted variant of
+   the same inset pill shape, never a flat fill; (2) a brand's own identity palette swatches
+   show real hex values, which is the entire point of that section.
+   ================================================================================== */
+:root {
+  --bg: #E0E5EC;
+  --fg: #3D4852;
+  --muted: #6B7280;
+  --accent: #6C63FF;
+  --accent-light: #8B84FF;
+  --accent-2: #38B2AC;
+
+  /* Shadow colours -- rgba, never opaque hex, so they blend into the base grey. */
+  --sh-light: rgba(255, 255, 255, 0.55);
+  --sh-dark: rgba(163, 177, 198, 0.65);
+
+  /* The four canonical shadow recipes, reused everywhere via var() composition. */
+  --neu-flat: 9px 9px 16px var(--sh-dark), -9px -9px 16px var(--sh-light);
+  --neu-flat-hover: 12px 12px 20px rgba(163,177,198,0.75), -12px -12px 20px rgba(255,255,255,0.65);
+  --neu-flat-sm: 5px 5px 10px var(--sh-dark), -5px -5px 10px var(--sh-light);
+  --neu-inset: inset 6px 6px 10px var(--sh-dark), inset -6px -6px 10px var(--sh-light);
+  --neu-inset-deep: inset 10px 10px 20px rgba(163,177,198,0.75), inset -10px -10px 20px rgba(255,255,255,0.65);
+  --neu-inset-sm: inset 3px 3px 6px var(--sh-dark), inset -3px -3px 6px var(--sh-light);
+
+  /* Tone tints -- soft, cool-family variants so the accent colours below never read as a
+     jarring flat sticker against the grey clay; each pairs a low-saturation background
+     wash with a readable ink for WCAG AA. */
+  --tone-neutral-bg: #D7DCE3; --tone-neutral-ink: var(--muted);
+  --tone-info-bg: #DCE3F5;    --tone-info-ink: #3B4E8C;
+  --tone-success-bg: #D7EEEA; --tone-success-ink: #206657;
+  --tone-warning-bg: #F3E6D2; --tone-warning-ink: #8A5A17;
+  --tone-danger-bg: #F3DCDD;  --tone-danger-ink: #9C3B44;
+}
+
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; margin: 0; width: 100%; text-align: left; }
+body {
+  font-family: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  color: var(--fg);
+  background: var(--bg);
+}
+h1, h2, h3 { font-family: "Plus Jakarta Sans", "DM Sans", sans-serif; letter-spacing: -0.01em; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
+
+/* Fixed-height app shell: .app-frame never grows past the viewport, so nothing here ever
+   causes page-level scroll -- .main below is the ONLY scrolling element. That's what makes
+   the top bar and rail "stay put" without needing position:sticky tricks that can break
+   under a flex layout. The top bar also gets position:sticky as a second, literal guarantee. */
+.app-frame { display: flex; flex-direction: column; height: 100vh; background: var(--bg); overflow: hidden; }
+
+.top-bar {
+  flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 24px; background: var(--bg); box-shadow: var(--neu-flat-sm);
+  position: sticky; top: 0; z-index: 20;
+}
+.top-bar-brand { font-family: "Plus Jakarta Sans", sans-serif; font-weight: 800; font-size: 17px; color: var(--fg); }
+.top-bar-user {
+  width: 38px; height: 38px; border-radius: 50%; border: none; background: var(--bg);
+  box-shadow: var(--neu-inset-deep); display: grid; place-items: center; font-size: 15px;
+  color: var(--accent); cursor: pointer;
+}
+
+.app-shell { display: flex; flex: 1; min-height: 0; background: var(--bg); }
+@media (max-width: 720px) {
+  .app-shell { flex-direction: column; }
+  .rail { flex: 0 0 auto; }
+}
+
+/* Rail: a single large extruded slab of the same clay the page is made of. Individual
+   items are transparent at rest (flush with the slab) and press INTO the surface -- inset
+   shadow -- when selected, the classic neumorphic "pressed tab" pattern. */
+.rail {
+  flex: 0 0 272px;
+  background: var(--bg);
+  box-shadow: var(--neu-flat);
+  border-radius: 0 32px 32px 0;
+  padding: 28px 18px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 1;
+}
+.rail-brand {
+  font-family: "Plus Jakarta Sans", sans-serif; font-weight: 700; font-size: 16px;
+  color: var(--fg); margin-bottom: 26px; padding: 0 10px;
+}
+.rail-section-label {
+  font-size: 11px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase;
+  color: var(--muted); padding: 0 10px 10px;
+}
+.rail-item {
+  display: block; width: 100%; text-align: left; background: transparent; border: none;
+  color: var(--fg); font-size: 14px; font-weight: 500; padding: 11px 14px; border-radius: 16px;
+  cursor: pointer; font-family: inherit; margin-bottom: 6px; min-height: 44px;
+  transition: box-shadow 220ms ease, transform 220ms ease, color 220ms ease;
+}
+.rail-item:hover { box-shadow: var(--neu-flat-sm); transform: translateY(-1px); }
+.rail-item.active {
+  box-shadow: var(--neu-flat-sm); background: rgba(108,99,255,0.10);
+  color: var(--accent); font-weight: 700; transform: none;
+}
+.rail-brand-item { display: flex; flex-direction: column; gap: 2px; min-height: unset; }
+.rail-brand-sub { font-size: 11.5px; color: var(--muted); font-weight: 400; }
+.rail-brand-block { margin-bottom: 6px; }
+
+/* Territory gate -- configured markets are real, clickable pills; every other standard
+   territory still shows (so the gate itself is visible) as a quiet, flush-flat "not yet"
+   tag rather than a crossed-out label -- absent content should read as "not built yet,"
+   not as an error. Never populated with invented content. */
+.territory-row { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 14px 2px; align-items: center; }
+.territory-pill {
+  font-family: inherit; font-size: 11px; font-weight: 700; border: none; border-radius: 999px;
+  padding: 4px 10px; cursor: pointer; background: var(--bg); color: var(--muted);
+  box-shadow: var(--neu-flat-sm); transition: box-shadow 200ms ease, color 200ms ease;
+}
+.territory-pill.active { box-shadow: var(--neu-inset-sm); color: var(--accent); background: rgba(108,99,255,0.10); }
+.territory-pill.disabled {
+  cursor: default; box-shadow: none; background: transparent; color: var(--muted); opacity: 0.4;
+}
+.rail-empty { padding: 8px 10px; font-size: 13px; color: var(--muted); }
+
+.main { flex: 1; min-width: 0; overflow-y: auto; overflow-x: hidden; background: var(--bg); }
+.loading, .error-banner { padding: 40px; color: var(--muted); }
+.error-banner { color: var(--tone-danger-ink); }
+
+.workspace { max-width: 980px; margin: 0 auto; padding: 40px 32px 72px; }
+
+/* Page sections ("Brand Intelligence", "HCP Intelligence") -- a level above Panel: they
+   group several cards under one named heading rather than being a card themselves, so no
+   shadow/background of their own, just spacing and a heading. */
+.page-section { margin-bottom: 34px; }
+.page-section-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); margin-bottom: 4px; }
+.page-section-title { font-size: 22px; font-weight: 800; color: var(--fg); margin: 0 0 18px; }
+
+/* Brand Persona table */
+.persona-table-wrap { overflow-x: auto; }
+.persona-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.persona-table th, .persona-table td { text-align: left; padding: 12px 14px; vertical-align: top; }
+.persona-table tr { box-shadow: inset 0 -1px 0 var(--sh-dark); }
+.persona-table tr:last-child { box-shadow: none; }
+.persona-table th { font-weight: 700; color: var(--fg); width: 200px; white-space: nowrap; }
+.persona-table td { color: var(--muted); line-height: 1.55; }
+.persona-table-missing { font-style: italic; opacity: 0.75; }
+.persona-table-note { font-size: 11.5px; color: var(--muted); margin: 14px 0 0; font-style: italic; }
+
+/* HCP Intelligence subsections now reuse .expandable-stack / .expandable -- see
+   BrandWorkspace.tsx's exported Expandable. */
+.hcp-unavailable { font-size: 13px; color: var(--muted); font-style: italic; line-height: 1.6; margin: 0; }
+@media (max-width: 480px) {
+  .workspace { padding: 24px 16px 48px; }
+  .panel { padding: 20px 16px; }
+}
+
+
+/* Strategic overview -- leads the workspace. The brand-facts card sits above the four
+   insight tiles, all extruded off the same clay as everything else in the system. */
+.overview { margin-bottom: 28px; }
+.illustrative-banner {
+  display: flex; align-items: center; gap: 10px; background: var(--tone-warning-bg);
+  color: var(--tone-warning-ink); border-radius: 16px; box-shadow: var(--neu-flat-sm);
+  padding: 12px 18px; margin-bottom: 16px; font-size: 12.5px; line-height: 1.5;
+}
+.illustrative-tag {
+  flex: 0 0 auto; font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
+  background: var(--bg); color: var(--tone-warning-ink); border-radius: 999px; padding: 3px 10px;
+  box-shadow: var(--neu-inset-sm);
+}
+.overview-card {
+  background: var(--bg); border-radius: 32px; box-shadow: var(--neu-flat);
+  padding: 28px 30px; margin-bottom: 20px;
+}
+.overview-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
+.overview-top-left { min-width: 0; }
+.overview-label { font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
+.overview-brand { font-size: 32px; font-weight: 800; color: var(--fg); margin: 0 0 6px; line-height: 1.15; }
+.overview-tagline { font-size: 14.5px; color: var(--muted); margin: 0; }
+
+.overview-badges { flex: 0 0 auto; display: flex; align-items: center; gap: 10px; }
+.overview-ingested { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+
+.overview-facts {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(170px, 100%), 1fr));
+  gap: 18px; padding-top: 20px; box-shadow: inset 0 1px 0 var(--sh-dark);
+}
+.overview-fact-label { font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.overview-fact-value { font-size: 14px; font-weight: 700; color: var(--fg); line-height: 1.4; }
+.overview-fact-missing { font-size: 13px; font-weight: 400; font-style: italic; color: var(--muted); opacity: 0.8; }
+
+/* One neutral card shape for all four tiles -- these aren't a severity scale (unlike
+   claim-risk pills), so no tone colour is applied and no icon decoration either;
+   differentiated by title and content alone. */
+.insight-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 16px; }
+/* Forced 2x2 for the four overview tiles specifically (Target HCPs / Territories /
+   Competitors / Unmet needs) -- collapses to one column only when the pane is too narrow
+   for two real columns, never fewer than that by choice. */
+.insight-grid-2x2 { grid-template-columns: repeat(2, minmax(min(220px, 100%), 1fr)); }
+.insight-tile {
+  background: var(--bg); border-radius: 22px; box-shadow: var(--neu-flat-sm); padding: 20px 20px 18px;
+  transition: transform 260ms ease, box-shadow 260ms ease;
+}
+.insight-tile:hover { transform: translateY(-2px); box-shadow: var(--neu-flat); }
+.insight-title { font-size: 12.5px; font-weight: 700; color: var(--fg); margin-bottom: 8px; }
+.insight-body { font-size: 13px; line-height: 1.55; color: var(--muted); }
+
+@media (max-width: 480px) {
+  .overview-card { padding: 22px 20px; }
+  .overview-brand { font-size: 26px; }
+}
+
+/* Card: the base extruded unit. rounded-[32px] per the system; no border, ever -- the dual
+   shadow IS the edge. */
+.panel {
+  background: var(--bg); border-radius: 32px; box-shadow: var(--neu-flat);
+  padding: 26px 28px; margin-bottom: 22px;
+  transition: box-shadow 260ms ease, transform 260ms ease;
+}
+.panel-head { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+.panel-icon {
+  font-size: 15px; width: 38px; height: 38px; border-radius: 50%; flex: 0 0 auto;
+  display: grid; place-items: center; background: var(--bg); box-shadow: var(--neu-inset-deep);
+}
+.panel-head h2 { font-size: 15.5px; font-weight: 700; margin: 0; flex: 1; color: var(--fg); }
+.panel-hint { font-size: 12.5px; color: var(--muted); }
+
+/* Section "last updated" indicator -- a real, honest signal (the kit file's own mtime,
+   shared by every section) rather than a fabricated per-section date. */
+.section-meta { position: relative; flex: 0 0 auto; }
+.section-meta-trigger {
+  width: 28px; height: 28px; border-radius: 50%; border: none; background: var(--bg);
+  box-shadow: var(--neu-flat-sm); color: var(--tone-warning-ink); font-size: 13px;
+  cursor: pointer; display: grid; place-items: center;
+}
+.section-meta-trigger:hover { box-shadow: var(--neu-flat); }
+.section-meta-popover {
+  position: absolute; top: 34px; right: 0; z-index: 30; width: 260px;
+  background: var(--bg); border-radius: 20px; box-shadow: var(--neu-flat-hover);
+  padding: 16px 18px; text-align: left;
+}
+.section-meta-row { display: flex; justify-content: space-between; gap: 12px; font-size: 12.5px; margin-bottom: 8px; color: var(--fg); }
+.section-meta-label { font-weight: 700; color: var(--muted); flex: 0 0 auto; }
+.section-meta-caveat { font-size: 11px; color: var(--muted); font-style: italic; line-height: 1.5; margin: 8px 0 0; }
+.section-meta-stub { color: var(--tone-warning-ink); }
+.section-meta-update {
+  margin-top: 12px; width: 100%; font-family: inherit; font-size: 12px; font-weight: 700;
+  border: none; border-radius: 999px; padding: 7px 0; cursor: pointer;
+  background: var(--bg); color: var(--accent); box-shadow: var(--neu-flat-sm);
+}
+.section-meta-update:hover { box-shadow: var(--neu-inset-sm); }
+/* View + Update side by side on the brand card's badge popover specifically. */
+.section-meta-actions { display: flex; gap: 8px; margin-top: 12px; }
+.section-meta-actions .section-meta-update { margin-top: 0; flex: 1; width: auto; }
+
+/* min(220px, 100%) lets the track shrink to the container's full width instead of forcing
+   overflow when the container itself is narrower than the floor (narrow panes, small
+   phones) -- a fixed px floor in auto-fit/minmax has no such escape hatch. */
+.proof-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 18px; }
+.proof-tile { background: var(--bg); border-radius: 20px; box-shadow: var(--neu-flat-sm); padding: 16px 18px; }
+.proof-eyebrow { font-size: 10.5px; font-weight: 700; letter-spacing: .08em; color: var(--accent); }
+.proof-pillar { font-family: "Plus Jakarta Sans", sans-serif; font-size: 13px; font-weight: 700; color: var(--fg); margin: 6px 0 8px; }
+.proof-claim { font-size: 13.5px; color: var(--muted); line-height: 1.5; }
+
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 720px) { .two-col { grid-template-columns: 1fr; } }
+
+/* Info wells: carved-in surfaces for "here is a fact to read," not "here is a thing to
+   press" -- inset, not extruded. */
+.info-block { border-radius: 20px; padding: 16px 18px; background: var(--bg); box-shadow: var(--neu-inset); }
+.info-label { font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+.info-warn .info-label { color: var(--tone-warning-ink); }
+.info-block p { font-size: 13.5px; line-height: 1.55; margin: 0; color: var(--fg); }
+.info-label-do { color: var(--tone-success-ink); font-weight: 700; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 10px; }
+.info-label-dont { color: var(--tone-danger-ink); font-weight: 700; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 10px; }
+
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr)); gap: 14px; }
+.stat-tile { background: var(--bg); border-radius: 18px; box-shadow: var(--neu-flat-sm); padding: 14px 16px; }
+.stat-study { font-size: 11px; font-weight: 700; color: var(--accent); letter-spacing: .04em; }
+.stat-value { font-family: "Plus Jakarta Sans", sans-serif; font-size: 21px; font-weight: 800; margin: 6px 0 2px; color: var(--fg); }
+.stat-context { font-size: 11.5px; color: var(--muted); }
+
+.filter-row { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+.filter-chip {
+  font-family: inherit; font-size: 12.5px; font-weight: 600; border-radius: 999px;
+  padding: 8px 16px; border: none; background: var(--bg); box-shadow: var(--neu-flat-sm);
+  color: var(--muted); cursor: pointer; min-height: 36px;
+  transition: box-shadow 200ms ease, color 200ms ease, transform 200ms ease;
+}
+.filter-chip:hover { transform: translateY(-1px); }
+.filter-chip.active {
+  box-shadow: var(--neu-flat-sm); background: rgba(108,99,255,0.10);
+  color: var(--accent); transform: none;
+}
+
+.claim-list { display: flex; flex-direction: column; gap: 12px; }
+.claim-row {
+  display: flex; gap: 14px; padding: 16px 18px; border-radius: 20px;
+  background: var(--bg); box-shadow: var(--neu-flat-sm);
+}
+.claim-id { flex: 0 0 84px; font-family: ui-monospace, monospace; font-size: 11.5px; color: var(--muted); padding-top: 2px; }
+.claim-body { flex: 1; min-width: 0; }
+.claim-text { font-size: 13.5px; margin: 0 0 10px; line-height: 1.55; color: var(--fg); }
+.claim-meta { display: flex; flex-wrap: wrap; gap: 7px; }
+.claim-note { font-size: 12px; color: var(--muted); font-style: italic; margin: 10px 0 0; }
+
+/* Pill: the shared inset chip. Tone classes tint bg/ink; neutral (pill-outline) has no
+   tone tint at all -- the two are visually distinct so a real risk/status signal never
+   gets lost among plain reference-id chips. */
+.pill {
+  font-size: 11px; font-weight: 700; border-radius: 999px; padding: 4px 11px;
+  box-shadow: var(--neu-flat-sm); display: inline-block;
+}
+.pill-outline { background: var(--bg); color: var(--muted); }
+.tone-neutral { background: var(--tone-neutral-bg); color: var(--tone-neutral-ink); }
+.tone-info    { background: var(--tone-info-bg);    color: var(--tone-info-ink); }
+.tone-success { background: var(--tone-success-bg); color: var(--tone-success-ink); }
+.tone-warning { background: var(--tone-warning-bg); color: var(--tone-warning-ink); }
+.tone-danger  { background: var(--tone-danger-bg);  color: var(--tone-danger-ink); }
+
+.expandable-stack { display: flex; flex-direction: column; gap: 16px; }
+/* No overflow:hidden here -- it used to clip the section-meta popover to the card's rounded
+   corners (it renders "inside the pane" instead of floating on top). The head already has
+   its own matching border-radius below, and .expandable-body doesn't need clipping either. */
+.expandable { background: var(--bg); border-radius: 32px; box-shadow: var(--neu-flat); }
+.expandable-head {
+  width: 100%; display: flex; align-items: center; gap: 14px; padding: 20px 24px;
+  background: none; border: none; cursor: pointer; font-family: inherit; text-align: left;
+  min-height: 44px; border-radius: 32px;
+}
+.expandable-title { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+.expandable-title b { font-size: 14.5px; color: var(--fg); }
+.expandable-subtitle { font-size: 12px; color: var(--muted); }
+.chevron { transition: transform 260ms ease; color: var(--muted); }
+.chevron.open { transform: rotate(180deg); }
+.expandable-body { padding: 4px 24px 24px; }
+
+.swatch-row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+.swatch { width: 124px; }
+.swatch-color { width: 100%; height: 58px; border-radius: 16px; box-shadow: var(--neu-flat-sm); }
+.swatch-name { font-size: 12.5px; font-weight: 700; margin-top: 8px; color: var(--fg); }
+.swatch-hex { font-family: ui-monospace, monospace; font-size: 11px; color: var(--muted); }
+.swatch-use { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.typography-line { font-size: 13px; color: var(--muted); }
+
+.guardrail-list { margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.7; color: var(--fg); }
+.guardrail-category { font-weight: 700; color: var(--accent); }
+
+.persona-groups { display: flex; flex-direction: column; gap: 18px; }
+.persona-group-label { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+.persona-card { background: var(--bg); border-radius: 20px; box-shadow: var(--neu-flat-sm); padding: 14px 16px; margin-bottom: 10px; }
+.persona-top { display: flex; align-items: center; gap: 10px; font-size: 13.5px; color: var(--fg); }
+.persona-who { font-size: 12.5px; color: var(--muted); margin: 8px 0; line-height: 1.5; }
+.persona-voice { font-size: 12.5px; font-style: italic; color: var(--fg); margin: 0; }
+
+.footnote { font-size: 11.5px; margin-top: 28px; }
+
+/* Dispatch board (idea 2). A restriction reads as something PRESSED INTO the surface --
+   each gated claim is an inset well, a deliberate inversion of the ordinary extruded
+   card, so "blocked" has a different physical feel from "here is content," not just a
+   different colour. */
+.dispatch-board {
+  background: var(--bg); border-radius: 32px; box-shadow: var(--neu-flat);
+  margin-bottom: 26px; overflow: hidden;
+}
+.dispatch-head {
+  width: 100%; display: flex; align-items: center; gap: 14px; padding: 20px 24px;
+  background: none; border: none; cursor: pointer; font-family: inherit; text-align: left;
+  min-height: 44px;
+}
+.dispatch-icon {
+  font-size: 16px; width: 38px; height: 38px; border-radius: 50%; flex: 0 0 auto;
+  display: grid; place-items: center; background: var(--tone-warning-bg); box-shadow: var(--neu-inset-sm);
+}
+.dispatch-title { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+.dispatch-title b { font-size: 14.5px; color: var(--tone-warning-ink); }
+.dispatch-subtitle { font-size: 12px; color: var(--muted); }
+.dispatch-rows { padding: 4px 24px 22px; display: flex; flex-direction: column; gap: 14px; }
+.dispatch-row {
+  display: flex; gap: 16px; background: var(--bg); border-radius: 20px;
+  box-shadow: var(--neu-inset); padding: 16px 18px;
+}
+.dispatch-claim-id { flex: 0 0 84px; font-family: ui-monospace, monospace; font-size: 11.5px; color: var(--muted); padding-top: 2px; }
+.dispatch-fields { flex: 1; min-width: 0; }
+.dispatch-claim-text { font-size: 13.5px; font-weight: 600; margin: 0 0 12px; line-height: 1.5; color: var(--fg); }
+.dispatch-dl { margin: 0; display: grid; gap: 9px; }
+.dispatch-dl dt { font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
+.dispatch-dl dd { margin: 2px 0 0; font-size: 13px; line-height: 1.5; color: var(--fg); }
+.dispatch-may { color: var(--tone-success-ink); font-weight: 600; }
+
+/* Voice linter (idea 5). Typing well is deep-inset (you're carving text into the surface);
+   a pass/fail readout is a small extruded/inset chip depending on state. */
+.voice-pillars { display: flex; flex-wrap: wrap; gap: 9px; margin-bottom: 16px; }
+.voice-textarea {
+  width: 100%; font-family: inherit; font-size: 13.5px; padding: 16px 18px;
+  border: none; border-radius: 20px; resize: vertical; color: var(--fg);
+  background: var(--bg); box-shadow: var(--neu-inset-deep);
+}
+.voice-textarea:focus { box-shadow: var(--neu-inset-deep), 0 0 0 2px var(--accent); outline: none; }
+.voice-result { margin-top: 12px; padding: 10px 16px; border-radius: 14px; font-size: 13px; font-weight: 700; box-shadow: var(--neu-flat-sm); }
+.voice-result-pass { background: var(--tone-success-bg); color: var(--tone-success-ink); }
+.voice-result-fail { background: var(--tone-danger-bg); color: var(--tone-danger-ink); }
+.voice-preview {
+  margin-top: 12px; padding: 14px 16px; background: var(--bg); border-radius: 16px;
+  box-shadow: var(--neu-inset); font-size: 13px; line-height: 1.6; white-space: pre-wrap; color: var(--fg);
+}
+.voice-preview mark { background: var(--tone-danger-bg); color: var(--tone-danger-ink); border-radius: 5px; padding: 1px 3px; }
+.voice-hit-list { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.voice-hit-list li { display: flex; align-items: center; gap: 9px; font-size: 12.5px; }
+.voice-qualifier { color: var(--muted); }
+.voice-rules { margin-top: 18px; }
+.voice-rules summary { cursor: pointer; font-size: 12.5px; font-weight: 700; color: var(--muted); }
+.voice-rule-defs { margin: 12px 0 0; padding-left: 18px; font-size: 12.5px; line-height: 1.8; }
+
+/* ---------------------------------------------------------------------------------
+   Agent library. Same neumorphic system, same flat #E0E5EC page background throughout
+   (the system's own rule: no gradients on the root surface) -- the per-phase feel comes
+   from a smaller, deliberate set of accented elements (the active tab, the icon well,
+   the job-title colour) rather than restyling the whole page, so switching phases still
+   feels distinct without breaking the monochromatic discipline. */
+.agent-library {
+  padding: 56px 40px 80px;
+  max-width: 1080px;
+  margin: 0 auto;
+  background: var(--bg);
+  min-height: 100%;
+}
+
+.agent-hero { text-align: center; max-width: 620px; margin: 0 auto 40px; }
+.agent-hero-eyebrow {
+  font-size: 12px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 12px;
+}
+.agent-hero h1 {
+  font-size: 32px; font-weight: 800; line-height: 1.25; margin: 0 0 14px; color: var(--fg);
+}
+.agent-hero p { font-size: 15px; color: var(--muted); margin: 0; line-height: 1.6; }
+
+.phase-switcher {
+  display: flex; justify-content: center; gap: 6px; margin: 0 auto 20px;
+  background: var(--bg); border-radius: 999px; padding: 8px; width: fit-content;
+  box-shadow: var(--neu-flat);
+}
+.phase-tab {
+  font-family: inherit; font-size: 13.5px; font-weight: 600; border: none;
+  background: transparent; color: var(--muted); padding: 11px 22px; border-radius: 999px;
+  cursor: pointer; transition: box-shadow 260ms ease, color 260ms ease; min-height: 44px;
+}
+.phase-tab:hover { color: var(--fg); }
+.phase-tab.active {
+  box-shadow: var(--neu-flat-sm); background: rgba(108,99,255,0.10);
+  color: var(--phase-ink, var(--accent)); font-weight: 700;
+}
+
+.phase-tagline {
+  text-align: center; font-size: 13.5px; color: var(--muted); font-style: italic;
+  margin-bottom: 38px;
+}
+
+.agent-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(min(290px, 100%), 1fr));
+  gap: 22px;
+}
+
+@keyframes agent-card-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.agent-card {
+  background: var(--bg); border-radius: 32px; padding: 24px 24px 22px;
+  box-shadow: var(--neu-flat);
+  transition: transform 300ms ease-out, box-shadow 300ms ease-out;
+  animation: agent-card-in 420ms ease-out backwards;
+}
+.agent-card:hover { transform: translateY(-3px); box-shadow: var(--neu-flat-hover); }
+.agent-card-top { display: flex; align-items: center; justify-content: flex-end; margin-bottom: 16px; }
+.access-pill { font-size: 10.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; border-radius: 999px; padding: 5px 12px; box-shadow: var(--neu-flat-sm); }
+.access-read { background: var(--bg); color: var(--muted); }
+.access-write { background: var(--tone-warning-bg); color: var(--tone-warning-ink); }
+
+.agent-card h3 { font-size: 15.5px; font-weight: 700; margin: 0 0 8px; line-height: 1.35; color: var(--fg); }
+.agent-job { font-size: 13px; font-weight: 700; color: var(--phase-ink, var(--accent)); margin: 0 0 10px; line-height: 1.45; }
+.agent-detail { font-size: 12.5px; color: var(--muted); line-height: 1.65; margin: 0 0 16px; }
+.agent-source { font-size: 10.5px; font-family: ui-monospace, monospace; color: var(--muted); padding-top: 14px; box-shadow: inset 0 1px 0 var(--sh-dark); }
+
+/* ==================================================================================
+   Brand-plan update screen -- five per-section tabs, each its own persisted chat +
+   diff review. Same neumorphic system as the rest of the app; the tab rail reuses the
+   phase-switcher pill shape above, and each section's status is a tinted variant of the
+   same pill token set the claims/status pills already use elsewhere. */
+.kit-update-screen { padding: 40px 40px 60px; max-width: 1180px; margin: 0 auto; min-height: 100%; }
+
+.kit-update-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
+.kit-update-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
+.kit-update-title { font-size: 26px; font-weight: 800; margin: 0; color: var(--fg); }
+.kit-update-close {
+  font-family: inherit; font-size: 13px; font-weight: 600; border: none; border-radius: 999px;
+  background: var(--bg); box-shadow: var(--neu-flat-sm); color: var(--muted); padding: 10px 20px;
+  cursor: pointer; height: fit-content;
+}
+.kit-update-close:hover { box-shadow: var(--neu-inset-sm); }
+
+.kit-update-ingest {
+  background: var(--bg); border-radius: 28px; box-shadow: var(--neu-flat); padding: 24px 26px;
+  margin-bottom: 24px; color: var(--muted); font-size: 14px; line-height: 1.6;
+}
+.kit-update-ingest-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 14px; margin-top: 14px; }
+.kit-update-ingest-btn, .kit-update-upload {
+  font-family: inherit; font-size: 13.5px; font-weight: 700; border: none; border-radius: 999px;
+  background: var(--bg); box-shadow: var(--neu-flat-sm); color: var(--accent); padding: 11px 22px;
+  cursor: pointer; position: relative;
+}
+.kit-update-ingest-btn:hover, .kit-update-upload:hover { box-shadow: var(--neu-inset-sm); }
+.kit-update-ingest-btn:disabled { opacity: .6; cursor: default; }
+.kit-update-upload input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.kit-update-ingest-link { font-size: 12.5px; color: var(--muted); text-decoration: underline; }
+
+.kit-update-rail {
+  display: flex; flex-wrap: wrap; gap: 8px; background: var(--bg); border-radius: 24px;
+  padding: 8px; box-shadow: var(--neu-flat); margin-bottom: 22px;
+}
+.kit-update-rail-tab {
+  flex: 1 1 auto; min-width: 150px; font-family: inherit; border: none; background: transparent;
+  border-radius: 18px; padding: 10px 16px; cursor: pointer; text-align: left;
+  display: flex; flex-direction: column; gap: 4px; transition: box-shadow 220ms ease;
+}
+.kit-update-rail-tab:hover { box-shadow: var(--neu-flat-sm); }
+.kit-update-rail-tab.active { box-shadow: var(--neu-inset-sm); background: rgba(108,99,255,0.08); }
+.kit-update-rail-label { font-size: 13px; font-weight: 700; color: var(--fg); }
+.kit-update-rail-status { font-size: 10.5px; font-weight: 700; letter-spacing: .04em; }
+.kit-update-rail-status.status-not_started { color: var(--muted); }
+.kit-update-rail-status.status-drafting { color: var(--tone-info-ink); }
+.kit-update-rail-status.status-awaiting_review { color: var(--tone-warning-ink); }
+.kit-update-rail-status.status-published { color: var(--tone-success-ink); }
+
+.kit-update-body { display: grid; grid-template-columns: minmax(280px, 1fr) minmax(320px, 1fr); gap: 22px; align-items: start; }
+@media (max-width: 900px) { .kit-update-body { grid-template-columns: 1fr; } }
+
+.kit-chat, .kit-update-diff-pane {
+  background: var(--bg); border-radius: 28px; box-shadow: var(--neu-flat); padding: 20px 22px;
+}
+.kit-update-diff-title { font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); margin: 0 0 14px; }
+
+.kit-chat { display: flex; flex-direction: column; height: 480px; }
+.kit-chat-messages { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding-right: 4px; }
+.kit-chat-empty { color: var(--muted); font-size: 13px; font-style: italic; }
+.kit-chat-msg { border-radius: 18px; padding: 10px 14px; max-width: 88%; box-shadow: var(--neu-flat-sm); }
+.kit-chat-msg-user { align-self: flex-end; background: rgba(108,99,255,0.10); }
+.kit-chat-msg-assistant, .kit-chat-msg-system { align-self: flex-start; }
+.kit-chat-msg-role { font-size: 10.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin-bottom: 3px; }
+.kit-chat-msg-text { font-size: 13.5px; line-height: 1.55; color: var(--fg); white-space: pre-wrap; }
+.kit-chat-thinking { color: var(--muted); font-style: italic; }
+.kit-chat-input-row { display: flex; gap: 10px; margin-top: 14px; }
+.kit-chat-input {
+  flex: 1; resize: none; height: 48px; border: none; border-radius: 16px; padding: 12px 14px;
+  background: var(--bg); box-shadow: var(--neu-inset-deep); font-family: inherit; font-size: 13.5px; color: var(--fg);
+}
+.kit-chat-input:focus { outline: none; box-shadow: var(--neu-inset-deep), 0 0 0 2px var(--accent); }
+.kit-chat-send {
+  font-family: inherit; font-size: 13px; font-weight: 700; border: none; border-radius: 16px;
+  background: var(--bg); box-shadow: var(--neu-flat-sm); color: var(--accent); padding: 0 18px; cursor: pointer;
+}
+.kit-chat-send:hover { box-shadow: var(--neu-inset-sm); }
+.kit-chat-send:disabled { opacity: .5; cursor: default; }
+
+.kit-diff-empty { color: var(--muted); font-size: 13px; font-style: italic; line-height: 1.6; }
+.kit-diff-row { border-radius: 18px; padding: 12px 14px; box-shadow: var(--neu-inset); margin-bottom: 12px; }
+.kit-diff-field { font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
+.kit-diff-values { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--fg); margin-bottom: 8px; flex-wrap: wrap; }
+.kit-diff-current { color: var(--muted); text-decoration: line-through; }
+.kit-diff-arrow { color: var(--muted); }
+.kit-diff-proposed { font-weight: 700; }
+.kit-diff-toggle { display: flex; gap: 8px; }
+.kit-diff-toggle-btn {
+  font-family: inherit; font-size: 12px; font-weight: 700; border: none; border-radius: 999px;
+  background: var(--bg); box-shadow: var(--neu-flat-sm); color: var(--muted); padding: 6px 14px; cursor: pointer;
+}
+.kit-diff-toggle-btn.accept.active { box-shadow: var(--neu-inset-sm); background: var(--tone-success-bg); color: var(--tone-success-ink); }
+.kit-diff-toggle-btn.reject.active { box-shadow: var(--neu-inset-sm); background: var(--tone-danger-bg); color: var(--tone-danger-ink); }
+.kit-diff-publish {
+  width: 100%; margin-top: 6px; font-family: inherit; font-size: 13.5px; font-weight: 700; border: none;
+  border-radius: 16px; background: var(--bg); box-shadow: var(--neu-flat-sm); color: var(--accent);
+  padding: 12px; cursor: pointer;
+}
+.kit-diff-publish:hover:not(:disabled) { box-shadow: var(--neu-inset-sm); }
+.kit-diff-publish:disabled { opacity: .5; cursor: default; }
+
+@media (max-width: 640px) {
+  .agent-library { padding: 36px 18px 60px; }
+  .agent-hero h1 { font-size: 25px; }
+  .phase-switcher { flex-wrap: wrap; border-radius: 24px; }
+}

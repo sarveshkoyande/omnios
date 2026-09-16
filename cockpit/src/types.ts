@@ -1,0 +1,191 @@
+/** Shape of `config/brand_kits.json`'s per-brand kit, as returned by
+ *  GET /api/brand-kits/{brand} (strategy/brand_kit.py). Read-only for now -- the kit is
+ *  still committed config, not an editable record; see idea 3/6 in the brand-workspace
+ *  ideation doc for what "living" would require. */
+
+export interface BrandSummary {
+  brand: string;
+  generic: string;
+  company: string;
+  therapy_area: string;
+  indication: string;
+  /** Territories this brand's kit is actually configured for -- the real gate. A brand
+   *  never lists a territory here it doesn't have content for. */
+  territories: string[];
+}
+
+export interface MessagePillar {
+  pillar: string;
+  claim: string;
+  evidence: string;
+}
+
+export interface ClinicalDataPoint {
+  study: string;
+  stat: string;
+  context: string;
+}
+
+export interface Claim {
+  id: string;
+  text: string;
+  category: string;
+  status: "draft" | "in_review" | "approved" | string;
+  risk: "Low" | "Medium" | "High" | string;
+  class: string;
+  references: string[];
+  fair_balance: string;
+  note?: string;
+}
+
+export interface Reference {
+  id: string;
+  title: string;
+  type: string;
+  key_data: string;
+  promo_eligible: boolean;
+  note?: string;
+}
+
+export interface GuardrailEntry {
+  category: string;
+  text: string;
+}
+
+export interface Guardrails {
+  dos: GuardrailEntry[];
+  donts: GuardrailEntry[];
+}
+
+export interface IdentityColor {
+  hex: string;
+  name: string;
+  use: string;
+}
+
+export interface Identity {
+  palette: IdentityColor[];
+  typography: string;
+}
+
+export interface Persona {
+  name: string;
+  who: string;
+  tier: string;
+  voice: string;
+}
+
+export interface Personas {
+  hcp: Persona[];
+  patient: Persona[];
+  payer: Persona[];
+}
+
+export interface Concept {
+  id?: string;
+  name?: string;
+  status: string;
+  tags?: string[];
+  description?: string;
+}
+
+export interface Competitor {
+  name: string;
+  threat: string;
+  detail: string;
+}
+
+export interface Component {
+  claim_links?: string[];
+  [key: string]: unknown;
+}
+
+export interface MarketShare {
+  current: string;
+  target: string;
+}
+
+/** The five brand-plan update tabs, in display order -- must match strategy/kit_chat.py's
+ *  KIT_SECTIONS keys exactly, the shared boundary between backend grounding and this UI. */
+export const KIT_UPDATE_SECTIONS = [
+  "kit-brand-details",
+  "kit-brand-persona",
+  "kit-guardrails",
+  "kit-hcp-persona",
+  "kit-hcp-segmentation",
+] as const;
+export type KitUpdateSection = (typeof KIT_UPDATE_SECTIONS)[number];
+
+export const KIT_UPDATE_SECTION_LABELS: Record<KitUpdateSection, string> = {
+  "kit-brand-details": "Brand details",
+  "kit-brand-persona": "Brand persona",
+  "kit-guardrails": "Guardrails",
+  "kit-hcp-persona": "HCP persona",
+  "kit-hcp-segmentation": "HCP segmentation",
+};
+
+export interface KitDiffFieldEntry {
+  current: unknown;
+  proposed: unknown;
+}
+
+export interface KitChatMessage {
+  role: string;
+  agent_id: string | null;
+  text: string;
+  kind: string;
+  ts: string;
+}
+
+export interface KitDraft {
+  section: KitUpdateSection;
+  status: "not_started" | "drafting" | "awaiting_review" | "published";
+  diff: Record<string, KitDiffFieldEntry>;
+  updated_at: string | null;
+  history: KitChatMessage[];
+}
+
+export interface BrandKit {
+  source_label: string;
+  source_note: string;
+  company: string;
+  generic: string;
+  therapy_area: string;
+  indication: string;
+  territories: string[];
+  /** Not present on every kit -- both are commercial-planning metadata this kit's source
+   *  document doesn't always carry. Absent rather than guessed when the kit has neither. */
+  key_objective?: string;
+  market_share?: MarketShare;
+  /** Which territory this resolved kit reflects, and whether the fields shown were
+   *  overridden with a hand-authored placeholder for that territory -- see
+   *  strategy/brand_kit.py's resolve_territory(). When true, `note` explains it. */
+  territory?: string;
+  illustrative?: boolean;
+  note?: string;
+  /** ISO timestamp of when config/brand_kits.json was last modified -- the one real
+   *  "last updated" signal that exists. Shared by every section; there is no per-section
+   *  change history yet, so this is never split into a fake per-section date. */
+  updated_at?: string;
+  fiscal_frame: string;
+  tagline: string;
+  core_claim: string;
+  positioning_statement: string;
+  message_hierarchy: MessagePillar[];
+  approved_indication: string;
+  safety_reference: string;
+  clinical_data: ClinicalDataPoint[];
+  tone_pillars: string[];
+  voice_do: string[];
+  voice_dont: string[];
+  guardrails: Guardrails;
+  concepts: Concept[];
+  message_pool: string[];
+  claims: Claim[];
+  references: Reference[];
+  components: Component[];
+  personas: Personas;
+  competitors: Competitor[];
+  care_continuum: Record<string, unknown>;
+  identity: Identity;
+}
