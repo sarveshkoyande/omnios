@@ -1,51 +1,118 @@
 /* ==================================================================================
-   Neumorphism (Soft UI) -- cool monochromatic system. Every surface is molded from the
-   same #E0E5EC clay; depth comes entirely from dual opposing shadows (light top-left,
-   dark bottom-right), never from borders or flat colour fills. Two exceptions, both
-   deliberate: (1) risk/status/coverage pills carry real semantic colour because a claim's
-   risk tier is regulatory information, not decoration -- rendered as a tinted variant of
-   the same inset pill shape, never a flat fill; (2) a brand's own identity palette swatches
-   show real hex values, which is the entire point of that section.
-   ================================================================================== */
+   Indegene DS 4.Ai -- calm, clinical, precise. One brand purple used with conviction,
+   a narrow neutral ramp, and depth from real elevation + a 1px neutral border rather
+   than the soft-clay neumorphism this page used before. Tokens below are the literal
+   values from Indegene DS 4.Ai tokens.css (see C:\Users\Admin\Downloads\Indegene DS
+   4.Ai Design System\tokens.css and INDEGENE-DS-4AI-DESIGN-GUIDELINES.md).
+
+   Every existing rule in this file still reads through the OLD variable names
+   (--bg, --fg, --muted, --accent, --neu- and --tone- prefixed names) rather than being rewritten
+   selector-by-selector -- redefining what those names resolve to is what actually
+   reskins the whole app in one pass. --neu-flat and friends now compose a 1px
+   var(--neutral-200) outline (via a zero-spread inset-free box-shadow ring, since a
+   real `border` can't be baked into a box-shadow variable) with a real
+   var(--elevation-*) shadow on top, so every card that used to be "clay extruded via
+   dual shadow" is now "white surface, bordered, elevated" -- the Indegene card
+   recipe -- with no per-selector rewrite needed. */
 :root {
-  --bg: #E0E5EC;
-  --fg: #3D4852;
-  --muted: #6B7280;
-  --accent: #6C63FF;
-  --accent-light: #8B84FF;
-  --accent-2: #38B2AC;
+  /* ---- Indegene brand / semantic / neutral tokens, verbatim ---- */
+  --primary: #5D2CC9;
+  --primary-light-background: #F5F0FF;
+  --primary-background-hover: #421F8F;
+  --primary-background-pressed: #271254;
 
-  /* Shadow colours -- rgba, never opaque hex, so they blend into the base grey. */
-  --sh-light: rgba(255, 255, 255, 0.55);
-  --sh-dark: rgba(163, 177, 198, 0.65);
+  --success-foreground: #1D5F02;
+  --success-light-background: #EAF3E6;
+  --error-foreground: #BF1724;
+  --error-light-background: #FFE8E8;
+  --warning-foreground: #946119;
+  --warning-light-background: #FFF4E1;
+  --info-foreground: #0E5FB7;
+  --info-light-background: #E1EEFB;
 
-  /* The four canonical shadow recipes, reused everywhere via var() composition. */
-  --neu-flat: 9px 9px 16px var(--sh-dark), -9px -9px 16px var(--sh-light);
-  --neu-flat-hover: 12px 12px 20px rgba(163,177,198,0.75), -12px -12px 20px rgba(255,255,255,0.65);
-  --neu-flat-sm: 5px 5px 10px var(--sh-dark), -5px -5px 10px var(--sh-light);
-  --neu-inset: inset 6px 6px 10px var(--sh-dark), inset -6px -6px 10px var(--sh-light);
-  --neu-inset-deep: inset 10px 10px 20px rgba(163,177,198,0.75), inset -10px -10px 20px rgba(255,255,255,0.65);
-  --neu-inset-sm: inset 3px 3px 6px var(--sh-dark), inset -3px -3px 6px var(--sh-light);
+  --neutral-50: #FAFAFA;
+  --neutral-100: #F2F2F2;
+  --neutral-200: #E5E5E5;
+  --neutral-300: #D1D5DB;
+  --neutral-400: #B5B3B3;
+  --neutral-500: #9A9A9C;
+  --neutral-600: #6D6E71;
+  --neutral-700: #4A4647;
+  --neutral-800: #332F30;
+  --neutral-900: #231F20;
+  --base-white: #FFFFFF;
 
-  /* Tone tints -- soft, cool-family variants so the accent colours below never read as a
-     jarring flat sticker against the grey clay; each pairs a low-saturation background
-     wash with a readable ink for WCAG AA. */
-  --tone-neutral-bg: #D7DCE3; --tone-neutral-ink: var(--muted);
-  --tone-info-bg: #DCE3F5;    --tone-info-ink: #3B4E8C;
-  --tone-success-bg: #D7EEEA; --tone-success-ink: #206657;
-  --tone-warning-bg: #F3E6D2; --tone-warning-ink: #8A5A17;
-  --tone-danger-bg: #F3DCDD;  --tone-danger-ink: #9C3B44;
+  --surface-app-shell-nav: #FBFBFB;
+  --surface-page-content: #F7F8FA;
+  --surface-app-header: #F8F8FC;
+  --surface-card-tinted: #F4F1FB;
+
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+  --radius-full: 999px;
+
+  --elevation-02: 0 1px 2px rgba(0,0,0,0.14), 0 0 2px rgba(0,0,0,0.12);
+  --elevation-04: 0 2px 4px rgba(0,0,0,0.14), 0 0 2px rgba(0,0,0,0.12);
+
+  /* ---- Old names, now resolving to the Indegene recipe above. Every selector below
+     still references --bg, --fg, --muted, --accent, and the --neu- / --tone- prefixed
+     names; only what those names MEAN changed. ---- */
+  --bg: var(--surface-app-shell-nav);
+  --fg: var(--neutral-900);
+  --muted: var(--neutral-600);
+  --accent: var(--primary);
+  --accent-light: var(--primary-background-hover);
+  --accent-2: var(--info-foreground);
+
+  --sh-light: transparent;
+  --sh-dark: var(--neutral-200);
+
+  /* Card recipe: 1px neutral border (via a zero-blur box-shadow ring, the only way to
+     fold a border into a var() a `box-shadow` property can consume) + real elevation
+     on top. Each selector's own `background: var(--bg)` still supplies the fill. */
+  --neu-flat: 0 0 0 1px var(--neutral-200), var(--elevation-02);
+  --neu-flat-hover: 0 0 0 1px var(--neutral-200), var(--elevation-04);
+  --neu-flat-sm: 0 0 0 1px var(--neutral-200), var(--elevation-02);
+  /* "Pressed/selected" reads as a primary-tinted border, not a carved-in shadow --
+     pairs with the `rgba(108,99,255,...)` -> primary-light-background swap below. */
+  --neu-inset: 0 0 0 1px var(--neutral-300);
+  --neu-inset-deep: 0 0 0 1px var(--neutral-300);
+  --neu-inset-sm: 0 0 0 1px var(--primary);
+
+  --tone-neutral-bg: var(--neutral-100); --tone-neutral-ink: var(--neutral-700);
+  --tone-info-bg: var(--info-light-background);       --tone-info-ink: var(--info-foreground);
+  --tone-success-bg: var(--success-light-background); --tone-success-ink: var(--success-foreground);
+  --tone-warning-bg: var(--warning-light-background); --tone-warning-ink: var(--warning-foreground);
+  --tone-danger-bg: var(--error-light-background);    --tone-danger-ink: var(--error-foreground);
 }
+
+/* DM Sans only -- no fallback stack, per Indegene DS 4.Ai rule 3 ("if the local
+   @font-face fails, text is intentionally invisible rather than rendering in the
+   wrong typeface"). Files copied from the design-system download into public/fonts. */
+@font-face { font-family: "DM Sans"; font-weight: 400; font-style: normal; src: url("/static/cockpit/fonts/DMSans-Regular.ttf") format("truetype"); font-display: swap; }
+@font-face { font-family: "DM Sans"; font-weight: 400; font-style: italic; src: url("/static/cockpit/fonts/DMSans-Italic.ttf") format("truetype"); font-display: swap; }
+@font-face { font-family: "DM Sans"; font-weight: 500; font-style: normal; src: url("/static/cockpit/fonts/DMSans-Medium.ttf") format("truetype"); font-display: swap; }
+@font-face { font-family: "DM Sans"; font-weight: 500; font-style: italic; src: url("/static/cockpit/fonts/DMSans-MediumItalic.ttf") format("truetype"); font-display: swap; }
+@font-face { font-family: "DM Sans"; font-weight: 600; font-style: normal; src: url("/static/cockpit/fonts/DMSans-SemiBold.ttf") format("truetype"); font-display: swap; }
+@font-face { font-family: "DM Sans"; font-weight: 600; font-style: italic; src: url("/static/cockpit/fonts/DMSans-SemiBoldItalic.ttf") format("truetype"); font-display: swap; }
+@font-face { font-family: "DM Sans"; font-weight: 700; font-style: normal; src: url("/static/cockpit/fonts/DMSans-Bold.ttf") format("truetype"); font-display: swap; }
+@font-face { font-family: "DM Sans"; font-weight: 700; font-style: italic; src: url("/static/cockpit/fonts/DMSans-BoldItalic.ttf") format("truetype"); font-display: swap; }
+@font-face { font-family: "DM Sans"; font-weight: 800; font-style: normal; src: url("/static/cockpit/fonts/DMSans-ExtraBold.ttf") format("truetype"); font-display: swap; }
 
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; margin: 0; width: 100%; text-align: left; }
 body {
-  font-family: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  font-family: "DM Sans";
   color: var(--fg);
-  background: var(--bg);
+  background: var(--surface-page-content);
 }
-h1, h2, h3 { font-family: "Plus Jakarta Sans", "DM Sans", sans-serif; letter-spacing: -0.01em; }
-:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
+h1, h2, h3 { font-family: "DM Sans"; font-weight: 600; letter-spacing: -0.01em; }
+/* The Indegene DS 4.Ai double-ring focus indicator: a white gap ring then a primary
+   ring, so it reads on any surface the focused control sits on. */
+:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--base-white), 0 0 0 4px var(--primary); border-radius: var(--radius-xs); }
 
 /* Fixed-height app shell: .app-frame never grows past the viewport, so nothing here ever
    causes page-level scroll -- .main below is the ONLY scrolling element. That's what makes
@@ -58,7 +125,7 @@ h1, h2, h3 { font-family: "Plus Jakarta Sans", "DM Sans", sans-serif; letter-spa
   padding: 14px 24px; background: var(--bg); box-shadow: var(--neu-flat-sm);
   position: sticky; top: 0; z-index: 20;
 }
-.top-bar-brand { font-family: "Plus Jakarta Sans", sans-serif; font-weight: 800; font-size: 17px; color: var(--fg); }
+.top-bar-brand { font-family: "DM Sans"; font-weight: 600; font-size: 17px; color: var(--fg); }
 .top-bar-user {
   width: 38px; height: 38px; border-radius: 50%; border: none; background: var(--bg);
   box-shadow: var(--neu-inset-deep); display: grid; place-items: center; font-size: 15px;
@@ -71,22 +138,22 @@ h1, h2, h3 { font-family: "Plus Jakarta Sans", "DM Sans", sans-serif; letter-spa
   .rail { flex: 0 0 auto; }
 }
 
-/* Rail: a single large extruded slab of the same clay the page is made of. Individual
-   items are transparent at rest (flush with the slab) and press INTO the surface -- inset
-   shadow -- when selected, the classic neumorphic "pressed tab" pattern. */
+/* App Shell Nav rail (Indegene DS 4.Ai section 12): a bordered, evenly-rounded card
+   floating over --surface-app-shell-nav, not a page-flush slab. */
 .rail {
   flex: 0 0 272px;
   background: var(--bg);
   box-shadow: var(--neu-flat);
-  border-radius: 0 32px 32px 0;
-  padding: 28px 18px;
+  border-radius: var(--radius-md);
+  margin: 12px 0 12px 12px;
+  padding: 20px 12px;
   display: flex;
   flex-direction: column;
   position: relative;
   z-index: 1;
 }
 .rail-brand {
-  font-family: "Plus Jakarta Sans", sans-serif; font-weight: 700; font-size: 16px;
+  font-family: "DM Sans"; font-weight: 700; font-size: 16px;
   color: var(--fg); margin-bottom: 26px; padding: 0 10px;
 }
 .rail-section-label {
@@ -95,13 +162,13 @@ h1, h2, h3 { font-family: "Plus Jakarta Sans", "DM Sans", sans-serif; letter-spa
 }
 .rail-item {
   display: block; width: 100%; text-align: left; background: transparent; border: none;
-  color: var(--fg); font-size: 14px; font-weight: 500; padding: 11px 14px; border-radius: 16px;
+  color: var(--fg); font-size: 14px; font-weight: 500; padding: 11px 14px; border-radius: var(--radius-sm);
   cursor: pointer; font-family: inherit; margin-bottom: 6px; min-height: 44px;
   transition: box-shadow 220ms ease, transform 220ms ease, color 220ms ease;
 }
 .rail-item:hover { box-shadow: var(--neu-flat-sm); transform: translateY(-1px); }
 .rail-item.active {
-  box-shadow: var(--neu-flat-sm); background: rgba(108,99,255,0.10);
+  box-shadow: var(--neu-flat-sm); background: var(--primary-light-background);
   color: var(--accent); font-weight: 700; transform: none;
 }
 .rail-brand-item { display: flex; flex-direction: column; gap: 2px; min-height: unset; }
@@ -114,11 +181,11 @@ h1, h2, h3 { font-family: "Plus Jakarta Sans", "DM Sans", sans-serif; letter-spa
    not as an error. Never populated with invented content. */
 .territory-row { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 14px 2px; align-items: center; }
 .territory-pill {
-  font-family: inherit; font-size: 11px; font-weight: 700; border: none; border-radius: 999px;
+  font-family: inherit; font-size: 11px; font-weight: 700; border: none; border-radius: var(--radius-full);
   padding: 4px 10px; cursor: pointer; background: var(--bg); color: var(--muted);
   box-shadow: var(--neu-flat-sm); transition: box-shadow 200ms ease, color 200ms ease;
 }
-.territory-pill.active { box-shadow: var(--neu-inset-sm); color: var(--accent); background: rgba(108,99,255,0.10); }
+.territory-pill.active { box-shadow: var(--neu-inset-sm); color: var(--accent); background: var(--primary-light-background); }
 .territory-pill.disabled {
   cursor: default; box-shadow: none; background: transparent; color: var(--muted); opacity: 0.4;
 }
@@ -135,7 +202,7 @@ h1, h2, h3 { font-family: "Plus Jakarta Sans", "DM Sans", sans-serif; letter-spa
    shadow/background of their own, just spacing and a heading. */
 .page-section { margin-bottom: 34px; }
 .page-section-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); margin-bottom: 4px; }
-.page-section-title { font-size: 22px; font-weight: 800; color: var(--fg); margin: 0 0 18px; }
+.page-section-title { font-size: 22px; font-weight: 600; color: var(--fg); margin: 0 0 18px; }
 
 /* Brand Persona table */
 .persona-table-wrap { overflow-x: auto; }
@@ -162,22 +229,22 @@ h1, h2, h3 { font-family: "Plus Jakarta Sans", "DM Sans", sans-serif; letter-spa
 .overview { margin-bottom: 28px; }
 .illustrative-banner {
   display: flex; align-items: center; gap: 10px; background: var(--tone-warning-bg);
-  color: var(--tone-warning-ink); border-radius: 16px; box-shadow: var(--neu-flat-sm);
+  color: var(--tone-warning-ink); border-radius: var(--radius-sm); box-shadow: var(--neu-flat-sm);
   padding: 12px 18px; margin-bottom: 16px; font-size: 12.5px; line-height: 1.5;
 }
 .illustrative-tag {
-  flex: 0 0 auto; font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
-  background: var(--bg); color: var(--tone-warning-ink); border-radius: 999px; padding: 3px 10px;
+  flex: 0 0 auto; font-size: 10px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
+  background: var(--bg); color: var(--tone-warning-ink); border-radius: var(--radius-full); padding: 3px 10px;
   box-shadow: var(--neu-inset-sm);
 }
 .overview-card {
-  background: var(--bg); border-radius: 32px; box-shadow: var(--neu-flat);
+  background: var(--bg); border-radius: var(--radius-md); box-shadow: var(--neu-flat);
   padding: 28px 30px; margin-bottom: 20px;
 }
 .overview-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
 .overview-top-left { min-width: 0; }
 .overview-label { font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
-.overview-brand { font-size: 32px; font-weight: 800; color: var(--fg); margin: 0 0 6px; line-height: 1.15; }
+.overview-brand { font-size: 32px; font-weight: 600; color: var(--fg); margin: 0 0 6px; line-height: 1.15; }
 .overview-tagline { font-size: 14.5px; color: var(--muted); margin: 0; }
 
 .overview-badges { flex: 0 0 auto; display: flex; align-items: center; gap: 10px; }
@@ -200,7 +267,7 @@ h1, h2, h3 { font-family: "Plus Jakarta Sans", "DM Sans", sans-serif; letter-spa
    for two real columns, never fewer than that by choice. */
 .insight-grid-2x2 { grid-template-columns: repeat(2, minmax(min(220px, 100%), 1fr)); }
 .insight-tile {
-  background: var(--bg); border-radius: 22px; box-shadow: var(--neu-flat-sm); padding: 20px 20px 18px;
+  background: var(--bg); border-radius: var(--radius-md); box-shadow: var(--neu-flat-sm); padding: 20px 20px 18px;
   transition: transform 260ms ease, box-shadow 260ms ease;
 }
 .insight-tile:hover { transform: translateY(-2px); box-shadow: var(--neu-flat); }
@@ -215,7 +282,7 @@ h1, h2, h3 { font-family: "Plus Jakarta Sans", "DM Sans", sans-serif; letter-spa
 /* Card: the base extruded unit. rounded-[32px] per the system; no border, ever -- the dual
    shadow IS the edge. */
 .panel {
-  background: var(--bg); border-radius: 32px; box-shadow: var(--neu-flat);
+  background: var(--bg); border-radius: var(--radius-md); box-shadow: var(--neu-flat);
   padding: 26px 28px; margin-bottom: 22px;
   transition: box-shadow 260ms ease, transform 260ms ease;
 }
@@ -238,7 +305,7 @@ h1, h2, h3 { font-family: "Plus Jakarta Sans", "DM Sans", sans-serif; letter-spa
 .section-meta-trigger:hover { box-shadow: var(--neu-flat); }
 .section-meta-popover {
   position: absolute; top: 34px; right: 0; z-index: 30; width: 260px;
-  background: var(--bg); border-radius: 20px; box-shadow: var(--neu-flat-hover);
+  background: var(--bg); border-radius: var(--radius-sm); box-shadow: var(--neu-flat-hover);
   padding: 16px 18px; text-align: left;
 }
 .section-meta-row { display: flex; justify-content: space-between; gap: 12px; font-size: 12.5px; margin-bottom: 8px; color: var(--fg); }
@@ -247,7 +314,7 @@ h1, h2, h3 { font-family: "Plus Jakarta Sans", "DM Sans", sans-serif; letter-spa
 .section-meta-stub { color: var(--tone-warning-ink); }
 .section-meta-update {
   margin-top: 12px; width: 100%; font-family: inherit; font-size: 12px; font-weight: 700;
-  border: none; border-radius: 999px; padding: 7px 0; cursor: pointer;
+  border: none; border-radius: var(--radius-full); padding: 7px 0; cursor: pointer;
   background: var(--bg); color: var(--accent); box-shadow: var(--neu-flat-sm);
 }
 .section-meta-update:hover { box-shadow: var(--neu-inset-sm); }
@@ -259,9 +326,9 @@ h1, h2, h3 { font-family: "Plus Jakarta Sans", "DM Sans", sans-serif; letter-spa
    overflow when the container itself is narrower than the floor (narrow panes, small
    phones) -- a fixed px floor in auto-fit/minmax has no such escape hatch. */
 .proof-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 18px; }
-.proof-tile { background: var(--bg); border-radius: 20px; box-shadow: var(--neu-flat-sm); padding: 16px 18px; }
+.proof-tile { background: var(--bg); border-radius: var(--radius-sm); box-shadow: var(--neu-flat-sm); padding: 16px 18px; }
 .proof-eyebrow { font-size: 10.5px; font-weight: 700; letter-spacing: .08em; color: var(--accent); }
-.proof-pillar { font-family: "Plus Jakarta Sans", sans-serif; font-size: 13px; font-weight: 700; color: var(--fg); margin: 6px 0 8px; }
+.proof-pillar { font-family: "DM Sans"; font-size: 13px; font-weight: 700; color: var(--fg); margin: 6px 0 8px; }
 .proof-claim { font-size: 13.5px; color: var(--muted); line-height: 1.5; }
 
 .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
@@ -269,7 +336,7 @@ h1, h2, h3 { font-family: "Plus Jakarta Sans", "DM Sans", sans-serif; letter-spa
 
 /* Info wells: carved-in surfaces for "here is a fact to read," not "here is a thing to
    press" -- inset, not extruded. */
-.info-block { border-radius: 20px; padding: 16px 18px; background: var(--bg); box-shadow: var(--neu-inset); }
+.info-block { border-radius: var(--radius-sm); padding: 16px 18px; background: var(--bg); box-shadow: var(--neu-inset); }
 .info-label { font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
 .info-warn .info-label { color: var(--tone-warning-ink); }
 .info-block p { font-size: 13.5px; line-height: 1.55; margin: 0; color: var(--fg); }
@@ -277,27 +344,27 @@ h1, h2, h3 { font-family: "Plus Jakarta Sans", "DM Sans", sans-serif; letter-spa
 .info-label-dont { color: var(--tone-danger-ink); font-weight: 700; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 10px; }
 
 .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr)); gap: 14px; }
-.stat-tile { background: var(--bg); border-radius: 18px; box-shadow: var(--neu-flat-sm); padding: 14px 16px; }
+.stat-tile { background: var(--bg); border-radius: var(--radius-sm); box-shadow: var(--neu-flat-sm); padding: 14px 16px; }
 .stat-study { font-size: 11px; font-weight: 700; color: var(--accent); letter-spacing: .04em; }
-.stat-value { font-family: "Plus Jakarta Sans", sans-serif; font-size: 21px; font-weight: 800; margin: 6px 0 2px; color: var(--fg); }
+.stat-value { font-family: "DM Sans"; font-size: 21px; font-weight: 600; margin: 6px 0 2px; color: var(--fg); }
 .stat-context { font-size: 11.5px; color: var(--muted); }
 
 .filter-row { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
 .filter-chip {
-  font-family: inherit; font-size: 12.5px; font-weight: 600; border-radius: 999px;
+  font-family: inherit; font-size: 12.5px; font-weight: 600; border-radius: var(--radius-full);
   padding: 8px 16px; border: none; background: var(--bg); box-shadow: var(--neu-flat-sm);
   color: var(--muted); cursor: pointer; min-height: 36px;
   transition: box-shadow 200ms ease, color 200ms ease, transform 200ms ease;
 }
 .filter-chip:hover { transform: translateY(-1px); }
 .filter-chip.active {
-  box-shadow: var(--neu-flat-sm); background: rgba(108,99,255,0.10);
+  box-shadow: var(--neu-flat-sm); background: var(--primary-light-background);
   color: var(--accent); transform: none;
 }
 
 .claim-list { display: flex; flex-direction: column; gap: 12px; }
 .claim-row {
-  display: flex; gap: 14px; padding: 16px 18px; border-radius: 20px;
+  display: flex; gap: 14px; padding: 16px 18px; border-radius: var(--radius-sm);
   background: var(--bg); box-shadow: var(--neu-flat-sm);
 }
 .claim-id { flex: 0 0 84px; font-family: ui-monospace, monospace; font-size: 11.5px; color: var(--muted); padding-top: 2px; }
@@ -310,7 +377,7 @@ h1, h2, h3 { font-family: "Plus Jakarta Sans", "DM Sans", sans-serif; letter-spa
    tone tint at all -- the two are visually distinct so a real risk/status signal never
    gets lost among plain reference-id chips. */
 .pill {
-  font-size: 11px; font-weight: 700; border-radius: 999px; padding: 4px 11px;
+  font-size: 11px; font-weight: 700; border-radius: var(--radius-full); padding: 4px 11px;
   box-shadow: var(--neu-flat-sm); display: inline-block;
 }
 .pill-outline { background: var(--bg); color: var(--muted); }
@@ -324,11 +391,11 @@ h1, h2, h3 { font-family: "Plus Jakarta Sans", "DM Sans", sans-serif; letter-spa
 /* No overflow:hidden here -- it used to clip the section-meta popover to the card's rounded
    corners (it renders "inside the pane" instead of floating on top). The head already has
    its own matching border-radius below, and .expandable-body doesn't need clipping either. */
-.expandable { background: var(--bg); border-radius: 32px; box-shadow: var(--neu-flat); }
+.expandable { background: var(--bg); border-radius: var(--radius-md); box-shadow: var(--neu-flat); }
 .expandable-head {
   width: 100%; display: flex; align-items: center; gap: 14px; padding: 20px 24px;
   background: none; border: none; cursor: pointer; font-family: inherit; text-align: left;
-  min-height: 44px; border-radius: 32px;
+  min-height: 44px; border-radius: var(--radius-md);
 }
 .expandable-title { display: flex; flex-direction: column; gap: 2px; flex: 1; }
 .expandable-title b { font-size: 14.5px; color: var(--fg); }
@@ -339,7 +406,7 @@ h1, h2, h3 { font-family: "Plus Jakarta Sans", "DM Sans", sans-serif; letter-spa
 
 .swatch-row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
 .swatch { width: 124px; }
-.swatch-color { width: 100%; height: 58px; border-radius: 16px; box-shadow: var(--neu-flat-sm); }
+.swatch-color { width: 100%; height: 58px; border-radius: var(--radius-sm); box-shadow: var(--neu-flat-sm); }
 .swatch-name { font-size: 12.5px; font-weight: 700; margin-top: 8px; color: var(--fg); }
 .swatch-hex { font-family: ui-monospace, monospace; font-size: 11px; color: var(--muted); }
 .swatch-use { font-size: 11px; color: var(--muted); margin-top: 2px; }
@@ -350,7 +417,7 @@ h1, h2, h3 { font-family: "Plus Jakarta Sans", "DM Sans", sans-serif; letter-spa
 
 .persona-groups { display: flex; flex-direction: column; gap: 18px; }
 .persona-group-label { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
-.persona-card { background: var(--bg); border-radius: 20px; box-shadow: var(--neu-flat-sm); padding: 14px 16px; margin-bottom: 10px; }
+.persona-card { background: var(--bg); border-radius: var(--radius-sm); box-shadow: var(--neu-flat-sm); padding: 14px 16px; margin-bottom: 10px; }
 .persona-top { display: flex; align-items: center; gap: 10px; font-size: 13.5px; color: var(--fg); }
 .persona-who { font-size: 12.5px; color: var(--muted); margin: 8px 0; line-height: 1.5; }
 .persona-voice { font-size: 12.5px; font-style: italic; color: var(--fg); margin: 0; }
@@ -362,7 +429,7 @@ h1, h2, h3 { font-family: "Plus Jakarta Sans", "DM Sans", sans-serif; letter-spa
    card, so "blocked" has a different physical feel from "here is content," not just a
    different colour. */
 .dispatch-board {
-  background: var(--bg); border-radius: 32px; box-shadow: var(--neu-flat);
+  background: var(--bg); border-radius: var(--radius-md); box-shadow: var(--neu-flat);
   margin-bottom: 26px; overflow: hidden;
 }
 .dispatch-head {
@@ -379,7 +446,7 @@ h1, h2, h3 { font-family: "Plus Jakarta Sans", "DM Sans", sans-serif; letter-spa
 .dispatch-subtitle { font-size: 12px; color: var(--muted); }
 .dispatch-rows { padding: 4px 24px 22px; display: flex; flex-direction: column; gap: 14px; }
 .dispatch-row {
-  display: flex; gap: 16px; background: var(--bg); border-radius: 20px;
+  display: flex; gap: 16px; background: var(--bg); border-radius: var(--radius-sm);
   box-shadow: var(--neu-inset); padding: 16px 18px;
 }
 .dispatch-claim-id { flex: 0 0 84px; font-family: ui-monospace, monospace; font-size: 11.5px; color: var(--muted); padding-top: 2px; }
@@ -395,18 +462,18 @@ h1, h2, h3 { font-family: "Plus Jakarta Sans", "DM Sans", sans-serif; letter-spa
 .voice-pillars { display: flex; flex-wrap: wrap; gap: 9px; margin-bottom: 16px; }
 .voice-textarea {
   width: 100%; font-family: inherit; font-size: 13.5px; padding: 16px 18px;
-  border: none; border-radius: 20px; resize: vertical; color: var(--fg);
+  border: none; border-radius: var(--radius-sm); resize: vertical; color: var(--fg);
   background: var(--bg); box-shadow: var(--neu-inset-deep);
 }
 .voice-textarea:focus { box-shadow: var(--neu-inset-deep), 0 0 0 2px var(--accent); outline: none; }
-.voice-result { margin-top: 12px; padding: 10px 16px; border-radius: 14px; font-size: 13px; font-weight: 700; box-shadow: var(--neu-flat-sm); }
+.voice-result { margin-top: 12px; padding: 10px 16px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 700; box-shadow: var(--neu-flat-sm); }
 .voice-result-pass { background: var(--tone-success-bg); color: var(--tone-success-ink); }
 .voice-result-fail { background: var(--tone-danger-bg); color: var(--tone-danger-ink); }
 .voice-preview {
-  margin-top: 12px; padding: 14px 16px; background: var(--bg); border-radius: 16px;
+  margin-top: 12px; padding: 14px 16px; background: var(--bg); border-radius: var(--radius-sm);
   box-shadow: var(--neu-inset); font-size: 13px; line-height: 1.6; white-space: pre-wrap; color: var(--fg);
 }
-.voice-preview mark { background: var(--tone-danger-bg); color: var(--tone-danger-ink); border-radius: 5px; padding: 1px 3px; }
+.voice-preview mark { background: var(--tone-danger-bg); color: var(--tone-danger-ink); border-radius: var(--radius-xs); padding: 1px 3px; }
 .voice-hit-list { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .voice-hit-list li { display: flex; align-items: center; gap: 9px; font-size: 12.5px; }
 .voice-qualifier { color: var(--muted); }
@@ -434,23 +501,23 @@ h1, h2, h3 { font-family: "Plus Jakarta Sans", "DM Sans", sans-serif; letter-spa
   color: var(--accent); margin-bottom: 12px;
 }
 .agent-hero h1 {
-  font-size: 32px; font-weight: 800; line-height: 1.25; margin: 0 0 14px; color: var(--fg);
+  font-size: 32px; font-weight: 600; line-height: 1.25; margin: 0 0 14px; color: var(--fg);
 }
 .agent-hero p { font-size: 15px; color: var(--muted); margin: 0; line-height: 1.6; }
 
 .phase-switcher {
   display: flex; justify-content: center; gap: 6px; margin: 0 auto 20px;
-  background: var(--bg); border-radius: 999px; padding: 8px; width: fit-content;
+  background: var(--bg); border-radius: var(--radius-full); padding: 8px; width: fit-content;
   box-shadow: var(--neu-flat);
 }
 .phase-tab {
   font-family: inherit; font-size: 13.5px; font-weight: 600; border: none;
-  background: transparent; color: var(--muted); padding: 11px 22px; border-radius: 999px;
+  background: transparent; color: var(--muted); padding: 11px 22px; border-radius: var(--radius-full);
   cursor: pointer; transition: box-shadow 260ms ease, color 260ms ease; min-height: 44px;
 }
 .phase-tab:hover { color: var(--fg); }
 .phase-tab.active {
-  box-shadow: var(--neu-flat-sm); background: rgba(108,99,255,0.10);
+  box-shadow: var(--neu-flat-sm); background: var(--primary-light-background);
   color: var(--phase-ink, var(--accent)); font-weight: 700;
 }
 
@@ -469,14 +536,14 @@ h1, h2, h3 { font-family: "Plus Jakarta Sans", "DM Sans", sans-serif; letter-spa
   to { opacity: 1; transform: translateY(0); }
 }
 .agent-card {
-  background: var(--bg); border-radius: 32px; padding: 24px 24px 22px;
+  background: var(--bg); border-radius: var(--radius-md); padding: 24px 24px 22px;
   box-shadow: var(--neu-flat);
   transition: transform 300ms ease-out, box-shadow 300ms ease-out;
   animation: agent-card-in 420ms ease-out backwards;
 }
 .agent-card:hover { transform: translateY(-3px); box-shadow: var(--neu-flat-hover); }
 .agent-card-top { display: flex; align-items: center; justify-content: flex-end; margin-bottom: 16px; }
-.access-pill { font-size: 10.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; border-radius: 999px; padding: 5px 12px; box-shadow: var(--neu-flat-sm); }
+.access-pill { font-size: 10.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; border-radius: var(--radius-full); padding: 5px 12px; box-shadow: var(--neu-flat-sm); }
 .access-read { background: var(--bg); color: var(--muted); }
 .access-write { background: var(--tone-warning-bg); color: var(--tone-warning-ink); }
 /* The pill IS the "read more" affordance now -- no separate button at the card's bottom.
@@ -491,28 +558,28 @@ h1, h2, h3 { font-family: "Plus Jakarta Sans", "DM Sans", sans-serif; letter-spa
 .agent-source { font-size: 10.5px; font-family: ui-monospace, monospace; color: var(--muted); padding-top: 14px; box-shadow: inset 0 1px 0 var(--sh-dark); }
 
 .agent-detail-back {
-  font-family: inherit; font-size: 13px; font-weight: 600; border: none; border-radius: 999px;
+  font-family: inherit; font-size: 13px; font-weight: 600; border: none; border-radius: var(--radius-full);
   background: var(--bg); box-shadow: var(--neu-flat-sm); color: var(--muted); padding: 10px 20px;
   cursor: pointer; margin-bottom: 28px;
 }
 .agent-detail-back:hover { box-shadow: var(--neu-inset-sm); color: var(--fg); }
 
 .agent-detail-head { max-width: 720px; margin: 0 auto 36px; text-align: center; }
-.agent-detail-head h1 { font-size: 30px; font-weight: 800; margin: 14px 0 8px; color: var(--fg); }
+.agent-detail-head h1 { font-size: 30px; font-weight: 600; margin: 14px 0 8px; color: var(--fg); }
 .agent-detail-job { font-size: 15px; font-weight: 700; color: var(--phase-ink, var(--accent)); margin: 0 0 10px; }
 .agent-detail-body { font-size: 14px; color: var(--muted); line-height: 1.6; margin: 0; }
 .agent-detail-head .agent-card-top { justify-content: center; display: flex; }
 
 .agent-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 28px; }
 @media (max-width: 760px) { .agent-detail-grid { grid-template-columns: 1fr; } }
-.agent-detail-panel { background: var(--bg); border-radius: 28px; box-shadow: var(--neu-flat); padding: 24px 26px; }
-.agent-detail-panel h2 { font-size: 14px; font-weight: 800; color: var(--fg); margin: 0 0 6px; }
+.agent-detail-panel { background: var(--bg); border-radius: var(--radius-md); box-shadow: var(--neu-flat); padding: 24px 26px; }
+.agent-detail-panel h2 { font-size: 14px; font-weight: 600; color: var(--fg); margin: 0 0 6px; }
 .agent-detail-panel-note { font-size: 11.5px; color: var(--muted); font-style: italic; line-height: 1.5; margin: 0 0 16px; }
 
 .agent-activity-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
 .agent-activity-list li {
   font-size: 13px; line-height: 1.5; color: var(--fg); background: var(--bg);
-  box-shadow: var(--neu-inset-sm); border-radius: 14px; padding: 10px 14px;
+  box-shadow: var(--neu-inset-sm); border-radius: var(--radius-sm); padding: 10px 14px;
 }
 
 .agent-source-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
@@ -534,21 +601,21 @@ h1, h2, h3 { font-family: "Plus Jakarta Sans", "DM Sans", sans-serif; letter-spa
 
 .kit-update-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
 .kit-update-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
-.kit-update-title { font-size: 26px; font-weight: 800; margin: 0; color: var(--fg); }
+.kit-update-title { font-size: 26px; font-weight: 600; margin: 0; color: var(--fg); }
 .kit-update-close {
-  font-family: inherit; font-size: 13px; font-weight: 600; border: none; border-radius: 999px;
+  font-family: inherit; font-size: 13px; font-weight: 600; border: none; border-radius: var(--radius-full);
   background: var(--bg); box-shadow: var(--neu-flat-sm); color: var(--muted); padding: 10px 20px;
   cursor: pointer; height: fit-content;
 }
 .kit-update-close:hover { box-shadow: var(--neu-inset-sm); }
 
 .kit-update-ingest {
-  background: var(--bg); border-radius: 28px; box-shadow: var(--neu-flat); padding: 24px 26px;
+  background: var(--bg); border-radius: var(--radius-md); box-shadow: var(--neu-flat); padding: 24px 26px;
   margin-bottom: 24px; color: var(--muted); font-size: 14px; line-height: 1.6;
 }
 .kit-update-ingest-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 14px; margin-top: 14px; }
 .kit-update-ingest-btn, .kit-update-upload {
-  font-family: inherit; font-size: 13.5px; font-weight: 700; border: none; border-radius: 999px;
+  font-family: inherit; font-size: 13.5px; font-weight: 700; border: none; border-radius: var(--radius-full);
   background: var(--bg); box-shadow: var(--neu-flat-sm); color: var(--accent); padding: 11px 22px;
   cursor: pointer; position: relative;
 }
@@ -558,16 +625,16 @@ h1, h2, h3 { font-family: "Plus Jakarta Sans", "DM Sans", sans-serif; letter-spa
 .kit-update-ingest-link { font-size: 12.5px; color: var(--muted); text-decoration: underline; }
 
 .kit-update-rail {
-  display: flex; flex-wrap: wrap; gap: 8px; background: var(--bg); border-radius: 24px;
+  display: flex; flex-wrap: wrap; gap: 8px; background: var(--bg); border-radius: var(--radius-md);
   padding: 8px; box-shadow: var(--neu-flat); margin-bottom: 22px;
 }
 .kit-update-rail-tab {
   flex: 1 1 auto; min-width: 150px; font-family: inherit; border: none; background: transparent;
-  border-radius: 18px; padding: 10px 16px; cursor: pointer; text-align: left;
+  border-radius: var(--radius-sm); padding: 10px 16px; cursor: pointer; text-align: left;
   display: flex; flex-direction: column; gap: 4px; transition: box-shadow 220ms ease;
 }
 .kit-update-rail-tab:hover { box-shadow: var(--neu-flat-sm); }
-.kit-update-rail-tab.active { box-shadow: var(--neu-inset-sm); background: rgba(108,99,255,0.08); }
+.kit-update-rail-tab.active { box-shadow: var(--neu-inset-sm); background: var(--primary-light-background); }
 .kit-update-rail-label { font-size: 13px; font-weight: 700; color: var(--fg); }
 .kit-update-rail-status { font-size: 10.5px; font-weight: 700; letter-spacing: .04em; }
 .kit-update-rail-status.status-not_started { color: var(--muted); }
@@ -596,7 +663,7 @@ h1, h2, h3 { font-family: "Plus Jakarta Sans", "DM Sans", sans-serif; letter-spa
 .kit-diff-review::-webkit-scrollbar, .kit-chat-messages::-webkit-scrollbar { display: none; }
 
 .kit-chat, .kit-update-diff-pane {
-  background: var(--bg); border-radius: 28px; box-shadow: var(--neu-flat); padding: 20px 22px;
+  background: var(--bg); border-radius: var(--radius-md); box-shadow: var(--neu-flat); padding: 20px 22px;
   min-height: 0;
 }
 .kit-update-diff-pane { display: flex; flex-direction: column; }
@@ -608,27 +675,27 @@ h1, h2, h3 { font-family: "Plus Jakarta Sans", "DM Sans", sans-serif; letter-spa
 .kit-chat-messages { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding-right: 4px; }
 .kit-chat-input-row { flex: 0 0 auto; }
 .kit-chat-empty { color: var(--muted); font-size: 13px; font-style: italic; }
-.kit-chat-msg { border-radius: 18px; padding: 10px 14px; max-width: 88%; box-shadow: var(--neu-flat-sm); }
-.kit-chat-msg-user { align-self: flex-end; background: rgba(108,99,255,0.10); }
+.kit-chat-msg { border-radius: var(--radius-sm); padding: 10px 14px; max-width: 88%; box-shadow: var(--neu-flat-sm); }
+.kit-chat-msg-user { align-self: flex-end; background: var(--primary-light-background); }
 .kit-chat-msg-assistant, .kit-chat-msg-system { align-self: flex-start; }
 .kit-chat-msg-role { font-size: 10.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin-bottom: 3px; }
 .kit-chat-msg-text { font-size: 13.5px; line-height: 1.55; color: var(--fg); white-space: pre-wrap; }
 .kit-chat-thinking { color: var(--muted); font-style: italic; }
 .kit-chat-input-row { display: flex; gap: 10px; margin-top: 14px; }
 .kit-chat-input {
-  flex: 1; resize: none; height: 48px; border: none; border-radius: 16px; padding: 12px 14px;
+  flex: 1; resize: none; height: 48px; border: none; border-radius: var(--radius-sm); padding: 12px 14px;
   background: var(--bg); box-shadow: var(--neu-inset-deep); font-family: inherit; font-size: 13.5px; color: var(--fg);
 }
 .kit-chat-input:focus { outline: none; box-shadow: var(--neu-inset-deep), 0 0 0 2px var(--accent); }
 .kit-chat-send {
-  font-family: inherit; font-size: 13px; font-weight: 700; border: none; border-radius: 16px;
+  font-family: inherit; font-size: 13px; font-weight: 700; border: none; border-radius: var(--radius-sm);
   background: var(--bg); box-shadow: var(--neu-flat-sm); color: var(--accent); padding: 0 18px; cursor: pointer;
 }
 .kit-chat-send:hover { box-shadow: var(--neu-inset-sm); }
 .kit-chat-send:disabled { opacity: .5; cursor: default; }
 
 .kit-diff-empty { color: var(--muted); font-size: 13px; font-style: italic; line-height: 1.6; }
-.kit-diff-row { border-radius: 18px; padding: 12px 14px; box-shadow: var(--neu-inset); margin-bottom: 12px; }
+.kit-diff-row { border-radius: var(--radius-sm); padding: 12px 14px; box-shadow: var(--neu-inset); margin-bottom: 12px; }
 .kit-diff-field { font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
 .kit-diff-values { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--fg); margin-bottom: 8px; flex-wrap: wrap; }
 .kit-diff-current { color: var(--muted); text-decoration: line-through; }
@@ -636,14 +703,14 @@ h1, h2, h3 { font-family: "Plus Jakarta Sans", "DM Sans", sans-serif; letter-spa
 .kit-diff-proposed { font-weight: 700; }
 .kit-diff-toggle { display: flex; gap: 8px; }
 .kit-diff-toggle-btn {
-  font-family: inherit; font-size: 12px; font-weight: 700; border: none; border-radius: 999px;
+  font-family: inherit; font-size: 12px; font-weight: 700; border: none; border-radius: var(--radius-full);
   background: var(--bg); box-shadow: var(--neu-flat-sm); color: var(--muted); padding: 6px 14px; cursor: pointer;
 }
 .kit-diff-toggle-btn.accept.active { box-shadow: var(--neu-inset-sm); background: var(--tone-success-bg); color: var(--tone-success-ink); }
 .kit-diff-toggle-btn.reject.active { box-shadow: var(--neu-inset-sm); background: var(--tone-danger-bg); color: var(--tone-danger-ink); }
 .kit-diff-publish {
   width: 100%; margin-top: 6px; font-family: inherit; font-size: 13.5px; font-weight: 700; border: none;
-  border-radius: 16px; background: var(--bg); box-shadow: var(--neu-flat-sm); color: var(--accent);
+  border-radius: var(--radius-sm); background: var(--bg); box-shadow: var(--neu-flat-sm); color: var(--accent);
   padding: 12px; cursor: pointer;
 }
 .kit-diff-publish:hover:not(:disabled) { box-shadow: var(--neu-inset-sm); }
@@ -652,5 +719,5 @@ h1, h2, h3 { font-family: "Plus Jakarta Sans", "DM Sans", sans-serif; letter-spa
 @media (max-width: 640px) {
   .agent-library { padding: 36px 18px 60px; }
   .agent-hero h1 { font-size: 25px; }
-  .phase-switcher { flex-wrap: wrap; border-radius: 24px; }
+  .phase-switcher { flex-wrap: wrap; border-radius: var(--radius-md); }
 }
