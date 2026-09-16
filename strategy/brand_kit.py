@@ -17,12 +17,33 @@ for None first.
 """
 from __future__ import annotations
 
+import datetime
 import functools
 import json
 import pathlib
 
 BASE_DIR = pathlib.Path(__file__).resolve().parent.parent
 KITS_JSON = BASE_DIR / "config" / "brand_kits.json"
+
+
+def kit_file_mtime() -> str | None:
+    """When config/brand_kits.json was last modified, as an ISO timestamp. This is the ONE
+    real "last updated" signal that exists anywhere in this data -- there is no per-section
+    or per-field change history yet (the kit is still committed config, not a versioned
+    record; see idea 3/6 in the brand-workspace ideation doc). Every section in the UI
+    shares this same value rather than a fabricated per-section date -- it is honest about
+    tracking the whole file, not a claim about what specifically changed."""
+    try:
+        ts = KITS_JSON.stat().st_mtime
+    except OSError:
+        return None
+    return datetime.datetime.fromtimestamp(ts, tz=datetime.timezone.utc).isoformat()
+
+# Standard regulatory-territory codes a campaign can be scoped to. This is a fixed reference
+# list, not brand data -- it lets the UI show which territories a given kit is NOT yet
+# configured for (visibly, honestly) without inventing per-territory content for any of
+# them. A kit only "operates" in the territories named in its own `territories` field.
+KNOWN_TERRITORIES = ["US", "EU", "UK", "Japan", "Canada"]
 
 
 @functools.lru_cache(maxsize=1)
@@ -35,6 +56,25 @@ def _load() -> dict:
         return {}
 
 
+def list_brands() -> list[dict]:
+    """Every brand holding a kit, as a lightweight roster for a brand switcher.
+
+    Deliberately thin -- name plus the few identifying fields a chooser needs. Callers that
+    want the whole record ask for `kit_for()`; shipping 19 claims and 13 components in a
+    list response would make the switcher pay for content it never renders."""
+    return [
+        {
+            "brand": name,
+            "generic": kit.get("generic", ""),
+            "company": kit.get("company", ""),
+            "therapy_area": kit.get("therapy_area", ""),
+            "indication": kit.get("indication", ""),
+            "territories": kit.get("territories", []),
+        }
+        for name, kit in _load().items()
+    ]
+
+
 def kit_for(brand: str) -> dict | None:
     """The kit for `brand` (case-insensitive), or None."""
     if not brand:
@@ -44,6 +84,58 @@ def kit_for(brand: str) -> dict | None:
         if name.lower() == brand.strip().lower():
             return kit
     return None
+
+
+def apply_diff(brand: str, fields: dict) -> dict:
+    """Write `fields` (field name -> new value) into `brand`'s entry in
+    config/brand_kits.json, preserving every other field and the file's existing key
+    order. This is the ONLY place that ever writes to brand_kits.json outside of manual
+    editing -- everything else in this module only reads it. Callers (kit_drafts.publish_draft)
+    are expected to have already resolved `fields` down to just the user-accepted subset
+    of an agent's proposed diff; this function does not itself gate or validate content,
+    it only applies what it's given.
+
+    Clears `_load()`'s cache so the change is visible on the next read without a server
+    restart -- the staleness gap that made an earlier session's direct-JSON-edit need a
+    manual restart to show up."""
+    if not KITS_JSON.exists():
+        raise FileNotFoundError(str(KITS_JSON))
+    data = json.loads(KITS_JSON.read_text(encoding="utf-8"))
+    kits = data.get("kits", {})
+    key = next((k for k in kits if k.lower() == brand.strip().lower()), None)
+    if key is None:
+        raise KeyError(f"no brand kit for '{brand}'")
+    kits[key].update(fields)
+    KITS_JSON.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    _load.cache_clear()
+    return kits[key]
+
+
+def is_available_in(kit: dict, territory: str) -> bool:
+    """Whether `kit` is configured to run in `territory` (case-insensitive). A campaign
+    should never be launchable in a market its brand kit hasn't been built for -- this is
+    the actual gate, not just a display label."""
+    return territory.strip().lower() in {t.lower() for t in kit.get("territories", [])}
+
+
+def resolve_territory(kit: dict, territory: str | None) -> dict:
+    """The kit as it applies to `territory`: the base kit's own fields (its content IS the
+    primary/default territory -- there is no separate "US override" entry) with any
+    `territory_content[territory]` override shallow-merged on top for every other
+    configured territory. Every override in this kit is hand-authored and marked
+    `illustrative: true` with a `note` explaining it is a placeholder -- never silently
+    invented here. Returns a copy; never mutates the cached kit. `kit_for()` itself is left
+    untouched so the plan-grounding call sites (orchestrator, studio_run) keep working
+    against the base kit exactly as before."""
+    merged = dict(kit)
+    overrides = merged.pop("territory_content", {}) or {}
+    match = next((v for k, v in overrides.items() if territory and k.lower() == territory.strip().lower()), None)
+    if match:
+        merged.update(match)
+    merged["territory"] = territory or (kit.get("territories") or [None])[0]
+    merged["illustrative"] = bool(match.get("illustrative")) if match else False
+    merged["updated_at"] = kit_file_mtime()
+    return merged
 
 
 # Key-message topic keywords -> which message-hierarchy pillar substantiates them best.
