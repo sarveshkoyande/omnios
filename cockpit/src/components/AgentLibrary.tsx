@@ -100,19 +100,18 @@ export function AgentLibrary() {
         {agents.map((a, i) => (
           <div className="agent-card" key={a.id} style={{ animationDelay: `${i * 40}ms` }}>
             <div className="agent-card-top">
-              {a.access === "write" ? (
-                <span className="access-pill access-write">Can edit</span>
-              ) : (
-                <span className="access-pill access-read">Read only</span>
-              )}
+              <button
+                type="button"
+                className={`access-pill access-pill-btn ${a.access === "write" ? "access-write" : "access-read"}`}
+                onClick={() => setSelected(a)}
+              >
+                Read more &#8594;
+              </button>
             </div>
             <h3>{a.name}</h3>
             <p className="agent-job">{a.job}</p>
             <p className="agent-detail">{a.detail}</p>
             <div className="agent-source">{a.source}</div>
-            <button type="button" className="agent-read-more" onClick={() => setSelected(a)}>
-              Read more &#8594;
-            </button>
           </div>
         ))}
       </div>
