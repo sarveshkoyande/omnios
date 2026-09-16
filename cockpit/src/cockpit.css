@@ -485,6 +485,42 @@ h1, h2, h3 { font-family: "Plus Jakarta Sans", "DM Sans", sans-serif; letter-spa
 .agent-detail { font-size: 12.5px; color: var(--muted); line-height: 1.65; margin: 0 0 16px; }
 .agent-source { font-size: 10.5px; font-family: ui-monospace, monospace; color: var(--muted); padding-top: 14px; box-shadow: inset 0 1px 0 var(--sh-dark); }
 
+.agent-read-more {
+  margin-top: 14px; width: 100%; font-family: inherit; font-size: 12.5px; font-weight: 700;
+  border: none; border-radius: 14px; background: var(--bg); box-shadow: var(--neu-flat-sm);
+  color: var(--phase-ink, var(--accent)); padding: 10px; cursor: pointer;
+}
+.agent-read-more:hover { box-shadow: var(--neu-inset-sm); }
+
+.agent-detail-back {
+  font-family: inherit; font-size: 13px; font-weight: 600; border: none; border-radius: 999px;
+  background: var(--bg); box-shadow: var(--neu-flat-sm); color: var(--muted); padding: 10px 20px;
+  cursor: pointer; margin-bottom: 28px;
+}
+.agent-detail-back:hover { box-shadow: var(--neu-inset-sm); color: var(--fg); }
+
+.agent-detail-head { max-width: 720px; margin: 0 auto 36px; text-align: center; }
+.agent-detail-head h1 { font-size: 30px; font-weight: 800; margin: 14px 0 8px; color: var(--fg); }
+.agent-detail-job { font-size: 15px; font-weight: 700; color: var(--phase-ink, var(--accent)); margin: 0 0 10px; }
+.agent-detail-body { font-size: 14px; color: var(--muted); line-height: 1.6; margin: 0; }
+.agent-detail-head .agent-card-top { justify-content: center; display: flex; }
+
+.agent-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 28px; }
+@media (max-width: 760px) { .agent-detail-grid { grid-template-columns: 1fr; } }
+.agent-detail-panel { background: var(--bg); border-radius: 28px; box-shadow: var(--neu-flat); padding: 24px 26px; }
+.agent-detail-panel h2 { font-size: 14px; font-weight: 800; color: var(--fg); margin: 0 0 6px; }
+.agent-detail-panel-note { font-size: 11.5px; color: var(--muted); font-style: italic; line-height: 1.5; margin: 0 0 16px; }
+
+.agent-activity-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.agent-activity-list li {
+  font-size: 13px; line-height: 1.5; color: var(--fg); background: var(--bg);
+  box-shadow: var(--neu-inset-sm); border-radius: 14px; padding: 10px 14px;
+}
+
+.agent-source-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.agent-source-label { font-size: 12.5px; font-weight: 700; color: var(--phase-ink, var(--accent)); margin-bottom: 3px; }
+.agent-source-detail { font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+
 /* ==================================================================================
    Brand-plan update screen -- five per-section tabs, each its own persisted chat +
    diff review. Same neumorphic system as the rest of the app; the tab rail reuses the
