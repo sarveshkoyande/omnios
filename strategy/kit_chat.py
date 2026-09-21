@@ -34,7 +34,8 @@ KIT_SECTIONS: dict[str, tuple[str, list[str]]] = {
                            ["indication", "fiscal_frame", "key_objective", "market_share",
                             "tagline", "core_claim", "positioning_statement"]),
     "kit-brand-persona": ("Brand Persona Agent",
-                           ["tone_pillars", "voice_do", "voice_dont", "message_hierarchy"]),
+                           ["tone_pillars", "voice_do", "voice_dont", "message_hierarchy",
+                            "brand_personification"]),
     "kit-guardrails": ("Guardrails Agent", ["guardrails"]),
     "kit-hcp-persona": ("HCP Persona Agent", ["personas"]),
     "kit-hcp-segmentation": ("HCP Segmentation Agent", ["personas", "competitors"]),
@@ -58,6 +59,38 @@ Reply with ONLY one raw JSON object, no markdown fences, no prose outside it:
 If nothing in the document supports a change to any of your fields, return an empty "diff"
 object and say so plainly in "reply" -- never fabricate a field to have something to show."""
 
+# Per-section addendum to _SYSTEM, appended only for the two sections this generates
+# marketer-depth prose/structured content for -- every other section's prompt is
+# byte-identical to before this dict existed (empty string, no change). A prose field
+# is the highest-risk surface for a model to pad with generic filler, so both entries
+# repeat the no-fabrication rule from _SYSTEM in their own terms.
+_SECTION_GUIDANCE: dict[str, str] = {
+    "kit-hcp-persona": """
+
+For "personas" specifically: profile each HCP in personas.hcp the way a pharma
+marketing team actually profiles one -- not just name/who/tier/voice. Where the
+document text supports it, also propose per-HCP: practice_setting (setting, patient
+volume, whatever is actually stated), goals (what they're trying to achieve for
+patients), barriers (what gets in the way today), channel_preference (how they prefer
+to be reached), objections (real reservations about the brand or therapy class), and
+message_resonance (which message-hierarchy pillar lands best, and why). Also propose a
+narrative: 2-4 sentences of prose describing this HCP the way a marketer writes a
+persona bio -- not a restatement of the structured fields, actual connected prose.
+Leave any of these sub-fields off a persona entirely when the document doesn't support
+it for that specific HCP -- do not invent a generic-sounding goal or barrier just to
+fill the shape. A missing sub-field is correct; a fabricated one is not.""",
+    "kit-brand-persona": """
+
+For "brand_personification" specifically: describe this brand as if it were a person,
+grounded in its existing tone_pillars/voice_do/voice_dont and whatever the ingested
+document adds. Propose archetype (a short label, e.g. "The Trusted Expert"), traits (3-5
+personality adjectives or short phrases), and narrative (2-4 sentences of prose painting
+the brand as a person -- not a restatement of the tone pillars as a list). Same rule as
+everywhere else: only propose this field when the brand's actual voice/tone material
+supports a specific characterization -- a generic "confident and caring" archetype that
+could describe any brand is not grounded, it's filler.""",
+}
+
 
 def _strip_fence(text: str) -> str:
     text = (text or "").strip()
@@ -76,7 +109,14 @@ def _parse_envelope(text: str) -> dict:
         start, end = cleaned.find("{"), cleaned.rfind("}")
         if start != -1 and end > start:
             cleaned = cleaned[start:end + 1]
-    return json.loads(cleaned)
+    # strict=False: the model asked for multi-sentence "narrative" prose (U3's persona
+    # depth) reliably emits a literal newline inside a JSON string value rather than
+    # the escaped \n strict JSON requires -- confirmed by reproducing "Unterminated
+    # string"/"Expecting property name" failures on every retry attempt against
+    # otherwise well-formed output. strict=False accepts literal control characters
+    # inside strings (the one thing wrong with this output) without loosening any other
+    # part of JSON's grammar.
+    return json.loads(cleaned, strict=False)
 
 
 def _short_error(e: Exception) -> str:
@@ -112,7 +152,7 @@ def _build_diff(current: dict, proposed: dict, allowed_fields: list[str]) -> dic
 
 def _grounding_prompt(kit: dict, section: str, pdf_text: str, convo: str, user_message: str) -> tuple[str, str, list[str]]:
     agent_name, fields = KIT_SECTIONS[section]
-    system = _SYSTEM.format(agent_name=agent_name, fields=", ".join(fields))
+    system = _SYSTEM.format(agent_name=agent_name, fields=", ".join(fields)) + _SECTION_GUIDANCE.get(section, "")
     current = _current_values(kit, fields)
     user_payload = (
         f"Current values for your fields:\n{json.dumps(current, indent=2)}\n\n"
@@ -124,11 +164,33 @@ def _grounding_prompt(kit: dict, section: str, pdf_text: str, convo: str, user_m
 
 
 def _call_llm(system: str, user_payload: str) -> dict:
+    """One turn, with one retry on malformed JSON -- same pattern as tab_chat.py's
+    operations agent. The richer HCP/Brand persona payloads (nested arrays, prose
+    narrative fields) give the model more surface area to produce invalid JSON on
+    (an unescaped quote inside a narrative sentence, a dropped comma) than the
+    original short-field sections did, so a bare first-try parse is no longer
+    reliable enough for those two sections specifically -- but the retry is generic
+    and helps every section equally."""
     client = conversation_llm._get_client()
-    resp = client.messages.create(model=conversation_llm.MODEL, max_tokens=2000,
-                                   system=system, messages=[{"role": "user", "content": user_payload}])
-    text = next((b.text for b in resp.content if b.type == "text"), "")
-    return _parse_envelope(text)
+
+    def _call(extra: str = "") -> dict:
+        # 2000 was too small once the persona sections asked for prose + multiple
+        # structured sub-fields: the Gemini path is a reasoning model, and max_tokens
+        # here caps reasoning tokens AND the visible JSON output together -- a
+        # reproduced failure showed ~1400 of 2000 tokens spent on internal reasoning
+        # before the model even started the JSON, truncating the response mid-string
+        # every time. 6000 leaves enough headroom for both on the richest section.
+        resp = client.messages.create(model=conversation_llm.MODEL, max_tokens=6000,
+                                       system=system, messages=[{"role": "user", "content": user_payload + extra}])
+        text = next((b.text for b in resp.content if b.type == "text"), "")
+        return _parse_envelope(text)
+
+    try:
+        return _call()
+    except (ValueError, json.JSONDecodeError):
+        return _call("\n\nYour previous response was not valid JSON. Return only one raw "
+                      "JSON object with exactly two keys, \"reply\" and \"diff\" -- no markdown "
+                      "fences, no prose outside the object, every string properly escaped.")
 
 
 def kickoff(project_id: str, brand: str, section: str, pdf_text: str) -> dict:
