@@ -78,7 +78,16 @@ narrative: 2-4 sentences of prose describing this HCP the way a marketer writes 
 persona bio -- not a restatement of the structured fields, actual connected prose.
 Leave any of these sub-fields off a persona entirely when the document doesn't support
 it for that specific HCP -- do not invent a generic-sounding goal or barrier just to
-fill the shape. A missing sub-field is correct; a fabricated one is not.""",
+fill the shape. A missing sub-field is correct; a fabricated one is not.
+
+CRITICAL: "personas" is one whole-object field -- your proposed "personas" value is
+NOT merged with the current one, it REPLACES it entirely. Your proposed personas.hcp
+array MUST include every persona from the CURRENT value, unchanged, except the one(s)
+the document text actually gives you new information about. Never drop, omit, or
+silently replace a persona the document didn't mention. Similarly, always include the
+current personas.patient and personas.payer arrays unchanged unless the document
+specifically supports a change to one of them. Dropping an untouched persona is data
+loss, not an update -- treat it as seriously as fabricating one.""",
     "kit-brand-persona": """
 
 For "brand_personification" specifically: describe this brand as if it were a person,
@@ -89,6 +98,17 @@ the brand as a person -- not a restatement of the tone pillars as a list). Same 
 everywhere else: only propose this field when the brand's actual voice/tone material
 supports a specific characterization -- a generic "confident and caring" archetype that
 could describe any brand is not grounded, it's filler.""",
+    # kit-hcp-segmentation also owns "personas" (for patient/payer) -- same
+    # whole-object-replace hazard as kit-hcp-persona above, discovered while verifying
+    # that section's new guidance: pre-existing risk, not introduced by this plan, but
+    # cheap to close in the same place with the same one clause.
+    "kit-hcp-segmentation": """
+
+CRITICAL: "personas" is one whole-object field -- your proposed value REPLACES the
+current one entirely, it is not merged. Always include personas.hcp unchanged unless
+the document specifically supports a change to it, and likewise for whichever of
+personas.patient/personas.payer you are not actively updating. Never drop an untouched
+persona -- that is data loss, not an update.""",
 }
 
 

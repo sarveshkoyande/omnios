@@ -1,6 +1,43 @@
-import type { BrandKit, KitUpdateSection } from "../types";
+import type { BrandKit, KitUpdateSection, Persona } from "../types";
 import { Expandable } from "./BrandWorkspace";
 import { Icon } from "./Icon";
+
+function joinField(v: string | string[] | undefined): string | null {
+  if (!v) return null;
+  return Array.isArray(v) ? v.join(", ") : v;
+}
+
+/** The marketer-depth fields (U1) -- all optional, rendered only when a field is
+ *  actually present so a persona that hasn't been through the generation flow yet
+ *  looks exactly like it did before this feature existed. */
+function PersonaDetail({ p }: { p: Persona }) {
+  const rows: [string, string | null][] = [
+    ["Practice", p.practice_setting ?? null],
+    ["Goals", joinField(p.goals)],
+    ["Barriers", joinField(p.barriers)],
+    ["Prefers", p.channel_preference ?? null],
+    ["Objections", joinField(p.objections)],
+    ["Message that lands", p.message_resonance ?? null],
+  ].filter(([, v]) => v !== null) as [string, string][];
+
+  if (!p.narrative && rows.length === 0) return null;
+
+  return (
+    <div className="persona-detail">
+      {p.narrative && <p className="persona-narrative">{p.narrative}</p>}
+      {rows.length > 0 && (
+        <dl className="persona-detail-grid">
+          {rows.map(([label, value]) => (
+            <div key={label}>
+              <dt>{label}</dt>
+              <dd>{value}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+    </div>
+  );
+}
 
 /** HCP Intelligence -- four subsections. Only two are groundable from this kit today:
  *  Personas (kit.personas.hcp, real) and Needs (each persona's own `voice` quote, which
@@ -29,6 +66,7 @@ export function HcpIntelligence({ kit, onUpdate }: {
               </div>
               <p className="persona-who">{p.who}</p>
               <p className="persona-voice">&ldquo;{p.voice}&rdquo;</p>
+              <PersonaDetail p={p} />
             </div>
           ))}
         </div>
