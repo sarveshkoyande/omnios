@@ -111,6 +111,69 @@ def apply_diff(brand: str, fields: dict) -> dict:
     return kits[key]
 
 
+def create_brand(brand: str) -> dict:
+    """Add a brand-new, empty-but-valid kit to config/brand_kits.json and return it.
+
+    Every field the cockpit's BrandKit type declares as required is present with an
+    honest empty value (empty string/array/object) rather than a placeholder-looking
+    default -- the UI's own "Not captured" / "Not available in this kit" treatment
+    already handles rendering an empty field correctly, so a brand-new kit looks like
+    every other kit's honest-gap state from the moment it's created, not like it's
+    missing something the loader forgot to fill in.
+
+    `territories` defaults to ["US"] (not empty) specifically so the cockpit's
+    territory-gated kit fetch (`getBrandKit(brand, territory)`) has a market to resolve
+    against immediately -- an empty territories list would leave the new brand's
+    workspace view stuck on "Loading..." with nothing to select.
+
+    Raises ValueError if the name is blank, or KeyError if a kit with this name
+    (case-insensitively) already exists."""
+    name = brand.strip()
+    if not name:
+        raise ValueError("brand name is required")
+    if not KITS_JSON.exists():
+        raise FileNotFoundError(str(KITS_JSON))
+    data = json.loads(KITS_JSON.read_text(encoding="utf-8"))
+    kits = data.setdefault("kits", {})
+    if any(k.lower() == name.lower() for k in kits):
+        raise KeyError(f"a brand kit named '{name}' already exists")
+
+    skeleton = {
+        "source_label": f"{name} (new, not yet set up)",
+        "source_note": "New brand -- created via the cockpit's + Brand flow. No content ingested yet.",
+        "company": "",
+        "generic": "",
+        "therapy_area": "",
+        "indication": "",
+        "territories": ["US"],
+        "fiscal_frame": "",
+        "tagline": "",
+        "core_claim": "",
+        "positioning_statement": "",
+        "message_hierarchy": [],
+        "approved_indication": "",
+        "safety_reference": "",
+        "clinical_data": [],
+        "tone_pillars": [],
+        "voice_do": [],
+        "voice_dont": [],
+        "guardrails": {"dos": [], "donts": []},
+        "concepts": [],
+        "message_pool": [],
+        "claims": [],
+        "references": [],
+        "components": [],
+        "personas": {"hcp": [], "patient": [], "payer": []},
+        "competitors": [],
+        "care_continuum": {},
+        "identity": {"palette": [], "typography": ""},
+    }
+    kits[name] = skeleton
+    KITS_JSON.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    _load.cache_clear()
+    return skeleton
+
+
 def is_available_in(kit: dict, territory: str) -> bool:
     """Whether `kit` is configured to run in `territory` (case-insensitive). A campaign
     should never be launchable in a market its brand kit hasn't been built for -- this is

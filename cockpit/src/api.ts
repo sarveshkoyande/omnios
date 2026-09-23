@@ -12,7 +12,12 @@ async function postJSON<T>(url: string, body: unknown): Promise<T> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body ?? {}),
   });
-  if (!res.ok) throw new Error(`POST ${url} -> ${res.status}`);
+  if (!res.ok) {
+    // FastAPI's HTTPException body is {"detail": "<message>"} -- surface that directly
+    // when present (e.g. createBrand's "already exists") instead of a bare status code.
+    const detail = await res.json().catch(() => null);
+    throw new Error(typeof detail?.detail === "string" ? detail.detail : `POST ${url} -> ${res.status}`);
+  }
   return res.json();
 }
 
@@ -25,6 +30,13 @@ function projectIdFor(brand: string): string {
 
 export function listBrands(): Promise<{ brands: BrandSummary[]; known_territories: string[] }> {
   return getJSON("/api/brand-kits");
+}
+
+/** The "+" next to Brands in the rail -- creates a new, empty-but-valid brand kit so a
+ *  brand-new brand can go straight into the guided kit-update flow. Throws (with the
+ *  server's message) on a blank name or a name that's already taken. */
+export function createBrand(name: string): Promise<{ brand: string; kit: BrandKit }> {
+  return postJSON("/api/brand-kits", { brand: name });
 }
 
 /** `territory` is the real gate, not a display filter -- the server 404s if this brand

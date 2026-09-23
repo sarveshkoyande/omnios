@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getBrandKit, listBrands } from "./api";
+import { createBrand, getBrandKit, listBrands } from "./api";
 import type { BrandKit, BrandSummary, KitUpdateSection } from "./types";
 import { BrandWorkspace } from "./components/BrandWorkspace";
 import { AgentLibrary } from "./components/AgentLibrary";
@@ -54,6 +54,28 @@ export default function App() {
     setView("kit-update");
   };
 
+  /** The "+" next to Brands: sets up a brand-new brand and takes you straight into the
+   *  guided update flow (kit-brand-details is the natural starting tab for a kit that
+   *  has nothing in it yet) instead of a blank workspace view. window.prompt is a
+   *  deliberately minimal first cut for naming the brand -- a real modal is an easy
+   *  upgrade later if this affordance earns one. */
+  const addBrand = async () => {
+    const name = window.prompt("Name the new brand:");
+    if (!name || !name.trim()) return;
+    try {
+      await createBrand(name);
+      const r = await listBrands();
+      setBrands(r.brands);
+      setKnownTerritories(r.known_territories);
+      setSelected(name.trim());
+      setTerritory("US");
+      setKitUpdateSection("kit-brand-details");
+      setView("kit-update");
+    } catch (e) {
+      window.alert(String(e instanceof Error ? e.message : e));
+    }
+  };
+
   return (
     <div className="app-frame">
       <header className="top-bar">
@@ -83,7 +105,12 @@ export default function App() {
 
         {/* Persistent across every view, including the kit-update ("agent") screen --
             the brand switcher is app-level context, not workspace-view-specific chrome. */}
-        <div className="rail-section-label" style={{ marginTop: 24 }}>Brands</div>
+        <div className="rail-section-row" style={{ marginTop: 24 }}>
+          <span className="rail-section-label" style={{ marginTop: 0 }}>Brands</span>
+          <button type="button" className="rail-add-brand" title="Set up a new brand" aria-label="Set up a new brand" onClick={addBrand}>
+            <Icon name="plus" size={14} />
+          </button>
+        </div>
         {brands?.map((b) => {
           const isSelected = selected === b.brand;
           const activeTerritory = isSelected ? territory : b.territories[0];

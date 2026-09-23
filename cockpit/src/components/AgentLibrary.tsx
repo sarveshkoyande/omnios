@@ -105,7 +105,6 @@ export function AgentLibrary() {
             <h3>{a.name}</h3>
             <p className="agent-job">{a.job}</p>
             <p className="agent-detail">{a.detail}</p>
-            <div className="agent-source">{a.source}</div>
           </div>
         ))}
       </div>

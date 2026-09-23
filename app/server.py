@@ -812,6 +812,21 @@ def api_brand_kits():
     return {"brands": brand_kit.list_brands(), "known_territories": brand_kit.KNOWN_TERRITORIES}
 
 
+@app.post("/api/brand-kits")
+def api_create_brand_kit(payload: dict):
+    """Creates a new, empty-but-valid brand kit (the "+" next to Brands in the rail) --
+    the entry point that lets a brand-new brand go straight into the guided kit-update
+    flow instead of needing a hand-authored config/brand_kits.json entry first."""
+    name = (payload or {}).get("brand", "")
+    try:
+        kit = brand_kit.create_brand(name)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    except KeyError as e:
+        raise HTTPException(409, str(e))
+    return {"brand": name.strip(), "kit": kit}
+
+
 @app.get("/api/brand-kits/{brand}")
 def api_brand_kit(brand: str, territory: str | None = None):
     """One brand's full kit: story, messages, claims, references, clinical data, guardrails,
