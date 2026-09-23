@@ -18,7 +18,11 @@ import time
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from paths import data_path  # noqa: E402
 import db  # noqa: E402  (dual-dialect SQLite/Postgres connection factory)
-import brand_kit  # noqa: E402
+# Package-qualified, not a flat `import brand_kit` -- see strategy/kit_chat.py's import
+# comment for why: publish_draft()'s apply_diff() call needs to invalidate the SAME
+# `_load()` cache app/server.py reads from, or a publish looks like it silently didn't
+# take until the process restarts.
+from strategy import brand_kit  # noqa: E402
 
 DB_PATH = data_path("kit_drafts.db")
 

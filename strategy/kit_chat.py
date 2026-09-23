@@ -23,9 +23,17 @@ import pathlib
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-import brand_kit  # noqa: E402
 import conversation_llm  # noqa: E402
 import kit_drafts  # noqa: E402
+# Package-qualified (not the flat `import brand_kit` every other sibling here uses) so this
+# shares the exact same module object -- and the same `_load()` lru_cache -- as
+# app/server.py's `from strategy import brand_kit`. A flat import here would resolve to a
+# SEPARATE module instance under sys.modules['brand_kit'] (vs. server.py's
+# sys.modules['strategy.brand_kit']): server.py's create_brand() clears only its own
+# instance's cache, so kickoff()'s kit_for() would keep reading a stale, pre-creation kits
+# dict for the rest of the process's life -- reproduced as every New Brand setup's kickoff
+# failing with "No brand kit found for '<brand>'" even though the brand was just created.
+from strategy import brand_kit  # noqa: E402
 
 # section -> (agent label, BrandKit field names this section owns). This table is the
 # single boundary the grounding functions and the frontend diff UI both read from.
