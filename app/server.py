@@ -812,19 +812,47 @@ def api_brand_kits():
     return {"brands": brand_kit.list_brands(), "known_territories": brand_kit.KNOWN_TERRITORIES}
 
 
-@app.post("/api/brand-kits")
-def api_create_brand_kit(payload: dict):
-    """Creates a new, empty-but-valid brand kit (the "+" next to Brands in the rail) --
-    the entry point that lets a brand-new brand go straight into the guided kit-update
-    flow instead of needing a hand-authored config/brand_kits.json entry first."""
-    name = (payload or {}).get("brand", "")
+@app.post("/api/brand-kits/infer-name")
+async def api_infer_brand_name(file: UploadFile = File(...)):
+    """New Brand setup, step 1: read the uploaded brand-plan document and propose the
+    brand name from it -- the document already states it, so the user shouldn't have to
+    type it blind before they've even shown the app what brand this is. Returns "" (not
+    an error) when the LLM is unavailable or the document genuinely doesn't name a
+    brand; the frontend falls back to letting the user type/edit the name themselves,
+    same never-block contract as every other LLM-backed step in this flow."""
+    content = await file.read()
     try:
-        kit = brand_kit.create_brand(name)
+        text = extract_text(file.filename or "brand-plan.pdf", content)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    return {"name": brand_kit.infer_brand_name(text)}
+
+
+@app.post("/api/brand-kits/setup")
+async def api_setup_brand(file: UploadFile = File(...), name: str = Form(...), territory: str = Form(...)):
+    """New Brand setup, step 2 (final): creates the brand kit scoped to the user's
+    confirmed territory, then immediately kicks off the same 5-section concurrent
+    orchestrator /ingest already uses, seeding every kit-update tab's first draft from
+    the same document in one step -- the user lands on the guided screen with drafts
+    already waiting, not an empty shell."""
+    content = await file.read()
+    try:
+        text = extract_text(file.filename or "brand-plan.pdf", content)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    try:
+        brand_kit.create_brand(name, territories=[territory])
     except ValueError as e:
         raise HTTPException(400, str(e))
     except KeyError as e:
         raise HTTPException(409, str(e))
-    return {"brand": name.strip(), "kit": kit}
+
+    brand = name.strip()
+    results = await kit_chat.kickoff_all(brand, brand, text)
+    for r in results:
+        stage = _kit_chat_stage(brand, r["section"])
+        tab_chat.append(brand, stage, "assistant", r["section"], r.get("reply", ""), kind="action")
+    return {"brand": brand, "sections": results}
 
 
 @app.get("/api/brand-kits/{brand}")

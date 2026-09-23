@@ -32,11 +32,32 @@ export function listBrands(): Promise<{ brands: BrandSummary[]; known_territorie
   return getJSON("/api/brand-kits");
 }
 
-/** The "+" next to Brands in the rail -- creates a new, empty-but-valid brand kit so a
- *  brand-new brand can go straight into the guided kit-update flow. Throws (with the
- *  server's message) on a blank name or a name that's already taken. */
-export function createBrand(name: string): Promise<{ brand: string; kit: BrandKit }> {
-  return postJSON("/api/brand-kits", { brand: name });
+/** New Brand setup, step 1: upload a brand-plan document and let the agent read the
+ *  brand name off it instead of asking the user to type it blind. Returns "" (not an
+ *  error) when the LLM can't determine a name -- the caller falls back to a manual
+ *  text field. */
+export async function inferBrandName(file: File): Promise<{ name: string }> {
+  const form = new FormData();
+  form.set("file", file);
+  const res = await fetch("/api/brand-kits/infer-name", { method: "POST", body: form });
+  if (!res.ok) throw new Error(`infer-name -> ${res.status}`);
+  return res.json();
+}
+
+/** New Brand setup, step 2 (final): creates the brand scoped to the confirmed
+ *  territory and immediately ingests the same document against all 5 kit-update
+ *  sections, so the guided screen the user lands on already has drafts waiting. */
+export async function setupBrand(file: File, name: string, territory: string): Promise<{ brand: string; sections: KitDraft[] }> {
+  const form = new FormData();
+  form.set("file", file);
+  form.set("name", name);
+  form.set("territory", territory);
+  const res = await fetch("/api/brand-kits/setup", { method: "POST", body: form });
+  if (!res.ok) {
+    const detail = await res.json().catch(() => null);
+    throw new Error(typeof detail?.detail === "string" ? detail.detail : `setup -> ${res.status}`);
+  }
+  return res.json();
 }
 
 /** `territory` is the real gate, not a display filter -- the server 404s if this brand

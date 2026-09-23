@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
-import { createBrand, getBrandKit, listBrands } from "./api";
+import { getBrandKit, listBrands } from "./api";
 import type { BrandKit, BrandSummary, KitUpdateSection } from "./types";
 import { BrandWorkspace } from "./components/BrandWorkspace";
 import { AgentLibrary } from "./components/AgentLibrary";
 import { KitUpdateScreen } from "./components/KitUpdateScreen";
+import { NewBrandSetup } from "./components/NewBrandSetup";
 import { Icon } from "./components/Icon";
 import "./cockpit.css";
 
-type View = "workspace" | "agents" | "kit-update";
+type View = "workspace" | "agents" | "kit-update" | "new-brand";
 
 export default function App() {
   const [view, setView] = useState<View>("workspace");
@@ -54,26 +55,17 @@ export default function App() {
     setView("kit-update");
   };
 
-  /** The "+" next to Brands: sets up a brand-new brand and takes you straight into the
-   *  guided update flow (kit-brand-details is the natural starting tab for a kit that
-   *  has nothing in it yet) instead of a blank workspace view. window.prompt is a
-   *  deliberately minimal first cut for naming the brand -- a real modal is an easy
-   *  upgrade later if this affordance earns one. */
-  const addBrand = async () => {
-    const name = window.prompt("Name the new brand:");
-    if (!name || !name.trim()) return;
-    try {
-      await createBrand(name);
-      const r = await listBrands();
-      setBrands(r.brands);
-      setKnownTerritories(r.known_territories);
-      setSelected(name.trim());
-      setTerritory("US");
-      setKitUpdateSection("kit-brand-details");
-      setView("kit-update");
-    } catch (e) {
-      window.alert(String(e instanceof Error ? e.message : e));
-    }
+  /** New Brand setup finished: refresh the brand list so the rail picks it up, select
+   *  it, and land on the guided kit-update screen (kit-brand-details -- the natural
+   *  starting tab) where the drafts setupBrand() already seeded are waiting. */
+  const onNewBrandComplete = async (brand: string) => {
+    const r = await listBrands();
+    setBrands(r.brands);
+    setKnownTerritories(r.known_territories);
+    setSelected(brand);
+    setTerritory(r.brands.find((b) => b.brand === brand)?.territories[0] ?? null);
+    setKitUpdateSection("kit-brand-details");
+    setView("kit-update");
   };
 
   return (
@@ -107,7 +99,7 @@ export default function App() {
             the brand switcher is app-level context, not workspace-view-specific chrome. */}
         <div className="rail-section-row" style={{ marginTop: 24 }}>
           <span className="rail-section-label" style={{ marginTop: 0 }}>Brands</span>
-          <button type="button" className="rail-add-brand" title="Set up a new brand" aria-label="Set up a new brand" onClick={addBrand}>
+          <button type="button" className="rail-add-brand" title="Set up a new brand" aria-label="Set up a new brand" onClick={() => setView("new-brand")}>
             <Icon name="plus" size={14} />
           </button>
         </div>
@@ -153,6 +145,13 @@ export default function App() {
 
       <main className="main">
         {view === "agents" && <AgentLibrary />}
+        {view === "new-brand" && (
+          <NewBrandSetup
+            knownTerritories={knownTerritories}
+            onComplete={onNewBrandComplete}
+            onCancel={() => setView("workspace")}
+          />
+        )}
         {view === "workspace" && (
           <>
             {error && <div className="error-banner">Couldn't load brand data: {error}</div>}

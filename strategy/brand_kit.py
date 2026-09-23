@@ -21,6 +21,7 @@ import datetime
 import functools
 import json
 import pathlib
+import sys
 
 BASE_DIR = pathlib.Path(__file__).resolve().parent.parent
 KITS_JSON = BASE_DIR / "config" / "brand_kits.json"
@@ -111,7 +112,7 @@ def apply_diff(brand: str, fields: dict) -> dict:
     return kits[key]
 
 
-def create_brand(brand: str) -> dict:
+def create_brand(brand: str, territories: list[str] | None = None) -> dict:
     """Add a brand-new, empty-but-valid kit to config/brand_kits.json and return it.
 
     Every field the cockpit's BrandKit type declares as required is present with an
@@ -121,10 +122,12 @@ def create_brand(brand: str) -> dict:
     every other kit's honest-gap state from the moment it's created, not like it's
     missing something the loader forgot to fill in.
 
-    `territories` defaults to ["US"] (not empty) specifically so the cockpit's
-    territory-gated kit fetch (`getBrandKit(brand, territory)`) has a market to resolve
-    against immediately -- an empty territories list would leave the new brand's
-    workspace view stuck on "Loading..." with nothing to select.
+    `territories` defaults to ["US"] (not empty, and not left for the caller to forget)
+    specifically so the cockpit's territory-gated kit fetch (`getBrandKit(brand,
+    territory)`) has a market to resolve against immediately -- an empty territories
+    list would leave the new brand's workspace view stuck on "Loading..." with nothing
+    to select. The New Brand setup flow (R2) always passes the user's confirmed
+    territory explicitly; the default only covers other callers.
 
     Raises ValueError if the name is blank, or KeyError if a kit with this name
     (case-insensitively) already exists."""
@@ -145,7 +148,7 @@ def create_brand(brand: str) -> dict:
         "generic": "",
         "therapy_area": "",
         "indication": "",
-        "territories": ["US"],
+        "territories": territories or ["US"],
         "fiscal_frame": "",
         "tagline": "",
         "core_claim": "",
@@ -172,6 +175,40 @@ def create_brand(brand: str) -> dict:
     KITS_JSON.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     _load.cache_clear()
     return skeleton
+
+
+def infer_brand_name(text: str) -> str:
+    """Step 1 of the New Brand setup flow: read the ingested brand-plan document and
+    name the brand it's about, instead of asking the user to type it -- the document
+    already states it, usually in the first paragraph or a title.
+
+    Never raises -- on any failure (LLM unavailable, empty/unusable reply) returns ""
+    so the caller can fall back to asking the user to type the name themselves, same
+    resilience contract as every other LLM call site in this repo."""
+    sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+    import conversation_llm  # noqa: E402  (local import: keeps this module's own import
+    # list free of the LLM dependency for callers that never touch this function)
+
+    if not text.strip() or not conversation_llm.llm_available():
+        return ""
+    system = (
+        "You are given the text of a pharma brand-plan document. Reply with ONLY the "
+        "brand or drug name this document is about -- no titles, no punctuation, no "
+        "explanation, just the name as it would appear in a brand switcher. If the "
+        "document genuinely does not name a brand, reply with exactly: UNKNOWN"
+    )
+    try:
+        client = conversation_llm._get_client()
+        resp = client.messages.create(model=conversation_llm.MODEL, max_tokens=6000,
+                                       system=system,
+                                       messages=[{"role": "user", "content": text[:4000]}])
+        name = next((b.text for b in resp.content if b.type == "text"), "").strip()
+        name = name.strip('"\' \n')
+        if not name or name.upper() == "UNKNOWN" or len(name) > 80:
+            return ""
+        return name
+    except Exception:  # noqa: BLE001 -- never raise on an LLM failure
+        return ""
 
 
 def is_available_in(kit: dict, territory: str) -> bool:

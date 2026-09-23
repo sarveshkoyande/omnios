@@ -748,3 +748,56 @@ h1, h2, h3 { font-family: "DM Sans"; font-weight: 600; letter-spacing: -0.01em; 
   .agent-hero h1 { font-size: 25px; }
   .phase-switcher { flex-wrap: wrap; border-radius: var(--radius-md); }
 }
+
+/* ==================================================================================
+   New Brand setup -- the "+" next to Brands lands here instead of a window.prompt
+   popup. Same shell shape as .kit-update-screen (transparent, no outer scrollbar) so
+   the two full-screen flows feel like one family. */
+.new-brand-setup { background: transparent; padding: 40px 40px 60px; max-width: 640px; margin: 0 auto; }
+.new-brand-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
+.new-brand-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
+.new-brand-title { font-size: 24px; font-weight: 600; margin: 0; color: var(--fg); }
+
+.new-brand-card { background: var(--card-bg); border-radius: var(--radius-md); box-shadow: var(--neu-flat); padding: 28px 30px; }
+.new-brand-help { font-size: 13.5px; color: var(--muted); line-height: 1.6; margin: 0 0 20px; }
+
+.new-brand-upload {
+  display: block; text-align: center; padding: 22px; border-radius: var(--radius-sm);
+  box-shadow: var(--neu-inset); color: var(--accent); font-size: 13.5px; font-weight: 600;
+  cursor: pointer; position: relative; margin-bottom: 18px;
+}
+.new-brand-upload input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+
+.new-brand-name-field { margin-bottom: 20px; }
+.new-brand-name-field label { display: block; font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.new-brand-name-field input {
+  width: 100%; font-family: inherit; font-size: 14px; padding: 10px 14px; border: none;
+  border-radius: var(--radius-sm); box-shadow: var(--neu-inset); color: var(--fg); background: var(--card-bg);
+}
+.new-brand-name-field input:focus { outline: none; box-shadow: var(--neu-inset), 0 0 0 2px var(--accent); }
+.new-brand-inferred-note { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--tone-success-ink); margin: 8px 0 0; }
+
+.new-brand-next {
+  width: 100%; font-family: inherit; font-size: 13.5px; font-weight: 700; border: none;
+  border-radius: var(--radius-sm); background: var(--card-bg); box-shadow: var(--neu-flat-sm);
+  color: var(--accent); padding: 12px; cursor: pointer;
+}
+.new-brand-next:hover:not(:disabled) { box-shadow: var(--neu-inset-sm); }
+.new-brand-next:disabled { opacity: .5; cursor: default; }
+
+.new-brand-territory-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.new-brand-territory-pill {
+  font-family: inherit; font-size: 13px; font-weight: 600; border: none; border-radius: var(--radius-full);
+  padding: 8px 18px; background: var(--card-bg); box-shadow: var(--neu-flat-sm); color: var(--fg); cursor: pointer;
+}
+.new-brand-territory-pill.active { box-shadow: var(--neu-inset-sm); background: var(--primary-light-background); color: var(--accent); }
+.new-brand-territory-input {
+  width: 100%; font-family: inherit; font-size: 14px; padding: 10px 14px; border: none;
+  border-radius: var(--radius-sm); box-shadow: var(--neu-inset); color: var(--fg); background: var(--card-bg);
+  margin-bottom: 16px;
+}
+.new-brand-territory-input:focus { outline: none; box-shadow: var(--neu-inset), 0 0 0 2px var(--accent); }
+
+.new-brand-actions { display: flex; gap: 10px; }
+.new-brand-actions .kit-update-close { flex: 0 0 auto; }
+.new-brand-actions .new-brand-next { flex: 1; }
