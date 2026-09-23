@@ -750,14 +750,11 @@ h1, h2, h3 { font-family: "DM Sans"; font-weight: 600; letter-spacing: -0.01em; 
 }
 
 /* ==================================================================================
-   New Brand setup -- the "+" next to Brands lands here instead of a window.prompt
-   popup. Same shell shape as .kit-update-screen (transparent, no outer scrollbar) so
-   the two full-screen flows feel like one family. */
-.new-brand-setup { background: transparent; padding: 40px 40px 60px; max-width: 640px; margin: 0 auto; }
-.new-brand-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
-.new-brand-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
-.new-brand-title { font-size: 24px; font-weight: 600; margin: 0; color: var(--fg); }
-
+   New Brand setup -- the "+" next to Brands opens the guided update screen
+   (.kit-update-screen) directly in "newBrand" mode: this panel renders inside that
+   screen's own .kit-update-ingest slot (no separate full-page wizard/shell of its own),
+   so naming, territory and the first ingest all happen on the same screen that then
+   falls straight through into the normal five-tab view once setup finishes. */
 .new-brand-card { background: var(--card-bg); border-radius: var(--radius-md); box-shadow: var(--neu-flat); padding: 28px 30px; }
 .new-brand-help { font-size: 13.5px; color: var(--muted); line-height: 1.6; margin: 0 0 20px; }
 
@@ -797,10 +794,6 @@ h1, h2, h3 { font-family: "DM Sans"; font-weight: 600; letter-spacing: -0.01em; 
   margin-bottom: 16px;
 }
 .new-brand-territory-input:focus { outline: none; box-shadow: var(--neu-inset), 0 0 0 2px var(--accent); }
-
-.new-brand-actions { display: flex; gap: 10px; }
-.new-brand-actions .kit-update-close { flex: 0 0 auto; }
-.new-brand-actions .new-brand-next { flex: 1; }
 
 /* Deliberately unlabeled and low-contrast -- a discreet "no brand plan handy?" escape
    hatch, not a promoted feature. Sits between the title and Cancel in the header. */

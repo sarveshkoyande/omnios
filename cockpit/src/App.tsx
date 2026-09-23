@@ -4,11 +4,10 @@ import type { BrandKit, BrandSummary, KitUpdateSection } from "./types";
 import { BrandWorkspace } from "./components/BrandWorkspace";
 import { AgentLibrary } from "./components/AgentLibrary";
 import { KitUpdateScreen } from "./components/KitUpdateScreen";
-import { NewBrandSetup } from "./components/NewBrandSetup";
 import { Icon } from "./components/Icon";
 import "./cockpit.css";
 
-type View = "workspace" | "agents" | "kit-update" | "new-brand";
+type View = "workspace" | "agents" | "kit-update";
 
 export default function App() {
   const [view, setView] = useState<View>("workspace");
@@ -19,6 +18,7 @@ export default function App() {
   const [kit, setKit] = useState<BrandKit | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [kitUpdateSection, setKitUpdateSection] = useState<KitUpdateSection | null>(null);
+  const [newBrandSetup, setNewBrandSetup] = useState(false);
 
   useEffect(() => {
     listBrands()
@@ -55,9 +55,10 @@ export default function App() {
     setView("kit-update");
   };
 
-  /** New Brand setup finished: refresh the brand list so the rail picks it up, select
-   *  it, and land on the guided kit-update screen (kit-brand-details -- the natural
-   *  starting tab) where the drafts setupBrand() already seeded are waiting. */
+  /** New Brand setup finished (KitUpdateScreen's own newBrand mode -- same screen the
+   *  whole way through, not a handoff from a separate wizard): refresh the brand list so
+   *  the rail picks it up, select it, and switch off newBrand mode so the screen falls
+   *  through to its normal five-tab view with the drafts setupBrand() already seeded. */
   const onNewBrandComplete = async (brand: string) => {
     const r = await listBrands();
     setBrands(r.brands);
@@ -65,7 +66,7 @@ export default function App() {
     setSelected(brand);
     setTerritory(r.brands.find((b) => b.brand === brand)?.territories[0] ?? null);
     setKitUpdateSection("kit-brand-details");
-    setView("kit-update");
+    setNewBrandSetup(false);
   };
 
   return (
@@ -99,7 +100,13 @@ export default function App() {
             the brand switcher is app-level context, not workspace-view-specific chrome. */}
         <div className="rail-section-row" style={{ marginTop: 24 }}>
           <span className="rail-section-label" style={{ marginTop: 0 }}>Brands</span>
-          <button type="button" className="rail-add-brand" title="Set up a new brand" aria-label="Set up a new brand" onClick={() => setView("new-brand")}>
+          <button
+            type="button"
+            className="rail-add-brand"
+            title="Set up a new brand"
+            aria-label="Set up a new brand"
+            onClick={() => { setNewBrandSetup(true); setKitUpdateSection("kit-brand-details"); setView("kit-update"); }}
+          >
             <Icon name="plus" size={14} />
           </button>
         </div>
@@ -145,13 +152,6 @@ export default function App() {
 
       <main className="main">
         {view === "agents" && <AgentLibrary />}
-        {view === "new-brand" && (
-          <NewBrandSetup
-            knownTerritories={knownTerritories}
-            onComplete={onNewBrandComplete}
-            onCancel={() => setView("workspace")}
-          />
-        )}
         {view === "workspace" && (
           <>
             {error && <div className="error-banner">Couldn't load brand data: {error}</div>}
@@ -159,11 +159,14 @@ export default function App() {
             {kit && selected && <BrandWorkspace brand={selected} kit={kit} onUpdate={openKitUpdate} />}
           </>
         )}
-        {view === "kit-update" && selected && kitUpdateSection && (
+        {view === "kit-update" && kitUpdateSection && (newBrandSetup || selected) && (
           <KitUpdateScreen
-            brand={selected}
+            brand={newBrandSetup ? "" : selected!}
             initialSection={kitUpdateSection}
-            onClose={() => setView("workspace")}
+            newBrand={newBrandSetup}
+            knownTerritories={knownTerritories}
+            onBrandCreated={onNewBrandComplete}
+            onClose={() => { setNewBrandSetup(false); setView("workspace"); }}
           />
         )}
       </main>
