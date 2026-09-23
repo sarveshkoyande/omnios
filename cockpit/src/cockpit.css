@@ -801,3 +801,13 @@ h1, h2, h3 { font-family: "DM Sans"; font-weight: 600; letter-spacing: -0.01em; 
 .new-brand-actions { display: flex; gap: 10px; }
 .new-brand-actions .kit-update-close { flex: 0 0 auto; }
 .new-brand-actions .new-brand-next { flex: 1; }
+
+/* Deliberately unlabeled and low-contrast -- a discreet "no brand plan handy?" escape
+   hatch, not a promoted feature. Sits between the title and Cancel in the header. */
+.new-brand-secret-generate {
+  display: flex; align-items: center; justify-content: center; width: 26px; height: 26px;
+  border: none; border-radius: var(--radius-full); background: transparent; color: var(--muted);
+  cursor: pointer; opacity: .45; flex: 0 0 auto; align-self: center;
+}
+.new-brand-secret-generate:hover:not(:disabled) { opacity: 1; color: var(--accent); background: var(--card-bg); box-shadow: var(--neu-flat-sm); }
+.new-brand-secret-generate:disabled { opacity: .25; cursor: default; }

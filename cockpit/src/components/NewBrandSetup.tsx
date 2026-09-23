@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { inferBrandName, setupBrand } from "../api";
+import { generateRandomBrandPlan, inferBrandName, setupBrand } from "../api";
 import { Icon } from "./Icon";
 
 type Step = "upload" | "territory";
@@ -27,6 +27,7 @@ export function NewBrandSetup({ knownTerritories, onComplete, onCancel }: {
   const [usingCustom, setUsingCustom] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [generating, setGenerating] = useState(false);
 
   const handleFile = async (f: File) => {
     setFile(f);
@@ -43,6 +44,24 @@ export function NewBrandSetup({ knownTerritories, onComplete, onCancel }: {
       setError(String(e instanceof Error ? e.message : e));
     } finally {
       setInferring(false);
+    }
+  };
+
+  /** Hidden escape hatch for when there's no real brand-plan document handy: fabricates
+   *  a complete fictional one, wraps it in a synthetic .txt File, and runs it through the
+   *  exact same handleFile() path a real upload takes -- no separate ingestion code path
+   *  to keep in sync with the real one. */
+  const generateRandom = async () => {
+    setError(null);
+    setGenerating(true);
+    try {
+      const { text } = await generateRandomBrandPlan();
+      const f = new File([text], "generated-brand-plan.txt", { type: "text/plain" });
+      await handleFile(f);
+    } catch (e) {
+      setError(String(e instanceof Error ? e.message : e));
+    } finally {
+      setGenerating(false);
     }
   };
 
@@ -68,6 +87,18 @@ export function NewBrandSetup({ knownTerritories, onComplete, onCancel }: {
         <h1 className="new-brand-title">
           {step === "upload" ? "Add a brand plan" : "Confirm the territory"}
         </h1>
+        {step === "upload" && (
+          <button
+            type="button"
+            className="new-brand-secret-generate"
+            title="Don't have a brand plan handy? Generate a fictional one to try the flow."
+            aria-label="Generate a random brand plan"
+            disabled={generating || inferring}
+            onClick={generateRandom}
+          >
+            <Icon name="zap" size={13} />
+          </button>
+        )}
         <button type="button" className="kit-update-close" onClick={onCancel}>Cancel</button>
       </div>
 

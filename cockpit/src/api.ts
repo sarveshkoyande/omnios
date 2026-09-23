@@ -44,6 +44,19 @@ export async function inferBrandName(file: File): Promise<{ name: string }> {
   return res.json();
 }
 
+/** New Brand setup's hidden "generate one for me" escape hatch -- fabricates a complete
+ *  fictional brand-plan document (name + text) for when the user doesn't have a real one
+ *  handy. Throws if the LLM is unavailable; the caller should let the user upload a real
+ *  file instead. */
+export async function generateRandomBrandPlan(): Promise<{ name: string; text: string }> {
+  const res = await fetch("/api/brand-kits/generate-random", { method: "POST" });
+  if (!res.ok) {
+    const detail = await res.json().catch(() => null);
+    throw new Error(typeof detail?.detail === "string" ? detail.detail : `generate-random -> ${res.status}`);
+  }
+  return res.json();
+}
+
 /** New Brand setup, step 2 (final): creates the brand scoped to the confirmed
  *  territory and immediately ingests the same document against all 5 kit-update
  *  sections, so the guided screen the user lands on already has drafts waiting. */

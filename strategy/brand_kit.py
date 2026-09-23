@@ -211,6 +211,49 @@ def infer_brand_name(text: str) -> str:
         return ""
 
 
+def generate_random_brand_plan() -> dict:
+    """Fabricates a complete fictional pharma brand-plan document from scratch -- for the
+    New Brand setup flow's "generate one for me" escape hatch, when the user doesn't have
+    a real brand-plan document handy but still wants to try the flow end-to-end. Returns
+    {"name": ..., "text": ...} so the caller can feed `text` through the exact same
+    ingestion path a real uploaded document takes (infer_brand_name would just re-derive
+    `name` from it; returning both saves that round trip).
+
+    Never raises -- on any failure (LLM unavailable, bad reply) returns {"name": "", "text": ""}
+    so the caller can show an error and let the user upload a real file instead, same
+    resilience contract as every other LLM call site in this repo."""
+    sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+    import conversation_llm  # noqa: E402  (local import, see infer_brand_name above)
+
+    if not conversation_llm.llm_available():
+        return {"name": "", "text": ""}
+    system = (
+        "You invent entirely fictional pharma brand-plan documents for product demos -- "
+        "never a real, currently-marketed drug. Invent a plausible brand name, generic "
+        "name, company, therapy area, indication, and a short brand-plan narrative "
+        "(6-10 paragraphs) covering: brand story/positioning, key clinical claims (with "
+        "invented but plausible efficacy/safety data), target HCP and patient personas, "
+        "competitive landscape, and messaging pillars. Reply with ONLY the document "
+        "text -- no preamble, no markdown headers -- but make sure the very first line "
+        "is exactly: Brand: <the brand name>"
+    )
+    try:
+        client = conversation_llm._get_client()
+        resp = client.messages.create(model=conversation_llm.MODEL, max_tokens=6000,
+                                       system=system,
+                                       messages=[{"role": "user", "content": "Generate one."}])
+        text = next((b.text for b in resp.content if b.type == "text"), "").strip()
+        if not text:
+            return {"name": "", "text": ""}
+        first_line = text.splitlines()[0]
+        name = first_line.split(":", 1)[1].strip() if ":" in first_line else ""
+        if not name or len(name) > 80:
+            name = infer_brand_name(text)
+        return {"name": name, "text": text}
+    except Exception:  # noqa: BLE001 -- never raise on an LLM failure
+        return {"name": "", "text": ""}
+
+
 def is_available_in(kit: dict, territory: str) -> bool:
     """Whether `kit` is configured to run in `territory` (case-insensitive). A campaign
     should never be launchable in a market its brand kit hasn't been built for -- this is

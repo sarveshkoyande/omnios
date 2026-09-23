@@ -828,6 +828,20 @@ async def api_infer_brand_name(file: UploadFile = File(...)):
     return {"name": brand_kit.infer_brand_name(text)}
 
 
+@app.post("/api/brand-kits/generate-random")
+async def api_generate_random_brand_plan():
+    """New Brand setup's hidden "generate one for me" escape hatch, for trying the flow
+    when you don't have a real brand-plan document handy. Fabricates a complete fictional
+    brand-plan document (name + narrative text) and hands it back as plain text the
+    frontend can wrap in a synthetic .txt File and feed through the exact same
+    infer-name/setup pipeline a real upload would take -- no separate code path to keep
+    in sync. Returns "" for both fields (not an error) if the LLM is unavailable."""
+    result = brand_kit.generate_random_brand_plan()
+    if not result.get("text"):
+        raise HTTPException(503, "couldn't generate a sample brand plan right now -- try uploading a real document instead")
+    return result
+
+
 @app.post("/api/brand-kits/setup")
 async def api_setup_brand(file: UploadFile = File(...), name: str = Form(...), territory: str = Form(...)):
     """New Brand setup, step 2 (final): creates the brand kit scoped to the user's
