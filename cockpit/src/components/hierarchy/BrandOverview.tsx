@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
-import { createPlan } from "../../api";
+import { createPlan, scheduleCampaign } from "../../api";
 import { go, href } from "../../route";
-import type { BrandTree, TreePlan } from "../../types";
+import type { BrandKit, BrandTree, TreeCampaign, TreePlan } from "../../types";
 import { Icon } from "../Icon";
 import { CreateForm, periodLabel, StatusPill, when } from "./shared";
 
@@ -68,7 +68,9 @@ function PlanLauncher({ brand, plans, onChanged }: { brand: string; plans: TreeP
 
 /** Idea 7: a brand's engagement plans, master-detail -- a searchable one-line list on the
  *  left, the selected plan's campaigns and status on the right. No table, no filters. */
-export function BrandOverview({ brand, tree, onChanged }: { brand: string; tree: BrandTree; onChanged: () => void }) {
+export function BrandOverview({ brand, tree, kit, onChanged }: {
+  brand: string; tree: BrandTree; kit: BrandKit | null; onChanged: () => void;
+}) {
   const all = tree.engagement_plans;
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState<number | null>(all[0]?.id ?? null);
@@ -140,7 +142,7 @@ export function BrandOverview({ brand, tree, onChanged }: { brand: string; tree:
           </div>
 
           <div className="hier-master-detail">
-            {selected && <PlanDetail brand={brand} plan={selected} />}
+            {selected && <PlanDetail brand={brand} plan={selected} kit={kit} onChanged={onChanged} />}
           </div>
         </div>
       )}
@@ -161,7 +163,150 @@ function planSummary(plan: TreePlan): string {
   return `${period ? `Runs ${period}. ` : "No period is set for this plan. "}${campaignPhrase}`;
 }
 
-function PlanDetail({ brand, plan }: { brand: string; plan: TreePlan }) {
+/** The brand's brief and message context -- an engagement plan has none of its own; this is
+ *  the same brand kit the Brief & kit tab reads, in words. Every sentence is built only from
+ *  fields the kit actually carries (BrandKit's own optional-field discipline). */
+function BriefContext({ kit }: { kit: BrandKit | null }) {
+  if (!kit) return null;
+  const brief: string[] = [];
+  if (kit.indication) brief.push(`indicated for ${kit.indication}`);
+  if (kit.lifecycle_stage) brief.push(`at the ${kit.lifecycle_stage.toLowerCase()} stage`);
+  const briefSentence = brief.length ? `${kit.company || "This brand"} is ${brief.join(", ")}.` : null;
+
+  const objective = kit.key_objective ? `The current objective is ${kit.key_objective.toLowerCase().replace(/\.$/, "")}.` : null;
+  const metric = kit.success_measure ? `Success is measured by ${kit.success_measure.toLowerCase()}.` : null;
+  const audience = kit.primary_audience ? `It's aimed primarily at ${kit.primary_audience.toLowerCase()}.` : null;
+  const message = kit.positioning_statement ? `Positioned as: “${kit.positioning_statement}”` : kit.core_claim ? `Core claim: “${kit.core_claim}”` : null;
+
+  if (!briefSentence && !objective && !metric && !audience && !message) return null;
+
+  return (
+    <div className="hier-brief">
+      <div className="hier-detail-subhead">Brief &amp; message</div>
+      {(briefSentence || objective) && <p className="hier-detail-summary">{[briefSentence, objective].filter(Boolean).join(" ")}</p>}
+      {(audience || metric) && <p className="hier-detail-summary">{[audience, metric].filter(Boolean).join(" ")}</p>}
+      {message && <p className="hier-detail-summary hier-brief-message">{message}</p>}
+    </div>
+  );
+}
+
+const DAY_MS = 86400000;
+const toMs = (d: string) => new Date(`${d}T00:00:00`).getTime();
+const iso = (ms: number) => new Date(ms).toISOString().slice(0, 10);
+
+/** What range to plot: the campaigns' own dates (start_date/end_date, falling back to
+ *  created_at..closed_at-or-today when unset) widened to cover the plan's own period when
+ *  it has one -- so a campaign scheduled outside the plan's period is still visible. */
+function timelineDomain(plan: TreePlan, ranges: Map<number, [number, number]>): [number, number] | null {
+  const points: number[] = [];
+  if (plan.period_start) points.push(toMs(plan.period_start));
+  if (plan.period_end) points.push(toMs(plan.period_end));
+  for (const [s, e] of ranges.values()) { points.push(s); points.push(e); }
+  if (points.length === 0) return null;
+  const min = Math.min(...points);
+  const max = Math.max(...points, min + DAY_MS);
+  const pad = Math.max((max - min) * 0.03, DAY_MS);
+  return [min - pad, max + pad];
+}
+
+/** Campaigns laid out on a shared horizontal axis so it's clear at a glance which one runs
+ *  when. Undated campaigns (the common case today) are listed below the axis instead of
+ *  guessed onto it, with a one-click way to schedule them. */
+function CampaignTimeline({ brand, plan, onChanged }: { brand: string; plan: TreePlan; onChanged: () => void }) {
+  const [editing, setEditing] = useState<number | null>(null);
+
+  const ranges = useMemo(() => {
+    const m = new Map<number, [number, number]>();
+    for (const c of plan.campaigns) {
+      if (!c.start_date && !c.end_date) continue;
+      const s = c.start_date ? toMs(c.start_date) : toMs(c.end_date!);
+      const e = c.end_date ? toMs(c.end_date) : Math.max(s, Date.now());
+      m.set(c.id, [s, Math.max(s, e)]);
+    }
+    return m;
+  }, [plan.campaigns]);
+
+  const domain = timelineDomain(plan, ranges);
+  const scheduled = plan.campaigns.filter((c) => ranges.has(c.id));
+  const unscheduled = plan.campaigns.filter((c) => !ranges.has(c.id));
+  const today = Date.now();
+
+  const save = (campaignId: number, s: string, e: string) => {
+    scheduleCampaign(campaignId, s || null, e || null).then(() => { setEditing(null); onChanged(); }).catch(() => undefined);
+  };
+
+  return (
+    <div className="hier-timeline">
+      <div className="hier-detail-subhead">Timeline</div>
+      {domain && scheduled.length > 0 && (
+        <div className="hier-timeline-axis">
+          <div className="hier-timeline-scale">
+            <span>{iso(domain[0])}</span>
+            <span>{iso(domain[1])}</span>
+          </div>
+          <div className="hier-timeline-track">
+            {domain[0] <= today && today <= domain[1] && (
+              <div className="hier-timeline-today" style={{ left: `${((today - domain[0]) / (domain[1] - domain[0])) * 100}%` }} title="Today" />
+            )}
+          </div>
+          {scheduled.map((c) => {
+            const [s, e] = ranges.get(c.id)!;
+            const left = ((s - domain[0]) / (domain[1] - domain[0])) * 100;
+            const width = Math.max(((e - s) / (domain[1] - domain[0])) * 100, 1.2);
+            return (
+              <div className="hier-timeline-row" key={c.id}>
+                <a className="hier-timeline-label" href={href({ kind: "campaign", brand, planId: plan.id, campaignId: c.id })}>{c.name}</a>
+                <div className="hier-timeline-lane">
+                  <div className={`hier-timeline-bar bar-status-${c.status}`} style={{ left: `${left}%`, width: `${width}%` }}
+                    title={`${c.start_date ?? "?"} – ${c.end_date ?? "ongoing"}`} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      {scheduled.length === 0 && <p className="hier-hint">No campaigns are scheduled yet — set dates on a campaign below to plot it here.</p>}
+
+      {unscheduled.length > 0 && (
+        <div className="hier-timeline-unscheduled">
+          {unscheduled.map((c) => (
+            <ScheduleRow key={c.id} brand={brand} plan={plan} campaign={c}
+              editing={editing === c.id} onEdit={() => setEditing(c.id)} onCancel={() => setEditing(null)} onSave={save} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ScheduleRow({ brand, plan, campaign, editing, onEdit, onCancel, onSave }: {
+  brand: string; plan: TreePlan; campaign: TreeCampaign; editing: boolean;
+  onEdit: () => void; onCancel: () => void; onSave: (campaignId: number, start: string, end: string) => void;
+}) {
+  const [s, setS] = useState(campaign.start_date ?? "");
+  const [e, setE] = useState(campaign.end_date ?? "");
+  if (!editing) {
+    return (
+      <div className="hier-timeline-row hier-timeline-row-unscheduled">
+        <a className="hier-timeline-label" href={href({ kind: "campaign", brand, planId: plan.id, campaignId: campaign.id })}>{campaign.name}</a>
+        <button type="button" className="hier-timeline-schedule-btn" onClick={onEdit}>Set dates</button>
+      </div>
+    );
+  }
+  return (
+    <div className="hier-timeline-row hier-timeline-row-unscheduled">
+      <span className="hier-timeline-label">{campaign.name}</span>
+      <div className="hier-period">
+        <label>From <input type="date" className="jc-input" value={s} onChange={(ev) => setS(ev.target.value)} /></label>
+        <label>To <input type="date" className="jc-input" value={e} onChange={(ev) => setE(ev.target.value)} /></label>
+        <button type="button" className="jc-btn jc-btn-keep" onClick={() => onSave(campaign.id, s, e)}>Save</button>
+        <button type="button" className="jc-btn jc-btn-ghost" onClick={onCancel}>Cancel</button>
+      </div>
+    </div>
+  );
+}
+
+function PlanDetail({ brand, plan, kit, onChanged }: { brand: string; plan: TreePlan; kit: BrandKit | null; onChanged: () => void }) {
   const drifted = plan.campaigns.filter((c) => c.content.changed_steps.length > 0).length;
   return (
     <div className="hier-detail-card">
@@ -178,6 +323,10 @@ function PlanDetail({ brand, plan }: { brand: string; plan: TreePlan }) {
           {drifted} of its campaign{drifted === 1 ? "" : "s"} {drifted === 1 ? "has" : "have"} changed brand content since it was last built.
         </p>
       )}
+
+      <BriefContext kit={kit} />
+
+      {plan.campaigns.length > 0 && <CampaignTimeline brand={brand} plan={plan} onChanged={onChanged} />}
 
       <div className="hier-detail-campaigns">
         <div className="hier-detail-subhead">Associated campaigns</div>

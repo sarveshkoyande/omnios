@@ -1044,6 +1044,17 @@ class NamedRequest(BaseModel):
     name: str
 
 
+class CreateCampaignRequest(BaseModel):
+    name: str
+    start_date: str | None = None
+    end_date: str | None = None
+
+
+class CampaignScheduleRequest(BaseModel):
+    start_date: str | None = None
+    end_date: str | None = None
+
+
 class MoveCampaignRequest(BaseModel):
     engagement_plan_id: int
 
@@ -1081,8 +1092,8 @@ def api_list_campaigns(plan_id: int):
 
 
 @app.post("/api/engagement-plans/{plan_id}/campaigns")
-def api_create_campaign(plan_id: int, req: NamedRequest):
-    return _hier(hierarchy.create_campaign, plan_id, req.name)
+def api_create_campaign(plan_id: int, req: CreateCampaignRequest):
+    return _hier(hierarchy.create_campaign, plan_id, req.name, req.start_date, req.end_date)
 
 
 @app.get("/api/campaigns/{campaign_id}")
@@ -1095,6 +1106,11 @@ def api_get_campaign(campaign_id: int):
 @app.patch("/api/campaigns/{campaign_id}")
 def api_rename_campaign(campaign_id: int, req: NamedRequest):
     return _hier(hierarchy.rename_campaign, campaign_id, req.name)
+
+
+@app.patch("/api/campaigns/{campaign_id}/schedule")
+def api_schedule_campaign(campaign_id: int, req: CampaignScheduleRequest):
+    return _hier(hierarchy.schedule_campaign, campaign_id, req.start_date, req.end_date)
 
 
 @app.post("/api/campaigns/{campaign_id}/move")

@@ -96,11 +96,15 @@ export default function App() {
   const summaryOf = brands?.find((b) => b.brand.toLowerCase() === (brand ?? "").toLowerCase()) ?? null;
   const activeTerritory = brand ? (territory[brand] ?? summaryOf?.territories[0] ?? null) : null;
   const onWorkspace = route.kind === "brand" && route.tab === "workspace";
+  // The overview tab wants the kit too -- it's the only source of the brand's brief and
+  // message context (indication, objective, positioning), which an engagement plan has
+  // none of its own.
+  const wantsKit = route.kind === "brand";
   useEffect(() => {
-    if (!brand || !onWorkspace || !activeTerritory) return;
+    if (!brand || !wantsKit) return;
     setKit(null);
-    getBrandKit(brand, activeTerritory).then((r) => setKit(r.kit)).catch((e) => setError(String(e)));
-  }, [brand, onWorkspace, activeTerritory, kitVersion]);
+    getBrandKit(brand, activeTerritory ?? undefined).then((r) => setKit(r.kit)).catch((e) => setError(String(e)));
+  }, [brand, wantsKit, activeTerritory, kitVersion]);
 
   const onNewBrandComplete = async (created: string, step: import("./types").JourneyStepId) => {
     await loadBrands();
@@ -136,7 +140,7 @@ export default function App() {
           return <BrandWorkspace brand={route.brand} kit={kit} onUpdate={(step) => go({ kind: "journey", brand: route.brand, step })} />;
         }
         if (treeError) return <div className="error-banner">Couldn't load {route.brand}: {treeError}</div>;
-        return tree ? <BrandOverview key={tree.brand} brand={tree.brand} tree={tree} onChanged={refreshTree} /> : <div className="loading">Loading&hellip;</div>;
+        return tree ? <BrandOverview key={tree.brand} brand={tree.brand} tree={tree} kit={kit} onChanged={refreshTree} /> : <div className="loading">Loading&hellip;</div>;
       default:
         if (treeError) return <div className="error-banner">{treeError}</div>;
         if (!tree) return <div className="loading">Loading&hellip;</div>;

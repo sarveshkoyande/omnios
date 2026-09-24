@@ -205,7 +205,7 @@ def _campaign_dict(conn, r) -> dict:
     return c
 
 
-def create_campaign(plan_id: int, name: str) -> dict:
+def create_campaign(plan_id: int, name: str, start_date: str | None = None, end_date: str | None = None) -> dict:
     name = (name or "").strip()
     if not name:
         raise ValueError("a campaign needs a name")
@@ -217,12 +217,27 @@ def create_campaign(plan_id: int, name: str) -> dict:
         snap = take_snapshot(plan["brand"])
         cur = conn.execute(
             "INSERT INTO campaign (brand_id, engagement_plan_id, name, status, snapshot_json, snapshot_at, "
-            "created_at, updated_at) VALUES (?,?,?,?,?,?,?,?)",
-            (plan["brand_id"], plan_id, name, "draft", json.dumps(snap), snap["taken_at"], _now(), _now()))
+            "start_date, end_date, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)",
+            (plan["brand_id"], plan_id, name, "draft", json.dumps(snap), snap["taken_at"],
+             start_date or None, end_date or None, _now(), _now()))
         conn.commit()
         return get_campaign(cur.lastrowid)
     finally:
         conn.close()
+
+
+def schedule_campaign(campaign_id: int, start_date: str | None, end_date: str | None) -> dict:
+    """When a campaign is meant to run, for the engagement plan's timeline (R21). Either
+    date may be cleared by passing an empty string."""
+    get_campaign(campaign_id)
+    conn = _conn()
+    try:
+        conn.execute("UPDATE campaign SET start_date=?, end_date=?, updated_at=? WHERE id=?",
+                     (start_date or None, end_date or None, _now(), campaign_id))
+        conn.commit()
+    finally:
+        conn.close()
+    return get_campaign(campaign_id)
 
 
 def get_campaign(campaign_id: int) -> dict:

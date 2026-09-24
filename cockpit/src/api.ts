@@ -96,8 +96,12 @@ export function buildJourneyFlow(brand: string, campaignId?: number): Promise<Jo
   return postJSON(journeyUrl(brand, "/flow/build"), campaignId ? { campaign_id: campaignId } : {});
 }
 
-export function createCampaign(planId: number, name: string): Promise<{ id: number; name: string }> {
-  return postJSON(`/api/engagement-plans/${planId}/campaigns`, { name });
+export function createCampaign(planId: number, name: string, startDate?: string | null, endDate?: string | null): Promise<HierCampaign> {
+  return postJSON(`/api/engagement-plans/${planId}/campaigns`, { name, start_date: startDate || null, end_date: endDate || null });
+}
+
+export function scheduleCampaign(campaignId: number, startDate: string | null, endDate: string | null): Promise<HierCampaign> {
+  return sendJSON("PATCH", `/api/campaigns/${campaignId}/schedule`, { start_date: startDate, end_date: endDate });
 }
 
 /* ---- Flow step edits (plan U7): chat -> structured ops draft -> keep / undo ---- */

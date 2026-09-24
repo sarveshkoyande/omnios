@@ -11,6 +11,8 @@ export function EngagementPlanPage({ brand, plan, onChanged }: { brand: string; 
   const [start, setStart] = useState(plan.period_start ?? "");
   const [end, setEnd] = useState(plan.period_end ?? "");
   const [start2, setStart2] = useState<"plan" | "flows">("plan");
+  const [campStart, setCampStart] = useState("");
+  const [campEnd, setCampEnd] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,7 +27,7 @@ export function EngagementPlanPage({ brand, plan, onChanged }: { brand: string; 
   const setStatus = (status: "active" | "closed") => run(updatePlan(plan.id, { status })).then(onChanged).catch(() => undefined);
 
   const newCampaign = (campaignName: string) => run((async () => {
-    const c = await createCampaign(plan.id, campaignName);
+    const c = await createCampaign(plan.id, campaignName, campStart || null, campEnd || null);
     if (start2 === "plan") {
       await startCampaignPlan(c.id);
       onChanged();
@@ -84,6 +86,11 @@ export function EngagementPlanPage({ brand, plan, onChanged }: { brand: string; 
                 <label><input type="radio" checked={start2 === "flows"} onChange={() => setStart2("flows")} />
                   <span><strong>Flows only</strong> — go straight to channel sequences</span></label>
               </fieldset>
+              <div className="hier-period">
+                <label>Runs from <input type="date" className="jc-input" value={campStart} onChange={(e) => setCampStart(e.target.value)} /></label>
+                <label>to <input type="date" className="jc-input" value={campEnd} onChange={(e) => setCampEnd(e.target.value)} /></label>
+                <span className="hier-hint">Optional, for the plan's timeline</span>
+              </div>
             </CreateForm>
           )}
         </div>

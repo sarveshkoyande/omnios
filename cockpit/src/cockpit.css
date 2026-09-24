@@ -1133,6 +1133,39 @@ a.rail-add-brand { display: inline-grid; place-items: center; color: inherit; te
 .hier-detail-summary.hier-summary-warn { color: var(--tone-warning-ink); }
 .hier-detail-subhead { font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
 .hier-detail-campaigns { display: flex; flex-direction: column; gap: 8px; }
+
+/* ---- Brief & message: words about the brand this plan belongs to (the plan itself has
+   none of its own), sourced from the same brand kit the Brief & kit tab reads. ---- */
+.hier-brief { display: flex; flex-direction: column; gap: 6px; padding-top: 4px; }
+.hier-brief-message { font-style: italic; }
+
+/* ---- Timeline: campaigns on a shared horizontal axis so it's clear which one runs when.
+   Undated campaigns list below with a one-click way to schedule them. ---- */
+.hier-timeline { display: flex; flex-direction: column; gap: 8px; }
+.hier-timeline-axis { display: flex; flex-direction: column; gap: 6px; }
+.hier-timeline-scale { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--muted); padding-left: 128px; }
+.hier-timeline-track { position: relative; height: 0; margin-left: 128px; }
+.hier-timeline-today { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--tone-warning-ink); z-index: 1; }
+.hier-timeline-row { display: flex; align-items: center; gap: 10px; min-height: 30px; }
+.hier-timeline-label {
+  flex: 0 0 118px; font-size: 12px; font-weight: 600; color: var(--fg); text-decoration: none;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.hier-timeline-label:hover { color: var(--primary); }
+.hier-timeline-lane { position: relative; flex: 1; height: 16px; border-radius: var(--radius-full); box-shadow: var(--neu-inset-sm); }
+.hier-timeline-bar { position: absolute; top: 0; bottom: 0; border-radius: var(--radius-full); background: var(--primary); }
+.hier-timeline-bar.bar-status-draft { background: var(--neutral-400); }
+.hier-timeline-bar.bar-status-in_progress { background: var(--info-foreground); }
+.hier-timeline-bar.bar-status-confirmed { background: var(--success-foreground); }
+.hier-timeline-bar.bar-status-closed { background: var(--neutral-400); }
+.hier-timeline-unscheduled { display: flex; flex-direction: column; gap: 4px; margin-top: 2px; }
+.hier-timeline-row-unscheduled { min-height: unset; padding: 6px 0; }
+.hier-timeline-schedule-btn {
+  font-family: inherit; font-size: 11.5px; font-weight: 600; border: none; background: transparent;
+  color: var(--primary); cursor: pointer; padding: 0;
+}
+.hier-timeline-schedule-btn:hover { text-decoration: underline; }
+.hier-timeline-row-unscheduled .hier-period { flex-wrap: wrap; }
 .hier-campaign-row {
   display: flex; flex-wrap: wrap; align-items: center; gap: 10px; text-decoration: none;
   padding: 12px 14px; border-radius: var(--radius-sm); box-shadow: var(--neu-inset-sm); color: inherit;

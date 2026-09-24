@@ -48,6 +48,10 @@ _ADDED_COLUMNS = (
     ("campaign", "status_detail", "TEXT"),
     ("campaign", "snapshot_json", "TEXT"),
     ("campaign", "snapshot_at", "TEXT"),
+    # Optional, set by hand (not derived) -- when a campaign is meant to run, for the
+    # engagement plan's timeline view. Absent means "not scheduled yet", not "unknown".
+    ("campaign", "start_date", "TEXT"),
+    ("campaign", "end_date", "TEXT"),
     ("campaign_version", "snapshot_json", "TEXT"),
     # "rules": base + structured edits (the Journey model). "document": the Campaign Plan's
     # Operations diagram, a WorkflowDocument kept on the project and edited in its own

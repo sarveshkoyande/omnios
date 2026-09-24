@@ -322,6 +322,9 @@ export interface HierCampaign {
   created_at: string;
   updated_at: string;
   closed_at: string | null;
+  /** Set by hand for the engagement plan's timeline view -- absent means not scheduled yet. */
+  start_date: string | null;
+  end_date: string | null;
   content: { tracked: boolean; changed_steps: string[]; snapshot_at: string | null };
 }
 export interface HierPlan {
