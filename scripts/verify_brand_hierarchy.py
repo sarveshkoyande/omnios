@@ -352,6 +352,148 @@ def check_api_routes():  # R21
     assert any(x["id"] == pid for x in tree["engagement_plans"]), tree
 
 
+# ---- U5: flows keyed by flow id; the Journey writes into the hierarchy ---------------------
+
+def _bj():
+    from strategy import brand_journey
+    return brand_journey
+
+
+def _flow_ready_brand(prefix: str = "FlowBrand") -> str:
+    bj = _bj()
+    _counter[0] += 1
+    b = f"{prefix}{_counter[0]}"
+    brand_kit.create_brand(b)
+    vals = {
+        "brief": [("indication", "Heart failure"), ("territories", ["US"]),
+                  ("key_objective", "Grow new patient starts"), ("branded", "branded")],
+        "audience": [("primary_audience", "HCPs"),
+                     ("personas", {"hcp": [{"name": "The Busy Cardiologist", "who": "Treats HF",
+                                            "tier": "Primary"}]})],
+        "message": [("core_claim", "Fewer HF hospitalizations"),
+                    ("positioning_statement", "The HF therapy that keeps patients home"),
+                    ("message_hierarchy", [{"pillar": "Efficacy", "claim": "c", "evidence": "e"}]),
+                    ("tone_pillars", ["Confident"])],
+    }
+    for step, pairs in vals.items():
+        for k, v in pairs:
+            bj.keep(b, bj.propose(b, step, k, v)["id"])
+        bj.confirm(b, step)
+    return b
+
+
+def check_journey_first_flow_creates_first_plan_and_campaign():  # R22
+    bj = _bj()
+    b = _flow_ready_brand()
+    doc = bj.build_flow(b)
+    assert doc["status"] == "built" and doc["flow_id"], doc
+    t = h.tree(b)
+    assert [p["name"] for p in t["engagement_plans"]] == [h.FIRST_PLAN], t
+    camp = t["engagement_plans"][0]["campaigns"][0]
+    assert camp["name"] == h.FIRST_CAMPAIGN and [f["origin"] for f in camp["flows"]] == ["journey"], camp
+    assert camp["status"] == "in_progress", camp
+    assert bj.build_flow(b)["flow_id"] == doc["flow_id"], "a rebuild reuses the same flow"
+    bj.confirm(b, "flow")
+    assert h.get_flow(doc["flow_id"])["status"] == "confirmed"
+    assert h.get_campaign(camp["id"])["status"] == "confirmed"
+    bj.reopen(b, "flow")
+    assert h.get_flow(doc["flow_id"])["status"] == "built"
+
+
+def check_journey_flow_asks_for_a_campaign_when_plans_exist():  # R22
+    bj = _bj()
+    b = _flow_ready_brand()
+    plan = h.create_plan(b, "Q3 2026")
+    camp = h.create_campaign(plan["id"], "HCP launch")
+    doc = bj.get_flow(b)
+    assert doc.get("needs_campaign") and [c["id"] for c in doc["campaigns"]] == [camp["id"]], doc
+    r = _client().post(f"/api/brands/{b}/journey/flow/build")
+    assert r.status_code == 409, r.text
+    r = _client().post(f"/api/brands/{b}/journey/flow/build", json={"campaign_id": camp["id"]})
+    assert r.status_code == 200 and r.json()["campaign_id"] == camp["id"], r.text
+    assert [p["name"] for p in h.tree(b)["engagement_plans"]] == ["Q3 2026"], "no extra plan was created"
+    other = h.create_campaign(h.create_plan("Oncomyra", "Elsewhere")["id"], "Not yours")
+    try:
+        h.ensure_journey_flow(_flow_ready_brand(), other["id"])
+        raise AssertionError("a flow went into another brand's campaign")
+    except (ValueError, h.NeedsCampaign):
+        pass
+
+
+def check_flow_routes_by_id():  # U-R1, U-R2
+    bj = _bj()
+    c = _client()
+    b = _flow_ready_brand()
+    fid = bj.build_flow(b)["flow_id"]
+    doc = c.get(f"/api/flows/{fid}").json()
+    first = doc["flow"]["nodes"][1]["data"]["block_code"]
+    r = c.post(f"/api/flows/{fid}/turn", json={"ops": [{"op": "change", "code": first, "set": {"label": "Renamed"}}]})
+    assert r.status_code == 200 and r.json()["flow"]["draft"], r.text
+    kept = c.post(f"/api/flows/{fid}/keep").json()
+    assert kept["draft"] is None and any(n["data"]["label"] == "Renamed" for n in kept["flow"]["nodes"]), kept
+    rebuilt = c.post(f"/api/flows/{fid}/build").json()
+    assert any(n["data"]["label"] == "Renamed" for n in rebuilt["flow"]["nodes"]), "kept edit survives a rebuild"
+    c.post(f"/api/flows/{fid}/turn", json={"ops": [{"op": "remove", "code": first}]})
+    assert c.post(f"/api/flows/{fid}/undo").json()["draft"] is None
+    assert c.get("/api/flows/999999").status_code == 404
+
+
+def check_existing_journey_flow_is_backfilled():  # U-R6, R20
+    bj = _bj()
+    b = _flow_ready_brand()
+    fid = bj.build_flow(b)["flow_id"]
+    first = bj.get_flow(b)["flow"]["nodes"][1]["data"]["block_code"]
+    bj.flow_turn(b, "", [{"op": "change", "code": first, "set": {"label": "Kept edit"}}])
+    bj.keep_flow_draft(b)
+    bj.flow_turn(b, "", [{"op": "change", "code": first, "set": {"label": "Pending edit"}}])
+    rec = h.flow_storage(fid)
+    before = bj.get_flow(b)
+    # Recreate the pre-hierarchy state: the flow only in brand_journey.db, no flow row, no plans.
+    jconn = bj._conn()
+    jconn.execute("CREATE TABLE IF NOT EXISTS journey_flow_draft (brand TEXT PRIMARY KEY, ops_json TEXT NOT NULL, "
+                  "updated_at TEXT NOT NULL)")
+    jconn.execute("INSERT INTO journey_flow (brand, doc_json, updated_at) VALUES (?,?,?)",
+                  (b, json.dumps({"base": rec["base"]["base"], "codes": rec["base"]["codes"], "ops": rec["ops"],
+                                  "dropped": rec["dropped"]}), "2026-01-01T00:00:00Z"))
+    jconn.execute("INSERT INTO journey_flow_draft (brand, ops_json, updated_at) VALUES (?,?,?)",
+                  (b, json.dumps(rec["draft_ops"]), "2026-01-01T00:00:00Z"))
+    jconn.commit()
+    jconn.close()
+    conn = _raw()
+    conn.execute("DELETE FROM flow WHERE id=?", (fid,))
+    conn.execute("DELETE FROM campaign WHERE engagement_plan_id IN (SELECT e.id FROM engagement_plan e "
+                 "JOIN brand br ON br.id=e.brand_id WHERE br.kit_key=?)", (b,))
+    conn.execute("DELETE FROM engagement_plan WHERE brand_id=(SELECT id FROM brand WHERE kit_key=?)", (b,))
+    conn.commit()
+    conn.close()
+    assert h.journey_flow_id(b) is None
+    res = h.backfill()
+    assert res["journey_flows"] >= 1, res
+    t = h.tree(b)
+    plan = t["engagement_plans"][0]
+    assert plan["name"] == h.EARLIER_WORK and plan["campaigns"][0]["name"] == h.FIRST_CAMPAIGN, t
+    after = bj.get_flow(b)
+    assert after["flow"] == before["flow"] and after["ops"] == before["ops"], "codes and kept edits survive"
+    assert after["draft"]["ops"] == before["draft"]["ops"], "the pending draft survives"
+    again = h.backfill()
+    assert h.tree(b) == t and again["journey_flows"] == 0, "a second backfill changes nothing"
+
+
+def check_reset_deletes_only_journey_flows():  # R19, AE5
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("reset_test_data", ROOT / "scripts" / "reset_test_data.py")
+    rtd = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(rtd)
+    bj = _bj()
+    b = _flow_ready_brand()
+    doc = bj.build_flow(b)
+    manual = h.create_flow(doc["campaign_id"], "Hand-added")
+    counts = rtd.clear_brand_journey(b.lower())
+    assert counts["campaigns.flow (journey)"] == 1, counts
+    assert [f["id"] for f in h.list_flows(doc["campaign_id"])] == [manual["id"]]
+    assert h.journey_flow_id(b) is None
+
+
 CHECKS = [v for k, v in list(globals().items()) if k.startswith("check_") and callable(v)]
 
 

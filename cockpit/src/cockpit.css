@@ -994,3 +994,6 @@ h1, h2, h3 { font-family: "DM Sans"; font-weight: 600; letter-spacing: -0.01em; 
   .agent-dock-count-ring, .agent-dock-thread.leaving, .agent-dock-head, .agent-dock .jc-chiplist { animation: none; }
 }
 @media (max-width: 720px) { .agent-dock-countdown { padding-left: 0; } }
+
+/* Journey Flow step: where the brand's first flow goes when it already has engagement plans. */
+.jc-flow-placement { display: flex; flex-direction: column; gap: 8px; max-width: 520px; }

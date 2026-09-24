@@ -92,8 +92,12 @@ export function getJourneyFlow(brand: string): Promise<JourneyFlow> {
   return getJSON(journeyUrl(brand, "/flow"));
 }
 
-export function buildJourneyFlow(brand: string): Promise<JourneyFlow> {
-  return postJSON(journeyUrl(brand, "/flow/build"), {});
+export function buildJourneyFlow(brand: string, campaignId?: number): Promise<JourneyFlow> {
+  return postJSON(journeyUrl(brand, "/flow/build"), campaignId ? { campaign_id: campaignId } : {});
+}
+
+export function createCampaign(planId: number, name: string): Promise<{ id: number; name: string }> {
+  return postJSON(`/api/engagement-plans/${planId}/campaigns`, { name });
 }
 
 /* ---- Flow step edits (plan U7): chat -> structured ops draft -> keep / undo ---- */

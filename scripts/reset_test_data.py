@@ -38,8 +38,13 @@ def _journey_counts(conn, brand: str) -> dict[str, int]:
             for t in _brand_tables(conn)}
 
 
+_JOURNEY_FLOWS = ("FROM flow WHERE origin = 'journey' AND campaign_id IN (SELECT c.id FROM campaign c "
+                  "JOIN brand b ON b.id = c.brand_id WHERE lower(b.kit_key) = lower(?))")
+
+
 def clear_brand_journey(brand: str, dry_run: bool = False) -> dict[str, int]:
-    """Delete (or with dry_run, only count) `brand`'s rows in brand_journey.db.
+    """Delete (or with dry_run, only count) `brand`'s rows in brand_journey.db, and the
+    flows its Journey built in campaigns.db (hierarchy R19; other campaigns and flows stay).
     Returns {table: rows}."""
     conn = db.connect("brand_journey")
     try:
@@ -48,9 +53,23 @@ def clear_brand_journey(brand: str, dry_run: bool = False) -> dict[str, int]:
             for t in counts:
                 conn.execute(f'DELETE FROM "{t}" WHERE lower(brand) = lower(?)', (brand,))
             conn.commit()
-        return counts
     finally:
         conn.close()
+    camp = db.connect("campaigns")
+    try:
+        try:
+            counts["campaigns.flow (journey)"] = camp.execute(f"SELECT COUNT(*) {_JOURNEY_FLOWS}", (brand,)).fetchone()[0]
+        except Exception:  # noqa: BLE001 -- no hierarchy tables yet
+            return counts
+        if not dry_run and counts["campaigns.flow (journey)"]:
+            camp.execute(f"DELETE {_JOURNEY_FLOWS}", (brand,))
+            # A flows-only campaign left with no flows reads draft again.
+            camp.execute("UPDATE campaign SET status = 'draft' WHERE project_id IS NULL AND status <> 'closed' "
+                         "AND NOT EXISTS (SELECT 1 FROM flow WHERE flow.campaign_id = campaign.id)")
+            camp.commit()
+        return counts
+    finally:
+        camp.close()
 
 
 def _count_or_zero(conn, sql: str) -> int:

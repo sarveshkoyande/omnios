@@ -345,6 +345,132 @@ def list_flows(campaign_id: int) -> list[dict]:
         conn.close()
 
 
+FIRST_PLAN = "First engagement plan"
+FIRST_CAMPAIGN = "Launch campaign"
+JOURNEY_FLOW = "Journey flow"
+
+
+def _json(v):
+    return json.loads(v) if v else None
+
+
+def flow_storage(flow_id: int) -> dict:
+    """A flow's stored document (U-R1): base (rules-built plan + codes), kept ops, pending
+    draft ops, dropped ops, plus its campaign and brand."""
+    conn = _conn()
+    try:
+        r = conn.execute(
+            "SELECT f.*, c.status AS campaign_status, b.kit_key AS brand FROM flow f "
+            "JOIN campaign c ON c.id=f.campaign_id LEFT JOIN brand b ON b.id=c.brand_id WHERE f.id=?",
+            (flow_id,)).fetchone()
+        if r is None:
+            raise NotFound(f"no flow {flow_id}")
+        return {"id": r["id"], "campaign_id": r["campaign_id"], "name": r["name"], "origin": r["origin"],
+                "status": r["status"], "brand": r["brand"], "campaign_status": r["campaign_status"],
+                "base": _json(r["base_json"]), "ops": _json(r["ops_json"]) or [],
+                "draft_ops": _json(r["draft_ops_json"]), "dropped": _json(r["dropped_json"]) or []}
+    finally:
+        conn.close()
+
+
+_UNSET = object()
+
+
+def save_flow_storage(flow_id: int, base=_UNSET, ops=_UNSET, dropped=_UNSET, draft_ops=_UNSET,
+                      status=_UNSET) -> None:
+    sets, vals = [], []
+    for col, v in (("base_json", base), ("ops_json", ops), ("dropped_json", dropped),
+                   ("draft_ops_json", draft_ops)):
+        if v is not _UNSET:
+            sets.append(f"{col}=?")
+            vals.append(json.dumps(v) if v not in (None, []) or col == "ops_json" else None)
+    if status is not _UNSET:
+        sets.append("status=?")
+        vals.append(status)
+    if not sets:
+        return
+    conn = _conn()
+    try:
+        r = conn.execute("SELECT campaign_id FROM flow WHERE id=?", (flow_id,)).fetchone()
+        if r is None:
+            raise NotFound(f"no flow {flow_id}")
+        conn.execute(f"UPDATE flow SET {', '.join(sets)}, updated_at=? WHERE id=?", (*vals, _now(), flow_id))
+        _refresh_status(conn, r["campaign_id"])
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def journey_flow_id(brand: str) -> int | None:
+    """The brand's Journey-built flow (the Journey's Flow step shows this one), if any."""
+    key = brand_key(brand)
+    conn = _conn()
+    try:
+        r = conn.execute(
+            "SELECT f.id FROM flow f JOIN campaign c ON c.id=f.campaign_id JOIN brand b ON b.id=c.brand_id "
+            "WHERE b.kit_key=? AND f.origin='journey' AND c.status<>'closed' ORDER BY f.id DESC LIMIT 1",
+            (key,)).fetchone()
+        return r["id"] if r else None
+    finally:
+        conn.close()
+
+
+def open_campaigns(brand: str) -> list[dict]:
+    """The brand's campaigns a new flow can go into, with their engagement plan's name."""
+    out = []
+    for p in list_plans(brand):
+        if p["status"] == "closed":
+            continue
+        for c in list_campaigns(p["id"]):
+            if c["status"] != "closed":
+                out.append({"id": c["id"], "name": c["name"], "engagement_plan_id": p["id"],
+                            "engagement_plan": p["name"]})
+    return out
+
+
+class NeedsCampaign(ValueError):
+    """The brand already has engagement plans: the caller must say which campaign."""
+
+
+def ensure_journey_flow(brand: str, campaign_id: int | None = None) -> int:
+    """R22: the Journey's flow lives in a campaign. With no engagement plans yet, create
+    "First engagement plan" > "Launch campaign" for it; otherwise the flow goes into the
+    campaign the user picked (NeedsCampaign when none was given)."""
+    existing = journey_flow_id(brand)
+    if existing is not None:
+        return existing
+    key = brand_key(brand)
+    if campaign_id is None:
+        if list_plans(key):
+            raise NeedsCampaign("choose the campaign this flow belongs to")
+        plan = create_plan(key, FIRST_PLAN)
+        campaign_id = create_campaign(plan["id"], FIRST_CAMPAIGN)["id"]
+    else:
+        c = get_campaign(campaign_id)
+        if c["brand"] != key:
+            raise ValueError("that campaign belongs to another brand")
+    return create_flow(campaign_id, JOURNEY_FLOW, origin="journey")["id"]
+
+
+def delete_journey_flows(brand: str) -> int:
+    """R19: wiping a brand's Journey deletes the flows it created, nothing else."""
+    key = brand_kit.canonical_key(brand or "")
+    if key is None:
+        return 0
+    conn = _conn()
+    try:
+        rows = conn.execute(
+            "SELECT f.id, f.campaign_id FROM flow f JOIN campaign c ON c.id=f.campaign_id "
+            "JOIN brand b ON b.id=c.brand_id WHERE b.kit_key=? AND f.origin='journey'", (key,)).fetchall()
+        for r in rows:
+            conn.execute("DELETE FROM flow WHERE id=?", (r["id"],))
+            _refresh_status(conn, r["campaign_id"])
+        conn.commit()
+        return len(rows)
+    finally:
+        conn.close()
+
+
 # ------------------------------------------------------------------------------ tree ----
 
 def tree(brand: str) -> dict:
@@ -515,9 +641,64 @@ def backfill() -> dict:
             out["created"] += 1
             _refresh_status(conn, cur.lastrowid)
 
+        # 5. Each brand's Journey flow (brand_journey.db, one per brand before this work)
+        # -> a flow row in "Earlier work" > "Launch campaign", keeping codes, kept and pending
+        # edits (U-R6). Brands that already have a Journey flow row are skipped.
+        out["journey_flows"] = _backfill_journey_flows(conn)
+
         for r in conn.execute("SELECT id FROM campaign WHERE engagement_plan_id IS NOT NULL").fetchall():
             _refresh_status(conn, r["id"])
         conn.commit()
     finally:
         conn.close()
     return out
+
+
+def _backfill_journey_flows(conn) -> int:
+    try:
+        jconn = db.connect("brand_journey")
+    except Exception:  # noqa: BLE001
+        return 0
+    try:
+        try:
+            rows = jconn.execute("SELECT brand, doc_json FROM journey_flow").fetchall()
+        except Exception:  # noqa: BLE001 -- no Journey flows were ever built here
+            return 0
+        drafts, confirmed = {}, set()
+        try:
+            drafts = {r["brand"]: r["ops_json"] for r in jconn.execute("SELECT brand, ops_json FROM journey_flow_draft")}
+        except Exception:  # noqa: BLE001
+            pass
+        try:
+            confirmed = {r["brand"] for r in jconn.execute(
+                "SELECT brand FROM journey_steps WHERE step='flow' AND status='confirmed'")}
+        except Exception:  # noqa: BLE001
+            pass
+    finally:
+        jconn.close()
+    moved = 0
+    for r in rows:
+        key = brand_kit.canonical_key(r["brand"])
+        if key is None:
+            continue
+        bid = campaign_store.brand_row_for_kit(conn, key)
+        if conn.execute("SELECT 1 FROM flow f JOIN campaign c ON c.id=f.campaign_id "
+                        "WHERE c.brand_id=? AND f.origin='journey'", (bid,)).fetchone():
+            continue
+        stored = json.loads(r["doc_json"])
+        plan_id = _earlier_work_plan(conn, bid)
+        c = conn.execute("SELECT id FROM campaign WHERE engagement_plan_id=? AND name=? AND status<>'closed' "
+                         "ORDER BY id LIMIT 1", (plan_id, FIRST_CAMPAIGN)).fetchone()
+        cid = c["id"] if c else conn.execute(
+            "INSERT INTO campaign (brand_id, engagement_plan_id, name, status, created_at, updated_at) "
+            "VALUES (?,?,?,?,?,?)", (bid, plan_id, FIRST_CAMPAIGN, "draft", _now(), _now())).lastrowid
+        conn.execute(
+            "INSERT INTO flow (campaign_id, name, origin, status, base_json, ops_json, draft_ops_json, "
+            "dropped_json, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)",
+            (cid, JOURNEY_FLOW, "journey", "confirmed" if r["brand"] in confirmed else "built",
+             json.dumps({"base": stored["base"], "codes": stored["codes"]}), json.dumps(stored.get("ops") or []),
+             drafts.get(r["brand"]), json.dumps(stored["dropped"]) if stored.get("dropped") else None,
+             _now(), _now()))
+        _refresh_status(conn, cid)
+        moved += 1
+    return moved

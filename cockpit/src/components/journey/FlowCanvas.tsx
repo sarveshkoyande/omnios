@@ -8,7 +8,7 @@ import { useWorkflowStore } from "@omni-frontend/workspace/stages/operations/flo
 import { campaignFlowToDocument } from "@omni-frontend/workspace/stages/operations/campaignAdapter";
 import { layoutCampaignDocument } from "@omni-frontend/workspace/stages/operations/campaignLayout";
 import type { CampaignFlow } from "@omni-frontend/workspace/types";
-import { buildJourneyFlow, getJourneyFlow, journeyConfirm, journeyFlowKeep, journeyFlowTurn, journeyFlowUndo, journeyReopen } from "../../api";
+import { buildJourneyFlow, createCampaign, getJourneyFlow, journeyConfirm, journeyFlowKeep, journeyFlowTurn, journeyFlowUndo, journeyReopen } from "../../api";
 import type { JourneyCampaignFlow, JourneyFlow, JourneyFlowOp, JourneyState, JourneyStep } from "../../types";
 import { StepChat, type TurnState } from "./StepChat";
 
@@ -84,7 +84,22 @@ export function FlowCanvas({ brand, labels, step, onState }: {
     p.catch((e) => setError(e instanceof Error ? e.message : String(e))).finally(() => setBusy(false));
   };
 
-  const build = () => run(buildJourneyFlow(brand).then(setFlow));
+  // R22: a brand with engagement plans picks the campaign its Journey flow goes into.
+  const [placement, setPlacement] = useState("");
+  const [newCampaign, setNewCampaign] = useState("");
+  const build = () => run((async () => {
+    let campaignId: number | undefined;
+    if (flow?.needs_campaign && flow.status !== "built") {
+      if (placement.startsWith("new:")) {
+        campaignId = (await createCampaign(Number(placement.slice(4)), newCampaign.trim())).id;
+      } else if (placement) {
+        campaignId = Number(placement);
+      }
+    }
+    setFlow(await buildJourneyFlow(brand, campaignId));
+  })());
+  const placementMissing = !!flow?.needs_campaign && flow.status !== "built"
+    && (!placement || (placement.startsWith("new:") && !newCampaign.trim()));
   /** Dock CTA: rejects on failure so the dock stays open to show the error. */
   const settle = async (p: Promise<JourneyState>) => {
     setBusy(true);
@@ -133,9 +148,28 @@ export function FlowCanvas({ brand, labels, step, onState }: {
         {flow.status === "waiting" && (
           <div className="jc-waiting">Flow is waiting on {flow.waiting.map((s) => labels[s] ?? s).join(", ")}. Confirm those steps and the flow can be built by rules.</div>
         )}
+        {flow.needs_campaign && flow.status === "not_built" && (
+          <div className="jc-flow-placement">
+            <label className="jc-field-label" htmlFor="flow-placement">This brand already has engagement plans. Put this flow in</label>
+            <select id="flow-placement" className="jc-input" value={placement} disabled={busy}
+              onChange={(e) => setPlacement(e.target.value)}>
+              <option value="">Choose a campaign…</option>
+              {(flow.campaigns ?? []).map((c) => (
+                <option key={c.id} value={String(c.id)}>{c.engagement_plan} › {c.name}</option>
+              ))}
+              {(flow.engagement_plans ?? []).map((p) => (
+                <option key={`new-${p.id}`} value={`new:${p.id}`}>{p.name} › New campaign…</option>
+              ))}
+            </select>
+            {placement.startsWith("new:") && (
+              <input className="jc-input" placeholder="Campaign name" value={newCampaign} disabled={busy}
+                onChange={(e) => setNewCampaign(e.target.value)} aria-label="New campaign name" />
+            )}
+          </div>
+        )}
         {flow.status !== "waiting" && (
           <div className="draft-bar-actions">
-            <button type="button" className="jc-btn jc-btn-keep" disabled={busy || draftOps.length > 0} onClick={build}>
+            <button type="button" className="jc-btn jc-btn-keep" disabled={busy || draftOps.length > 0 || placementMissing} onClick={build}>
               {busy ? "Working…" : flow.status === "built" ? "Rebuild flow" : "Build flow"}
             </button>
           </div>

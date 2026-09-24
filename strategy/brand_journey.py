@@ -233,6 +233,8 @@ def confirm(brand: str, step: str) -> None:
         conn.commit()
     finally:
         conn.close()
+    if step == "flow":
+        _set_journey_flow_status(b, "confirmed")
 
 
 def reopen(brand: str, step: str) -> None:
@@ -246,6 +248,16 @@ def reopen(brand: str, step: str) -> None:
         conn.commit()
     finally:
         conn.close()
+    if step == "flow":
+        _set_journey_flow_status(b, "built")
+
+
+def _set_journey_flow_status(b: str, status: str) -> None:
+    """The Flow step's confirm/reopen is the Journey flow's own status (feeds its campaign)."""
+    hierarchy = _hier()
+    fid = hierarchy.journey_flow_id(b)
+    if fid is not None and hierarchy.flow_storage(fid)["base"]:
+        hierarchy.save_flow_storage(fid, status=status)
 
 
 def add_turn(brand: str, step: str, role: str, text: str) -> None:
@@ -591,13 +603,6 @@ _FLOW_HELP = ("I can edit the flow with structured changes: add a block, remove 
               "for example: change B3's channel to SMS.")
 
 
-def _conn_flow():
-    conn = _conn()
-    conn.execute("""CREATE TABLE IF NOT EXISTS journey_flow_draft (
-        brand TEXT PRIMARY KEY, ops_json TEXT NOT NULL, updated_at TEXT NOT NULL)""")
-    return conn
-
-
 def _primary_persona(kit: dict, primary_audience) -> str:
     personas = kit.get("personas") or {}
     if not isinstance(personas, dict):
@@ -729,27 +734,21 @@ def _apply_ops(flow: dict, codes: dict, ops: list, strict: bool) -> tuple[list, 
     return applied, dropped
 
 
-def _load_flow_row(conn, b: str) -> dict | None:
-    row = conn.execute("SELECT doc_json FROM journey_flow WHERE brand=?", (b,)).fetchone()
-    return json.loads(row["doc_json"]) if row else None
+# ---- Flow storage: one `flow` row per flow in campaigns.db, keyed by flow id (hierarchy
+# plan U5, KTD6). The Journey's Flow step shows the brand's Journey flow; the brand-keyed
+# functions below resolve it, and the *_by_id functions work for any flow.
+
+def _hier():
+    from strategy import hierarchy
+    return hierarchy
 
 
-def _save_flow_row(conn, b: str, stored: dict) -> None:
-    conn.execute("DELETE FROM journey_flow WHERE brand=?", (b,))
-    conn.execute("INSERT INTO journey_flow (brand, doc_json, updated_at) VALUES (?,?,?)",
-                 (b, json.dumps(stored), _now()))
-
-
-def _draft_ops(conn, b: str) -> list | None:
-    row = conn.execute("SELECT ops_json FROM journey_flow_draft WHERE brand=?", (b,)).fetchone()
-    return json.loads(row["ops_json"]) if row else None
-
-
-def _set_draft_ops(conn, b: str, ops: list | None) -> None:
-    conn.execute("DELETE FROM journey_flow_draft WHERE brand=?", (b,))
-    if ops:
-        conn.execute("INSERT INTO journey_flow_draft (brand, ops_json, updated_at) VALUES (?,?,?)",
-                     (b, json.dumps(ops), _now()))
+def _stored(rec: dict) -> dict | None:
+    """The flow row as the {base, codes, ops, dropped} document the edit logic works on."""
+    if not rec.get("base"):
+        return None
+    return {"base": rec["base"]["base"], "codes": rec["base"]["codes"], "ops": rec["ops"],
+            "dropped": rec["dropped"]}
 
 
 def _flow_waiting(b: str) -> list[str]:
@@ -763,11 +762,26 @@ def _current(stored: dict) -> tuple[dict, dict]:
     return flow, codes
 
 
-def _flow_doc(b: str, stored: dict | None, draft_ops: list | None) -> dict:
+def _flow_doc(b: str, stored: dict | None, draft_ops: list | None, rec: dict | None = None) -> dict:
+    ids = {"flow_id": rec["id"] if rec else None, "campaign_id": rec["campaign_id"] if rec else None,
+           "flow_status": rec["status"] if rec else None}
     if stored is None:
         waiting = _flow_waiting(b)
-        return {"brand": b, "status": "waiting" if waiting else "not_built", "waiting": waiting,
-                "flow": None, "plan": None, "ops": [], "dropped": [], "draft": None}
+        doc = {"brand": b, "status": "waiting" if waiting else "not_built", "waiting": waiting,
+               "flow": None, "plan": None, "ops": [], "dropped": [], "draft": None, **ids}
+        if rec is None and not waiting:
+            try:
+                placements = _hier().open_campaigns(b)
+            except Exception:  # noqa: BLE001 -- the picker is optional; building still works
+                placements = []
+            # R22: with engagement plans already there, the build needs a campaign picked.
+            plans = [{"id": p["id"], "name": p["name"]} for p in _hier().list_plans(b)
+                     if p["status"] != "closed"]
+            if placements or plans:
+                doc["needs_campaign"] = True
+                doc["campaigns"] = placements
+                doc["engagement_plans"] = plans
+        return doc
     flow, codes = _current(stored)
     draft = None
     if draft_ops:
@@ -776,120 +790,161 @@ def _flow_doc(b: str, stored: dict | None, draft_ops: list | None) -> dict:
         draft = {"ops": draft_ops, "flow": dflow}
     plan = {k: v for k, v in stored["base"].items() if k != "flow"}
     return {"brand": b, "status": "built", "waiting": [], "flow": flow, "plan": plan,
-            "ops": stored["ops"], "dropped": stored.get("dropped", []), "draft": draft}
+            "ops": stored["ops"], "dropped": stored.get("dropped", []), "draft": draft, **ids}
 
 
-def get_flow(brand: str) -> dict:
-    b = _key(brand)
-    conn = _conn_flow()
-    try:
-        return _flow_doc(b, _load_flow_row(conn, b), _draft_ops(conn, b))
-    finally:
-        conn.close()
+def _rec(flow_id: int) -> dict:
+    return _hier().flow_storage(flow_id)
 
 
-def build_flow(brand: str) -> dict:
+def get_flow_by_id(flow_id: int) -> dict:
+    rec = _rec(flow_id)
+    return _flow_doc(rec["brand"], _stored(rec), rec["draft_ops"], rec)
+
+
+def build_flow_by_id(flow_id: int) -> dict:
     """Build or rebuild (R16, R17): rules skeleton from the brand ctx with the LLM step off,
     stable codes, then kept ops reapplied by code; ops whose target is gone are dropped and
     reported. Returns the waiting prerequisites instead when Brief, Audience and Message are
     not all confirmed."""
-    b = _key(brand)
+    rec = _rec(flow_id)
+    b = rec["brand"]
     if _flow_waiting(b):
-        return _flow_doc(b, None, None)
+        return _flow_doc(b, None, None, rec)
     base = campaign_ops.build_campaign_plan(brand_ctx(b), use_llm=False)
-    conn = _conn_flow()
-    try:
-        prev = _load_flow_row(conn, b) or {"codes": {}, "ops": []}
-        codes = dict(prev["codes"])
-        _assign_codes(base["flow"], codes)
-        flow = copy.deepcopy(base["flow"])
-        kept, dropped = _apply_ops(flow, codes, prev["ops"], strict=False)
-        stored = {"base": base, "codes": codes, "ops": kept, "dropped": dropped}
-        pending = _draft_ops(conn, b)
-        if pending:
-            ok, _ = _apply_ops(flow, dict(codes), pending, strict=False)
-            _set_draft_ops(conn, b, ok)
-        _save_flow_row(conn, b, stored)
-        _ensure_seeded(conn, b)
-        if _stored_statuses(conn, b).get("flow") == "not_started":
-            _set_status(conn, b, "flow", "drafted")
-        conn.commit()
-        return _flow_doc(b, stored, _draft_ops(conn, b))
-    finally:
-        conn.close()
+    prev = _stored(rec) or {"codes": {}, "ops": []}
+    codes = dict(prev["codes"])
+    _assign_codes(base["flow"], codes)
+    flow = copy.deepcopy(base["flow"])
+    kept, dropped = _apply_ops(flow, codes, prev["ops"], strict=False)
+    stored = {"base": base, "codes": codes, "ops": kept, "dropped": dropped}
+    pending = rec["draft_ops"]
+    if pending:
+        pending, _ = _apply_ops(flow, dict(codes), pending, strict=False)
+    _hier().save_flow_storage(flow_id, base={"base": base, "codes": codes}, ops=kept, dropped=dropped,
+                              draft_ops=pending or None,
+                              status="confirmed" if rec["status"] == "confirmed" else "built")
+    if rec["origin"] == "journey":
+        conn = _conn()
+        try:
+            _ensure_seeded(conn, b)
+            if _stored_statuses(conn, b).get("flow") == "not_started":
+                _set_status(conn, b, "flow", "drafted")
+            conn.commit()
+        finally:
+            conn.close()
+    return get_flow_by_id(flow_id)
 
 
-def propose_flow_ops(brand: str, ops) -> dict:
+def propose_flow_ops_by_id(flow_id: int, ops) -> dict:
     """Validate `ops` against the current flow (kept + pending draft) and append them to the
     draft. ValueError, with no draft change, if any op is malformed or targets a missing code."""
-    b = _key(brand)
     if not isinstance(ops, list) or not ops:
         raise ValueError('send an operations envelope: {"ops": [{"op": ...}]}')
     ops = [_normalize_op(op) for op in ops]
-    conn = _conn_flow()
-    try:
-        stored = _load_flow_row(conn, b)
-        if stored is None:
-            raise ValueError("build the flow before editing it")
+    rec = _rec(flow_id)
+    stored = _stored(rec)
+    if stored is None:
+        raise ValueError("build the flow before editing it")
+    flow, codes = _current(stored)
+    pending = rec["draft_ops"] or []
+    _apply_ops(flow, codes, pending, strict=False)
+    _apply_ops(flow, codes, ops, strict=True)
+    _hier().save_flow_storage(flow_id, draft_ops=pending + ops)
+    return get_flow_by_id(flow_id)
+
+
+def keep_flow_draft_by_id(flow_id: int) -> dict:
+    """Append the draft ops to the kept list; codes of added blocks become permanent."""
+    rec = _rec(flow_id)
+    stored, pending = _stored(rec), rec["draft_ops"]
+    if stored and pending:
         flow, codes = _current(stored)
-        pending = _draft_ops(conn, b) or []
-        _apply_ops(flow, codes, pending, strict=False)
-        _apply_ops(flow, codes, ops, strict=True)
-        _set_draft_ops(conn, b, pending + ops)
-        conn.commit()
-        return _flow_doc(b, stored, pending + ops)
-    finally:
-        conn.close()
+        ok, _ = _apply_ops(flow, codes, pending, strict=False)
+        _hier().save_flow_storage(flow_id, base={"base": stored["base"], "codes": codes},
+                                  ops=stored["ops"] + ok, draft_ops=None)
+    return get_flow_by_id(flow_id)
+
+
+def undo_flow_draft_by_id(flow_id: int) -> dict:
+    _hier().save_flow_storage(flow_id, draft_ops=None)
+    return get_flow_by_id(flow_id)
+
+
+def _journey_flow(brand: str) -> int | None:
+    return _hier().journey_flow_id(_key(brand))
+
+
+def get_flow(brand: str) -> dict:
+    b = _key(brand)
+    fid = _journey_flow(b)
+    return get_flow_by_id(fid) if fid is not None else _flow_doc(b, None, None)
+
+
+def build_flow(brand: str, campaign_id: int | None = None) -> dict:
+    """Build the brand's Journey flow. The first build places it (R22): a brand with no
+    engagement plans gets "First engagement plan" > "Launch campaign"; otherwise
+    `campaign_id` says where it goes (hierarchy.NeedsCampaign when it is missing)."""
+    b = _key(brand)
+    if _flow_waiting(b):
+        return get_flow(b)
+    return build_flow_by_id(_hier().ensure_journey_flow(b, campaign_id))
+
+
+def _require_journey_flow(b: str) -> int:
+    fid = _journey_flow(b)
+    if fid is None:
+        raise ValueError("build the flow before editing it")
+    return fid
+
+
+def propose_flow_ops(brand: str, ops) -> dict:
+    b = _key(brand)
+    if not isinstance(ops, list) or not ops:
+        raise ValueError('send an operations envelope: {"ops": [{"op": ...}]}')
+    return propose_flow_ops_by_id(_require_journey_flow(b), ops)
 
 
 def keep_flow_draft(brand: str) -> dict:
-    """Append the draft ops to the kept list; codes of added blocks become permanent."""
-    b = _key(brand)
-    conn = _conn_flow()
-    try:
-        stored, pending = _load_flow_row(conn, b), _draft_ops(conn, b)
-        if stored and pending:
-            flow, codes = _current(stored)
-            ok, _ = _apply_ops(flow, codes, pending, strict=False)
-            stored["ops"], stored["codes"] = stored["ops"] + ok, codes
-            _save_flow_row(conn, b, stored)
-            _set_draft_ops(conn, b, None)
-            conn.commit()
-        return _flow_doc(b, stored, None)
-    finally:
-        conn.close()
+    fid = _journey_flow(_key(brand))
+    return keep_flow_draft_by_id(fid) if fid is not None else get_flow(brand)
 
 
 def undo_flow_draft(brand: str) -> dict:
-    b = _key(brand)
-    conn = _conn_flow()
-    try:
-        _set_draft_ops(conn, b, None)
-        conn.commit()
-        return _flow_doc(b, _load_flow_row(conn, b), None)
-    finally:
-        conn.close()
+    fid = _journey_flow(_key(brand))
+    return undo_flow_draft_by_id(fid) if fid is not None else get_flow(brand)
 
 
 def _call_flow_llm(system: str, payload: str) -> dict:
     return _call_llm_json(system, payload)
 
 
-def flow_turn(brand: str, message: str = "", ops=None) -> dict:
+def flow_turn_by_id(flow_id: int, message: str = "", ops=None) -> dict:
+    """flow_turn for any flow; the chat notes go to its brand's Flow step history."""
+    return flow_turn(_rec(flow_id)["brand"], message, ops, flow_id=flow_id)
+
+
+def flow_turn(brand: str, message: str = "", ops=None, flow_id: int | None = None) -> dict:
     """The Flow step's turn (KTD8). An explicit ops envelope lands as a draft (ValueError on
     an invalid op, no draft). Free text becomes ops through the LLM when it is on; an LLM
     failure or an invalid LLM op degrades to a help reply with no draft -- never raises."""
     b = _key(brand)
     message = (message or "").strip()
+    if flow_id is None:
+        get_doc = lambda: get_flow(b)  # noqa: E731
+        propose = lambda o: propose_flow_ops(b, o)  # noqa: E731
+    else:
+        get_doc = lambda: get_flow_by_id(flow_id)  # noqa: E731
+        propose = lambda o: propose_flow_ops_by_id(flow_id, o)  # noqa: E731
     if ops:
-        doc = propose_flow_ops(b, ops)
+        doc = propose(ops)
         if message:
             add_turn(b, "flow", "user", message)
         reply = f"Drafted {len(ops)} change{'s' if len(ops) != 1 else ''}. Keep or undo."
         add_turn(b, "flow", "agent", reply)
         return {"reply": reply, "mode": "ops", "flow": doc}
     add_turn(b, "flow", "user", message)
-    current = get_flow(b)
+    current = get_doc()
     mode, reply = "fallback", ""
     if current["status"] != "built":
         reply = "Build the flow first: it needs Brief, Audience and Message confirmed."
@@ -901,11 +956,11 @@ def flow_turn(brand: str, message: str = "", ops=None) -> dict:
             env = _call_flow_llm(_FLOW_TURN_SYSTEM, f"Blocks:\n{json.dumps(blocks)}\n\n"
                                  f"Conversation so far:\n{_recent_turns(b, 'flow')}")
             if env.get("ops"):
-                current = propose_flow_ops(b, env["ops"])
+                current = propose(env["ops"])
             reply, mode = str(env.get("reply") or "").strip(), "llm"
         except Exception as e:  # noqa: BLE001 -- degrade, never fail
             print(f"[brand_journey] flow turn LLM failed for {b}: {e!r}")
-            current, mode, reply = get_flow(b), "fallback", ""
+            current, mode, reply = get_doc(), "fallback", ""
     reply = reply or _FLOW_HELP
     add_turn(b, "flow", "agent", reply)
     return {"reply": reply, "mode": mode, "flow": current}

@@ -259,6 +259,20 @@ export interface JourneyFlow {
   dropped: { op: JourneyFlowOp; reason: string }[];
   /** Pending chat edit: its ops and the flow they would produce. */
   draft: { ops: JourneyFlowOp[]; flow: JourneyCampaignFlow } | null;
+  /** The flow's record in Brand > Engagement Plan > Campaign > Flow; null until first built. */
+  flow_id: number | null;
+  campaign_id: number | null;
+  /** First build for a brand that already has engagement plans: pick the campaign it goes in. */
+  needs_campaign?: boolean;
+  campaigns?: FlowPlacement[];
+  engagement_plans?: { id: number; name: string }[];
+}
+
+export interface FlowPlacement {
+  id: number;
+  name: string;
+  engagement_plan_id: number;
+  engagement_plan: string;
 }
 
 export interface JourneyFlowEdge { id: string; source: string; target: string; label?: string }

@@ -863,6 +863,8 @@ def _journey_call(fn, *args):
     """Maps the journey store's errors: unknown brand -> 404, bad input -> 400."""
     try:
         return fn(*args)
+    except hierarchy.NeedsCampaign as e:
+        raise HTTPException(409, str(e))
     except KeyError as e:
         raise HTTPException(404, str(e).strip("'\""))
     except ValueError as e:
@@ -919,10 +921,42 @@ def api_journey_flow(brand: str):
     return _journey_call(brand_journey.get_flow, brand)
 
 
+class FlowBuildRequest(BaseModel):
+    campaign_id: int | None = None
+
+
 @app.post("/api/brands/{brand}/journey/flow/build")
-def api_journey_flow_build(brand: str):
-    """Build or rebuild the rules-built flow (R16); stable block codes, kept edits reapplied."""
-    return _journey_call(brand_journey.build_flow, brand)
+def api_journey_flow_build(brand: str, req: FlowBuildRequest | None = None):
+    """Build or rebuild the rules-built flow (R16); stable block codes, kept edits reapplied.
+    The first build places the flow in a campaign (hierarchy R22): automatically for a brand
+    with no engagement plans, else in `campaign_id` (409 when it is missing)."""
+    return _journey_call(brand_journey.build_flow, brand, req.campaign_id if req else None)
+
+
+# Any flow by id (hierarchy plan U5): the same rules-built base + structured edits.
+@app.get("/api/flows/{flow_id}")
+def api_flow(flow_id: int):
+    return _journey_call(brand_journey.get_flow_by_id, flow_id)
+
+
+@app.post("/api/flows/{flow_id}/build")
+def api_flow_build(flow_id: int):
+    return _journey_call(brand_journey.build_flow_by_id, flow_id)
+
+
+@app.post("/api/flows/{flow_id}/turn")
+def api_flow_turn(flow_id: int, req: JourneyTurnRequest):
+    return _journey_call(brand_journey.flow_turn_by_id, flow_id, req.message, req.ops)
+
+
+@app.post("/api/flows/{flow_id}/keep")
+def api_flow_keep(flow_id: int):
+    return _journey_call(brand_journey.keep_flow_draft_by_id, flow_id)
+
+
+@app.post("/api/flows/{flow_id}/undo")
+def api_flow_undo(flow_id: int):
+    return _journey_call(brand_journey.undo_flow_draft_by_id, flow_id)
 
 
 @app.post("/api/brands/{brand}/journey/{step}/turn")
