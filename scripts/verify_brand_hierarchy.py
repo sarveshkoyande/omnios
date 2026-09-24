@@ -494,6 +494,69 @@ def check_reset_deletes_only_journey_flows():  # R19, AE5
     assert h.journey_flow_id(b) is None
 
 
+# ---- U6: the Campaign Plan's Operations diagram is a flow of its campaign --------------------
+
+_DOC = {"version": 1, "pages": [{"id": "p1", "name": "Flow", "nodes": [{"id": "n1", "label": "Email 1"}], "edges": []}]}
+
+
+def _bound_campaign(plan_brand: str = "Oncomyra") -> tuple[dict, str]:
+    c = h.create_campaign(_plan(plan_brand)["id"], "Diagrammed")
+    pid = _new_project(plan_brand)
+    h.bind_project(c["id"], pid)
+    return c, pid
+
+
+def check_saving_the_operations_diagram_creates_one_plan_flow():  # U6
+    cl = _client()
+    c, pid = _bound_campaign()
+    assert h.list_flows(c["id"]) == []
+    assert cl.patch(f"/api/projects/{pid}/campaign-plan-layout", json=_DOC).status_code == 200
+    doc2 = {**_DOC, "pages": [{**_DOC["pages"][0], "name": "Edited"}]}
+    cl.patch(f"/api/projects/{pid}/campaign-plan-layout", json=doc2)
+    flows = h.list_flows(c["id"])
+    assert [(f["origin"], f["name"]) for f in flows] == [("campaign_plan", h.PLAN_FLOW)], flows
+    got = cl.get(f"/api/flows/{flows[0]['id']}").json()
+    assert got["kind"] == "document" and got["document"] == doc2 and got["project_id"] == pid, got
+    assert h.get_campaign(c["id"])["status"] == "in_progress"
+    r = cl.post(f"/api/flows/{flows[0]['id']}/turn", json={"ops": [{"op": "remove", "code": "B1"}]})
+    assert r.status_code == 400 and "Operations" in r.text, r.text
+    assert cl.post(f"/api/flows/{flows[0]['id']}/build").status_code == 400
+
+
+def check_unlinked_project_diagram_save_still_works():  # U6, no regression
+    pid = _new_project("Oncomira")
+    assert _client().patch(f"/api/projects/{pid}/campaign-plan-layout", json=_DOC).status_code == 200
+    assert pstore.get_project(pid)["campaign_plan_layout"] == _DOC
+
+
+def check_moving_a_campaign_freezes_its_old_diagram():  # U6 + R16
+    cl = _client()
+    c, pid = _bound_campaign()
+    cl.patch(f"/api/projects/{pid}/campaign-plan-layout", json=_DOC)
+    old_flow = h.list_flows(c["id"])[0]["id"]
+    new = h.move_campaign(c["id"], h.create_plan("Cardiovex", "Moved here")["id"])
+    new_flows = h.list_flows(new["id"])
+    assert [f["origin"] for f in new_flows] == ["campaign_plan"], new_flows
+    later = {**_DOC, "pages": [{**_DOC["pages"][0], "name": "After the move"}]}
+    cl.patch(f"/api/projects/{pid}/campaign-plan-layout", json=later)
+    old = cl.get(f"/api/flows/{old_flow}").json()
+    assert old["frozen"] and old["document"] == _DOC, "the closed campaign keeps the diagram as it was"
+    assert cl.get(f"/api/flows/{new_flows[0]['id']}").json()["document"] == later
+
+
+def check_backfill_adds_plan_flows_for_existing_diagrams():  # U6 backfill
+    c, pid = _bound_campaign()
+    pconn = pstore._conn()
+    pconn.execute("UPDATE projects SET campaign_plan_layout=? WHERE id=?", (json.dumps(_DOC), pid))
+    pconn.commit()
+    pconn.close()
+    assert h.list_flows(c["id"]) == []
+    h.backfill()
+    assert [f["origin"] for f in h.list_flows(c["id"])] == ["campaign_plan"]
+    h.backfill()
+    assert len(h.list_flows(c["id"])) == 1, "a second backfill adds nothing"
+
+
 CHECKS = [v for k, v in list(globals().items()) if k.startswith("check_") and callable(v)]
 
 

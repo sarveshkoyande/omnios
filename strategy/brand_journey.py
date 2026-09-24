@@ -793,12 +793,28 @@ def _flow_doc(b: str, stored: dict | None, draft_ops: list | None, rec: dict | N
             "ops": stored["ops"], "dropped": stored.get("dropped", []), "draft": draft, **ids}
 
 
-def _rec(flow_id: int) -> dict:
-    return _hier().flow_storage(flow_id)
+DOCUMENT_FLOW = "This flow is the Campaign Plan's Operations diagram: edit it in that editor."
+
+
+def _rec(flow_id: int, editable: bool = False) -> dict:
+    rec = _hier().flow_storage(flow_id)
+    if editable and rec["kind"] == "document":
+        raise ValueError(DOCUMENT_FLOW)
+    return rec
 
 
 def get_flow_by_id(flow_id: int) -> dict:
     rec = _rec(flow_id)
+    if rec["kind"] == "document":
+        # U6: the diagram lives on the project (or, once its campaign was closed by a move,
+        # as a frozen copy on the flow), in the flow builder's own WorkflowDocument schema.
+        doc = rec["frozen_layout"]
+        if doc is None and rec["project_id"]:
+            from strategy import projects as pstore
+            doc = (pstore.get_project(rec["project_id"]) or {}).get("campaign_plan_layout")
+        return {"brand": rec["brand"], "kind": "document", "flow_id": rec["id"], "campaign_id": rec["campaign_id"],
+                "flow_status": rec["status"], "project_id": rec["project_id"],
+                "frozen": rec["frozen_layout"] is not None, "document": doc}
     return _flow_doc(rec["brand"], _stored(rec), rec["draft_ops"], rec)
 
 
@@ -807,7 +823,7 @@ def build_flow_by_id(flow_id: int) -> dict:
     stable codes, then kept ops reapplied by code; ops whose target is gone are dropped and
     reported. Returns the waiting prerequisites instead when Brief, Audience and Message are
     not all confirmed."""
-    rec = _rec(flow_id)
+    rec = _rec(flow_id, editable=True)
     b = rec["brand"]
     if _flow_waiting(b):
         return _flow_doc(b, None, None, rec)
@@ -842,7 +858,7 @@ def propose_flow_ops_by_id(flow_id: int, ops) -> dict:
     if not isinstance(ops, list) or not ops:
         raise ValueError('send an operations envelope: {"ops": [{"op": ...}]}')
     ops = [_normalize_op(op) for op in ops]
-    rec = _rec(flow_id)
+    rec = _rec(flow_id, editable=True)
     stored = _stored(rec)
     if stored is None:
         raise ValueError("build the flow before editing it")
@@ -856,7 +872,7 @@ def propose_flow_ops_by_id(flow_id: int, ops) -> dict:
 
 def keep_flow_draft_by_id(flow_id: int) -> dict:
     """Append the draft ops to the kept list; codes of added blocks become permanent."""
-    rec = _rec(flow_id)
+    rec = _rec(flow_id, editable=True)
     stored, pending = _stored(rec), rec["draft_ops"]
     if stored and pending:
         flow, codes = _current(stored)
@@ -867,6 +883,7 @@ def keep_flow_draft_by_id(flow_id: int) -> dict:
 
 
 def undo_flow_draft_by_id(flow_id: int) -> dict:
+    _rec(flow_id, editable=True)
     _hier().save_flow_storage(flow_id, draft_ops=None)
     return get_flow_by_id(flow_id)
 
@@ -921,7 +938,7 @@ def _call_flow_llm(system: str, payload: str) -> dict:
 
 def flow_turn_by_id(flow_id: int, message: str = "", ops=None) -> dict:
     """flow_turn for any flow; the chat notes go to its brand's Flow step history."""
-    return flow_turn(_rec(flow_id)["brand"], message, ops, flow_id=flow_id)
+    return flow_turn(_rec(flow_id, editable=True)["brand"], message, ops, flow_id=flow_id)
 
 
 def flow_turn(brand: str, message: str = "", ops=None, flow_id: int | None = None) -> dict:

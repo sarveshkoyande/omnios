@@ -49,6 +49,12 @@ _ADDED_COLUMNS = (
     ("campaign", "snapshot_json", "TEXT"),
     ("campaign", "snapshot_at", "TEXT"),
     ("campaign_version", "snapshot_json", "TEXT"),
+    # "rules": base + structured edits (the Journey model). "document": the Campaign Plan's
+    # Operations diagram, a WorkflowDocument kept on the project and edited in its own
+    # editor (hierarchy plan U6, user decision 2026-09-24). layout_json holds a frozen copy
+    # only when the campaign was closed by a move to another brand.
+    ("flow", "kind", "TEXT NOT NULL DEFAULT 'rules'"),
+    ("flow", "layout_json", "TEXT"),
 )
 # Indexes on added columns, created only once the columns exist.
 _ADDED_INDEXES = (

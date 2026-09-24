@@ -237,7 +237,7 @@ Both kinds are already built by the same builder; they diverge only in storage a
 
 ### Key Decisions
 
-- **U-KD1. The Journey's model, for all flows:** a rules-built base, an ordered list of kept structured edits, a pending draft edit, and stable block codes. (session-settled: user-directed, D5.)
+- **U-KD1. The Journey's model, for all flows:** a rules-built base, an ordered list of kept structured edits, a pending draft edit, and stable block codes. (session-settled: user-directed, D5.) **Amended 2026-09-24 (user decision during build):** the Campaign Plan's Operations diagram keeps its full editor and is stored as a "document" flow of its campaign. Unifying it with the rules model is deferred. U-R5 and U-R7 below are superseded for Operations diagrams.
 - **U-KD2. A flow is its own record inside a campaign.** It is no longer "the brand's flow" (Journey) or "the project's layout" (Operations stage). (session-settled: follows D3.)
 
 ### Requirements

@@ -244,6 +244,14 @@ def save_project(
     conn.execute(f"UPDATE projects SET {', '.join(updates)} WHERE id=?", (*values, pid))
     conn.commit()
     conn.close()
+    if campaign_plan_layout is not None:
+        # The Operations diagram is its campaign's "Campaign Plan flow" (hierarchy plan U6);
+        # make sure that flow exists. Best-effort: a diagram save never fails on it.
+        try:
+            from strategy import hierarchy
+            hierarchy.ensure_plan_flow(pid)
+        except Exception as e:  # noqa: BLE001
+            print(f"[hierarchy] plan flow update failed: {e}")
     return get_project(pid)
 
 

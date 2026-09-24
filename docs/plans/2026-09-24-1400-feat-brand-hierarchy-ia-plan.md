@@ -85,12 +85,14 @@ The full contract lives in the two requirements docs. In short:
   - `created_at`, `updated_at`.
 
   The Journey's flow functions in `strategy/brand_journey.py` (build, turn, keep, undo, rebuild) are re-keyed from `brand` to `flow_id`, and read their inputs from the flow's campaign snapshot (KTD8). `journey_flow` and `journey_flow_draft` become read-only sources for the backfill and are then left unused.
-- **KTD7. Existing Operations layouts become frozen flows.** There is no converter from `WorkflowDocument` back to `CampaignFlow` (see CLAUDE.md), so an existing `projects.campaign_plan_layout` becomes a flow with `origin=legacy_layout`:
-  - its `WorkflowDocument` is stored as a frozen base, with no ops;
-  - it renders as before, read-only;
-  - "Rebuild from rules" replaces it with a fresh rules-built base and turns on structured edits.
+- **KTD7 (revised 2026-09-24, user decision). The Operations editor stays as it is; its diagram is a "document" flow of the campaign.** Converting the Operations stage to the Journey's model would have removed its drag-and-drop palette, styling, layers, data fields, import/export, the agent's full redraw and the SFMC export's input. So:
+  - `flow.kind` is `rules` (base plus structured edits: Journey and hand-added flows) or `document` (the Campaign Plan's `WorkflowDocument`);
+  - a document flow ("Campaign Plan flow", `origin=campaign_plan`) points at `projects.campaign_plan_layout`, which stays the single copy. The editor, the Operations agent (`strategy/tab_chat.py`) and `strategy/sfmc_export.py` are unchanged;
+  - `projects.save_project` creates the flow the first time a campaign-linked project saves a layout, and the backfill adds it for existing ones;
+  - when a campaign is moved to another brand, its document flow keeps a frozen copy (`flow.layout_json`) and the new campaign gets its own;
+  - rules-only operations (build, turn, keep, undo) refuse document flows with a clear message.
 
-  New Campaign Plans build their Operations flow through `campaign_ops.build_campaign_plan` into a normal flow row. The Operations agent emits the Journey's structured-ops envelope instead of a whole document (U-R7).
+  Unifying the two models (recording editor changes as structured edits) is deferred.
 - **KTD8. The snapshot is JSON of the kit fields plus the Journey answers, taken at campaign creation.**
   - `brand_journey.brand_ctx(brand)` is split into `ctx_from(kit, answers)` plus a thin wrapper, so a flow builds from `campaign.snapshot_json` instead of the live kit (P-R5).
   - Drift is a field-by-field comparison of the snapshot with the current kit and answers, grouped into Brief, Audience, Message and Kit (P-R3).
@@ -191,17 +193,19 @@ The full contract lives in the two requirements docs. In short:
   - `verify_brand_journey.py`'s flow checks are updated to the flow-id API, and all of them stay green;
   - new checks cover the R22 first-plan creation, the backfill of an existing Journey flow (block codes and ops intact), and a reset deleting only Journey-made flows (AE5).
 
-**U6. Operations stage onto the flow model**
-- **Covers:** U-R4, U-R5, U-R7, KTD7.
+**U6. The Operations diagram as a flow of its campaign** (revised, KTD7)
+- **Covers:** U-R5 (revised), U-R6 for Operations.
 - **Files:**
-  - `app/server.py`: the campaign-plan-layout routes. `PATCH` stays for the legacy path, and new Campaign Plans write flow rows.
-  - `strategy/tab_chat.py`: the Operations agent emits the structured-ops envelope, reusing `brand_journey`'s op applier.
-  - `frontend/src/workspace/stages/operations/`: loads and saves the campaign's flow rows.
-  - `strategy/hierarchy.py`: `backfill()` step 8, which turns each `campaign_plan_layout` into a `legacy_layout` flow.
-- **Verification:**
-  - a migrated layout renders unchanged (U-AE2, a screenshot comparison in the browser pass);
-  - an Operations chat edit lands as a draft op and survives a rebuild (U-AE1);
-  - "Rebuild from rules" on a legacy flow produces a normal flow.
+  - `strategy/campaign_store.py`: `flow.kind` and `flow.layout_json`;
+  - `strategy/hierarchy.py`: `ensure_plan_flow`, the freeze on a cross-brand move, and backfill step 5a;
+  - `strategy/projects.py`: the save hook;
+  - `strategy/brand_journey.py`: document flows are read-only through the flow API.
+- **Verification:** in `verify_brand_hierarchy.py`:
+  - one plan flow per campaign on repeated saves, and `GET /api/flows/{id}` returns the saved document;
+  - rules-only operations return 400;
+  - unlinked projects still save;
+  - the old diagram is frozen on a cross-brand move;
+  - the backfill is idempotent.
 
 #### Phase C — Naming (idea 2)
 

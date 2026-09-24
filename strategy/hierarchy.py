@@ -282,6 +282,14 @@ def move_campaign(campaign_id: int, target_plan_id: int) -> dict:
             (c.get("project_id"), target["brand_id"], target_plan_id, c["name"], "draft",
              c.get("status_detail"), _now(), _now()))
         new_id = cur.lastrowid
+        plan_flow = conn.execute("SELECT id FROM flow WHERE campaign_id=? AND origin='campaign_plan'",
+                                 (campaign_id,)).fetchone()
+        if plan_flow and c.get("project_id"):
+            from strategy import projects as pstore
+            layout = (pstore.get_project(c["project_id"]) or {}).get("campaign_plan_layout")
+            conn.execute("UPDATE flow SET layout_json=? WHERE id=?",
+                         (json.dumps(layout) if layout else None, plan_flow["id"]))
+            _ensure_plan_flow(conn, new_id)
         _refresh_status(conn, new_id)
         conn.commit()
     finally:
@@ -345,6 +353,7 @@ def list_flows(campaign_id: int) -> list[dict]:
         conn.close()
 
 
+PLAN_FLOW = "Campaign Plan flow"
 FIRST_PLAN = "First engagement plan"
 FIRST_CAMPAIGN = "Launch campaign"
 JOURNEY_FLOW = "Journey flow"
@@ -360,13 +369,15 @@ def flow_storage(flow_id: int) -> dict:
     conn = _conn()
     try:
         r = conn.execute(
-            "SELECT f.*, c.status AS campaign_status, b.kit_key AS brand FROM flow f "
+            "SELECT f.*, c.status AS campaign_status, c.project_id, b.kit_key AS brand FROM flow f "
             "JOIN campaign c ON c.id=f.campaign_id LEFT JOIN brand b ON b.id=c.brand_id WHERE f.id=?",
             (flow_id,)).fetchone()
         if r is None:
             raise NotFound(f"no flow {flow_id}")
         return {"id": r["id"], "campaign_id": r["campaign_id"], "name": r["name"], "origin": r["origin"],
-                "status": r["status"], "brand": r["brand"], "campaign_status": r["campaign_status"],
+                "kind": r["kind"], "status": r["status"], "brand": r["brand"],
+                "campaign_status": r["campaign_status"], "project_id": r["project_id"],
+                "frozen_layout": _json(r["layout_json"]),
                 "base": _json(r["base_json"]), "ops": _json(r["ops_json"]) or [],
                 "draft_ops": _json(r["draft_ops_json"]), "dropped": _json(r["dropped_json"]) or []}
     finally:
@@ -397,6 +408,35 @@ def save_flow_storage(flow_id: int, base=_UNSET, ops=_UNSET, dropped=_UNSET, dra
         conn.execute(f"UPDATE flow SET {', '.join(sets)}, updated_at=? WHERE id=?", (*vals, _now(), flow_id))
         _refresh_status(conn, r["campaign_id"])
         conn.commit()
+    finally:
+        conn.close()
+
+
+def _ensure_plan_flow(conn, campaign_id: int) -> int:
+    r = conn.execute("SELECT id FROM flow WHERE campaign_id=? AND origin='campaign_plan' ORDER BY id LIMIT 1",
+                     (campaign_id,)).fetchone()
+    if r:
+        return r["id"]
+    cur = conn.execute(
+        "INSERT INTO flow (campaign_id, name, origin, kind, status, created_at, updated_at) "
+        "VALUES (?,?,?,?,?,?,?)", (campaign_id, PLAN_FLOW, "campaign_plan", "document", "built", _now(), _now()))
+    _refresh_status(conn, campaign_id)
+    return cur.lastrowid
+
+
+def ensure_plan_flow(project_id: str) -> int | None:
+    """The Campaign Plan's Operations diagram as a flow of its campaign (U6): a "document"
+    flow whose content is the project's campaign_plan_layout. Called when that layout is
+    saved; a project with no open campaign has none."""
+    conn = _conn()
+    try:
+        r = conn.execute("SELECT id FROM campaign WHERE project_id=? AND status<>'closed' ORDER BY id DESC LIMIT 1",
+                         (project_id,)).fetchone()
+        if r is None:
+            return None
+        fid = _ensure_plan_flow(conn, r["id"])
+        conn.commit()
+        return fid
     finally:
         conn.close()
 
@@ -641,6 +681,16 @@ def backfill() -> dict:
             out["created"] += 1
             _refresh_status(conn, cur.lastrowid)
 
+        # 5a. Campaign Plans that already have an Operations diagram get their plan flow (U6).
+        with_layout = _projects_with_layout()
+        for r in conn.execute("SELECT id, project_id FROM campaign WHERE project_id IS NOT NULL "
+                              "AND status<>'closed' AND engagement_plan_id IS NOT NULL").fetchall():
+            if r["project_id"] in with_layout:
+                if not conn.execute("SELECT 1 FROM flow WHERE campaign_id=? AND origin='campaign_plan'",
+                                    (r["id"],)).fetchone():
+                    _ensure_plan_flow(conn, r["id"])
+                    out["plan_flows"] = out.get("plan_flows", 0) + 1
+
         # 5. Each brand's Journey flow (brand_journey.db, one per brand before this work)
         # -> a flow row in "Earlier work" > "Launch campaign", keeping codes, kept and pending
         # edits (U-R6). Brands that already have a Journey flow row are skipped.
@@ -652,6 +702,16 @@ def backfill() -> dict:
     finally:
         conn.close()
     return out
+
+
+def _projects_with_layout() -> set[str]:
+    from strategy import projects as pstore
+    pconn = pstore._conn()
+    try:
+        return {r["id"] for r in pconn.execute(
+            "SELECT id FROM projects WHERE campaign_plan_layout IS NOT NULL AND campaign_plan_layout <> 'null'")}
+    finally:
+        pconn.close()
 
 
 def _backfill_journey_flows(conn) -> int:
