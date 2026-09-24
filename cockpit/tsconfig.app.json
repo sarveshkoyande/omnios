@@ -36,5 +36,8 @@
       "@dagrejs/dagre": ["./node_modules/@dagrejs/dagre"]
     }
   },
-  "include": ["src"]
+  "include": ["src"],
+  /* Parked (its only use in BrandWorkspace is commented out) and imports ../gate, which was
+     never committed. Re-include once src/gate.ts is in the repo. */
+  "exclude": ["src/components/DispatchBoard.tsx"]
 }

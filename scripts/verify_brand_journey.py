@@ -34,6 +34,14 @@ _REAL_KITS = brand_kit.KITS_JSON
 _REAL_KITS_BYTES = _REAL_KITS.read_bytes()
 _KITS_COPY = _TMP / "brand_kits.json"
 shutil.copyfile(_REAL_KITS, _KITS_COPY)
+# The Cardiovex checks need a pre-existing, fully populated legacy kit. A fresh checkout
+# commits only Oncomyra, so seed Cardiovex into the temporary copy (never the real file)
+# from Oncomyra's kit plus the two required Brief fields it lacks.
+_kits_doc = json.loads(_KITS_COPY.read_text(encoding="utf-8"))
+if not any(k.lower() == "cardiovex" for k in _kits_doc["kits"]):
+    _kits_doc["kits"]["Cardiovex"] = {**_kits_doc["kits"]["Oncomyra"], "territories": ["US"],
+                                      "key_objective": "Grow new patient starts"}
+    _KITS_COPY.write_text(json.dumps(_kits_doc, indent=2), encoding="utf-8")
 brand_kit.KITS_JSON = _KITS_COPY
 brand_kit._load.cache_clear()
 
@@ -423,6 +431,18 @@ def check_u3_revised_document_changes_only_message():  # F4
     assert r.status_code == 404, r.text
 
 
+def check_u3_reuploaded_document_does_not_stack_drafts():
+    b = _fresh_brand()
+    canned = {"message": {"tagline": "Beat by beat"}}
+    with _patched(bj, extract_step=lambda step, text: canned.get(step, {})):
+        assert bj.apply_document(b, "plan") == ["message"]
+        assert bj.apply_document(b, "plan") == [], "same document drafted again"
+        canned["message"]["tagline"] = "Newer line"
+        assert bj.apply_document(b, "plan v2") == ["message"]
+    drafts = bj.list_drafts(b, "message")
+    assert [(d["field"], d["value"]) for d in drafts] == [("tagline", "Newer line")], drafts
+
+
 # ---- U6: brand-derived flow, stable block codes, structured edits -------------------------
 
 def _flow_ready_brand() -> str:
@@ -555,6 +575,34 @@ def check_u6_chained_adds_resolve_refs_and_survive_keep():
     got = bj.build_flow(b)
     assert got["dropped"] == [], got["dropped"]
     assert {"Wait 3 days", "Reminder"} <= {n["data"]["label"] for n in got["flow"]["nodes"]}
+
+
+def check_u6_flow_turn_llm_success_drafts_ops():
+    b = _flow_ready_brand()
+    code = bj.build_flow(b)["flow"]["nodes"][1]["data"]["block_code"]
+
+    def fake(system, payload):
+        assert code in payload, payload
+        return {"reply": "Renamed it.", "ops": [{"op": "change", "code": code,
+                                                 "set": {"label": "LLM renamed"}}]}
+    with _patched(bj, _llm_on=lambda: True, _call_flow_llm=fake):
+        r = bj.flow_turn(b, "rename the first send")
+    assert r["mode"] == "llm" and r["reply"] == "Renamed it.", r
+    draft = bj.get_flow(b)["draft"]
+    assert draft and draft["flow"]["nodes"][1]["data"]["label"] == "LLM renamed", draft
+    assert bj.get_flow(b)["flow"]["nodes"][1]["data"]["label"] != "LLM renamed"
+
+
+def check_u6_flow_turn_llm_invalid_op_falls_back():
+    b = _flow_ready_brand()
+    bj.build_flow(b)
+
+    def fake(system, payload):
+        return {"reply": "Done.", "ops": [{"op": "change", "code": "B999", "set": {"label": "x"}}]}
+    with _patched(bj, _llm_on=lambda: True, _call_flow_llm=fake):
+        r = bj.flow_turn(b, "rename something that isn't there")
+    assert r["mode"] == "fallback" and r["reply"] == bj._FLOW_HELP, r
+    assert bj.get_flow(b)["draft"] is None
 
 
 # ---- U8: retirement of the guided update screen + reset script ---------------------------

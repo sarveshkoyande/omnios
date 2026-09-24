@@ -332,7 +332,7 @@ import re  # noqa: E402
 from concurrent.futures import ThreadPoolExecutor  # noqa: E402
 
 import conversation_llm  # noqa: E402
-from strategy import kit_chat  # noqa: E402  (reuses _FIELD_SHAPES and the envelope parser)
+from strategy import kit_chat  # noqa: E402  (reuses FIELD_SHAPES and the envelope parser)
 
 CONTENT_STEPS = ("brief", "audience", "message", "kit")
 _FALLBACK_MAX_CHARS = 200
@@ -364,13 +364,13 @@ def _llm_on() -> bool:
 
 
 def _shape_hints(keys) -> str:
-    hints = [f'- "{k}" must be shaped exactly like: {kit_chat._FIELD_SHAPES[k]}'
-             for k in keys if k in kit_chat._FIELD_SHAPES]
+    hints = [f'- "{k}" must be shaped exactly like: {kit_chat.FIELD_SHAPES[k]}'
+             for k in keys if k in kit_chat.FIELD_SHAPES]
     return ("\n\nRequired JSON shape for structured fields:\n" + "\n".join(hints)) if hints else ""
 
 
 def _call_llm_json(system: str, payload: str) -> dict:
-    """One call, one retry on invalid JSON, strict=False parse (kit_chat._parse_envelope) --
+    """One call, one retry on invalid JSON, strict=False parse (kit_chat.parse_envelope) --
     the kit_chat._call_llm idiom. Raises on provider failure; callers fall back."""
     client = conversation_llm._get_client()
 
@@ -378,7 +378,7 @@ def _call_llm_json(system: str, payload: str) -> dict:
         resp = client.messages.create(model=conversation_llm.MODEL, max_tokens=6000, system=system,
                                       messages=[{"role": "user", "content": payload + extra}])
         text = next((b.text for b in resp.content if b.type == "text"), "")
-        return kit_chat._parse_envelope(text)
+        return kit_chat.parse_envelope(text)
 
     try:
         return _call()
@@ -402,7 +402,7 @@ def _effective_answers(b: str) -> dict:
 
 
 def _is_scalar(b: str, key: str) -> bool:
-    if key in kit_chat._FIELD_SHAPES or jf.FIELDS_BY_KEY[key]["target"] == "brand":
+    if key in kit_chat.FIELD_SHAPES or jf.FIELDS_BY_KEY[key]["target"] == "brand":
         return False
     current = (brand_kit.kit_for(b) or {}).get(key)
     if isinstance(current, dict):
@@ -483,16 +483,24 @@ def extract_step(step: str, text: str) -> dict:
 def apply_document(brand: str, text: str) -> list[str]:
     """Run extraction for every content step concurrently, and propose drafts only where a
     value differs from the kept one (R10, R20). A changed confirmed step (including a locked
-    Kit) moves back to drafted. Returns the changed steps in step order."""
+    Kit) moves back to drafted. Returns the changed steps in step order.
+
+    Compared against kept + pending values, so re-uploading the same document does not stack
+    duplicate drafts; a new value supersedes the field's pending set-mode draft."""
     b = _key(brand)
     with ThreadPoolExecutor(max_workers=len(CONTENT_STEPS)) as pool:
         results = dict(zip(CONTENT_STEPS, pool.map(lambda s: extract_step(s, text), CONTENT_STEPS)))
-    answers = answers_for(b)
+    answers = _effective_answers(b)
+    pending = list_drafts(b)
     changed = []
     for step in CONTENT_STEPS:
         allowed = set(_step_fields(step))
-        proposed = [propose(b, step, k, v) for k, v in (results.get(step) or {}).items()
-                    if k in allowed and jf.has_value(v) and v != answers.get(k)]
+        updates = {k: v for k, v in (results.get(step) or {}).items()
+                   if k in allowed and jf.has_value(v) and v != answers.get(k)}
+        for d in pending:
+            if d["mode"] == "set" and d["field"] in updates:
+                undo(b, d["id"])
+        proposed = [propose(b, step, k, v) for k, v in updates.items()]
         if proposed:
             changed.append(step)
             if step_status(b, step) == "confirmed":

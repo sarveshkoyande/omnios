@@ -3,7 +3,7 @@
 What remains of the retired brand-plan guided update flow (its per-section agents,
 kickoff orchestrator and routes were removed when the Agentic Brand Journey replaced it,
 plan docs/plans/2026-09-24-0629-feat-agentic-brand-journey-plan.md U8). The journey's
-agent turns (strategy/brand_journey.py) reuse _FIELD_SHAPES and _parse_envelope.
+agent turns (strategy/brand_journey.py) reuse FIELD_SHAPES and parse_envelope.
 """
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ import json
 # config/brand_kits.json on publish, but the UI can't render it -- silently invisible,
 # not an error. Included unconditionally (not just when the current value is empty) so
 # an existing kit's own shape can't drift either.
-_FIELD_SHAPES: dict[str, str] = {
+FIELD_SHAPES: dict[str, str] = {
     "message_hierarchy": '[{"pillar": "<pillar name>", "claim": "<supporting claim>", '
                           '"evidence": "<citation or evidence for the claim>"}, ...]',
     "market_share": '{"current": "<e.g. \\"6%\\">", "target": "<e.g. \\"12%\\">"}',
@@ -49,7 +49,7 @@ def _strip_fence(text: str) -> str:
     return text.strip()
 
 
-def _parse_envelope(text: str) -> dict:
+def parse_envelope(text: str) -> dict:
     cleaned = _strip_fence(text)
     if not cleaned:
         raise ValueError("empty response")

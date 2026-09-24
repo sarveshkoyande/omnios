@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   getBrandKit, getJourney, journeyConfirm, journeyDocument, journeyReopen, journeyKeep, journeyTurn, journeyUndo, startJourney,
 } from "../../api";
@@ -94,6 +94,9 @@ export function JourneyScreen({ brand, initialStep, onClose, onBrandCreated, onK
   const [scope, setScope] = useState<PersonaScope | null>(null);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
   const [docNote, setDocNote] = useState<string | null>(null);
+  // Bumped on every step switch and every turn, so a reply that lands after the user has
+  // moved on (or sent again) can't write into the step chat they are now looking at.
+  const turnSeq = useRef(0);
 
   const refreshKit = useCallback(() => {
     if (!brand) return;
@@ -108,6 +111,7 @@ export function JourneyScreen({ brand, initialStep, onClose, onBrandCreated, onK
 
   // Each step's chat starts clean on entry (R4).
   const goTo = (s: JourneyStepId) => {
+    turnSeq.current += 1;
     setStep(s);
     setTurn(IDLE);
     setBarError(null);
@@ -124,14 +128,18 @@ export function JourneyScreen({ brand, initialStep, onClose, onBrandCreated, onK
   const locked = step === "kit" && current?.status === "confirmed";
 
   const sendTurn = async (message: string): Promise<boolean> => {
+    const seq = ++turnSeq.current;
     setTurn((t) => ({ ...t, pending: true, error: null }));
     const scoped = step === "audience" && scope ? `[About the ${scope.group} persona card "${scope.name}"] ${message}` : message;
     try {
       const r = await journeyTurn(brand, step, scoped);
+      // The snapshot still carries the old step's new drafts (rail counts); only the reply is stale.
       setState(r.state);
+      if (seq !== turnSeq.current) return false;
       setTurn({ pending: false, reply: r.reply, error: null });
       return true;
     } catch (e) {
+      if (seq !== turnSeq.current) return false;
       setTurn((t) => ({ ...t, pending: false, error: e instanceof Error ? e.message : String(e) }));
       return false;
     }

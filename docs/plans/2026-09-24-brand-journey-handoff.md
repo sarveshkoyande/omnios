@@ -9,7 +9,13 @@ The autonomous pipeline (lfg) was paused after step 4 (code review), before appl
 
 - Done: plan, document review, all 8 units (U1-U8) built and committed, simplify pass applied.
 - Verified: `python scripts/verify_brand_journey.py` 38/38; `cockpit/`: `npx tsc -b --noEmit`, `npm run lint`, `npm run build` clean; browser-verified F2 (new brand from a sentence), keep/undo/confirm, F3 (flow build + chat edit + keep + reload), workspace "Plan in <step>" links.
-- Not done: apply review fixes (step 5), residual record (6), browser test pass (7), push + PR (8), CI watch (9).
+- Step 5 done (2026-09-24, follow-up session): findings 1-4 applied; `verify_brand_journey.py` now 41/41
+  (adds flow-turn LLM success + invalid-op fallback, and re-upload-does-not-stack checks) and seeds a
+  Cardiovex fixture into its temp kit copy so it passes on a fresh checkout. `cockpit/tsconfig.app.json`
+  excludes the parked `DispatchBoard.tsx`, whose `../gate` import was never committed.
+- Not done: residual record (6), browser test pass (7); push + PR (8) opened from `claude/gallant-edison-m28ax4`; CI watch (9).
+- Finding 1 note: a stale turn reply still applies its journey snapshot (so rail draft counts stay right)
+  but no longer writes into the new step's chat.
 
 ## Review findings to apply next (step 5)
 
