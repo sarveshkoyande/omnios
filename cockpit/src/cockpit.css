@@ -45,14 +45,24 @@
   /* Softer than the DS's near-white defaults (#FBFBFB / #F7F8FA) -- flat white read as
      glare against the cool grey this app used before. A cool mid-light grey keeps
      Indegene's border+elevation card recipe legible. */
-  --surface-app-shell-nav: #F5F6F7;
-  --surface-page-content: #F5F6F7;
-  /* Cards get a real fill distinct from the grey page/rail, instead of sharing --bg --
-     the border+shadow alone read as too subtle a separation once the page itself went
-     grey again. */
-  --card-bg: var(--base-white);
-  --surface-app-header: #F8F8FC;
-  --surface-card-tinted: #F4F1FB;
+  /* Glossy lavender glass: a soft lavender gradient behind everything (--app-backdrop),
+     with frosted translucent cards on top (--card-bg + backdrop-filter, see "Glass"
+     block at the end of this file). */
+  --surface-app-shell-nav: #EFE8FF;
+  --surface-page-content: #EFE8FF;
+  --app-backdrop:
+    radial-gradient(1100px 700px at 8% -12%, #E4D6FF 0%, transparent 60%),
+    radial-gradient(900px 620px at 102% 4%, #F5DBF4 0%, transparent 58%),
+    radial-gradient(1000px 760px at 55% 115%, #D8E2FF 0%, transparent 60%),
+    linear-gradient(160deg, #EEE6FF 0%, #F4EFFF 48%, #E9E4FA 100%);
+  --card-bg: rgba(255, 255, 255, 0.58);
+  --surface-app-header: rgba(255, 255, 255, 0.55);
+  --surface-card-tinted: rgba(246, 241, 255, 0.62);
+  --glass-ring: rgba(255, 255, 255, 0.78);
+  --glass-shadow: 0 8px 28px rgba(86, 58, 168, 0.10);
+  --glass-shadow-hover: 0 12px 34px rgba(86, 58, 168, 0.16);
+  --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  --glass-blur: blur(18px) saturate(160%);
 
   --radius-xs: 4px;
   --radius-sm: 8px;
@@ -80,9 +90,9 @@
   /* Card recipe: 1px neutral border (via a zero-blur box-shadow ring, the only way to
      fold a border into a var() a `box-shadow` property can consume) + real elevation
      on top. Each selector's own `background: var(--card-bg)` still supplies the fill. */
-  --neu-flat: 0 0 0 1px var(--neutral-200), var(--elevation-02);
-  --neu-flat-hover: 0 0 0 1px var(--neutral-200), var(--elevation-04);
-  --neu-flat-sm: 0 0 0 1px var(--neutral-200), var(--elevation-02);
+  --neu-flat: 0 0 0 1px var(--glass-ring), var(--glass-highlight), var(--glass-shadow);
+  --neu-flat-hover: 0 0 0 1px var(--glass-ring), var(--glass-highlight), var(--glass-shadow-hover);
+  --neu-flat-sm: 0 0 0 1px var(--glass-ring), var(--glass-highlight), 0 2px 10px rgba(86, 58, 168, 0.08);
   /* "Pressed/selected" reads as a primary-tinted border, not a carved-in shadow --
      pairs with the `rgba(108,99,255,...)` -> primary-light-background swap below. */
   --neu-inset: 0 0 0 1px var(--neutral-300);
@@ -114,7 +124,8 @@ html, body, #root { height: 100%; margin: 0; width: 100%; text-align: left; }
 body {
   font-family: "DM Sans";
   color: var(--fg);
-  background: var(--surface-page-content);
+  background: var(--app-backdrop);
+  background-attachment: fixed;
 }
 h1, h2, h3 { font-family: "DM Sans"; font-weight: 600; letter-spacing: -0.01em; }
 /* The Indegene DS 4.Ai double-ring focus indicator: a white gap ring then a primary
@@ -125,7 +136,7 @@ h1, h2, h3 { font-family: "DM Sans"; font-weight: 600; letter-spacing: -0.01em; 
    causes page-level scroll -- .main below is the ONLY scrolling element. That's what makes
    the top bar and rail "stay put" without needing position:sticky tricks that can break
    under a flex layout. The top bar also gets position:sticky as a second, literal guarantee. */
-.app-frame { display: flex; flex-direction: column; height: 100vh; background: var(--bg); overflow: hidden; }
+.app-frame { display: flex; flex-direction: column; height: 100vh; background: var(--app-backdrop); overflow: hidden; }
 
 .top-bar {
   flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between;
@@ -139,7 +150,7 @@ h1, h2, h3 { font-family: "DM Sans"; font-weight: 600; letter-spacing: -0.01em; 
   color: var(--accent); cursor: pointer;
 }
 
-.app-shell { display: flex; flex: 1; min-height: 0; background: var(--bg); }
+.app-shell { display: flex; flex: 1; min-height: 0; background: transparent; }
 @media (max-width: 720px) {
   .app-shell { flex-direction: column; }
   .rail { flex: 0 0 auto; }
@@ -205,7 +216,7 @@ h1, h2, h3 { font-family: "DM Sans"; font-weight: 600; letter-spacing: -0.01em; 
 }
 .rail-empty { padding: 8px 10px; font-size: 13px; color: var(--muted); }
 
-.main { flex: 1; min-width: 0; min-height: 0; overflow-y: auto; overflow-x: hidden; background: var(--bg); }
+.main { flex: 1; min-width: 0; min-height: 0; overflow-y: auto; overflow-x: hidden; background: transparent; }
 .loading, .error-banner { padding: 40px; color: var(--muted); }
 .error-banner { color: var(--tone-danger-ink); }
 
@@ -895,3 +906,14 @@ h1, h2, h3 { font-family: "DM Sans"; font-weight: 600; letter-spacing: -0.01em; 
   color: var(--primary); cursor: pointer; text-decoration: underline;
 }
 .not-planned-link:hover { color: var(--primary-background-hover); }
+
+/* ---- Glass: frosted blur behind every floating surface, so the lavender backdrop reads
+   through the translucent --card-bg instead of looking like flat washed-out white. ---- */
+.top-bar, .rail, .overview-card, .panel, .expandable, .insight-tile, .phase-switcher,
+.agent-card, .agent-detail-panel, .kit-update-ingest, .kit-update-rail, .kit-chat,
+.kit-update-diff-pane, .new-brand-card, .jc-card, .journey-rail-step, .step-chat,
+.section-meta-popover {
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+}
+.top-bar { background: var(--surface-app-header); }
