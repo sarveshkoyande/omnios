@@ -1,26 +1,109 @@
 import { useMemo, useState } from "react";
-import { createPlan, scheduleCampaign } from "../../api";
+import { createCampaign, createPlan, scheduleCampaign, startJourney } from "../../api";
 import { go, href } from "../../route";
-import type { BrandKit, BrandTree, TreeCampaign, TreePlan } from "../../types";
+import type { BrandKit, BrandSummary, BrandTree, JourneyStepId, TreeCampaign, TreePlan } from "../../types";
 import { Icon } from "../Icon";
 import { CreateForm, periodLabel, StatusPill, when } from "./shared";
+
+/** Steps of the "build something" wizard. The two top-level intents (an engagement plan vs
+ *  a campaign) each narrow to one final action -- there is no third "edit a campaign"
+ *  branch, editing one IS the campaign branch once a plan is picked. */
+type WizardStep =
+  | "choice"
+  | "plan-brand"
+  | "plan-new-name"
+  | "plan-existing-pick"
+  | "plan-territory"
+  | "plan-name"
+  | "campaign-pick-plan"
+  | "campaign";
+
+interface WizardState {
+  step: WizardStep;
+  isNewBrand: boolean;
+  brandName: string;
+  territory: string;
+  planName: string;
+  campaignPlanId: number | null;
+  campaignName: string;
+}
+const WIZARD_INITIAL: WizardState = {
+  step: "choice", isNewBrand: true, brandName: "", territory: "", planName: "", campaignPlanId: null, campaignName: "",
+};
 
 /** The launcher card, cropped to just its own size and anchored bottom-right (not a
  *  full-width sticky bar) -- clicking the AI button opens it, typing a name and sending
  *  starts a new engagement plan the same way "+ New engagement plan" does. */
-function PlanLauncher({ brand, plans, onChanged }: { brand: string; plans: TreePlan[]; onChanged: () => void }) {
+const WIZARD_BACK: Partial<Record<WizardStep, (w: WizardState) => WizardStep>> = {
+  "plan-brand": () => "choice",
+  "plan-new-name": () => "plan-brand",
+  "plan-existing-pick": () => "plan-brand",
+  "plan-territory": (w) => (w.isNewBrand ? "plan-new-name" : "plan-existing-pick"),
+  "plan-name": () => "plan-territory",
+  "campaign-pick-plan": () => "choice",
+  campaign: () => "campaign-pick-plan",
+};
+
+const WIZARD_TITLE: Record<WizardStep, string> = {
+  choice: "Let’s build something.",
+  "plan-brand": "Which brand is this for?",
+  "plan-new-name": "What’s the brand called?",
+  "plan-existing-pick": "Pick a brand",
+  "plan-territory": "Which territory?",
+  "plan-name": "Name the engagement plan",
+  "campaign-pick-plan": "Which engagement plan?",
+  campaign: "Campaigns",
+};
+
+/** The "build something" wizard: two intents only (an engagement plan, or a campaign) --
+ *  editing a campaign isn't a third branch, it's what the campaign branch opens into once
+ *  a plan is picked. Opens as a wide card centered at the bottom of the screen with the
+ *  page behind it dimmed; closing it any time is safe because nothing is created until a
+ *  final step's own button is pressed. */
+function PlanLauncher({ brand, plans, onChanged, brands, knownTerritories, onBrandCreated }: {
+  brand: string; plans: TreePlan[]; onChanged: () => void; brands: BrandSummary[]; knownTerritories: string[];
+  onBrandCreated: (created: string, step: JourneyStepId) => void;
+}) {
   const [open, setOpen] = useState(false);
-  const [text, setText] = useState("");
+  const [wiz, setWiz] = useState<WizardState>(WIZARD_INITIAL);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const latest = plans[0];
 
-  const submit = () => {
-    if (!text.trim()) return;
+  const close = () => { setOpen(false); setWiz(WIZARD_INITIAL); setError(null); };
+  const go2 = (step: WizardStep, patch: Partial<WizardState> = {}) => { setError(null); setWiz((w) => ({ ...w, ...patch, step })); };
+  const back = () => { const to = WIZARD_BACK[wiz.step]; if (to) go2(to(wiz)); };
+
+  const pickedBrand = brands.find((b) => b.brand === wiz.brandName) ?? null;
+  const territoryOptions = wiz.isNewBrand ? knownTerritories : (pickedBrand?.territories ?? []);
+  const campaignPlan = plans.find((p) => p.id === wiz.campaignPlanId) ?? null;
+
+  const importBrandPlan = () => {
     setBusy(true);
     setError(null);
-    createPlan(brand, { name: text.trim() })
-      .then((p) => { onChanged(); go({ kind: "plan", brand, planId: p.id }); })
+    startJourney({ name: wiz.brandName, description: wiz.territory ? `Territory: ${wiz.territory}.` : "" })
+      .then((r) => { onBrandCreated(r.brand, "brief"); close(); })
+      .catch((e) => setError(e instanceof Error ? e.message : String(e)))
+      .finally(() => setBusy(false));
+  };
+
+  const updateBrandPlan = () => { go({ kind: "journey", brand: wiz.brandName, step: "brief" }); close(); };
+
+  const createEngagementPlan = () => {
+    if (!wiz.planName.trim()) return;
+    setBusy(true);
+    setError(null);
+    createPlan(wiz.brandName, { name: wiz.planName.trim() })
+      .then((p) => { onChanged(); go({ kind: "plan", brand: wiz.brandName, planId: p.id }); close(); })
+      .catch((e) => setError(e instanceof Error ? e.message : String(e)))
+      .finally(() => setBusy(false));
+  };
+
+  const createCampaignHere = () => {
+    if (!campaignPlan || !wiz.campaignName.trim()) return;
+    setBusy(true);
+    setError(null);
+    createCampaign(campaignPlan.id, wiz.campaignName.trim())
+      .then((c) => { onChanged(); go({ kind: "campaign", brand, planId: campaignPlan.id, campaignId: c.id }); close(); })
       .catch((e) => setError(e instanceof Error ? e.message : String(e)))
       .finally(() => setBusy(false));
   };
@@ -29,32 +112,141 @@ function PlanLauncher({ brand, plans, onChanged }: { brand: string; plans: TreeP
     <>
       {open && (
         <>
-          <div className="plan-launcher-backdrop" onClick={() => setOpen(false)} />
-          <div className="plan-launcher-card" role="dialog" aria-modal="true" aria-label="Build your next campaign">
-            <button type="button" className="plan-launcher-close" aria-label="Close" onClick={() => setOpen(false)}>
+          <div className="plan-launcher-backdrop" onClick={close} />
+          <div className="plan-launcher-card" role="dialog" aria-modal="true" aria-label="Build something">
+            {wiz.step !== "choice" && (
+              <button type="button" className="plan-launcher-back" onClick={back} aria-label="Back">
+                <Icon name="arrowLeft" size={14} />
+              </button>
+            )}
+            <button type="button" className="plan-launcher-close" aria-label="Close" onClick={close}>
               <Icon name="close" size={16} />
             </button>
-            <h3>Let&rsquo;s build your next agentic campaign.</h3>
-            <p className="plan-launcher-sub">Describe your engagement plan and let AI build and optimize it.</p>
-            <div className="plan-launcher-chips">
-              <span className="plan-launcher-chip"><Icon name="document" size={16} /><span><b>Brand</b>{brand}</span></span>
-              {latest && <span className="plan-launcher-chip"><Icon name="target" size={16} /><span><b>Latest plan</b>{latest.name}</span></span>}
-            </div>
-            <form className="plan-launcher-form" onSubmit={(e) => { e.preventDefault(); submit(); }}>
-              <textarea
-                className="jc-input plan-launcher-input"
-                rows={2}
-                placeholder="Describe what you want to make…"
-                value={text}
-                disabled={busy}
-                onChange={(e) => setText(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(); } }}
-                autoFocus
-              />
-              <button type="submit" className="plan-launcher-send" disabled={busy || !text.trim()} aria-label="Send">
-                <Icon name="arrowRight" size={20} />
-              </button>
-            </form>
+            <h3>{WIZARD_TITLE[wiz.step]}</h3>
+
+            {wiz.step === "choice" && (
+              <div className="wiz-choice-grid">
+                <button type="button" className="wiz-choice-card" onClick={() => go2("plan-brand")}>
+                  <Icon name="target" size={22} />
+                  <b>Engagement plan</b>
+                  <span>Start a new brand, or a new plan on one you already run.</span>
+                </button>
+                <button type="button" className="wiz-choice-card" onClick={() => go2("campaign-pick-plan")}>
+                  <Icon name="route" size={22} />
+                  <b>Campaign</b>
+                  <span>Add one to an engagement plan, or open one you already started.</span>
+                </button>
+              </div>
+            )}
+
+            {wiz.step === "plan-brand" && (
+              <div className="wiz-choice-grid">
+                <button type="button" className="wiz-choice-card" onClick={() => go2("plan-new-name", { isNewBrand: true })}>
+                  <Icon name="sparkles" size={22} />
+                  <b>New brand</b>
+                  <span>Kick off the brand journey from scratch.</span>
+                </button>
+                <button type="button" className="wiz-choice-card" onClick={() => go2("plan-existing-pick", { isNewBrand: false })}>
+                  <Icon name="users" size={22} />
+                  <b>Existing brand</b>
+                  <span>{brands.length} brand{brands.length === 1 ? "" : "s"} already set up.</span>
+                </button>
+              </div>
+            )}
+
+            {wiz.step === "plan-new-name" && (
+              <div className="wiz-form">
+                <input className="jc-input" autoFocus placeholder="Brand name, e.g. Cardiozen" value={wiz.brandName}
+                  onChange={(e) => setWiz((w) => ({ ...w, brandName: e.target.value }))}
+                  onKeyDown={(e) => { if (e.key === "Enter" && wiz.brandName.trim()) go2("plan-territory"); }} />
+                <button type="button" className="jc-btn jc-btn-keep" disabled={!wiz.brandName.trim()} onClick={() => go2("plan-territory")}>Continue</button>
+              </div>
+            )}
+
+            {wiz.step === "plan-existing-pick" && (
+              <div className="wiz-list">
+                {brands.length === 0 && <p className="hier-hint">No brands set up yet.</p>}
+                {brands.map((b) => (
+                  <button key={b.brand} type="button" className="wiz-list-row" onClick={() => go2("plan-territory", { brandName: b.brand })}>
+                    <span className="wiz-list-row-name">{b.brand}</span>
+                    <span className="wiz-list-row-sub">{b.indication || b.therapy_area}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {wiz.step === "plan-territory" && (
+              <div className="wiz-form">
+                {territoryOptions.length > 0 ? (
+                  <div className="wiz-chip-row">
+                    {territoryOptions.map((t) => (
+                      <button key={t} type="button" className={`wiz-chip ${wiz.territory === t ? "active" : ""}`}
+                        onClick={() => setWiz((w) => ({ ...w, territory: t }))}>{t}</button>
+                    ))}
+                  </div>
+                ) : <p className="hier-hint">No territories configured yet -- that's fine, it's set later in the brief.</p>}
+
+                {wiz.isNewBrand ? (
+                  <button type="button" className="wiz-big-btn" disabled={busy} onClick={importBrandPlan}>
+                    {busy ? "Starting…" : "Import brand plan"} <Icon name="arrowRight" size={16} />
+                  </button>
+                ) : (
+                  <div className="wiz-two-btn">
+                    <button type="button" className="jc-btn jc-btn-keep" onClick={() => go2("plan-name")}>Use existing brand</button>
+                    <button type="button" className="jc-btn" onClick={updateBrandPlan}>Update brand plan</button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {wiz.step === "plan-name" && (
+              <div className="wiz-form">
+                <input className="jc-input" autoFocus placeholder="Engagement plan name, e.g. Q4 2026 HFrEF Launch Push" value={wiz.planName}
+                  onChange={(e) => setWiz((w) => ({ ...w, planName: e.target.value }))}
+                  onKeyDown={(e) => { if (e.key === "Enter") createEngagementPlan(); }} />
+                <button type="button" className="jc-btn jc-btn-keep" disabled={busy || !wiz.planName.trim()} onClick={createEngagementPlan}>
+                  {busy ? "Creating…" : "Create plan"}
+                </button>
+              </div>
+            )}
+
+            {wiz.step === "campaign-pick-plan" && (
+              <div className="wiz-list">
+                {plans.length === 0 && (
+                  <p className="hier-hint">{brand} has no engagement plans yet. <button type="button" className="hier-timeline-schedule-btn" onClick={() => go2("plan-brand")}>Start one</button></p>
+                )}
+                {plans.map((p) => (
+                  <button key={p.id} type="button" className="wiz-list-row" onClick={() => go2("campaign", { campaignPlanId: p.id })}>
+                    <span className="wiz-list-row-name">{p.name}</span>
+                    <span className="wiz-list-row-sub">{p.campaigns.length} campaign{p.campaigns.length === 1 ? "" : "s"}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {wiz.step === "campaign" && campaignPlan && (
+              <div className="wiz-form">
+                {campaignPlan.campaigns.length > 0 && (
+                  <div className="wiz-list">
+                    {campaignPlan.campaigns.map((c) => (
+                      <a key={c.id} className="wiz-list-row" href={href({ kind: "campaign", brand, planId: campaignPlan.id, campaignId: c.id })}>
+                        <span className="wiz-list-row-name">{c.name}</span>
+                        <StatusPill status={c.status} />
+                      </a>
+                    ))}
+                  </div>
+                )}
+                <div className="wiz-form-row">
+                  <input className="jc-input" placeholder="New campaign name" value={wiz.campaignName}
+                    onChange={(e) => setWiz((w) => ({ ...w, campaignName: e.target.value }))}
+                    onKeyDown={(e) => { if (e.key === "Enter") createCampaignHere(); }} />
+                  <button type="button" className="jc-btn jc-btn-keep" disabled={busy || !wiz.campaignName.trim()} onClick={createCampaignHere}>
+                    {busy ? "Creating…" : "Create campaign"}
+                  </button>
+                </div>
+              </div>
+            )}
+
             {error && <div className="step-chat-error" role="alert">{error}</div>}
           </div>
         </>
@@ -68,8 +260,9 @@ function PlanLauncher({ brand, plans, onChanged }: { brand: string; plans: TreeP
 
 /** Idea 7: a brand's engagement plans, master-detail -- a searchable one-line list on the
  *  left, the selected plan's campaigns and status on the right. No table, no filters. */
-export function BrandOverview({ brand, tree, kit, onChanged }: {
+export function BrandOverview({ brand, tree, kit, onChanged, brands, knownTerritories, onBrandCreated }: {
   brand: string; tree: BrandTree; kit: BrandKit | null; onChanged: () => void;
+  brands: BrandSummary[]; knownTerritories: string[]; onBrandCreated: (created: string, step: JourneyStepId) => void;
 }) {
   const all = tree.engagement_plans;
   const [query, setQuery] = useState("");
@@ -149,7 +342,7 @@ export function BrandOverview({ brand, tree, kit, onChanged }: {
         </div>
       )}
 
-      {all.length > 0 && <PlanLauncher brand={brand} plans={all} onChanged={onChanged} />}
+      <PlanLauncher brand={brand} plans={all} onChanged={onChanged} brands={brands} knownTerritories={knownTerritories} onBrandCreated={onBrandCreated} />
     </div>
   );
 }

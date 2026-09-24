@@ -140,7 +140,11 @@ export default function App() {
           return <BrandWorkspace brand={route.brand} kit={kit} onUpdate={(step) => go({ kind: "journey", brand: route.brand, step })} />;
         }
         if (treeError) return <div className="error-banner">Couldn't load {route.brand}: {treeError}</div>;
-        return tree ? <BrandOverview key={tree.brand} brand={tree.brand} tree={tree} kit={kit} onChanged={refreshTree} /> : <div className="loading">Loading&hellip;</div>;
+        return tree ? (
+          <BrandOverview key={tree.brand} brand={tree.brand} tree={tree} kit={kit} onChanged={refreshTree}
+            brands={brands ?? []} knownTerritories={knownTerritories}
+            onBrandCreated={onNewBrandComplete} />
+        ) : <div className="loading">Loading&hellip;</div>;
       default:
         if (treeError) return <div className="error-banner">{treeError}</div>;
         if (!tree) return <div className="loading">Loading&hellip;</div>;
