@@ -286,3 +286,13 @@ export type JourneyFlowOp =
   | { op: "change"; code: string; set: { label?: string; channel?: string; detail?: string; day?: number } };
 
 export interface JourneyFlowTurnResult { reply: string; mode: "ops" | "llm" | "fallback"; flow: JourneyFlow }
+
+/** Hierarchy idea 5: what changed in the brand's content since a campaign's snapshot. */
+export interface CampaignDriftChange { key: string; label: string; then: unknown; now: unknown }
+export interface CampaignDrift {
+  campaign_id: number;
+  tracked: boolean;
+  snapshot_at: string | null;
+  has_drift: boolean;
+  changed: Partial<Record<"brief" | "audience" | "message" | "kit", CampaignDriftChange[]>>;
+}

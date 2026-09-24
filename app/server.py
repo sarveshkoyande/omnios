@@ -1092,6 +1092,18 @@ def api_move_campaign(campaign_id: int, req: MoveCampaignRequest):
     return _hier(hierarchy.move_campaign, campaign_id, req.engagement_plan_id)
 
 
+@app.get("/api/campaigns/{campaign_id}/drift")
+def api_campaign_drift(campaign_id: int):
+    """What changed in the brand's content since the campaign's snapshot (P-R3, P-R4)."""
+    return _hier(hierarchy.drift, campaign_id)
+
+
+@app.post("/api/campaigns/{campaign_id}/refresh-snapshot")
+def api_campaign_refresh_snapshot(campaign_id: int):
+    """Update to current content (P-KD3): new snapshot, flows rebuilt with kept edits."""
+    return _hier(hierarchy.refresh_snapshot, campaign_id)
+
+
 @app.get("/api/campaigns/{campaign_id}/flows")
 def api_list_flows(campaign_id: int):
     return {"flows": _hier(hierarchy.list_flows, campaign_id)}
@@ -1108,7 +1120,9 @@ def api_start_campaign_plan(campaign_id: int):
     if c.get("project_id"):
         raise HTTPException(409, "this campaign already has a campaign plan")
     brand = c["brand"]
-    kit = brand_kit.kit_for(brand) or {}
+    # The campaign's snapshot of the brand content (P-R5); older campaigns read the live kit.
+    snap = hierarchy.campaign_snapshot(campaign_id) or {}
+    kit = snap.get("kit") or brand_kit.kit_for(brand) or {}
     state = new_state()
     slots = state["slots"]
     slots["brand"] = brand
@@ -1117,7 +1131,7 @@ def api_start_campaign_plan(campaign_id: int):
     slots["indication"] = str(kit.get("approved_indication") or kit.get("indication") or "")
     try:
         from strategy.conversation import _match_lifecycle
-        stage = brand_journey.answers_for(brand).get("lifecycle_stage")
+        stage = (snap.get("answers") or brand_journey.answers_for(brand)).get("lifecycle_stage")
         slots["lifecycle_key"] = _match_lifecycle(str(stage)) if stage else ""
     except Exception:  # noqa: BLE001 -- the intake asks for it instead
         slots["lifecycle_key"] = ""

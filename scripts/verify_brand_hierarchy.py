@@ -557,6 +557,59 @@ def check_backfill_adds_plan_flows_for_existing_diagrams():  # U6 backfill
     assert len(h.list_flows(c["id"])) == 1, "a second backfill adds nothing"
 
 
+# ---- U8: each campaign keeps the brand content it was built from -------------------------
+
+def _labels(doc: dict) -> str:
+    return json.dumps([n["data"].get("label") for n in doc["flow"]["nodes"]])
+
+
+def check_flow_keeps_its_snapshot_until_updated():  # P-R1, P-R3, P-R5, P-AE1, P-AE2
+    bj = _bj()
+    b = _flow_ready_brand()
+    doc = bj.build_flow(b)
+    fid, cid = doc["flow_id"], doc["campaign_id"]
+    assert "Efficacy" in _labels(doc)
+    assert h.get_campaign(cid)["content"] == {"tracked": True, "changed_steps": [],
+                                              "snapshot_at": h.get_campaign(cid)["snapshot_at"]}
+    wait = next(n for n in doc["flow"]["nodes"] if n["type"] == "wait")["data"]["block_code"]
+    bj.flow_turn(b, "", [{"op": "change", "code": wait, "set": {"label": "Wait a fortnight"}}])
+    bj.keep_flow_draft(b)
+    # The brand's message changes after the campaign was built.
+    bj.keep(b, bj.propose(b, "message", "message_hierarchy",
+                          [{"pillar": "Outcomes", "claim": "c", "evidence": "e"}])["id"])
+    assert h.get_campaign(cid)["content"]["changed_steps"] == ["message"]
+    d = _client().get(f"/api/campaigns/{cid}/drift").json()
+    change = d["changed"]["message"][0]
+    assert d["has_drift"] and change["key"] == "message_hierarchy", d
+    assert change["then"][0]["pillar"] == "Efficacy" and change["now"][0]["pillar"] == "Outcomes", change
+    rebuilt = bj.build_flow_by_id(fid)
+    assert "Efficacy" in _labels(rebuilt) and "Outcomes" not in _labels(rebuilt), "a rebuild still uses the snapshot"
+    r = _client().post(f"/api/campaigns/{cid}/refresh-snapshot").json()
+    assert r["has_drift"] is False and r["flows"][0]["flow_id"] == fid, r
+    updated = bj.get_flow_by_id(fid)
+    assert "Outcomes" in _labels(updated) and "Wait a fortnight" in _labels(updated), "new content, kept edit reapplied"
+
+
+def check_campaign_plan_prefills_from_the_snapshot():  # P-R5
+    c = h.create_campaign(_plan()["id"], "Snapshot plan")
+    real = brand_kit.kit_for("Oncomyra")["therapy_area"]
+    brand_kit.apply_diff("Oncomyra", {"therapy_area": "changed after the snapshot"})
+    try:
+        pid = _client().post(f"/api/campaigns/{c['id']}/campaign-plan").json()["project"]["id"]
+        assert pstore.get_project(pid)["state"]["slots"]["therapy_area"] == real
+        assert h.drift(c["id"])["tracked"] is True
+    finally:
+        brand_kit.apply_diff("Oncomyra", {"therapy_area": real})
+
+
+def check_legacy_campaigns_are_not_called_up_to_date():  # P-R6
+    pid = _new_project("Cardiovex")
+    _server()._record_campaign_plan(pid, {"brand": "Cardiovex"}, _result(), "")
+    c = h.open_campaign_for_project(pid)
+    assert c["content"]["tracked"] is False, c["content"]
+    assert _client().get(f"/api/campaigns/{c['id']}/drift").json()["tracked"] is False
+
+
 # ---- U7: one vocabulary ------------------------------------------------------------------
 
 def check_glossaries_match():  # N-R6

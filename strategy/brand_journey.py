@@ -617,12 +617,16 @@ def _primary_persona(kit: dict, primary_audience) -> str:
 
 
 def brand_ctx(brand: str) -> dict:
-    """KTD6: the minimal ctx build_campaign_plan reads, from the kept kit and journey answers.
-    Project-only keys (bam, kpi, journey_spec, micro_journeys, studio_answers, strategy,
-    segment_profile) get empty defaults; the kept Message pillars become the message ladder."""
+    """KTD6: the minimal ctx build_campaign_plan reads, from the kept kit and journey answers."""
     b = _key(brand)
-    kit = brand_kit.kit_for(b) or {}
-    answers = answers_for(b)
+    return ctx_from(brand_kit.kit_for(b) or {}, answers_for(b), b)
+
+
+def ctx_from(kit: dict, answers: dict, b: str) -> dict:
+    """The build ctx from a kit and answers -- live (brand_ctx) or a campaign's snapshot
+    (hierarchy plan KTD8, P-R5). Project-only keys (bam, kpi, journey_spec, micro_journeys,
+    studio_answers, strategy, segment_profile) get empty defaults; the kept Message pillars
+    become the message ladder."""
     persona = _primary_persona(kit, answers.get("primary_audience"))
     audience = [str(answers.get("primary_audience") or "").strip(), persona]
     pillars = [str(p["pillar"]).strip() for p in (kit.get("message_hierarchy") or [])
@@ -827,7 +831,9 @@ def build_flow_by_id(flow_id: int) -> dict:
     b = rec["brand"]
     if _flow_waiting(b):
         return _flow_doc(b, None, None, rec)
-    base = campaign_ops.build_campaign_plan(brand_ctx(b), use_llm=False)
+    snap = rec.get("campaign_snapshot")
+    ctx = ctx_from(snap["kit"], snap["answers"], b) if snap else brand_ctx(b)
+    base = campaign_ops.build_campaign_plan(ctx, use_llm=False)
     prev = _stored(rec) or {"codes": {}, "ops": []}
     codes = dict(prev["codes"])
     _assign_codes(base["flow"], codes)

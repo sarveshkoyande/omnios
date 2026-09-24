@@ -997,3 +997,13 @@ h1, h2, h3 { font-family: "DM Sans"; font-weight: 600; letter-spacing: -0.01em; 
 
 /* Journey Flow step: where the brand's first flow goes when it already has engagement plans. */
 .jc-flow-placement { display: flex; flex-direction: column; gap: 8px; max-width: 520px; }
+
+/* Hierarchy idea 5: a campaign built on brand content that has since changed. */
+.jc-drift { display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; border-radius: var(--radius-sm);
+  background: var(--tone-warning-bg); color: var(--tone-warning-ink); font-size: 13px; }
+.jc-drift-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.jc-drift-actions { display: flex; align-items: center; gap: 10px; }
+.jc-drift-list { margin: 0; display: flex; flex-direction: column; gap: 8px; color: var(--fg); }
+.jc-drift-row dt { font-weight: 700; font-size: 12px; color: var(--muted); }
+.jc-drift-row dd { margin: 2px 0 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; }
+.jc-drift-then { text-decoration: line-through; opacity: .7; }

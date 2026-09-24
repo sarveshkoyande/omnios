@@ -191,8 +191,7 @@ def _refresh_status(conn, campaign_id: int) -> None:
 
 def _campaign_dict(conn, r) -> dict:
     c = _row(r)
-    for k in ("snapshot_json",):
-        c.pop(k, None)
+    snapshot = c.pop("snapshot_json", None)
     c["has_campaign_plan"] = bool(c.get("project_id"))
     c["versions"] = conn.execute("SELECT COUNT(*) AS n FROM campaign_version WHERE campaign_id=?",
                                  (c["id"],)).fetchone()["n"]
@@ -200,6 +199,9 @@ def _campaign_dict(conn, r) -> dict:
                                    (c["id"],)).fetchone()["n"]
     b = conn.execute("SELECT kit_key FROM brand WHERE id=?", (c["brand_id"],)).fetchone() if c.get("brand_id") else None
     c["brand"] = b["kit_key"] if b else None
+    d = _drift(_json(snapshot), c["brand"]) if c["brand"] else {"tracked": False, "changed": {}}
+    c["content"] = {"tracked": d["tracked"], "changed_steps": list(d["changed"]),
+                    "snapshot_at": c.get("snapshot_at")}
     return c
 
 
@@ -212,9 +214,11 @@ def create_campaign(plan_id: int, name: str) -> dict:
         raise ValueError("this engagement plan is closed")
     conn = _conn()
     try:
+        snap = take_snapshot(plan["brand"])
         cur = conn.execute(
-            "INSERT INTO campaign (brand_id, engagement_plan_id, name, status, created_at, updated_at) "
-            "VALUES (?,?,?,?,?,?)", (plan["brand_id"], plan_id, name, "draft", _now(), _now()))
+            "INSERT INTO campaign (brand_id, engagement_plan_id, name, status, snapshot_json, snapshot_at, "
+            "created_at, updated_at) VALUES (?,?,?,?,?,?,?,?)",
+            (plan["brand_id"], plan_id, name, "draft", json.dumps(snap), snap["taken_at"], _now(), _now()))
         conn.commit()
         return get_campaign(cur.lastrowid)
     finally:
@@ -276,11 +280,12 @@ def move_campaign(campaign_id: int, target_plan_id: int) -> dict:
             return get_campaign(campaign_id)
         conn.execute("UPDATE campaign SET status='closed', closed_at=?, updated_at=? WHERE id=?",
                      (_now(), _now(), campaign_id))
+        snap = take_snapshot(target["brand"])
         cur = conn.execute(
             "INSERT INTO campaign (project_id, brand_id, engagement_plan_id, name, status, status_detail, "
-            "created_at, updated_at) VALUES (?,?,?,?,?,?,?,?)",
+            "snapshot_json, snapshot_at, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)",
             (c.get("project_id"), target["brand_id"], target_plan_id, c["name"], "draft",
-             c.get("status_detail"), _now(), _now()))
+             c.get("status_detail"), json.dumps(snap), snap["taken_at"], _now(), _now()))
         new_id = cur.lastrowid
         plan_flow = conn.execute("SELECT id FROM flow WHERE campaign_id=? AND origin='campaign_plan'",
                                  (campaign_id,)).fetchone()
@@ -306,6 +311,91 @@ def _set_project_brand(project_id: str, brand: str) -> None:
         state = proj["state"]
         state.setdefault("slots", {})["brand"] = brand
         pstore.save_project(project_id, state=state)
+
+
+# ---------------------------------------------------------------------- provenance ----
+# Idea 5 (P-R1..P-R6): a campaign keeps the brand content it was built from.
+
+SNAPSHOT_STEPS = ("brief", "audience", "message", "kit")
+
+
+def take_snapshot(brand: str) -> dict:
+    """The brand's current Brief/Audience/Message/Kit answers plus the kit itself (flows
+    build from it), as of now."""
+    from strategy import brand_journey
+    key = brand_key(brand)
+    return {"taken_at": _now(), "kit": brand_kit.kit_for(key) or {}, "answers": brand_journey.answers_for(key)}
+
+
+def _norm(v):
+    from strategy import journey_fields as jf
+    return json.dumps(v, sort_keys=True) if jf.has_value(v) else None
+
+
+def _drift(snapshot: dict | None, brand: str, detail: bool = False) -> dict:
+    """What changed in the brand's content since `snapshot`, per step (P-R3)."""
+    if not snapshot:
+        return {"tracked": False, "changed": {}}
+    from strategy import brand_journey, journey_fields as jf
+    current = brand_journey.answers_for(brand)
+    changed: dict[str, list] = {}
+    for step in SNAPSHOT_STEPS:
+        for f in jf.fields_for(step):
+            key = f["key"]
+            if key == "brand_name":
+                continue
+            then, now = snapshot["answers"].get(key), current.get(key)
+            if _norm(then) != _norm(now):
+                entry = {"key": key, "label": key.replace("_", " ").capitalize()}
+                if detail:
+                    entry.update({"then": then, "now": now})
+                changed.setdefault(step, []).append(entry)
+    return {"tracked": True, "changed": changed}
+
+
+def campaign_snapshot(campaign_id: int) -> dict | None:
+    conn = _conn()
+    try:
+        r = conn.execute("SELECT snapshot_json FROM campaign WHERE id=?", (campaign_id,)).fetchone()
+        if r is None:
+            raise NotFound(f"no campaign {campaign_id}")
+        return _json(r["snapshot_json"])
+    finally:
+        conn.close()
+
+
+def drift(campaign_id: int) -> dict:
+    """P-R3/P-R4: per step, each field whose current value differs from the campaign's
+    snapshot, with both values. Untracked (legacy) campaigns say so (P-R6)."""
+    c = get_campaign(campaign_id)
+    snap = campaign_snapshot(campaign_id)
+    d = _drift(snap, c["brand"], detail=True)
+    return {"campaign_id": campaign_id, "tracked": d["tracked"], "snapshot_at": c.get("snapshot_at"),
+            "has_drift": bool(d["changed"]), "changed": d["changed"]}
+
+
+def refresh_snapshot(campaign_id: int) -> dict:
+    """P-KD3: take a new snapshot, then rebuild the campaign's rules flows from it with their
+    kept edits reapplied; reports edits a rebuild had to drop."""
+    c = get_campaign(campaign_id)
+    if c["status"] == "closed":
+        raise ValueError("this campaign is closed")
+    snap = take_snapshot(c["brand"])
+    conn = _conn()
+    try:
+        conn.execute("UPDATE campaign SET snapshot_json=?, snapshot_at=?, updated_at=? WHERE id=?",
+                     (json.dumps(snap), snap["taken_at"], _now(), campaign_id))
+        conn.commit()
+        rebuild = [r["id"] for r in conn.execute(
+            "SELECT id FROM flow WHERE campaign_id=? AND kind='rules' AND base_json IS NOT NULL", (campaign_id,))]
+    finally:
+        conn.close()
+    from strategy import brand_journey
+    flows = []
+    for fid in rebuild:
+        doc = brand_journey.build_flow_by_id(fid)
+        flows.append({"flow_id": fid, "status": doc["status"], "dropped": doc.get("dropped", [])})
+    return {**drift(campaign_id), "flows": flows}
 
 
 # ----------------------------------------------------------------------------- flows ----
@@ -369,7 +459,8 @@ def flow_storage(flow_id: int) -> dict:
     conn = _conn()
     try:
         r = conn.execute(
-            "SELECT f.*, c.status AS campaign_status, c.project_id, b.kit_key AS brand FROM flow f "
+            "SELECT f.*, c.status AS campaign_status, c.project_id, c.snapshot_json AS campaign_snapshot, "
+            "b.kit_key AS brand FROM flow f "
             "JOIN campaign c ON c.id=f.campaign_id LEFT JOIN brand b ON b.id=c.brand_id WHERE f.id=?",
             (flow_id,)).fetchone()
         if r is None:
@@ -377,7 +468,7 @@ def flow_storage(flow_id: int) -> dict:
         return {"id": r["id"], "campaign_id": r["campaign_id"], "name": r["name"], "origin": r["origin"],
                 "kind": r["kind"], "status": r["status"], "brand": r["brand"],
                 "campaign_status": r["campaign_status"], "project_id": r["project_id"],
-                "frozen_layout": _json(r["layout_json"]),
+                "frozen_layout": _json(r["layout_json"]), "campaign_snapshot": _json(r["campaign_snapshot"]),
                 "base": _json(r["base_json"]), "ops": _json(r["ops_json"]) or [],
                 "draft_ops": _json(r["draft_ops_json"]), "dropped": _json(r["dropped_json"]) or []}
     finally:

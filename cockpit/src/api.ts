@@ -1,4 +1,4 @@
-import type { BrandKit, BrandSummary, JourneyFlow, JourneyFlowOp, JourneyFlowTurnResult, JourneyQuestion, JourneyState, JourneyStepId, JourneyTurnResult } from "./types";
+import type { BrandKit, CampaignDrift, BrandSummary, JourneyFlow, JourneyFlowOp, JourneyFlowTurnResult, JourneyQuestion, JourneyState, JourneyStepId, JourneyTurnResult } from "./types";
 
 async function getJSON<T>(url: string): Promise<T> {
   const res = await fetch(url);
@@ -111,4 +111,12 @@ export function journeyFlowKeep(brand: string): Promise<JourneyState> {
 
 export function journeyFlowUndo(brand: string): Promise<JourneyState> {
   return postJSON(journeyUrl(brand, "/flow/undo"), {});
+}
+
+export function getCampaignDrift(campaignId: number): Promise<CampaignDrift> {
+  return getJSON(`/api/campaigns/${campaignId}/drift`);
+}
+
+export function refreshCampaignSnapshot(campaignId: number): Promise<CampaignDrift> {
+  return postJSON(`/api/campaigns/${campaignId}/refresh-snapshot`, {});
 }
