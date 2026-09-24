@@ -290,5 +290,23 @@ export interface JourneyFlow {
   brand: string;
   status: "waiting" | "not_built" | "built";
   waiting: JourneyStepId[];
-  flow: { nodes: JourneyFlowNode[]; edges: unknown[] } | null;
+  flow: JourneyCampaignFlow | null;
+  /** Kept structured edits, reapplied on every rebuild (KTD8). */
+  ops: JourneyFlowOp[];
+  /** Kept edits a rebuild could not reapply, with the reason. */
+  dropped: { op: JourneyFlowOp; reason: string }[];
+  /** Pending chat edit: its ops and the flow they would produce. */
+  draft: { ops: JourneyFlowOp[]; flow: JourneyCampaignFlow } | null;
 }
+
+export interface JourneyFlowEdge { id: string; source: string; target: string; label?: string }
+export interface JourneyCampaignFlow { nodes: JourneyFlowNode[]; edges: JourneyFlowEdge[] }
+
+/** Structured flow edit (R17): the only way chat changes the flow. */
+export type JourneyFlowOp =
+  | { op: "add"; type: string; label: string; after?: string; channel?: string; detail?: string; day?: number }
+  | { op: "remove"; code: string }
+  | { op: "connect"; from: string; to: string; label?: string }
+  | { op: "change"; code: string; set: { label?: string; channel?: string; detail?: string; day?: number } };
+
+export interface JourneyFlowTurnResult { reply: string; mode: "ops" | "llm" | "fallback"; flow: JourneyFlow }

@@ -861,8 +861,6 @@ h1, h2, h3 { font-family: "DM Sans"; font-weight: 600; letter-spacing: -0.01em; 
 .jc-persona-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr)); gap: 10px; }
 .jc-persona { font-family: inherit; text-align: left; border: none; cursor: pointer; width: 100%; margin: 0; }
 .jc-persona.active { box-shadow: var(--neu-inset-sm); background: var(--primary-light-background); }
-.jc-flow-list { margin: 0; padding-left: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
-.jc-flow-list li { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 13.5px; }
 
 .draft-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
 .draft-bar-count { font-size: 13px; color: var(--muted); }
@@ -884,3 +882,11 @@ h1, h2, h3 { font-family: "DM Sans"; font-weight: 600; letter-spacing: -0.01em; 
   .journey { padding: 20px 16px 48px; }
   .journey-rail { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
 }
+
+/* Flow step (plan U7): the shared flow-builder canvas, read-only; edits arrive as chat drafts. */
+.jc-flow-frame { margin-top: 12px; height: 62vh; min-height: 460px; border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--border, rgba(0,0,0,0.12)); }
+.jc-flow-frame.is-draft { outline: 2px dashed var(--tone-warning-ink); outline-offset: 2px; }
+.jc-flow-diagram { position: relative; display: flex; width: 100%; height: 100%; }
+.jc-flow-diagram .react-flow__node, .jc-flow-diagram .react-flow__handle { pointer-events: none; }
+.jc-flow-draft-note { margin-top: 12px; font-size: 13px; color: var(--tone-warning-ink); background: var(--tone-warning-bg); border-radius: var(--radius-sm); padding: 10px 14px; }
+.jc-flow-ops { margin: 6px 0 0; padding-left: 18px; }

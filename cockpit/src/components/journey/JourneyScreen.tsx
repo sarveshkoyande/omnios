@@ -7,7 +7,7 @@ import { AudienceCanvas, type PersonaScope } from "./AudienceCanvas";
 import { BriefCanvas } from "./BriefCanvas";
 import { DraftBar } from "./DraftBar";
 import type { DraftActions } from "./DraftValue";
-import { FlowPlaceholder } from "./FlowPlaceholder";
+import { FlowCanvas } from "./FlowCanvas";
 import { KitCanvas } from "./KitCanvas";
 import { kitFlags } from "./journeyUtils";
 import { MessageCanvas } from "./MessageCanvas";
@@ -179,7 +179,7 @@ export function JourneyScreen({ brand, initialStep, onClose, onBrandCreated, onK
       case "message": return <MessageCanvas kit={kit} drafts={drafts} actions={actions} />;
       case "kit": return <KitCanvas kit={kit} drafts={drafts} actions={actions} flags={kitFlags(kit, drafts)} dismissed={dismissed}
         onDismiss={(k) => setDismissed((d) => new Set(d).add(k))} />;
-      case "flow": return <FlowPlaceholder key={brand} brand={brand} labels={labels} />;
+      case "flow": return current ? <FlowCanvas key={brand} brand={brand} labels={labels} step={current} onState={setState} /> : null;
     }
   };
 

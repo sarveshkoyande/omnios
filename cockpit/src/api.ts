@@ -1,4 +1,4 @@
-import type { BrandKit, BrandSummary, JourneyFlow, JourneyQuestion, JourneyState, JourneyStepId, JourneyTurnResult, KitDraft, KitUpdateSection } from "./types";
+import type { BrandKit, BrandSummary, JourneyFlow, JourneyFlowOp, JourneyFlowTurnResult, JourneyQuestion, JourneyState, JourneyStepId, JourneyTurnResult, KitDraft, KitUpdateSection } from "./types";
 
 async function getJSON<T>(url: string): Promise<T> {
   const res = await fetch(url);
@@ -177,4 +177,17 @@ export function getJourneyFlow(brand: string): Promise<JourneyFlow> {
 
 export function buildJourneyFlow(brand: string): Promise<JourneyFlow> {
   return postJSON(journeyUrl(brand, "/flow/build"), {});
+}
+
+/* ---- Flow step edits (plan U7): chat -> structured ops draft -> keep / undo ---- */
+export function journeyFlowTurn(brand: string, body: { message?: string; ops?: JourneyFlowOp[] }): Promise<JourneyFlowTurnResult> {
+  return postJSON(journeyUrl(brand, "/flow/turn"), body);
+}
+
+export function journeyFlowKeep(brand: string): Promise<JourneyState> {
+  return postJSON(journeyUrl(brand, "/flow/keep"), {});
+}
+
+export function journeyFlowUndo(brand: string): Promise<JourneyState> {
+  return postJSON(journeyUrl(brand, "/flow/undo"), {});
 }

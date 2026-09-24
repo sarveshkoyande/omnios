@@ -20,7 +20,21 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+
+    /* Plan U7: the shared flow-builder in ../frontend/src (see vite.config.ts). Its bare
+       imports are pinned to this app's node_modules, matching the Vite aliases. */
+    "paths": {
+      "@omni-frontend/*": ["../frontend/src/*"],
+      "react": ["./node_modules/@types/react"],
+      "react/*": ["./node_modules/@types/react/*"],
+      "react-dom": ["./node_modules/@types/react-dom"],
+      "react-dom/*": ["./node_modules/@types/react-dom/*"],
+      "@xyflow/react": ["./node_modules/@xyflow/react"],
+      "zustand": ["./node_modules/zustand"],
+      "zod": ["./node_modules/zod"],
+      "@dagrejs/dagre": ["./node_modules/@dagrejs/dagre"]
+    }
   },
   "include": ["src"]
 }
