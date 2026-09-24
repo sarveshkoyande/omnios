@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Ideation: Brand / Campaign / Engagement Plan IA</title>
+<style>
+  :root{
+    --bg:#FAFAF8; --surface:#FFFFFF; --surface-tint:#F5F3EE;
+    --ink:#1E1B16; --ink-soft:#5B5647; --outline:#E4E0D5;
+    --accent:#8A5A2B; --accent-soft:#F3E7D8; --accent-ink:#6B4520;
+    --good:#2F6E4E; --good-soft:#E5F2EA; --good-ink:#1E5238;
+    --warn:#9A5B12; --warn-soft:#FBECD9; --warn-ink:#7A4710;
+    --danger:#A23B2E; --danger-soft:#FBE7E3; --danger-ink:#832D22;
+    --info:#3A5C8A; --info-soft:#E7EEF8; --info-ink:#2C4770;
+    --radius:10px; --serif:'Source Serif 4',Georgia,'Times New Roman',serif;
+    --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#17150F; --surface:#211E17; --surface-tint:#2A261C;
+      --ink:#EDE9DD; --ink-soft:#B7AF9B; --outline:#3A3527;
+      --accent:#D3A467; --accent-soft:#3A2F1C; --accent-ink:#E8C48F;
+      --good:#7FC79E; --good-soft:#1D3327; --good-ink:#9BDBB6;
+      --warn:#E0A855; --warn-soft:#3A2C10; --warn-ink:#F0C27E;
+      --danger:#E38A78; --danger-soft:#3A1E19; --danger-ink:#F0A897;
+      --info:#8FB0DD; --info-soft:#1E2A3D; --info-ink:#AEC7EA;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#17150F; --surface:#211E17; --surface-tint:#2A261C;
+    --ink:#EDE9DD; --ink-soft:#B7AF9B; --outline:#3A3527;
+    --accent:#D3A467; --accent-soft:#3A2F1C; --accent-ink:#E8C48F;
+    --good:#7FC79E; --good-soft:#1D3327; --good-ink:#9BDBB6;
+    --warn:#E0A855; --warn-soft:#3A2C10; --warn-ink:#F0C27E;
+    --danger:#E38A78; --danger-soft:#3A1E19; --danger-ink:#F0A897;
+    --info:#8FB0DD; --info-soft:#1E2A3D; --info-ink:#AEC7EA;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.62;-webkit-font-smoothing:antialiased}
+  .page{max-width:58rem;margin-inline:auto;padding:2.5rem 1.5rem 5rem}
+  .prose{max-width:70ch}
+  h1,h2,h3,h4{font-family:var(--serif);line-height:1.25;margin:0;color:var(--ink)}
+  h1{font-size:2.3rem;font-weight:600;letter-spacing:-.015em;margin-bottom:.3rem}
+  h2{font-size:1.5rem;font-weight:600;margin:3rem 0 1rem;padding-bottom:.5rem;border-bottom:1px solid var(--outline)}
+  h3{font-size:1.25rem;font-weight:600}
+  .eyebrow{font-family:var(--sans);font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent-ink)}
+  p{margin:.75rem 0}
+  code{font-family:var(--mono);font-size:.86em;background:var(--surface-tint);border:1px solid var(--outline);border-radius:4px;padding:.08em .34em}
+  a{color:var(--accent-ink)}
+  .meta-row{display:flex;flex-wrap:wrap;gap:.5rem 1.2rem;margin:.6rem 0 1.8rem;font-size:.92rem;color:var(--ink-soft)}
+  .meta-row b{color:var(--ink);font-weight:600}
+  .pill{display:inline-flex;align-items:center;gap:.3rem;border-radius:999px;padding:.18rem .68rem;font-size:.78rem;font-weight:700;font-family:var(--sans)}
+  .pill.mode{background:var(--info-soft);color:var(--info-ink)}
+  .axis-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.6rem;list-style:none;margin:0;padding:0}
+  .axis-list li{background:var(--surface-tint);border:1px solid var(--outline);border-radius:var(--radius);padding:.7rem .9rem;font-size:.92rem}
+  .axis-list b{display:block;font-family:var(--serif);font-size:1rem;margin-bottom:.15rem}
+  .jumplist{background:var(--surface-tint);border:1px solid var(--outline);border-radius:var(--radius);padding:1rem 1.3rem;margin-bottom:1.6rem}
+  .jumplist p{margin:0 0 .5rem;font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft)}
+  .jumplist ol{margin:0;padding-left:1.2rem}
+  .jumplist a{text-decoration:none}
+  .jumplist a:hover{text-decoration:underline}
+  .idea{background:var(--surface);border:1px solid var(--outline);border-radius:14px;padding:1.6rem 1.8rem;margin-bottom:1.6rem;scroll-margin-top:1rem}
+  .idea-head{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap;margin-bottom:.4rem}
+  .idea-title{font-size:1.35rem;font-weight:600;font-family:var(--serif)}
+  .idea-num{display:inline-flex;align-items:center;justify-content:center;width:1.9rem;height:1.9rem;border-radius:50%;background:var(--accent-soft);color:var(--accent-ink);font-weight:700;font-family:var(--sans);font-size:.95rem;margin-right:.5rem;flex:0 0 auto}
+  .badges{display:flex;gap:.4rem;flex-wrap:wrap}
+  .badge{border-radius:999px;padding:.16rem .62rem;font-size:.74rem;font-weight:700;font-family:var(--sans);white-space:nowrap}
+  .badge.axis{background:var(--info-soft);color:var(--info-ink)}
+  .badge.conf-high{background:var(--good-soft);color:var(--good-ink)}
+  .badge.conf-med{background:var(--warn-soft);color:var(--warn-ink)}
+  .badge.conf-low{background:var(--danger-soft);color:var(--danger-ink)}
+  .badge.cx{background:var(--surface-tint);color:var(--ink-soft);border:1px solid var(--outline)}
+  dl.fields{display:grid;grid-template-columns:9rem 1fr;gap:.5rem 1rem;margin:1rem 0}
+  dl.fields dt{font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);padding-top:.15rem}
+  dl.fields dd{margin:0}
+  .basis-tag{display:inline-block;font-family:var(--mono);font-size:.78rem;font-weight:700;border-radius:5px;padding:.05em .4em;margin-right:.4em}
+  .basis-tag.direct{background:var(--good-soft);color:var(--good-ink)}
+  .basis-tag.external{background:var(--info-soft);color:var(--info-ink)}
+  .basis-tag.reasoned{background:var(--warn-soft);color:var(--warn-ink)}
+  .callout{border-radius:var(--radius);padding:.9rem 1.1rem;margin:1rem 0;font-size:.95rem}
+  .callout.downside{background:var(--warn-soft);color:var(--warn-ink)}
+  .callout.downside b{color:var(--warn-ink)}
+  .roadmap-note{background:var(--accent-soft);color:var(--accent-ink);border-radius:var(--radius);padding:.9rem 1.1rem;margin:1rem 0 0;font-size:.9rem}
+  svg text{font-family:var(--sans)}
+  .diagram-wrap{margin:1.1rem 0;background:var(--surface-tint);border:1px solid var(--outline);border-radius:var(--radius);padding:1rem}
+  table{border-collapse:collapse;width:100%;font-size:.92rem}
+  th,td{text-align:left;padding:.55rem .7rem;border-bottom:1px solid var(--outline);vertical-align:top}
+  th{font-family:var(--sans);font-size:.76rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft)}
+  footer.composition-signal{margin-top:3rem;padding-top:1rem;border-top:1px solid var(--outline);font-size:.82rem;color:var(--ink-soft)}
+  @media (max-width:640px){ .idea{padding:1.2rem 1.2rem} dl.fields{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<div class="page">
+
+<span class="eyebrow">Ideation</span>
+<h1>Brand, Campaign &amp; Engagement Plan: information architecture</h1>
+<div class="meta-row">
+  <span><b>Date:</b> 2026-09-24</span>
+  <span><b>Topic:</b> brand-campaign-engagement-plan-ia</span>
+  <span class="pill mode">repo-grounded</span>
+</div>
+<p class="prose"><b>Focus:</b> How Omni OS should model and navigate the relationship between a brand, its campaigns, and an "engagement plan" — how a new brand gets created and managed, whether campaigns are ad hoc or roll up into a formal plan, how a user actually creates an engagement plan today, and how navigation should be spaced out so brand-, campaign-, and flow-level concepts stop mixing together.</p>
+
+<h2 id="grounding">Codebase Context</h2>
+<div class="prose">
+<p>Two parallel, disconnected "unit of planning work" data models exist today. <code>project</code> (<code>strategy/projects.py</code>, <code>strategy/orchestrator.py</code>) is a generic record that, when five agents run (planner/intel/strategy/inspiration/activation), composes a phase-gated narrative document Omni OS calls a "Brand Engagement Plan" — stored on the project row, one project per plan. <code>brand</code> (<code>strategy/brand_journey.py</code> + <code>config/brand_kits.json</code>, shipped 2026-09-24) is a brand entry with its own five-step agentic intake (Brief/Audience/Message/Kit/Flow) that produces a confirmed kit plus one rules-built <code>CampaignFlow</code> — deterministic and auditable by design (R16/R17).</p>
+<p><b>There is no bridge between them.</b> No campaign or project carries a <code>brand_id</code>; <code>orchestrator.run_agents()</code> takes brand as a bare string. A user can run a Brand Journey and a project-based Engagement Plan for the same brand with zero cross-awareness. Multi-campaign support per brand was explicitly deferred when the Brand Journey shipped.</p>
+<p><b>The term "engagement plan" itself is the collision.</b> It currently maps only to the orchestrator's narrative document — never to the Brand Journey's Flow, which is a single campaign automation artifact. Two different artifact types are wearing overlapping names, which is a plausible root of the confusion driving this ideation.</p>
+<p><b>Navigation is split across two apps.</b> Cockpit (<code>cockpit/</code>, the active surface) is brand-first — a sidebar of brands, each opening a read-only workspace or the Journey — with no campaign or engagement-plan concept visible anywhere in it. The older <code>frontend/</code> is project-first — a card grid of projects, each opening a four-stage workspace (Planning → Orchestration → Operations → Reporting) — and is where the orchestrator's Engagement Plan and <code>campaign_ops.py</code> flows actually live today.</p>
+<p><b>External pattern.</b> Web research across Salesforce Marketing Cloud, Adobe Journey Optimizer, and Veeva Vault CRM (the closest pharma analog) converges on one shape: Brand (owning entity, own dashboard) → Campaign/Initiative (strategic container, metric rollup) → Journey/Flow (execution artifact, one-or-more per campaign) — with "engagement plan" positioned as the campaign-tier container or a level above individual flows, never as a sibling of "campaign." HubSpot's flat, hierarchy-less campaign model is the named anti-pattern to avoid. Breadcrumb-based drill-through (Brand &gt; Campaign &gt; Journey), paired with a left-nav that re-scopes at each level, is the named UI pattern once a hierarchy goes past two levels.</p>
+</div>
+
+<h2 id="axes">Topic Axes</h2>
+<ul class="axis-list">
+  <li><b>Data model &amp; hierarchy</b>What a brand, campaign, and engagement plan actually are as objects, and how they relate.</li>
+  <li><b>Navigation &amp; wayfinding</b>How the hierarchy surfaces in the UI so brand-, campaign-, and flow-level concepts don't mix.</li>
+  <li><b>Creation flows</b>How a user actually starts: new brand, new campaign, new engagement plan — guided vs. ad hoc.</li>
+  <li><b>Provenance &amp; reuse</b>Lineage back to the brand kit/message a campaign was built from; reuse across campaigns.</li>
+  <li><b>Unifying the two systems</b>Reconciling the orchestrator's phase-gated plan with the Brand Journey's rules-built flow.</li>
+</ul>
+
+<h2 id="ideas">Ranked Ideas</h2>
+<div class="jumplist">
+<p>Jump to an idea</p>
+<ol>
+  <li><a href="#idea-1">Give the brand a first-class <code>campaigns</code> table</a></li>
+  <li><a href="#idea-2">Resolve the "engagement plan" naming collision</a></li>
+  <li><a href="#idea-3">One breadcrumb, Brand &gt; Campaign &gt; Flow, replacing two apps</a></li>
+  <li><a href="#idea-4">Formal Engagement Plan vs. ad-hoc Campaign as a creation-time fork</a></li>
+  <li><a href="#idea-5">Kit-gated campaign creation with a versioned lineage snapshot</a></li>
+  <li><a href="#idea-6">Reconcile <code>CampaignFlow</code> and the Journey's flow onto one schema</a></li>
+  <li><a href="#idea-7">Multi-campaign rollup dashboard per brand</a></li>
+</ol>
+</div>
+
+<article class="idea" id="idea-1">
+  <div class="idea-head">
+    <div class="idea-title"><span class="idea-num">1</span>Give the brand a first-class <code>campaigns</code> table</div>
+    <div class="badges"><span class="badge axis">Data model &amp; hierarchy</span><span class="badge conf-high">Confidence 90%</span><span class="badge cx">Complexity Medium</span></div>
+  </div>
+  <p>Add a real <code>brand_id</code> foreign key to every project and every Brand Journey flow, and introduce one <code>campaigns</code> table that both write into. Today neither system's records point back to a brand at all — <code>orchestrator.run_agents(brand, ...)</code> takes brand as a bare string, and no campaign or project row carries a <code>brand_id</code>. Without this, "how are a brand's campaigns managed" has no query answer: it isn't possible to even list a brand's campaigns today.</p>
+  <div class="diagram-wrap">
+  <svg viewBox="0 0 760 190" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Brand contains many campaigns, each of which contains exactly one flow or plan">
+    <defs>
+      <marker id="arrow1" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="var(--ink-soft)"/></marker>
+    </defs>
+    <rect x="20" y="70" width="150" height="50" rx="8" fill="var(--accent-soft)" stroke="var(--accent-ink)"/>
+    <text x="95" y="100" text-anchor="middle" font-size="15" font-weight="700" fill="var(--accent-ink)">Brand</text>
+    <line x1="170" y1="95" x2="230" y2="30" stroke="var(--ink-soft)" stroke-width="1.5" marker-end="url(#arrow1)"/>
+    <line x1="170" y1="95" x2="230" y2="95" stroke="var(--ink-soft)" stroke-width="1.5" marker-end="url(#arrow1)"/>
+    <line x1="170" y1="95" x2="230" y2="160" stroke="var(--ink-soft)" stroke-width="1.5" marker-end="url(#arrow1)"/>
+    <rect x="235" y="8" width="150" height="44" rx="8" fill="var(--surface)" stroke="var(--outline)"/>
+    <text x="310" y="35" text-anchor="middle" font-size="13" fill="var(--ink)">Campaign A</text>
+    <rect x="235" y="73" width="150" height="44" rx="8" fill="var(--surface)" stroke="var(--outline)"/>
+    <text x="310" y="100" text-anchor="middle" font-size="13" fill="var(--ink)">Campaign B</text>
+    <rect x="235" y="138" width="150" height="44" rx="8" fill="var(--surface)" stroke="var(--outline)"/>
+    <text x="310" y="165" text-anchor="middle" font-size="13" fill="var(--ink)">Campaign C</text>
+    <line x1="385" y1="30" x2="440" y2="30" stroke="var(--ink-soft)" stroke-width="1.5" marker-end="url(#arrow1)"/>
+    <line x1="385" y1="95" x2="440" y2="95" stroke="var(--ink-soft)" stroke-width="1.5" marker-end="url(#arrow1)"/>
+    <line x1="385" y1="160" x2="440" y2="160" stroke="var(--ink-soft)" stroke-width="1.5" marker-end="url(#arrow1)"/>
+    <rect x="445" y="8" width="290" height="44" rx="8" fill="var(--info-soft)" stroke="var(--info-ink)"/>
+    <text x="590" y="35" text-anchor="middle" font-size="13" fill="var(--info-ink)">Formal Engagement Plan (orchestrator)</text>
+    <rect x="445" y="73" width="290" height="44" rx="8" fill="var(--good-soft)" stroke="var(--good-ink)"/>
+    <text x="590" y="100" text-anchor="middle" font-size="13" fill="var(--good-ink)">Ad-hoc Campaign Flow (Journey-built)</text>
+    <rect x="445" y="138" width="290" height="44" rx="8" fill="var(--good-soft)" stroke="var(--good-ink)"/>
+    <text x="590" y="165" text-anchor="middle" font-size="13" fill="var(--good-ink)">Ad-hoc Campaign Flow (Journey-built)</text>
+  </svg>
+  </div>
+  <dl class="fields">
+    <dt>Basis</dt><dd><span class="basis-tag direct">direct</span>verified: no <code>brand_id</code> field exists anywhere in <code>projects.py</code>, <code>campaign_ops.py</code>, or <code>orchestrator.py</code>; <code>orchestrator.run_agents(brand: str, therapy_area: str, ...)</code> resolves brand by bare string match against <code>config/brand_kits.json</code>. No <code>/api/campaigns</code> route exists at all — only brand-scoped and project-scoped routes.</dd>
+    <dt>Rationale</dt><dd>Every other idea in this document — navigation, rollups, provenance, the formal/ad-hoc fork — is downstream of a campaign having a parent. Doing this once removes the need to bolt on ad-hoc joins later.</dd>
+    <dt>Downsides</dt><dd>A real schema migration across two currently-independent stores (<code>projects.db</code> and <code>brand_journey.db</code>); touches every write path into both.</dd>
+  </dl>
+</article>
+
+<article class="idea" id="idea-2">
+  <div class="idea-head">
+    <div class="idea-title"><span class="idea-num">2</span>Resolve the "engagement plan" naming collision</div>
+    <div class="badges"><span class="badge axis">Data model &amp; hierarchy</span><span class="badge conf-high">Confidence 85%</span><span class="badge cx">Complexity Medium</span></div>
+  </div>
+  <p>Stop letting "engagement plan" name two different things. All five ideation lenses independently converged on this as the root of the user's own confusion. The recommended shape, matching the external convergent pattern: <b>Engagement Plan becomes the brand-level rollup that sits above campaigns</b> — never a sibling of "campaign," and no longer exclusively the orchestrator's narrative document. The orchestrator's current output gets a narrower, accurate name (e.g. "Campaign Narrative" or "Campaign Brief") scoped to one campaign.</p>
+  <p>Two alternative shapes surfaced and are worth naming rather than silently dropping: <b>(b)</b> collapse "engagement plan" and "campaign" into one object with two views — a doc view and a flow view — rather than two tiers; <b>(c)</b> a strict three-tier vocabulary borrowed from publishing — Engagement Plan (book) → Campaign (chapter) → Flow (scene) — which forces a containment rule (no flow without a campaign, no campaign without a plan) that closes the "ad-hoc campaign with no engagement plan" edge case for good. All three resolve the collision; they differ on whether Engagement Plan survives as a distinct object at all. That's a real decision, not a detail — pick one before building navigation on top of it.</p>
+  <dl class="fields">
+    <dt>Basis</dt><dd><span class="basis-tag direct">direct</span>verified: "Brand Engagement Plan" as a term appears only in <code>plan_document.py</code>, <code>orchestrator.py</code>, <code>studio_run.py</code>, <code>persona_review.py</code>, and <code>campaign_artifacts.py</code> — exclusively the orchestrator's narrative artifact, never the Journey's Flow. <span class="basis-tag external">external</span>Adobe Journey Optimizer and Salesforce Marketing Cloud both position the plan/initiative tier above individual journeys, never beside them; HubSpot's flat model (no native hierarchy) is the named anti-pattern.</dd>
+    <dt>Rationale</dt><dd>This is the single fix with the highest ratio of user-confusion-resolved to engineering effort — largely a rename plus one new rollup concept, not a rewrite of either agent pipeline.</dd>
+    <dt>Downsides</dt><dd>Renaming a core, user-facing domain concept touches copy, routes, and prompts across both surfaces; picking the wrong sub-position (b vs. c) now is expensive to reverse once campaigns exist under it.</dd>
+  </dl>
+  <div class="roadmap-note"><b>Sequencing:</b> depends on Idea 1's <code>brand_id</code>/<code>campaigns</code> table existing to have something to roll up.</div>
+</article>
+
+<article class="idea" id="idea-3">
+  <div class="idea-head">
+    <div class="idea-title"><span class="idea-num">3</span>One breadcrumb, Brand &gt; Campaign &gt; Flow, replacing two apps</div>
+    <div class="badges"><span class="badge axis">Navigation &amp; wayfinding</span><span class="badge conf-high">Confidence 80%</span><span class="badge cx">Complexity High</span></div>
+  </div>
+  <p>Replace Cockpit's flat brand sidebar and <code>frontend/</code>'s flat project-card home with one breadcrumb-driven drill-through — Brand dashboard → Campaign detail → Flow/plan view — with a left-nav that re-scopes at whichever level is selected, instead of two separate top-level apps a user has to remember to switch between. This is the direct structural fix for "I can't figure out how navigation should be spaced out."</p>
+  <dl class="fields">
+    <dt>Basis</dt><dd><span class="basis-tag external">external</span>named pattern from research: "breadcrumb-based drill-through... sidebar alone doesn't scale past 2 levels," confirmed as the convergent solution across Salesforce and Adobe. <span class="basis-tag direct">direct</span>verified: Cockpit's <code>App.tsx</code> sidebar is driven solely by <code>listBrands()</code>, with zero campaign-level nav anywhere in that file or in <code>BrandWorkspace.tsx</code>; <code>frontend/</code>'s home is a flat project-card grid with no brand concept.</dd>
+    <dt>Rationale</dt><dd>Two disconnected entry points for one hierarchy is exactly what produces the "mishmash" described — collapsing to one navigable structure fixes the complaint at its source, not just its symptom.</dd>
+    <dt>Downsides</dt><dd>"Campaign" doesn't exist as a nav-level concept in either surface today, so this breadcrumb is aspirational relative to current code — it's the target shape, not a rename of something that already exists. Determining which surface (Cockpit or <code>frontend/</code>) becomes the surviving shell is a real product decision, not incremental cleanup.</dd>
+  </dl>
+</article>
+
+<article class="idea" id="idea-4">
+  <div class="idea-head">
+    <div class="idea-title"><span class="idea-num">4</span>Formal Engagement Plan vs. ad-hoc Campaign as a creation-time fork</div>
+    <div class="badges"><span class="badge axis">Creation flows</span><span class="badge conf-med">Confidence 65%</span><span class="badge cx">Complexity Medium</span></div>
+  </div>
+  <p>Add one "+ New Campaign" action, available once a brand exists, that asks the user to choose: run the full phase-gated orchestrator (<code>run_agents()</code> — a multi-approval narrative, human-approved per phase) or spin up a single ad-hoc Campaign Flow via the Journey's already-shipped rules-built path. Both back-ends already exist independently today; this makes the choice between them a deliberate, discoverable product decision instead of two undiscoverable apps.</p>
+  <dl class="fields">
+    <dt>Basis</dt><dd><span class="basis-tag direct">direct</span>the user proposed this exact distinction unprompted ("maybe you could have a formal engagement plan or ad-hoc campaigns"); confirmed in code — <code>orchestrator.py</code>'s <code>PHASE_ORDER = ["align","select","create","deploy"]</code> requires human approval per phase, while the Journey's Flow step (R16/R17) is deliberately lighter-weight and deterministic.</dd>
+    <dt>Rationale</dt><dd>Turns the user's own vocabulary into the literal product decision. Cheap relative to its payoff because both code paths are already built — this is surfacing and routing work, not new agent logic.</dd>
+    <dt>Downsides</dt><dd>Genuinely depends on Idea 2 settling first — which shape "Campaign" and "Engagement Plan" take decides what this fork is even choosing between. Presenting it before that's settled risks locking in the wrong vocabulary.</dd>
+  </dl>
+  <div class="roadmap-note"><b>Sequencing:</b> the payoff step after Ideas 1 and 2 — the natural next move once a brand has a campaigns table and the naming collision is resolved.</div>
+</article>
+
+<article class="idea" id="idea-5">
+  <div class="idea-head">
+    <div class="idea-title"><span class="idea-num">5</span>Kit-gated campaign creation with a versioned lineage snapshot</div>
+    <div class="badges"><span class="badge axis">Provenance &amp; reuse</span><span class="badge conf-high">Confidence 85%</span><span class="badge cx">Complexity Medium</span></div>
+  </div>
+  <p>Two things, combined: campaign creation should require an existing confirmed brand kit as its source (no orphan campaigns), and every campaign it creates should stamp the exact kit/message/audience snapshot it was built from. Today <code>brand_journey.py</code>'s <code>brand_ctx()</code> reads <i>live</i> kit state with no version pin — so editing a brand's message later silently orphans every campaign already built from the old version, with no way to tell which campaigns still reflect the approved claim. That's a real compliance risk, not a cosmetic gap, in a pharma context.</p>
+  <p>Three concrete mechanisms surfaced for the versioning half, worth naming as design options rather than committing to one blindly: a <b>git-style branch/commit model</b> (a campaign "branches" from a kit commit and can show how many revisions behind it is); <b>field-level citation</b> like a legal brief (a campaign cites specific kit fields it used, degrading gracefully when a campaign blends multiple kit revisions rather than breaking on one rigid FK); and a <b>franchise-licensing model</b> (kit fields render as "locked" vs. "local" in the flow-builder UI, telling the team exactly what to render differently). The simplest variant — a plain snapshot FK stamped at creation time — is enough to close the immediate gap; the other two are richer answers worth a design pass once the simple version proves the need.</p>
+  <dl class="fields">
+    <dt>Basis</dt><dd><span class="basis-tag direct">direct</span>verified: <code>brand_journey.py</code>'s context builder reads live kit state, not a pinned version; the 2026-09-09 agentic-planning ideation already named "no traceability, no diff/re-validation on edit" as consequences of the missing versioning. <span class="basis-tag external">external</span>franchise licensing and legal-citation as named analogies for centrally-governed-but-locally-executed and partial/graceful provenance, respectively.</dd>
+    <dt>Rationale</dt><dd>Without this, multi-campaign reuse (Idea 7) is unsafe — campaigns would be built on kit state that can shift under them with no signal.</dd>
+    <dt>Downsides</dt><dd>Requires picking a provenance granularity (whole-snapshot vs. field-level) before implementation; the richer mechanisms are real design investments, not drop-in additions.</dd>
+  </dl>
+</article>
+
+<article class="idea" id="idea-6">
+  <div class="idea-head">
+    <div class="idea-title"><span class="idea-num">6</span>Reconcile <code>CampaignFlow</code> and the Journey's flow onto one schema</div>
+    <div class="badges"><span class="badge axis">Unifying the two systems</span><span class="badge conf-med">Confidence 70%</span><span class="badge cx">Complexity Medium</span></div>
+  </div>
+  <p><code>campaign_ops.py</code> (used by the orchestrator's Operations stage) and <code>strategy/brand_journey.py</code> (the Journey's Flow step) each independently build a campaign-flow graph, with no shared schema and no path from one to the other today. Reconcile them onto one representation rather than letting two implementations of the same concept keep drifting apart as both get new features.</p>
+  <div class="callout downside"><b>Verifier correction:</b> the two schemas are not starting from nothing in common — <code>campaign_ops.py</code>'s node-type vocabulary and <code>brand_journey.py</code>'s <code>FLOW_NODE_TYPES</code> (<code>send/wait/decision/branch/exit/followup/closure</code>) are nearly identical. They clearly evolved from a shared vocabulary; the representations differ (a flat dict vs. a <code>nodes</code>/<code>data.block_code</code> graph with stable IDs), which makes this more tractable than a from-scratch unification — genuinely good news for anyone picking this up.</div>
+  <dl class="fields">
+    <dt>Basis</dt><dd><span class="basis-tag direct">direct</span>verified via read: shared node-type vocabulary across both modules; no converter exists between the two representations today.</dd>
+    <dt>Rationale</dt><dd>Two independently-maintained flow-graph implementations sharing a vocabulary but not a schema is a concrete, fixable root cause of "it's a mishmash" — closing it at the schema level, rather than patching symptoms in the UI, prevents further drift.</dd>
+    <dt>Downsides</dt><dd>Touches both <code>strategy/campaign_ops.py</code> and <code>strategy/brand_journey.py</code> — a cross-cutting change that needs a migration plan for any live data in either shape.</dd>
+  </dl>
+</article>
+
+<article class="idea" id="idea-7">
+  <div class="idea-head">
+    <div class="idea-title"><span class="idea-num">7</span>Multi-campaign rollup dashboard per brand</div>
+    <div class="badges"><span class="badge axis">Data model &amp; hierarchy</span><span class="badge conf-med">Confidence 70%</span><span class="badge cx">Complexity Medium</span></div>
+  </div>
+  <p>Once a brand has a real <code>campaigns</code> table (Idea 1), add a per-brand view listing every campaign — formal plans and ad-hoc flows together — with status and rolled-up metrics, matching the enterprise pattern where metrics roll up child→parent. This is the feature the user is implicitly asking for ("Brands have separate campaigns — how are those managed?"), and it was explicitly flagged as deferred, not solved, in the Brand Journey's own shipped handoff.</p>
+  <dl class="fields">
+    <dt>Basis</dt><dd><span class="basis-tag direct">direct</span>verified: "multi-campaign workflows... explicitly deferred" in the 2026-09-24 Brand Journey handoff; no rollup or cross-campaign view exists in either surface today. <span class="basis-tag external">external</span>Salesforce and Adobe's metric-rollup pattern, child→parent.</dd>
+    <dt>Rationale</dt><dd>The most-cited deferred gap across three separate prior ideation documents — it keeps resurfacing because nothing has closed it yet, and it's the direct answer to the user's own question about managing a brand's campaigns.</dd>
+    <dt>Downsides</dt><dd>Has no data to roll up until Idea 1 ships; a smaller version (a live "N campaigns" badge on each brand in the sidebar) is a natural, cheap follow-on once that data exists — but not before.</dd>
+  </dl>
+  <div class="roadmap-note"><b>Sequencing:</b> strictly after Idea 1.</div>
+</article>
+
+<h2 id="rejected">Rejection Summary</h2>
+<table>
+<thead><tr><th>#</th><th>Idea</th><th>Reason Rejected</th></tr></thead>
+<tbody>
+<tr><td>—</td><td>Shared Planning Context bridging the orchestrator and the Brand Journey at runtime</td><td>Scope overrun — this is real-time agent-context/engine architecture, not an IA or navigation fix; it's also the 2026-09-09 ideation's already-named gap restated, not new synthesis from this grounding. Worth its own separate ideation focused on the agent pipeline, not folded into this one.</td></tr>
+<tr><td>—</td><td>Auto-spawn a first campaign automatically on Brand Journey confirmation</td><td>Presupposes the Campaign entity from Idea 1 already exists, which it doesn't today. A reasonable downstream UX polish once Ideas 1 and 2 ship, not an independent architectural idea worth ranking on its own.</td></tr>
+<tr><td>—</td><td>Sidebar "N campaigns" badge per brand</td><td>Mischaracterized in generation as a cheap/tactical win — verification confirmed the Cockpit sidebar has zero campaign-awareness and no campaign entity exists to count, so it requires Idea 1's data model first. It becomes a genuinely cheap addition once that ships (see Idea 7's downside note).</td></tr>
+<tr><td>—</td><td>Extend the Operations-agent's sole-write-access pattern into a brand-level reconciliation/permission model</td><td>Scope overrun — permissions and access-control across campaign types is a different concern from the user's IA/navigation/naming question, and the cited pattern (a per-project, per-stage write gate) has no existing brand-level scope to extend into.</td></tr>
+</tbody>
+</table>
+
+<footer class="composition-signal">Composed 2026-09-24T00:00Z by ce-ideate from the user's spoken request (transcribed) and repo grounding of <a href="https://github.com/sarveshkoyande/omnios">github.com/sarveshkoyande/omnios</a>.</footer>
+
+</div>
+</body>
+</html>
