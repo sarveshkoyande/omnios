@@ -205,6 +205,19 @@ def check_u2_confirmed_step_missing_kit_field_reads_drafted():
     assert _step(bj.journey_state(b), "brief")["status"] == "drafted"
 
 
+def check_u2_open_question_skips_pending_draft():
+    # The dock's question must match what a turn asks next, or a chip answers the wrong field.
+    b = _fresh_brand()
+    first = _step(bj.journey_state(b), "brief")["question"]["key"]
+    d = bj.propose(b, "brief", first, "Pending value")
+    st = _step(bj.journey_state(b), "brief")
+    assert st["question"]["key"] != first, st["question"]
+    assert st["question"]["key"] == jf.next_questions("brief", bj._effective_answers(b), 1)[0]["key"]
+    assert first in st["missing"], st["missing"]
+    bj.undo(b, d["id"])
+    assert _step(bj.journey_state(b), "brief")["question"]["key"] == first
+
+
 def check_u2_new_brand_not_started():
     b = _fresh_brand()
     st = bj.journey_state(b)

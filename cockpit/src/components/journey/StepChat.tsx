@@ -186,24 +186,31 @@ export function StepChat({ brand, step, stepLabel, question, earlierCount, turn,
   const pendingSteps = PENDING_STEPS(stepLabel);
   const shownPending = pendingSteps.slice(0, Math.min(pendingSteps.length, tick + 1));
 
-  const ctas = (
+  const saveDrafts = () => act(canConfirm && !question
+    ? async () => { await drafts.onKeep(); await drafts.onConfirm(); }
+    : drafts.onKeep);
+
+  // Shown after an advance fails: settle the answer by hand.
+  const retryCtas = (
     <div className="agent-dock-ctas">
       {drafts.count > 0 && !locked && (
         <>
-          <button type="button" className="jc-btn jc-btn-keep" disabled={drafts.busy}
-            onClick={() => act(canConfirm ? async () => { await drafts.onKeep(); await drafts.onConfirm(); } : drafts.onKeep)}>
-            {canConfirm ? "Keep & confirm step" : "Keep changes"}
-          </button>
-          <button type="button" className="jc-btn" disabled={drafts.busy} onClick={() => act(drafts.onUndo)}>Undo changes</button>
+          <button type="button" className="jc-btn jc-btn-keep" disabled={drafts.busy} onClick={saveDrafts}>Save answer</button>
+          <button type="button" className="jc-btn" disabled={drafts.busy} onClick={() => act(drafts.onUndo)}>Discard</button>
         </>
       )}
+      <button type="button" className="jc-btn jc-btn-ghost" onClick={onDismiss}>Close</button>
+    </div>
+  );
+
+  const idleCtas = (
+    <div className="agent-dock-ctas">
       {drafts.count === 0 && !confirmed && !locked && canConfirm && (
         <button type="button" className="jc-btn jc-btn-keep" disabled={drafts.busy} onClick={() => act(drafts.onConfirm)}>Confirm step</button>
       )}
-      {confirmed && (
-        <button type="button" className="jc-btn" disabled={drafts.busy} onClick={() => act(drafts.onReopen)}>Reopen step</button>
+      {confirmed && drafts.count === 0 && (
+        <button type="button" className="jc-btn jc-btn-ghost" disabled={drafts.busy} onClick={() => act(drafts.onReopen)}>Reopen step</button>
       )}
-      {expanded && <button type="button" className="jc-btn jc-btn-ghost" onClick={onDismiss}>Close</button>}
     </div>
   );
 
@@ -246,7 +253,7 @@ export function StepChat({ brand, step, stepLabel, question, earlierCount, turn,
               <button type="button" className="jc-link" disabled={drafts.busy || leaving} onClick={undoAnswer}>Undo</button>
             </div>
           )}
-          {!turn.pending && !(advancing && count !== null) && (turn.advance ? ctas : (
+          {!turn.pending && !(advancing && count !== null) && (turn.advance ? retryCtas : (
             <div className="agent-dock-ctas">
               <button type="button" className="jc-btn jc-btn-ghost" onClick={onDismiss}>Close</button>
             </div>
@@ -260,11 +267,15 @@ export function StepChat({ brand, step, stepLabel, question, earlierCount, turn,
           <div className="agent-dock-prompt">
             {prompt}
             {drafts.count > 0 && !locked && (
-              <span className="agent-dock-count">{drafts.count} change{drafts.count === 1 ? "" : "s"} ready to review</span>
+              <span className="agent-dock-count">
+                {drafts.count} earlier answer{drafts.count === 1 ? "" : "s"} not saved yet
+                {" · "}<button type="button" className="jc-link" disabled={drafts.busy} onClick={saveDrafts}>Save</button>
+                {" · "}<button type="button" className="jc-link" disabled={drafts.busy} onClick={() => act(drafts.onUndo)}>Discard</button>
+              </span>
             )}
             {drafts.confirmBlocked && drafts.count === 0 && !confirmed && <span className="agent-dock-count">{drafts.confirmBlocked}</span>}
           </div>
-          {ctas}
+          {idleCtas}
         </div>
       )}
       {drafts.error && <div className="step-chat-error" role="alert">{drafts.error}</div>}

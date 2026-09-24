@@ -304,9 +304,15 @@ def journey_state(brand: str, history_step: str | None = None) -> dict:
                 status = "drafted"
         statuses[step] = status
 
+    # The open question skips fields with a pending draft, matching what a turn asks next
+    # (_effective_answers); status and `missing` stay on kept answers only.
+    effective = dict(answers)
+    for d in drafts:
+        if d["mode"] == "set":
+            effective[d["field"]] = d["value"]
     steps = []
     for step in jf.STEPS:
-        nxt = jf.next_questions(step, answers, 1) if step != "flow" else []
+        nxt = jf.next_questions(step, effective, 1) if step != "flow" else []
         entry = {
             "step": step,
             "label": jf.STEP_LABELS[step],
