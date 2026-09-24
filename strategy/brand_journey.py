@@ -262,6 +262,18 @@ def add_turn(brand: str, step: str, role: str, text: str) -> None:
         conn.close()
 
 
+def _recent_turns(brand: str, step: str, limit: int = 6) -> str:
+    """The step's last few chat turns as plain text, so a short follow-up ("all recipients,
+    3 days after") is read against the question the agent just asked."""
+    conn = _conn()
+    try:
+        rows = list(conn.execute("SELECT role, text FROM journey_turns WHERE brand=? AND step=? "
+                                 "ORDER BY seq DESC LIMIT ?", (_key(brand), step, limit)))
+    finally:
+        conn.close()
+    return "\n".join(f"{r['role']}: {r['text']}" for r in reversed(rows)) or "(none)"
+
+
 def journey_state(brand: str, history_step: str | None = None) -> dict:
     """Per-step status, waiting prerequisites, pending drafts, the current open question as
     a fresh prompt, and the count of earlier chat turns (R4). Turns themselves are only
@@ -425,7 +437,8 @@ def agent_turn(brand: str, step: str, message: str) -> dict:
             current = {k: answers.get(k) for k in _step_fields(step)}
             nxt = open_before[0]["question"] if open_before else "(nothing open)"
             payload = (f"Current values:\n{json.dumps(current, indent=2)}\n\n"
-                       f"Next open question: {nxt}\n\nUser: {message}")
+                       f"Next open question: {nxt}\n\n"
+                       f"Conversation so far:\n{_recent_turns(b, step)}")
             env = _call_turn_llm(system, payload)
             proposals = env.get("proposals") or {}
             dropped = [k for k in proposals if k not in keys]
@@ -541,12 +554,19 @@ _AUDIENCE_GROUP = {"hcps": "hcp", "patients": "patient", "caregivers": "patient"
 
 _FLOW_TURN_SYSTEM = """You turn a pharma marketer's request into structured edits of a campaign
 flow. Blocks are identified ONLY by their block code (B1, B2, ...). Allowed operations:
-{"op": "add", "type": "send|wait|decision|branch|exit|followup|closure", "label": "...", "after": "<code, optional>", "channel": "<optional>", "detail": "<optional>"}
+{"op": "add", "type": "send|wait|decision|branch|exit|followup|closure", "label": "...", "after": "<code, optional>", "channel": "<optional>", "detail": "<optional>", "ref": "<optional temp name, e.g. N1>"}
+A later op in the same list may use an earlier add's "ref" in place of a block code.
 {"op": "remove", "code": "<code>"}
 {"op": "connect", "from": "<code>", "to": "<code>", "label": "<optional>"}
 {"op": "change", "code": "<code>", "set": {"label|channel|detail|day": <value>}}
-Use only codes that exist in the flow given. If the request is unclear, return no ops and
-ask one short question. Reply with ONLY one raw JSON object, no markdown fences:
+Use only codes that exist in the flow given. The last "user:" line is the current request;
+read it together with the earlier turns (it may answer your previous question). Prefer
+acting: when the combined request names what to add or change and roughly where, return the
+ops with sensible defaults (e.g. an email reminder is a "send" with channel "email"; "N days
+after" means a "wait" of N days followed by the send). Ask one short question only when you
+truly cannot choose the block or the operation. The change lands as a draft the user keeps
+or undoes, so a reasonable guess is better than another question. Reply with ONLY one raw
+JSON object, no markdown fences:
 {"reply": "<at most two sentences>", "ops": [ ... ]}"""
 
 _FLOW_HELP = ("I can edit the flow with structured changes: add a block, remove one, connect "
@@ -676,9 +696,14 @@ def _apply_op(flow: dict, codes: dict, op: dict) -> None:
 def _apply_ops(flow: dict, codes: dict, ops: list, strict: bool) -> tuple[list, list]:
     """(applied, dropped). strict: the first failing op raises instead of being dropped."""
     applied, dropped = [], []
+    refs: dict = {}  # an add op's optional "ref" -> the block code it received, for later ops in the batch
     for op in ops:
         try:
-            _apply_op(flow, codes, op)
+            resolved = {k: (refs.get(v, v) if k in ("after", "from", "to", "code") else v)
+                        for k, v in op.items()}
+            _apply_op(flow, codes, resolved)
+            if op.get("op") == "add" and op.get("ref"):
+                refs[op["ref"]] = codes[f"added:{op['uid']}"]
             applied.append(op)
         except ValueError as e:
             if strict:
@@ -856,7 +881,8 @@ def flow_turn(brand: str, message: str = "", ops=None) -> dict:
             shown = (current["draft"] or current)["flow"]
             blocks = [{"code": n["data"]["block_code"], "type": n["type"],
                        "label": n["data"].get("label")} for n in shown["nodes"]]
-            env = _call_flow_llm(_FLOW_TURN_SYSTEM, f"Blocks:\n{json.dumps(blocks)}\n\nUser: {message}")
+            env = _call_flow_llm(_FLOW_TURN_SYSTEM, f"Blocks:\n{json.dumps(blocks)}\n\n"
+                                 f"Conversation so far:\n{_recent_turns(b, 'flow')}")
             if env.get("ops"):
                 current = propose_flow_ops(b, env["ops"])
             reply, mode = str(env.get("reply") or "").strip(), "llm"

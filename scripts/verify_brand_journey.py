@@ -539,6 +539,24 @@ def check_u6_flow_draft_keep_undo_and_free_text_fallback():
     assert got["ops"] and got["draft"] is None
 
 
+def check_u6_chained_adds_resolve_refs_and_survive_keep():
+    b = _flow_ready_brand()
+    doc = bj.build_flow(b)
+    anchor = doc["flow"]["nodes"][1]["data"]["block_code"]
+    ops = [{"op": "add", "type": "wait", "label": "Wait 3 days", "after": anchor, "ref": "N1"},
+           {"op": "add", "type": "send", "label": "Reminder", "after": "N1", "channel": "email"}]
+    r = bj.flow_turn(b, "", ops)
+    added = [n for n in r["flow"]["draft"]["flow"]["nodes"] if n["id"].startswith("added_")]
+    assert [n["data"]["label"] for n in added] == ["Wait 3 days", "Reminder"], added
+    wait_id = added[0]["id"]
+    assert any(e["source"] == wait_id and e["target"] == added[1]["id"]
+               for e in r["flow"]["draft"]["flow"]["edges"]), "reminder not chained after wait"
+    bj.keep_flow_draft(b)
+    got = bj.build_flow(b)
+    assert got["dropped"] == [], got["dropped"]
+    assert {"Wait 3 days", "Reminder"} <= {n["data"]["label"] for n in got["flow"]["nodes"]}
+
+
 CHECKS = [v for k, v in list(globals().items()) if k.startswith("check_") and callable(v)]
 
 
