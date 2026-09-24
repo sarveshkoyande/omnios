@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { BrandKit, KitUpdateSection } from "../types";
+import type { BrandKit, JourneyStepId } from "../types";
 import { Icon } from "./Icon";
 
 function formatWhen(iso?: string): string {
@@ -17,15 +17,13 @@ function formatWhen(iso?: string): string {
  *  fabricated per-section one, and says so explicitly. "Update" is a real, honest stub --
  *  it does not silently no-op, it tells you editing isn't wired up yet.
  *
- *  When a panel maps to one of the five brand-plan update sections (`section` + `onUpdate`
- *  both supplied), Update is real: it navigates to that section's tab on the update screen
- *  instead of showing the stub message. Panels with no mapped section (Proof points,
- *  Clinical data, Claims library, Identity, Voice check -- none of them own a slice of
- *  the update flow's field set) keep the honest stub. */
-export function SectionMeta({ kit, section, onUpdate }: {
+ *  When a panel maps to a brand journey step (`step` + `onUpdate` both supplied), Update is
+ *  real: it opens the journey on that step instead of showing the stub message. Panels no
+ *  journey step fills keep the honest stub. */
+export function SectionMeta({ kit, step, onUpdate }: {
   kit: BrandKit;
-  section?: KitUpdateSection;
-  onUpdate?: (section: KitUpdateSection) => void;
+  step?: JourneyStepId;
+  onUpdate?: (step: JourneyStepId) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [updateClicked, setUpdateClicked] = useState(false);
@@ -55,8 +53,8 @@ export function SectionMeta({ kit, section, onUpdate }: {
             This is the brand kit file's own timestamp -- every section shares it. There is no
             per-section change history yet.
           </p>
-          {section && onUpdate ? (
-            <button type="button" className="section-meta-update" onClick={() => onUpdate(section)}>
+          {step && onUpdate ? (
+            <button type="button" className="section-meta-update" onClick={() => onUpdate(step)}>
               Update
             </button>
           ) : !updateClicked ? (
@@ -71,5 +69,40 @@ export function SectionMeta({ kit, section, onUpdate }: {
         </div>
       )}
     </div>
+  );
+}
+
+const STEP_LABEL: Record<JourneyStepId, string> = {
+  brief: "Brief",
+  audience: "Audience",
+  message: "Message",
+  kit: "Kit",
+  flow: "Flow",
+};
+
+/** Empty state for a workspace area a journey step fills: says it isn't planned yet and,
+ *  when the workspace can open the journey, links straight to that step. Areas no journey
+ *  step fills keep their own "Not available in this kit" text instead. */
+export function NotPlanned({ step, onOpen, className = "overview-fact-missing" }: {
+  step: JourneyStepId;
+  onOpen?: (step: JourneyStepId) => void;
+  className?: string;
+}) {
+  return (
+    <span className={className}>
+      Not planned yet
+      {onOpen && (
+        <>
+          {" "}&middot;{" "}
+          <button
+            type="button"
+            className="not-planned-link"
+            onClick={(e) => { e.stopPropagation(); onOpen(step); }}
+          >
+            Plan in {STEP_LABEL[step]}
+          </button>
+        </>
+      )}
+    </span>
   );
 }

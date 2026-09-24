@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { getBrandKit, listBrands } from "./api";
-import type { BrandKit, BrandSummary, JourneyStepId, KitUpdateSection } from "./types";
+import type { BrandKit, BrandSummary, JourneyStepId } from "./types";
 import { BrandWorkspace } from "./components/BrandWorkspace";
 import { AgentLibrary } from "./components/AgentLibrary";
 import { JourneyScreen } from "./components/journey/JourneyScreen";
@@ -8,15 +8,6 @@ import { Icon } from "./components/Icon";
 import "./cockpit.css";
 
 type View = "workspace" | "agents" | "journey";
-
-/** Old guided-update sections map onto the journey step that now owns that content. */
-const SECTION_STEP: Record<KitUpdateSection, JourneyStepId> = {
-  "kit-brand-details": "message",
-  "kit-brand-persona": "message",
-  "kit-guardrails": "kit",
-  "kit-hcp-persona": "audience",
-  "kit-hcp-segmentation": "audience",
-};
 
 export default function App() {
   const [view, setView] = useState<View>("workspace");
@@ -60,8 +51,8 @@ export default function App() {
     setView("workspace");
   };
 
-  const openJourney = (section: KitUpdateSection) => {
-    setJourneyStep(SECTION_STEP[section] ?? "brief");
+  const openJourney = (step: JourneyStepId) => {
+    setJourneyStep(step);
     setNewBrandSetup(false);
     setView("journey");
   };

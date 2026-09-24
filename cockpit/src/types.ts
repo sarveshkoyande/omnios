@@ -130,46 +130,6 @@ export interface MarketShare {
   target: string;
 }
 
-/** The five brand-plan update tabs, in display order -- must match strategy/kit_chat.py's
- *  KIT_SECTIONS keys exactly, the shared boundary between backend grounding and this UI. */
-export const KIT_UPDATE_SECTIONS = [
-  "kit-brand-details",
-  "kit-brand-persona",
-  "kit-guardrails",
-  "kit-hcp-persona",
-  "kit-hcp-segmentation",
-] as const;
-export type KitUpdateSection = (typeof KIT_UPDATE_SECTIONS)[number];
-
-export const KIT_UPDATE_SECTION_LABELS: Record<KitUpdateSection, string> = {
-  "kit-brand-details": "Brand details",
-  "kit-brand-persona": "Brand persona",
-  "kit-guardrails": "Guardrails",
-  "kit-hcp-persona": "HCP persona",
-  "kit-hcp-segmentation": "HCP segmentation",
-};
-
-export interface KitDiffFieldEntry {
-  current: unknown;
-  proposed: unknown;
-}
-
-export interface KitChatMessage {
-  role: string;
-  agent_id: string | null;
-  text: string;
-  kind: string;
-  ts: string;
-}
-
-export interface KitDraft {
-  section: KitUpdateSection;
-  status: "not_started" | "drafting" | "awaiting_review" | "published";
-  diff: Record<string, KitDiffFieldEntry>;
-  updated_at: string | null;
-  history: KitChatMessage[];
-}
-
 export interface BrandKit {
   source_label: string;
   source_note: string;

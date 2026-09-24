@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { BrandKit, KitUpdateSection } from "../types";
+import type { BrandKit, JourneyStepId } from "../types";
 import { inkSoft } from "../tokens";
 // DispatchBoard / VoiceLinter / useMemo / Claim / RISK_TONE / STATUS_TONE: only used by
 // the commented-out section block below (ClaimsLibrary needs useMemo/Claim/RISK_TONE/
@@ -9,7 +9,7 @@ import { inkSoft } from "../tokens";
 import { StrategicOverview } from "./StrategicOverview";
 import { BrandPersonaTable } from "./BrandPersonaTable";
 import { HcpIntelligence } from "./HcpIntelligence";
-import { SectionMeta } from "./SectionMeta";
+import { NotPlanned, SectionMeta } from "./SectionMeta";
 import { Icon } from "./Icon";
 
 /** Top-level page section wrapper -- "Brand Intelligence" and "HCP Intelligence" are a
@@ -35,12 +35,12 @@ function NotCaptured({ note }: { note: string }) {
 
 /** Section shell shared by every panel below -- gives the page one consistent rhythm
  *  instead of each section inventing its own card chrome. */
-function Panel({ title, icon, kit, section, onUpdate, action, children }: {
+function Panel({ title, icon, kit, step, onUpdate, action, children }: {
   title: string;
   icon: React.ReactNode;
   kit?: BrandKit;
-  section?: KitUpdateSection;
-  onUpdate?: (section: KitUpdateSection) => void;
+  step?: JourneyStepId;
+  onUpdate?: (step: JourneyStepId) => void;
   action?: React.ReactNode;
   children: React.ReactNode;
 }) {
@@ -49,7 +49,7 @@ function Panel({ title, icon, kit, section, onUpdate, action, children }: {
       <div className="panel-head">
         <span className="panel-icon" aria-hidden>{icon}</span>
         <h2>{title}</h2>
-        {kit && <SectionMeta kit={kit} section={section} onUpdate={onUpdate} />}
+        {kit && <SectionMeta kit={kit} step={step} onUpdate={onUpdate} />}
         {action && <div className="panel-action">{action}</div>}
       </div>
       <div className="panel-body">{children}</div>
@@ -61,13 +61,13 @@ function Panel({ title, icon, kit, section, onUpdate, action, children }: {
  *  matches the reference UI's expandable-row pattern for the "brand-book" material that
  *  isn't needed at a glance the way proof points and safety are. Exported so
  *  HcpIntelligence.tsx uses the identical shell rather than a second copy. */
-export function Expandable({ title, icon, subtitle, kit, section, onUpdate, children, defaultOpen = false }: {
+export function Expandable({ title, icon, subtitle, kit, step, onUpdate, children, defaultOpen = false }: {
   title: string;
   icon: React.ReactNode;
   subtitle: string;
   kit?: BrandKit;
-  section?: KitUpdateSection;
-  onUpdate?: (section: KitUpdateSection) => void;
+  step?: JourneyStepId;
+  onUpdate?: (step: JourneyStepId) => void;
   children: React.ReactNode;
   defaultOpen?: boolean;
 }) {
@@ -80,7 +80,7 @@ export function Expandable({ title, icon, subtitle, kit, section, onUpdate, chil
           <b>{title}</b>
           <span className="expandable-subtitle">{subtitle}</span>
         </span>
-        {kit && <SectionMeta kit={kit} section={section} onUpdate={onUpdate} />}
+        {kit && <SectionMeta kit={kit} step={step} onUpdate={onUpdate} />}
         <span className={`chevron ${open ? "open" : ""}`}><Icon name="chevronDown" size={16} /></span>
       </button>
       {open && <div className="expandable-body">{children}</div>}
@@ -211,7 +211,10 @@ function IdentitySystem({ kit }: { kit: BrandKit }) {
 }
 */
 
-function GuardrailsPanel({ kit }: { kit: BrandKit }) {
+function GuardrailsPanel({ kit, onOpen }: { kit: BrandKit; onOpen?: (step: JourneyStepId) => void }) {
+  if (kit.guardrails.dos.length === 0 && kit.guardrails.donts.length === 0) {
+    return <p className="hcp-unavailable"><NotPlanned step="kit" onOpen={onOpen} className="" /></p>;
+  }
   return (
     <div className="two-col">
       <div>
@@ -266,7 +269,7 @@ function PersonasPanel({ kit }: { kit: BrandKit }) {
 export function BrandWorkspace({ brand, kit, onUpdate }: {
   brand: string;
   kit: BrandKit;
-  onUpdate?: (section: KitUpdateSection) => void;
+  onUpdate?: (step: JourneyStepId) => void;
 }) {
   return (
     <div className="workspace">
@@ -277,12 +280,12 @@ export function BrandWorkspace({ brand, kit, onUpdate }: {
 
       <PageSection title="Brand Intelligence">
         <div className="expandable-stack">
-          <Expandable title="Brand persona" icon={<Icon name="persona" />} kit={kit} section="kit-brand-persona" onUpdate={onUpdate} subtitle="Role, promise, tone, territories -- what's captured and what isn't">
-            <BrandPersonaTable kit={kit} />
+          <Expandable title="Brand persona" icon={<Icon name="persona" />} kit={kit} step="message" onUpdate={onUpdate} subtitle="Role, promise, tone, territories -- what's captured and what isn't">
+            <BrandPersonaTable kit={kit} onOpen={onUpdate} />
           </Expandable>
 
-          <Expandable title="Communication guardrails" icon={<Icon name="shield" />} kit={kit} section="kit-guardrails" onUpdate={onUpdate} subtitle="Brand dos &amp; don'ts">
-            <GuardrailsPanel kit={kit} />
+          <Expandable title="Communication guardrails" icon={<Icon name="shield" />} kit={kit} step="kit" onUpdate={onUpdate} subtitle="Brand dos &amp; don'ts">
+            <GuardrailsPanel kit={kit} onOpen={onUpdate} />
           </Expandable>
         </div>
       </PageSection>
@@ -326,7 +329,7 @@ export function BrandWorkspace({ brand, kit, onUpdate }: {
         <Expandable title="Voice check" icon="&#127908;" kit={kit} subtitle={`${kit.voice_dont.length} banned terms, checked live against your draft`}>
           <VoiceLinter kit={kit} />
         </Expandable>
-        <Expandable title="Patient &amp; payer personas" icon="&#128100;" kit={kit} section="kit-hcp-segmentation" onUpdate={onUpdate} subtitle="HCP personas now live in the HCP Intelligence section above">
+        <Expandable title="Patient &amp; payer personas" icon="&#128100;" kit={kit} step="audience" onUpdate={onUpdate} subtitle="HCP personas now live in the HCP Intelligence section above">
           <PersonasPanel kit={kit} />
         </Expandable>
       </div>

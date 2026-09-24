@@ -91,7 +91,7 @@ def apply_diff(brand: str, fields: dict) -> dict:
     """Write `fields` (field name -> new value) into `brand`'s entry in
     config/brand_kits.json, preserving every other field and the file's existing key
     order. This is the ONLY place that ever writes to brand_kits.json outside of manual
-    editing -- everything else in this module only reads it. Callers (kit_drafts.publish_draft)
+    editing -- everything else in this module only reads it. Callers (brand_journey.keep)
     are expected to have already resolved `fields` down to just the user-accepted subset
     of an agent's proposed diff; this function does not itself gate or validate content,
     it only applies what it's given.

@@ -1,6 +1,7 @@
 import { useState } from "react";
-import type { BrandKit, KitUpdateSection } from "../types";
+import type { BrandKit, JourneyStepId } from "../types";
 import { Icon } from "./Icon";
+import { NotPlanned } from "./SectionMeta";
 
 /** The brand-details section, leading the workspace -- everything below (claims, identity,
  *  guardrails) is detail; this is the "what is this brand, in one glance" answer, so it has
@@ -25,13 +26,14 @@ import { Icon } from "./Icon";
 export function StrategicOverview({ brand, kit, onUpdate }: {
   brand: string;
   kit: BrandKit;
-  onUpdate?: (section: KitUpdateSection) => void;
+  onUpdate?: (step: JourneyStepId) => void;
 }) {
-  const facts: { label: string; value: string | null }[] = [
-    { label: "Indication", value: kit.indication },
-    { label: "Lifecycle stage", value: kit.fiscal_frame },
+  // `step`: the journey step that fills this fact when empty; market share has none.
+  const facts: { label: string; value: string | null; step?: JourneyStepId }[] = [
+    { label: "Indication", value: kit.indication || null, step: "brief" },
+    { label: "Lifecycle stage", value: kit.fiscal_frame || null, step: "brief" },
     { label: "Market share (current -> target)", value: kit.market_share ? `${kit.market_share.current} -> ${kit.market_share.target}` : null },
-    { label: "Key objective", value: kit.key_objective ?? null },
+    { label: "Key objective", value: kit.key_objective || null, step: "brief" },
   ];
 
   const primaryHcps = kit.personas.hcp.filter((p) => p.tier === "Primary");
@@ -62,7 +64,9 @@ export function StrategicOverview({ brand, kit, onUpdate }: {
             <div className="overview-fact" key={f.label}>
               <div className="overview-fact-label">{f.label}</div>
               <div className="overview-fact-value">
-                {f.value ?? <span className="overview-fact-missing">Not captured in this kit yet</span>}
+                {f.value ?? (f.step
+                  ? <NotPlanned step={f.step} onOpen={onUpdate} />
+                  : <span className="overview-fact-missing">Not captured in this kit yet</span>)}
               </div>
             </div>
           ))}
@@ -73,25 +77,25 @@ export function StrategicOverview({ brand, kit, onUpdate }: {
         <div className="insight-tile">
           <div className="insight-title">Target HCPs</div>
           <div className="insight-body">
-            {primaryHcps.length > 0 ? primaryHcps.map((p) => p.name.split(" (")[0]).join(", ") : "Not captured in this kit yet"}
+            {primaryHcps.length > 0 ? primaryHcps.map((p) => p.name.split(" (")[0]).join(", ") : <NotPlanned step="audience" onOpen={onUpdate} />}
           </div>
         </div>
         <div className="insight-tile">
           <div className="insight-title">Key message territories</div>
           <div className="insight-body">
-            {territories.length > 0 ? territories.join(", ") : "Not captured in this kit yet"}
+            {territories.length > 0 ? territories.join(", ") : <NotPlanned step="message" onOpen={onUpdate} />}
           </div>
         </div>
         <div className="insight-tile">
           <div className="insight-title">Key competitors</div>
           <div className="insight-body">
-            {competitors.length > 0 ? competitors.map((c) => c.name).join(", ") : "Not captured in this kit yet"}
+            {competitors.length > 0 ? competitors.map((c) => c.name).join(", ") : <NotPlanned step="audience" onOpen={onUpdate} />}
           </div>
         </div>
         <div className="insight-tile">
           <div className="insight-title">Unmet needs</div>
           <div className="insight-body">
-            {unmetNeeds.length > 0 ? unmetNeeds.join(" · ") : "Not captured in this kit yet"}
+            {unmetNeeds.length > 0 ? unmetNeeds.join(" · ") : <NotPlanned step="message" onOpen={onUpdate} />}
           </div>
         </div>
       </div>
@@ -107,7 +111,7 @@ export function StrategicOverview({ brand, kit, onUpdate }: {
  *  Update stays an honest stub since editing genuinely isn't wired up yet. */
 function BrandStatusBadges({ kit, onUpdate }: {
   kit: BrandKit;
-  onUpdate?: (section: KitUpdateSection) => void;
+  onUpdate?: (step: JourneyStepId) => void;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -157,7 +161,7 @@ function BrandStatusBadges({ kit, onUpdate }: {
             <div className="section-meta-actions">
               <button type="button" className="section-meta-update" onClick={goToBrandPersona}>View</button>
               {onUpdate && (
-                <button type="button" className="section-meta-update" onClick={() => onUpdate("kit-brand-details")}>Update</button>
+                <button type="button" className="section-meta-update" onClick={() => onUpdate("brief")}>Update</button>
               )}
             </div>
           </div>

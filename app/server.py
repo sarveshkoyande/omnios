@@ -49,8 +49,6 @@ from strategy import campaign_store  # noqa: E402
 from strategy import brand_memory  # noqa: E402
 from strategy import brand_kit  # noqa: E402  (brand workspace: the kit as a horizontal record)
 from strategy import kit_pdf  # noqa: E402  (brand-plan update flow: sample "Brand Plan" PDF)
-from strategy import kit_drafts  # noqa: E402  (brand-plan update flow: per-section draft diffs)
-from strategy import kit_chat  # noqa: E402  (brand-plan update flow: per-section agents + orchestrator)
 from strategy import brand_journey  # noqa: E402  (Agentic Brand Journey: drafts, turns, pre-fill)
 from strategy import journey_fields  # noqa: E402  (Agentic Brand Journey: staged field registry)
 from strategy import blob_store  # noqa: E402  (serves real label images to the Claims Library)
@@ -845,33 +843,6 @@ async def api_generate_random_brand_plan():
     return result
 
 
-@app.post("/api/brand-kits/setup")
-async def api_setup_brand(file: UploadFile = File(...), name: str = Form(...), territory: str = Form(...)):
-    """New Brand setup, step 2 (final): creates the brand kit scoped to the user's
-    confirmed territory, then immediately kicks off the same 5-section concurrent
-    orchestrator /ingest already uses, seeding every kit-update tab's first draft from
-    the same document in one step -- the user lands on the guided screen with drafts
-    already waiting, not an empty shell."""
-    content = await file.read()
-    try:
-        text = extract_text(file.filename or "brand-plan.pdf", content)
-    except ValueError as e:
-        raise HTTPException(400, str(e))
-    try:
-        brand_kit.create_brand(name, territories=[territory])
-    except ValueError as e:
-        raise HTTPException(400, str(e))
-    except KeyError as e:
-        raise HTTPException(409, str(e))
-
-    brand = name.strip()
-    results = await kit_chat.kickoff_all(brand, brand, text)
-    for r in results:
-        stage = _kit_chat_stage(brand, r["section"])
-        tab_chat.append(brand, stage, "assistant", r["section"], r.get("reply", ""), kind="action")
-    return {"brand": brand, "sections": results}
-
-
 # ------------------------------------------------------------------ #
 # Agentic Brand Journey (plan 2026-09-24-0629): step-scoped agent
 # turns, drafts keep/undo/confirm, and document pre-fill.
@@ -1014,22 +985,10 @@ def api_brand_kit(brand: str, territory: str | None = None):
     return {"brand": brand, "kit": brand_kit.resolve_territory(kit, territory)}
 
 
-# ------------------------------------------------------------------ #
-# Brand-plan update flow: guided per-section chat + diff review, fed
-# by an ingested (sample or uploaded) "Brand Plan" PDF.
-# ------------------------------------------------------------------ #
-
-def _kit_chat_stage(brand: str, section: str) -> str:
-    """Reuses tab_chat's generic (project_id, stage_id) message store for kit-update chat
-    history, rather than standing up a second chat-persistence table -- append()/get_history()
-    don't gate on STAGE_AGENTS, so a synthetic stage_id here is a safe, minimal reuse."""
-    return f"kit:{brand}:{section}"
-
-
 @app.get("/api/brand-kits/{brand}/sample-pdf")
 def api_brand_kit_sample_pdf(brand: str):
     """A generated "Brand Plan" PDF for this brand's own committed kit -- the sample
-    document offered as the kit-update flow's step-1 ingestion source (R10). Renders
+    document for this brand. Renders
     whatever the kit actually has; missing fields show as not captured, never invented."""
     kit = brand_kit.kit_for(brand)
     if not kit:
@@ -1037,79 +996,6 @@ def api_brand_kit_sample_pdf(brand: str):
     pdf_bytes = kit_pdf.render_kit_pdf(kit, brand)
     return Response(content=pdf_bytes, media_type="application/pdf",
                      headers={"Content-Disposition": f'inline; filename="{brand}-brand-plan.pdf"'})
-
-
-@app.get("/api/projects/{pid}/kit-update/{brand}")
-def api_kit_update_state(pid: str, brand: str):
-    """Progress-rail state (R6) plus each section's chat history, for opening the update
-    screen fresh or restoring an in-progress one (F2)."""
-    drafts = kit_drafts.list_drafts(pid, brand)
-    for d in drafts:
-        d["history"] = tab_chat.get_history(pid, _kit_chat_stage(brand, d["section"]))
-    return {"brand": brand, "sections": drafts}
-
-
-@app.post("/api/projects/{pid}/kit-update/{brand}/ingest")
-async def api_kit_update_ingest(pid: str, brand: str, use_sample: bool = Form(False),
-                                 file: UploadFile | None = File(None)):
-    """Step 1 (R11): extract text from an uploaded PDF, or generate+extract this brand's
-    own sample PDF, then fire the orchestrator (kickoff_all) for all 5 sections
-    concurrently (R7/R8). Re-ingesting mid-session replaces each section's pending
-    (unpublished) draft; already-published sections are left untouched."""
-    kit = brand_kit.kit_for(brand)
-    if not kit:
-        raise HTTPException(404, f"no brand kit for '{brand}'")
-
-    if use_sample or not file:
-        pdf_bytes = kit_pdf.render_kit_pdf(kit, brand)
-        filename = f"{brand}-brand-plan.pdf"
-    else:
-        pdf_bytes = await file.read()
-        filename = file.filename or "brand-plan.pdf"
-
-    try:
-        pdf_text = extract_text(filename, pdf_bytes)
-    except ValueError as e:
-        raise HTTPException(400, str(e))
-
-    results = await kit_chat.kickoff_all(pid, brand, pdf_text)
-    for r in results:
-        stage = _kit_chat_stage(brand, r["section"])
-        tab_chat.append(pid, stage, "assistant", r["section"], r.get("reply", ""), kind="action")
-    return {"sections": results}
-
-
-@app.post("/api/projects/{pid}/kit-update/{brand}/{section}/ask")
-def api_kit_update_ask(pid: str, brand: str, section: str, payload: dict):
-    """A normal chat turn in one section's tab (R5)."""
-    message = (payload or {}).get("message", "")
-    if not message:
-        raise HTTPException(400, "message is required")
-    if section not in kit_chat.KIT_SECTIONS:
-        raise HTTPException(404, f"unknown kit-update section '{section}'")
-    stage = _kit_chat_stage(brand, section)
-    # Read history BEFORE appending this turn's user message -- kit_chat.ask() already
-    # appends `message` itself as "User: {message}" in its prompt, so including it a
-    # second time via history would duplicate the current turn for the LLM.
-    history = tab_chat.get_history(pid, stage)
-    tab_chat.append(pid, stage, "user", None, message)
-    result = kit_chat.ask(pid, brand, section, message, history=history)
-    tab_chat.append(pid, stage, "assistant", section, result.get("reply", ""), kind="chat")
-    return result
-
-
-@app.post("/api/projects/{pid}/kit-update/{brand}/{section}/publish")
-def api_kit_update_publish(pid: str, brand: str, section: str, payload: dict):
-    """Publishes this section's currently-accepted diff fields into the brand's live kit
-    (R4/R9) -- per-tab, independent of the other four sections' state."""
-    accepted_fields = (payload or {}).get("accepted_fields") or []
-    if section not in kit_chat.KIT_SECTIONS:
-        raise HTTPException(404, f"unknown kit-update section '{section}'")
-    try:
-        draft = kit_drafts.publish_draft(pid, brand, section, accepted_fields)
-    except (ValueError, KeyError) as e:
-        raise HTTPException(400, str(e))
-    return draft
 
 
 # ------------------------------------------------------------------ #

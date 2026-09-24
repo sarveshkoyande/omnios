@@ -1,5 +1,5 @@
-"""Renders a brand kit as a "Brand Plan" PDF -- the sample document the kit-update flow
-(strategy/kit_chat.py) ingests as its step-1 source, and also usable as a straight
+"""Renders a brand kit as a "Brand Plan" PDF -- served at /api/brand-kits/{brand}/sample-pdf as a
+sample brand-plan document, and also usable as a straight
 "export this kit as PDF" feature later.
 
 General renderer, not a fixed demo fixture: works off whatever fields the given kit

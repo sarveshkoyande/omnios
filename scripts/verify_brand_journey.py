@@ -557,6 +557,34 @@ def check_u6_chained_adds_resolve_refs_and_survive_keep():
     assert {"Wait 3 days", "Reminder"} <= {n["data"]["label"] for n in got["flow"]["nodes"]}
 
 
+# ---- U8: retirement of the guided update screen + reset script ---------------------------
+
+def check_u8_kit_update_route_gone():
+    r = _client().get("/api/projects/Cardiovex/kit-update/Cardiovex")
+    assert r.status_code == 404, r.status_code
+
+
+def check_u8_reset_brand_clears_journey_rows_only():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("reset_test_data", ROOT / "scripts" / "reset_test_data.py")
+    rtd = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(rtd)
+    b, other = _fresh_brand("ResetMe"), _fresh_brand("KeepMe")
+    for x in (b, other):
+        bj.propose(x, "message", "tagline", "T")
+        bj.add_turn(x, "message", "user", "hi")
+    kit_before = _KITS_COPY.read_bytes()
+    counts = rtd.clear_brand_journey(b.upper())
+    assert sum(counts.values()) >= 1, counts
+    assert _KITS_COPY.read_bytes() == kit_before, "kit file changed"
+    assert _REAL_KITS.read_bytes() == _REAL_KITS_BYTES
+    conn = bj._conn()
+    left = conn.execute("SELECT COUNT(*) FROM journey_drafts WHERE lower(brand) = lower(?)", (b,)).fetchone()[0]
+    kept = conn.execute("SELECT COUNT(*) FROM journey_drafts WHERE lower(brand) = lower(?)", (other,)).fetchone()[0]
+    conn.close()
+    assert left == 0 and kept >= 1, (left, kept)
+
+
 CHECKS = [v for k, v in list(globals().items()) if k.startswith("check_") and callable(v)]
 
 

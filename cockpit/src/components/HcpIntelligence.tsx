@@ -1,6 +1,7 @@
-import type { BrandKit, KitUpdateSection, Persona } from "../types";
+import type { BrandKit, JourneyStepId, Persona } from "../types";
 import { Expandable } from "./BrandWorkspace";
 import { Icon } from "./Icon";
+import { NotPlanned } from "./SectionMeta";
 
 function joinField(v: string | string[] | undefined): string | null {
   if (!v) return null;
@@ -50,13 +51,14 @@ function PersonaDetail({ p }: { p: Persona }) {
  *  subsections default closed so the page isn't led with empty-state text. */
 export function HcpIntelligence({ kit, onUpdate }: {
   kit: BrandKit;
-  onUpdate?: (section: KitUpdateSection) => void;
+  onUpdate?: (step: JourneyStepId) => void;
 }) {
   const hcps = kit.personas.hcp;
 
   return (
     <div className="expandable-stack">
-      <Expandable title="HCP Personas" icon={<Icon name="persona" />} kit={kit} section="kit-hcp-persona" onUpdate={onUpdate} subtitle={`${hcps.length} primary/secondary personas from the kit`}>
+      <Expandable title="HCP Personas" icon={<Icon name="persona" />} kit={kit} step="audience" onUpdate={onUpdate} subtitle={`${hcps.length} primary/secondary personas from the kit`}>
+        {hcps.length === 0 && <p className="hcp-unavailable"><NotPlanned step="audience" onOpen={onUpdate} className="" /></p>}
         <div className="persona-groups">
           {hcps.map((p) => (
             <div className="persona-card" key={p.name}>
@@ -88,6 +90,7 @@ export function HcpIntelligence({ kit, onUpdate }: {
       </Expandable>
 
       <Expandable title="HCP Needs / Barriers" icon={<Icon name="message" />} kit={kit} subtitle="In each persona's own words">
+        {hcps.length === 0 && <p className="hcp-unavailable"><NotPlanned step="audience" onOpen={onUpdate} className="" /></p>}
         <div className="persona-groups">
           {hcps.map((p) => (
             <div className="persona-card" key={p.name}>

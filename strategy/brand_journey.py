@@ -2,7 +2,7 @@
 
 Per brand: journey-only answers, pending drafts per step, step status, step chat turns and
 the flow document, in its own SQLite file (<DATA_DIR>/brand_journey.db) -- same
-"own flat store" pattern as strategy/kit_drafts.py.
+"own flat store" pattern as the other strategy/ stores.
 
 Drafts are the only way agent content reaches a brand (R6, R7): `propose` stores one,
 `keep` writes it -- kit-targeted values through `brand_kit.apply_diff`, so
@@ -26,7 +26,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import db  # noqa: E402
 import journey_fields as jf  # noqa: E402
 # Package-qualified so apply_diff clears the same _load() cache app/server.py reads --
-# see the import comment in strategy/kit_chat.py.
+# a flat `import brand_kit` would be a separate module instance with its own stale cache.
 from strategy import brand_kit  # noqa: E402
 
 STATUSES = ("not_started", "drafted", "confirmed")
