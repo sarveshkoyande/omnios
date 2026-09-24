@@ -16,8 +16,13 @@ export interface TurnState {
   /** Agent reply to that message (cleared on step change). */
   reply: string | null;
   outcome: TurnOutcome | null;
+  /** Set when the message answered the step's question: the dock counts down, keeps the
+   *  drafted answer and moves on, instead of asking for a keep/confirm click. */
+  advance: { stepDone: boolean; nextLabel: string | null } | null;
   error: string | null;
 }
+
+const COUNTDOWN = 5;
 
 /** The step's pending drafts, surfaced as the dock's CTAs so they are settled here only. */
 export interface DockDrafts {
@@ -29,10 +34,10 @@ export interface DockDrafts {
   /** True once every required field is kept or covered by a pending draft. */
   complete: boolean;
   error: string | null;
-  onKeep: () => Promise<void>;
-  onUndo: () => Promise<void>;
-  onConfirm: () => Promise<void>;
-  onReopen: () => Promise<void>;
+  onKeep: () => Promise<unknown>;
+  onUndo: () => Promise<unknown>;
+  onConfirm: () => Promise<unknown>;
+  onReopen: () => Promise<unknown>;
 }
 
 const PENDING_STEPS = (stepLabel: string) => [
@@ -56,9 +61,9 @@ function doneSteps(stepLabel: string, o: TurnOutcome): string[] {
 }
 
 /** Floating agent dock for a journey step: a compact composer that expands upward on send to
- *  show your message, the agent's thinking steps and its reply. Its CTAs keep, undo or
- *  confirm the step's drafts, which is the only place those are settled. */
-export function StepChat({ brand, step, stepLabel, question, earlierCount, turn, locked, scopeLabel, onClearScope, onSend, drafts, onDismiss }: {
+ *  show your message, the agent's thinking steps and its reply. An answer to the step's
+ *  question counts down and advances on its own; otherwise its CTAs settle the drafts. */
+export function StepChat({ brand, step, stepLabel, question, earlierCount, turn, locked, scopeLabel, onClearScope, onSend, drafts, onDismiss, onAdvance }: {
   brand: string;
   step: JourneyStepId;
   stepLabel: string;
@@ -73,6 +78,8 @@ export function StepChat({ brand, step, stepLabel, question, earlierCount, turn,
   drafts: DockDrafts;
   /** Collapse the expanded exchange. */
   onDismiss: () => void;
+  /** Keeps the answered drafts and moves to the next question (or confirms the step). */
+  onAdvance?: () => Promise<void>;
 }) {
   const [text, setText] = useState("");
   const [lastFailed, setLastFailed] = useState<string | null>(null);
@@ -83,8 +90,39 @@ export function StepChat({ brand, step, stepLabel, question, earlierCount, turn,
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const threadRef = useRef<HTMLDivElement>(null);
 
+  const [count, setCount] = useState<number | null>(null);
+  const [leaving, setLeaving] = useState(false);
+
   const expanded = turn.message !== null;
   const disabled = turn.pending || locked;
+  const advancing = !!turn.advance && !!onAdvance && !turn.pending && !turn.error;
+
+  // Answer acknowledged: count down, animate the exchange out, then keep and move on.
+  useEffect(() => {
+    if (!advancing || !onAdvance) { setCount(null); setLeaving(false); return; }
+    setCount(COUNTDOWN);
+    setLeaving(false);
+    let n = COUNTDOWN;
+    let exit: number | undefined;
+    const t = window.setInterval(() => {
+      n -= 1;
+      setCount(n);
+      if (n > 0) return;
+      window.clearInterval(t);
+      setLeaving(true);
+      exit = window.setTimeout(() => {
+        onAdvance().catch(() => { setLeaving(false); setCount(null); });
+      }, 380);
+    }, 1000);
+    return () => { window.clearInterval(t); window.clearTimeout(exit); };
+    // Restart only for a new acknowledged answer, not on every parent render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [advancing, turn.reply]);
+
+  const undoAnswer = () => {
+    setCount(null);
+    void drafts.onUndo().then(onDismiss, () => undefined);
+  };
 
   useEffect(() => {
     if (!turn.pending) return;
@@ -126,7 +164,7 @@ export function StepChat({ brand, step, stepLabel, question, earlierCount, turn,
     }
   };
 
-  const act = (fn: () => Promise<void>) => { void fn().then(onDismiss, () => undefined); };
+  const act = (fn: () => Promise<unknown>) => { void fn().then(onDismiss, () => undefined); };
 
   const toggleHistory = () => {
     const open = !historyOpen;
@@ -143,7 +181,7 @@ export function StepChat({ brand, step, stepLabel, question, earlierCount, turn,
   const canConfirm = drafts.complete && drafts.confirmBlocked === null;
   const prompt = locked
     ? "This step is confirmed and locked."
-    : question?.question ?? "That covers this step. Keep what looks right, then confirm.";
+    : question?.question ?? "That covers this step.";
   const chips = locked ? [] : (question?.chips ?? []).slice(0, 4);
   const pendingSteps = PENDING_STEPS(stepLabel);
   const shownPending = pendingSteps.slice(0, Math.min(pendingSteps.length, tick + 1));
@@ -172,7 +210,7 @@ export function StepChat({ brand, step, stepLabel, question, earlierCount, turn,
   return (
     <section className={`agent-dock ${expanded ? "expanded" : ""}`} aria-label={`${stepLabel} agent`}>
       {expanded && (
-        <div className="agent-dock-thread" ref={threadRef} aria-live="polite">
+        <div className={`agent-dock-thread ${leaving ? "leaving" : ""}`} ref={threadRef} aria-live="polite">
           <div className="agent-dock-user">{turn.message}</div>
           <ol className="agent-dock-steps">
             {(turn.pending ? shownPending : turn.outcome ? doneSteps(stepLabel, turn.outcome) : []).map((s, i, arr) => {
@@ -197,12 +235,27 @@ export function StepChat({ brand, step, stepLabel, question, earlierCount, turn,
               {lastFailed && <button type="button" className="jc-link" onClick={() => send(lastFailed, text.trim() === lastFailed)}>Retry</button>}
             </div>
           )}
-          {!turn.pending && ctas}
+          {advancing && count !== null && (
+            <div className="agent-dock-countdown" role="status">
+              <span className="agent-dock-count-ring" key={count}>{Math.max(count, 1)}</span>
+              <span>
+                {turn.advance?.stepDone
+                  ? `${stepLabel} is complete. Confirming${turn.advance.nextLabel ? `, then on to ${turn.advance.nextLabel}` : ""}…`
+                  : "Next question coming up…"}
+              </span>
+              <button type="button" className="jc-link" disabled={drafts.busy || leaving} onClick={undoAnswer}>Undo</button>
+            </div>
+          )}
+          {!turn.pending && !(advancing && count !== null) && (turn.advance ? ctas : (
+            <div className="agent-dock-ctas">
+              <button type="button" className="jc-btn jc-btn-ghost" onClick={onDismiss}>Close</button>
+            </div>
+          ))}
         </div>
       )}
 
       {!expanded && (
-        <div className="agent-dock-head">
+        <div className="agent-dock-head" key={prompt}>
           <span className="agent-dock-avatar" aria-hidden>AI</span>
           <div className="agent-dock-prompt">
             {prompt}

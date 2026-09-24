@@ -462,7 +462,7 @@ def agent_turn(brand: str, step: str, message: str) -> dict:
     nxt = jf.next_questions(step, _effective_answers(b), 1)
     question = nxt[0] if nxt else None
     if mode == "fallback" or not reply:
-        reply = question["question"] if question else "That covers this step. Keep what looks right."
+        reply = question["question"] if question else "That covers this step."
     add_turn(b, step, "agent", reply)
     return {"reply": reply, "question": question, "drafts": drafts, "dropped": dropped,
             "mode": mode, "state": journey_state(b)}

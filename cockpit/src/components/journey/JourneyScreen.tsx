@@ -18,7 +18,17 @@ const STATUS_LABEL: Record<string, { tone: string; label: string }> = {
   confirmed: { tone: "success", label: "Confirmed" },
 };
 
-const IDLE: TurnState = { pending: false, message: null, reply: null, outcome: null, error: null };
+const IDLE: TurnState = { pending: false, message: null, reply: null, outcome: null, advance: null, error: null };
+
+/** The reply minus the trailing next question, which the dock shows on its own once it
+ *  advances. Falls back to a short acknowledgment when the reply was only that question. */
+function acknowledgment(reply: string, next: string | null): string {
+  let text = reply.trim();
+  if (next && text.endsWith(next.trim())) text = text.slice(0, -next.trim().length).trim();
+  else if (!next && text === "That covers this step.") text = "";
+  else if (next) text = text.replace(/(^|[.!]\s+)[^.!?]*\?\s*$/, "$1").trim();
+  return text || "Got it, noted.";
+}
 
 /** New brand start panel (R11, F1/F2): upload a plan document or type one sentence. */
 function StartPanel({ onStarted, onClose }: { onStarted: (brand: string, step: JourneyStepId) => void; onClose: () => void }) {
@@ -133,16 +143,25 @@ export function JourneyScreen({ brand, initialStep, onClose, onBrandCreated, onK
 
   const sendTurn = async (message: string): Promise<boolean> => {
     const seq = ++turnSeq.current;
-    setTurn({ pending: true, message, reply: null, outcome: null, error: null });
+    setTurn({ pending: true, message, reply: null, outcome: null, advance: null, error: null });
     const scoped = step === "audience" && scope ? `[About the ${scope.group} persona card "${scope.name}"] ${message}` : message;
     try {
       const r = await journeyTurn(brand, step, scoped);
       // The snapshot still carries the old step's new drafts (rail counts); only the reply is stale.
       setState(r.state);
       if (seq !== turnSeq.current) return false;
+      const changes = [...new Set(r.drafts.map((d) => d.field.replace(/_/g, " ")))];
+      const answered = r.drafts.some((d) => d.step === step);
+      const order = r.state.steps.map((x) => x.step);
+      const nextStep = order[order.indexOf(step) + 1] ?? null;
       setTurn({
-        pending: false, message, reply: r.reply, error: null,
-        outcome: { mode: r.mode, changes: [...new Set(r.drafts.map((d) => d.field.replace(/_/g, " ")))], dropped: r.dropped.map((f) => f.replace(/_/g, " ")) },
+        pending: false, message, error: null,
+        reply: answered ? acknowledgment(r.reply, r.question?.question ?? null) : r.reply,
+        outcome: { mode: r.mode, changes, dropped: r.dropped.map((f) => f.replace(/_/g, " ")) },
+        advance: answered ? {
+          stepDone: r.question === null,
+          nextLabel: nextStep ? r.state.steps.find((x) => x.step === nextStep)?.label ?? null : null,
+        } : null,
       });
       return true;
     } catch (e) {
@@ -160,6 +179,7 @@ export function JourneyScreen({ brand, initialStep, onClose, onBrandCreated, onK
       const s = await p;
       setState(s);
       if (kitTouched) { refreshKit(); onKitChanged(); }
+      return s;
     } catch (e) {
       setBarError(e instanceof Error ? e.message : String(e));
       throw e;
@@ -169,6 +189,21 @@ export function JourneyScreen({ brand, initialStep, onClose, onBrandCreated, onK
   };
 
   const actions: DraftActions = { locked, busy };
+
+  /** Countdown finished: keep the answer, then either show the next question or, when the
+   *  step has none left, confirm it and open the next step. */
+  const advance = async () => {
+    const done = turn.advance?.stepDone ?? false;
+    const s = await run(journeyKeep(brand, step, "all"), true);
+    const after = s.steps.find((x) => x.step === step);
+    const order = s.steps.map((x) => x.step);
+    const nextStep = order[order.indexOf(step) + 1];
+    if (done && after && after.missing.length === 0 && !confirmBlocked && after.status !== "confirmed") {
+      await run(journeyConfirm(brand, step), false);
+      if (nextStep) { goTo(nextStep); return; }
+    }
+    dismissTurn();
+  };
 
   const flags = step === "kit" ? kitFlags(kit, drafts).filter((f) => !dismissed.has(f.key)) : [];
   const confirmBlocked = flags.length > 0
@@ -245,7 +280,7 @@ export function JourneyScreen({ brand, initialStep, onClose, onBrandCreated, onK
             <>
               <StepChat key={step} brand={brand} step={step} stepLabel={current.label} question={current.question}
                 earlierCount={current.earlier_count} turn={turn} locked={locked} onSend={sendTurn}
-                onDismiss={dismissTurn}
+                onDismiss={dismissTurn} onAdvance={advance}
                 drafts={{
                   count: drafts.length, status: current.status, busy, confirmBlocked, error: barError,
                   complete: current.missing.every((f) => drafts.some((d) => d.field === f)),

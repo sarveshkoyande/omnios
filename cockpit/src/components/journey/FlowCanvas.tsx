@@ -12,7 +12,7 @@ import { buildJourneyFlow, getJourneyFlow, journeyConfirm, journeyFlowKeep, jour
 import type { JourneyCampaignFlow, JourneyFlow, JourneyFlowOp, JourneyState, JourneyStep } from "../../types";
 import { StepChat, type TurnState } from "./StepChat";
 
-const IDLE: TurnState = { pending: false, message: null, reply: null, outcome: null, error: null };
+const IDLE: TurnState = { pending: false, message: null, reply: null, outcome: null, advance: null, error: null };
 
 function describeOp(op: JourneyFlowOp): string {
   switch (op.op) {
@@ -102,12 +102,12 @@ export function FlowCanvas({ brand, labels, step, onState }: {
   const dismissTurn = useCallback(() => setTurn(IDLE), []);
 
   const sendTurn = async (message: string): Promise<boolean> => {
-    setTurn({ pending: true, message, reply: null, outcome: null, error: null });
+    setTurn({ pending: true, message, reply: null, outcome: null, advance: null, error: null });
     try {
       const r = await journeyFlowTurn(brand, { message });
       setFlow(r.flow);
       setTurn({
-        pending: false, message, reply: r.reply, error: null,
+        pending: false, message, reply: r.reply, error: null, advance: null,
         outcome: { mode: r.mode, changes: (r.flow.draft?.ops ?? []).map(describeOp), dropped: [] },
       });
       return true;

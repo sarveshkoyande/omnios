@@ -915,7 +915,7 @@ h1, h2, h3 { font-family: "DM Sans"; font-weight: 600; letter-spacing: -0.01em; 
   position: sticky; bottom: 20px; z-index: 15; margin-top: 8px;
   display: flex; flex-direction: column; gap: 10px; padding: 14px 16px;
   border-radius: var(--radius-lg);
-  background: rgba(255, 255, 255, 0.72);
+  background: rgba(252, 250, 255, 0.94);
   box-shadow: 0 0 0 1px var(--glass-ring), var(--glass-highlight),
     0 18px 48px rgba(86, 58, 168, 0.22), 0 2px 8px rgba(86, 58, 168, 0.10);
   -webkit-backdrop-filter: var(--glass-blur);
@@ -972,3 +972,25 @@ h1, h2, h3 { font-family: "DM Sans"; font-weight: 600; letter-spacing: -0.01em; 
   .agent-dock { bottom: 12px; padding: 12px; }
   .agent-dock-thread .agent-dock-ctas, .agent-dock-steps { padding-left: 0; }
 }
+
+/* Answer acknowledged -> countdown -> exchange animates out -> next question slides in. */
+.agent-dock-countdown { display: flex; align-items: center; gap: 10px; padding-left: 36px; font-size: 13px; color: var(--muted); }
+.agent-dock-count-ring {
+  flex: 0 0 auto; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center;
+  font-size: 12.5px; font-weight: 700; color: var(--primary);
+  background: var(--primary-light-background); box-shadow: 0 0 0 2px rgba(93, 44, 201, 0.35);
+  animation: agent-count-tick 1s ease-out;
+}
+@keyframes agent-count-tick { 0% { transform: scale(1.25); box-shadow: 0 0 0 6px rgba(93, 44, 201, 0.12); } 100% { transform: none; } }
+.agent-dock-thread.leaving { animation: agent-thread-out .38s ease-in forwards; overflow: hidden; }
+@keyframes agent-thread-out {
+  from { opacity: 1; max-height: min(52vh, 460px); transform: none; }
+  to { opacity: 0; max-height: 0; transform: translateY(-10px); }
+}
+.agent-dock-head { animation: agent-q-in .35s ease-out; }
+@keyframes agent-q-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.agent-dock .jc-chiplist { animation: agent-q-in .35s ease-out .08s both; }
+@media (prefers-reduced-motion: reduce) {
+  .agent-dock-count-ring, .agent-dock-thread.leaving, .agent-dock-head, .agent-dock .jc-chiplist { animation: none; }
+}
+@media (max-width: 720px) { .agent-dock-countdown { padding-left: 0; } }
