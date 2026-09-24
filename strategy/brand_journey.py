@@ -315,6 +315,10 @@ def journey_state(brand: str, history_step: str | None = None) -> dict:
             "drafts": [d for d in drafts if d["step"] == step],
             "question": nxt[0] if nxt else None,
             "earlier_count": counts.get(step, 0),
+            # Required fields with no kept value: confirm() refuses while any remain.
+            "missing": [] if step == "flow" else [
+                f["key"] for f in jf.required_fields(step, answers)
+                if not jf.has_value(answers.get(f["key"]))],
         }
         if history is not None and step == history_step:
             entry["history"] = history

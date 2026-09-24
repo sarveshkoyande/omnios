@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ReactFlowProvider } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 // The Campaign Ops flow-builder, rendered from frontend/src through the Vite alias (KTD7).
@@ -10,10 +10,9 @@ import { layoutCampaignDocument } from "@omni-frontend/workspace/stages/operatio
 import type { CampaignFlow } from "@omni-frontend/workspace/types";
 import { buildJourneyFlow, getJourneyFlow, journeyConfirm, journeyFlowKeep, journeyFlowTurn, journeyFlowUndo, journeyReopen } from "../../api";
 import type { JourneyCampaignFlow, JourneyFlow, JourneyFlowOp, JourneyState, JourneyStep } from "../../types";
-import { DraftBar } from "./DraftBar";
 import { StepChat, type TurnState } from "./StepChat";
 
-const IDLE: TurnState = { pending: false, reply: null, error: null };
+const IDLE: TurnState = { pending: false, message: null, reply: null, outcome: null, error: null };
 
 function describeOp(op: JourneyFlowOp): string {
   switch (op.op) {
@@ -86,14 +85,31 @@ export function FlowCanvas({ brand, labels, step, onState }: {
   };
 
   const build = () => run(buildJourneyFlow(brand).then(setFlow));
-  const settle = (p: Promise<JourneyState>) => run(p.then((s) => { onState(s); return reload(); }));
+  /** Dock CTA: rejects on failure so the dock stays open to show the error. */
+  const settle = async (p: Promise<JourneyState>) => {
+    setBusy(true);
+    setError(null);
+    try {
+      onState(await p);
+      await reload();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+      throw e;
+    } finally {
+      setBusy(false);
+    }
+  };
+  const dismissTurn = useCallback(() => setTurn(IDLE), []);
 
   const sendTurn = async (message: string): Promise<boolean> => {
-    setTurn((t) => ({ ...t, pending: true, error: null }));
+    setTurn({ pending: true, message, reply: null, outcome: null, error: null });
     try {
       const r = await journeyFlowTurn(brand, { message });
       setFlow(r.flow);
-      setTurn({ pending: false, reply: r.reply, error: null });
+      setTurn({
+        pending: false, message, reply: r.reply, error: null,
+        outcome: { mode: r.mode, changes: (r.flow.draft?.ops ?? []).map(describeOp), dropped: [] },
+      });
       return true;
     } catch (e) {
       setTurn((t) => ({ ...t, pending: false, error: e instanceof Error ? e.message : String(e) }));
@@ -107,8 +123,7 @@ export function FlowCanvas({ brand, labels, step, onState }: {
     : null), [flow]);
   const shown = flow?.draft?.flow ?? flow?.flow ?? null;
   const draftOps = flow?.draft?.ops ?? [];
-  const confirmBlocked = flow?.status !== "built" ? "Build the flow first."
-    : draftOps.length > 0 ? "Keep or undo the pending edit first." : null;
+  const confirmBlocked = flow?.status !== "built" ? "Build the flow first." : null;
 
   if (error && !flow) return <div className="jc-card"><div className="step-chat-error">{error}</div></div>;
   if (!flow) return <div className="jc-card"><span className="jc-empty">Loading flow&hellip;</span></div>;
@@ -146,13 +161,15 @@ export function FlowCanvas({ brand, labels, step, onState }: {
       </div>
       {flow.status === "built" && (
         <>
-          <DraftBar draftCount={draftOps.length} status={step.status} busy={busy} error={null} confirmBlocked={confirmBlocked}
-            onKeepAll={() => settle(journeyFlowKeep(brand))}
-            onUndoAll={() => settle(journeyFlowUndo(brand))}
-            onConfirm={() => settle(journeyConfirm(brand, "flow"))}
-            onReopen={() => settle(journeyReopen(brand, "flow"))} />
-          <StepChat brand={brand} step="flow" question={step.question} earlierCount={step.earlier_count}
-            turn={turn} locked={false} onSend={sendTurn} />
+          <StepChat brand={brand} step="flow" stepLabel={step.label} question={step.question} earlierCount={step.earlier_count}
+            turn={turn} locked={false} onSend={sendTurn} onDismiss={dismissTurn}
+            drafts={{
+              count: draftOps.length, status: step.status, busy, confirmBlocked, error: null, complete: true,
+              onKeep: () => settle(journeyFlowKeep(brand)),
+              onUndo: () => settle(journeyFlowUndo(brand)),
+              onConfirm: () => settle(journeyConfirm(brand, "flow")),
+              onReopen: () => settle(journeyReopen(brand, "flow")),
+            }} />
         </>
       )}
     </>

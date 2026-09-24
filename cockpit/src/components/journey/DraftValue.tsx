@@ -2,14 +2,12 @@ import type { ReactNode } from "react";
 import type { JourneyDraft } from "../../types";
 import { hasValue } from "./journeyUtils";
 
-/** Shared canvas pieces: a readable rendering of any kit value, and the highlighted
- *  draft row with keep/undo beside it (R6). Canvases compose these per field. */
+/** Shared canvas pieces: a readable rendering of any kit value, and the highlighted draft
+ *  row. Drafts are kept or undone from the step's agent dock, not per row. */
 
 export interface DraftActions {
   locked: boolean;
   busy: boolean;
-  onKeep: (ids: string[]) => void;
-  onUndo: (ids: string[]) => void;
 }
 
 function humanKey(k: string): string {
@@ -48,20 +46,14 @@ export function ValueView({ value }: { value: unknown }): ReactNode {
   );
 }
 
-/** One pending draft, highlighted, with keep and undo beside it. */
-export function DraftItem({ draft, actions, children }: { draft: JourneyDraft; actions: DraftActions; children?: ReactNode }) {
+/** One pending draft, highlighted as proposed by the agent. */
+export function DraftItem({ draft, children }: { draft: JourneyDraft; actions?: DraftActions; children?: ReactNode }) {
   return (
     <div className="jc-draft">
       <div className="jc-draft-body">
-        <span className="jc-draft-tag">{draft.mode === "append" ? "Draft addition" : "Draft"}</span>
+        <span className="jc-draft-tag">{draft.mode === "append" ? "Proposed addition" : "Proposed"}</span>
         {children ?? <ValueView value={draft.value} />}
       </div>
-      {!actions.locked && (
-        <div className="jc-draft-actions">
-          <button type="button" className="jc-btn jc-btn-keep" disabled={actions.busy} onClick={() => actions.onKeep([draft.id])}>Keep</button>
-          <button type="button" className="jc-btn" disabled={actions.busy} onClick={() => actions.onUndo([draft.id])}>Undo</button>
-        </div>
-      )}
     </div>
   );
 }

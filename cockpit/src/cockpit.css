@@ -817,7 +817,7 @@ h1, h2, h3 { font-family: "DM Sans"; font-weight: 600; letter-spacing: -0.01em; 
 .new-brand-secret-generate:disabled { opacity: .25; cursor: default; }
 
 /* ---- Agentic Brand Journey (plan U4/U5): shell, canvases, chat strip, draft bar ---- */
-.journey { max-width: 980px; margin: 0 auto; padding: 32px 32px 72px; display: flex; flex-direction: column; gap: 16px; }
+.journey { max-width: 980px; margin: 0 auto; padding: 32px 32px 24px; display: flex; flex-direction: column; gap: 16px; }
 .journey-head-actions { display: flex; align-items: center; gap: 10px; }
 .journey-head-actions .kit-update-upload { position: relative; }
 .journey-rail { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
@@ -853,7 +853,6 @@ h1, h2, h3 { font-family: "DM Sans"; font-weight: 600; letter-spacing: -0.01em; 
 }
 .jc-draft-body { flex: 1; min-width: 0; font-size: 13.5px; display: flex; flex-direction: column; gap: 6px; }
 .jc-draft-tag { font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
-.jc-draft-actions { display: flex; gap: 6px; flex: 0 0 auto; }
 .jc-btn {
   font-family: inherit; font-size: 12.5px; font-weight: 600; border: none; cursor: pointer; padding: 6px 12px;
   border-radius: var(--radius-full); background: var(--card-bg); color: var(--fg); box-shadow: var(--neu-flat-sm);
@@ -873,16 +872,7 @@ h1, h2, h3 { font-family: "DM Sans"; font-weight: 600; letter-spacing: -0.01em; 
 .jc-persona { font-family: inherit; text-align: left; border: none; cursor: pointer; width: 100%; margin: 0; }
 .jc-persona.active { box-shadow: var(--neu-inset-sm); background: var(--primary-light-background); }
 
-.draft-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
-.draft-bar-count { font-size: 13px; color: var(--muted); }
-.draft-bar-actions { display: flex; gap: 8px; }
-.draft-bar-note { flex-basis: 100%; font-size: 12px; color: var(--muted); text-align: right; }
-
-.step-chat { background: var(--surface-card-tinted); border-radius: var(--radius-md); box-shadow: var(--neu-flat-sm); padding: 14px 18px; display: flex; flex-direction: column; gap: 10px; }
 .step-chat-scope { font-size: 12.5px; color: var(--fg); }
-.step-chat-prompt { font-size: 14.5px; font-weight: 600; color: var(--fg); line-height: 1.5; }
-.step-chat-pending { color: var(--muted); font-style: italic; font-weight: 400; }
-.step-chat-form { display: flex; gap: 8px; }
 .step-chat-error { font-size: 12.5px; color: var(--tone-danger-ink); }
 .step-chat-toggle { align-self: flex-start; padding: 0; }
 .step-chat-history { display: flex; flex-direction: column; gap: 6px; max-height: 200px; overflow-y: auto; }
@@ -911,9 +901,74 @@ h1, h2, h3 { font-family: "DM Sans"; font-weight: 600; letter-spacing: -0.01em; 
    through the translucent --card-bg instead of looking like flat washed-out white. ---- */
 .top-bar, .rail, .overview-card, .panel, .expandable, .insight-tile, .phase-switcher,
 .agent-card, .agent-detail-panel, .kit-update-ingest, .kit-update-rail, .kit-chat,
-.kit-update-diff-pane, .new-brand-card, .jc-card, .journey-rail-step, .step-chat,
+.kit-update-diff-pane, .new-brand-card, .jc-card, .journey-rail-step,
 .section-meta-popover {
   -webkit-backdrop-filter: var(--glass-blur);
   backdrop-filter: var(--glass-blur);
 }
 .top-bar { background: var(--surface-app-header); }
+
+/* ---- Agent dock: the step chat floats over the canvas at the bottom of the scroll area and
+   expands upward on send (your message, thinking steps, reply + CTAs). Sticky rather than
+   fixed so it stays aligned with the .journey column beside the rail. ---- */
+.agent-dock {
+  position: sticky; bottom: 20px; z-index: 15; margin-top: 8px;
+  display: flex; flex-direction: column; gap: 10px; padding: 14px 16px;
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 0 0 1px var(--glass-ring), var(--glass-highlight),
+    0 18px 48px rgba(86, 58, 168, 0.22), 0 2px 8px rgba(86, 58, 168, 0.10);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  transition: box-shadow .2s ease, transform .2s ease;
+}
+.agent-dock::before {
+  content: ""; position: absolute; inset: -1px; border-radius: inherit; padding: 1px; pointer-events: none;
+  background: linear-gradient(120deg, rgba(93, 44, 201, 0.55), rgba(245, 219, 244, 0.6), rgba(14, 95, 183, 0.45));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+}
+.agent-dock:focus-within { box-shadow: 0 0 0 1px var(--glass-ring), var(--glass-highlight),
+  0 22px 56px rgba(86, 58, 168, 0.28), 0 2px 8px rgba(86, 58, 168, 0.12); }
+.agent-dock.expanded { animation: agent-dock-rise .22s ease-out; }
+@keyframes agent-dock-rise { from { transform: translateY(8px); opacity: .85; } to { transform: none; opacity: 1; } }
+
+.agent-dock-head { display: flex; align-items: flex-start; gap: 10px; flex-wrap: wrap; }
+.agent-dock-avatar {
+  flex: 0 0 auto; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center;
+  font-size: 10px; font-weight: 700; letter-spacing: .04em; color: var(--base-white);
+  background: linear-gradient(135deg, var(--primary), var(--info-foreground));
+  box-shadow: 0 0 0 3px rgba(93, 44, 201, 0.14);
+}
+.agent-dock-prompt { flex: 1 1 260px; min-width: 0; font-size: 14px; font-weight: 600; color: var(--fg); line-height: 1.5; display: flex; flex-direction: column; gap: 2px; }
+.agent-dock-count { font-size: 12px; font-weight: 500; color: var(--accent); }
+.agent-dock-ctas { display: flex; flex-wrap: wrap; gap: 8px; }
+.agent-dock-thread .agent-dock-ctas { padding-left: 36px; }
+.jc-btn-ghost { background: transparent; box-shadow: none; color: var(--muted); }
+
+.agent-dock-thread { display: flex; flex-direction: column; gap: 12px; max-height: min(52vh, 460px); overflow-y: auto; padding: 2px 2px 4px; }
+.agent-dock-user {
+  align-self: flex-end; max-width: 80%; white-space: pre-wrap; overflow-wrap: anywhere;
+  font-size: 13.5px; line-height: 1.5; color: var(--fg);
+  padding: 8px 12px; border-radius: 14px 14px 4px 14px;
+  background: var(--primary-light-background); box-shadow: 0 0 0 1px rgba(93, 44, 201, 0.18);
+}
+.agent-dock-steps { list-style: none; margin: 0; padding: 0 0 0 36px; display: flex; flex-direction: column; gap: 6px; }
+.agent-dock-steps li { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted); animation: agent-step-in .25s ease-out; }
+.agent-dock-step-dot { flex: 0 0 auto; width: 8px; height: 8px; border-radius: 50%; background: var(--success-foreground); }
+.agent-dock-steps li.running { color: var(--fg); }
+.agent-dock-steps li.running .agent-dock-step-dot { background: var(--primary); animation: agent-pulse 1s ease-in-out infinite; }
+@keyframes agent-step-in { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+@keyframes agent-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(93, 44, 201, 0.45); } 50% { box-shadow: 0 0 0 5px rgba(93, 44, 201, 0); } }
+.agent-dock-reply { display: flex; align-items: flex-start; gap: 10px; }
+.agent-dock-reply p { margin: 0; font-size: 14px; line-height: 1.55; color: var(--fg); white-space: pre-wrap; }
+
+.agent-dock-form { display: flex; align-items: flex-end; gap: 8px; }
+.agent-dock-input { flex: 1; resize: none; min-height: 38px; line-height: 1.45; overflow-y: auto; transition: height .12s ease; }
+@media (prefers-reduced-motion: reduce) {
+  .agent-dock, .agent-dock-steps li, .agent-dock-steps li.running .agent-dock-step-dot, .agent-dock-input { animation: none; transition: none; }
+}
+@media (max-width: 720px) {
+  .agent-dock { bottom: 12px; padding: 12px; }
+  .agent-dock-thread .agent-dock-ctas, .agent-dock-steps { padding-left: 0; }
+}

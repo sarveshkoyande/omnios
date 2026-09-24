@@ -5,7 +5,6 @@ import {
 import type { BrandKit, JourneyState, JourneyStepId } from "../../types";
 import { AudienceCanvas, type PersonaScope } from "./AudienceCanvas";
 import { BriefCanvas } from "./BriefCanvas";
-import { DraftBar } from "./DraftBar";
 import type { DraftActions } from "./DraftValue";
 import { FlowCanvas } from "./FlowCanvas";
 import { KitCanvas } from "./KitCanvas";
@@ -19,7 +18,7 @@ const STATUS_LABEL: Record<string, { tone: string; label: string }> = {
   confirmed: { tone: "success", label: "Confirmed" },
 };
 
-const IDLE: TurnState = { pending: false, reply: null, error: null };
+const IDLE: TurnState = { pending: false, message: null, reply: null, outcome: null, error: null };
 
 /** New brand start panel (R11, F1/F2): upload a plan document or type one sentence. */
 function StartPanel({ onStarted, onClose }: { onStarted: (brand: string, step: JourneyStepId) => void; onClose: () => void }) {
@@ -118,6 +117,11 @@ export function JourneyScreen({ brand, initialStep, onClose, onBrandCreated, onK
     setScope(null);
   };
 
+  const dismissTurn = useCallback(() => {
+    turnSeq.current += 1;
+    setTurn(IDLE);
+  }, []);
+
   if (!brand) {
     return <StartPanel onClose={onClose} onStarted={onBrandCreated} />;
   }
@@ -129,14 +133,17 @@ export function JourneyScreen({ brand, initialStep, onClose, onBrandCreated, onK
 
   const sendTurn = async (message: string): Promise<boolean> => {
     const seq = ++turnSeq.current;
-    setTurn((t) => ({ ...t, pending: true, error: null }));
+    setTurn({ pending: true, message, reply: null, outcome: null, error: null });
     const scoped = step === "audience" && scope ? `[About the ${scope.group} persona card "${scope.name}"] ${message}` : message;
     try {
       const r = await journeyTurn(brand, step, scoped);
       // The snapshot still carries the old step's new drafts (rail counts); only the reply is stale.
       setState(r.state);
       if (seq !== turnSeq.current) return false;
-      setTurn({ pending: false, reply: r.reply, error: null });
+      setTurn({
+        pending: false, message, reply: r.reply, error: null,
+        outcome: { mode: r.mode, changes: [...new Set(r.drafts.map((d) => d.field.replace(/_/g, " ")))], dropped: r.dropped.map((f) => f.replace(/_/g, " ")) },
+      });
       return true;
     } catch (e) {
       if (seq !== turnSeq.current) return false;
@@ -145,25 +152,28 @@ export function JourneyScreen({ brand, initialStep, onClose, onBrandCreated, onK
     }
   };
 
-  const run = (p: Promise<JourneyState>, kitTouched: boolean) => {
+  /** Settles a draft action; rejects on failure so the dock stays open to show the error. */
+  const run = async (p: Promise<JourneyState>, kitTouched: boolean) => {
     setBusy(true);
     setBarError(null);
-    p.then((s) => { setState(s); if (kitTouched) { refreshKit(); onKitChanged(); } })
-      .catch((e) => setBarError(e instanceof Error ? e.message : String(e)))
-      .finally(() => setBusy(false));
+    try {
+      const s = await p;
+      setState(s);
+      if (kitTouched) { refreshKit(); onKitChanged(); }
+    } catch (e) {
+      setBarError(e instanceof Error ? e.message : String(e));
+      throw e;
+    } finally {
+      setBusy(false);
+    }
   };
 
-  const actions: DraftActions = {
-    locked,
-    busy,
-    onKeep: (ids) => run(journeyKeep(brand, step, ids), true),
-    onUndo: (ids) => run(journeyUndo(brand, step, ids), false),
-  };
+  const actions: DraftActions = { locked, busy };
 
   const flags = step === "kit" ? kitFlags(kit, drafts).filter((f) => !dismissed.has(f.key)) : [];
   const confirmBlocked = flags.length > 0
     ? `Resolve ${flags.length} flag${flags.length === 1 ? "" : "s"} before confirming.`
-    : drafts.length > 0 ? "Keep or undo the pending drafts first." : null;
+    : null;
 
   const uploadDoc = (file: File) => {
     setBusy(true);
@@ -233,14 +243,17 @@ export function JourneyScreen({ brand, initialStep, onClose, onBrandCreated, onK
           <div className="journey-canvas">{canvas()}</div>
           {step !== "flow" && (
             <>
-              <DraftBar draftCount={drafts.length} status={current.status} busy={busy} error={barError}
-                confirmBlocked={confirmBlocked}
-                onKeepAll={() => run(journeyKeep(brand, step, "all"), true)}
-                onUndoAll={() => run(journeyUndo(brand, step, drafts.map((d) => d.id)), false)}
-                onConfirm={() => run(journeyConfirm(brand, step), false)}
-                onReopen={() => run(journeyReopen(brand, step), false)} />
-              <StepChat key={step} brand={brand} step={step} question={current.question} earlierCount={current.earlier_count}
-                turn={turn} locked={locked} onSend={sendTurn}
+              <StepChat key={step} brand={brand} step={step} stepLabel={current.label} question={current.question}
+                earlierCount={current.earlier_count} turn={turn} locked={locked} onSend={sendTurn}
+                onDismiss={dismissTurn}
+                drafts={{
+                  count: drafts.length, status: current.status, busy, confirmBlocked, error: barError,
+                  complete: current.missing.every((f) => drafts.some((d) => d.field === f)),
+                  onKeep: () => run(journeyKeep(brand, step, "all"), true),
+                  onUndo: () => run(journeyUndo(brand, step, drafts.map((d) => d.id)), false),
+                  onConfirm: () => run(journeyConfirm(brand, step), false),
+                  onReopen: () => run(journeyReopen(brand, step), false),
+                }}
                 scopeLabel={step === "audience" && scope ? scope.name : null} onClearScope={() => setScope(null)} />
             </>
           )}

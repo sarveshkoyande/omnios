@@ -222,6 +222,8 @@ export interface JourneyStep {
   drafts: JourneyDraft[];
   question: JourneyQuestion | null;
   earlier_count: number;
+  /** Required fields with no kept value; the step can't be confirmed until this is empty. */
+  missing: string[];
   history?: JourneyTurnNote[];
 }
 
