@@ -1088,6 +1088,99 @@ a.rail-add-brand { display: inline-grid; place-items: center; color: inherit; te
   .hier-table { display: block; overflow-x: auto; }
 }
 
+/* ---- Brand overview: master-detail (a searchable one-line list, the selected plan's detail
+   on the right) instead of the filtered table. Same neumorphic system throughout. ---- */
+.hier-page-master { max-width: 1180px; }
+.hier-master { display: grid; grid-template-columns: 300px 1fr; gap: 20px; align-items: start; }
+@media (max-width: 860px) { .hier-master { grid-template-columns: 1fr; } }
+
+.hier-master-list {
+  background: var(--card-bg); border-radius: var(--radius-md); box-shadow: var(--neu-flat);
+  padding: 14px; display: flex; flex-direction: column; gap: 10px;
+}
+.hier-search {
+  display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-radius: var(--radius-full);
+  box-shadow: var(--neu-inset-sm); color: var(--muted);
+}
+.hier-search-input {
+  flex: 1; border: 0; background: transparent; font-family: inherit; font-size: 13.5px; color: var(--fg);
+  padding: 0; box-shadow: none; min-height: unset;
+}
+.hier-search-input:focus { outline: none; box-shadow: none; }
+.hier-plan-list { display: flex; flex-direction: column; gap: 4px; max-height: 62vh; overflow-y: auto; }
+.hier-plan-row {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left;
+  font-family: inherit; border: none; background: transparent; border-radius: var(--radius-sm);
+  padding: 10px 12px; cursor: pointer; transition: background 160ms ease;
+}
+.hier-plan-row:hover { background: var(--primary-light-background); }
+.hier-plan-row.active { background: var(--primary-light-background); box-shadow: var(--neu-inset-sm); }
+.hier-plan-row-name { font-size: 13.5px; font-weight: 700; color: var(--fg); }
+.hier-plan-row-sub { font-size: 12px; color: var(--muted); }
+
+.hier-master-detail { min-width: 0; }
+.hier-detail-card { display: flex; flex-direction: column; gap: 18px; padding: 24px 26px; }
+.hier-detail-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.hier-detail-head > div { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.hier-detail-name { font-size: 19px; font-weight: 700; color: var(--fg); text-decoration: none; }
+.hier-detail-name:hover { color: var(--primary); }
+.hier-detail-stats { display: flex; flex-wrap: wrap; gap: 10px; }
+.hier-detail-stats > span { padding: 7px 14px; border-radius: var(--radius-full); background: var(--primary-light-background); font-size: 12.5px; }
+.hier-detail-stats strong { font-size: 14px; margin-right: 4px; }
+.hier-detail-subhead { font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+.hier-detail-campaigns { display: flex; flex-direction: column; gap: 8px; }
+.hier-campaign-row {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px; text-decoration: none;
+  padding: 12px 14px; border-radius: var(--radius-sm); box-shadow: var(--neu-inset-sm); color: inherit;
+}
+.hier-campaign-row:hover { background: var(--primary-light-background); }
+.hier-campaign-row-name { font-weight: 700; font-size: 13.5px; color: var(--fg); }
+.hier-campaign-row-meta { font-size: 12px; color: var(--muted); margin-right: auto; }
+
+/* ---- Plan launcher: a big round AI button fixed bottom-right; clicking it opens a small
+   card above it (its own size, not a page-wide bar) to start a new plan by chat. ---- */
+.plan-launcher-fab {
+  position: fixed; right: 32px; bottom: 32px; z-index: 40;
+  width: 60px; height: 60px; border-radius: 50%; border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--primary); color: var(--base-white);
+  box-shadow: var(--glass-shadow-hover);
+  transition: transform 200ms ease;
+}
+.plan-launcher-fab:hover { transform: scale(1.06); }
+.plan-launcher-card {
+  position: fixed; right: 32px; bottom: 104px; z-index: 40; width: min(360px, calc(100vw - 64px));
+  background: var(--card-bg); border-radius: var(--radius-md); padding: 20px 22px;
+  box-shadow: var(--glass-shadow-hover);
+  -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
+  animation: agent-dock-rise .22s ease-out;
+}
+.plan-launcher-close {
+  position: absolute; top: 12px; right: 12px; border: none; background: transparent; cursor: pointer;
+  color: var(--muted); padding: 4px;
+}
+.plan-launcher-close:hover { color: var(--fg); }
+.plan-launcher-card h3 { margin: 0 22px 4px 0; font-size: 15.5px; font-weight: 700; text-align: center; color: var(--fg); }
+.plan-launcher-sub { margin: 0 0 14px; font-size: 12px; color: var(--muted); text-align: center; }
+.plan-launcher-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.plan-launcher-chip {
+  display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: var(--radius-sm);
+  box-shadow: var(--neu-inset-sm); font-size: 11.5px; color: var(--muted); flex: 1 1 140px;
+}
+.plan-launcher-chip b { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); font-weight: 700; }
+.plan-launcher-chip span { display: flex; flex-direction: column; gap: 1px; color: var(--fg); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.plan-launcher-form { display: flex; align-items: flex-end; gap: 8px; }
+.plan-launcher-input { flex: 1; resize: none; min-height: 40px; }
+.plan-launcher-send {
+  flex: 0 0 auto; width: 38px; height: 38px; border-radius: 50%; border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; background: var(--primary); color: var(--base-white);
+}
+.plan-launcher-send:disabled { opacity: .5; cursor: default; }
+@media (max-width: 720px) {
+  .plan-launcher-fab { right: 18px; bottom: 18px; }
+  .plan-launcher-card { right: 18px; left: 18px; width: auto; bottom: 90px; }
+}
+
 /* ---- Campaign Plan, native in the Cockpit (brief, planning agent, plan sections) ---- */
 .cp-page { max-width: 1280px; margin: 0 auto; padding: 20px 32px 40px; display: flex; flex-direction: column; gap: 14px; }
 .cp-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 16px; }
