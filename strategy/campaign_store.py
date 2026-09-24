@@ -19,7 +19,10 @@ import time
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import blob_store  # noqa: E402
-import brand_kit  # noqa: E402
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
+# The package import, not a flat `import brand_kit`: a second module instance would keep its
+# own stale kit cache and miss brands created since it first loaded (see brand_journey.py).
+from strategy import brand_kit  # noqa: E402
 import db  # noqa: E402  (dual-dialect SQLite/Postgres connection factory)
 from paths import data_path  # noqa: E402
 
@@ -35,12 +38,43 @@ def _conn():
     return db.connect("campaigns")
 
 
+# Columns added after databases already existed. CREATE TABLE IF NOT EXISTS won't add them,
+# so each is attempted with a plain ADD COLUMN whose "already exists" error is swallowed
+# (the projects.py idiom; the rollback keeps Postgres' transaction usable).
+_ADDED_COLUMNS = (
+    ("brand", "kit_key", "TEXT"),
+    ("campaign", "engagement_plan_id", "INTEGER REFERENCES engagement_plan(id)"),
+    ("campaign", "closed_at", "TEXT"),
+    ("campaign", "status_detail", "TEXT"),
+    ("campaign", "snapshot_json", "TEXT"),
+    ("campaign", "snapshot_at", "TEXT"),
+    ("campaign_version", "snapshot_json", "TEXT"),
+)
+# Indexes on added columns, created only once the columns exist.
+_ADDED_INDEXES = (
+    "CREATE UNIQUE INDEX IF NOT EXISTS ux_brand_kit_key ON brand(kit_key) WHERE kit_key IS NOT NULL",
+    "CREATE INDEX IF NOT EXISTS ix_campaign_plan ON campaign(engagement_plan_id)",
+    "CREATE INDEX IF NOT EXISTS ix_campaign_project ON campaign(project_id)",
+)
+
+
 def init_db() -> None:
-    """Create the schema if missing (idempotent)."""
+    """Create the schema if missing and add later columns (idempotent)."""
     conn = _conn()
-    conn.executescript(SCHEMA_PATH.read_text(encoding="utf-8"))
-    conn.commit()
-    conn.close()
+    try:
+        conn.executescript(SCHEMA_PATH.read_text(encoding="utf-8"))
+        conn.commit()
+        for table, col, decl in _ADDED_COLUMNS:
+            try:
+                conn.execute(f"ALTER TABLE {table} ADD COLUMN {col} {decl}")
+                conn.commit()
+            except Exception:  # noqa: BLE001  (SQLite: OperationalError; Postgres: DuplicateColumn)
+                conn.rollback()
+        for ddl in _ADDED_INDEXES:
+            conn.execute(ddl)
+        conn.commit()
+    finally:
+        conn.close()
 
 
 # ------------------------------------------------------------------ blob manifest ----
@@ -60,10 +94,37 @@ def _store_blob(conn: sqlite3.Connection, data: str | bytes, mime: str, name: st
 
 # ------------------------------------------------------------------ upserts -----------
 
+def brand_row_for_kit(conn, key: str) -> int:
+    """The brand row for brand-kit key `key` (brand.kit_key), linking an existing row of the
+    same case-insensitive name or creating one. The one place kit brands get their row."""
+    row = conn.execute("SELECT id FROM brand WHERE kit_key=?", (key,)).fetchone()
+    if row:
+        return row["id"]
+    row = conn.execute("SELECT id FROM brand WHERE lower(name)=lower(?) AND kit_key IS NULL "
+                       "ORDER BY CASE WHEN name=? THEN 0 ELSE 1 END, id LIMIT 1", (key, key)).fetchone()
+    if row:
+        conn.execute("UPDATE brand SET kit_key=? WHERE id=?", (key, row["id"]))
+        return row["id"]
+    kit = brand_kit.kit_for(key) or {}
+    cur = conn.execute(
+        "INSERT INTO brand (name, generic_name, therapy_area, kit_key) VALUES (?,?,?,?)",
+        (key, kit.get("generic") or None, kit.get("therapy_area") or None, key),
+    )
+    return cur.lastrowid
+
+
 def _brand_id(conn, brand: str, therapy_area: str = "", generic: str = "", lifecycle: str = "",
               client: str = "") -> int | None:
     if not brand:
         return None
+    key = brand_kit.canonical_key(brand)
+    if key is not None:
+        bid = brand_row_for_kit(conn, key)
+        if client:
+            conn.execute("INSERT OR IGNORE INTO client (name) VALUES (?)", (client,))
+            cid = conn.execute("SELECT id FROM client WHERE name=?", (client,)).fetchone()["id"]
+            conn.execute("UPDATE brand SET client_id=COALESCE(client_id, ?) WHERE id=?", (cid, bid))
+        return bid
     client_id = None
     if client:
         conn.execute("INSERT OR IGNORE INTO client (name) VALUES (?)", (client,))
@@ -107,7 +168,11 @@ def persist_campaign_from_result(result: dict, slots: dict, plan_markdown: str =
                                  project_id: str = "") -> dict:
     """Fold a generated plan (orchestrator result + captured slots) into the normalized
     model. Returns a small summary of what was written. Best-effort: never raises into the
-    request path -- a failure here must not break plan generation."""
+    request path -- a failure here must not break plan generation.
+
+    A project already linked to an open campaign (the Campaign Plan of a campaign) gets a new
+    version on that campaign; its derived rows (segment, messages, channels, KPIs) are
+    replaced to match the latest run. Only an unlinked project inserts a campaign."""
     init_db()
     conn = _conn()
     try:
@@ -116,30 +181,50 @@ def persist_campaign_from_result(result: dict, slots: dict, plan_markdown: str =
         indication = slots.get("indication") or result.get("indication", "")
         inferred = result.get("inferred_inputs", {})
         strat = result.get("stage_2_4_strategy", {})
-
-        bid = _brand_id(conn, brand, ta, lifecycle=slots.get("lifecycle_key", ""))
-        iid = _indication_id(conn, bid, indication)
-
         budget = (result.get("stage_5_budget") or {}).get("total_budget")
-        cur = conn.execute(
-            """INSERT INTO campaign (project_id, brand_id, indication_id, name, lifecycle_key, persona,
-               journey_stage, cx_maturity, objective, total_budget, status, created_at, updated_at)
-               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-            (project_id or None, bid, iid, f"{brand} · {indication or ta}".strip(" ·"),
-             slots.get("lifecycle_key"), inferred.get("persona"), inferred.get("stage_label"),
-             (result.get("cx_maturity") or {}).get("level"),
-             (strat.get("stage_profile") or {}).get("engagement_goal"),
-             budget, "draft", _now(), _now()),
-        )
-        campaign_id = cur.lastrowid
+
+        linked = conn.execute(
+            "SELECT id, brand_id FROM campaign WHERE project_id=? AND status<>'closed' ORDER BY id DESC LIMIT 1",
+            (project_id,),
+        ).fetchone() if project_id else None
+
+        if linked:
+            campaign_id, bid = linked["id"], linked["brand_id"]
+            iid = _indication_id(conn, bid, indication)
+            conn.execute(
+                """UPDATE campaign SET indication_id=?, lifecycle_key=?, persona=?, journey_stage=?,
+                   cx_maturity=?, objective=?, total_budget=?, updated_at=? WHERE id=?""",
+                (iid, slots.get("lifecycle_key"), inferred.get("persona"), inferred.get("stage_label"),
+                 (result.get("cx_maturity") or {}).get("level"),
+                 (strat.get("stage_profile") or {}).get("engagement_goal"), budget, _now(), campaign_id),
+            )
+            for table in ("campaign_segment", "campaign_message", "campaign_channel", "campaign_kpi"):
+                conn.execute(f"DELETE FROM {table} WHERE campaign_id=?", (campaign_id,))
+        else:
+            bid = _brand_id(conn, brand, ta, lifecycle=slots.get("lifecycle_key", ""))
+            iid = _indication_id(conn, bid, indication)
+            cur = conn.execute(
+                """INSERT INTO campaign (project_id, brand_id, indication_id, name, lifecycle_key, persona,
+                   journey_stage, cx_maturity, objective, total_budget, status, created_at, updated_at)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (project_id or None, bid, iid, f"{brand} · {indication or ta}".strip(" ·"),
+                 slots.get("lifecycle_key"), inferred.get("persona"), inferred.get("stage_label"),
+                 (result.get("cx_maturity") or {}).get("level"),
+                 (strat.get("stage_profile") or {}).get("engagement_goal"),
+                 budget, "draft", _now(), _now()),
+            )
+            campaign_id = cur.lastrowid
 
         # Versioned snapshot -> blob store (plan markdown + full result JSON).
         plan_key = _store_blob(conn, plan_markdown, "text/markdown", f"{brand}_plan.md") if plan_markdown else None
         result_key = _store_blob(conn, json.dumps(result), "application/json", f"{brand}_result.json")
+        version_no = (conn.execute("SELECT COALESCE(MAX(version_no), 0) AS n FROM campaign_version "
+                                   "WHERE campaign_id=?", (campaign_id,)).fetchone()["n"] or 0) + 1
+        snapshot = conn.execute("SELECT snapshot_json FROM campaign WHERE id=?", (campaign_id,)).fetchone()
         conn.execute(
-            "INSERT INTO campaign_version (campaign_id, version_no, plan_blob_key, result_blob_key, created_at) "
-            "VALUES (?,?,?,?,?)",
-            (campaign_id, 1, plan_key, result_key, _now()),
+            "INSERT INTO campaign_version (campaign_id, version_no, plan_blob_key, result_blob_key, created_at, "
+            "snapshot_json) VALUES (?,?,?,?,?,?)",
+            (campaign_id, version_no, plan_key, result_key, _now(), snapshot["snapshot_json"] if snapshot else None),
         )
 
         # Segment profile.
@@ -214,8 +299,8 @@ def persist_campaign_from_result(result: dict, slots: dict, plan_markdown: str =
                              (campaign_id, kind, metric))
 
         conn.commit()
-        return {"campaign_id": campaign_id, "claims": claims_written, "assets": assets_written,
-                "references": len(ref_ids)}
+        return {"campaign_id": campaign_id, "version_no": version_no, "claims": claims_written,
+                "assets": assets_written, "references": len(ref_ids)}
     finally:
         conn.close()
 

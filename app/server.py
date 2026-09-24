@@ -50,6 +50,7 @@ from strategy import brand_memory  # noqa: E402
 from strategy import brand_kit  # noqa: E402  (brand workspace: the kit as a horizontal record)
 from strategy import kit_pdf  # noqa: E402  (brand-plan update flow: sample "Brand Plan" PDF)
 from strategy import brand_journey  # noqa: E402  (Agentic Brand Journey: drafts, turns, pre-fill)
+from strategy import hierarchy  # noqa: E402  (Brand > Engagement Plan > Campaign > Flow)
 from strategy import journey_fields  # noqa: E402  (Agentic Brand Journey: staged field registry)
 from strategy import blob_store  # noqa: E402  (serves real label images to the Claims Library)
 from strategy import bootstrap  # noqa: E402  (first-boot seeding of an empty data disk)
@@ -965,6 +966,152 @@ def api_journey_confirm(brand: str, step: str):
 def api_journey_reopen(brand: str, step: str):
     _journey_call(brand_journey.reopen, brand, _journey_step(step))
     return _journey_call(brand_journey.journey_state, brand)
+
+
+# ------------------------------------------------------------------ #
+# Brand > Engagement Plan > Campaign > Flow
+# (docs/plans/2026-09-24-1400-feat-brand-hierarchy-ia-plan.md, U2/U4)
+# ------------------------------------------------------------------ #
+
+def _hier(fn, *args, **kwargs):
+    """Map the hierarchy's NotFound to 404 and its ValueError to 400."""
+    try:
+        return fn(*args, **kwargs)
+    except hierarchy.NotFound as e:
+        raise HTTPException(404, str(e.args[0] if e.args else e))
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+class EngagementPlanRequest(BaseModel):
+    name: str
+    period_start: str | None = None
+    period_end: str | None = None
+
+
+class EngagementPlanPatch(BaseModel):
+    name: str | None = None
+    period_start: str | None = None
+    period_end: str | None = None
+    status: str | None = None
+
+
+class NamedRequest(BaseModel):
+    name: str
+
+
+class MoveCampaignRequest(BaseModel):
+    engagement_plan_id: int
+
+
+@app.get("/api/brands/{brand}/tree")
+def api_brand_tree(brand: str):
+    return _hier(hierarchy.tree, brand)
+
+
+@app.get("/api/brands/{brand}/engagement-plans")
+def api_list_engagement_plans(brand: str):
+    return {"engagement_plans": _hier(hierarchy.list_plans, brand)}
+
+
+@app.post("/api/brands/{brand}/engagement-plans")
+def api_create_engagement_plan(brand: str, req: EngagementPlanRequest):
+    return _hier(hierarchy.create_plan, brand, req.name, req.period_start, req.period_end)
+
+
+@app.get("/api/engagement-plans/{plan_id}")
+def api_get_engagement_plan(plan_id: int):
+    plan = _hier(hierarchy.get_plan, plan_id)
+    plan["campaigns"] = _hier(hierarchy.list_campaigns, plan_id)
+    return plan
+
+
+@app.patch("/api/engagement-plans/{plan_id}")
+def api_update_engagement_plan(plan_id: int, req: EngagementPlanPatch):
+    return _hier(hierarchy.update_plan, plan_id, **req.model_dump(exclude_unset=True))
+
+
+@app.get("/api/engagement-plans/{plan_id}/campaigns")
+def api_list_campaigns(plan_id: int):
+    return {"campaigns": _hier(hierarchy.list_campaigns, plan_id)}
+
+
+@app.post("/api/engagement-plans/{plan_id}/campaigns")
+def api_create_campaign(plan_id: int, req: NamedRequest):
+    return _hier(hierarchy.create_campaign, plan_id, req.name)
+
+
+@app.get("/api/campaigns/{campaign_id}")
+def api_get_campaign(campaign_id: int):
+    c = _hier(hierarchy.get_campaign, campaign_id)
+    c["flows"] = _hier(hierarchy.list_flows, campaign_id)
+    return c
+
+
+@app.patch("/api/campaigns/{campaign_id}")
+def api_rename_campaign(campaign_id: int, req: NamedRequest):
+    return _hier(hierarchy.rename_campaign, campaign_id, req.name)
+
+
+@app.post("/api/campaigns/{campaign_id}/move")
+def api_move_campaign(campaign_id: int, req: MoveCampaignRequest):
+    return _hier(hierarchy.move_campaign, campaign_id, req.engagement_plan_id)
+
+
+@app.get("/api/campaigns/{campaign_id}/flows")
+def api_list_flows(campaign_id: int):
+    return {"flows": _hier(hierarchy.list_flows, campaign_id)}
+
+
+@app.post("/api/campaigns/{campaign_id}/campaign-plan")
+def api_start_campaign_plan(campaign_id: int):
+    """Start the campaign's Campaign Plan: a project bound to the campaign at creation, with
+    the brand (and what the kit knows) already filled in, so the intake never asks for it
+    (R13, KTD13)."""
+    c = _hier(hierarchy.get_campaign, campaign_id)
+    if c["status"] == "closed":
+        raise HTTPException(400, "this campaign is closed")
+    if c.get("project_id"):
+        raise HTTPException(409, "this campaign already has a campaign plan")
+    brand = c["brand"]
+    kit = brand_kit.kit_for(brand) or {}
+    state = new_state()
+    slots = state["slots"]
+    slots["brand"] = brand
+    slots["campaign_name"] = c["name"]
+    slots["therapy_area"] = str(kit.get("therapy_area") or "")
+    slots["indication"] = str(kit.get("approved_indication") or kit.get("indication") or "")
+    try:
+        from strategy.conversation import _match_lifecycle
+        stage = brand_journey.answers_for(brand).get("lifecycle_stage")
+        slots["lifecycle_key"] = _match_lifecycle(str(stage)) if stage else ""
+    except Exception:  # noqa: BLE001 -- the intake asks for it instead
+        slots["lifecycle_key"] = ""
+    slots["lifecycle_key"] = slots["lifecycle_key"] or ""
+    proj = pstore.create_project(c["name"], state, [_msg("agent", opening_message(brand, c["name"]))])
+    try:
+        hierarchy.bind_project(campaign_id, proj["id"])
+    except ValueError as e:
+        pstore.delete_project(proj["id"])
+        raise HTTPException(409, str(e))
+    return {"campaign": _hier(hierarchy.get_campaign, campaign_id), "project": proj}
+
+
+def _record_campaign_plan(project_id: str, slots: dict, result: dict, plan_md: str) -> None:
+    """A Campaign Plan finished (Deploy): store it as the campaign's next version and refresh
+    the campaign. Best-effort -- never breaks the plan stream (R18)."""
+    try:
+        summary = campaign_store.persist_campaign_from_result(result, slots, plan_md or "", project_id)
+        hierarchy.after_plan_saved(summary["campaign_id"])
+    except Exception as e:  # noqa: BLE001
+        print(f"[campaign_store] persist failed: {e}")
+
+
+def _record_plan_phase(project_id: str, phase: str) -> None:
+    try:
+        hierarchy.mark_plan_phase(project_id, phase)
+    except Exception as e:  # noqa: BLE001
+        print(f"[hierarchy] phase update failed: {e}")
 
 
 @app.get("/api/brand-kits/{brand}")
@@ -2143,14 +2290,12 @@ def api_run_stream(project_id: str, phase: str = "align"):
                 state["_plan_ctx"] = ctx_snapshot
             pstore.save_project(project_id, state=state, messages=messages,
                                 result=result, plan_markdown=plan_md, plan_html=plan_html)
+            _record_plan_phase(project_id, phase)
             # Persist the completed plan into the campaign & content data model only on the
             # final phase (Deploy) -- earlier phases are partial. Best-effort; never let a
             # persistence error break the streamed response.
             if result and phase == orchestrator.PHASE_ORDER[-1]:
-                try:
-                    campaign_store.persist_campaign_from_result(result, slots, plan_md or "", project_id)
-                except Exception as e:  # noqa: BLE001
-                    print(f"[campaign_store] persist failed: {e}")
+                _record_campaign_plan(project_id, slots, result, plan_md)
                 try:
                     brand_memory.save_brand_memory(slots.get("brand", ""), slots)
                 except Exception as e:  # noqa: BLE001
@@ -2212,10 +2357,7 @@ def api_studio_stream(project_id: str, auto_assume: bool = False):
             pstore.save_project(project_id, state=state, messages=messages,
                                 result=result, plan_markdown=plan_md, plan_html=plan_html)
             if result:
-                try:
-                    campaign_store.persist_campaign_from_result(result, slots, plan_md or "", project_id)
-                except Exception as exc:  # noqa: BLE001
-                    print(f"[campaign_store] persist failed: {exc}")
+                _record_campaign_plan(project_id, slots, result, plan_md)
                 try:
                     brand_memory.save_brand_memory(slots.get("brand", ""), slots)
                 except Exception as exc:  # noqa: BLE001

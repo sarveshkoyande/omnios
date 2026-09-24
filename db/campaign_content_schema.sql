@@ -206,6 +206,38 @@ CREATE TABLE IF NOT EXISTS campaign (
 );
 CREATE INDEX IF NOT EXISTS ix_campaign_brand ON campaign(brand_id);
 
+-- Brand > Engagement Plan > Campaign > Flow (docs/plans/2026-09-24-1400-feat-brand-hierarchy-ia-plan.md).
+-- A brand has many engagement plans (e.g. one per quarter); a campaign belongs to one
+-- (campaign.engagement_plan_id, added by strategy/campaign_store.init_db since existing
+-- databases predate it); a campaign has many flows. Brand identity is brand.kit_key, the
+-- config/brand_kits.json key, also added by init_db.
+CREATE TABLE IF NOT EXISTS engagement_plan (
+    id            INTEGER PRIMARY KEY,
+    brand_id      INTEGER NOT NULL REFERENCES brand(id) ON DELETE CASCADE,
+    name          TEXT NOT NULL,
+    period_start  TEXT,                          -- optional ISO date
+    period_end    TEXT,                          -- optional ISO date
+    status        TEXT NOT NULL DEFAULT 'active',-- active|closed
+    created_at    TEXT NOT NULL,
+    updated_at    TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_engagement_plan_brand ON engagement_plan(brand_id);
+
+CREATE TABLE IF NOT EXISTS flow (
+    id              INTEGER PRIMARY KEY,
+    campaign_id     INTEGER NOT NULL REFERENCES campaign(id) ON DELETE CASCADE,
+    name            TEXT NOT NULL,
+    origin          TEXT NOT NULL DEFAULT 'manual',-- journey|campaign_plan|manual|legacy_layout
+    status          TEXT NOT NULL DEFAULT 'draft', -- draft|built|confirmed
+    base_json       TEXT,                          -- rules-built CampaignFlow with block codes
+    ops_json        TEXT,                          -- kept structured edits, in order
+    draft_ops_json  TEXT,                          -- pending edit awaiting keep/undo
+    dropped_json    TEXT,                          -- kept edits a rebuild could not reapply
+    created_at      TEXT NOT NULL,
+    updated_at      TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_flow_campaign ON flow(campaign_id);
+
 -- Immutable versioned snapshot of the generated plan (md + html live in the blob store).
 CREATE TABLE IF NOT EXISTS campaign_version (
     id              INTEGER PRIMARY KEY,

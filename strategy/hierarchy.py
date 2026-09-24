@@ -1,0 +1,523 @@
+"""Brand > Engagement Plan > Campaign > Flow (plan docs/plans/2026-09-24-1400-feat-brand-hierarchy-ia-plan.md).
+
+Every level lives in campaigns.db (KTD1): `engagement_plan`, the existing `campaign` table
+(linked by `campaign.engagement_plan_id`), and `flow`. A brand is its brand-kit key
+(`brand.kit_key`, KTD4). Each record is created inside an existing parent (R8), campaign
+status is derived from facts (KTD5), and `backfill()` places existing work into one
+"Earlier work" engagement plan per brand (R20).
+"""
+from __future__ import annotations
+
+import datetime as _dt
+import json
+import pathlib
+import sys
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
+import db  # noqa: E402
+# Package imports so this shares the server's module instances (brand_kit's cache in
+# particular -- see brand_journey.py).
+from strategy import brand_kit, campaign_store  # noqa: E402
+
+EARLIER_WORK = "Earlier work"
+PLAN_STATUSES = ("active", "closed")
+CAMPAIGN_STATUSES = ("draft", "in_progress", "confirmed", "closed")
+FLOW_ORIGINS = ("journey", "campaign_plan", "manual", "legacy_layout")
+
+
+class NotFound(KeyError):
+    """An unknown brand, engagement plan, campaign or flow."""
+
+
+def _now() -> str:
+    return campaign_store._now()
+
+
+_ready: set[str] = set()
+
+
+def _conn():
+    # init_db runs the whole schema script plus the column checks; once per data file is enough.
+    path = str(campaign_store.DB_PATH)
+    if path not in _ready:
+        campaign_store.init_db()
+        _ready.add(path)
+    return db.connect("campaigns")
+
+
+def _row(r) -> dict:
+    return dict(r) if r is not None else {}
+
+
+# --------------------------------------------------------------------------- brands ----
+
+def brand_key(brand: str) -> str:
+    """The brand-kit key for `brand` (case-insensitive), or NotFound."""
+    key = brand_kit.canonical_key(brand or "")
+    if key is None:
+        raise NotFound(f"no brand '{brand}'")
+    return key
+
+
+def _brand_id(conn, brand: str) -> tuple[int, str]:
+    key = brand_key(brand)
+    return campaign_store.brand_row_for_kit(conn, key), key
+
+
+# ------------------------------------------------------------------ engagement plans ----
+
+def _check_period(start, end) -> tuple[str | None, str | None]:
+    out = []
+    for v in (start, end):
+        if v in (None, ""):
+            out.append(None)
+            continue
+        try:
+            out.append(_dt.date.fromisoformat(str(v)).isoformat())
+        except ValueError:
+            raise ValueError(f"'{v}' is not a date (YYYY-MM-DD)") from None
+    if out[0] and out[1] and out[1] < out[0]:
+        raise ValueError("the period ends before it starts")
+    return out[0], out[1]
+
+
+def _plan_dict(conn, r) -> dict:
+    d = _row(r)
+    b = conn.execute("SELECT kit_key FROM brand WHERE id=?", (d["brand_id"],)).fetchone()
+    d["brand"] = b["kit_key"] if b else None
+    return d
+
+
+def create_plan(brand: str, name: str, period_start=None, period_end=None) -> dict:
+    name = (name or "").strip()
+    if not name:
+        raise ValueError("an engagement plan needs a name")
+    start, end = _check_period(period_start, period_end)
+    conn = _conn()
+    try:
+        bid, _ = _brand_id(conn, brand)
+        cur = conn.execute(
+            "INSERT INTO engagement_plan (brand_id, name, period_start, period_end, status, created_at, updated_at) "
+            "VALUES (?,?,?,?,?,?,?)", (bid, name, start, end, "active", _now(), _now()))
+        conn.commit()
+        return get_plan(cur.lastrowid)
+    finally:
+        conn.close()
+
+
+def get_plan(plan_id: int) -> dict:
+    conn = _conn()
+    try:
+        r = conn.execute("SELECT * FROM engagement_plan WHERE id=?", (plan_id,)).fetchone()
+        if r is None:
+            raise NotFound(f"no engagement plan {plan_id}")
+        return _plan_dict(conn, r)
+    finally:
+        conn.close()
+
+
+def list_plans(brand: str) -> list[dict]:
+    conn = _conn()
+    try:
+        bid, _ = _brand_id(conn, brand)
+        conn.commit()
+        rows = conn.execute("SELECT * FROM engagement_plan WHERE brand_id=? "
+                            "ORDER BY COALESCE(period_start, created_at) DESC, id DESC", (bid,)).fetchall()
+        return [_plan_dict(conn, r) for r in rows]
+    finally:
+        conn.close()
+
+
+def update_plan(plan_id: int, **fields) -> dict:
+    cur = get_plan(plan_id)
+    name = fields.get("name", cur["name"])
+    if not (name or "").strip():
+        raise ValueError("an engagement plan needs a name")
+    start, end = _check_period(fields.get("period_start", cur["period_start"]),
+                               fields.get("period_end", cur["period_end"]))
+    status = fields.get("status", cur["status"])
+    if status not in PLAN_STATUSES:
+        raise ValueError(f"status must be one of {', '.join(PLAN_STATUSES)}")
+    conn = _conn()
+    try:
+        conn.execute("UPDATE engagement_plan SET name=?, period_start=?, period_end=?, status=?, updated_at=? "
+                     "WHERE id=?", (name.strip(), start, end, status, _now(), plan_id))
+        conn.commit()
+    finally:
+        conn.close()
+    return get_plan(plan_id)
+
+
+def _earlier_work_plan(conn, brand_id: int) -> int:
+    r = conn.execute("SELECT id FROM engagement_plan WHERE brand_id=? AND name=? ORDER BY id LIMIT 1",
+                     (brand_id, EARLIER_WORK)).fetchone()
+    if r:
+        return r["id"]
+    cur = conn.execute(
+        "INSERT INTO engagement_plan (brand_id, name, status, created_at, updated_at) VALUES (?,?,?,?,?)",
+        (brand_id, EARLIER_WORK, "active", _now(), _now()))
+    return cur.lastrowid
+
+
+# ------------------------------------------------------------------------- campaigns ----
+
+def _derive_status(conn, c: dict) -> str:
+    """KTD5: closed stays closed; a Campaign Plan is confirmed once a version exists (Deploy
+    done); flows-only campaigns are confirmed when every flow is; anything underway is
+    in_progress; otherwise draft."""
+    if c["status"] == "closed":
+        return "closed"
+    flows = [r["status"] for r in conn.execute("SELECT status FROM flow WHERE campaign_id=?", (c["id"],))]
+    if c.get("project_id"):
+        versions = conn.execute("SELECT COUNT(*) AS n FROM campaign_version WHERE campaign_id=?",
+                                (c["id"],)).fetchone()["n"]
+        if versions:
+            return "confirmed"
+        return "in_progress" if (c.get("status_detail") or flows) else "draft"
+    if flows:
+        return "confirmed" if all(s == "confirmed" for s in flows) else "in_progress"
+    return "draft"
+
+
+def _refresh_status(conn, campaign_id: int) -> None:
+    r = conn.execute("SELECT * FROM campaign WHERE id=?", (campaign_id,)).fetchone()
+    if r is None:
+        return
+    status = _derive_status(conn, dict(r))
+    if status != r["status"]:
+        conn.execute("UPDATE campaign SET status=?, updated_at=? WHERE id=?", (status, _now(), campaign_id))
+
+
+def _campaign_dict(conn, r) -> dict:
+    c = _row(r)
+    for k in ("snapshot_json",):
+        c.pop(k, None)
+    c["has_campaign_plan"] = bool(c.get("project_id"))
+    c["versions"] = conn.execute("SELECT COUNT(*) AS n FROM campaign_version WHERE campaign_id=?",
+                                 (c["id"],)).fetchone()["n"]
+    c["flow_count"] = conn.execute("SELECT COUNT(*) AS n FROM flow WHERE campaign_id=?",
+                                   (c["id"],)).fetchone()["n"]
+    b = conn.execute("SELECT kit_key FROM brand WHERE id=?", (c["brand_id"],)).fetchone() if c.get("brand_id") else None
+    c["brand"] = b["kit_key"] if b else None
+    return c
+
+
+def create_campaign(plan_id: int, name: str) -> dict:
+    name = (name or "").strip()
+    if not name:
+        raise ValueError("a campaign needs a name")
+    plan = get_plan(plan_id)
+    if plan["status"] == "closed":
+        raise ValueError("this engagement plan is closed")
+    conn = _conn()
+    try:
+        cur = conn.execute(
+            "INSERT INTO campaign (brand_id, engagement_plan_id, name, status, created_at, updated_at) "
+            "VALUES (?,?,?,?,?,?)", (plan["brand_id"], plan_id, name, "draft", _now(), _now()))
+        conn.commit()
+        return get_campaign(cur.lastrowid)
+    finally:
+        conn.close()
+
+
+def get_campaign(campaign_id: int) -> dict:
+    conn = _conn()
+    try:
+        r = conn.execute("SELECT * FROM campaign WHERE id=?", (campaign_id,)).fetchone()
+        if r is None:
+            raise NotFound(f"no campaign {campaign_id}")
+        return _campaign_dict(conn, r)
+    finally:
+        conn.close()
+
+
+def list_campaigns(plan_id: int) -> list[dict]:
+    get_plan(plan_id)
+    conn = _conn()
+    try:
+        rows = conn.execute("SELECT * FROM campaign WHERE engagement_plan_id=? ORDER BY updated_at DESC, id DESC",
+                            (plan_id,)).fetchall()
+        return [_campaign_dict(conn, r) for r in rows]
+    finally:
+        conn.close()
+
+
+def rename_campaign(campaign_id: int, name: str) -> dict:
+    name = (name or "").strip()
+    if not name:
+        raise ValueError("a campaign needs a name")
+    get_campaign(campaign_id)
+    conn = _conn()
+    try:
+        conn.execute("UPDATE campaign SET name=?, updated_at=? WHERE id=?", (name, _now(), campaign_id))
+        conn.commit()
+    finally:
+        conn.close()
+    return get_campaign(campaign_id)
+
+
+def move_campaign(campaign_id: int, target_plan_id: int) -> dict:
+    """Same brand: the campaign moves (R17). Another brand: it is closed and a new campaign
+    opens in the target plan, taking over the Campaign Plan's project so later versions attach
+    there (R16). Flows stay with the closed campaign -- they were built from the old brand."""
+    c = get_campaign(campaign_id)
+    if c["status"] == "closed":
+        raise ValueError("a closed campaign can't be moved")
+    target = get_plan(target_plan_id)
+    if target["status"] == "closed":
+        raise ValueError("the target engagement plan is closed")
+    conn = _conn()
+    try:
+        if target["brand_id"] == c["brand_id"]:
+            conn.execute("UPDATE campaign SET engagement_plan_id=?, updated_at=? WHERE id=?",
+                         (target_plan_id, _now(), campaign_id))
+            conn.commit()
+            return get_campaign(campaign_id)
+        conn.execute("UPDATE campaign SET status='closed', closed_at=?, updated_at=? WHERE id=?",
+                     (_now(), _now(), campaign_id))
+        cur = conn.execute(
+            "INSERT INTO campaign (project_id, brand_id, engagement_plan_id, name, status, status_detail, "
+            "created_at, updated_at) VALUES (?,?,?,?,?,?,?,?)",
+            (c.get("project_id"), target["brand_id"], target_plan_id, c["name"], "draft",
+             c.get("status_detail"), _now(), _now()))
+        new_id = cur.lastrowid
+        _refresh_status(conn, new_id)
+        conn.commit()
+    finally:
+        conn.close()
+    if c.get("project_id"):
+        _set_project_brand(c["project_id"], target["brand"])
+    return get_campaign(new_id)
+
+
+def _set_project_brand(project_id: str, brand: str) -> None:
+    from strategy import projects as pstore
+    proj = pstore.get_project(project_id)
+    if proj:
+        state = proj["state"]
+        state.setdefault("slots", {})["brand"] = brand
+        pstore.save_project(project_id, state=state)
+
+
+# ----------------------------------------------------------------------------- flows ----
+
+def create_flow(campaign_id: int, name: str, origin: str = "manual") -> dict:
+    name = (name or "").strip()
+    if not name:
+        raise ValueError("a flow needs a name")
+    if origin not in FLOW_ORIGINS:
+        raise ValueError(f"origin must be one of {', '.join(FLOW_ORIGINS)}")
+    c = get_campaign(campaign_id)
+    if c["status"] == "closed":
+        raise ValueError("this campaign is closed")
+    conn = _conn()
+    try:
+        cur = conn.execute("INSERT INTO flow (campaign_id, name, origin, status, created_at, updated_at) "
+                           "VALUES (?,?,?,?,?,?)", (campaign_id, name, origin, "draft", _now(), _now()))
+        _refresh_status(conn, campaign_id)
+        conn.commit()
+        return get_flow(cur.lastrowid)
+    finally:
+        conn.close()
+
+
+def get_flow(flow_id: int) -> dict:
+    conn = _conn()
+    try:
+        r = conn.execute("SELECT id, campaign_id, name, origin, status, created_at, updated_at FROM flow WHERE id=?",
+                         (flow_id,)).fetchone()
+        if r is None:
+            raise NotFound(f"no flow {flow_id}")
+        return _row(r)
+    finally:
+        conn.close()
+
+
+def list_flows(campaign_id: int) -> list[dict]:
+    get_campaign(campaign_id)
+    conn = _conn()
+    try:
+        rows = conn.execute("SELECT id, campaign_id, name, origin, status, created_at, updated_at FROM flow "
+                            "WHERE campaign_id=? ORDER BY updated_at DESC, id DESC", (campaign_id,)).fetchall()
+        return [_row(r) for r in rows]
+    finally:
+        conn.close()
+
+
+# ------------------------------------------------------------------------------ tree ----
+
+def tree(brand: str) -> dict:
+    key = brand_key(brand)
+    plans = list_plans(key)
+    for p in plans:
+        p["campaigns"] = list_campaigns(p["id"])
+        for c in p["campaigns"]:
+            c["flows"] = list_flows(c["id"])
+    return {"brand": key, "engagement_plans": plans}
+
+
+# -------------------------------------------------------------------- Campaign Plans ----
+
+def open_campaign_for_project(project_id: str) -> dict | None:
+    conn = _conn()
+    try:
+        r = conn.execute("SELECT * FROM campaign WHERE project_id=? AND status<>'closed' ORDER BY id DESC LIMIT 1",
+                         (project_id,)).fetchone()
+        return _campaign_dict(conn, r) if r else None
+    finally:
+        conn.close()
+
+
+def bind_project(campaign_id: int, project_id: str) -> dict:
+    """Link a newly created Campaign Plan project to its campaign (R13)."""
+    c = get_campaign(campaign_id)
+    if c["status"] == "closed":
+        raise ValueError("this campaign is closed")
+    if c.get("project_id"):
+        raise ValueError("this campaign already has a campaign plan")
+    conn = _conn()
+    try:
+        conn.execute("UPDATE campaign SET project_id=?, updated_at=? WHERE id=?", (project_id, _now(), campaign_id))
+        _refresh_status(conn, campaign_id)
+        conn.commit()
+    finally:
+        conn.close()
+    return get_campaign(campaign_id)
+
+
+def mark_plan_phase(project_id: str, phase: str) -> None:
+    """A Campaign Plan phase ran: record it so the campaign reads in_progress (KTD5)."""
+    conn = _conn()
+    try:
+        r = conn.execute("SELECT id FROM campaign WHERE project_id=? AND status<>'closed' ORDER BY id DESC LIMIT 1",
+                         (project_id,)).fetchone()
+        if r is None:
+            return
+        conn.execute("UPDATE campaign SET status_detail=?, updated_at=? WHERE id=?", (phase, _now(), r["id"]))
+        _refresh_status(conn, r["id"])
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def after_plan_saved(campaign_id: int) -> None:
+    """A Campaign Plan version was stored: place an unlinked campaign (a plan started outside
+    the hierarchy, which only the legacy frontend/ home can still do) under its kit brand's
+    "Earlier work" plan, and refresh its status."""
+    conn = _conn()
+    try:
+        r = conn.execute("SELECT * FROM campaign WHERE id=?", (campaign_id,)).fetchone()
+        if r is None:
+            return
+        if r["engagement_plan_id"] is None and r["brand_id"] is not None:
+            b = conn.execute("SELECT kit_key FROM brand WHERE id=?", (r["brand_id"],)).fetchone()
+            if b and b["kit_key"]:
+                conn.execute("UPDATE campaign SET engagement_plan_id=? WHERE id=?",
+                             (_earlier_work_plan(conn, r["brand_id"]), campaign_id))
+        _refresh_status(conn, campaign_id)
+        conn.commit()
+    finally:
+        conn.close()
+
+
+# -------------------------------------------------------------------------- backfill ----
+
+def backfill() -> dict:
+    """Idempotent (R20). Links brand rows to kits, folds duplicate campaigns of one project
+    into one campaign with numbered versions, places unplaced campaigns and kit-brand projects
+    without a campaign into the brand's "Earlier work" plan, and logs what it can't place."""
+    from strategy import projects as pstore
+    out = {"linked_brands": 0, "folded": 0, "placed": 0, "created": 0, "unplaced": []}
+    conn = _conn()
+    try:
+        # 1. Brand rows whose name matches a kit.
+        for r in conn.execute("SELECT id, name FROM brand WHERE kit_key IS NULL").fetchall():
+            key = brand_kit.canonical_key(r["name"])
+            if key and not conn.execute("SELECT 1 FROM brand WHERE kit_key=?", (key,)).fetchone():
+                conn.execute("UPDATE brand SET kit_key=? WHERE id=?", (key, r["id"]))
+                out["linked_brands"] += 1
+        # Campaigns pointing at a duplicate-name brand row move to the kit's row.
+        for r in conn.execute("SELECT c.id, b.name FROM campaign c JOIN brand b ON b.id=c.brand_id "
+                              "WHERE b.kit_key IS NULL").fetchall():
+            key = brand_kit.canonical_key(r["name"])
+            if key:
+                conn.execute("UPDATE campaign SET brand_id=? WHERE id=?",
+                             (campaign_store.brand_row_for_kit(conn, key), r["id"]))
+
+        # 2. Fold duplicates: several open campaigns for one project -> the oldest keeps them
+        # all as versions, in creation order. The duplicates' derived rows are dropped (their
+        # plan and result live on in the moved versions' blobs).
+        dup_projects = conn.execute(
+            "SELECT project_id FROM campaign WHERE project_id IS NOT NULL AND status<>'closed' "
+            "GROUP BY project_id HAVING COUNT(*) > 1").fetchall()
+        for d in dup_projects:
+            ids = [r["id"] for r in conn.execute(
+                "SELECT id FROM campaign WHERE project_id=? AND status<>'closed' ORDER BY id", (d["project_id"],))]
+            keeper, extra = ids[0], ids[1:]
+            versions = conn.execute(
+                "SELECT id FROM campaign_version WHERE campaign_id IN (%s) ORDER BY created_at, id"
+                % ",".join("?" * len(ids)), ids).fetchall()
+            # Park numbers out of the way first so the UNIQUE(campaign_id, version_no) holds.
+            for i, v in enumerate(versions, start=1):
+                conn.execute("UPDATE campaign_version SET campaign_id=?, version_no=? WHERE id=?",
+                             (keeper, -i, v["id"]))
+            for i, v in enumerate(versions, start=1):
+                conn.execute("UPDATE campaign_version SET version_no=? WHERE id=?", (i, v["id"]))
+            for cid in extra:
+                conn.execute("UPDATE flow SET campaign_id=? WHERE campaign_id=?", (keeper, cid))
+                for table in ("campaign_segment", "campaign_message", "campaign_channel", "campaign_kpi"):
+                    conn.execute(f"DELETE FROM {table} WHERE campaign_id=?", (cid,))
+                conn.execute("DELETE FROM campaign WHERE id=?", (cid,))
+                out["folded"] += 1
+
+        # 3. Unplaced campaigns of a kit brand -> "Earlier work".
+        for r in conn.execute("SELECT c.id, c.brand_id, c.project_id, b.kit_key, b.name FROM campaign c "
+                              "LEFT JOIN brand b ON b.id=c.brand_id WHERE c.engagement_plan_id IS NULL").fetchall():
+            if r["kit_key"]:
+                conn.execute("UPDATE campaign SET engagement_plan_id=? WHERE id=?",
+                             (_earlier_work_plan(conn, r["brand_id"]), r["id"]))
+                out["placed"] += 1
+            else:
+                out["unplaced"].append({"campaign_id": r["id"], "project_id": r["project_id"],
+                                        "brand": r["name"]})
+
+        # 4. Projects with a kit brand and no campaign -> a campaign in "Earlier work".
+        linked = {r["project_id"] for r in conn.execute(
+            "SELECT project_id FROM campaign WHERE project_id IS NOT NULL")}
+        seen_unplaced = {u["project_id"] for u in out["unplaced"]}
+        pconn = pstore._conn()
+        try:
+            prows = pconn.execute("SELECT id, name, state_json, created_at FROM projects").fetchall()
+        finally:
+            pconn.close()
+        for p in prows:
+            if p["id"] in linked:
+                continue
+            try:
+                pstate = json.loads(p["state_json"] or "{}") or {}
+            except ValueError:
+                pstate = {}
+            slots = pstate.get("slots") or {}
+            started = pstate.get("phase") not in (None, "", "collecting")
+            name = (slots.get("brand") or "").strip()
+            key = brand_kit.canonical_key(name) if name else None
+            if key is None:
+                if p["id"] not in seen_unplaced:
+                    out["unplaced"].append({"campaign_id": None, "project_id": p["id"], "brand": name or None})
+                continue
+            bid = campaign_store.brand_row_for_kit(conn, key)
+            cur = conn.execute(
+                "INSERT INTO campaign (project_id, brand_id, engagement_plan_id, name, status, status_detail, "
+                "created_at, updated_at) VALUES (?,?,?,?,?,?,?,?)",
+                (p["id"], bid, _earlier_work_plan(conn, bid), p["name"] or f"{key} plan", "draft",
+                 pstate.get("phase") if started else None, p["created_at"] or _now(), _now()))
+            out["created"] += 1
+            _refresh_status(conn, cur.lastrowid)
+
+        for r in conn.execute("SELECT id FROM campaign WHERE engagement_plan_id IS NOT NULL").fetchall():
+            _refresh_status(conn, r["id"])
+        conn.commit()
+    finally:
+        conn.close()
+    return out

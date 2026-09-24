@@ -457,7 +457,15 @@ def _match_indication(message: str, options: list[str]) -> str | None:
     return best if best_score >= 1 else None
 
 
-def opening_message() -> str:
+def opening_message(brand: str = "", campaign: str = "") -> str:
+    if brand:
+        return (
+            f"Hi — I'm your campaign planning agent for **{brand}**"
+            + (f", campaign **{campaign}**" if campaign else "")
+            + ". **Fill in the brief above** (edit the blanks, or paste your own in any wording) and "
+            "I'll pull out the details — indication, lifecycle stage, audience, budget and the rest. "
+            "I'll infer what I can and ask about anything important that's missing."
+        )
     return (
         "Hi — I'm your brand engagement planning agent. **Fill in the brief above** (edit the "
         "blanks, or paste your own in any wording) and I'll pull out the details — brand, molecule, "

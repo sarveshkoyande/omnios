@@ -46,7 +46,7 @@ ID_TABLES = {
     "client", "brand", "indication", "taxonomy_term", "ref_source", "claim",
     "content_module", "content_asset", "campaign", "campaign_version", "campaign_segment",
     "campaign_message", "campaign_channel", "campaign_kpi", "review_record",
-    "brand_market_intel", "campaign_award",
+    "brand_market_intel", "campaign_award", "engagement_plan", "flow",
     "sync_event",  # orchestration_store: id INTEGER PRIMARY KEY AUTOINCREMENT
 }
 # NOT id-tables: blob (TEXT pk), blob_data (TEXT pk), claim_reference / module_claim /

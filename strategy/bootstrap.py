@@ -124,6 +124,23 @@ def seed_library() -> dict:
     return result
 
 
+def _backfill_hierarchy() -> dict:
+    """Place existing campaigns and plans into Brand > Engagement Plan > Campaign (idempotent;
+    strategy/hierarchy.py). Never fails startup."""
+    try:
+        if str(ROOT) not in sys.path:
+            sys.path.insert(0, str(ROOT))
+        from strategy import hierarchy
+        res = hierarchy.backfill()
+        if res["unplaced"]:
+            print(f"[bootstrap] hierarchy: {len(res['unplaced'])} legacy item(s) with no matching brand kit "
+                  f"were left out: {res['unplaced']}")
+        return {k: (len(v) if isinstance(v, list) else v) for k, v in res.items()}
+    except Exception:  # noqa: BLE001
+        print("[bootstrap] hierarchy backfill failed:\n" + traceback.format_exc())
+        return {"error": "backfill failed"}
+
+
 def run(background: bool = True) -> dict:
     """Idempotent boot seeding. seed_kb() runs synchronously (fast, and the KB must exist
     before anything reads it); the heavier library rebuild runs only when the library is
@@ -133,6 +150,7 @@ def run(background: bool = True) -> dict:
 
     import hcp_360
     out["hcp_360"] = hcp_360.load_hcp_360()
+    out["hierarchy"] = _backfill_hierarchy()
 
     if not library_is_empty():
         return out
@@ -144,6 +162,7 @@ def run(background: bool = True) -> dict:
             print("[bootstrap] empty library detected -- rebuilding from committed seeds...")
             res = seed_library()
             print(f"[bootstrap] library seeded: {res}")
+            _backfill_hierarchy()
         except Exception:  # noqa: BLE001 -- never crash startup on a seeding failure
             print("[bootstrap] library seeding failed:\n" + traceback.format_exc())
         finally:
