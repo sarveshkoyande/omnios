@@ -212,31 +212,6 @@ export default function App() {
                         })}
                       </div>
                     )}
-                    {(tree?.engagement_plans ?? []).length > 0 && <div className="rail-tree-label">Engagement plans</div>}
-                    {tree?.engagement_plans.map((p) => (
-                      <div key={p.id}>
-                        <a className={`rail-tree-item ${p.status === "closed" ? "is-closed" : ""} ${route.kind === "plan" && p.id === planId ? "active" : ""}`}
-                          href={href({ kind: "plan", brand: b.brand, planId: p.id })}>{p.name}</a>
-                        {p.id === planId && p.campaigns.map((c) => (
-                          <div key={c.id} className="rail-tree-nest">
-                            <a className={`rail-tree-item ${c.status === "closed" ? "is-closed" : ""} ${route.kind === "campaign" && c.id === campaignId ? "active" : ""}`}
-                              href={href({ kind: "campaign", brand: b.brand, planId: p.id, campaignId: c.id })}>{c.name}</a>
-                            {c.id === campaignId && (
-                              <div className="rail-tree-nest">
-                                {c.has_campaign_plan && (
-                                  <a className={`rail-tree-item ${route.kind === "campaign-plan" ? "active" : ""}`}
-                                    href={href({ kind: "campaign-plan", brand: b.brand, planId: p.id, campaignId: c.id })}>Campaign Plan</a>
-                                )}
-                                {c.flows.map((f) => (
-                                  <a key={f.id} className={`rail-tree-item ${f.id === flowId ? "active" : ""}`}
-                                    href={href({ kind: "flow", brand: b.brand, planId: p.id, campaignId: c.id, flowId: f.id })}>{f.name}</a>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    ))}
                   </div>
                 )}
               </div>

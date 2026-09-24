@@ -1099,7 +1099,7 @@ a.rail-add-brand { display: inline-grid; place-items: center; color: inherit; te
    between them. */
 .hier-master {
   display: grid; grid-template-columns: 2fr 1px 3fr; align-items: stretch;
-  background: var(--base-white); border-radius: var(--radius-md); box-shadow: var(--neu-flat); overflow: hidden;
+  background: var(--base-white); border-radius: var(--radius-md); box-shadow: var(--neu-flat);
 }
 .hier-master-divider { background: var(--neutral-200); }
 @media (max-width: 860px) {
@@ -1114,22 +1114,25 @@ a.rail-add-brand { display: inline-grid; place-items: center; color: inherit; te
 }
 .hier-search {
   display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-radius: var(--radius-full);
-  box-shadow: var(--neu-inset-sm); color: var(--muted);
+  box-shadow: inset 0 0 0 1px var(--primary); color: var(--muted);
 }
 .hier-search-input {
   flex: 1; border: 0; background: transparent; font-family: inherit; font-size: 13px; color: var(--fg);
   padding: 0; box-shadow: none; min-height: unset;
 }
 .hier-search-input:focus { outline: none; box-shadow: none; }
-.hier-plan-list { display: flex; flex-direction: column; gap: 4px; flex: 1; min-height: 0; overflow-y: auto; }
+/* scrollbar-gutter reserves the scrollbar's own track so a classic (non-overlay) scrollbar
+   never sits flush against a row's rounded right edge and visually flattens it -- the
+   actual cause of rows looking "cut" on the side in browsers without overlay scrollbars. */
+.hier-plan-list { display: flex; flex-direction: column; gap: 4px; flex: 1; min-height: 0; overflow-y: auto; scrollbar-gutter: stable; padding-right: 2px; }
 .hier-plan-row {
   display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left;
   font-family: inherit; border: none; background: transparent; border-radius: var(--radius-sm);
   padding: 10px 12px; cursor: pointer; transition: background 160ms ease;
 }
 .hier-plan-row:hover { background: var(--primary-light-background); }
-.hier-plan-row.active { background: var(--primary-light-background); box-shadow: var(--neu-inset-sm); }
-.hier-plan-row:focus-visible { outline: none; box-shadow: var(--neu-inset-sm); }
+.hier-plan-row.active { background: var(--primary-light-background); box-shadow: inset 0 0 0 1px var(--primary); }
+.hier-plan-row:focus-visible { outline: none; box-shadow: inset 0 0 0 1px var(--primary); }
 .hier-plan-row-name { font-size: 13px; font-weight: 700; color: var(--fg); }
 .hier-plan-row-sub { font-size: 11.5px; color: var(--muted); }
 
