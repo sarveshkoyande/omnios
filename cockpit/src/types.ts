@@ -221,3 +221,74 @@ export interface BrandKit {
   care_continuum: Record<string, unknown>;
   identity: Identity;
 }
+
+/* ---- Agentic Brand Journey (plan U4/U5) -- shapes returned by /api/brands/{brand}/journey ---- */
+
+export const JOURNEY_STEPS = ["brief", "audience", "message", "kit", "flow"] as const;
+export type JourneyStepId = (typeof JOURNEY_STEPS)[number];
+export type JourneyStepStatus = "not_started" | "drafted" | "confirmed";
+
+export interface JourneyDraft {
+  id: string;
+  step: JourneyStepId;
+  field: string;
+  /** "set" replaces the field; "append" adds `value` as one item (to sub-list `path` if set). */
+  mode: "set" | "append" | string;
+  path: string | null;
+  value: unknown;
+  created_at: string;
+}
+
+export interface JourneyQuestion {
+  step: JourneyStepId;
+  key: string;
+  target: string;
+  question: string;
+  chips: string[];
+  required: boolean;
+}
+
+export interface JourneyTurnNote {
+  role: string;
+  text: string;
+  created_at: string;
+}
+
+export interface JourneyStep {
+  step: JourneyStepId;
+  label: string;
+  status: JourneyStepStatus;
+  waiting: JourneyStepId[];
+  drafts: JourneyDraft[];
+  question: JourneyQuestion | null;
+  earlier_count: number;
+  history?: JourneyTurnNote[];
+}
+
+export interface JourneyState {
+  brand: string;
+  steps: JourneyStep[];
+}
+
+export interface JourneyTurnResult {
+  reply: string;
+  question: JourneyQuestion | null;
+  drafts: JourneyDraft[];
+  dropped: string[];
+  mode: "llm" | "fallback";
+  state: JourneyState;
+}
+
+export interface JourneyFlowNode {
+  id: string;
+  type: string;
+  position?: { x: number; y: number };
+  data: { label: string; day?: number | string; channel?: string; detail?: string; block_code?: string };
+}
+
+export interface JourneyFlow {
+  brand: string;
+  status: "waiting" | "not_built" | "built";
+  waiting: JourneyStepId[];
+  flow: { nodes: JourneyFlowNode[]; edges: unknown[] } | null;
+}

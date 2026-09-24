@@ -489,6 +489,8 @@ def apply_document(brand: str, text: str) -> list[str]:
 
 
 _NAME_RE = re.compile(r"\b(?:called|named)\s+([A-Z][\w\-]*)")
+# "Zeltrova is a ..." / "Zeltrova, a ..." -- a leading capitalised word used as the subject.
+_LEAD_NAME_RE = re.compile(r"^([A-Z][\w\-]+)(?:\s+is\b|\s+will\b|,)")
 
 
 def name_from_description(description: str) -> str:
@@ -496,6 +498,9 @@ def name_from_description(description: str) -> str:
     or "... named X", else the whole description when it is one to three words."""
     d = (description or "").strip()
     m = _NAME_RE.search(d)
+    if m:
+        return m.group(1)
+    m = _LEAD_NAME_RE.match(d)
     if m:
         return m.group(1)
     return d if d and len(d.split()) <= 3 else ""
@@ -506,7 +511,8 @@ def start_journey(name: str, description: str, text: str) -> dict:
     from the document (brand_kit.infer_brand_name) or the description. ValueError when no
     name can be found, KeyError when the brand already exists."""
     name = ((name or "").strip() or (brand_kit.infer_brand_name(text) if text else "")
-            or name_from_description(description))
+            or name_from_description(description)
+            or (brand_kit.infer_brand_name(description) if description else ""))
     if not name:
         raise ValueError("couldn't tell the brand's name -- pass it as 'name'")
     brand_kit.create_brand(name)

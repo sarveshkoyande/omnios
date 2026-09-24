@@ -1,13 +1,22 @@
 import { useEffect, useState } from "react";
 import { getBrandKit, listBrands } from "./api";
-import type { BrandKit, BrandSummary, KitUpdateSection } from "./types";
+import type { BrandKit, BrandSummary, JourneyStepId, KitUpdateSection } from "./types";
 import { BrandWorkspace } from "./components/BrandWorkspace";
 import { AgentLibrary } from "./components/AgentLibrary";
-import { KitUpdateScreen } from "./components/KitUpdateScreen";
+import { JourneyScreen } from "./components/journey/JourneyScreen";
 import { Icon } from "./components/Icon";
 import "./cockpit.css";
 
-type View = "workspace" | "agents" | "kit-update";
+type View = "workspace" | "agents" | "journey";
+
+/** Old guided-update sections map onto the journey step that now owns that content. */
+const SECTION_STEP: Record<KitUpdateSection, JourneyStepId> = {
+  "kit-brand-details": "message",
+  "kit-brand-persona": "message",
+  "kit-guardrails": "kit",
+  "kit-hcp-persona": "audience",
+  "kit-hcp-segmentation": "audience",
+};
 
 export default function App() {
   const [view, setView] = useState<View>("workspace");
@@ -17,8 +26,9 @@ export default function App() {
   const [territory, setTerritory] = useState<string | null>(null);
   const [kit, setKit] = useState<BrandKit | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [kitUpdateSection, setKitUpdateSection] = useState<KitUpdateSection | null>(null);
+  const [journeyStep, setJourneyStep] = useState<JourneyStepId>("brief");
   const [newBrandSetup, setNewBrandSetup] = useState(false);
+  const [kitVersion, setKitVersion] = useState(0);
 
   useEffect(() => {
     listBrands()
@@ -39,33 +49,33 @@ export default function App() {
     getBrandKit(selected, territory)
       .then((r) => setKit(r.kit))
       .catch((e) => setError(String(e)));
-  }, [selected, territory]);
+  }, [selected, territory, kitVersion]);
 
   const selectBrand = (b: BrandSummary) => {
     setSelected(b.brand);
     setTerritory(b.territories[0] ?? null);
-    // The brand switcher is now reachable from every view (including kit-update); picking
+    // The brand switcher is now reachable from every view (including the journey); picking
     // a different brand always lands on that brand's workspace rather than leaving a
-    // kit-update session open for the brand you just navigated away from.
+    // journey open for the brand you just navigated away from.
     setView("workspace");
   };
 
-  const openKitUpdate = (section: KitUpdateSection) => {
-    setKitUpdateSection(section);
-    setView("kit-update");
+  const openJourney = (section: KitUpdateSection) => {
+    setJourneyStep(SECTION_STEP[section] ?? "brief");
+    setNewBrandSetup(false);
+    setView("journey");
   };
 
-  /** New Brand setup finished (KitUpdateScreen's own newBrand mode -- same screen the
-   *  whole way through, not a handoff from a separate wizard): refresh the brand list so
-   *  the rail picks it up, select it, and switch off newBrand mode so the screen falls
-   *  through to its normal five-tab view with the drafts setupBrand() already seeded. */
-  const onNewBrandComplete = async (brand: string) => {
+  /** Journey start panel created the brand: refresh the brand list so the rail picks it
+   *  up, select it, and drop out of start-panel mode onto the step the journey chose
+   *  (Brief for a sentence, the first drafted step for a document). */
+  const onNewBrandComplete = async (brand: string, step: JourneyStepId) => {
     const r = await listBrands();
     setBrands(r.brands);
     setKnownTerritories(r.known_territories);
     setSelected(brand);
     setTerritory(r.brands.find((b) => b.brand === brand)?.territories[0] ?? null);
-    setKitUpdateSection("kit-brand-details");
+    setJourneyStep(step);
     setNewBrandSetup(false);
   };
 
@@ -96,7 +106,7 @@ export default function App() {
           Agent Library
         </button>
 
-        {/* Persistent across every view, including the kit-update ("agent") screen --
+        {/* Persistent across every view, including the journey screen --
             the brand switcher is app-level context, not workspace-view-specific chrome. */}
         <div className="rail-section-row" style={{ marginTop: 24 }}>
           <span className="rail-section-label" style={{ marginTop: 0 }}>Brands</span>
@@ -105,7 +115,7 @@ export default function App() {
             className="rail-add-brand"
             title="Set up a new brand"
             aria-label="Set up a new brand"
-            onClick={() => { setNewBrandSetup(true); setKitUpdateSection("kit-brand-details"); setView("kit-update"); }}
+            onClick={() => { setNewBrandSetup(true); setJourneyStep("brief"); setView("journey"); }}
           >
             <Icon name="plus" size={14} />
           </button>
@@ -156,16 +166,16 @@ export default function App() {
           <>
             {error && <div className="error-banner">Couldn't load brand data: {error}</div>}
             {!error && !kit && <div className="loading">Loading brand workspace&hellip;</div>}
-            {kit && selected && <BrandWorkspace brand={selected} kit={kit} onUpdate={openKitUpdate} />}
+            {kit && selected && <BrandWorkspace brand={selected} kit={kit} onUpdate={openJourney} />}
           </>
         )}
-        {view === "kit-update" && kitUpdateSection && (newBrandSetup || selected) && (
-          <KitUpdateScreen
-            brand={newBrandSetup ? "" : selected!}
-            initialSection={kitUpdateSection}
-            newBrand={newBrandSetup}
-            knownTerritories={knownTerritories}
+        {view === "journey" && (newBrandSetup || selected) && (
+          <JourneyScreen
+            key={newBrandSetup ? "new" : selected}
+            brand={newBrandSetup ? null : selected}
+            initialStep={journeyStep}
             onBrandCreated={onNewBrandComplete}
+            onKitChanged={() => setKitVersion((v) => v + 1)}
             onClose={() => { setNewBrandSetup(false); setView("workspace"); }}
           />
         )}

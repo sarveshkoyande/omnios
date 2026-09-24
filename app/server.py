@@ -989,6 +989,12 @@ def api_journey_confirm(brand: str, step: str):
     return _journey_call(brand_journey.journey_state, brand)
 
 
+@app.post("/api/brands/{brand}/journey/{step}/reopen")
+def api_journey_reopen(brand: str, step: str):
+    _journey_call(brand_journey.reopen, brand, _journey_step(step))
+    return _journey_call(brand_journey.journey_state, brand)
+
+
 @app.get("/api/brand-kits/{brand}")
 def api_brand_kit(brand: str, territory: str | None = None):
     """One brand's full kit: story, messages, claims, references, clinical data, guardrails,
