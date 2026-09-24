@@ -59,11 +59,10 @@ def _now() -> str:
 
 def _key(brand: str) -> str:
     """Canonical kit key for `brand` (case-insensitive), or KeyError."""
-    name = (brand or "").strip().lower()
-    for k in brand_kit._load():
-        if k.lower() == name:
-            return k
-    raise KeyError(f"no brand kit for '{brand}'")
+    key = brand_kit.canonical_key(brand)
+    if key is None:
+        raise KeyError(f"no brand kit for '{brand}'")
+    return key
 
 
 def answers_for(brand: str) -> dict:

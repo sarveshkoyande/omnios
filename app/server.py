@@ -926,9 +926,10 @@ def api_journey_flow_build(brand: str):
 
 @app.post("/api/brands/{brand}/journey/{step}/turn")
 def api_journey_turn(brand: str, step: str, req: JourneyTurnRequest):
-    if _journey_step(step) == "flow":
+    step = _journey_step(step)
+    if step == "flow":
         return _journey_call(brand_journey.flow_turn, brand, req.message, req.ops)
-    return _journey_call(brand_journey.agent_turn, brand, _journey_step(step), req.message)
+    return _journey_call(brand_journey.agent_turn, brand, step, req.message)
 
 
 @app.post("/api/brands/{brand}/journey/{step}/keep")

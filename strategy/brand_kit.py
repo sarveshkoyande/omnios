@@ -76,15 +76,18 @@ def list_brands() -> list[dict]:
     ]
 
 
+def canonical_key(brand: str) -> str | None:
+    """The stored kit key matching `brand` case-insensitively, or None."""
+    name = (brand or "").strip().lower()
+    if not name:
+        return None
+    return next((k for k in _load() if k.lower() == name), None)
+
+
 def kit_for(brand: str) -> dict | None:
     """The kit for `brand` (case-insensitive), or None."""
-    if not brand:
-        return None
-    kits = _load()
-    for name, kit in kits.items():
-        if name.lower() == brand.strip().lower():
-            return kit
-    return None
+    key = canonical_key(brand)
+    return _load()[key] if key is not None else None
 
 
 def apply_diff(brand: str, fields: dict) -> dict:
