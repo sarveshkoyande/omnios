@@ -98,7 +98,7 @@ export function FlowPage({ brand, planId, campaignId, meta, onChanged }: {
         <section className="jc-card">
           <div className="hier-row">
             <span>{d.frozen ? "A frozen copy of the diagram from when this campaign was moved to another brand."
-              : "This is the Campaign Plan's Operations diagram. Edit it in the Campaign Plan."}</span>
+              : "This is the Campaign Plan's Operations diagram, shown read-only. Editing it in the Cockpit comes with the Campaign Plan's Operations stage."}</span>
             {!d.frozen && <a className="jc-btn jc-btn-keep" href={href({ kind: "campaign-plan", brand, planId, campaignId })}>Open Campaign Plan</a>}
           </div>
           {d.document ? <div className="jc-flow-frame"><DocumentDiagram doc={d.document} /></div>

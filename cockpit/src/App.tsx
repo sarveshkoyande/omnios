@@ -9,7 +9,7 @@ import { BrandOverview } from "./components/hierarchy/BrandOverview";
 import { EngagementPlanPage } from "./components/hierarchy/EngagementPlanPage";
 import { CampaignPage } from "./components/hierarchy/CampaignPage";
 import { FlowPage } from "./components/hierarchy/FlowPage";
-import { CampaignPlanView } from "./components/hierarchy/CampaignPlanView";
+import { CampaignPlanPage } from "./components/campaignplan/CampaignPlanPage";
 import { go, href, routeBrand, useRoute, type Route } from "./route";
 import "./cockpit.css";
 
@@ -144,7 +144,11 @@ export default function App() {
         if (route.kind === "plan") return <EngagementPlanPage key={plan.id} brand={tree.brand} plan={plan} onChanged={refreshTree} />;
         if (!campaign) return <div className="error-banner">That campaign isn't in {plan.name}.</div>;
         if (route.kind === "campaign") return <CampaignPage key={campaign.id} brand={tree.brand} planId={plan.id} campaign={campaign} onChanged={refreshTree} />;
-        if (route.kind === "campaign-plan") return <CampaignPlanView campaign={campaign} />;
+        if (route.kind === "campaign-plan") {
+          return campaign.project_id
+            ? <CampaignPlanPage key={campaign.project_id} campaign={campaign} />
+            : <div className="hier-page"><div className="jc-empty">This campaign has no Campaign Plan yet.</div></div>;
+        }
         if (!flowMeta) return <div className="error-banner">That flow isn't in {campaign.name}.</div>;
         return <FlowPage key={flowMeta.id} brand={tree.brand} planId={plan.id} campaignId={campaign.id} meta={flowMeta} onChanged={refreshTree} />;
     }
@@ -163,7 +167,6 @@ export default function App() {
         <aside className="rail">
           <div className="rail-section-label">Workspace</div>
           <a className={`rail-item ${route.kind === "agents" ? "active" : ""}`} href={href({ kind: "agents" })}>Agent Library</a>
-          <a className="rail-item" href="/v2" title="The earlier app: project Home, Library and Prompt Library">Classic app ↗</a>
 
           <div className="rail-section-row" style={{ marginTop: 24 }}>
             <span className="rail-section-label" style={{ marginTop: 0 }}>Brands</span>
@@ -238,7 +241,7 @@ export default function App() {
           {brands && brands.length === 0 && <div className="rail-empty">No brand kits configured yet.</div>}
         </aside>
 
-        <main className={`main ${route.kind === "campaign-plan" ? "main-framed" : ""}`}>
+        <main className="main">
           <Breadcrumb crumbs={crumbsFor(route, tree)} />
           {main()}
         </main>

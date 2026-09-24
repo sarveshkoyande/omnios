@@ -657,8 +657,6 @@ def check_page_routes():  # S-KD3, S-R5, S-R6, KTD10, KTD11
     cl = _client()
     root = cl.get("/")
     assert root.status_code == 200 and "/static/cockpit/" in root.text, "/ serves the Cockpit"
-    embed = cl.get("/campaign-plan-view?project=x&embed=1")
-    assert embed.status_code == 200 and "/static/v2/" in embed.text
     assert "/static/v2/" in cl.get("/v2").text, "the earlier app stays reachable"
     assert cl.get("/legacy").status_code == 200 and cl.get("/hcp360").status_code == 200
 

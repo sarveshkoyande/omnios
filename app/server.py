@@ -3010,16 +3010,9 @@ def root():
 
 @app.get("/v2")
 def root_v2():
-    """The earlier React + MUI app (frontend/ built into static/v2). Still reachable, and
-    linked from the Cockpit, because its Home, Library and Prompt Library have no Cockpit
-    equivalent yet; its Campaign Plan workspace is embedded in the Cockpit instead."""
-    return FileResponse(APP_DIR / "static" / "v2" / "index.html")
-
-
-@app.get("/campaign-plan-view")
-def root_campaign_plan_view():
-    """The frontend/ Campaign Plan workspace for one project (?project=<id>&embed=1), framed
-    by the Cockpit's Campaign Plan view until that view is ported (KTD10)."""
+    """The earlier React + MUI app (frontend/ built into static/v2). Not linked from the
+    Cockpit, which builds Campaign Plans natively; kept reachable for its Home, Library and
+    Prompt Library until those have Cockpit equivalents."""
     return FileResponse(APP_DIR / "static" / "v2" / "index.html")
 
 

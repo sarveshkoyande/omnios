@@ -47,15 +47,10 @@ const NavItem = styled("li")<{ active?: boolean }>(({ active }) => ({
   "&:focus-visible": { outline: "2px solid #fff", outlineOffset: 3, borderRadius: tokens.radius.pill },
 }));
 
-// The Cockpit frames one project's Campaign Plan workspace at /campaign-plan-view
-// ?project=<id>&embed=1 (hierarchy plan KTD10): open it straight away, without this app's chrome.
-const launch = new URLSearchParams(window.location.search);
-const EMBED_PROJECT = launch.get("embed") === "1" ? launch.get("project") : null;
-
 export default function App() {
-  const [view, setView] = useState<View>(EMBED_PROJECT ? "workspace" : "home");
+  const [view, setView] = useState<View>("home");
   const [prefillBrand, setPrefillBrand] = useState<string | null>(null);
-  const [openProjectId, setOpenProjectId] = useState<string | null>(EMBED_PROJECT);
+  const [openProjectId, setOpenProjectId] = useState<string | null>(null);
   const [seedMessage, setSeedMessage] = useState<string | null>(null);
   const [seedFile, setSeedFile] = useState<File | null>(null);
   const [initialWorkspaceStage, setInitialWorkspaceStage] = useState(1);
@@ -98,14 +93,6 @@ export default function App() {
     setWorkspaceStartMode("flow");
     setView("workspace");
   };
-
-  if (EMBED_PROJECT) {
-    return (
-      <Box sx={{ position: "relative", zIndex: 1 }}>
-        <Workspace openProjectId={EMBED_PROJECT} initialStage={1} startMode="direct" chromeHeight={0} />
-      </Box>
-    );
-  }
 
   return (
     <>
