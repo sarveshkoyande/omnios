@@ -4,7 +4,7 @@ type: feat
 date: 2026-09-24
 topic: brand-campaign-engagement-plan-ia
 artifact_contract: ce-unified-plan/v1
-artifact_readiness: requirements-only
+artifact_readiness: requirements-complete
 product_contract_source: brainstorm (written by hand in the ce-brainstorm format; the skill was not available in the session)
 origin: docs/ideation/2026-09-24-brand-campaign-engagement-plan-ia-ideation.html, ideas 2 to 7
 companion: docs/brainstorms/2026-09-24-brand-campaigns-index-requirements.md (idea 1, the hierarchy's data model)
@@ -17,7 +17,7 @@ execution: none (requirements only; no Planning Contract yet)
 
 - **Objective:** Omni OS reads as one hierarchy: **Brand › Engagement Plan › Campaign › Flow**. It uses one vocabulary, one navigation shell (the Cockpit), and one way to create each level. Every campaign can say which approved brand content it was built from, and every flow is stored and edited the same way.
 - **Means:** Six changes on top of idea 1's hierarchy: naming (2), breadcrumb shell (3), creation at each level (4), kit snapshot per campaign (5), one flow model (6), and a brand overview (7).
-- **Product authority:** Requirements only. The user settled the model and four of the five decisions on 2026-09-24. One decision (D4) and idea 1's Q5 to Q7 remain.
+- **Product authority:** Requirements complete. The user settled the model and every decision on 2026-09-24, and this is ready for a Planning Contract.
 
 ### The model (user, 2026-09-24)
 
@@ -33,6 +33,7 @@ Settled decisions:
 - **D1. Naming.** "Engagement Plan" is a container under the brand, but the brief and kit stay outside it. A brand has many engagement plans. The orchestrator's document is renamed "Campaign Plan".
 - **D2. Shell.** The Cockpit becomes the one shell.
 - **D3. Multiplicity.** A brand has many engagement plans, each has many campaigns, and each campaign has many flows.
+- **D4. Provenance.** A whole snapshot of the brand content per campaign.
 - **D5. Flow model.** Every flow uses a rules-built base plus structured edits.
 - **From idea 1:** everything is created inside its parent; a campaign exists from creation; wiping the Journey deletes what it built; moving to another brand closes the old record and opens a new one.
 
@@ -197,7 +198,7 @@ Its flows and Campaign Plan read from that record, not the live kit.
 
 ### Key Decisions
 
-- **P-KD1. Whole snapshot at campaign creation.** The kit has no version history, so the campaign stores its own copy. Field-level citation and "locked vs local" fields are later refinements. (proposed — see D4, the one decision still open.)
+- **P-KD1. Whole snapshot at campaign creation.** The kit has no version history, so the campaign stores its own copy. Field-level citation and "locked vs local" fields are later refinements. (session-settled: user-approved, D4 — chosen over field-level citation.)
 - **P-KD2. Drift is shown, not auto-fixed.** (proposed.)
 - **P-KD3. A campaign can take a new snapshot on request.** It then shows exactly what changed, and its flows are rebuilt from the new snapshot with their kept edits reapplied (idea 6). (proposed.)
 
@@ -309,10 +310,10 @@ This is the Brand level of the shell (idea 3).
 | D1 | Naming: Engagement Plan is a container under the brand (brief and kit outside), and the orchestrator's document is "Campaign Plan" | Settled (user) |
 | D2 | Shell: the Cockpit | Settled (user) |
 | D3 | Multiplicity: many plans per brand, many campaigns per plan, many flows per campaign | Settled (user) |
-| D4 | Provenance: a whole snapshot per campaign (proposed), or field-level citation from the start | **Open** |
+| D4 | Provenance: a whole snapshot of the brand content per campaign | Settled (user) |
 | D5 | Flow model: a rules-built base plus structured edits | Settled (user) |
 
-Also open, from idea 1: Q5 (the Journey's Flow step), Q6 (engagement plan period) and Q7 (where existing data goes).
+Idea 1's Q5 to Q7 are also settled: the Journey's Flow step creates the brand's first engagement plan and campaign; a period is optional; existing work goes into one "Earlier work" plan per brand. No open decisions remain.
 
 ## Sources / Research
 

@@ -4,7 +4,7 @@ type: feat
 date: 2026-09-24
 topic: brand-campaigns-index
 artifact_contract: ce-unified-plan/v1
-artifact_readiness: requirements-only
+artifact_readiness: requirements-complete
 product_contract_source: brainstorm (written by hand in the ce-brainstorm format; the skill was not available in the session)
 origin: docs/ideation/2026-09-24-brand-campaign-engagement-plan-ia-ideation.html, idea 1 ("Give the brand a first-class campaigns table"), revised to the user's four-level hierarchy
 companion: docs/brainstorms/2026-09-24-brand-campaign-ia-ideas-2-7-requirements.md (ideas 2 to 7)
@@ -18,7 +18,7 @@ execution: none (requirements only; no Planning Contract yet)
 - **Objective:** Every piece of campaign work sits in one hierarchy. You can list a brand's engagement plans, a plan's campaigns, and a campaign's flows.
 - **Means:** One brand identity (the brand kit) and three stored levels under it: Engagement Plan, Campaign, Flow. The existing `campaign` table in `campaigns.db` is reused for campaigns. The orchestrator and the Brand Journey both write into the hierarchy.
 - **Product authority:** This covers the data model, read APIs and a backfill of existing data. Naming, navigation, creation screens, provenance, the flow model and the brand view are ideas 2 to 7 in the companion doc.
-- **Readiness:** Requirements only. Three open questions remain (Q5 to Q7).
+- **Readiness:** Requirements complete. The user settled every open question on 2026-09-24, and this is ready for a Planning Contract.
 
 ---
 
@@ -65,6 +65,9 @@ The ideation says no `brand_id` exists anywhere and no campaigns table exists. R
 - **KD8. Re-running a Campaign Plan adds a version, not a campaign.** (proposed.) Governs R15.
 - **KD9. Moving a campaign to another brand closes it and opens a new one.** The new campaign is placed in an engagement plan the user picks under the new brand. (session-settled: user-directed — chosen over moving the same record.) Governs R16.
 - **KD10. Wiping a brand's Journey deletes the flows the Journey created.** (session-settled: user-directed — chosen over archiving them.) Governs R19.
+- **KD11. The Journey's Flow step creates the brand's first engagement plan and campaign and puts its flow there.** (session-settled: user-approved — chosen over ending the Journey at Kit.) Governs R22.
+- **KD12. An engagement plan's period is optional.** (session-settled: user-approved — chosen over requiring start and end dates.) Governs R3.
+- **KD13. Existing work goes into one "Earlier work" engagement plan per brand.** (session-settled: user-approved — chosen over grouping by calendar quarter.) Governs R20.
 
 ### Actors
 
@@ -121,7 +124,13 @@ The ideation says no `brand_id` exists anywhere and no campaigns table exists. R
   - it creates campaigns for existing projects whose brand matches a kit and that have none (others go to R9);
   - it turns each brand's existing Journey flow into a flow record in a campaign;
   - it folds duplicate campaigns from re-runs of one project into one campaign with numbered versions;
-  - it places everything it links or creates in an engagement plan for that brand (see Q7).
+  - it places everything it links or creates in one engagement plan per brand named "Earlier work" (KD13), created if missing.
+
+**Read API**
+
+**The Journey's Flow step**
+
+- R22. When A1 first builds a flow in the Journey's Flow step and the brand has no engagement plan, the step creates one (default name: "First engagement plan", no period), a campaign in it (default name: "Launch campaign"), and puts the flow there. Both names can be changed afterwards. If the brand already has engagement plans, the step asks which plan and campaign the flow goes into, and offers to create a new campaign.
 
 **Read API**
 
@@ -151,7 +160,7 @@ The ideation says no `brand_id` exists anywhere and no campaigns table exists. R
   - **Trigger:** The app starts against existing `projects.db`, `campaigns.db` and `brand_journey.db`.
   - **Actors:** A4
   - **Steps:** The R20 backfill runs.
-  - **Outcome:** Every brand shows its past plans and Journey flow inside the hierarchy. Legacy no-kit projects are logged. Running the backfill again changes nothing.
+  - **Outcome:** Every brand shows its past plans and Journey flow inside its "Earlier work" engagement plan. Legacy no-kit projects are logged. Running the backfill again changes nothing.
   - **Covered by:** R9, R20
 
 ### Acceptance Examples
@@ -185,11 +194,11 @@ Settled by the user on 2026-09-24:
 - Q3. Wiping a brand's Journey → delete what the Journey created (KD10).
 - Q4. Moving to another brand → close and open a new one (KD9).
 
-Open:
+- Q5. The Journey's Flow step → it creates the first engagement plan and campaign and puts its flow there (KD11, R22).
+- Q6. Engagement plan period → optional (KD12, R3).
+- Q7. Where existing data goes → one "Earlier work" engagement plan per brand (KD13, R20).
 
-- Q5. **The Journey's Flow step.** Now that flows live inside campaigns, should the Journey's Flow step create the brand's first engagement plan and campaign, and put its flow there (proposed)? Or should the Journey end at Kit, with every flow made inside a campaign?
-- Q6. **Engagement plan period.** Is a period (for example a quarter) optional (proposed), or required on every engagement plan?
-- Q7. **Where existing data goes.** Should the backfill put each brand's existing campaigns and Journey flow into one engagement plan named "Earlier work" (proposed), or into one plan per calendar quarter based on when each was created?
+No open questions remain.
 
 ### Sources / Research
 
