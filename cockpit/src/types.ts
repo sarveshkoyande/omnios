@@ -182,6 +182,12 @@ export interface BrandKit {
    *  document doesn't always carry. Absent rather than guessed when the kit has neither. */
   key_objective?: string;
   market_share?: MarketShare;
+  /** Journey Brief/Audience answers (plan KTD4). Optional: older kits predate them. */
+  lifecycle_stage?: string;
+  success_measure?: string;
+  /** "branded" | "unbranded"; gates product-claim questions in the journey. */
+  branded?: string;
+  primary_audience?: string;
   /** Which territory this resolved kit reflects, and whether the fields shown were
    *  overridden with a hand-authored placeholder for that territory -- see
    *  strategy/brand_kit.py's resolve_territory(). When true, `note` explains it. */
