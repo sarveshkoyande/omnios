@@ -202,7 +202,15 @@ def _get_client():
 
 
 def _foundry_configured() -> bool:
-    if not (ENDPOINT or RESOURCE):
+    # Check the raw env vars, NOT the module-level RESOURCE constant -- RESOURCE carries a
+    # non-empty fallback default ("genai-demos-resource") so the client-construction code
+    # below always has something to build a URL from once this gate has already passed.
+    # Reading that defaulted value here made this gate always true (as long as `anthropic`
+    # is importable) even when the user never set any AZURE_AI_FOUNDRY_* var -- which
+    # defeated the "prefer Gemini when Foundry isn't actually configured" priority the
+    # docstring promises: a Gemini-only setup (this repo's default local config) would
+    # always attempt Foundry first, fail with no Azure credential, and never reach Gemini.
+    if not (os.environ.get("AZURE_AI_FOUNDRY_ENDPOINT") or os.environ.get("AZURE_AI_FOUNDRY_RESOURCE")):
         return False
     try:
         from anthropic import AnthropicFoundry  # noqa: F401

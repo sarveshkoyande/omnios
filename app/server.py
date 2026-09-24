@@ -8,6 +8,7 @@ The original single-shot endpoints are kept for backward compatibility / scripti
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import pathlib
 import sqlite3
@@ -46,6 +47,10 @@ from strategy import feed as feed_mod  # noqa: E402
 from strategy import db  # noqa: E402  (KB is always local SQLite via LOCAL_ONLY_STORES; other stores still dual-dialect)
 from strategy import campaign_store  # noqa: E402
 from strategy import brand_memory  # noqa: E402
+from strategy import brand_kit  # noqa: E402  (brand workspace: the kit as a horizontal record)
+from strategy import kit_pdf  # noqa: E402  (brand-plan update flow: sample "Brand Plan" PDF)
+from strategy import brand_journey  # noqa: E402  (Agentic Brand Journey: drafts, turns, pre-fill)
+from strategy import journey_fields  # noqa: E402  (Agentic Brand Journey: staged field registry)
 from strategy import blob_store  # noqa: E402  (serves real label images to the Claims Library)
 from strategy import bootstrap  # noqa: E402  (first-boot seeding of an empty data disk)
 from strategy import personas as personas_mod  # noqa: E402  (synthetic persona layer)
@@ -793,6 +798,205 @@ def api_prompt_library():
     """Read-only catalog of every LLM system prompt / agent 'skill' in the app, pulled live
     from the running code (see strategy/prompt_library.py) -- for the Prompt Library tab."""
     return {"prompts": prompt_library.list_prompts()}
+
+
+# ------------------------------------------------------------------ #
+# Brand workspace: the brand kit as a read-only horizontal record
+# ------------------------------------------------------------------ #
+
+@app.get("/api/brand-kits")
+def api_brand_kits():
+    """Roster of brands holding a kit, for the cockpit's brand switcher. Each entry carries
+    its own `territories` (the markets it is actually configured for) plus the fixed
+    `known_territories` reference list, so the UI can show every standard territory and
+    grey out the ones this kit hasn't been built for -- without inventing content for them."""
+    return {"brands": brand_kit.list_brands(), "known_territories": brand_kit.KNOWN_TERRITORIES}
+
+
+@app.post("/api/brand-kits/infer-name")
+async def api_infer_brand_name(file: UploadFile = File(...)):
+    """New Brand setup, step 1: read the uploaded brand-plan document and propose the
+    brand name from it -- the document already states it, so the user shouldn't have to
+    type it blind before they've even shown the app what brand this is. Returns "" (not
+    an error) when the LLM is unavailable or the document genuinely doesn't name a
+    brand; the frontend falls back to letting the user type/edit the name themselves,
+    same never-block contract as every other LLM-backed step in this flow."""
+    content = await file.read()
+    try:
+        text = extract_text(file.filename or "brand-plan.pdf", content)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    return {"name": brand_kit.infer_brand_name(text)}
+
+
+@app.post("/api/brand-kits/generate-random")
+async def api_generate_random_brand_plan():
+    """New Brand setup's hidden "generate one for me" escape hatch, for trying the flow
+    when you don't have a real brand-plan document handy. Fabricates a complete fictional
+    brand-plan document (name + narrative text) and hands it back as plain text the
+    frontend can wrap in a synthetic .txt File and feed through the exact same
+    infer-name/setup pipeline a real upload would take -- no separate code path to keep
+    in sync. Returns "" for both fields (not an error) if the LLM is unavailable."""
+    result = brand_kit.generate_random_brand_plan()
+    if not result.get("text"):
+        raise HTTPException(503, "couldn't generate a sample brand plan right now -- try uploading a real document instead")
+    return result
+
+
+# ------------------------------------------------------------------ #
+# Agentic Brand Journey (plan 2026-09-24-0629): step-scoped agent
+# turns, drafts keep/undo/confirm, and document pre-fill.
+# ------------------------------------------------------------------ #
+
+class JourneyTurnRequest(BaseModel):
+    message: str = ""
+    ops: list[dict] | None = None  # Flow step only: structured edit envelope (KTD8)
+
+
+class JourneyDraftsRequest(BaseModel):
+    draft_ids: list[str] = []
+    all: bool = False
+
+
+def _journey_call(fn, *args):
+    """Maps the journey store's errors: unknown brand -> 404, bad input -> 400."""
+    try:
+        return fn(*args)
+    except KeyError as e:
+        raise HTTPException(404, str(e).strip("'\""))
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+def _journey_step(step: str) -> str:
+    if step not in journey_fields.STEPS:
+        raise HTTPException(404, f"unknown journey step '{step}'")
+    return step
+
+
+async def _journey_doc_text(file: UploadFile | None) -> str:
+    if file is None or not file.filename:
+        return ""
+    try:
+        return extract_text(file.filename, await file.read())
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+@app.post("/api/brands/journey/start")
+async def api_journey_start(file: UploadFile | None = File(None), description: str = Form(""),
+                            name: str = Form("")):
+    """Create a brand and start its journey: with a document, every content step is
+    pre-filled as drafts (KTD5); with only a sentence, the Brief interview starts."""
+    text = await _journey_doc_text(file)
+    try:
+        return await asyncio.to_thread(brand_journey.start_journey, name, description, text)
+    except KeyError as e:
+        raise HTTPException(409, str(e).strip("'\""))
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+@app.get("/api/brands/{brand}/journey")
+def api_journey_state(brand: str, history_step: str | None = None):
+    return _journey_call(brand_journey.journey_state, brand, history_step)
+
+
+@app.post("/api/brands/{brand}/journey/document")
+async def api_journey_document(brand: str, file: UploadFile = File(...)):
+    """A revised plan for an existing brand: drafts only where it differs (R20)."""
+    _journey_call(brand_journey.journey_state, brand)  # 404 before reading the file
+    text = await _journey_doc_text(file)
+    changed = await asyncio.to_thread(_journey_call, brand_journey.apply_document, brand, text)
+    return {"brand": brand, "changed_steps": changed,
+            "state": _journey_call(brand_journey.journey_state, brand)}
+
+
+@app.get("/api/brands/{brand}/journey/flow")
+def api_journey_flow(brand: str):
+    """The brand's flow document (or its waiting prerequisites) plus any pending draft."""
+    return _journey_call(brand_journey.get_flow, brand)
+
+
+@app.post("/api/brands/{brand}/journey/flow/build")
+def api_journey_flow_build(brand: str):
+    """Build or rebuild the rules-built flow (R16); stable block codes, kept edits reapplied."""
+    return _journey_call(brand_journey.build_flow, brand)
+
+
+@app.post("/api/brands/{brand}/journey/{step}/turn")
+def api_journey_turn(brand: str, step: str, req: JourneyTurnRequest):
+    step = _journey_step(step)
+    if step == "flow":
+        return _journey_call(brand_journey.flow_turn, brand, req.message, req.ops)
+    return _journey_call(brand_journey.agent_turn, brand, step, req.message)
+
+
+@app.post("/api/brands/{brand}/journey/{step}/keep")
+def api_journey_keep(brand: str, step: str, req: JourneyDraftsRequest):
+    if _journey_step(step) == "flow":  # the flow draft is one ops list: keep applies all of it
+        _journey_call(brand_journey.keep_flow_draft, brand)
+        return _journey_call(brand_journey.journey_state, brand)
+    if req.all:
+        _journey_call(brand_journey.keep_all, brand, step)
+    else:
+        for draft_id in req.draft_ids:
+            _journey_call(brand_journey.keep, brand, draft_id)
+    return _journey_call(brand_journey.journey_state, brand)
+
+
+@app.post("/api/brands/{brand}/journey/{step}/undo")
+def api_journey_undo(brand: str, step: str, req: JourneyDraftsRequest):
+    if _journey_step(step) == "flow":
+        _journey_call(brand_journey.undo_flow_draft, brand)
+        return _journey_call(brand_journey.journey_state, brand)
+    for draft_id in req.draft_ids:
+        _journey_call(brand_journey.undo, brand, draft_id)
+    return _journey_call(brand_journey.journey_state, brand)
+
+
+@app.post("/api/brands/{brand}/journey/{step}/confirm")
+def api_journey_confirm(brand: str, step: str):
+    _journey_call(brand_journey.confirm, brand, _journey_step(step))
+    return _journey_call(brand_journey.journey_state, brand)
+
+
+@app.post("/api/brands/{brand}/journey/{step}/reopen")
+def api_journey_reopen(brand: str, step: str):
+    _journey_call(brand_journey.reopen, brand, _journey_step(step))
+    return _journey_call(brand_journey.journey_state, brand)
+
+
+@app.get("/api/brand-kits/{brand}")
+def api_brand_kit(brand: str, territory: str | None = None):
+    """One brand's full kit: story, messages, claims, references, clinical data, guardrails,
+    identity and personas. Read-only for now -- the kit is still committed config
+    (config/brand_kits.json), so this exposes it rather than making it editable.
+
+    `territory` is the actual campaign gate: a brand that isn't configured for the
+    requested territory 404s rather than silently returning content scoped to a different
+    market's label. When the resolved territory carries a hand-authored override, the
+    returned kit's `illustrative` flag is true and every overridden field is explicitly
+    placeholder text -- never a fabricated regulatory claim."""
+    kit = brand_kit.kit_for(brand)
+    if not kit:
+        raise HTTPException(404, f"no brand kit for '{brand}'")
+    if territory and not brand_kit.is_available_in(kit, territory):
+        raise HTTPException(404, f"'{brand}' has no kit configured for territory '{territory}'")
+    return {"brand": brand, "kit": brand_kit.resolve_territory(kit, territory)}
+
+
+@app.get("/api/brand-kits/{brand}/sample-pdf")
+def api_brand_kit_sample_pdf(brand: str):
+    """A generated "Brand Plan" PDF for this brand's own committed kit -- the sample
+    document for this brand. Renders
+    whatever the kit actually has; missing fields show as not captured, never invented."""
+    kit = brand_kit.kit_for(brand)
+    if not kit:
+        raise HTTPException(404, f"no brand kit for '{brand}'")
+    pdf_bytes = kit_pdf.render_kit_pdf(kit, brand)
+    return Response(content=pdf_bytes, media_type="application/pdf",
+                     headers={"Content-Disposition": f'inline; filename="{brand}-brand-plan.pdf"'})
 
 
 # ------------------------------------------------------------------ #
@@ -2596,6 +2800,14 @@ def root():
 def root_v2():
     """Kept as an alias to / so any existing /v2 links/bookmarks keep working."""
     return FileResponse(APP_DIR / "static" / "v2" / "index.html")
+
+
+@app.get("/cockpit")
+def root_cockpit():
+    """New brand-workspace cockpit (built by cockpit/ via Vite into static/cockpit) --
+    a separate app from static/v2 while the new workspace IA is being built out; see
+    docs/ideation/2026-09-11-brand-workspace-ideation.html for the direction."""
+    return FileResponse(APP_DIR / "static" / "cockpit" / "index.html")
 
 
 @app.get("/legacy")
