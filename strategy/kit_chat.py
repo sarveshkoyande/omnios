@@ -120,6 +120,36 @@ persona -- that is data loss, not an update.""",
 }
 
 
+# Explicit JSON shape for every structured (non-scalar) field an agent can propose,
+# matching cockpit/src/types.ts's BrandKit interface field-for-field. "Same shape as the
+# current value" (in _SYSTEM) is meaningless for a brand-new kit, whose skeleton fields
+# start as empty arrays/objects (strategy/brand_kit.py's create_brand()) -- nothing to
+# imitate -- so a first-pass kickoff on a freshly created brand had nothing to anchor a
+# proposed shape to and would invent its own reasonable-looking but wrong one (e.g. a
+# message_hierarchy object with hcp_messages/patient_messages instead of the array of
+# {pillar, claim, evidence} the frontend renders; competitors as plain strings instead of
+# {name, threat, detail}; personas with invented field names instead of
+# name/who/tier/voice). The proposed value would still get written to
+# config/brand_kits.json on publish, but the UI can't render it -- silently invisible,
+# not an error. Included unconditionally (not just when the current value is empty) so
+# an existing kit's own shape can't drift either.
+_FIELD_SHAPES: dict[str, str] = {
+    "message_hierarchy": '[{"pillar": "<pillar name>", "claim": "<supporting claim>", '
+                          '"evidence": "<citation or evidence for the claim>"}, ...]',
+    "market_share": '{"current": "<e.g. \\"6%\\">", "target": "<e.g. \\"12%\\">"}',
+    "guardrails": '{"dos": [{"category": "<short category>", "text": "<the do>"}], '
+                  '"donts": [{"category": "<short category>", "text": "<the don\'t>"}]}',
+    "competitors": '[{"name": "<competitor name>", "threat": "<Low, Medium, or High>", '
+                    '"detail": "<why they matter>"}, ...]',
+    "personas": '{"hcp": [{"name": "<persona name/title>", "who": "<who this persona is>", '
+                '"tier": "<segment tier, e.g. Primary or Secondary>", '
+                '"voice": "<how they speak / what tone resonates>"}], '
+                '"patient": [<same base shape as hcp>], "payer": [<same base shape as hcp>]} '
+                '-- every persona needs at least name/who/tier/voice; the marketer-depth '
+                'sub-fields described below are additional, not a replacement for these.',
+}
+
+
 def _strip_fence(text: str) -> str:
     text = (text or "").strip()
     if text.startswith("```"):
@@ -180,7 +210,14 @@ def _build_diff(current: dict, proposed: dict, allowed_fields: list[str]) -> dic
 
 def _grounding_prompt(kit: dict, section: str, pdf_text: str, convo: str, user_message: str) -> tuple[str, str, list[str]]:
     agent_name, fields = KIT_SECTIONS[section]
+    shape_hints = "\n".join(
+        f'- "{f}" must be shaped exactly like: {_FIELD_SHAPES[f]}'
+        for f in fields if f in _FIELD_SHAPES
+    )
     system = _SYSTEM.format(agent_name=agent_name, fields=", ".join(fields)) + _SECTION_GUIDANCE.get(section, "")
+    if shape_hints:
+        system += f"\n\nRequired JSON shape for your structured field(s) -- follow this exactly, " \
+                   f"even if the current value below is empty:\n{shape_hints}"
     current = _current_values(kit, fields)
     user_payload = (
         f"Current values for your fields:\n{json.dumps(current, indent=2)}\n\n"
