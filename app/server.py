@@ -8,6 +8,7 @@ The original single-shot endpoints are kept for backward compatibility / scripti
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import pathlib
 import sqlite3
@@ -50,6 +51,8 @@ from strategy import brand_kit  # noqa: E402  (brand workspace: the kit as a hor
 from strategy import kit_pdf  # noqa: E402  (brand-plan update flow: sample "Brand Plan" PDF)
 from strategy import kit_drafts  # noqa: E402  (brand-plan update flow: per-section draft diffs)
 from strategy import kit_chat  # noqa: E402  (brand-plan update flow: per-section agents + orchestrator)
+from strategy import brand_journey  # noqa: E402  (Agentic Brand Journey: drafts, turns, pre-fill)
+from strategy import journey_fields  # noqa: E402  (Agentic Brand Journey: staged field registry)
 from strategy import blob_store  # noqa: E402  (serves real label images to the Claims Library)
 from strategy import bootstrap  # noqa: E402  (first-boot seeding of an empty data disk)
 from strategy import personas as personas_mod  # noqa: E402  (synthetic persona layer)
@@ -867,6 +870,104 @@ async def api_setup_brand(file: UploadFile = File(...), name: str = Form(...), t
         stage = _kit_chat_stage(brand, r["section"])
         tab_chat.append(brand, stage, "assistant", r["section"], r.get("reply", ""), kind="action")
     return {"brand": brand, "sections": results}
+
+
+# ------------------------------------------------------------------ #
+# Agentic Brand Journey (plan 2026-09-24-0629): step-scoped agent
+# turns, drafts keep/undo/confirm, and document pre-fill.
+# ------------------------------------------------------------------ #
+
+class JourneyTurnRequest(BaseModel):
+    message: str = ""
+
+
+class JourneyDraftsRequest(BaseModel):
+    draft_ids: list[str] = []
+    all: bool = False
+
+
+def _journey_call(fn, *args):
+    """Maps the journey store's errors: unknown brand -> 404, bad input -> 400."""
+    try:
+        return fn(*args)
+    except KeyError as e:
+        raise HTTPException(404, str(e).strip("'\""))
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+def _journey_step(step: str) -> str:
+    if step not in journey_fields.STEPS:
+        raise HTTPException(404, f"unknown journey step '{step}'")
+    return step
+
+
+async def _journey_doc_text(file: UploadFile | None) -> str:
+    if file is None or not file.filename:
+        return ""
+    try:
+        return extract_text(file.filename, await file.read())
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+@app.post("/api/brands/journey/start")
+async def api_journey_start(file: UploadFile | None = File(None), description: str = Form(""),
+                            name: str = Form("")):
+    """Create a brand and start its journey: with a document, every content step is
+    pre-filled as drafts (KTD5); with only a sentence, the Brief interview starts."""
+    text = await _journey_doc_text(file)
+    try:
+        return await asyncio.to_thread(brand_journey.start_journey, name, description, text)
+    except KeyError as e:
+        raise HTTPException(409, str(e).strip("'\""))
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+@app.get("/api/brands/{brand}/journey")
+def api_journey_state(brand: str, history_step: str | None = None):
+    return _journey_call(brand_journey.journey_state, brand, history_step)
+
+
+@app.post("/api/brands/{brand}/journey/document")
+async def api_journey_document(brand: str, file: UploadFile = File(...)):
+    """A revised plan for an existing brand: drafts only where it differs (R20)."""
+    _journey_call(brand_journey.journey_state, brand)  # 404 before reading the file
+    text = await _journey_doc_text(file)
+    changed = await asyncio.to_thread(_journey_call, brand_journey.apply_document, brand, text)
+    return {"brand": brand, "changed_steps": changed,
+            "state": _journey_call(brand_journey.journey_state, brand)}
+
+
+@app.post("/api/brands/{brand}/journey/{step}/turn")
+def api_journey_turn(brand: str, step: str, req: JourneyTurnRequest):
+    return _journey_call(brand_journey.agent_turn, brand, _journey_step(step), req.message)
+
+
+@app.post("/api/brands/{brand}/journey/{step}/keep")
+def api_journey_keep(brand: str, step: str, req: JourneyDraftsRequest):
+    _journey_step(step)
+    if req.all:
+        _journey_call(brand_journey.keep_all, brand, step)
+    else:
+        for draft_id in req.draft_ids:
+            _journey_call(brand_journey.keep, brand, draft_id)
+    return _journey_call(brand_journey.journey_state, brand)
+
+
+@app.post("/api/brands/{brand}/journey/{step}/undo")
+def api_journey_undo(brand: str, step: str, req: JourneyDraftsRequest):
+    _journey_step(step)
+    for draft_id in req.draft_ids:
+        _journey_call(brand_journey.undo, brand, draft_id)
+    return _journey_call(brand_journey.journey_state, brand)
+
+
+@app.post("/api/brands/{brand}/journey/{step}/confirm")
+def api_journey_confirm(brand: str, step: str):
+    _journey_call(brand_journey.confirm, brand, _journey_step(step))
+    return _journey_call(brand_journey.journey_state, brand)
 
 
 @app.get("/api/brand-kits/{brand}")

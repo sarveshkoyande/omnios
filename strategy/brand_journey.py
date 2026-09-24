@@ -309,3 +309,214 @@ def journey_state(brand: str, history_step: str | None = None) -> dict:
             entry["history"] = history
         steps.append(entry)
     return {"brand": b, "steps": steps}
+
+
+def step_status(brand: str, step: str) -> str:
+    return next(s["status"] for s in journey_state(brand)["steps"] if s["step"] == step)
+
+
+# ---- U3: step-scoped agent turn (KTD3) and document pre-fill (KTD5) ------------------------
+
+import re  # noqa: E402
+from concurrent.futures import ThreadPoolExecutor  # noqa: E402
+
+import conversation_llm  # noqa: E402
+from strategy import kit_chat  # noqa: E402  (reuses _FIELD_SHAPES and the envelope parser)
+
+CONTENT_STEPS = ("brief", "audience", "message", "kit")
+_FALLBACK_MAX_CHARS = 200
+_STRING_LIST_FIELDS = frozenset({"territories", "tone_pillars", "voice_do", "voice_dont"})
+
+_TURN_SYSTEM = """You are the journey agent for a pharma brand's "{step_label}" step.
+
+The system has already chosen which fields are open. You may ONLY propose values for these
+open fields of this step: {fields}. Never propose any other field.
+
+Propose a value only when the user's message clearly supports it -- this is pharma content,
+and a fabricated value is worse than none. Keep "reply" to at most two short sentences and
+at most one question; if you ask one, phrase the NEXT open field's question (given below)
+rather than inventing your own.
+
+Reply with ONLY one raw JSON object, no markdown fences, no prose outside it:
+{{"reply": "<at most two sentences>", "proposals": {{"<field>": <value>, ...}}}}"""
+
+_EXTRACT_SYSTEM = """You extract a pharma brand's "{step_label}" content from a brand-plan
+document. You may ONLY fill these fields: {fields}. Include a field only when the document
+text clearly states it -- leave it out otherwise; never guess or invent.
+
+Reply with ONLY one raw JSON object, no markdown fences, no prose outside it:
+{{"proposals": {{"<field>": <value>, ...}}}}"""
+
+
+def _llm_on() -> bool:
+    return conversation_llm.llm_available()
+
+
+def _shape_hints(keys) -> str:
+    hints = [f'- "{k}" must be shaped exactly like: {kit_chat._FIELD_SHAPES[k]}'
+             for k in keys if k in kit_chat._FIELD_SHAPES]
+    return ("\n\nRequired JSON shape for structured fields:\n" + "\n".join(hints)) if hints else ""
+
+
+def _call_llm_json(system: str, payload: str) -> dict:
+    """One call, one retry on invalid JSON, strict=False parse (kit_chat._parse_envelope) --
+    the kit_chat._call_llm idiom. Raises on provider failure; callers fall back."""
+    client = conversation_llm._get_client()
+
+    def _call(extra: str = "") -> dict:
+        resp = client.messages.create(model=conversation_llm.MODEL, max_tokens=6000, system=system,
+                                      messages=[{"role": "user", "content": payload + extra}])
+        text = next((b.text for b in resp.content if b.type == "text"), "")
+        return kit_chat._parse_envelope(text)
+
+    try:
+        return _call()
+    except (ValueError, json.JSONDecodeError):
+        return _call("\n\nYour previous response was not valid JSON. Return only one raw JSON "
+                     "object -- no markdown fences, no prose outside it, strings escaped.")
+
+
+def _call_turn_llm(system: str, payload: str) -> dict:
+    return _call_llm_json(system, payload)
+
+
+def _effective_answers(b: str) -> dict:
+    """Kept answers overlaid with pending set-mode drafts, so a drafted field is not asked
+    again while it waits for keep or undo."""
+    answers = answers_for(b)
+    for d in list_drafts(b):
+        if d["mode"] == "set":
+            answers[d["field"]] = d["value"]
+    return answers
+
+
+def _is_scalar(b: str, key: str) -> bool:
+    if key in kit_chat._FIELD_SHAPES or jf.FIELDS_BY_KEY[key]["target"] == "brand":
+        return False
+    current = (brand_kit.kit_for(b) or {}).get(key)
+    if isinstance(current, dict):
+        return False
+    return not isinstance(current, list) or key in _STRING_LIST_FIELDS
+
+
+def _step_fields(step: str) -> list[str]:
+    return [f["key"] for f in jf.fields_for(step) if f["target"] != "brand"]
+
+
+def agent_turn(brand: str, step: str, message: str) -> dict:
+    """One short agent turn scoped to `step` (KTD3). Proposals outside the step's open
+    fields are dropped; the rest become drafts. Never raises on LLM failure: falls back to
+    the registry (question + chips; a short answer drafts the current question's field)."""
+    b = _key(brand)
+    jf.step_prerequisites(step)  # ValueError on unknown step
+    if step == "flow":
+        raise ValueError("flow edits use structured operations, not field turns")
+    message = (message or "").strip()
+    answers = _effective_answers(b)
+    open_before = [f for f in jf.open_fields(step, answers) if f["target"] != "brand"]
+    add_turn(b, step, "user", message)
+
+    drafts, dropped, mode, reply = [], [], "fallback", ""
+    if message and _llm_on():
+        try:
+            keys = [f["key"] for f in open_before]
+            system = _TURN_SYSTEM.format(step_label=jf.STEP_LABELS[step],
+                                         fields=", ".join(keys) or "(none)") + _shape_hints(keys)
+            current = {k: answers.get(k) for k in _step_fields(step)}
+            nxt = open_before[0]["question"] if open_before else "(nothing open)"
+            payload = (f"Current values:\n{json.dumps(current, indent=2)}\n\n"
+                       f"Next open question: {nxt}\n\nUser: {message}")
+            env = _call_turn_llm(system, payload)
+            proposals = env.get("proposals") or {}
+            dropped = [k for k in proposals if k not in keys]
+            drafts = [propose(b, step, k, v) for k, v in proposals.items()
+                      if k in keys and jf.has_value(v)]
+            reply, mode = str(env.get("reply") or "").strip(), "llm"
+        except Exception as e:  # noqa: BLE001 -- degrade to the registry, never fail
+            print(f"[brand_journey] turn LLM failed for {b}/{step}: {e!r}")
+            for d in drafts:
+                undo(b, d["id"])
+            drafts, dropped, mode = [], [], "fallback"
+    if mode == "fallback" and message and open_before:
+        f = open_before[0]
+        if len(message) <= _FALLBACK_MAX_CHARS and _is_scalar(b, f["key"]):
+            value = [message] if f["key"] in _STRING_LIST_FIELDS else message
+            drafts.append(propose(b, step, f["key"], value))
+
+    nxt = jf.next_questions(step, _effective_answers(b), 1)
+    question = nxt[0] if nxt else None
+    if mode == "fallback" or not reply:
+        reply = question["question"] if question else "That covers this step. Keep what looks right."
+    add_turn(b, step, "agent", reply)
+    return {"reply": reply, "question": question, "drafts": drafts, "dropped": dropped,
+            "mode": mode, "state": journey_state(b)}
+
+
+def extract_step(step: str, text: str) -> dict:
+    """KTD5: one extraction call constrained to `step`'s registry fields. {} when the LLM
+    is off or fails (never raises)."""
+    if not (text or "").strip() or not _llm_on():
+        return {}
+    keys = _step_fields(step)
+    system = _EXTRACT_SYSTEM.format(step_label=jf.STEP_LABELS[step],
+                                    fields=", ".join(keys)) + _shape_hints(keys)
+    try:
+        env = _call_llm_json(system, f"Brand-plan document text:\n{text}")
+        return {k: v for k, v in (env.get("proposals") or {}).items() if k in keys}
+    except Exception as e:  # noqa: BLE001
+        print(f"[brand_journey] extraction failed for {step}: {e!r}")
+        return {}
+
+
+def apply_document(brand: str, text: str) -> list[str]:
+    """Run extraction for every content step concurrently, and propose drafts only where a
+    value differs from the kept one (R10, R20). A changed confirmed step (including a locked
+    Kit) moves back to drafted. Returns the changed steps in step order."""
+    b = _key(brand)
+    with ThreadPoolExecutor(max_workers=len(CONTENT_STEPS)) as pool:
+        results = dict(zip(CONTENT_STEPS, pool.map(lambda s: extract_step(s, text), CONTENT_STEPS)))
+    answers = answers_for(b)
+    changed = []
+    for step in CONTENT_STEPS:
+        allowed = set(_step_fields(step))
+        proposed = [propose(b, step, k, v) for k, v in (results.get(step) or {}).items()
+                    if k in allowed and jf.has_value(v) and v != answers.get(k)]
+        if proposed:
+            changed.append(step)
+            if step_status(b, step) == "confirmed":
+                reopen(b, step)
+    return changed
+
+
+_NAME_RE = re.compile(r"\b(?:called|named)\s+([A-Z][\w\-]*)")
+
+
+def name_from_description(description: str) -> str:
+    """Best-effort brand name from a one-line description without the LLM: "... called X"
+    or "... named X", else the whole description when it is one to three words."""
+    d = (description or "").strip()
+    m = _NAME_RE.search(d)
+    if m:
+        return m.group(1)
+    return d if d and len(d.split()) <= 3 else ""
+
+
+def start_journey(name: str, description: str, text: str) -> dict:
+    """Create a brand and start its journey (F1, F2). An explicit `name` wins; else it comes
+    from the document (brand_kit.infer_brand_name) or the description. ValueError when no
+    name can be found, KeyError when the brand already exists."""
+    name = ((name or "").strip() or (brand_kit.infer_brand_name(text) if text else "")
+            or name_from_description(description))
+    if not name:
+        raise ValueError("couldn't tell the brand's name -- pass it as 'name'")
+    brand_kit.create_brand(name)
+    b = _key(name)
+    changed = apply_document(b, text) if text else []
+    if description and not text:
+        if _llm_on():
+            agent_turn(b, "brief", description)
+        else:
+            add_turn(b, "brief", "user", description)
+    state = journey_state(b)
+    brief = next(s for s in state["steps"] if s["step"] == "brief")
+    return {"brand": b, "changed_steps": changed, "question": brief["question"], "state": state}

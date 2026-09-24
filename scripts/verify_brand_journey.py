@@ -229,6 +229,200 @@ def check_u2_create_brand_has_ktd4_fields():
     assert KTD4_FIELDS <= set(kit), KTD4_FIELDS - set(kit)
 
 
+# ---- U3: agent turn + document pre-fill endpoints (TestClient, LLM forced off) ----------
+
+_client_cache: list = []
+
+
+def _client():
+    """TestClient over app.server.app with every conversation_llm instance forced off."""
+    if not _client_cache:
+        from fastapi.testclient import TestClient
+        from app import server
+        _client_cache.append(TestClient(server.app))
+    for name in ("conversation_llm", "strategy.conversation_llm"):
+        mod = sys.modules.get(name)
+        if mod is not None:
+            mod.llm_available = lambda: False
+    return _client_cache[0]
+
+
+def _sbj():
+    """The strategy.brand_journey instance app/server.py uses (the one to monkeypatch)."""
+    from strategy import brand_journey
+    return brand_journey
+
+
+class _patched:
+    def __init__(self, mod, **attrs):
+        self.mod, self.attrs = mod, attrs
+
+    def __enter__(self):
+        self.old = {k: getattr(self.mod, k) for k in self.attrs}
+        for k, v in self.attrs.items():
+            setattr(self.mod, k, v)
+
+    def __exit__(self, *exc):
+        for k, v in self.old.items():
+            setattr(self.mod, k, v)
+
+
+def check_u3_get_journey_and_unknowns():
+    c = _client()
+    b = _fresh_brand()
+    r = c.get(f"/api/brands/{b}/journey")
+    assert r.status_code == 200, r.text
+    assert [s["step"] for s in r.json()["steps"]] == list(jf.STEPS)
+    assert c.get("/api/brands/NoSuchBrandXYZ/journey").status_code == 404
+    assert c.post(f"/api/brands/{b}/journey/nope/turn", json={"message": "hi"}).status_code == 404
+    assert c.post("/api/brands/NoSuchBrandXYZ/journey/brief/turn",
+                  json={"message": "hi"}).status_code == 404
+
+
+def check_u3_llm_turn_drops_out_of_step_proposals():
+    c = _client()
+    b = _fresh_brand()
+
+    def fake(system, payload):
+        return {"reply": "Got it.", "proposals": {"indication": "Heart failure",
+                                                  "tagline": "Out of step"}}
+    with _patched(_sbj(), _llm_on=lambda: True, _call_turn_llm=fake):
+        r = c.post(f"/api/brands/{b}/journey/brief/turn",
+                   json={"message": "It's a heart failure drug called Cardiozen"})
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["mode"] == "llm", body
+    assert {d["field"] for d in body["drafts"]} == {"indication"}, body["drafts"]
+    assert "tagline" in body["dropped"], body
+    assert all(d["step"] == "brief" for d in bj.list_drafts(b))
+    assert bj.list_drafts(b, "message") == []
+
+
+def check_u3_llm_turn_failure_falls_back():
+    c = _client()
+    b = _fresh_brand()
+
+    def boom(system, payload):
+        raise RuntimeError("provider down")
+    with _patched(_sbj(), _llm_on=lambda: True, _call_turn_llm=boom):
+        r = c.post(f"/api/brands/{b}/journey/brief/turn", json={"message": "Heart failure"})
+    assert r.status_code == 200, r.text
+    assert r.json()["mode"] == "fallback"
+
+
+def check_u3_fallback_turn_chip_becomes_draft():
+    c = _client()
+    b = _fresh_brand()
+    st = c.get(f"/api/brands/{b}/journey").json()
+    q = _step(st, "brief")["question"]
+    assert q["key"] == "indication", q
+    r = c.post(f"/api/brands/{b}/journey/brief/turn", json={"message": "Heart failure"})
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["mode"] == "fallback", body
+    assert [(d["field"], d["value"]) for d in body["drafts"]] == [("indication", "Heart failure")]
+    # territories defaults to ["US"] on create_brand, so lifecycle_stage (a chip question) is next
+    assert body["question"]["key"] == "lifecycle_stage", body["question"]
+    assert body["question"]["chips"] == jf.FIELDS_BY_KEY["lifecycle_stage"]["chips"]
+    c.post(f"/api/brands/{b}/journey/brief/turn", json={"message": "Launch"})  # a chip
+    r = c.post(f"/api/brands/{b}/journey/brief/turn", json={"message": "Grow share"})
+    assert r.json()["question"]["key"] == "success_measure", r.json()["question"]
+    fields = [d["field"] for d in bj.list_drafts(b, "brief")]
+    assert fields == ["indication", "lifecycle_stage", "key_objective"], fields
+    st = _step(bj.journey_state(b), "brief")
+    assert st["status"] == "drafted" and st["earlier_count"] == 6, st
+
+
+def check_u3_keep_undo_confirm_routes():
+    c = _client()
+    b = _fresh_brand()
+    ids = [bj.propose(b, "brief", k, v)["id"] for k, v in
+           (("indication", "HF"), ("key_objective", "Grow"))]
+    extra = bj.propose(b, "brief", "success_measure", "NPS")["id"]
+    r = c.post(f"/api/brands/{b}/journey/brief/undo", json={"draft_ids": [extra]})
+    assert r.status_code == 200, r.text
+    assert c.post(f"/api/brands/{b}/journey/brief/confirm").status_code == 400  # missing fields
+    r = c.post(f"/api/brands/{b}/journey/brief/keep", json={"draft_ids": ids})
+    assert r.status_code == 200, r.text
+    assert brand_kit.kit_for(b)["indication"] == "HF"
+    assert c.post(f"/api/brands/{b}/journey/brief/keep",
+                  json={"draft_ids": ["missing"]}).status_code == 404
+    r = c.post(f"/api/brands/{b}/journey/brief/confirm")
+    assert r.status_code == 200, r.text
+    assert _step(r.json(), "brief")["status"] == "confirmed"
+
+
+def check_u3_keep_all_route():
+    c = _client()
+    b = _fresh_brand()
+    bj.propose(b, "message", "tagline", "T1")
+    r = c.post(f"/api/brands/{b}/journey/message/keep", json={"all": True})
+    assert r.status_code == 200, r.text
+    assert brand_kit.kit_for(b)["tagline"] == "T1"
+
+
+def check_u3_start_with_document_prefills():  # F1
+    c = _client()
+    canned = {"brief": {"indication": "Heart failure", "tagline": "dropped: not brief"},
+              "message": {"tagline": "Beat by beat"}}
+    with _patched(_sbj(), extract_step=lambda step, text: canned.get(step, {})):
+        r = c.post("/api/brands/journey/start", data={"name": "VerifyF1Brand"},
+                   files={"file": ("plan.txt", b"Cardiozen brand plan", "text/plain")})
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["brand"] == "VerifyF1Brand"
+    assert sorted(body["changed_steps"]) == ["brief", "message"], body
+    st = bj.journey_state("VerifyF1Brand")
+    for step, field in (("brief", "indication"), ("message", "tagline")):
+        s = _step(st, step)
+        assert s["status"] == "drafted", s
+        assert [d["field"] for d in s["drafts"]] == [field], s["drafts"]
+
+
+def check_u3_start_with_sentence_only():  # F2
+    c = _client()
+    r = c.post("/api/brands/journey/start",
+               data={"description": "A heart failure drug called Verifyzen"})
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["brand"] == "Verifyzen", body
+    assert body["question"]["key"] == "indication", body["question"]
+    assert brand_kit.kit_for("Verifyzen") is not None
+
+
+def check_u3_start_duplicate_409_and_no_name_400():
+    c = _client()
+    assert c.post("/api/brands/journey/start", data={"name": "Cardiovex"}).status_code == 409
+    assert c.post("/api/brands/journey/start", data={}).status_code == 400
+
+
+def check_u3_revised_document_changes_only_message():  # F4
+    c = _client()
+    b = _fresh_brand()
+    for step, vals in (("brief", {"indication": "HF", "key_objective": "Grow",
+                                  "branded": "unbranded"}),
+                       ("message", {"tagline": "Old", "positioning_statement": "P",
+                                    "tone_pillars": ["Calm"]})):
+        for k, v in vals.items():
+            bj.keep(b, bj.propose(b, step, k, v)["id"])
+    bj.confirm(b, "brief")
+    bj.confirm(b, "message")
+    canned = {"brief": {"indication": "HF", "key_objective": "Grow"},
+              "message": {"tagline": "New", "positioning_statement": "P"}}
+    with _patched(_sbj(), extract_step=lambda step, text: canned.get(step, {})):
+        r = c.post(f"/api/brands/{b}/journey/document",
+                   files={"file": ("rev.txt", b"revised plan", "text/plain")})
+    assert r.status_code == 200, r.text
+    assert r.json()["changed_steps"] == ["message"], r.json()
+    st = bj.journey_state(b)
+    assert [d["field"] for d in _step(st, "message")["drafts"]] == ["tagline"]
+    assert _step(st, "brief")["drafts"] == [] and _step(st, "brief")["status"] == "confirmed"
+    assert _step(st, "message")["status"] == "drafted"
+    r = c.post("/api/brands/NoSuchBrandXYZ/journey/document",
+               files={"file": ("rev.txt", b"x", "text/plain")})
+    assert r.status_code == 404, r.text
+
+
 CHECKS = [v for k, v in list(globals().items()) if k.startswith("check_") and callable(v)]
 
 
