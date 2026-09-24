@@ -879,6 +879,7 @@ async def api_setup_brand(file: UploadFile = File(...), name: str = Form(...), t
 
 class JourneyTurnRequest(BaseModel):
     message: str = ""
+    ops: list[dict] | None = None  # Flow step only: structured edit envelope (KTD8)
 
 
 class JourneyDraftsRequest(BaseModel):
@@ -940,14 +941,30 @@ async def api_journey_document(brand: str, file: UploadFile = File(...)):
             "state": _journey_call(brand_journey.journey_state, brand)}
 
 
+@app.get("/api/brands/{brand}/journey/flow")
+def api_journey_flow(brand: str):
+    """The brand's flow document (or its waiting prerequisites) plus any pending draft."""
+    return _journey_call(brand_journey.get_flow, brand)
+
+
+@app.post("/api/brands/{brand}/journey/flow/build")
+def api_journey_flow_build(brand: str):
+    """Build or rebuild the rules-built flow (R16); stable block codes, kept edits reapplied."""
+    return _journey_call(brand_journey.build_flow, brand)
+
+
 @app.post("/api/brands/{brand}/journey/{step}/turn")
 def api_journey_turn(brand: str, step: str, req: JourneyTurnRequest):
+    if _journey_step(step) == "flow":
+        return _journey_call(brand_journey.flow_turn, brand, req.message, req.ops)
     return _journey_call(brand_journey.agent_turn, brand, _journey_step(step), req.message)
 
 
 @app.post("/api/brands/{brand}/journey/{step}/keep")
 def api_journey_keep(brand: str, step: str, req: JourneyDraftsRequest):
-    _journey_step(step)
+    if _journey_step(step) == "flow":  # the flow draft is one ops list: keep applies all of it
+        _journey_call(brand_journey.keep_flow_draft, brand)
+        return _journey_call(brand_journey.journey_state, brand)
     if req.all:
         _journey_call(brand_journey.keep_all, brand, step)
     else:
@@ -958,7 +975,9 @@ def api_journey_keep(brand: str, step: str, req: JourneyDraftsRequest):
 
 @app.post("/api/brands/{brand}/journey/{step}/undo")
 def api_journey_undo(brand: str, step: str, req: JourneyDraftsRequest):
-    _journey_step(step)
+    if _journey_step(step) == "flow":
+        _journey_call(brand_journey.undo_flow_draft, brand)
+        return _journey_call(brand_journey.journey_state, brand)
     for draft_id in req.draft_ids:
         _journey_call(brand_journey.undo, brand, draft_id)
     return _journey_call(brand_journey.journey_state, brand)

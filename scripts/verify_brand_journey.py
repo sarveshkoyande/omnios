@@ -423,6 +423,122 @@ def check_u3_revised_document_changes_only_message():  # F4
     assert r.status_code == 404, r.text
 
 
+# ---- U6: brand-derived flow, stable block codes, structured edits -------------------------
+
+def _flow_ready_brand() -> str:
+    b = _fresh_brand("FlowBrand")
+    vals = {
+        "brief": [("indication", "Heart failure"), ("territories", ["US"]),
+                  ("key_objective", "Grow new patient starts"), ("branded", "branded")],
+        "audience": [("primary_audience", "HCPs"),
+                     ("personas", {"hcp": [{"name": "The Busy Cardiologist", "who": "Treats HF",
+                                            "tier": "Primary"}]})],
+        "message": [("core_claim", "Fewer HF hospitalizations"),
+                    ("positioning_statement", "The HF therapy that keeps patients home"),
+                    ("message_hierarchy", [{"pillar": "Efficacy", "claim": "c", "evidence": "e"},
+                                           {"pillar": "Safety", "claim": "c", "evidence": "e"}]),
+                    ("tone_pillars", ["Confident"])],
+    }
+    for step, pairs in vals.items():
+        for k, v in pairs:
+            bj.keep(b, bj.propose(b, step, k, v)["id"])
+        bj.confirm(b, step)
+    return b
+
+
+def _codes(doc: dict) -> dict:
+    return {n["id"]: n["data"]["block_code"] for n in doc["flow"]["nodes"]}
+
+
+def check_u6_build_has_send_wait_exit():
+    doc = bj.build_flow(_flow_ready_brand())
+    assert doc["status"] == "built", doc
+    types = {n["type"] for n in doc["flow"]["nodes"]}
+    assert {"send", "wait", "exit"} <= types, types
+    codes = sorted(int(c[1:]) for c in _codes(doc).values())
+    assert codes == list(range(1, len(codes) + 1)), codes
+
+
+def check_u6_ctx_from_brand():
+    b = _flow_ready_brand()
+    ctx = bj.brand_ctx(b)
+    assert ctx["brand"] == b and ctx["therapy_area"], ctx
+    assert ctx["brief"]["objective"] == "Grow new patient starts", ctx["brief"]
+    assert "HCPs" in ctx["brief"]["audience"], ctx["brief"]
+    assert ctx["inferred"]["persona"] == "The Busy Cardiologist", ctx["inferred"]
+    assert "content_library" in ctx
+
+
+def check_u6_codes_stable_after_add_and_rebuild():  # AE4
+    b = _flow_ready_brand()
+    doc = bj.build_flow(b)
+    before = _codes(doc)
+    first = doc["flow"]["nodes"][1]["data"]["block_code"]
+    r = bj.flow_turn(b, "", [{"op": "add", "type": "send", "label": "Rep visit", "after": first}])
+    assert r["flow"]["draft"] and r["flow"]["draft"]["ops"], r
+    bj.keep_flow_draft(b)
+    rebuilt = bj.build_flow(b)
+    after = _codes(rebuilt)
+    for nid, code in before.items():
+        assert after[nid] == code, (nid, code, after.get(nid))
+    added = [c for nid, c in after.items() if nid not in before]
+    assert added == [f"B{len(before) + 1}"], added
+    assert rebuilt["dropped"] == [], rebuilt["dropped"]
+
+
+def check_u6_change_unknown_code_rejected():
+    c = _client()
+    b = _flow_ready_brand()
+    bj.build_flow(b)
+    r = c.post(f"/api/brands/{b}/journey/flow/turn",
+               json={"ops": [{"op": "change", "code": "B999", "set": {"label": "x"}}]})
+    assert r.status_code == 400 and "B999" in r.text, r.text
+    assert bj.get_flow(b)["draft"] is None
+
+
+def check_u6_build_waits_when_brief_unconfirmed():  # AE5
+    c = _client()
+    b = _fresh_brand()
+    r = c.post(f"/api/brands/{b}/journey/flow/build")
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["status"] == "waiting" and body["flow"] is None, body
+    assert body["waiting"] == ["brief", "audience", "message"], body
+
+
+def check_u6_llm_off_build_route_and_identical():
+    c = _client()
+    b = _flow_ready_brand()
+    r1 = c.post(f"/api/brands/{b}/journey/flow/build")
+    r2 = c.post(f"/api/brands/{b}/journey/flow/build")
+    assert r1.status_code == 200 and r1.json()["status"] == "built", r1.text
+    assert r1.json() == r2.json()
+    assert c.get(f"/api/brands/{b}/journey/flow").json() == r2.json()
+
+
+def check_u6_flow_draft_keep_undo_and_free_text_fallback():
+    c = _client()
+    b = _flow_ready_brand()
+    doc = bj.build_flow(b)
+    code = doc["flow"]["nodes"][1]["data"]["block_code"]
+    r = c.post(f"/api/brands/{b}/journey/flow/turn",
+               json={"ops": [{"op": "change", "code": code, "set": {"label": "Renamed"}}]})
+    assert r.status_code == 200, r.text
+    assert r.json()["flow"]["draft"]["flow"]["nodes"][1]["data"]["label"] == "Renamed"
+    c.post(f"/api/brands/{b}/journey/flow/undo", json={"all": True})
+    got = bj.get_flow(b)
+    assert got["draft"] is None and got["flow"]["nodes"][1]["data"]["label"] != "Renamed"
+    r = c.post(f"/api/brands/{b}/journey/flow/turn", json={"message": "add an SMS reminder"})
+    assert r.status_code == 200 and r.json()["mode"] == "fallback" and r.json()["reply"], r.text
+    assert bj.get_flow(b)["draft"] is None
+    c.post(f"/api/brands/{b}/journey/flow/turn",
+           json={"ops": [{"op": "remove", "code": code}]})
+    c.post(f"/api/brands/{b}/journey/flow/keep", json={"all": True})
+    got = bj.get_flow(b)
+    assert code not in {n["data"]["block_code"] for n in got["flow"]["nodes"]}
+    assert got["ops"] and got["draft"] is None
+
+
 CHECKS = [v for k, v in list(globals().items()) if k.startswith("check_") and callable(v)]
 
 
