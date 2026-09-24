@@ -141,6 +141,8 @@ export function BrandOverview({ brand, tree, kit, onChanged }: {
             </div>
           </div>
 
+          <div className="hier-master-divider" aria-hidden />
+
           <div className="hier-master-detail">
             {selected && <PlanDetail brand={brand} plan={selected} kit={kit} onChanged={onChanged} />}
           </div>
@@ -163,29 +165,121 @@ function planSummary(plan: TreePlan): string {
   return `${period ? `Runs ${period}. ` : "No period is set for this plan. "}${campaignPhrase}`;
 }
 
-/** The brand's brief and message context -- an engagement plan has none of its own; this is
- *  the same brand kit the Brief & kit tab reads, in words. Every sentence is built only from
- *  fields the kit actually carries (BrandKit's own optional-field discipline). */
-function BriefContext({ kit }: { kit: BrandKit | null }) {
-  if (!kit) return null;
-  const brief: string[] = [];
-  if (kit.indication) brief.push(`indicated for ${kit.indication}`);
-  if (kit.lifecycle_stage) brief.push(`at the ${kit.lifecycle_stage.toLowerCase()} stage`);
-  const briefSentence = brief.length ? `${kit.company || "This brand"} is ${brief.join(", ")}.` : null;
+/** A stable pseudo-random ratio in [0, 1) from a string seed -- used only where this page
+ *  has no real number to show and needs one anyway (Budget/HCP funnel fallbacks), so the
+ *  same plan always renders the same illustrative figures instead of reshuffling on every
+ *  visit. Never used where a real value exists. */
+function seeded(seed: string, salt = 0): number {
+  let h = salt || 7;
+  for (let i = 0; i < seed.length; i++) h = (Math.imul(h, 31) + seed.charCodeAt(i)) >>> 0;
+  return (h % 10000) / 10000;
+}
 
-  const objective = kit.key_objective ? `The current objective is ${kit.key_objective.toLowerCase().replace(/\.$/, "")}.` : null;
-  const metric = kit.success_measure ? `Success is measured by ${kit.success_measure.toLowerCase()}.` : null;
-  const audience = kit.primary_audience ? `It's aimed primarily at ${kit.primary_audience.toLowerCase()}.` : null;
-  const message = kit.positioning_statement ? `Positioned as: “${kit.positioning_statement}”` : kit.core_claim ? `Core claim: “${kit.core_claim}”` : null;
+const money = (n: number) => `$${(n / 1000).toLocaleString(undefined, { maximumFractionDigits: 0 })}K`;
 
-  if (!briefSentence && !objective && !metric && !audience && !message) return null;
+/** The plan's objective, spelled out large -- the one real fact worth headlining. An
+ *  engagement plan has no objective field of its own; this reads the brand's (BrandKit's
+ *  key_objective, same as the Brief & kit tab), because every plan under a brand shares it.
+ *  Absent kit data gets the same honest fallback the rest of the app uses, not an invented
+ *  objective. */
+function PlanObjective({ kit, brand }: { kit: BrandKit | null; brand: string }) {
+  return (
+    <div className="hier-punch-card hier-objective">
+      <span className="hier-punch-icon"><Icon name="target" size={20} /></span>
+      <div className="hier-punch-body">
+        <div className="hier-detail-subhead">Objective</div>
+        {kit?.key_objective ? (
+          <p className="hier-objective-text">{kit.key_objective}</p>
+        ) : (
+          <p className="hier-objective-text hier-objective-missing">
+            No objective captured for {brand} yet.{" "}
+            <a href={href({ kind: "journey", brand, step: "brief" })}>Set one in the Brief step →</a>
+          </p>
+        )}
+        {kit?.success_measure && <p className="hier-objective-metric">Measured by {kit.success_measure.toLowerCase()}</p>}
+      </div>
+    </div>
+  );
+}
+
+/** Budget, spaciously -- real money when a Campaign Plan run has written it (campaign.
+ *  total_budget, from the Budget stage) onto any campaign in this plan; an illustrative,
+ *  clearly-labelled split otherwise, so the section is never an empty box while still never
+ *  passing off a made-up number as real. */
+function PlanBudget({ brand, plan }: { brand: string; plan: TreePlan }) {
+  const real = plan.campaigns.filter((c) => (c.total_budget ?? 0) > 0);
+  const isReal = real.length > 0;
+  const rows: { name: string; value: number; campaignId: number }[] = isReal
+    ? real.map((c) => ({ name: c.name, value: c.total_budget!, campaignId: c.id }))
+    : (plan.campaigns.length > 0 ? plan.campaigns : [{ id: 0, name: plan.name } as TreeCampaign]).map((c, i) => {
+        const base = 250000 + seeded(`${brand}:${plan.id}:${c.id || i}`, 11) * 650000;
+        return { name: c.name, value: Math.round(base / 5000) * 5000, campaignId: c.id };
+      });
+  const total = rows.reduce((n, r) => n + r.value, 0);
+  const max = Math.max(...rows.map((r) => r.value), 1);
 
   return (
-    <div className="hier-brief">
-      <div className="hier-detail-subhead">Brief &amp; message</div>
-      {(briefSentence || objective) && <p className="hier-detail-summary">{[briefSentence, objective].filter(Boolean).join(" ")}</p>}
-      {(audience || metric) && <p className="hier-detail-summary">{[audience, metric].filter(Boolean).join(" ")}</p>}
-      {message && <p className="hier-detail-summary hier-brief-message">{message}</p>}
+    <div className="hier-punch-card hier-budget">
+      <span className="hier-punch-icon"><Icon name="wallet" size={20} /></span>
+      <div className="hier-punch-body">
+        <div className="hier-budget-head">
+          <div className="hier-detail-subhead">Budget</div>
+          {!isReal && <span className="illustrative-tag">Illustrative</span>}
+        </div>
+        <div className="hier-budget-total">{money(total)}</div>
+        <div className="hier-budget-bars">
+          {rows.map((r) => (
+            <div className="hier-budget-bar-row" key={r.campaignId || r.name}>
+              <span className="hier-budget-bar-label">{r.name}</span>
+              <div className="hier-budget-bar-track">
+                <div className="hier-budget-bar-fill" style={{ width: `${Math.max((r.value / max) * 100, 6)}%` }} />
+              </div>
+              <span className="hier-budget-bar-value">{money(r.value)}</span>
+            </div>
+          ))}
+        </div>
+        {!isReal && <p className="hier-detail-panel-note">No campaign here has run a Campaign Plan's Budget stage yet — shown split is a placeholder, not a committed number.</p>}
+      </div>
+    </div>
+  );
+}
+
+const FUNNEL_STAGES = ["Awareness", "Consideration", "Trial", "Adoption"];
+
+/** HCP funnel performance, as a shrinking-width funnel rather than a sentence. There's no
+ *  measured funnel wired to a plan yet, so this is an illustrative, clearly-labelled
+ *  distribution (seeded by brand so it's stable, not reshuffled) -- the same
+ *  "illustrative heuristic" convention strategy/segment_profile.py already uses for the
+ *  HCP adoption ladder elsewhere in this app. */
+function HcpFunnel({ brand, plan }: { brand: string; plan: TreePlan }) {
+  const seed = `${brand}:${plan.id}:funnel`;
+  let pct = 100;
+  const stages = FUNNEL_STAGES.map((label, i) => {
+    const value = pct;
+    pct = Math.round(pct * (0.45 + seeded(seed, i + 1) * 0.3));
+    return { label, pct: value };
+  });
+  return (
+    <div className="hier-punch-card hier-funnel">
+      <span className="hier-punch-icon"><Icon name="users" size={20} /></span>
+      <div className="hier-punch-body">
+        <div className="hier-budget-head">
+          <div className="hier-detail-subhead">HCP funnel performance</div>
+          <span className="illustrative-tag">Illustrative</span>
+        </div>
+        <div className="hier-funnel-stages">
+          {stages.map((s) => (
+            <div className="hier-funnel-stage" key={s.label}>
+              <div className="hier-funnel-bar-wrap">
+                <div className="hier-funnel-bar" style={{ width: `${Math.max(s.pct, 8)}%` }} />
+              </div>
+              <span className="hier-funnel-label">{s.label}</span>
+              <span className="hier-funnel-pct">{s.pct}%</span>
+            </div>
+          ))}
+        </div>
+        <p className="hier-detail-panel-note">Modeled distribution across the HCP adoption ladder -- not measured performance.</p>
+      </div>
     </div>
   );
 }
@@ -324,9 +418,15 @@ function PlanDetail({ brand, plan, kit, onChanged }: { brand: string; plan: Tree
         </p>
       )}
 
-      <BriefContext kit={kit} />
+      <PlanObjective kit={kit} brand={brand} />
+      <PlanBudget brand={brand} plan={plan} />
+      <HcpFunnel brand={brand} plan={plan} />
 
       {plan.campaigns.length > 0 && <CampaignTimeline brand={brand} plan={plan} onChanged={onChanged} />}
+
+      <a className="hier-brief-link" href={href({ kind: "brand", brand, tab: "workspace" })}>
+        <Icon name="document" size={15} /> View the full brief &amp; kit <Icon name="arrowRight" size={13} />
+      </a>
 
       <div className="hier-detail-campaigns">
         <div className="hier-detail-subhead">Associated campaigns</div>

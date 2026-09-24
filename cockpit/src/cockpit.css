@@ -1094,16 +1094,23 @@ a.rail-add-brand { display: inline-grid; place-items: center; color: inherit; te
    header and scrolls on its own, like the reference modal's two-pane layout. */
 .hier-page-master { max-width: 1180px; height: 100%; min-height: 0; padding-bottom: 24px; }
 .hier-page-master .hier-master { flex: 1; min-height: 0; }
-.hier-master { display: grid; grid-template-columns: 2fr 3fr; gap: 22px; align-items: stretch; }
+/* One shared white shell -- list, divider and detail are three columns of the SAME
+   surface (one background/radius/shadow on the shell), not two separate cards with a gap
+   between them. */
+.hier-master {
+  display: grid; grid-template-columns: 2fr 1px 3fr; align-items: stretch;
+  background: var(--base-white); border-radius: var(--radius-md); box-shadow: var(--neu-flat); overflow: hidden;
+}
+.hier-master-divider { background: var(--neutral-200); }
 @media (max-width: 860px) {
   .hier-page-master { height: auto; }
   .hier-master { grid-template-columns: 1fr; align-items: start; }
+  .hier-master-divider { display: none; }
   .hier-master-list, .hier-master-detail, .hier-detail-card { height: auto; max-height: 70vh; }
 }
 
 .hier-master-list {
-  background: var(--base-white); border-radius: var(--radius-md); box-shadow: var(--neu-flat);
-  padding: 14px; display: flex; flex-direction: column; gap: 10px; min-height: 0; overflow: hidden;
+  background: transparent; padding: 14px; display: flex; flex-direction: column; gap: 10px; min-height: 0; overflow: hidden;
 }
 .hier-search {
   display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-radius: var(--radius-full);
@@ -1131,8 +1138,7 @@ a.rail-add-brand { display: inline-grid; place-items: center; color: inherit; te
    scroll, at the pane's full height, instead of growing the page. */
 .hier-detail-card {
   display: flex; flex-direction: column; gap: 16px; padding: 28px 30px;
-  background: var(--base-white); border-radius: var(--radius-md); box-shadow: var(--neu-flat);
-  height: 100%; min-height: 0; overflow-y: auto;
+  background: transparent; height: 100%; min-height: 0; overflow-y: auto;
 }
 .hier-detail-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 10px; }
 .hier-detail-head > div { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -1143,10 +1149,55 @@ a.rail-add-brand { display: inline-grid; place-items: center; color: inherit; te
 .hier-detail-subhead { font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
 .hier-detail-campaigns { display: flex; flex-direction: column; gap: 8px; }
 
-/* ---- Brief & message: words about the brand this plan belongs to (the plan itself has
-   none of its own), sourced from the same brand kit the Brief & kit tab reads. ---- */
-.hier-brief { display: flex; flex-direction: column; gap: 6px; padding-top: 4px; }
-.hier-brief-message { font-style: italic; }
+/* ---- Punch cards: Objective / Budget / HCP funnel -- spacious, icon-led blocks instead
+   of paragraph text, on a tinted panel so they read as distinct modules. ---- */
+.hier-punch-card {
+  display: flex; gap: 14px; padding: 18px 20px; border-radius: var(--radius-md);
+  background: var(--primary-light-background);
+}
+.hier-punch-icon {
+  flex: 0 0 auto; width: 38px; height: 38px; border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  background: var(--base-white); color: var(--primary); box-shadow: var(--neu-flat-sm);
+}
+.hier-punch-body { flex: 1; min-width: 0; }
+.hier-punch-body .hier-detail-subhead { margin-bottom: 6px; }
+
+.hier-objective-text { margin: 0; font-size: 14.5px; line-height: 1.55; color: var(--fg); font-weight: 600; }
+.hier-objective-missing { font-weight: 400; color: var(--muted); }
+.hier-objective-missing a { color: var(--primary); font-weight: 600; text-decoration: none; }
+.hier-objective-missing a:hover { text-decoration: underline; }
+.hier-objective-metric { margin: 8px 0 0; font-size: 12px; color: var(--muted); }
+
+.hier-budget-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
+.hier-budget-total { font-size: 26px; font-weight: 700; color: var(--fg); margin-bottom: 12px; }
+.hier-budget-bars { display: flex; flex-direction: column; gap: 8px; }
+.hier-budget-bar-row { display: flex; align-items: center; gap: 10px; }
+.hier-budget-bar-label {
+  flex: 0 0 130px; font-size: 12px; color: var(--fg); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.hier-budget-bar-track { flex: 1; height: 10px; border-radius: var(--radius-full); background: var(--base-white); overflow: hidden; }
+.hier-budget-bar-fill { height: 100%; border-radius: var(--radius-full); background: var(--primary); }
+.hier-budget-bar-value { flex: 0 0 auto; font-size: 11.5px; font-weight: 700; color: var(--muted); min-width: 44px; text-align: right; }
+
+.hier-funnel-stages { display: flex; flex-direction: column; gap: 8px; }
+.hier-funnel-stage { display: grid; grid-template-columns: 1fr 90px 40px; align-items: center; gap: 10px; }
+.hier-funnel-bar-wrap { height: 18px; display: flex; }
+.hier-funnel-bar {
+  height: 100%; border-radius: var(--radius-sm); background: linear-gradient(90deg, var(--primary), var(--primary-background-hover));
+  transition: width 300ms ease;
+}
+.hier-funnel-label { font-size: 12px; color: var(--fg); font-weight: 600; }
+.hier-funnel-pct { font-size: 12px; font-weight: 700; color: var(--muted); text-align: right; }
+
+.hier-detail-panel-note { font-size: 11px; color: var(--muted); font-style: italic; line-height: 1.5; margin: 10px 0 0; }
+
+.hier-brief-link {
+  display: inline-flex; align-items: center; gap: 6px; align-self: flex-start;
+  font-size: 12.5px; font-weight: 600; color: var(--primary); text-decoration: none;
+  padding: 8px 4px;
+}
+.hier-brief-link:hover { text-decoration: underline; }
 
 /* ---- Timeline: campaigns on a shared horizontal axis so it's clear which one runs when.
    Undated campaigns list below with a one-click way to schedule them. ---- */

@@ -325,6 +325,10 @@ export interface HierCampaign {
   /** Set by hand for the engagement plan's timeline view -- absent means not scheduled yet. */
   start_date: string | null;
   end_date: string | null;
+  /** Real, when it exists: written by a Campaign Plan run's Budget stage (stage_5_budget)
+   *  onto this same campaign row. Absent for a campaign with no Campaign Plan yet, or one
+   *  whose plan hasn't reached that stage. */
+  total_budget: number | null;
   content: { tracked: boolean; changed_steps: string[]; snapshot_at: string | null };
 }
 export interface HierPlan {
