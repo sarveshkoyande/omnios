@@ -1110,7 +1110,7 @@ a.rail-add-brand { display: inline-grid; place-items: center; color: inherit; te
 }
 
 .hier-master-list {
-  background: transparent; padding: 14px; display: flex; flex-direction: column; gap: 10px; min-height: 0; overflow: hidden;
+  background: transparent; padding: 14px; display: flex; flex-direction: column; gap: 10px; min-height: 0; overflow: visible;
 }
 .hier-search {
   display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-radius: var(--radius-full);
@@ -1129,6 +1129,7 @@ a.rail-add-brand { display: inline-grid; place-items: center; color: inherit; te
 }
 .hier-plan-row:hover { background: var(--primary-light-background); }
 .hier-plan-row.active { background: var(--primary-light-background); box-shadow: var(--neu-inset-sm); }
+.hier-plan-row:focus-visible { outline: none; box-shadow: var(--neu-inset-sm); }
 .hier-plan-row-name { font-size: 13px; font-weight: 700; color: var(--fg); }
 .hier-plan-row-sub { font-size: 11.5px; color: var(--muted); }
 
