@@ -1169,9 +1169,18 @@ a.rail-add-brand { display: inline-grid; place-items: center; color: inherit; te
 .hier-objective-missing a:hover { text-decoration: underline; }
 .hier-objective-metric { margin: 8px 0 0; font-size: 12px; color: var(--muted); }
 
+/* ---- Story so far: a short illustrative history, not a data-dump sentence. ---- */
+.hier-history-text { margin: 0; font-size: 13px; line-height: 1.7; color: var(--fg); }
+
 .hier-budget-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
-.hier-budget-total { font-size: 26px; font-weight: 700; color: var(--fg); margin-bottom: 12px; }
-.hier-budget-bars { display: flex; flex-direction: column; gap: 8px; }
+.hier-budget-main { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.hier-budget-total { font-size: 28px; font-weight: 700; color: var(--fg); }
+.hier-budget-toggle {
+  display: inline-flex; align-items: center; gap: 4px; font-family: inherit; font-size: 12px; font-weight: 600;
+  border: none; background: transparent; color: var(--primary); cursor: pointer; padding: 4px 0;
+}
+.hier-budget-toggle:hover { text-decoration: underline; }
+.hier-budget-bars { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
 .hier-budget-bar-row { display: flex; align-items: center; gap: 10px; }
 .hier-budget-bar-label {
   flex: 0 0 130px; font-size: 12px; color: var(--fg); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
@@ -1180,15 +1189,19 @@ a.rail-add-brand { display: inline-grid; place-items: center; color: inherit; te
 .hier-budget-bar-fill { height: 100%; border-radius: var(--radius-full); background: var(--primary); }
 .hier-budget-bar-value { flex: 0 0 auto; font-size: 11.5px; font-weight: 700; color: var(--muted); min-width: 44px; text-align: right; }
 
-.hier-funnel-stages { display: flex; flex-direction: column; gap: 8px; }
-.hier-funnel-stage { display: grid; grid-template-columns: 1fr 90px 40px; align-items: center; gap: 10px; }
-.hier-funnel-bar-wrap { height: 18px; display: flex; }
-.hier-funnel-bar {
-  height: 100%; border-radius: var(--radius-sm); background: linear-gradient(90deg, var(--primary), var(--primary-background-hover));
-  transition: width 300ms ease;
+/* ---- HCP funnel: nested trapezoids, each segment's bottom edge narrowed (via clip-path)
+   to match the next segment's width, so stacked with no gap they read as one funnel. ---- */
+.hier-funnel-shape { display: flex; flex-direction: column; align-items: center; gap: 0; margin: 4px 0 2px; }
+.hier-funnel-seg {
+  position: relative; height: 46px; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; color: var(--base-white); background: var(--primary);
 }
-.hier-funnel-label { font-size: 12px; color: var(--fg); font-weight: 600; }
-.hier-funnel-pct { font-size: 12px; font-weight: 700; color: var(--muted); text-align: right; }
+.hier-funnel-seg-0 { opacity: 1; }
+.hier-funnel-seg-1 { opacity: .82; }
+.hier-funnel-seg-2 { opacity: .66; }
+.hier-funnel-seg-3 { opacity: .52; }
+.hier-funnel-seg-label { font-size: 11.5px; font-weight: 700; letter-spacing: .02em; }
+.hier-funnel-seg-value { font-size: 10.5px; opacity: .9; }
 
 .hier-detail-panel-note { font-size: 11px; color: var(--muted); font-style: italic; line-height: 1.5; margin: 10px 0 0; }
 
@@ -1218,14 +1231,17 @@ a.rail-add-brand { display: inline-grid; place-items: center; color: inherit; te
 .hier-timeline-bar.bar-status-in_progress { background: var(--info-foreground); }
 .hier-timeline-bar.bar-status-confirmed { background: var(--success-foreground); }
 .hier-timeline-bar.bar-status-closed { background: var(--neutral-400); }
-.hier-timeline-unscheduled { display: flex; flex-direction: column; gap: 4px; margin-top: 2px; }
-.hier-timeline-row-unscheduled { min-height: unset; padding: 6px 0; }
-.hier-timeline-schedule-btn {
-  font-family: inherit; font-size: 11.5px; font-weight: 600; border: none; background: transparent;
-  color: var(--primary); cursor: pointer; padding: 0;
+.hier-timeline-bar.bar-illustrative {
+  background: repeating-linear-gradient(45deg, var(--neutral-400), var(--neutral-400) 5px, var(--neutral-300) 5px, var(--neutral-300) 10px);
+  opacity: .85;
 }
-.hier-timeline-schedule-btn:hover { text-decoration: underline; }
-.hier-timeline-row-unscheduled .hier-period { flex-wrap: wrap; }
+.hier-timeline-edit-btn {
+  flex: 0 0 auto; font-family: inherit; font-size: 11px; font-weight: 600; border: none; background: transparent;
+  color: var(--primary); cursor: pointer; padding: 0; white-space: nowrap;
+}
+.hier-timeline-edit-btn:hover { text-decoration: underline; }
+.hier-timeline-row-editing { min-height: unset; padding: 4px 0; }
+.hier-timeline-row-editing .hier-period { flex-wrap: wrap; }
 .hier-campaign-row {
   display: flex; flex-wrap: wrap; align-items: center; gap: 10px; text-decoration: none;
   padding: 12px 14px; border-radius: var(--radius-sm); box-shadow: var(--neu-inset-sm); color: inherit;

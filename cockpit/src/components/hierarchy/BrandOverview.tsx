@@ -154,17 +154,6 @@ export function BrandOverview({ brand, tree, kit, onChanged }: {
   );
 }
 
-/** A sentence, not a row of pills -- what this plan is, in words, from real fields only
- *  (no invented goals or budgets). */
-function planSummary(plan: TreePlan): string {
-  const period = periodLabel(plan.period_start, plan.period_end);
-  const n = plan.campaigns.length;
-  const campaignPhrase = n === 0
-    ? "It has no campaigns yet."
-    : `It covers ${n} campaign${n === 1 ? "" : "s"}: ${plan.campaigns.map((c) => c.name).join(", ")}.`;
-  return `${period ? `Runs ${period}. ` : "No period is set for this plan. "}${campaignPhrase}`;
-}
-
 /** A stable pseudo-random ratio in [0, 1) from a string seed -- used only where this page
  *  has no real number to show and needs one anyway (Budget/HCP funnel fallbacks), so the
  *  same plan always renders the same illustrative figures instead of reshuffling on every
@@ -176,6 +165,45 @@ function seeded(seed: string, salt = 0): number {
 }
 
 const money = (n: number) => `$${(n / 1000).toLocaleString(undefined, { maximumFractionDigits: 0 })}K`;
+
+/** A bit of history instead of a data dump -- launch, an indication expansion, a trial
+ *  read-out, told as a short story, with the plan's real period and campaigns woven into
+ *  it instead of listed as a bare "Runs X. Covers Y, Z." sentence. This app has no real
+ *  launch-history timeline to draw on, so the backstory is illustrative -- seeded per plan
+ *  so it reads the same on every visit rather than reshuffling, and tagged as such, same
+ *  convention as Budget/HCP funnel below. */
+function PlanHistory({ brand, plan, kit }: { brand: string; plan: TreePlan; kit: BrandKit | null }) {
+  const seed = `${brand}:${plan.id}:history`;
+  const launchYear = 2024 + Math.floor(seeded(seed, 2) * 2);
+  const expansionYear = launchYear + 1;
+  const indication = kit?.indication || "its lead indication";
+  const audience = (kit?.primary_audience || "HCPs").toLowerCase();
+  const period = periodLabel(plan.period_start, plan.period_end);
+  const names = plan.campaigns.map((c) => c.name);
+  const trialName = `${brand.replace(/[^A-Za-z]/g, "").slice(0, 3).toUpperCase() || "TRX"}-${100 + Math.floor(seeded(seed, 9) * 800)}`;
+  const campaignPhrase = names.length === 0
+    ? "no campaign has been built to carry it forward yet"
+    : `${names.length} campaign${names.length === 1 ? "" : "s"} carry it forward — ${names.join(", ")}`;
+
+  return (
+    <div className="hier-punch-card hier-history">
+      <span className="hier-punch-icon"><Icon name="star" size={20} /></span>
+      <div className="hier-punch-body">
+        <div className="hier-budget-head">
+          <div className="hier-detail-subhead">Story so far</div>
+          <span className="illustrative-tag">Illustrative</span>
+        </div>
+        <p className="hier-history-text">
+          {brand} launched in {launchYear} for {indication} and quickly became a flagship therapy.
+          In January {expansionYear}, a label expansion into a second indication was confirmed after
+          the {trialName} trial read out — news that&rsquo;s still novel to most of {audience}.{" "}
+          {period ? `This plan runs ${period}, and ` : "This plan has no period set yet, and "}
+          {campaignPhrase}.
+        </p>
+      </div>
+    </div>
+  );
+}
 
 /** The plan's objective, spelled out large -- the one real fact worth headlining. An
  *  engagement plan has no objective field of its own; this reads the brand's (BrandKit's
@@ -207,6 +235,7 @@ function PlanObjective({ kit, brand }: { kit: BrandKit | null; brand: string }) 
  *  clearly-labelled split otherwise, so the section is never an empty box while still never
  *  passing off a made-up number as real. */
 function PlanBudget({ brand, plan }: { brand: string; plan: TreePlan }) {
+  const [expanded, setExpanded] = useState(false);
   const real = plan.campaigns.filter((c) => (c.total_budget ?? 0) > 0);
   const isReal = real.length > 0;
   const rows: { name: string; value: number; campaignId: number }[] = isReal
@@ -226,39 +255,53 @@ function PlanBudget({ brand, plan }: { brand: string; plan: TreePlan }) {
           <div className="hier-detail-subhead">Budget</div>
           {!isReal && <span className="illustrative-tag">Illustrative</span>}
         </div>
-        <div className="hier-budget-total">{money(total)}</div>
-        <div className="hier-budget-bars">
-          {rows.map((r) => (
-            <div className="hier-budget-bar-row" key={r.campaignId || r.name}>
-              <span className="hier-budget-bar-label">{r.name}</span>
-              <div className="hier-budget-bar-track">
-                <div className="hier-budget-bar-fill" style={{ width: `${Math.max((r.value / max) * 100, 6)}%` }} />
-              </div>
-              <span className="hier-budget-bar-value">{money(r.value)}</span>
-            </div>
-          ))}
+        <div className="hier-budget-main">
+          <div className="hier-budget-total">{money(total)}</div>
+          {rows.length > 1 && (
+            <button type="button" className="hier-budget-toggle" onClick={() => setExpanded((v) => !v)}>
+              {expanded ? "Hide breakdown" : "Show breakdown"}
+              <Icon name="chevronDown" size={13} style={{ transform: expanded ? "rotate(180deg)" : undefined, transition: "transform 160ms ease" }} />
+            </button>
+          )}
         </div>
+        {expanded && rows.length > 1 && (
+          <div className="hier-budget-bars">
+            {rows.map((r) => (
+              <div className="hier-budget-bar-row" key={r.campaignId || r.name}>
+                <span className="hier-budget-bar-label">{r.name}</span>
+                <div className="hier-budget-bar-track">
+                  <div className="hier-budget-bar-fill" style={{ width: `${Math.max((r.value / max) * 100, 6)}%` }} />
+                </div>
+                <span className="hier-budget-bar-value">{money(r.value)}</span>
+              </div>
+            ))}
+          </div>
+        )}
         {!isReal && <p className="hier-detail-panel-note">No campaign here has run a Campaign Plan's Budget stage yet — shown split is a placeholder, not a committed number.</p>}
       </div>
     </div>
   );
 }
 
-const FUNNEL_STAGES = ["Awareness", "Consideration", "Trial", "Adoption"];
+const FUNNEL_STAGES = ["Reached", "Engaged", "Considering", "Prescribing"];
 
-/** HCP funnel performance, as a shrinking-width funnel rather than a sentence. There's no
- *  measured funnel wired to a plan yet, so this is an illustrative, clearly-labelled
- *  distribution (seeded by brand so it's stable, not reshuffled) -- the same
+/** HCP funnel performance as an actual tapering funnel (nested trapezoids), not a bar
+ *  list -- each segment's own width is its share of the top of the funnel, and its bottom
+ *  edge narrows to match the next segment's width, so stacked with no gap they read as one
+ *  continuous funnel silhouette. There's no measured funnel wired to a plan yet, so the
+ *  counts are illustrative (seeded by plan, stable across visits) -- the same
  *  "illustrative heuristic" convention strategy/segment_profile.py already uses for the
  *  HCP adoption ladder elsewhere in this app. */
 function HcpFunnel({ brand, plan }: { brand: string; plan: TreePlan }) {
   const seed = `${brand}:${plan.id}:funnel`;
-  let pct = 100;
+  const universe = 400 + Math.round(seeded(seed, 1) * 1400);
+  let count = universe;
   const stages = FUNNEL_STAGES.map((label, i) => {
-    const value = pct;
-    pct = Math.round(pct * (0.45 + seeded(seed, i + 1) * 0.3));
-    return { label, pct: value };
+    const value = count;
+    count = Math.round(count * (0.4 + seeded(seed, i + 5) * 0.3));
+    return { label, count: value };
   });
+
   return (
     <div className="hier-punch-card hier-funnel">
       <span className="hier-punch-icon"><Icon name="users" size={20} /></span>
@@ -267,18 +310,27 @@ function HcpFunnel({ brand, plan }: { brand: string; plan: TreePlan }) {
           <div className="hier-detail-subhead">HCP funnel performance</div>
           <span className="illustrative-tag">Illustrative</span>
         </div>
-        <div className="hier-funnel-stages">
-          {stages.map((s) => (
-            <div className="hier-funnel-stage" key={s.label}>
-              <div className="hier-funnel-bar-wrap">
-                <div className="hier-funnel-bar" style={{ width: `${Math.max(s.pct, 8)}%` }} />
+        <div className="hier-funnel-shape">
+          {stages.map((s, i) => {
+            const widthPct = Math.max(Math.round((s.count / universe) * 100), 22);
+            const next = stages[i + 1];
+            const bottomFrac = next ? Math.max((next.count / s.count) * 100, 40) : 62;
+            return (
+              <div key={s.label} className={`hier-funnel-seg hier-funnel-seg-${i}`}
+                style={{
+                  width: `${widthPct}%`,
+                  clipPath: `polygon(0 0, 100% 0, ${50 + bottomFrac / 2}% 100%, ${50 - bottomFrac / 2}% 100%)`,
+                }}
+              >
+                <span className="hier-funnel-seg-label">{s.label}</span>
+                <span className="hier-funnel-seg-value">{s.count.toLocaleString()} · {Math.round((s.count / universe) * 100)}%</span>
               </div>
-              <span className="hier-funnel-label">{s.label}</span>
-              <span className="hier-funnel-pct">{s.pct}%</span>
-            </div>
-          ))}
+            );
+          })}
         </div>
-        <p className="hier-detail-panel-note">Modeled distribution across the HCP adoption ladder -- not measured performance.</p>
+        <p className="hier-detail-panel-note">
+          Modeled against an illustrative addressable universe of {universe.toLocaleString()} HCPs -- not measured performance.
+        </p>
       </div>
     </div>
   );
@@ -304,12 +356,13 @@ function timelineDomain(plan: TreePlan, ranges: Map<number, [number, number]>): 
 }
 
 /** Campaigns laid out on a shared horizontal axis so it's clear at a glance which one runs
- *  when. Undated campaigns (the common case today) are listed below the axis instead of
- *  guessed onto it, with a one-click way to schedule them. */
+ *  when. A campaign with no real dates gets an illustrative slot instead of being left off
+ *  the axis (seeded by campaign, stable across visits) -- shown in a lighter, dashed bar
+ *  with a one-click way to confirm its real dates, which replaces the placeholder. */
 function CampaignTimeline({ brand, plan, onChanged }: { brand: string; plan: TreePlan; onChanged: () => void }) {
   const [editing, setEditing] = useState<number | null>(null);
 
-  const ranges = useMemo(() => {
+  const real = useMemo(() => {
     const m = new Map<number, [number, number]>();
     for (const c of plan.campaigns) {
       if (!c.start_date && !c.end_date) continue;
@@ -320,9 +373,40 @@ function CampaignTimeline({ brand, plan, onChanged }: { brand: string; plan: Tre
     return m;
   }, [plan.campaigns]);
 
+  // Illustrative dates are laid out within the plan's own period when it has one, else the
+  // span of whatever real dates exist, else a plain 90-day window starting today.
+  const baseWindow = useMemo<[number, number]>(() => {
+    if (plan.period_start && plan.period_end) return [toMs(plan.period_start), toMs(plan.period_end)];
+    if (real.size > 0) {
+      const vals = [...real.values()].flat();
+      return [Math.min(...vals), Math.max(...vals)];
+    }
+    const now = Date.now();
+    return [now, now + DAY_MS * 90];
+  }, [plan.period_start, plan.period_end, real]);
+
+  const illustrativeIds = useMemo(() => new Set(plan.campaigns.filter((c) => !real.has(c.id)).map((c) => c.id)),
+    [plan.campaigns, real]);
+
+  const ranges = useMemo(() => {
+    const m = new Map(real);
+    const [ws, we] = baseWindow;
+    const span = Math.max(we - ws, DAY_MS * 7);
+    let i = 0;
+    for (const c of plan.campaigns) {
+      if (m.has(c.id)) continue;
+      const seed = `${brand}:${plan.id}:${c.id}:tl`;
+      const startFrac = seeded(seed, 3 + i) * 0.55;
+      const lenFrac = 0.18 + seeded(seed, 9 + i) * 0.32;
+      const s = ws + span * startFrac;
+      const e = Math.min(we + span * 0.1, s + span * lenFrac);
+      m.set(c.id, [s, Math.max(s + DAY_MS, e)]);
+      i++;
+    }
+    return m;
+  }, [real, baseWindow, plan.campaigns, brand, plan.id]);
+
   const domain = timelineDomain(plan, ranges);
-  const scheduled = plan.campaigns.filter((c) => ranges.has(c.id));
-  const unscheduled = plan.campaigns.filter((c) => !ranges.has(c.id));
   const today = Date.now();
 
   const save = (campaignId: number, s: string, e: string) => {
@@ -331,8 +415,11 @@ function CampaignTimeline({ brand, plan, onChanged }: { brand: string; plan: Tre
 
   return (
     <div className="hier-timeline">
-      <div className="hier-detail-subhead">Timeline</div>
-      {domain && scheduled.length > 0 && (
+      <div className="hier-budget-head">
+        <div className="hier-detail-subhead">Timeline</div>
+        {illustrativeIds.size > 0 && <span className="illustrative-tag">Partly illustrative</span>}
+      </div>
+      {domain && (
         <div className="hier-timeline-axis">
           <div className="hier-timeline-scale">
             <span>{iso(domain[0])}</span>
@@ -343,53 +430,43 @@ function CampaignTimeline({ brand, plan, onChanged }: { brand: string; plan: Tre
               <div className="hier-timeline-today" style={{ left: `${((today - domain[0]) / (domain[1] - domain[0])) * 100}%` }} title="Today" />
             )}
           </div>
-          {scheduled.map((c) => {
+          {plan.campaigns.map((c) => {
             const [s, e] = ranges.get(c.id)!;
+            const illus = illustrativeIds.has(c.id);
             const left = ((s - domain[0]) / (domain[1] - domain[0])) * 100;
             const width = Math.max(((e - s) / (domain[1] - domain[0])) * 100, 1.2);
+            if (editing === c.id) {
+              return (
+                <ScheduleRow key={c.id} brand={brand} plan={plan} campaign={c}
+                  onCancel={() => setEditing(null)} onSave={save} />
+              );
+            }
             return (
               <div className="hier-timeline-row" key={c.id}>
                 <a className="hier-timeline-label" href={href({ kind: "campaign", brand, planId: plan.id, campaignId: c.id })}>{c.name}</a>
                 <div className="hier-timeline-lane">
-                  <div className={`hier-timeline-bar bar-status-${c.status}`} style={{ left: `${left}%`, width: `${width}%` }}
-                    title={`${c.start_date ?? "?"} – ${c.end_date ?? "ongoing"}`} />
+                  <div className={`hier-timeline-bar bar-status-${c.status} ${illus ? "bar-illustrative" : ""}`} style={{ left: `${left}%`, width: `${width}%` }}
+                    title={illus ? "Illustrative -- dates not confirmed" : `${c.start_date ?? "?"} – ${c.end_date ?? "ongoing"}`} />
                 </div>
+                {illus && <button type="button" className="hier-timeline-edit-btn" onClick={() => setEditing(c.id)}>Confirm dates</button>}
               </div>
             );
           })}
-        </div>
-      )}
-      {scheduled.length === 0 && <p className="hier-hint">No campaigns are scheduled yet — set dates on a campaign below to plot it here.</p>}
-
-      {unscheduled.length > 0 && (
-        <div className="hier-timeline-unscheduled">
-          {unscheduled.map((c) => (
-            <ScheduleRow key={c.id} brand={brand} plan={plan} campaign={c}
-              editing={editing === c.id} onEdit={() => setEditing(c.id)} onCancel={() => setEditing(null)} onSave={save} />
-          ))}
         </div>
       )}
     </div>
   );
 }
 
-function ScheduleRow({ brand, plan, campaign, editing, onEdit, onCancel, onSave }: {
-  brand: string; plan: TreePlan; campaign: TreeCampaign; editing: boolean;
-  onEdit: () => void; onCancel: () => void; onSave: (campaignId: number, start: string, end: string) => void;
+function ScheduleRow({ brand, plan, campaign, onCancel, onSave }: {
+  brand: string; plan: TreePlan; campaign: TreeCampaign;
+  onCancel: () => void; onSave: (campaignId: number, start: string, end: string) => void;
 }) {
   const [s, setS] = useState(campaign.start_date ?? "");
   const [e, setE] = useState(campaign.end_date ?? "");
-  if (!editing) {
-    return (
-      <div className="hier-timeline-row hier-timeline-row-unscheduled">
-        <a className="hier-timeline-label" href={href({ kind: "campaign", brand, planId: plan.id, campaignId: campaign.id })}>{campaign.name}</a>
-        <button type="button" className="hier-timeline-schedule-btn" onClick={onEdit}>Set dates</button>
-      </div>
-    );
-  }
   return (
-    <div className="hier-timeline-row hier-timeline-row-unscheduled">
-      <span className="hier-timeline-label">{campaign.name}</span>
+    <div className="hier-timeline-row hier-timeline-row-editing">
+      <a className="hier-timeline-label" href={href({ kind: "campaign", brand, planId: plan.id, campaignId: campaign.id })}>{campaign.name}</a>
       <div className="hier-period">
         <label>From <input type="date" className="jc-input" value={s} onChange={(ev) => setS(ev.target.value)} /></label>
         <label>To <input type="date" className="jc-input" value={e} onChange={(ev) => setE(ev.target.value)} /></label>
@@ -411,13 +488,13 @@ function PlanDetail({ brand, plan, kit, onChanged }: { brand: string; plan: Tree
         </div>
       </div>
 
-      <p className="hier-detail-summary">{planSummary(plan)}</p>
       {drifted > 0 && (
         <p className="hier-detail-summary hier-summary-warn">
           {drifted} of its campaign{drifted === 1 ? "" : "s"} {drifted === 1 ? "has" : "have"} changed brand content since it was last built.
         </p>
       )}
 
+      <PlanHistory brand={brand} plan={plan} kit={kit} />
       <PlanObjective kit={kit} brand={brand} />
       <PlanBudget brand={brand} plan={plan} />
       <HcpFunnel brand={brand} plan={plan} />
