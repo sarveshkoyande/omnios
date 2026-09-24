@@ -8,14 +8,14 @@ import { useWorkflowStore } from "@omni-frontend/workspace/stages/operations/flo
 import { campaignFlowToDocument } from "@omni-frontend/workspace/stages/operations/campaignAdapter";
 import { layoutCampaignDocument } from "@omni-frontend/workspace/stages/operations/campaignLayout";
 import type { CampaignFlow } from "@omni-frontend/workspace/types";
-import { buildJourneyFlow, createCampaign, getCampaignDrift, getJourneyFlow, refreshCampaignSnapshot, journeyConfirm, journeyFlowKeep, journeyFlowTurn, journeyFlowUndo, journeyReopen } from "../../api";
-import type { CampaignDrift, JourneyCampaignFlow, JourneyFlow, JourneyFlowOp, JourneyState, JourneyStep } from "../../types";
-import { ValueView } from "./DraftValue";
+import { buildJourneyFlow, createCampaign, getJourneyFlow, journeyConfirm, journeyFlowKeep, journeyFlowTurn, journeyFlowUndo, journeyReopen } from "../../api";
+import type { JourneyCampaignFlow, JourneyFlow, JourneyFlowOp, JourneyState, JourneyStep } from "../../types";
+import { DriftBanner } from "../DriftBanner";
 import { StepChat, type TurnState } from "./StepChat";
 
-const IDLE: TurnState = { pending: false, message: null, reply: null, outcome: null, advance: null, error: null };
+export const IDLE: TurnState = { pending: false, message: null, reply: null, outcome: null, advance: null, error: null };
 
-function describeOp(op: JourneyFlowOp): string {
+export function describeOp(op: JourneyFlowOp): string {
   switch (op.op) {
     case "add": return `Add ${op.type} "${op.label}"${op.after ? ` after ${op.after}` : ""}`;
     case "remove": return `Remove ${op.code}`;
@@ -41,7 +41,7 @@ function toCampaignFlow(flow: JourneyCampaignFlow, keptCodes: Set<string> | null
 
 /** Read-only diagram (KTD8: edits come only through chat ops). Node dragging, handles and the
  *  canvas keyboard shortcuts are suppressed; pan and zoom stay available. */
-function FlowDiagram({ flow, keptCodes }: { flow: JourneyCampaignFlow; keptCodes: Set<string> | null }) {
+export function FlowDiagram({ flow, keptCodes }: { flow: JourneyCampaignFlow; keptCodes: Set<string> | null }) {
   const loadDocument = useWorkflowStore((s) => s.loadDocument);
   useEffect(() => {
     let live = true;
@@ -72,20 +72,7 @@ export function FlowCanvas({ brand, labels, step, onState }: {
   const [turn, setTurn] = useState<TurnState>(IDLE);
 
   const reload = () => getJourneyFlow(brand).then(setFlow);
-  // Idea 5: the flow's campaign keeps the brand content it was built from; say when it moved on.
-  const [drift, setDrift] = useState<CampaignDrift | null>(null);
-  const [compare, setCompare] = useState(false);
   const campaignId = flow?.status === "built" ? flow.campaign_id : null;
-  useEffect(() => {
-    let live = true;
-    if (campaignId == null) { setDrift(null); return; }
-    getCampaignDrift(campaignId).then((d) => { if (live) setDrift(d); }).catch(() => undefined);
-    return () => { live = false; };
-  }, [campaignId, flow]);
-  const updateContent = () => {
-    if (campaignId == null) return;
-    run(refreshCampaignSnapshot(campaignId).then(async (d) => { setDrift(d); setCompare(false); await reload(); }));
-  };
 
   useEffect(() => {
     let live = true;
@@ -190,30 +177,7 @@ export function FlowCanvas({ brand, labels, step, onState }: {
           </div>
         )}
         {error && <div className="step-chat-error" role="alert">{error}</div>}
-        {drift?.has_drift && (
-          <div className="jc-drift" role="status">
-            <div className="jc-drift-head">
-              <span>
-                The brand's {Object.keys(drift.changed).map((s) => labels[s] ?? s).join(", ")} changed since this
-                campaign was built. This flow still uses the earlier content.
-              </span>
-              <span className="jc-drift-actions">
-                <button type="button" className="jc-link" onClick={() => setCompare((c) => !c)}>{compare ? "Hide" : "Compare"}</button>
-                <button type="button" className="jc-btn jc-btn-keep" disabled={busy} onClick={updateContent}>Update to current content</button>
-              </span>
-            </div>
-            {compare && (
-              <dl className="jc-drift-list">
-                {Object.entries(drift.changed).flatMap(([step, changes]) => (changes ?? []).map((c) => (
-                  <div key={`${step}-${c.key}`} className="jc-drift-row">
-                    <dt>{labels[step] ?? step} · {c.label}</dt>
-                    <dd><span className="jc-drift-then"><ValueView value={c.then} /></span><span aria-hidden>→</span><ValueView value={c.now} /></dd>
-                  </div>
-                )))}
-              </dl>
-            )}
-          </div>
-        )}
+        {campaignId != null && <DriftBanner campaignId={campaignId} reloadKey={flow} onUpdated={() => { void reload(); }} subject="This flow" />}
         {flow.dropped.length > 0 && (
           <div className="jc-waiting">
             {flow.dropped.length} kept edit{flow.dropped.length === 1 ? "" : "s"} could not be reapplied:

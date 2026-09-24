@@ -894,6 +894,28 @@ def undo_flow_draft_by_id(flow_id: int) -> dict:
     return get_flow_by_id(flow_id)
 
 
+def create_flow_in_campaign(campaign_id: int, name: str) -> dict:
+    """F-R4/F-R5: a hand-added flow, rules-built from the campaign's snapshot. Refused, with
+    nothing created, while Brief, Audience or Message is unconfirmed."""
+    hierarchy = _hier()
+    c = hierarchy.get_campaign(campaign_id)
+    waiting = _flow_waiting(c["brand"])
+    if waiting:
+        raise ValueError("Needs: " + ", ".join(jf.STEP_LABELS[s] for s in waiting))
+    return build_flow_by_id(hierarchy.create_flow(campaign_id, name, origin="manual")["id"])
+
+
+def set_flow_status_by_id(flow_id: int, confirmed: bool) -> dict:
+    """Confirm or reopen any rules flow; the Journey's own flow goes through its Flow step so
+    the two stay in step."""
+    rec = _rec(flow_id, editable=True)
+    if rec["origin"] == "journey":
+        (confirm if confirmed else reopen)(rec["brand"], "flow")
+    else:
+        _hier().set_flow_status(flow_id, "confirmed" if confirmed else "built")
+    return get_flow_by_id(flow_id)
+
+
 def _journey_flow(brand: str) -> int | None:
     return _hier().journey_flow_id(_key(brand))
 

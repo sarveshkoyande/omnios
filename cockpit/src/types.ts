@@ -296,3 +296,60 @@ export interface CampaignDrift {
   has_drift: boolean;
   changed: Partial<Record<"brief" | "audience" | "message" | "kit", CampaignDriftChange[]>>;
 }
+
+/* ---- Brand > Engagement Plan > Campaign > Flow (hierarchy plan, Phase E) ---- */
+export type FlowOrigin = "journey" | "campaign_plan" | "manual" | "legacy_layout";
+export interface HierFlow {
+  id: number;
+  campaign_id: number;
+  name: string;
+  origin: FlowOrigin;
+  status: "draft" | "built" | "confirmed";
+  created_at: string;
+  updated_at: string;
+}
+export type CampaignStatus = "draft" | "in_progress" | "confirmed" | "closed";
+export interface HierCampaign {
+  id: number;
+  name: string;
+  status: CampaignStatus;
+  engagement_plan_id: number;
+  project_id: string | null;
+  has_campaign_plan: boolean;
+  versions: number;
+  flow_count: number;
+  brand: string;
+  created_at: string;
+  updated_at: string;
+  closed_at: string | null;
+  content: { tracked: boolean; changed_steps: string[]; snapshot_at: string | null };
+}
+export interface HierPlan {
+  id: number;
+  name: string;
+  brand: string;
+  period_start: string | null;
+  period_end: string | null;
+  status: "active" | "closed";
+  created_at: string;
+  updated_at: string;
+}
+export type TreeCampaign = HierCampaign & { flows: HierFlow[] };
+export type TreePlan = HierPlan & { campaigns: TreeCampaign[] };
+export interface BrandTree {
+  brand: string;
+  engagement_plans: TreePlan[];
+}
+export type HierarchySummary = Record<string, { active_plans: number; open_campaigns: number }>;
+/** A flow by id: rules flows share JourneyFlow's shape; a Campaign Plan's diagram is a document. */
+export interface DocumentFlow {
+  kind: "document";
+  brand: string;
+  flow_id: number;
+  campaign_id: number;
+  flow_status: string;
+  project_id: string | null;
+  frozen: boolean;
+  document: unknown;
+}
+export type AnyFlow = (JourneyFlow & { kind?: undefined }) | DocumentFlow;

@@ -602,6 +602,33 @@ def delete_journey_flows(brand: str) -> int:
         conn.close()
 
 
+def set_flow_status(flow_id: int, status: str) -> dict:
+    if status not in ("built", "confirmed"):
+        raise ValueError("status must be built or confirmed")
+    rec = flow_storage(flow_id)
+    if rec["kind"] != "rules" or not rec["base"]:
+        raise ValueError("build the flow before confirming it")
+    save_flow_storage(flow_id, status=status)
+    return get_flow(flow_id)
+
+
+def summary_counts() -> dict:
+    """Per kit brand: active engagement plans and open campaigns (the Cockpit rail badges, R-R4)."""
+    conn = _conn()
+    try:
+        out: dict[str, dict] = {}
+        for r in conn.execute(
+                "SELECT b.kit_key AS brand, "
+                "(SELECT COUNT(*) FROM engagement_plan e WHERE e.brand_id=b.id AND e.status='active') AS plans, "
+                "(SELECT COUNT(*) FROM campaign c JOIN engagement_plan e ON e.id=c.engagement_plan_id "
+                " WHERE e.brand_id=b.id AND c.status<>'closed') AS campaigns "
+                "FROM brand b WHERE b.kit_key IS NOT NULL"):
+            out[r["brand"]] = {"active_plans": r["plans"], "open_campaigns": r["campaigns"]}
+        return out
+    finally:
+        conn.close()
+
+
 # ------------------------------------------------------------------------------ tree ----
 
 def tree(brand: str) -> dict:

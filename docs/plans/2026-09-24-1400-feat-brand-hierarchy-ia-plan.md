@@ -272,6 +272,11 @@ The full contract lives in the two requirements docs. In short:
   - S-AE1 end to end: brand › plan › campaign › Campaign Plan, with no brand question in the intake;
   - S-AE2: `/v2` lands in the Cockpit;
   - `/legacy` and `/hcp360` are unchanged.
+- **As built (2026-09-24):** `/` serves the Cockpit, and the Campaign Plan opens at `/campaign-plan-view?project=…&embed=1` inside it. Two deviations, because the `frontend/` app still holds screens with no Cockpit equivalent (the project Home, Library and Prompt Library):
+  - `/v2` keeps serving that app instead of redirecting (S-R5, S-AE2), and the Cockpit rail links to it as "Classic app";
+  - its Home intake can still start a plan outside a campaign (F-R6). Such a plan is placed in its brand's "Earlier work" engagement plan when it is saved (`hierarchy.after_plan_saved`), so it is not lost, but it is not bound at creation.
+
+  Both close once those screens move into the Cockpit.
 
 ### Sequencing and Shipping
 

@@ -230,7 +230,10 @@ export function Workspace({
   seedFile,
   initialStage,
   startMode = "direct",
+  chromeHeight = tokens.layout.topBarHeight,
 }: {
+  /** Height of the app chrome above the workspace; 0 when embedded in the Cockpit. */
+  chromeHeight?: number;
   prefillBrand?: string | null;
   openProjectId?: string | null;
   seedMessage?: string | null;
@@ -295,7 +298,7 @@ export function Workspace({
     // stageVars publishes the stage's marker hue as CSS variables for the six sanctioned marker
     // slots (stageTheme.ts). Nothing structural reads them: buttons, links, inputs, panel
     // headers and both bars resolve to Omni blue in every stage.
-    <Box sx={{ ...stageVars(stageAgentId), display: "flex", flexDirection: "column", height: `calc(100vh - ${tokens.layout.topBarHeight}px)`, minHeight: 0 }}>
+    <Box sx={{ ...stageVars(stageAgentId), display: "flex", flexDirection: "column", height: `calc(100vh - ${chromeHeight}px)`, minHeight: 0 }}>
       <PlansDrawer
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}

@@ -1,4 +1,4 @@
-import type { BrandKit, CampaignDrift, BrandSummary, JourneyFlow, JourneyFlowOp, JourneyFlowTurnResult, JourneyQuestion, JourneyState, JourneyStepId, JourneyTurnResult } from "./types";
+import type { AnyFlow, BrandKit, BrandTree, CampaignDrift, HierCampaign, HierPlan, HierarchySummary, BrandSummary, JourneyFlow, JourneyFlowOp, JourneyFlowTurnResult, JourneyQuestion, JourneyState, JourneyStepId, JourneyTurnResult } from "./types";
 
 async function getJSON<T>(url: string): Promise<T> {
   const res = await fetch(url);
@@ -119,4 +119,60 @@ export function getCampaignDrift(campaignId: number): Promise<CampaignDrift> {
 
 export function refreshCampaignSnapshot(campaignId: number): Promise<CampaignDrift> {
   return postJSON(`/api/campaigns/${campaignId}/refresh-snapshot`, {});
+}
+
+async function sendJSON<T>(method: string, url: string, body: unknown): Promise<T> {
+  const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body ?? {}) });
+  if (!res.ok) {
+    const detail = await res.json().catch(() => null);
+    throw new Error(typeof detail?.detail === "string" ? detail.detail : `${method} ${url} -> ${res.status}`);
+  }
+  return res.json();
+}
+
+/* ---- Brand > Engagement Plan > Campaign > Flow ---- */
+const enc = encodeURIComponent;
+
+export function getBrandTree(brand: string): Promise<BrandTree> {
+  return getJSON(`/api/brands/${enc(brand)}/tree`);
+}
+
+export function getHierarchySummary(): Promise<HierarchySummary> {
+  return getJSON("/api/hierarchy/summary");
+}
+
+export function createPlan(brand: string, body: { name: string; period_start?: string | null; period_end?: string | null }): Promise<HierPlan> {
+  return postJSON(`/api/brands/${enc(brand)}/engagement-plans`, body);
+}
+
+export function updatePlan(planId: number, body: Partial<Pick<HierPlan, "name" | "period_start" | "period_end" | "status">>): Promise<HierPlan> {
+  return sendJSON("PATCH", `/api/engagement-plans/${planId}`, body);
+}
+
+export function renameCampaign(campaignId: number, name: string): Promise<HierCampaign> {
+  return sendJSON("PATCH", `/api/campaigns/${campaignId}`, { name });
+}
+
+export function startCampaignPlan(campaignId: number): Promise<{ campaign: HierCampaign; project: { id: string } }> {
+  return postJSON(`/api/campaigns/${campaignId}/campaign-plan`, {});
+}
+
+export function createFlow(campaignId: number, name: string): Promise<AnyFlow> {
+  return postJSON(`/api/campaigns/${campaignId}/flows`, { name });
+}
+
+export function getFlow(flowId: number): Promise<AnyFlow> {
+  return getJSON(`/api/flows/${flowId}`);
+}
+
+export function buildFlow(flowId: number): Promise<AnyFlow> {
+  return postJSON(`/api/flows/${flowId}/build`, {});
+}
+
+export function flowTurn(flowId: number, body: { message?: string; ops?: JourneyFlowOp[] }): Promise<JourneyFlowTurnResult> {
+  return postJSON(`/api/flows/${flowId}/turn`, body);
+}
+
+export function flowAction(flowId: number, action: "keep" | "undo" | "confirm" | "reopen"): Promise<AnyFlow> {
+  return postJSON(`/api/flows/${flowId}/${action}`, {});
 }

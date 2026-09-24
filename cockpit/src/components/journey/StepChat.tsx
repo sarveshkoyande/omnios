@@ -63,7 +63,7 @@ function doneSteps(stepLabel: string, o: TurnOutcome): string[] {
 /** Floating agent dock for a journey step: a compact composer that expands upward on send to
  *  show your message, the agent's thinking steps and its reply. An answer to the step's
  *  question counts down and advances on its own; otherwise its CTAs settle the drafts. */
-export function StepChat({ brand, step, stepLabel, question, earlierCount, turn, locked, scopeLabel, onClearScope, onSend, drafts, onDismiss, onAdvance }: {
+export function StepChat({ brand, step, stepLabel, question, earlierCount, turn, locked, scopeLabel, onClearScope, onSend, drafts, onDismiss, onAdvance, idlePrompt, unit = "step" }: {
   brand: string;
   step: JourneyStepId;
   stepLabel: string;
@@ -80,6 +80,10 @@ export function StepChat({ brand, step, stepLabel, question, earlierCount, turn,
   onDismiss: () => void;
   /** Keeps the answered drafts and moves to the next question (or confirms the step). */
   onAdvance?: () => Promise<void>;
+  /** The collapsed dock's prompt when there's no open question. */
+  idlePrompt?: string;
+  /** What the confirm/reopen buttons act on ("step" in the Journey, "flow" on a flow page). */
+  unit?: string;
 }) {
   const [text, setText] = useState("");
   const [lastFailed, setLastFailed] = useState<string | null>(null);
@@ -181,7 +185,7 @@ export function StepChat({ brand, step, stepLabel, question, earlierCount, turn,
   const canConfirm = drafts.complete && drafts.confirmBlocked === null;
   const prompt = locked
     ? "This step is confirmed and locked."
-    : question?.question ?? "That covers this step.";
+    : question?.question ?? idlePrompt ?? "That covers this step.";
   const chips = locked ? [] : (question?.chips ?? []).slice(0, 4);
   const pendingSteps = PENDING_STEPS(stepLabel);
   const shownPending = pendingSteps.slice(0, Math.min(pendingSteps.length, tick + 1));
@@ -206,10 +210,10 @@ export function StepChat({ brand, step, stepLabel, question, earlierCount, turn,
   const idleCtas = (
     <div className="agent-dock-ctas">
       {drafts.count === 0 && !confirmed && !locked && canConfirm && (
-        <button type="button" className="jc-btn jc-btn-keep" disabled={drafts.busy} onClick={() => act(drafts.onConfirm)}>Confirm step</button>
+        <button type="button" className="jc-btn jc-btn-keep" disabled={drafts.busy} onClick={() => act(drafts.onConfirm)}>Confirm {unit}</button>
       )}
       {confirmed && drafts.count === 0 && (
-        <button type="button" className="jc-btn jc-btn-ghost" disabled={drafts.busy} onClick={() => act(drafts.onReopen)}>Reopen step</button>
+        <button type="button" className="jc-btn jc-btn-ghost" disabled={drafts.busy} onClick={() => act(drafts.onReopen)}>Reopen {unit}</button>
       )}
     </div>
   );

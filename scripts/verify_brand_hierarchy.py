@@ -610,6 +610,59 @@ def check_legacy_campaigns_are_not_called_up_to_date():  # P-R6
     assert _client().get(f"/api/campaigns/{c['id']}/drift").json()["tracked"] is False
 
 
+# ---- U9-U12: the Cockpit's hierarchy screens (backend side) --------------------------------
+
+def check_new_flow_needs_confirmed_steps():  # F-R4, F-R5, F-AE1, F-AE2
+    cl = _client()
+    brand_kit.create_brand("NotReady")
+    c = h.create_campaign(h.create_plan("NotReady", "Q3")["id"], "Early")
+    r = cl.post(f"/api/campaigns/{c['id']}/flows", json={"name": "Too soon"})
+    assert r.status_code == 400 and "Needs:" in r.text and "Message" in r.text, r.text
+    assert h.list_flows(c["id"]) == [], "nothing is created while steps are unconfirmed"
+    b = _flow_ready_brand()
+    camp = h.create_campaign(h.create_plan(b, "Q4")["id"], "HCP launch")
+    for name in ("Email nurture", "Rep follow-up"):
+        r = cl.post(f"/api/campaigns/{camp['id']}/flows", json={"name": name})
+        assert r.status_code == 200 and r.json()["status"] == "built", r.text
+    assert sorted(f["name"] for f in h.list_flows(camp["id"])) == ["Email nurture", "Rep follow-up"]
+
+
+def check_flow_confirm_and_reopen():  # KTD5 roll-up for flows-only campaigns
+    cl = _client()
+    b = _flow_ready_brand()
+    camp = h.create_campaign(h.create_plan(b, "Q1")["id"], "Solo")
+    fid = cl.post(f"/api/campaigns/{camp['id']}/flows", json={"name": "Only flow"}).json()["flow_id"]
+    assert h.get_campaign(camp["id"])["status"] == "in_progress"
+    cl.post(f"/api/flows/{fid}/confirm")
+    assert h.get_flow(fid)["status"] == "confirmed" and h.get_campaign(camp["id"])["status"] == "confirmed"
+    cl.post(f"/api/flows/{fid}/reopen")
+    assert h.get_flow(fid)["status"] == "built" and h.get_campaign(camp["id"])["status"] == "in_progress"
+
+
+def check_summary_counts_and_dashboard_agree():  # R-R4, R-R6, R-AE2
+    brand_kit.create_brand("Countable")
+    q2 = h.create_plan("Countable", "Q2")
+    q3 = h.create_plan("Countable", "Q3")
+    h.update_plan(q2["id"], status="closed")
+    a = h.create_campaign(q3["id"], "A")
+    h.create_campaign(q3["id"], "B")
+    h.move_campaign(a["id"], h.create_plan("Oncomyra", "Elsewhere")["id"])  # closes A under Countable
+    s = _client().get("/api/hierarchy/summary").json()["Countable"]
+    assert s == {"active_plans": 1, "open_campaigns": 1}, s
+    counts = campaign_store.campaign_counts_by_brand()
+    assert counts.get("Countable") == 1 and counts.get("countable") == 1, counts
+
+
+def check_page_routes():  # S-KD3, S-R5, S-R6, KTD10, KTD11
+    cl = _client()
+    root = cl.get("/")
+    assert root.status_code == 200 and "/static/cockpit/" in root.text, "/ serves the Cockpit"
+    embed = cl.get("/campaign-plan-view?project=x&embed=1")
+    assert embed.status_code == 200 and "/static/v2/" in embed.text
+    assert "/static/v2/" in cl.get("/v2").text, "the earlier app stays reachable"
+    assert cl.get("/legacy").status_code == 200 and cl.get("/hcp360").status_code == 200
+
+
 # ---- U7: one vocabulary ------------------------------------------------------------------
 
 def check_glossaries_match():  # N-R6

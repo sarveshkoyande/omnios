@@ -79,7 +79,7 @@ def brand_performance() -> dict:
                 "lifecycle_label": _LIFECYCLE_LABEL.get(b.get("lifecycle_key", ""), b.get("lifecycle_key", "")),
                 "competitors": comp,
                 "competitor_count": len(comp),
-                "campaigns": campaigns.get(b["brand"], 0),
+                "campaigns": campaigns.get(b["brand"], campaigns.get(b["brand"].lower(), 0)),
                 "momentum": _momentum(counts, len(comp)),
                 **counts,
             }

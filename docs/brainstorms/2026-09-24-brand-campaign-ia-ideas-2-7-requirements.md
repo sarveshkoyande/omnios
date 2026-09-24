@@ -128,7 +128,7 @@ A breadcrumb shows where you are (Brand › Engagement Plan › Campaign › Flo
   - **Flow**, or the **Campaign Plan** document.
 - S-R3. The left nav shows the current level's items: brands at the top, a brand's engagement plans inside a brand, a plan's campaigns inside a plan, and a campaign's flows and Campaign Plan inside a campaign.
 - S-R4. There is one entry point. The app lands on the brand list, and everything is reached through its parents.
-- S-R5. Links and bookmarks to `/`, `/v2` and `/cockpit` keep working and land somewhere sensible.
+- S-R5. Links and bookmarks to `/`, `/v2` and `/cockpit` keep working and land somewhere sensible. *(As built: `/` and `/cockpit` open the Cockpit; `/v2` still opens the earlier app, because its Home, Library and Prompt Library have no Cockpit equivalent yet. See the plan's U12.)*
 - S-R6. `/legacy` and `/hcp360` are untouched.
 - S-R7. The browser back button follows the levels.
 
@@ -173,7 +173,7 @@ The ideation's "formal vs ad-hoc" fork becomes a choice when creating a campaign
 - F-R3. **With a campaign plan:** creates the campaign and a project already bound to it, and opens the Campaign Plan at its first phase. The intake chat never asks for the brand.
 - F-R4. A campaign has "+ New flow", asking for a name. It builds the flow by rules from the brand's confirmed Brief, Audience and Message (using the campaign's snapshot, idea 5) and opens it with chat edits.
 - F-R5. If the brand's Brief, Audience or Message is not confirmed, "+ New flow" says what is missing and links to those Journey steps instead of failing. Creating engagement plans, campaigns and Campaign Plans stays available.
-- F-R6. The old way of starting a plan (the `frontend/` home intake) goes away or starts by picking a brand, engagement plan and campaign. No path creates a plan outside the hierarchy.
+- F-R6. The old way of starting a plan (the `frontend/` home intake) goes away or starts by picking a brand, engagement plan and campaign. No path creates a plan outside the hierarchy. *(Open: the earlier app's intake still exists at `/v2`. Plans it starts are filed under their brand's "Earlier work" when saved. See the plan's U12.)*
 - F-R7. Anything created appears immediately in its parent's list and the brand overview (idea 7).
 
 ### Acceptance Examples

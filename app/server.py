@@ -954,6 +954,16 @@ def api_flow_keep(flow_id: int):
     return _journey_call(brand_journey.keep_flow_draft_by_id, flow_id)
 
 
+@app.post("/api/flows/{flow_id}/confirm")
+def api_flow_confirm(flow_id: int):
+    return _journey_call(brand_journey.set_flow_status_by_id, flow_id, True)
+
+
+@app.post("/api/flows/{flow_id}/reopen")
+def api_flow_reopen(flow_id: int):
+    return _journey_call(brand_journey.set_flow_status_by_id, flow_id, False)
+
+
 @app.post("/api/flows/{flow_id}/undo")
 def api_flow_undo(flow_id: int):
     return _journey_call(brand_journey.undo_flow_draft_by_id, flow_id)
@@ -1102,6 +1112,18 @@ def api_campaign_drift(campaign_id: int):
 def api_campaign_refresh_snapshot(campaign_id: int):
     """Update to current content (P-KD3): new snapshot, flows rebuilt with kept edits."""
     return _hier(hierarchy.refresh_snapshot, campaign_id)
+
+
+@app.post("/api/campaigns/{campaign_id}/flows")
+def api_create_flow(campaign_id: int, req: NamedRequest):
+    """+ New flow (F-R4): rules-built from the campaign's snapshot; 400 "Needs: ..." while
+    Brief, Audience or Message is unconfirmed (F-R5)."""
+    return _journey_call(brand_journey.create_flow_in_campaign, campaign_id, req.name)
+
+
+@app.get("/api/hierarchy/summary")
+def api_hierarchy_summary():
+    return hierarchy.summary_counts()
 
 
 @app.get("/api/campaigns/{campaign_id}/flows")
@@ -2981,14 +3003,23 @@ def root_hcp360():
 
 @app.get("/")
 def root():
-    """New React + MUI front-end (built by frontend/ via Vite into static/v2) is now the
-    default landing experience -- migration complete enough to promote it off /v2."""
-    return FileResponse(APP_DIR / "static" / "v2" / "index.html")
+    """The Cockpit is the one shell (hierarchy plan S-KD1/KTD11): Brand > Engagement Plan >
+    Campaign > Flow, with each Campaign Plan opened inside it."""
+    return FileResponse(APP_DIR / "static" / "cockpit" / "index.html")
 
 
 @app.get("/v2")
 def root_v2():
-    """Kept as an alias to / so any existing /v2 links/bookmarks keep working."""
+    """The earlier React + MUI app (frontend/ built into static/v2). Still reachable, and
+    linked from the Cockpit, because its Home, Library and Prompt Library have no Cockpit
+    equivalent yet; its Campaign Plan workspace is embedded in the Cockpit instead."""
+    return FileResponse(APP_DIR / "static" / "v2" / "index.html")
+
+
+@app.get("/campaign-plan-view")
+def root_campaign_plan_view():
+    """The frontend/ Campaign Plan workspace for one project (?project=<id>&embed=1), framed
+    by the Cockpit's Campaign Plan view until that view is ported (KTD10)."""
     return FileResponse(APP_DIR / "static" / "v2" / "index.html")
 
 

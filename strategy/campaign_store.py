@@ -564,9 +564,18 @@ def campaign_counts_by_brand() -> dict[str, int]:
     init_db()
     conn = _conn()
     try:
+        # Open campaigns, the same count the Cockpit's brand overview shows (hierarchy R-R6);
+        # keyed by the brand row's name and its brand-kit key, in any case, so a roster name
+        # and a kit key that differ only in case agree.
         rows = conn.execute(
-            "SELECT b.name AS brand, COUNT(c.id) AS n FROM campaign c JOIN brand b ON b.id=c.brand_id GROUP BY b.name"
+            "SELECT b.name AS name, b.kit_key AS kit_key, COUNT(c.id) AS n FROM campaign c "
+            "JOIN brand b ON b.id=c.brand_id WHERE c.status<>'closed' GROUP BY b.id, b.name, b.kit_key"
         ).fetchall()
-        return {r["brand"]: r["n"] for r in rows}
+        out: dict[str, int] = {}
+        for r in rows:
+            keys = {r["name"], r["kit_key"]} - {None}
+            for k in keys | {k.lower() for k in keys}:
+                out[k] = out.get(k, 0) + r["n"]
+        return out
     finally:
         conn.close()

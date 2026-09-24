@@ -1007,3 +1007,88 @@ h1, h2, h3 { font-family: "DM Sans"; font-weight: 600; letter-spacing: -0.01em; 
 .jc-drift-row dt { font-weight: 700; font-size: 12px; color: var(--muted); }
 .jc-drift-row dd { margin: 2px 0 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; }
 .jc-drift-then { text-decoration: line-through; opacity: .7; }
+
+/* ---- Brand > Engagement Plan > Campaign > Flow (hierarchy plan, Phase E) ---- */
+a.rail-item { display: block; text-decoration: none; color: inherit; box-sizing: border-box; }
+a.rail-item.rail-brand-item { display: flex; }
+.rail-brand-name { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.rail-badge {
+  flex: 0 0 auto; min-width: 20px; height: 20px; padding: 0 6px; border-radius: var(--radius-full);
+  display: inline-grid; place-items: center; font-size: 11px; font-weight: 700;
+  background: var(--primary-light-background); color: var(--primary);
+}
+a.rail-add-brand { display: inline-grid; place-items: center; color: inherit; text-decoration: none; }
+.rail-tree { display: flex; flex-direction: column; gap: 2px; margin: 4px 0 10px 12px; padding-left: 10px;
+  border-left: 1px solid var(--neutral-200); }
+.rail-tree-label { font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--muted); margin: 8px 0 2px; }
+.rail-tree-nest { margin-left: 12px; display: flex; flex-direction: column; gap: 2px; }
+.rail-tree-item { display: block; padding: 5px 8px; border-radius: var(--radius-sm); font-size: 13px; color: var(--fg);
+  text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rail-tree-item:hover { background: var(--primary-light-background); }
+.rail-tree-item.active { background: var(--primary-light-background); color: var(--primary); font-weight: 700; }
+.rail-tree-item.is-closed { color: var(--muted); }
+
+.breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; max-width: 980px; margin: 0 auto;
+  padding: 18px 32px 0; font-size: 13px; color: var(--muted); }
+.breadcrumb a { color: var(--primary); text-decoration: none; font-weight: 600; }
+.breadcrumb a:hover { text-decoration: underline; }
+.breadcrumb [aria-current="page"] { color: var(--fg); font-weight: 600; }
+.breadcrumb-sep { margin: 0 4px; color: var(--neutral-400); }
+.main-framed { display: flex; flex-direction: column; overflow: hidden; }
+.main-framed .breadcrumb { max-width: none; margin: 0; padding: 12px 24px; }
+.campaign-plan-frame { flex: 1; width: 100%; border: 0; background: var(--card-bg); }
+
+.hier-page { max-width: 980px; margin: 0 auto; padding: 20px 32px 72px; display: flex; flex-direction: column; gap: 16px; }
+.hier-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.hier-head .kit-update-title { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.hier-head-actions { display: flex; gap: 8px; }
+.hier-meta { font-size: 12.5px; color: var(--muted); }
+.hier-hint { font-size: 12.5px; color: var(--muted); }
+.hier-warn { font-size: 12.5px; color: var(--tone-warning-ink); font-weight: 600; }
+.hier-summary { display: flex; flex-wrap: wrap; gap: 10px; }
+.hier-summary > span { padding: 8px 14px; border-radius: var(--radius-full); background: var(--card-bg);
+  box-shadow: var(--neu-flat-sm); font-size: 13px; }
+.hier-summary strong { font-size: 15px; margin-right: 4px; }
+.hier-summary-warn strong { color: var(--tone-warning-ink); }
+.hier-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; font-size: 12.5px; color: var(--muted); }
+.hier-filters label { display: inline-flex; align-items: center; gap: 6px; }
+.hier-filters select { flex: 0 0 auto; width: auto; padding: 5px 8px; }
+.hier-check input { margin: 0; }
+.hier-empty p { margin: 0 0 6px; }
+.hier-plan { display: flex; flex-direction: column; gap: 10px; }
+.hier-plan-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.hier-expand { border: 0; background: transparent; cursor: pointer; font-size: 13px; color: var(--muted); padding: 0 2px; }
+.hier-plan-name { font-weight: 700; font-size: 15px; color: var(--fg); text-decoration: none; }
+.hier-plan-name:hover { color: var(--primary); }
+.hier-indent { padding-left: 24px; }
+.hier-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.hier-table th { text-align: left; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--muted); padding: 6px 8px; border-bottom: 1px solid var(--neutral-200); }
+.hier-table td { padding: 8px; border-bottom: 1px solid rgba(0, 0, 0, 0.05); vertical-align: middle; }
+.hier-table a { color: var(--primary); font-weight: 600; text-decoration: none; }
+.hier-table a:hover { text-decoration: underline; }
+.hier-section-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.hier-section-head h2 { margin: 0; font-size: 16px; }
+.hier-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; font-size: 13.5px; }
+.hier-row a.jc-btn { text-decoration: none; }
+.hier-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.hier-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; font-size: 13.5px; }
+.hier-list a { color: var(--primary); font-weight: 600; text-decoration: none; }
+.hier-needs { font-size: 12.5px; color: var(--tone-warning-ink); }
+.hier-needs a { color: inherit; font-weight: 700; }
+.hier-create { display: flex; flex-direction: column; gap: 8px; min-width: min(420px, 100%); }
+.hier-create-actions { display: flex; gap: 8px; }
+.hier-edit { display: flex; flex-direction: column; gap: 8px; min-width: min(420px, 100%); margin-top: 4px; }
+.hier-period { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; font-size: 12.5px; color: var(--muted); }
+.hier-period label { display: inline-flex; align-items: center; gap: 6px; }
+.hier-period input { width: auto; flex: 0 0 auto; }
+.hier-choice { border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+.hier-choice legend { font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 4px; }
+.hier-choice label { display: flex; align-items: flex-start; gap: 8px; }
+.jc-drift-quiet { background: var(--tone-neutral-bg); color: var(--tone-neutral-ink); }
+@media (max-width: 720px) {
+  .hier-page { padding: 16px 16px 48px; }
+  .breadcrumb { padding: 14px 16px 0; }
+  .hier-table { display: block; overflow-x: auto; }
+}
