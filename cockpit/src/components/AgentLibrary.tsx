@@ -1,111 +1,104 @@
 import { useState } from "react";
-import { AGENTS, PHASES, type AgentEntry, type Phase } from "../agents";
+import { AGENTS, PHASES, type LibraryAgent, type Phase } from "../agents";
 import { Icon } from "./Icon";
 
-/** Per-phase accent ink only -- the neumorphic system keeps one flat page background
- *  throughout (no gradients on the root surface), so the phase "feel" comes from this one
- *  tinted colour applied to the active tab, the icon well glyph, and each card's job title,
- *  not from restyling the page itself. */
-const PHASE_TINT: Record<Phase, { ink: string }> = {
-  strategy: { ink: "#3B4E8C" },
-  ops: { ink: "#206657" },
-  intelligence: { ink: "#6B4FA0" },
-};
-
-function AgentDetail({ agent, phase, onBack }: { agent: AgentEntry; phase: Phase; onBack: () => void }) {
-  const tint = PHASE_TINT[phase];
+/** Read more: what the agent does, what it works from, and where it runs. An agent that is on
+ *  the product list but not built yet says so instead of claiming live behaviour. */
+function AgentDetail({ agent, onBack }: { agent: LibraryAgent; onBack: () => void }) {
   return (
-    <div className="agent-library" style={{ ["--phase-ink" as string]: tint.ink }}>
+    <div className="agent-library">
       <button type="button" className="agent-detail-back" onClick={onBack}><Icon name="arrowLeft" size={15} /> Back to Agent library</button>
 
       <div className="agent-detail-head">
+        <span className="agent-icon agent-icon-lg"><Icon name={agent.icon} size={26} /></span>
         <h1>{agent.name}</h1>
-        <p className="agent-detail-job">{agent.job}</p>
-        <p className="agent-detail-body">{agent.detail}</p>
+        <p className="agent-detail-summary">{agent.summary}</p>
+        {agent.inDevelopment && <span className="agent-status-pill">In development</span>}
       </div>
 
       <div className="agent-detail-grid">
         <section className="agent-detail-panel">
-          <h2>What it's doing</h2>
-          <p className="agent-detail-panel-note">
-            Illustrative recent activity -- this app doesn't run a live activity log yet, so
-            these are representative examples of this agent's real job, not a live feed.
-          </p>
-          <ul className="agent-activity-list">
-            {agent.activity.map((a, i) => (
-              <li key={i}>{a}</li>
-            ))}
-          </ul>
+          <h2>What it does</h2>
+          <p className="agent-detail-body">{agent.about}</p>
+          {agent.inDevelopment && (
+            <p className="agent-detail-panel-note">In development: not yet running in this app.</p>
+          )}
         </section>
 
-        <section className="agent-detail-panel">
-          <h2>Where it gets information from</h2>
-          <ul className="agent-source-list">
-            {agent.sources.map((s) => (
-              <li key={s.label}>
-                <div className="agent-source-label">{s.label}</div>
-                <div className="agent-source-detail">{s.detail}</div>
-              </li>
-            ))}
-          </ul>
-        </section>
+        {agent.worksFrom && agent.worksFrom.length > 0 && (
+          <section className="agent-detail-panel">
+            <h2>Works from</h2>
+            <ul className="agent-source-list">
+              {agent.worksFrom.map((s) => (
+                <li key={s.label}>
+                  <div className="agent-source-label">{s.label}</div>
+                  <div className="agent-source-detail">{s.detail}</div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
       </div>
 
-      <div className="agent-source">{agent.source}</div>
+      {agent.builtOn && <div className="agent-source">Built on {agent.builtOn}</div>}
     </div>
   );
 }
 
+function AgentCard({ agent, index, onOpen }: { agent: LibraryAgent; index: number; onOpen: () => void }) {
+  const wip = agent.status === "wip";
+  const body = (
+    <>
+      <div className="agent-card-top">
+        <span className="agent-icon"><Icon name={agent.icon} size={20} /></span>
+        {wip && <span className="agent-status-pill">WIP</span>}
+      </div>
+      <h3>{agent.name}</h3>
+      <p className="agent-summary">{agent.summary}</p>
+      {!wip && <span className="agent-read-more">Read more <Icon name="arrowRight" size={13} /></span>}
+    </>
+  );
+  const style = { animationDelay: `${index * 30}ms` };
+  if (wip) {
+    return <div className="agent-card is-wip" style={style} aria-disabled="true">{body}</div>;
+  }
+  return <button type="button" className="agent-card" style={style} onClick={onOpen}>{body}</button>;
+}
+
 export function AgentLibrary() {
   const [phase, setPhase] = useState<Phase>("strategy");
-  const [selected, setSelected] = useState<AgentEntry | null>(null);
-  const tint = PHASE_TINT[phase];
+  const [selected, setSelected] = useState<LibraryAgent | null>(null);
   const info = PHASES.find((p) => p.id === phase)!;
-  const agents = AGENTS[phase];
 
   if (selected) {
-    return <AgentDetail agent={selected} phase={phase} onBack={() => setSelected(null)} />;
+    return <AgentDetail agent={selected} onBack={() => setSelected(null)} />;
   }
 
   return (
-    <div className="agent-library" style={{ ["--phase-ink" as string]: tint.ink }}>
+    <div className="agent-library">
       <div className="agent-hero">
         <div className="agent-hero-eyebrow">Agent library</div>
-        <h1>Every capability, to deliver successful campaigns.</h1>
-        <p>Three workspaces. Every agent underneath them, named, with what it actually does.</p>
+        <h1>{info.label}</h1>
+        <div className="phase-switcher" role="tablist">
+          {PHASES.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              role="tab"
+              aria-selected={phase === p.id}
+              className={`phase-tab ${phase === p.id ? "active" : ""}`}
+              onClick={() => setPhase(p.id)}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+        <p>{info.tagline}</p>
       </div>
 
-      <div className="phase-switcher">
-        {PHASES.map((p) => (
-          <button
-            key={p.id}
-            type="button"
-            className={`phase-tab ${phase === p.id ? "active" : ""}`}
-            onClick={() => setPhase(p.id)}
-          >
-            {p.label}
-          </button>
-        ))}
-      </div>
-
-      <div className="phase-tagline">{info.tagline}</div>
-
-      <div className="agent-grid">
-        {agents.map((a, i) => (
-          <div className="agent-card" key={a.id} style={{ animationDelay: `${i * 40}ms` }}>
-            <div className="agent-card-top">
-              <button
-                type="button"
-                className={`access-pill access-pill-btn ${a.access === "write" ? "access-write" : "access-read"}`}
-                onClick={() => setSelected(a)}
-              >
-                Read more <Icon name="arrowRight" size={13} />
-              </button>
-            </div>
-            <h3>{a.name}</h3>
-            <p className="agent-job">{a.job}</p>
-            <p className="agent-detail">{a.detail}</p>
-          </div>
+      <div className="agent-grid" key={phase}>
+        {AGENTS[phase].map((a, i) => (
+          <AgentCard key={a.id} agent={a} index={i} onOpen={() => setSelected(a)} />
         ))}
       </div>
     </div>
