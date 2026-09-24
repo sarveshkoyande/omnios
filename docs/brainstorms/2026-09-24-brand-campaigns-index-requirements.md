@@ -4,7 +4,7 @@ type: feat
 date: 2026-09-24
 topic: brand-campaigns-index
 artifact_contract: ce-unified-plan/v1
-artifact_readiness: requirements-only
+artifact_readiness: requirements-complete
 product_contract_source: brainstorm (written by hand in the ce-brainstorm format; the skill was not available in the session)
 origin: docs/ideation/2026-09-24-brand-campaign-engagement-plan-ia-ideation.html, idea 1 ("Give the brand a first-class campaigns table")
 execution: none (requirements only; no Planning Contract yet)
@@ -17,7 +17,7 @@ execution: none (requirements only; no Planning Contract yet)
 - **Objective:** For any brand, one call lists all of its campaigns: formal plans from the orchestrator and ad-hoc flows from the Brand Journey.
 - **Means:** Make the existing `campaign` table in `campaigns.db` the single campaign index. Tie it to the brand kit's identity and write to it from both the orchestrator and the Journey. No second campaigns table.
 - **Product authority:** This covers the data model, one read API and a backfill of existing data only. Navigation, naming, dashboards and creation flows are later ideas (2 to 7) that build on it.
-- **Readiness:** Requirements only. Key Decisions marked **proposed** need the user's confirmation before planning; see Outstanding Questions.
+- **Readiness:** Requirements complete. The user settled all four open questions on 2026-09-24, and this is ready for a Planning Contract.
 
 ---
 
@@ -44,16 +44,19 @@ The ideation says no `brand_id` exists anywhere and no campaigns table exists. R
   The same brand can appear as different rows, and a kit brand can have no `campaigns.db` row at all.
 
 The missing piece is therefore not a table. It is one brand identity, and making both creation paths write to the table that already exists.
+Today a plan's brand is typed or inferred from the intake chat (`slots.brand`), which is how the three identities drift apart. A plan should instead always be created inside a brand.
 
 ### Key Decisions
 
 - **KD1. Reuse the existing `campaign` table; do not add a second one.** This corrects the ideation's premise. A new table would make a fourth place campaign-like data lives. (proposed — recommended: the table, its versions and the dashboard count already exist.) Governs R1 to R3.
 - **KD2. The brand kit key is the one brand identity.** A campaign belongs to a brand kit (`config/brand_kits.json`), matched case-insensitively like the Journey. `campaigns.db`'s own `brand` rows keep their current uses (market intel, claims, content), but link to the kit key when a kit exists. (proposed — the Cockpit, the active surface, is already brand-kit-first.) Governs R4 to R6.
-- **KD3. A plan with no matching brand kit is stored unassigned, not as a new brand.** Today a typo creates a new `brand` row silently. Unassigned campaigns stay listable and can be assigned later. (proposed — see Q1; the alternative is auto-creating a skeleton brand kit.) Governs R5.
-- **KD4. A campaign exists from the moment the work starts, not only when it finishes.** A plan campaign is created when its project gets a brand. A flow campaign is created when the Journey flow is first built. Status tracks progress. (proposed — see Q2.) Governs R7, R8.
+- **KD3. A plan is always created inside a brand.** It is started from an existing brand, so its brand is set at creation, never typed or inferred from chat. There is no "unassigned" campaign in the product. (session-settled: user-directed — "a plan is always created inside a brand"; chosen over storing no-kit plans unassigned or auto-creating a skeleton kit.) Governs R5, R5a.
+- **KD4. A campaign exists from the moment the work starts, not only when it finishes.** With KD3, a plan campaign is created when the plan is created. A flow campaign is created when the Journey flow is first built. Status tracks progress. (session-settled: user-approved — chosen over creating it only when Deploy completes.) Governs R7, R8.
 - **KD5. Re-running a plan adds a version, not a campaign.** One project maps to one campaign. (proposed.) Governs R10.
 - **KD6. The Journey flow is the brand's one ad-hoc campaign for now.** The Journey stores one flow per brand today, and multi-flow per brand stays out of scope. (proposed.) Governs R11.
 - **KD7. Kind names are internal and neutral: `plan` and `flow`.** The user-facing naming ("engagement plan" vs "campaign") is idea 2 and is not decided here. (proposed.) Governs R13.
+- **KD8. Wiping a brand's Journey deletes its flow campaign.** (session-settled: user-directed — chosen over archiving it.) Governs R12.
+- **KD9. Moving a plan to another brand closes its campaign and opens a new one.** The old brand keeps a closed record of it. (session-settled: user-directed — chosen over moving the same campaign.) Governs R7a.
 
 ### Actors
 
@@ -67,23 +70,25 @@ The missing piece is therefore not a table. It is one brand identity, and making
 **Campaign index**
 
 - R1. Each unit of campaign work has exactly one record, in the existing `campaign` table in `campaigns.db`. There is no second campaigns table.
-- R2. Each record carries its brand (brand kit key, or unassigned), its kind (`plan` or `flow`), a link to its source (project id for `plan`, brand for `flow`), a name, a status, and created and updated times.
+- R2. Each record carries its brand (brand kit key), its kind (`plan` or `flow`), a link to its source (project id for `plan`, brand for `flow`), a name, a status, and created and updated times.
 - R3. One read returns all of a brand's campaigns, both kinds, newest first.
 
 **Brand identity**
 
 - R4. A campaign's brand is the brand kit's canonical key, matched case-insensitively (the same rule as `brand_journey._key`).
-- R5. A plan whose brand matches no brand kit is stored unassigned. It does not create a brand row or a brand kit. Unassigned campaigns can be listed on their own.
+- R5. A plan can only be created from an existing brand. Its brand is set at creation from that brand, not typed or inferred from the intake chat, and plan creation never creates a brand row or a brand kit.
+- R5a. Projects that already exist with a brand matching no brand kit are legacy data. The backfill (R14) leaves them without a campaign and lists them in its log for a one-time cleanup. They do not appear under any brand.
 - R6. `campaigns.db`'s existing `brand` rows keep working for market intel, claims and content. Where a brand kit exists with the same name (case-insensitive), the row is linked to it, so every campaign for that brand resolves to one identity.
 
 **Lifecycle**
 
-- R7. A `plan` campaign is created when its project first has a brand. Its status follows the project phase and becomes final when Deploy completes. That completion step is where `persist_campaign_from_result` writes today.
+- R7. A `plan` campaign is created when the plan is created. Its status follows the project phase and becomes final when Deploy completes. That completion step is where `persist_campaign_from_result` writes today.
+- R7a. If a plan is moved to a different brand, its current campaign is closed and stays listed under the old brand as closed. A new campaign opens under the new brand, and later versions attach to the new one.
 - R8. A `flow` campaign is created when the brand's Journey flow is first built. Its status follows the Flow step: built, then confirmed.
 - R9. Writing a campaign record never blocks or breaks plan generation or the Journey. A failure is logged and repaired on the next write or at startup, matching the app's best-effort idiom.
 - R10. Re-running or regenerating a plan adds a new `campaign_version` to that project's campaign, with an incrementing version number. It never adds a second campaign.
 - R11. A brand has at most one `flow` campaign while the Journey stores one flow per brand.
-- R12. Rebuilding a brand's flow updates its existing `flow` campaign and never adds another. The only thing that wipes Journey data today is the developer script `scripts/reset_test_data.py`. It archives the brand's `flow` campaign instead of deleting it, so past campaigns stay auditable. (See Q3.)
+- R12. Rebuilding a brand's flow updates its existing `flow` campaign and never adds another. The only thing that wipes Journey data today is the developer script `scripts/reset_test_data.py`. It also deletes the brand's `flow` campaign.
 
 **Naming**
 
@@ -93,20 +98,20 @@ The missing piece is therefore not a table. It is one brand identity, and making
 
 - R14. On startup, a backfill runs idempotently and never deletes anything:
   - it links existing `campaign` rows to brand kits by name;
-  - it creates `plan` campaigns for existing projects that have a brand but no campaign;
+  - it creates `plan` campaigns for existing projects whose brand matches a brand kit and that have no campaign (others are handled by R5a);
   - it creates `flow` campaigns for brands with a built Journey flow;
   - it folds duplicate campaigns that came from re-runs of the same project into one campaign with numbered versions.
 
 **Read API**
 
-- R15. `GET /api/brands/{brand}/campaigns` returns that brand's campaigns: kind, name, status, source link, updated time. An unknown brand returns 404. A separate read returns unassigned campaigns.
+- R15. `GET /api/brands/{brand}/campaigns` returns that brand's campaigns: kind, name, status, source link, updated time. An unknown brand returns 404. Closed campaigns are included and marked closed.
 
 ### Key Flows
 
-- F1. Formal plan for a kit brand
-  - **Trigger:** A1 starts a project and names a brand that has a kit.
+- F1. Formal plan inside a brand
+  - **Trigger:** A1 starts a plan from a brand.
   - **Actors:** A1, A2
-  - **Steps:** A `plan` campaign appears for that brand as soon as the brand is known. Its status advances with each phase. Deploy completion attaches the plan as a version.
+  - **Steps:** A `plan` campaign appears for that brand immediately. Its status advances with each phase. Deploy completion attaches the plan as a version.
   - **Outcome:** The brand's campaign list shows the plan from the start, and re-running it adds versions, not rows.
   - **Covered by:** R3, R4, R7, R10
 - F2. Journey flow
@@ -115,24 +120,26 @@ The missing piece is therefore not a table. It is one brand identity, and making
   - **Steps:** A `flow` campaign is created on first build and marked confirmed when the Flow step is confirmed.
   - **Outcome:** The same list shows the flow next to the brand's plans.
   - **Covered by:** R3, R8, R11
-- F3. Plan for a brand with no kit
-  - **Trigger:** A1 runs a plan for "Cardiozen" but only "CardioZen" has a kit, or no kit exists at all.
+- F3. Plan moved to another brand
+  - **Trigger:** A1 moves an in-progress plan from Oncomyra to Cardiovex.
   - **Actors:** A1, A2
-  - **Steps:** Case-insensitive matching attaches it to "CardioZen" if that kit exists. Otherwise the campaign is stored unassigned.
-  - **Outcome:** No stray brand rows, and nothing is lost.
-  - **Covered by:** R4, R5
+  - **Steps:** Oncomyra's campaign for that plan is closed. A new campaign opens under Cardiovex, and the plan's later versions attach there.
+  - **Outcome:** Both brands show an accurate history.
+  - **Covered by:** R7a
 - F4. First start after this ships
   - **Trigger:** The app starts against existing `projects.db`, `campaigns.db` and `brand_journey.db`.
   - **Actors:** A4
   - **Steps:** The R14 backfill runs.
-  - **Outcome:** Every brand lists its past plans and its Journey flow. Running the backfill again changes nothing.
-  - **Covered by:** R14
+  - **Outcome:** Every brand lists its past plans and its Journey flow. Legacy projects with no matching kit are logged, not attached. Running the backfill again changes nothing.
+  - **Covered by:** R5a, R14
 
 ### Acceptance Examples
 
 - AE1. **Covers R3, R7, R8.** **Given** Oncomyra has one finished plan, one plan in its Select phase, and a built Journey flow, **when** the brand's campaigns are listed, **then** three campaigns appear: two `plan`, one `flow`.
 - AE2. **Covers R10.** **Given** a project's plan has been run to Deploy twice, **when** its brand's campaigns are listed, **then** there is one campaign for that project with versions 1 and 2.
-- AE3. **Covers R4, R5.** **Given** a kit exists for "Oncomyra" only, **when** plans are run for "oncomyra" and "Oncomira", **then** the first lists under Oncomyra and the second is unassigned. No new brand row is created for "Oncomira".
+- AE3. **Covers R5, R5a.** **Given** a new plan, **when** A1 creates it, **then** it can only be created from an existing brand and there is no brand name to type. **Given** a legacy project for "Oncomira" (no kit), **when** the backfill runs, **then** it gets no campaign, it is listed in the backfill log, and no "Oncomira" brand is created.
+- AE3a. **Covers R7a.** **Given** a plan under Oncomyra, **when** A1 moves it to Cardiovex, **then** Oncomyra lists it as closed and Cardiovex lists a new open campaign for it.
+- AE3b. **Covers R12.** **Given** a brand with a `flow` campaign, **when** `scripts/reset_test_data.py` wipes that brand's Journey, **then** the `flow` campaign is gone too.
 - AE4. **Covers R9.** **Given** `campaigns.db` is unavailable, **when** A1 runs a plan phase or builds a Journey flow, **then** both succeed, and the missing campaign record appears after the next startup.
 - AE5. **Covers R14.** **Given** existing data with duplicate campaign rows for one project, **when** the app starts twice, **then** the first start folds them into one campaign with versions, and the second start changes nothing.
 
@@ -145,7 +152,8 @@ The missing piece is therefore not a table. It is one brand identity, and making
 - Unifying the `CampaignFlow` and Journey flow schemas (idea 6).
 - A per-brand campaigns dashboard or a sidebar count badge (idea 7). R15's API is what those will read.
 - More than one Journey flow per brand.
-- A UI for assigning unassigned campaigns to a brand.
+- Where the "start a plan from a brand" entry point lives. Today plans start from the `frontend/` project home; choosing the surviving surface is idea 3, and the creation fork is idea 4. This work only requires that whichever entry exists binds the plan to an existing brand (R5).
+- A UI for cleaning up legacy projects with no matching kit (R5a lists them; cleanup is manual).
 
 ### Dependencies / Assumptions
 
@@ -156,12 +164,12 @@ The missing piece is therefore not a table. It is one brand identity, and making
 
 ### Outstanding Questions
 
-Resolve these before a Planning Contract is written:
+None. The four questions from the first draft were settled by the user on 2026-09-24:
 
-- Q1. **Plans for a brand with no kit (KD3, R5).** Store them unassigned (proposed), or auto-create a skeleton brand kit so every campaign has a brand?
-- Q2. **When a plan becomes a campaign (KD4, R7).** When the project first has a brand (proposed), or only when Deploy completes, as today?
-- Q3. **Wiping a brand's Journey data (R12).** Today only the developer script `scripts/reset_test_data.py` does this. Should it archive the brand's flow campaign (proposed), or delete it along with the Journey data?
-- Q4. **Brand changed mid-project.** If a project's brand is edited after its campaign exists, does the campaign move to the new brand (proposed), or does the old campaign close and a new one open?
+- Q1. A plan with no brand kit → cannot arise: a plan is always created inside a brand (KD3, R5). Legacy data only: R5a.
+- Q2. When a plan becomes a campaign → as soon as it has a brand, which with KD3 means at creation (KD4, R7).
+- Q3. Wiping a brand's Journey → delete its flow campaign (KD8, R12).
+- Q4. A plan moved to another brand → close the old campaign and open a new one (KD9, R7a).
 
 ### Sources / Research
 
