@@ -83,7 +83,7 @@ The missing piece is therefore not a table. It is one brand identity, and making
 - R9. Writing a campaign record never blocks or breaks plan generation or the Journey. A failure is logged and repaired on the next write or at startup, matching the app's best-effort idiom.
 - R10. Re-running or regenerating a plan adds a new `campaign_version` to that project's campaign, with an incrementing version number. It never adds a second campaign.
 - R11. A brand has at most one `flow` campaign while the Journey stores one flow per brand.
-- R12. Resetting a brand's Journey archives its `flow` campaign instead of deleting it, so past campaigns stay auditable. (See Q3.)
+- R12. Rebuilding a brand's flow updates its existing `flow` campaign and never adds another. The only thing that wipes Journey data today is the developer script `scripts/reset_test_data.py`. It archives the brand's `flow` campaign instead of deleting it, so past campaigns stay auditable. (See Q3.)
 
 **Naming**
 
@@ -160,7 +160,7 @@ Resolve these before a Planning Contract is written:
 
 - Q1. **Plans for a brand with no kit (KD3, R5).** Store them unassigned (proposed), or auto-create a skeleton brand kit so every campaign has a brand?
 - Q2. **When a plan becomes a campaign (KD4, R7).** When the project first has a brand (proposed), or only when Deploy completes, as today?
-- Q3. **Journey reset (R12).** Archive the brand's flow campaign (proposed), or delete it along with the Journey data?
+- Q3. **Wiping a brand's Journey data (R12).** Today only the developer script `scripts/reset_test_data.py` does this. Should it archive the brand's flow campaign (proposed), or delete it along with the Journey data?
 - Q4. **Brand changed mid-project.** If a project's brand is edited after its campaign exists, does the campaign move to the new brand (proposed), or does the old campaign close and a new one open?
 
 ### Sources / Research
@@ -169,5 +169,5 @@ Resolve these before a Planning Contract is written:
 - Existing campaign model: `db/campaign_content_schema.sql` (`brand`, `campaign`, `campaign_version`), `strategy/campaign_store.py` (`persist_campaign_from_result`, `_brand_id`, `campaign_counts_by_brand`), `strategy/dashboard.py`.
 - Plan persistence call site: `app/server.py`, the Deploy branch of the plan stream.
 - Projects: `strategy/projects.py` (`projects` table, `slots.brand` in `state_json`).
-- Brand Journey: `strategy/brand_journey.py` (`_key`, `journey_flow`, reset), `strategy/brand_kit.py` (`canonical_key`).
+- Brand Journey: `strategy/brand_journey.py` (`_key`, `journey_flow`), `strategy/brand_kit.py` (`canonical_key`), `scripts/reset_test_data.py` (developer reset).
 - Second brand roster: `config/client_brands.json`, `strategy/brand_lifecycle.py`.
