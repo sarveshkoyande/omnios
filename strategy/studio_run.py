@@ -1071,7 +1071,7 @@ def stream(ctx: dict, studio: dict, auto_assume=None):
         yield {"type": "run_done", "compose_failed": True}
         return
     yield {"type": "chat", "author": "planner", "kind": "turn", "reply_to": "",
-           "text": "That's every section — the full Brand Engagement Plan is assembled, including the "
+           "text": "That's every section — the full Campaign Plan is assembled, including the "
                    "supporting analysis. Exports are live; persona pressure-testing is available whenever you want it."}
     yield {"type": "plan", "html": html_out, "markdown": md, "partial": False}
     yield {"type": "run_done"}

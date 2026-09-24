@@ -557,6 +557,42 @@ def check_backfill_adds_plan_flows_for_existing_diagrams():  # U6 backfill
     assert len(h.list_flows(c["id"])) == 1, "a second backfill adds nothing"
 
 
+# ---- U7: one vocabulary ------------------------------------------------------------------
+
+def check_glossaries_match():  # N-R6
+    import re
+    from strategy import glossary
+    ts = (ROOT / "frontend" / "src" / "glossary.ts").read_text(encoding="utf-8")
+    front = {m[0]: (m[1], m[2]) for m in re.findall(
+        r'(\w+): \{ label: "([^"]*)", definition: "([^"]*)" \}', ts)}
+    assert front == glossary.TERMS, (front, glossary.TERMS)
+
+
+def check_engagement_plan_only_means_the_period_container():  # N-R2, N-R4, N-AE2
+    import re
+    # User-facing strings and prompt text only: string literals and JSX text, not comments or
+    # identifiers. "Engagement Planning Toolkit" is an external workbook's name and stays.
+    allowed = re.compile(r"engagement[ -]planning toolkit|brand > engagement plan > campaign", re.I)
+    offenders = []
+    files = [p for d in ("strategy", "frontend/src", "cockpit/src") for p in (ROOT / d).rglob("*")
+             if p.suffix in (".py", ".ts", ".tsx") and "node_modules" not in p.parts]
+    files.append(ROOT / "app" / "server.py")
+    for path in files:
+        for i, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            code = line.split("#", 1)[0] if path.suffix == ".py" else re.sub(r"//.*|/\*.*|^\s*\*.*", "", line)
+            for lit in re.findall(r'"[^"]*"|`[^`]*`|>[^<>{}]+<', code):
+                if re.search(r"brand engagement plan|engagement plan composer", lit, re.I) and not allowed.search(lit):
+                    offenders.append(f"{path.relative_to(ROOT)}:{i}: {lit.strip()}")
+    assert not offenders, offenders
+
+
+def check_export_title_reads_campaign_plan():  # N-AE1
+    import plan_document
+    md, html = plan_document.compose_plan_partial({"brand": "Oncomyra", "therapy_area": "oncology"}, set())[:2]
+    assert md.splitlines()[0].startswith("# Campaign Plan"), md.splitlines()[0]
+    assert "<h1>Campaign Plan</h1>" in html and "Engagement Plan" not in html.split("</h1>")[0]
+
+
 CHECKS = [v for k, v in list(globals().items()) if k.startswith("check_") and callable(v)]
 
 

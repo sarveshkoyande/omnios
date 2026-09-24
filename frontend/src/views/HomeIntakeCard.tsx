@@ -13,7 +13,7 @@ const settleIn = keyframes`
 
 const SUGGESTIONS = [
   "Launch campaign for Nuvexa in cardiology, targeting cardiologists across the US this quarter.",
-  "Refresh the engagement plan for a mature oncology brand ahead of a competitor launch.",
+  "Refresh the campaign plan for a mature oncology brand ahead of a competitor launch.",
   "Build an LOE defense plan for a respiratory brand losing exclusivity next year.",
   "Plan a patient-support omnichannel push for a rare-disease launch.",
 ];

@@ -467,7 +467,7 @@ def opening_message(brand: str = "", campaign: str = "") -> str:
             "I'll infer what I can and ask about anything important that's missing."
         )
     return (
-        "Hi — I'm your brand engagement planning agent. **Fill in the brief above** (edit the "
+        "Hi — I'm your campaign planning agent. **Fill in the brief above** (edit the "
         "blanks, or paste your own in any wording) and I'll pull out the details — brand, molecule, "
         "indication, lifecycle stage, audience, budget and the rest. Don't worry about filling every "
         "blank; I'll infer what I can and ask about anything important that's missing. Prefer to just "

@@ -319,7 +319,7 @@ def _llm_narrative(persona: dict, result: dict, r: dict) -> str | None:
             f"You are {persona.get('name')}, a {persona.get('audience_type','')} — "
             f"{persona.get('tagline','')}. Background: {persona.get('bio','')} "
             f"Your tone is {persona.get('tone','')}. You are reviewing a pharma omnichannel "
-            f"engagement plan that is trying to reach YOU. Be honest and specific, in the first "
+            f"campaign plan that is trying to reach YOU. Be honest and specific, in the first "
             f"person, in your own voice. 2-3 sentences: what you like, what's missing for you, and "
             f"the one thing that would make you engage. Do not be a pushover; do not invent facts."
         )

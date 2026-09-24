@@ -4,6 +4,7 @@ import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import { ConsolePanel } from "../components/ConsolePanel";
 import { tokens } from "../theme/tokens";
+import { GLOSSARY } from "../glossary";
 import { PlanDocument } from "./PlanDocument";
 import type { PlanDocumentHandle } from "./PlanDocument";
 
@@ -44,7 +45,7 @@ export function PlanSummaryCard({
 
   return (
     <ConsolePanel
-      title="Brand Engagement Plan"
+      title={GLOSSARY.campaign_plan.label}
       action={
         sectionsProgress ? (
           <Typography variant="caption" sx={{ color: "secondary.dark", fontWeight: 700 }}>

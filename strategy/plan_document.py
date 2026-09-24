@@ -18,6 +18,7 @@ import re
 import time
 
 from autorun import STANDARD_RISKS, GOVERNANCE_CADENCE  # noqa: E402
+import glossary  # noqa: E402
 
 
 def _esc(s) -> str:
@@ -1891,12 +1892,12 @@ def _sec_campaign_brief(ctx, md, h, R):
 # --------------------------------------------------------------------------- #
 
 _OWNER_LABEL = {
-    "planner": "Engagement Plan Composer",
+    "planner": "Campaign Plan Composer",
     "intel": "Market & Competitive Intelligence Agent",
     "strategy": "Strategy & Positioning Agent",
     "inspiration": "Creative Inspiration Agent",
     "activation": "Activation Planning Agent",
-    "final": "Engagement Plan Composer",
+    "final": "Campaign Plan Composer",
 }
 
 _never = lambda c, full: False  # noqa: E731
@@ -2053,9 +2054,9 @@ def _compose(ctx: dict, done_agents: set | None = None, fresh_agent: str = "",
     h: list[str] = []
 
     # ---- Title + badges + home navigator (structural; badges accrete as data lands) ----
-    md.append(f"# Brand Engagement Plan — {brand} · {ta}\n")
+    md.append(f"# {glossary.label('campaign_plan')} — {brand} · {ta}\n")
     md.append(f"*Lifecycle stage:* {inferred.get('lifecycle_label', '—')}  |  *Generated:* {ts}\n")
-    h.append(f"<h1>Brand Engagement Plan</h1><p class='plan-sub'>{_esc(brand)} · {_esc(ta)} — "
+    h.append(f"<h1>{glossary.label('campaign_plan')}</h1><p class='plan-sub'>{_esc(brand)} · {_esc(ta)} — "
              f"{_esc(inferred.get('lifecycle_label', ''))} · generated {ts}</p>")
     badges = _badge("science", brand) + _badge("biotech", ta)
     if indication:

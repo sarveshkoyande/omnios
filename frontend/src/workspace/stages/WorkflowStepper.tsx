@@ -1,6 +1,7 @@
 import { styled } from "@mui/material/styles";
 import { tokens, focusRingOnBrand, motion, hoverOnly } from "../../theme/tokens";
 import { stageMark } from "../../theme/stageTheme";
+import { GLOSSARY } from "../../glossary";
 
 /** Tab order is this array's order; `id` is the routing key and never changes. The two are
  *  deliberately decoupled so a tab can be inserted mid-way (see id 5, the Campaign Ops
@@ -8,7 +9,7 @@ import { stageMark } from "../../theme/stageTheme";
  *  `stage === n` checks throughout Workspace.tsx / useWorkspace.ts. The number rendered on
  *  each tab is its position here, not its id. */
 export const WORKFLOW_STAGES = [
-  { id: 1, name: "Planning & Strategy", icon: "strategy", blurb: "Brief, multi-agent research and the Brand Engagement Plan." },
+  { id: 1, name: "Planning & Strategy", icon: "strategy", blurb: `Brief, multi-agent research and the ${GLOSSARY.campaign_plan.label}.` },
   { id: 2, name: "Engagement Orchestration", icon: "account_tree", blurb: "Turn the plan into an orchestrated journey: triggers, next-best-channel and cadence." },
   { id: 3, name: "Campaign Operations", icon: "dashboard", blurb: "Execute in parallel tracks by channel: assets, MLR status and tactics per lane." },
   { id: 5, name: "Campaign Ops (2)", icon: "checklist_rtl", blurb: "Sandbox: launch readiness — deliverables, coverage, approvals and the go-live verdict." },

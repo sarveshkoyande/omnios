@@ -1,3 +1,5 @@
+import { GLOSSARY } from "@omni-frontend/glossary";
+
 /** The agent library -- called out explicitly per leadership direction: "the workspace
  *  structure should make the underlying capabilities understandable," not just expose one
  *  orchestrator agent behind a chat. Three workspaces, as described: Strategy & Planning,
@@ -51,7 +53,7 @@ export const AGENTS: Record<Phase, AgentEntry[]> = {
     {
       id: "planning",
       name: "Campaign Planning & Strategy Agent",
-      job: "Holds the conversation that builds your Brand Engagement Plan",
+      job: `Holds the conversation that builds your ${GLOSSARY.campaign_plan.label}`,
       detail: "The one you actually talk to during Stage 1 -- takes your brief, asks what's missing, and narrates the plan as it's composed.",
       access: "read",
       source: "strategy/tab_chat.py -- STAGE_AGENTS.planning",

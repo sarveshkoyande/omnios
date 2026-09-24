@@ -78,7 +78,7 @@ from strategy.paths import data_path  # noqa: E402
 from strategy.planning_v2 import pipeline as planning_v2_pipeline  # noqa: E402  (v2 Strategic-to-Tactical Planning Engine)
 from strategy import prompt_library  # noqa: E402  (read-only catalog of the app's LLM system prompts, for the Prompt Library tab)
 
-app = FastAPI(title="Omni OS Brand Engagement Planning Agent")
+app = FastAPI(title="Omni OS Campaign Planning Agent")
 
 
 @app.on_event("startup")
@@ -100,7 +100,7 @@ def _msg(role: str, text: str, extra: dict | None = None) -> dict:
 
 def _safe_filename(name: str) -> str:
     import re as _re
-    return _re.sub(r"[^a-z0-9]+", "-", (name or "brand-engagement-plan").lower()).strip("-") or "brand-engagement-plan"
+    return _re.sub(r"[^a-z0-9]+", "-", (name or "campaign-plan").lower()).strip("-") or "campaign-plan"
 
 
 # Sections the Artefacts page can request independently so the (slow, ~40 COUNT

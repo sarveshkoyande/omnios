@@ -99,7 +99,7 @@ def _agent_grounding_bullets(ctx: dict, agent_id: str) -> list[str]:
                 out.append("👥 Top content affinity: " + ", ".join(g["top_content_tags"]))
     return out
 
-# Each agent is named by its function. The Engagement Plan Composer (formerly "Cooper") is
+# Each agent is named by its function. The Campaign Plan Composer (formerly "Cooper") is
 # the plan's author: it opens the run by framing the document structure and closes it by
 # writing the executive summary.
 # Pipeline order == the order sections fill into the live document: planner scaffolds,
@@ -107,8 +107,8 @@ def _agent_grounding_bullets(ctx: dict, agent_id: str) -> list[str]:
 # then the planner returns to finalize. The UI shows a photo avatar (purely decorative)
 # with `initials` as the monogram fallback if it fails to load.
 AGENT_ROSTER = [
-    {"id": "planner", "name": "Engagement Plan Composer", "role": "",
-     "initials": "EP", "icon": "description"},
+    {"id": "planner", "name": "Campaign Plan Composer", "role": "",
+     "initials": "CP", "icon": "description"},
     {"id": "intel", "name": "Market & Competitive Intelligence Agent", "role": "",
      "initials": "MC", "icon": "travel_explore"},
     {"id": "strategy", "name": "Strategy & Positioning Agent", "role": "",
@@ -291,7 +291,7 @@ def run_agents(brand: str, therapy_area: str, lifecycle_key: str, budget: float 
     # 1. Engagement Planner -- frames the document: brief, governance, caveats, and (when the
     # brand has a captured intelligence hub) the brand foundation. Every other section is
     # scaffolded as a labelled placeholder its owning agent will fill.
-    yield _run("planner", f"Framing your Brand Engagement Plan for {brand}{ind_note} — scaffolding all four toolkit "
+    yield _run("planner", f"Framing your Campaign Plan for {brand}{ind_note} — scaffolding all four toolkit "
                           f"phases, locking the brief and governance, and checking for a brand intelligence kit…")
     inferred = infer_persona_and_stage(lifecycle_key)
     ctx["inferred"] = inferred
