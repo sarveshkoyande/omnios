@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { AGENTS, PHASES, type LibraryAgent, type Phase } from "../agents";
+import { AGENTS, PHASE_TINT, PHASES, type LibraryAgent, type Phase } from "../agents";
 import { Icon } from "./Icon";
 
 /** Read more: what the agent does, what it works from, and where it runs. An agent that is on
@@ -75,7 +75,7 @@ export function AgentLibrary() {
   }
 
   return (
-    <div className="agent-library">
+    <div className="agent-library" style={{ ["--phase-ink" as string]: PHASE_TINT[phase] }}>
       <div className="agent-hero">
         <div className="agent-hero-eyebrow">Agent library</div>
         <h1>{info.label}</h1>

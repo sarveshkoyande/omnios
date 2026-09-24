@@ -42,9 +42,16 @@ export interface PhaseInfo {
 
 export const PHASES: PhaseInfo[] = [
   { id: "strategy", label: "Strategy & Planning", tagline: "Agents that turn a brief into a grounded, evidence-linked plan." },
-  { id: "ops", label: "Ops", tagline: "Agents that turn the plan into journeys, assets and live segments." },
-  { id: "intelligence", label: "Intelligence", tagline: "Agents that read the market, the HCP universe and the spend." },
+  { id: "ops", label: "Ops & Orchestration", tagline: "Agents that turn the plan into journeys, assets and live segments." },
+  { id: "intelligence", label: "Intelligence & Optimization", tagline: "Agents that read the market, the HCP universe and the spend." },
 ];
+
+/** Per-phase accent ink, applied to the active phase tab and the hero heading. */
+export const PHASE_TINT: Record<Phase, string> = {
+  strategy: "#3B4E8C",
+  ops: "#206657",
+  intelligence: "#6B4FA0",
+};
 
 export const AGENTS: Record<Phase, LibraryAgent[]> = {
   strategy: [
@@ -122,10 +129,6 @@ export const AGENTS: Record<Phase, LibraryAgent[]> = {
       ],
       builtOn: "strategy/campaign_artifacts.py",
     },
-    { id: "plan-composer", name: "Plan Composer", icon: "document", status: "wip", summary: "Sequences the plan's sections and keeps them consistent as they land." },
-    { id: "messaging-strategist", name: "Messaging Strategist", icon: "message", status: "wip", summary: "Turns positioning and proof points into a message hierarchy." },
-    { id: "creative-inspiration", name: "Creative Inspiration", icon: "palette", status: "wip", summary: "Proposes creative concepts grounded in the brand kit." },
-    { id: "activation-planner", name: "Activation Planner", icon: "zap", status: "wip", summary: "Converts the strategy into a tactical build order." },
   ],
   ops: [
     {
@@ -147,50 +150,14 @@ export const AGENTS: Record<Phase, LibraryAgent[]> = {
         { label: "Flow sends", detail: "Each email step in the campaign's flows." },
       ],
     },
-    {
-      id: "litmus-test-agent", name: "Litmus Test Agent", icon: "flask", status: "available", inDevelopment: true,
-      summary: "Checks emails render correctly across clients and devices before they go out.",
-      about: "Will run each email template through rendering checks across mail clients and devices, and report what breaks before launch.",
-      worksFrom: [{ label: "Email templates", detail: "The templates the Email Template Builder produces." }],
-    },
-    {
-      id: "segment-update-agent", name: "Segment Update Agent", icon: "refresh", status: "available", inDevelopment: true,
-      summary: "Keeps campaign segments current as HCP data and engagement change.",
-      about: "Will refresh each campaign's segment membership as the HCP panel and engagement data change, and flag shifts worth acting on.",
-      worksFrom: [
-        { label: "HCP 360 panel", detail: "The latest HCP data behind each segment." },
-        { label: "Segment definitions", detail: "The segments each campaign was planned against." },
-      ],
-    },
+    { id: "litmus-test-agent", name: "Litmus Test Agent", icon: "flask", status: "wip", summary: "Checks emails render correctly across clients and devices before they go out." },
+    { id: "segment-update-agent", name: "Segment Update Agent", icon: "refresh", status: "wip", summary: "Keeps campaign segments current as HCP data and engagement change." },
     { id: "engagement-orchestration", name: "Engagement Orchestration", icon: "users", status: "wip", summary: "Tracks the setup activity board, owners and deadlines." },
   ],
   intelligence: [
-    {
-      id: "hcp-360", name: "HCP 360", icon: "users", status: "available",
-      summary: "Answers questions about the HCP universe: who, where, how they prescribe and engage.",
-      about: "A queryable panel of HCPs by specialty, state, segment, channel and brand. It's the source behind every audience number elsewhere in the app.",
-      worksFrom: [{ label: "HCP 360 store", detail: "Demographics, channel affinity, prescribing and writer status per HCP." }],
-      builtOn: "strategy/hcp_360.py",
-    },
-    {
-      id: "nba-for-platform", name: "NBA for Platform", icon: "sparkles", status: "available", inDevelopment: true,
-      summary: "Recommends the next best action for each HCP across channels.",
-      about: "Will recommend each HCP's next best action (channel, message and timing) from their engagement history and the plan's rules.",
-      worksFrom: [
-        { label: "HCP 360 panel", detail: "Each HCP's channel affinity and engagement." },
-        { label: "Campaign flows", detail: "The actions each campaign makes available." },
-      ],
-    },
-    {
-      id: "budget-agent", name: "Budget Agent", icon: "wallet", status: "available",
-      summary: "Allocates the campaign budget across channels to match the plan's posture.",
-      about: "Splits the campaign budget across channels, weighted by the chosen go-to-market posture and each channel's role in the plan.",
-      worksFrom: [
-        { label: "Your budget", detail: "The total budget from the brief." },
-        { label: "Channel posture", detail: "The channel mix and weights the Channel Planner settled on." },
-      ],
-      builtOn: "strategy/autorun.py (budget allocation)",
-    },
+    { id: "hcp-360", name: "HCP 360", icon: "users", status: "wip", summary: "Answers questions about the HCP universe: who, where, how they prescribe and engage." },
+    { id: "nba-for-platform", name: "NBA for Platform", icon: "sparkles", status: "wip", summary: "Recommends the next best action for each HCP across channels." },
+    { id: "budget-agent", name: "Budget Agent", icon: "wallet", status: "wip", summary: "Allocates the campaign budget across channels to match the plan's posture." },
     { id: "reporting-insights", name: "Reporting & Insights", icon: "barChart", status: "wip", summary: "Answers questions about campaign performance from the KPI scorecard." },
     { id: "persona-review", name: "Persona Review", icon: "eye", status: "wip", summary: "Reads a finished plan back through each persona's eyes." },
     { id: "kpi-dashboard", name: "KPI Dashboard", icon: "star", status: "wip", summary: "Builds the scorecard, funnel and demographic cards." },
