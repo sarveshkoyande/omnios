@@ -1,23 +1,24 @@
 ---
-title: Brand Campaigns Index - Requirements
+title: Brand Hierarchy Index (Brand > Engagement Plan > Campaign > Flow) - Requirements
 type: feat
 date: 2026-09-24
 topic: brand-campaigns-index
 artifact_contract: ce-unified-plan/v1
-artifact_readiness: requirements-complete
+artifact_readiness: requirements-only
 product_contract_source: brainstorm (written by hand in the ce-brainstorm format; the skill was not available in the session)
-origin: docs/ideation/2026-09-24-brand-campaign-engagement-plan-ia-ideation.html, idea 1 ("Give the brand a first-class campaigns table")
+origin: docs/ideation/2026-09-24-brand-campaign-engagement-plan-ia-ideation.html, idea 1 ("Give the brand a first-class campaigns table"), revised to the user's four-level hierarchy
+companion: docs/brainstorms/2026-09-24-brand-campaign-ia-ideas-2-7-requirements.md (ideas 2 to 7)
 execution: none (requirements only; no Planning Contract yet)
 ---
 
-# Brand Campaigns Index - Requirements
+# Brand Hierarchy Index - Requirements
 
 ## Goal Capsule
 
-- **Objective:** For any brand, one call lists all of its campaigns: formal plans from the orchestrator and ad-hoc flows from the Brand Journey.
-- **Means:** Make the existing `campaign` table in `campaigns.db` the single campaign index. Tie it to the brand kit's identity and write to it from both the orchestrator and the Journey. No second campaigns table.
-- **Product authority:** This covers the data model, one read API and a backfill of existing data only. Navigation, naming, dashboards and creation flows are later ideas (2 to 7) that build on it.
-- **Readiness:** Requirements complete. The user settled all four open questions on 2026-09-24, and this is ready for a Planning Contract.
+- **Objective:** Every piece of campaign work sits in one hierarchy. You can list a brand's engagement plans, a plan's campaigns, and a campaign's flows.
+- **Means:** One brand identity (the brand kit) and three stored levels under it: Engagement Plan, Campaign, Flow. The existing `campaign` table in `campaigns.db` is reused for campaigns. The orchestrator and the Brand Journey both write into the hierarchy.
+- **Product authority:** This covers the data model, read APIs and a backfill of existing data. Naming, navigation, creation screens, provenance, the flow model and the brand view are ideas 2 to 7 in the companion doc.
+- **Readiness:** Requirements only. Three open questions remain (Q5 to Q7).
 
 ---
 
@@ -25,157 +26,176 @@ execution: none (requirements only; no Planning Contract yet)
 
 ### Summary
 
-Today you cannot list a brand's campaigns.
-Formal plans and Journey flows are stored in different places with different ideas of what a "brand" is, and nothing connects them.
-This work gives every campaign one record, tied to one brand identity, so later work (navigation, the rollup dashboard, the naming fix) has something to stand on.
+The user's model (2026-09-24):
+
+```
+Brand                      ← brief + brand kit live here, outside any engagement plan
+ └─ Engagement Plan  ×N    ← e.g. one per quarter
+     └─ Campaign     ×N
+         └─ Flow     ×N
+```
+
+Today none of this can be listed.
+Formal plans and Journey flows are stored in different places, each with its own idea of what a "brand" is, and nothing connects them.
+This work gives each level one record and one parent, so every later idea has something to stand on.
 
 ### Problem Frame
 
 The ideation says no `brand_id` exists anywhere and no campaigns table exists. Reading the code corrects part of that:
 
-- **A campaign table already exists.** `db/campaign_content_schema.sql` defines `campaign` (with `brand_id`, `project_id`, `status`) and `campaign_version`, in `campaigns.db`. `campaign_store.persist_campaign_from_result()` writes a row when an orchestrator plan finishes its Deploy phase (`app/server.py`, the Deploy branch of the plan stream). `strategy/dashboard.py` already counts campaigns per brand from it.
-- **But only finished formal plans reach it.** A project gets a campaign row only after Deploy. In-progress projects are invisible. Brand Journey flows (`journey_flow` in `brand_journey.db`, one row per brand) never reach it.
+- **A campaign table already exists.** `db/campaign_content_schema.sql` defines `campaign` (with `brand_id`, `project_id`, `status`) and `campaign_version`, in `campaigns.db`. `campaign_store.persist_campaign_from_result()` writes a row when an orchestrator plan finishes its Deploy phase (`app/server.py`). `strategy/dashboard.py` already counts campaigns per brand from it.
+- **Only finished formal plans reach it.** In-progress projects are invisible, and Brand Journey flows (`journey_flow` in `brand_journey.db`, one row per brand) never reach it.
 - **Re-running a plan duplicates the campaign.** Each Deploy inserts a new `campaign` row, and `campaign_version.version_no` is always 1.
 - **Three brand identities disagree.**
-  1. The Cockpit and Journey use the brand kit key from `config/brand_kits.json` (`brand_kit.canonical_key`, case-insensitive).
-  2. `campaigns.db` has its own `brand` table, matched by exact case-sensitive name and seeded from the market-intel roster (`config/client_brands.json`, `strategy/brand_lifecycle.py`).
-  3. Orchestrator projects hold a free-typed `slots.brand` string inside `state_json` (`strategy/projects.py`).
-
-  The same brand can appear as different rows, and a kit brand can have no `campaigns.db` row at all.
-
-The missing piece is therefore not a table. It is one brand identity, and making both creation paths write to the table that already exists.
-Today a plan's brand is typed or inferred from the intake chat (`slots.brand`), which is how the three identities drift apart. A plan should instead always be created inside a brand.
+  1. The Cockpit and Journey use the brand kit key (`config/brand_kits.json`, `brand_kit.canonical_key`, case-insensitive).
+  2. `campaigns.db` has its own `brand` table, matched by exact case-sensitive name and seeded from the market-intel roster (`config/client_brands.json`).
+  3. Orchestrator projects hold a free-typed `slots.brand` inside `state_json` (`strategy/projects.py`).
+- **Nothing groups campaigns into plans, and nothing lets a campaign hold several flows.** There is no Engagement Plan level at all. Flows are stored one per brand (Journey) or one per project (the Operations stage's `campaign_plan_layout`).
+- **Plans are created with only a name.** `POST /api/projects` takes a name, and the brand is inferred later from the intake chat. This is how the brand identities drift apart.
 
 ### Key Decisions
 
-- **KD1. Reuse the existing `campaign` table; do not add a second one.** This corrects the ideation's premise. A new table would make a fourth place campaign-like data lives. (proposed — recommended: the table, its versions and the dashboard count already exist.) Governs R1 to R3.
-- **KD2. The brand kit key is the one brand identity.** A campaign belongs to a brand kit (`config/brand_kits.json`), matched case-insensitively like the Journey. `campaigns.db`'s own `brand` rows keep their current uses (market intel, claims, content), but link to the kit key when a kit exists. (proposed — the Cockpit, the active surface, is already brand-kit-first.) Governs R4 to R6.
-- **KD3. A plan is always created inside a brand.** It is started from an existing brand, so its brand is set at creation, never typed or inferred from chat. There is no "unassigned" campaign in the product. (session-settled: user-directed — "a plan is always created inside a brand"; chosen over storing no-kit plans unassigned or auto-creating a skeleton kit.) Governs R5, R5a.
-- **KD4. A campaign exists from the moment the work starts, not only when it finishes.** With KD3, a plan campaign is created when the plan is created. A flow campaign is created when the Journey flow is first built. Status tracks progress. (session-settled: user-approved — chosen over creating it only when Deploy completes.) Governs R7, R8.
-- **KD5. Re-running a plan adds a version, not a campaign.** One project maps to one campaign. (proposed.) Governs R10.
-- **KD6. The Journey flow is the brand's one ad-hoc campaign for now.** The Journey stores one flow per brand today, and multi-flow per brand stays out of scope. (proposed.) Governs R11.
-- **KD7. Kind names are internal and neutral: `plan` and `flow`.** The user-facing naming ("engagement plan" vs "campaign") is idea 2 and is not decided here. (proposed.) Governs R13.
-- **KD8. Wiping a brand's Journey deletes its flow campaign.** (session-settled: user-directed — chosen over archiving it.) Governs R12.
-- **KD9. Moving a plan to another brand closes its campaign and opens a new one.** The old brand keeps a closed record of it. (session-settled: user-directed — chosen over moving the same campaign.) Governs R7a.
+- **KD1. Four levels: Brand › Engagement Plan › Campaign › Flow.** A brand has many engagement plans, a plan has many campaigns, and a campaign has many flows. (session-settled: user-directed — "brand has multiple engagement plans, one per quarter let's say, each has multiple campaigns, each campaign has multiple flows".) Governs R1 to R6.
+- **KD2. The brief and brand kit belong to the Brand, outside every engagement plan.** The Brand Journey's Brief, Audience, Message and Kit steps stay brand-level. (session-settled: user-directed — "brief and kit stay outside engagement plan".) Governs R7.
+- **KD3. Nothing exists without its parent.** An engagement plan is always created inside a brand, a campaign inside an engagement plan, and a flow inside a campaign. None of them has a typed or inferred parent, and there is no "unassigned" level. (session-settled: user-directed — "a plan is always created inside a brand", extended to each level by KD1.) Governs R8, R9.
+- **KD4. The brand kit key is the one brand identity.** `campaigns.db`'s own `brand` rows keep their market-intel, claims and content uses, but link to the kit key when a kit exists. (proposed.) Governs R10, R11.
+- **KD5. Reuse the existing `campaign` table for Campaigns.** Engagement Plan and Flow are new records; there is no second campaigns table. (proposed.) Governs R2.
+- **KD6. The orchestrator's phased document belongs to a Campaign, as its Campaign Plan.** A campaign has at most one Campaign Plan, versioned, and any number of flows. (session-settled: follows the user's idea 2 answer — the orchestrator's document is renamed "Campaign Plan".) Governs R12, R13.
+- **KD7. Every level exists from the moment it is created.** A campaign with a Campaign Plan appears when the plan starts, not when Deploy completes. (session-settled: user-approved.) Governs R14.
+- **KD8. Re-running a Campaign Plan adds a version, not a campaign.** (proposed.) Governs R15.
+- **KD9. Moving a campaign to another brand closes it and opens a new one.** The new campaign is placed in an engagement plan the user picks under the new brand. (session-settled: user-directed — chosen over moving the same record.) Governs R16.
+- **KD10. Wiping a brand's Journey deletes the flows the Journey created.** (session-settled: user-directed — chosen over archiving them.) Governs R19.
 
 ### Actors
 
-- A1. Brand marketer: creates plans and Journey flows and wants to see all of a brand's campaigns in one place.
-- A2. Orchestrator: runs a phase-gated plan for a project (`strategy/orchestrator.py`, `app/server.py`).
-- A3. Brand Journey: builds and edits one rules-built flow per brand (`strategy/brand_journey.py`).
-- A4. Startup bootstrap: reseeds and backfills data idempotently on app start (`strategy/bootstrap.py`).
+- A1. Brand marketer: creates engagement plans, campaigns and flows under a brand, and wants to see them together.
+- A2. Orchestrator: runs a phased Campaign Plan for a campaign (`strategy/orchestrator.py`, `app/server.py`).
+- A3. Brand Journey: sets up the brand's brief and kit, and builds rules-based flows (`strategy/brand_journey.py`).
+- A4. Startup bootstrap: backfills existing data idempotently on app start (`strategy/bootstrap.py`).
 
 ### Requirements
 
-**Campaign index**
+**Hierarchy**
 
-- R1. Each unit of campaign work has exactly one record, in the existing `campaign` table in `campaigns.db`. There is no second campaigns table.
-- R2. Each record carries its brand (brand kit key), its kind (`plan` or `flow`), a link to its source (project id for `plan`, brand for `flow`), a name, a status, and created and updated times.
-- R3. One read returns all of a brand's campaigns, both kinds, newest first.
+- R1. There are four levels: Brand, Engagement Plan, Campaign, Flow. Each record at a level has exactly one parent at the level above.
+- R2. Campaigns are stored in the existing `campaign` table in `campaigns.db`. Engagement plans and flows get their own records. No level is stored in two places.
+- R3. An engagement plan carries its brand, a name, an optional period (start and end dates, for example a quarter), a status (active or closed), and created and updated times.
+- R4. A campaign carries its engagement plan, a name, a status (draft, in progress, confirmed, closed), whether it has a Campaign Plan, and created and updated times.
+- R5. A flow carries its campaign, a name, how it was made (Journey, Campaign Plan's Operations stage, or added by hand), its status, and created and updated times.
+- R6. One read returns any level's children, newest first:
+  - a brand's engagement plans;
+  - a plan's campaigns;
+  - a campaign's flows and its Campaign Plan.
+
+  One further read returns a brand's whole tree.
+- R7. The brief and brand kit stay on the brand. No engagement plan, campaign or flow stores its own copy (except idea 5's provenance snapshot).
+
+**Parents are fixed at creation**
+
+- R8. An engagement plan can only be created from an existing brand, a campaign only from an existing engagement plan, and a flow only from an existing campaign. No parent is typed or inferred from chat, and creation never creates a brand row or brand kit.
+- R9. Existing projects whose brand matches no brand kit are legacy data. The backfill (R20) leaves them out of the hierarchy and lists them in its log for a one-time cleanup.
 
 **Brand identity**
 
-- R4. A campaign's brand is the brand kit's canonical key, matched case-insensitively (the same rule as `brand_journey._key`).
-- R5. A plan can only be created from an existing brand. Its brand is set at creation from that brand, not typed or inferred from the intake chat, and plan creation never creates a brand row or a brand kit.
-- R5a. Projects that already exist with a brand matching no brand kit are legacy data. The backfill (R14) leaves them without a campaign and lists them in its log for a one-time cleanup. They do not appear under any brand.
-- R6. `campaigns.db`'s existing `brand` rows keep working for market intel, claims and content. Where a brand kit exists with the same name (case-insensitive), the row is linked to it, so every campaign for that brand resolves to one identity.
+- R10. A brand is the brand kit's canonical key, matched case-insensitively (the same rule as `brand_journey._key`).
+- R11. `campaigns.db`'s existing `brand` rows keep working for market intel, claims and content. Where a brand kit has the same name (case-insensitive), the row links to it, so each brand resolves to one identity.
 
-**Lifecycle**
+**Campaign Plans**
 
-- R7. A `plan` campaign is created when the plan is created. Its status follows the project phase and becomes final when Deploy completes. That completion step is where `persist_campaign_from_result` writes today.
-- R7a. If a plan is moved to a different brand, its current campaign is closed and stays listed under the old brand as closed. A new campaign opens under the new brand, and later versions attach to the new one.
-- R8. A `flow` campaign is created when the brand's Journey flow is first built. Its status follows the Flow step: built, then confirmed.
-- R9. Writing a campaign record never blocks or breaks plan generation or the Journey. A failure is logged and repaired on the next write or at startup, matching the app's best-effort idiom.
-- R10. Re-running or regenerating a plan adds a new `campaign_version` to that project's campaign, with an incrementing version number. It never adds a second campaign.
-- R11. A brand has at most one `flow` campaign while the Journey stores one flow per brand.
-- R12. Rebuilding a brand's flow updates its existing `flow` campaign and never adds another. The only thing that wipes Journey data today is the developer script `scripts/reset_test_data.py`. It also deletes the brand's `flow` campaign.
+- R12. A campaign can have one Campaign Plan: the orchestrator's phased document, stored as today on a project and linked to the campaign. A campaign without one is valid and is just its flows.
+- R13. Starting a Campaign Plan binds its project to the campaign at creation. The intake chat never asks which brand it is for.
+- R14. A campaign with a Campaign Plan exists from the moment the plan is started. Its status follows the plan's phase and becomes final when Deploy completes.
+- R15. Re-running or regenerating a Campaign Plan adds a new version, with an incrementing version number, to the same campaign. It never adds a campaign.
 
-**Naming**
+**Moves and removal**
 
-- R13. `plan` and `flow` are internal values. This work adds no user-facing renames.
+- R16. Moving a campaign to another brand closes it, and it stays listed as closed under the old brand. A new campaign opens in an engagement plan the user picks under the new brand, and later Campaign Plan versions attach to the new one.
+- R17. Moving a campaign to another engagement plan of the same brand just moves it.
+- R18. Writing any hierarchy record never blocks or breaks plan generation or the Journey. A failure is logged and repaired on the next write or at startup, matching the app's best-effort idiom.
+- R19. Wiping a brand's Journey data (today only the developer script `scripts/reset_test_data.py`) deletes the flows the Journey created, not the brand's other campaigns or flows.
 
 **Existing data**
 
-- R14. On startup, a backfill runs idempotently and never deletes anything:
+- R20. On startup, a backfill runs idempotently and never deletes anything:
   - it links existing `campaign` rows to brand kits by name;
-  - it creates `plan` campaigns for existing projects whose brand matches a brand kit and that have no campaign (others are handled by R5a);
-  - it creates `flow` campaigns for brands with a built Journey flow;
-  - it folds duplicate campaigns that came from re-runs of the same project into one campaign with numbered versions.
+  - it creates campaigns for existing projects whose brand matches a kit and that have none (others go to R9);
+  - it turns each brand's existing Journey flow into a flow record in a campaign;
+  - it folds duplicate campaigns from re-runs of one project into one campaign with numbered versions;
+  - it places everything it links or creates in an engagement plan for that brand (see Q7).
 
 **Read API**
 
-- R15. `GET /api/brands/{brand}/campaigns` returns that brand's campaigns: kind, name, status, source link, updated time. An unknown brand returns 404. Closed campaigns are included and marked closed.
+- R21. `GET /api/brands/{brand}/engagement-plans`, `GET /api/engagement-plans/{id}/campaigns` and `GET /api/campaigns/{id}/flows` return each level. `GET /api/brands/{brand}/tree` returns the whole hierarchy. An unknown id returns 404. Closed records are included and marked closed.
 
 ### Key Flows
 
-- F1. Formal plan inside a brand
-  - **Trigger:** A1 starts a plan from a brand.
+- F1. A quarter's plan with a formal campaign
+  - **Trigger:** A1 creates "Q3 2026" under Oncomyra, adds a campaign, and starts its Campaign Plan.
   - **Actors:** A1, A2
-  - **Steps:** A `plan` campaign appears for that brand immediately. Its status advances with each phase. Deploy completion attaches the plan as a version.
-  - **Outcome:** The brand's campaign list shows the plan from the start, and re-running it adds versions, not rows.
-  - **Covered by:** R3, R4, R7, R10
-- F2. Journey flow
-  - **Trigger:** A1 builds the Flow step for a brand.
+  - **Steps:** The plan and campaign appear immediately. The Campaign Plan's phases move the campaign's status. Deploy attaches the plan as version 1.
+  - **Outcome:** Oncomyra › Q3 2026 › the campaign, with its Campaign Plan and any flows.
+  - **Covered by:** R1, R6, R12 to R14
+- F2. Several flows in one campaign
+  - **Trigger:** A1 adds a second and a third flow to a campaign.
   - **Actors:** A1, A3
-  - **Steps:** A `flow` campaign is created on first build and marked confirmed when the Flow step is confirmed.
-  - **Outcome:** The same list shows the flow next to the brand's plans.
-  - **Covered by:** R3, R8, R11
-- F3. Plan moved to another brand
-  - **Trigger:** A1 moves an in-progress plan from Oncomyra to Cardiovex.
-  - **Actors:** A1, A2
-  - **Steps:** Oncomyra's campaign for that plan is closed. A new campaign opens under Cardiovex, and the plan's later versions attach there.
+  - **Steps:** Each flow is created inside the campaign.
+  - **Outcome:** The campaign lists three flows.
+  - **Covered by:** R5, R6, R8
+- F3. Campaign moved to another brand
+  - **Trigger:** A1 moves a campaign from Oncomyra to Cardiovex and picks Cardiovex's "Q3 2026" plan.
+  - **Actors:** A1
+  - **Steps:** Oncomyra's copy is closed, and a new campaign opens under Cardiovex › Q3 2026.
   - **Outcome:** Both brands show an accurate history.
-  - **Covered by:** R7a
+  - **Covered by:** R16
 - F4. First start after this ships
   - **Trigger:** The app starts against existing `projects.db`, `campaigns.db` and `brand_journey.db`.
   - **Actors:** A4
-  - **Steps:** The R14 backfill runs.
-  - **Outcome:** Every brand lists its past plans and its Journey flow. Legacy projects with no matching kit are logged, not attached. Running the backfill again changes nothing.
-  - **Covered by:** R5a, R14
+  - **Steps:** The R20 backfill runs.
+  - **Outcome:** Every brand shows its past plans and Journey flow inside the hierarchy. Legacy no-kit projects are logged. Running the backfill again changes nothing.
+  - **Covered by:** R9, R20
 
 ### Acceptance Examples
 
-- AE1. **Covers R3, R7, R8.** **Given** Oncomyra has one finished plan, one plan in its Select phase, and a built Journey flow, **when** the brand's campaigns are listed, **then** three campaigns appear: two `plan`, one `flow`.
-- AE2. **Covers R10.** **Given** a project's plan has been run to Deploy twice, **when** its brand's campaigns are listed, **then** there is one campaign for that project with versions 1 and 2.
-- AE3. **Covers R5, R5a.** **Given** a new plan, **when** A1 creates it, **then** it can only be created from an existing brand and there is no brand name to type. **Given** a legacy project for "Oncomira" (no kit), **when** the backfill runs, **then** it gets no campaign, it is listed in the backfill log, and no "Oncomira" brand is created.
-- AE3a. **Covers R7a.** **Given** a plan under Oncomyra, **when** A1 moves it to Cardiovex, **then** Oncomyra lists it as closed and Cardiovex lists a new open campaign for it.
-- AE3b. **Covers R12.** **Given** a brand with a `flow` campaign, **when** `scripts/reset_test_data.py` wipes that brand's Journey, **then** the `flow` campaign is gone too.
-- AE4. **Covers R9.** **Given** `campaigns.db` is unavailable, **when** A1 runs a plan phase or builds a Journey flow, **then** both succeed, and the missing campaign record appears after the next startup.
-- AE5. **Covers R14.** **Given** existing data with duplicate campaign rows for one project, **when** the app starts twice, **then** the first start folds them into one campaign with versions, and the second start changes nothing.
+- AE1. **Covers R1, R6.** **Given** Oncomyra has plans "Q2 2026" and "Q3 2026", Q3 has two campaigns, and one of those has three flows, **when** Oncomyra's tree is read, **then** it returns exactly that shape.
+- AE2. **Covers R15.** **Given** a Campaign Plan run to Deploy twice, **when** its campaign is read, **then** there is one campaign with versions 1 and 2.
+- AE3. **Covers R8, R13.** **Given** a new Campaign Plan, **when** A1 starts it from a campaign, **then** the intake does not ask for the brand, and no brand can be typed.
+- AE4. **Covers R16.** **Given** a campaign under Oncomyra › Q3, **when** A1 moves it to Cardiovex › Q3, **then** Oncomyra lists it as closed and Cardiovex lists a new open campaign.
+- AE5. **Covers R19.** **Given** a brand whose Journey built one flow and whose campaigns have two hand-added flows, **when** `scripts/reset_test_data.py` wipes the brand's Journey, **then** only the Journey-built flow is deleted.
+- AE6. **Covers R18.** **Given** `campaigns.db` is unavailable, **when** A1 runs a plan phase or builds a flow, **then** both succeed, and the missing records appear after the next startup.
+- AE7. **Covers R20.** **Given** duplicate campaign rows for one project, **when** the app starts twice, **then** the first start folds them into one campaign with versions, and the second changes nothing.
 
 ### Scope Boundaries
 
-- Navigation and the Brand > Campaign > Flow breadcrumb (idea 3).
-- Renaming "engagement plan" or any user-facing copy (idea 2).
-- A "+ New Campaign" creation fork (idea 4).
-- Pinning the brand-kit version a campaign was built from (idea 5).
-- Unifying the `CampaignFlow` and Journey flow schemas (idea 6).
-- A per-brand campaigns dashboard or a sidebar count badge (idea 7). R15's API is what those will read.
-- More than one Journey flow per brand.
-- Where the "start a plan from a brand" entry point lives. Today plans start from the `frontend/` project home; choosing the surviving surface is idea 3, and the creation fork is idea 4. This work only requires that whichever entry exists binds the plan to an existing brand (R5).
-- A UI for cleaning up legacy projects with no matching kit (R5a lists them; cleanup is manual).
+- Naming and copy (idea 2), navigation (idea 3), creation screens (idea 4), provenance (idea 5), the flow storage and editing model (idea 6), and the brand view (idea 7) are in the companion doc. This doc's read APIs are what those use.
+- A UI for cleaning up legacy no-kit projects (R9 lists them; cleanup is manual).
 
 ### Dependencies / Assumptions
 
 - `campaigns.db` is opened through `strategy/db.py`'s `connect("campaigns")`. Schema changes must work on SQLite and, where `DATABASE_URL` is set, Postgres.
-- A project's brand is read from `slots.brand` in its `state_json` (`strategy/projects.py`).
+- A project's brand is read from `slots.brand` in its `state_json` (`strategy/projects.py`). This only matters for the backfill, since new plans are bound at creation.
 - `brand_kit.canonical_key` stays the single case-insensitive resolver for brand kit names.
-- The startup backfill follows the existing idempotent `load_x()` pattern (`strategy/brand_lifecycle.py`, `strategy/hcp_360.py`) and is called from `strategy/bootstrap.py`.
+- The backfill follows the existing idempotent `load_x()` pattern (`strategy/brand_lifecycle.py`, `strategy/hcp_360.py`), called from `strategy/bootstrap.py`.
 
 ### Outstanding Questions
 
-None. The four questions from the first draft were settled by the user on 2026-09-24:
+Settled by the user on 2026-09-24:
 
-- Q1. A plan with no brand kit → cannot arise: a plan is always created inside a brand (KD3, R5). Legacy data only: R5a.
-- Q2. When a plan becomes a campaign → as soon as it has a brand, which with KD3 means at creation (KD4, R7).
-- Q3. Wiping a brand's Journey → delete its flow campaign (KD8, R12).
-- Q4. A plan moved to another brand → close the old campaign and open a new one (KD9, R7a).
+- Q1. A plan with no brand kit → cannot arise: everything is created inside its parent (KD3). Legacy data only: R9.
+- Q2. When a formal plan appears → as soon as it starts (KD7).
+- Q3. Wiping a brand's Journey → delete what the Journey created (KD10).
+- Q4. Moving to another brand → close and open a new one (KD9).
+
+Open:
+
+- Q5. **The Journey's Flow step.** Now that flows live inside campaigns, should the Journey's Flow step create the brand's first engagement plan and campaign, and put its flow there (proposed)? Or should the Journey end at Kit, with every flow made inside a campaign?
+- Q6. **Engagement plan period.** Is a period (for example a quarter) optional (proposed), or required on every engagement plan?
+- Q7. **Where existing data goes.** Should the backfill put each brand's existing campaigns and Journey flow into one engagement plan named "Earlier work" (proposed), or into one plan per calendar quarter based on when each was created?
 
 ### Sources / Research
 
-- Ideation: `docs/ideation/2026-09-24-brand-campaign-engagement-plan-ia-ideation.html` (idea 1, with ideas 2 to 7 as the downstream scope boundaries).
+- Ideation: `docs/ideation/2026-09-24-brand-campaign-engagement-plan-ia-ideation.html`.
 - Existing campaign model: `db/campaign_content_schema.sql` (`brand`, `campaign`, `campaign_version`), `strategy/campaign_store.py` (`persist_campaign_from_result`, `_brand_id`, `campaign_counts_by_brand`), `strategy/dashboard.py`.
-- Plan persistence call site: `app/server.py`, the Deploy branch of the plan stream.
-- Projects: `strategy/projects.py` (`projects` table, `slots.brand` in `state_json`).
-- Brand Journey: `strategy/brand_journey.py` (`_key`, `journey_flow`), `strategy/brand_kit.py` (`canonical_key`), `scripts/reset_test_data.py` (developer reset).
+- Plan creation and persistence: `app/server.py` (`POST /api/projects`, the Deploy branch of the plan stream).
+- Projects: `strategy/projects.py` (`projects` table, `slots.brand`, `campaign_plan_layout`).
+- Brand Journey: `strategy/brand_journey.py` (`_key`, `journey_flow`), `strategy/brand_kit.py` (`canonical_key`), `scripts/reset_test_data.py`.
 - Second brand roster: `config/client_brands.json`, `strategy/brand_lifecycle.py`.
