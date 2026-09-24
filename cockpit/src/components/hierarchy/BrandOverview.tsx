@@ -28,33 +28,36 @@ function PlanLauncher({ brand, plans, onChanged }: { brand: string; plans: TreeP
   return (
     <>
       {open && (
-        <div className="plan-launcher-card">
-          <button type="button" className="plan-launcher-close" aria-label="Close" onClick={() => setOpen(false)}>
-            <Icon name="close" size={14} />
-          </button>
-          <h3>Let&rsquo;s build your next agentic campaign.</h3>
-          <p className="plan-launcher-sub">Describe your engagement plan and let AI build and optimize it.</p>
-          <div className="plan-launcher-chips">
-            <span className="plan-launcher-chip"><Icon name="document" size={15} /><span><b>Brand</b>{brand}</span></span>
-            {latest && <span className="plan-launcher-chip"><Icon name="target" size={15} /><span><b>Latest plan</b>{latest.name}</span></span>}
-          </div>
-          <form className="plan-launcher-form" onSubmit={(e) => { e.preventDefault(); submit(); }}>
-            <textarea
-              className="jc-input plan-launcher-input"
-              rows={2}
-              placeholder="Describe what you want to make…"
-              value={text}
-              disabled={busy}
-              onChange={(e) => setText(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(); } }}
-              autoFocus
-            />
-            <button type="submit" className="plan-launcher-send" disabled={busy || !text.trim()} aria-label="Send">
-              <Icon name="arrowRight" size={18} />
+        <>
+          <div className="plan-launcher-backdrop" onClick={() => setOpen(false)} />
+          <div className="plan-launcher-card" role="dialog" aria-modal="true" aria-label="Build your next campaign">
+            <button type="button" className="plan-launcher-close" aria-label="Close" onClick={() => setOpen(false)}>
+              <Icon name="close" size={16} />
             </button>
-          </form>
-          {error && <div className="step-chat-error" role="alert">{error}</div>}
-        </div>
+            <h3>Let&rsquo;s build your next agentic campaign.</h3>
+            <p className="plan-launcher-sub">Describe your engagement plan and let AI build and optimize it.</p>
+            <div className="plan-launcher-chips">
+              <span className="plan-launcher-chip"><Icon name="document" size={16} /><span><b>Brand</b>{brand}</span></span>
+              {latest && <span className="plan-launcher-chip"><Icon name="target" size={16} /><span><b>Latest plan</b>{latest.name}</span></span>}
+            </div>
+            <form className="plan-launcher-form" onSubmit={(e) => { e.preventDefault(); submit(); }}>
+              <textarea
+                className="jc-input plan-launcher-input"
+                rows={2}
+                placeholder="Describe what you want to make…"
+                value={text}
+                disabled={busy}
+                onChange={(e) => setText(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(); } }}
+                autoFocus
+              />
+              <button type="submit" className="plan-launcher-send" disabled={busy || !text.trim()} aria-label="Send">
+                <Icon name="arrowRight" size={20} />
+              </button>
+            </form>
+            {error && <div className="step-chat-error" role="alert">{error}</div>}
+          </div>
+        </>
       )}
       <button type="button" className="plan-launcher-fab" aria-label="Build with AI" onClick={() => setOpen((v) => !v)}>
         <Icon name="sparkles" size={26} />
@@ -147,29 +150,39 @@ export function BrandOverview({ brand, tree, onChanged }: { brand: string; tree:
   );
 }
 
+/** A sentence, not a row of pills -- what this plan is, in words, from real fields only
+ *  (no invented goals or budgets). */
+function planSummary(plan: TreePlan): string {
+  const period = periodLabel(plan.period_start, plan.period_end);
+  const n = plan.campaigns.length;
+  const campaignPhrase = n === 0
+    ? "It has no campaigns yet."
+    : `It covers ${n} campaign${n === 1 ? "" : "s"}: ${plan.campaigns.map((c) => c.name).join(", ")}.`;
+  return `${period ? `Runs ${period}. ` : "No period is set for this plan. "}${campaignPhrase}`;
+}
+
 function PlanDetail({ brand, plan }: { brand: string; plan: TreePlan }) {
-  const flowCount = plan.campaigns.reduce((n, c) => n + c.flows.length, 0);
   const drifted = plan.campaigns.filter((c) => c.content.changed_steps.length > 0).length;
   return (
-    <div className="jc-card hier-detail-card">
+    <div className="hier-detail-card">
       <div className="hier-detail-head">
         <div>
           <a className="hier-detail-name" href={href({ kind: "plan", brand, planId: plan.id })}>{plan.name}</a>
           <StatusPill status={plan.status} />
         </div>
-        <span className="hier-meta">{periodLabel(plan.period_start, plan.period_end) ?? "No period"}</span>
       </div>
 
-      <div className="hier-detail-stats">
-        <span><strong>{plan.campaigns.length}</strong> campaign{plan.campaigns.length === 1 ? "" : "s"}</span>
-        <span><strong>{flowCount}</strong> flow{flowCount === 1 ? "" : "s"}</span>
-        {drifted > 0 && <span className="hier-summary-warn"><strong>{drifted}</strong> with changed brand content</span>}
-      </div>
+      <p className="hier-detail-summary">{planSummary(plan)}</p>
+      {drifted > 0 && (
+        <p className="hier-detail-summary hier-summary-warn">
+          {drifted} of its campaign{drifted === 1 ? "" : "s"} {drifted === 1 ? "has" : "have"} changed brand content since it was last built.
+        </p>
+      )}
 
       <div className="hier-detail-campaigns">
         <div className="hier-detail-subhead">Associated campaigns</div>
         {plan.campaigns.length === 0 ? (
-          <div className="jc-empty hier-indent">No campaigns yet.</div>
+          <p className="hier-hint hier-indent">No campaigns yet.</p>
         ) : (
           plan.campaigns.map((c) => (
             <a key={c.id} className="hier-campaign-row" href={href({ kind: "campaign", brand, planId: plan.id, campaignId: c.id })}>
