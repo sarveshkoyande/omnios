@@ -20,14 +20,6 @@
   font-size: var(--v3-text-body); color: var(--fg); background: var(--app-backdrop);
 }
 
-.v3-rail {
-  flex: 0 0 var(--v3-rail-w); margin: var(--v3-gap) 0 var(--v3-gap) var(--v3-gap);
-  padding: var(--v3-pad) 12px; display: flex; flex-direction: column; gap: var(--v3-gap);
-  background: var(--card-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
-  border-radius: var(--radius-lg); box-shadow: var(--neu-flat);
-}
-.v3-rail-brand { font-weight: 700; font-size: 15px; padding: 4px 6px; }
-
 .v3-main { flex: 1; min-width: 0; overflow-y: auto; padding: 24px 32px; }
 .v3-page-title { margin: 0 0 4px; font-size: var(--v3-text-title); font-weight: 700; }
 .v3-page-sub { margin: 0; font-size: var(--v3-text-secondary); color: var(--muted); }
@@ -38,3 +30,110 @@
   box-shadow: var(--neu-flat);
 }
 .v3-muted { color: var(--muted); font-size: var(--v3-text-secondary); }
+
+/* ---- Rail (A1-A5). The slot reserves the collapsed width; the rail itself grows over the
+   page on hover (no layout jump), and pinning makes the slot reserve the full width. ---- */
+.v3 { --v3-rail-collapsed: 60px; }
+.v3-rail-slot { position: relative; flex: 0 0 calc(var(--v3-rail-collapsed) + var(--v3-gap)); transition: flex-basis 180ms ease; z-index: 20; }
+.v3-rail-slot.pinned { flex-basis: calc(var(--v3-rail-w) + var(--v3-gap)); }
+.v3-rail {
+  position: absolute; top: var(--v3-gap); bottom: var(--v3-gap); left: var(--v3-gap);
+  width: var(--v3-rail-collapsed); padding: 12px 10px; display: flex; flex-direction: column; gap: 10px;
+  background: var(--card-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+  border-radius: var(--radius-lg); box-shadow: var(--neu-flat); overflow: hidden auto;
+  transition: width 180ms ease, box-shadow 180ms ease;
+}
+.v3-rail.expanded { width: var(--v3-rail-w); }
+.v3-rail-slot:not(.pinned) .v3-rail.expanded { box-shadow: var(--neu-flat), 0 12px 40px rgba(86, 58, 168, 0.18); background: rgba(255,255,255,0.86); }
+
+.v3-rail-top { display: flex; align-items: center; justify-content: space-between; min-height: 24px; }
+.v3-rail.collapsed .v3-rail-top { justify-content: center; }
+.v3-rail-brand { font-weight: 700; font-size: 15px; padding-left: 6px; white-space: nowrap; }
+.v3-rail-pin {
+  width: 24px; height: 24px; border: none; border-radius: var(--radius-sm); cursor: pointer;
+  display: grid; place-items: center; background: transparent; color: var(--muted);
+}
+.v3-rail-pin:hover { background: var(--primary-light-background); color: var(--primary); }
+
+.v3-nav-group { display: flex; flex-direction: column; gap: 2px; }
+.v3-nav-grow { flex: 1; }
+.v3-nav-label { font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 8px 8px 4px; }
+.v3-nav-divider { height: 1px; background: var(--neutral-200); margin: 8px 6px; }
+.v3-nav-item {
+  display: flex; align-items: center; gap: 10px; height: 34px; padding: 0 10px; border-radius: var(--radius-sm);
+  color: var(--neutral-700); text-decoration: none; font-size: 13.5px; font-weight: 500; white-space: nowrap;
+}
+.v3-rail.collapsed .v3-nav-item { justify-content: center; padding: 0; }
+.v3-nav-item:hover { background: rgba(93, 44, 201, 0.06); color: var(--fg); }
+.v3-nav-item.active { background: var(--primary-light-background); color: var(--primary); font-weight: 600; }
+.v3-nav-item span { overflow: hidden; text-overflow: ellipsis; }
+.v3-nav-empty { font-size: var(--v3-text-secondary); color: var(--muted); padding: 2px 10px; line-height: 1.4; }
+
+.v3-rail-user {
+  display: flex; align-items: center; gap: 10px; padding: 8px; border-top: 1px solid var(--neutral-200);
+  font-size: 13px; font-weight: 500; white-space: nowrap;
+}
+.v3-rail.collapsed .v3-rail-user { justify-content: center; padding: 8px 0 0; }
+.v3-avatar { width: 28px; height: 28px; flex: 0 0 auto; border-radius: var(--radius-full); display: grid; place-items: center; background: var(--primary-light-background); color: var(--primary); }
+
+/* "+ New": the one primary action in the rail (E3). */
+.v3-new { position: relative; }
+.v3-new-btn {
+  width: 100%; height: 36px; display: flex; align-items: center; justify-content: center; gap: 8px;
+  border: none; border-radius: var(--radius-sm); cursor: pointer; font-family: inherit; font-size: 13.5px; font-weight: 600;
+  background: var(--primary); color: var(--base-white);
+}
+.v3-new-btn:hover { background: var(--primary-background-hover); }
+.v3-new-menu, .v3-bs-pop {
+  position: absolute; top: calc(100% + 6px); left: 0; z-index: 30; min-width: 228px;
+  padding: 6px; border-radius: var(--radius-md); background: var(--base-white);
+  box-shadow: 0 0 0 1px var(--neutral-200), 0 12px 32px rgba(35, 31, 32, 0.14);
+}
+.v3-new-item {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 8px 10px;
+  border-radius: var(--radius-sm); color: var(--fg); text-decoration: none; font-size: 13px;
+}
+a.v3-new-item:hover { background: var(--primary-light-background); color: var(--primary); }
+.v3-new-item.disabled { color: var(--muted); cursor: default; }
+.v3-new-item em { font-style: normal; font-size: 11px; color: var(--muted); }
+
+/* ---- Brand switcher (BR1) ---- */
+.v3-bs { position: relative; }
+.v3-bs-trigger {
+  width: 100%; height: 38px; display: flex; align-items: center; gap: 8px; padding: 0 8px;
+  border: none; border-radius: var(--radius-sm); cursor: pointer; font-family: inherit; font-size: 13.5px; font-weight: 600;
+  background: rgba(255,255,255,0.7); color: var(--fg); box-shadow: 0 0 0 1px var(--neutral-200);
+}
+.v3-rail.collapsed .v3-bs-trigger { justify-content: center; padding: 0; }
+.v3-bs-trigger:hover { box-shadow: 0 0 0 1px var(--primary); }
+.v3-bs-label { flex: 1; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.v3-bs-dot {
+  width: 24px; height: 24px; flex: 0 0 auto; border-radius: var(--radius-sm); display: grid; place-items: center;
+  background: var(--primary-light-background); color: var(--primary); font-size: 12px; font-weight: 700;
+}
+.v3-bs-pop { max-height: 60vh; overflow-y: auto; min-width: 240px; }
+.v3-bs-search {
+  display: flex; align-items: center; gap: 8px; padding: 6px 8px; margin-bottom: 4px;
+  border-radius: var(--radius-sm); box-shadow: 0 0 0 1px var(--neutral-200); color: var(--muted);
+}
+.v3-bs-search input { flex: 1; border: none; outline: none; background: transparent; font-family: inherit; font-size: 13px; color: var(--fg); }
+.v3-bs-group { font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 8px 8px 4px; }
+.v3-bs-row { display: flex; align-items: center; border-radius: var(--radius-sm); }
+.v3-bs-row:hover, .v3-bs-row.active { background: var(--primary-light-background); }
+.v3-bs-pick {
+  flex: 1; display: flex; align-items: center; gap: 8px; padding: 6px 8px; border: none; background: transparent;
+  cursor: pointer; font-family: inherit; font-size: 13px; color: var(--fg); text-align: left;
+}
+.v3-bs-pick svg { margin-left: auto; color: var(--primary); }
+.v3-bs-pin { width: 26px; height: 26px; border: none; background: transparent; cursor: pointer; color: var(--neutral-400); display: grid; place-items: center; border-radius: var(--radius-sm); }
+.v3-bs-pin:hover { color: var(--primary); }
+.v3-bs-pin.on { color: var(--primary); }
+.v3-bs-pin.on svg { fill: currentColor; }
+.v3-bs-empty { padding: 10px 8px; font-size: 12.5px; color: var(--muted); }
+
+.v3-chip-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.v3-chip {
+  padding: 6px 12px; border: none; border-radius: var(--radius-full); cursor: pointer; font-family: inherit; font-size: 12.5px; font-weight: 600;
+  background: rgba(255,255,255,0.8); color: var(--fg); box-shadow: 0 0 0 1px var(--neutral-200);
+}
+.v3-chip:hover { box-shadow: 0 0 0 1px var(--primary); color: var(--primary); }

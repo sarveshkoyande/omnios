@@ -1,26 +1,61 @@
-import { REGISTRY } from "../agents";
-import { href } from "../route";
+import { useEffect, useState } from "react";
+import { listBrands } from "../api";
+import type { BrandSummary } from "../types";
+import { Rail } from "./Rail";
+import { useBrandScope, useFavorites, useRailPinned } from "./store";
 import "./v3.css";
 
-/** Phase 0 frame of the redesigned Cockpit (docs/redesign/cockpit-redesign-plan.md). The
- *  rail and main area are placeholders that Phase 1 (shell) and Phase 2 (Home) fill in. */
+/** Pages the Phase 1 shell can route to. Their real content arrives in later phases
+ *  (docs/redesign/cockpit-redesign-plan.md, "Build order"); for now each one states its
+ *  brand scope, so navigation and brand switching can be reviewed on their own. */
+const PAGES: Record<string, { title: string; phase: string; perBrand?: boolean }> = {
+  home: { title: "Home", phase: "Phase 2" },
+  work: { title: "My work", phase: "Phase 4" },
+  brands: { title: "Brands & Campaigns", phase: "Phase 6" },
+  chat: { title: "Chat", phase: "Phase 5" },
+  "iq/kits": { title: "Brand Kits", phase: "a later phase", perBrand: true },
+  "iq/personas": { title: "Personas", phase: "a later phase", perBrand: true },
+  "iq/guardrails": { title: "Compliance Guardrails", phase: "a later phase", perBrand: true },
+  "iq/intel": { title: "Market Intelligence", phase: "a later phase", perBrand: true },
+};
+
 export function V3App({ path }: { path: string[] }) {
+  const [brands, setBrands] = useState<BrandSummary[]>([]);
+  useEffect(() => { listBrands().then((r) => setBrands(r.brands)).catch(() => setBrands([])); }, []);
+
+  const scope = useBrandScope(brands.map((b) => b.brand));
+  const favs = useFavorites();
+  const [pinned, setPinned] = useRailPinned();
+
+  const current = path.join("/") || "home";
+  const page = PAGES[current] ?? PAGES.home;
+
   return (
     <div className="v3">
-      <aside className="v3-rail" aria-label="Navigation">
-        <div className="v3-rail-brand">Omni OS</div>
-        <span className="v3-muted">Navigation arrives in Phase 1.</span>
-      </aside>
+      <Rail current={current} brands={brands} activeBrand={scope.activeBrand} recentBrands={scope.recentBrands}
+        onSelectBrand={scope.selectBrand} favorites={favs.favorites} isFavorite={favs.isFavorite}
+        toggleFavorite={favs.toggleFavorite} pinned={pinned} setPinned={setPinned} />
       <main className="v3-main">
-        <h1 className="v3-page-title">Omni OS · redesign preview</h1>
+        <h1 className="v3-page-title">{page.title}</h1>
         <p className="v3-page-sub">
-          Phase 0 foundation. The current Cockpit is unchanged at <a href={href({ kind: "home" })}>/cockpit</a>.
+          {scope.activeBrand ? <>Scoped to <b>{scope.activeBrand}</b></> : "All brands"}
         </p>
-        <div className="v3-card">
-          <b>Agent registry</b>
-          <p className="v3-muted">{REGISTRY.length} agents, one entry each: {REGISTRY.map((a) => a.name).join(" · ")}</p>
-          {path.length > 0 && <p className="v3-muted">Route: /{path.join("/")}</p>}
-        </div>
+
+        {page.perBrand && !scope.activeBrand ? (
+          <div className="v3-card">
+            <b>Pick a brand</b>
+            <p className="v3-muted">{page.title} is kept per brand. Choose which one to open:</p>
+            <div className="v3-chip-row">
+              {brands.map((b) => (
+                <button key={b.brand} type="button" className="v3-chip" onClick={() => scope.selectBrand(b.brand)}>{b.brand}</button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="v3-card">
+            <p className="v3-muted">This page is built in {page.phase}.</p>
+          </div>
+        )}
       </main>
     </div>
   );
