@@ -22,10 +22,13 @@ const STEPS: JourneyStepId[] = ["brief", "audience", "message", "kit", "flow"];
 
 export function parseRoute(hash: string): Route {
   const parts = hash.replace(/^#\/?/, "").split("/").filter(Boolean).map(decodeURIComponent);
-  if (parts[0] === "agents") return { kind: "agents" };
+  // Switch-over (redesign Phase 7): the redesigned Cockpit is the default, and the old entry
+  // points open their v3 equivalents. Brand, plan, campaign and flow detail pages stay classic.
+  if (parts.length === 0) return { kind: "v3", path: [] };
+  if (parts[0] === "agents") return { kind: "v3", path: [] };
   if (parts[0] === "new-brand") return { kind: "new-brand" };
-  if (parts[0] === "flow-planner") return { kind: "flow-planner" };
-  if (parts[0] === "briefing-agent") return { kind: "briefing-agent" };
+  if (parts[0] === "flow-planner") return { kind: "v3", path: ["agent", "flow-planner"] };
+  if (parts[0] === "briefing-agent") return { kind: "v3", path: ["agent", "briefing-agent"] };
   if (parts[0] === "v3") return { kind: "v3", path: parts.slice(1) };
   if (parts[0] !== "b" || !parts[1]) return { kind: "home" };
   const brand = parts[1];

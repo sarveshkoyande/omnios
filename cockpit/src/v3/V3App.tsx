@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { listBrands } from "../api";
 import type { BrandSummary } from "../types";
 import { AppDetail } from "./AppDetail";
+import { Brands } from "./Brands";
 import { Chat } from "./Chat";
 import { Home } from "./Home";
 import { MyWork } from "./MyWork";
@@ -51,6 +52,8 @@ export function V3App({ path }: { path: string[] }) {
             isFavorite={favs.isFavorite} toggleFavorite={favs.toggleFavorite} />
         ) : current === "chat" ? (
           <Chat activeBrand={scope.activeBrand} />
+        ) : current === "brands" ? (
+          <Brands brands={brands} activeBrand={scope.activeBrand} />
         ) : current === "work" ? (
           <MyWork activeBrand={scope.activeBrand} />
         ) : path[0] === "app" ? <AppDetail id={path[1] ?? ""} /> : isHome ? (

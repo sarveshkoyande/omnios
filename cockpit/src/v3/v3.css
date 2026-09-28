@@ -574,3 +574,13 @@ a.v3-ask-agent { text-decoration: none; }
 .v3-flow-edit .flow-editor-turn { display: flex; flex-direction: column; gap: 10px; }
 .v3-flow-edit .wiz-form-row { display: flex; gap: 8px; }
 .v3-flow-edit .jc-input { flex: 1; min-width: 0; }
+
+/* ---- Phase 7: Brands & Campaigns ---- */
+.v3-brands { max-width: 1100px; }
+.v3-brands-plan { margin-top: 16px; padding: 12px 14px; border-radius: var(--radius-md); background: rgba(255,255,255,.72); box-shadow: 0 0 0 1px var(--neutral-200); }
+.v3-brands-plan > header { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+.v3-brands-plan > header span { font-size: 12px; color: var(--neutral-500); }
+.v3-brands-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.v3-brands-table th { text-align: left; font-weight: 600; font-size: 11px; color: var(--neutral-500); padding: 6px 8px; border-bottom: 1px solid var(--neutral-200); }
+.v3-brands-table td { padding: 7px 8px; border-bottom: 1px solid var(--neutral-100); }
+.v3-brands-next { display: flex; gap: 10px; }
