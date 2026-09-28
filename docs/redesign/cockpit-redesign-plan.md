@@ -133,7 +133,24 @@ separate route until approved.
 
 ---
 
+## Build order
+
+Each phase ends with a live demo; the next phase starts only after approval. The new Cockpit is
+built alongside the current one (under a `v3` route and a scoped `.v3` root class, so the new
+spacing/radii never leak into the current look) until the final switch-over.
+
+| Phase | Scope | Items | Review checkpoint |
+|---|---|---|---|
+| 0 | Foundation: v3 route, scoped tokens (fewer curves, tighter density, same glass look), single agent registry | E1–E6, F4 (registry) | Empty v3 frame renders; old Cockpit untouched |
+| 1 | App shell: grouped nav, Brand IQ, Favorites, collapsible rail, avatar, brand switcher | A1–A5, BR1–BR6 | Navigate and switch brands |
+| 2 | Home: greeting + Ask bar, quick actions, categories, apps grid, recent work | B1–B6 | Home feels right |
+| 3 | Workspace inputs: layout, top bar, app header, App settings, framework-driven input cards (decision spine), Generate | C1–C8, M1, M3–M6 | Briefing Agent inputs pre-filled from the brand kit |
+| 4 | Artifact viewer: view tabs, structured editing, auto-save, versions — with the brief artifact | C9–C11, C15, C16, D1 | Generate a real brief and edit it |
+| 5 | Refine drawer (diffs), Check guidelines, hand-off + exports | C12–C14 | Refine and export a brief |
+| 6 | Campaign Planner + Flow Planner on the template; fix duplicate campaigns | D2–D5, F3 | Campaign → Flow → Brief chain end to end |
+| 7 | Cleanup and switch-over: remove old wizards/FABs/filler, make v3 the default | F1, F2, F5 | Sign-off; `pre-redesign` tag stays as rollback |
+| Later | Brand plan + Engagement plan frameworks and apps | M2, D6 | Needs the team's template |
+
 ## Open questions
 
 1. Does the team have a Brand plan / Engagement plan template to build M2 from?
-2. Build order — to be proposed next.
