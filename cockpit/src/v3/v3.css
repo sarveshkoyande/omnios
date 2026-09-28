@@ -154,17 +154,40 @@ a.v3-new-item:hover { background: var(--primary-light-background); color: var(--
 }
 .v3-hero h1 { margin: 0 0 16px; font-size: 22px; font-weight: 700; line-height: 1.3; }
 .v3-ask {
-  display: flex; align-items: center; gap: 10px; padding: 6px 6px 6px 14px; border-radius: var(--radius-md);
+  display: flex; align-items: flex-end; gap: 10px; padding: 6px 6px 6px 14px; border-radius: var(--radius-md);
   background: var(--base-white); box-shadow: 0 0 0 1px var(--neutral-200); color: var(--primary);
 }
-.v3-ask:focus-within { box-shadow: 0 0 0 1px var(--primary), 0 0 0 4px rgba(93, 44, 201, 0.12); }
-.v3-ask input { flex: 1; border: none; outline: none; background: transparent; font-family: inherit; font-size: 14px; color: var(--fg); padding: 8px 0; }
+/* Focus stays calm: the border just darkens a touch, no purple ring or glow. */
+.v3-ask:focus-within { box-shadow: 0 0 0 1px var(--neutral-300); }
+.v3-ask > svg { align-self: center; flex: 0 0 auto; }
+.v3-ask textarea {
+  flex: 1; border: none; outline: none; background: transparent; resize: none; overflow-y: auto;
+  font-family: inherit; font-size: 14px; line-height: 1.45; color: var(--fg); padding: 8px 0; max-height: 160px;
+}
+.v3-ask textarea:focus, .v3-ask textarea:focus-visible { outline: none; box-shadow: none; }
 .v3-ask button {
-  border: none; border-radius: var(--radius-sm); padding: 8px 16px; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 600;
+  flex: 0 0 auto; border: none; border-radius: var(--radius-sm); padding: 8px 16px; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 600;
   background: var(--primary); color: var(--base-white);
 }
 .v3-ask button:disabled { opacity: .45; cursor: default; }
-.v3-ask-suggest { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; }
+
+.v3-ask-reply { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+.v3-ask-reply p { margin: 0; font-size: 13px; color: var(--neutral-700); }
+.v3-ask-q {
+  align-self: flex-end; max-width: 80%; padding: 8px 12px; border-radius: var(--radius-md); border-bottom-right-radius: var(--radius-xs);
+  background: var(--primary); color: var(--base-white); font-size: 13px; white-space: pre-wrap;
+}
+.v3-ask-agents { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; }
+.v3-ask-agent {
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: none; cursor: pointer; text-align: left;
+  font-family: inherit; color: var(--fg); border-radius: var(--radius-md); background: rgba(255,255,255,0.8); box-shadow: 0 0 0 1px var(--neutral-200);
+}
+.v3-ask-agent:not(:disabled):hover { box-shadow: 0 0 0 1px var(--primary); }
+.v3-ask-agent:disabled { cursor: default; opacity: .6; }
+.v3-ask-agent-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.v3-ask-agent-text b { font-size: 13px; }
+.v3-ask-agent-text span { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.v3-ask-open { font-size: 12px; font-weight: 600; color: var(--primary); }
 
 .v3-quick { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--v3-gap); }
 .v3-quick-card {

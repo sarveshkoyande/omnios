@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { getBrandTree } from "../api";
 import { PHASES, REGISTRY, type Phase, type RegistryAgent } from "../agents";
 import { Icon } from "../components/Icon";
@@ -37,21 +37,53 @@ function timeAgo(iso: string): string {
   return new Date(t).toLocaleDateString();
 }
 
-/** The Ask bar matches what you type against the agents themselves (name + summary) and
- *  offers the best fits; free-form answers arrive with Chat (Phase 5). */
+/** Everyday words people type, mapped to the agent that handles them. The agents' own names
+ *  and summaries are matched too; this just catches wording they don't literally contain. */
+const KEYWORDS: Record<string, string[]> = {
+  "flow-planner": ["flow", "journey", "diagram", "visio", "sop", "cadence", "resend", "touchpoint", "sequence"],
+  "briefing-agent": ["brief", "agency", "handoff", "hand-off", "document"],
+  "engagement-plan-builder": ["plan", "engagement", "quarter", "quarterly", "strategy", "goals"],
+  "segmentation-planner": ["segment", "segments", "segmentation", "hcp", "hcps", "target", "audience", "doctors", "physicians", "prescribers"],
+  "brand-persona-builder": ["persona", "personas", "patient", "patients", "emotion", "motivation"],
+  "channel-planner": ["channel", "channels", "budget", "mix", "spend", "cost"],
+  "signal-agent": ["competitor", "competitors", "competitive", "market", "signal", "signals", "lifecycle"],
+  "journey-builder": ["edit", "journey"],
+  "email-template-builder": ["email", "emails", "template", "templates", "subject"],
+  "reporting-insights": ["report", "reporting", "performance", "kpi", "kpis", "results", "metrics"],
+  "budget-agent": ["budget", "allocation", "allocate"],
+};
+
+/** Words too common to say anything about which agent you need. */
+const STOPWORDS = new Set([
+  "the", "and", "for", "with", "what", "which", "how", "can", "you", "your", "our", "we", "should", "would",
+  "could", "this", "that", "these", "those", "are", "was", "were", "will", "from", "into", "about", "does",
+  "do", "have", "has", "had", "there", "their", "them", "they", "hello", "hey", "please", "help", "need",
+  "want", "make", "get", "give", "tell", "show", "all", "any", "some", "one", "who", "why", "when", "where",
+  "between", "each", "more", "most", "also", "than", "then", "its", "not", "but", "out", "use", "using",
+]);
+
+/** Scores every agent against what was typed (whole words only, common words ignored).
+ *  Returns the best fits, strongest first. */
 function matchAgents(query: string): RegistryAgent[] {
-  const words = query.toLowerCase().split(/\s+/).filter((w) => w.length > 2);
+  const tokenize = (t: string) => t.toLowerCase().split(/[^a-z0-9-]+/).filter((w) => w.length > 2 && !STOPWORDS.has(w));
+  const words = tokenize(query);
   if (words.length === 0) return [];
   return REGISTRY
     .map((a) => {
-      const hay = `${a.name} ${a.summary}`.toLowerCase();
-      return { a, score: words.filter((w) => hay.includes(w)).length + (a.route ? 0.5 : 0) };
+      const hay = new Set(tokenize(`${a.name} ${a.summary}`));
+      const keys = KEYWORDS[a.id] ?? [];
+      const score = words.reduce((n, w) => n + (keys.includes(w) ? 2 : 0) + (hay.has(w) ? 1 : 0), 0);
+      const soon = a.tags.includes("coming-soon");
+      return { a, score: score > 0 ? score + (soon ? -0.5 : 0.5) : 0 };
     })
-    .filter((x) => x.score >= 1)
+    .filter((x) => x.score > 0)
     .sort((x, y) => y.score - x.score)
     .slice(0, 3)
     .map((x) => x.a);
 }
+
+/** Shown when nothing matches -- the agents that are actually usable today. */
+const FALLBACK_IDS = ["flow-planner", "briefing-agent", "engagement-plan-builder"];
 
 const QUICK_ACTIONS: { title: string; sub: string; icon: "document" | "route" | "target"; to?: string }[] = [
   { title: "Start an engagement plan", sub: "Quarterly goals, segments, budget and campaigns", icon: "target" },
@@ -61,6 +93,8 @@ const QUICK_ACTIONS: { title: string; sub: string; icon: "document" | "route" | 
 
 export function Home({ brands, activeBrand }: { brands: BrandSummary[]; activeBrand: string | null }) {
   const [ask, setAsk] = useState("");
+  const askRef = useRef<HTMLTextAreaElement>(null);
+  const [reply, setReply] = useState<{ question: string; agents: RegistryAgent[]; matched: boolean } | null>(null);
   const [phase, setPhase] = useState<Phase | "all">("all");
   const [recent, setRecent] = useState<RecentItem[] | null>(null);
 
@@ -83,7 +117,18 @@ export function Home({ brands, activeBrand }: { brands: BrandSummary[]; activeBr
     return () => { live = false; };
   }, [scopeBrands]);
 
-  const suggestions = matchAgents(ask);
+  const submitAsk = () => {
+    const question = ask.trim();
+    if (!question) return;
+    const found = matchAgents(question);
+    setReply({
+      question,
+      matched: found.length > 0,
+      agents: found.length > 0 ? found : REGISTRY.filter((a) => FALLBACK_IDS.includes(a.id)),
+    });
+    setAsk("");
+    if (askRef.current) askRef.current.style.height = "auto";
+  };
   const apps = phase === "all" ? REGISTRY : REGISTRY.filter((a) => a.phase === phase);
   const openAgent = (a: RegistryAgent) => { window.location.hash = a.route ?? `#/v3/app/${a.id}`; };
 
@@ -91,22 +136,38 @@ export function Home({ brands, activeBrand }: { brands: BrandSummary[]; activeBr
     <div className="v3-home">
       <section className="v3-hero">
         <h1>Hi there,<br />how can I help today?</h1>
-        <form className="v3-ask" onSubmit={(e) => { e.preventDefault(); if (suggestions[0]) openAgent(suggestions[0]); }}>
+        <form className="v3-ask" onSubmit={(e) => { e.preventDefault(); submitAsk(); }}>
           <Icon name="sparkles" size={16} />
-          <input value={ask} onChange={(e) => setAsk(e.target.value)}
+          <textarea ref={askRef} rows={1} value={ask}
+            onChange={(e) => {
+              setAsk(e.target.value);
+              e.target.style.height = "auto";
+              e.target.style.height = `${Math.min(e.target.scrollHeight, 160)}px`;
+            }}
+            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submitAsk(); } }}
             placeholder={activeBrand ? `Ask Omni anything about ${activeBrand}…` : "Ask Omni anything…"} />
-          <button type="submit" disabled={!suggestions[0]}>Send</button>
+          <button type="submit" disabled={!ask.trim()}>Send</button>
         </form>
-        {ask.trim() && (
-          <div className="v3-ask-suggest">
-            {suggestions.length > 0 ? (
-              <>
-                <span className="v3-muted">Best fit:</span>
-                {suggestions.map((a) => (
-                  <button key={a.id} type="button" className="v3-chip" onClick={() => openAgent(a)}>{a.name}</button>
-                ))}
-              </>
-            ) : <span className="v3-muted">No agent matches yet. Free-form questions arrive with Chat.</span>}
+        {reply && (
+          <div className="v3-ask-reply">
+            <div className="v3-ask-q">{reply.question}</div>
+            <p>
+              {reply.matched
+                ? <>The best agent{reply.agents.length > 1 ? "s" : ""} for this:</>
+                : <>I can't answer free-form questions yet; chat is coming. These agents are ready to use now:</>}
+            </p>
+            <div className="v3-ask-agents">
+              {reply.agents.map((a) => {
+                const soon = a.tags.includes("coming-soon");
+                return (
+                  <button key={a.id} type="button" className="v3-ask-agent" disabled={soon} onClick={() => openAgent(a)}>
+                    <span className="v3-app-icon"><Icon name={a.icon} size={15} /></span>
+                    <span className="v3-ask-agent-text"><b>{a.name}</b><span>{soon ? "Coming soon" : a.summary}</span></span>
+                    {!soon && <span className="v3-ask-open">Open</span>}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
       </section>
