@@ -173,3 +173,18 @@ export const AGENTS: Record<Phase, LibraryAgent[]> = {
     { id: "kpi-dashboard", name: "KPI Dashboard", icon: "star", status: "wip", summary: "Builds the scorecard, funnel and demographic cards." },
   ],
 };
+
+/** The single agent registry the redesigned Cockpit reads (docs/redesign, F4): every agent
+ *  once, tagged with its phase. AGENTS lists "flow-planner" under both Strategy and Ops;
+ *  the Ops entry (the SOP segmentation + journey planner that actually exists) wins. */
+export interface RegistryAgent extends LibraryAgent {
+  phase: Phase;
+}
+
+export const REGISTRY: RegistryAgent[] = (() => {
+  const byId = new Map<string, RegistryAgent>();
+  for (const p of PHASES) {
+    for (const a of AGENTS[p.id]) byId.set(a.id, { ...a, phase: p.id });
+  }
+  return [...byId.values()];
+})();

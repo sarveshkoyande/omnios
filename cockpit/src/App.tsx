@@ -12,6 +12,7 @@ import { FlowPage } from "./components/hierarchy/FlowPage";
 import { CampaignPlanPage } from "./components/campaignplan/CampaignPlanPage";
 import { FlowPlannerPage } from "./components/flowplanner/FlowPlannerPage";
 import { BriefingAgentPage } from "./components/briefingagent/BriefingAgentPage";
+import { V3App } from "./v3/V3App";
 import { go, href, routeBrand, useRoute, type Route } from "./route";
 import "./cockpit.css";
 
@@ -181,6 +182,8 @@ export default function App() {
         return <FlowPage key={flowMeta.id} brand={tree.brand} planId={plan.id} campaignId={campaign.id} meta={flowMeta} onChanged={refreshTree} />;
     }
   };
+
+  if (route.kind === "v3") return <V3App path={route.path} />;
 
   return (
     <div className="app-frame">

@@ -1,0 +1,40 @@
+/* Redesigned Cockpit (docs/redesign). Everything is scoped under .v3 so the current
+   Cockpit's look is untouched until switch-over. Same glass look and palette as
+   cockpit.css's :root (E2); only radii and density are redefined here (E1, E4) --
+   the tokens are overridden, not new values hardcoded per selector (E6). */
+.v3 {
+  --radius-xs: 3px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;
+
+  --v3-text-title: 20px;
+  --v3-text-body: 14px;
+  --v3-text-secondary: 12px;
+  --v3-gap: 12px;
+  --v3-pad: 16px;
+  --v3-rail-w: 248px;
+
+  display: flex; height: 100vh; overflow: hidden;
+  font-size: var(--v3-text-body); color: var(--fg); background: var(--app-backdrop);
+}
+
+.v3-rail {
+  flex: 0 0 var(--v3-rail-w); margin: var(--v3-gap) 0 var(--v3-gap) var(--v3-gap);
+  padding: var(--v3-pad) 12px; display: flex; flex-direction: column; gap: var(--v3-gap);
+  background: var(--card-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+  border-radius: var(--radius-lg); box-shadow: var(--neu-flat);
+}
+.v3-rail-brand { font-weight: 700; font-size: 15px; padding: 4px 6px; }
+
+.v3-main { flex: 1; min-width: 0; overflow-y: auto; padding: 24px 32px; }
+.v3-page-title { margin: 0 0 4px; font-size: var(--v3-text-title); font-weight: 700; }
+.v3-page-sub { margin: 0; font-size: var(--v3-text-secondary); color: var(--muted); }
+
+.v3-card {
+  margin-top: 20px; padding: var(--v3-pad); border-radius: var(--radius-lg);
+  background: var(--card-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: var(--neu-flat);
+}
+.v3-muted { color: var(--muted); font-size: var(--v3-text-secondary); }
