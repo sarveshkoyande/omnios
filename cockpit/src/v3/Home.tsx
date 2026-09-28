@@ -37,8 +37,13 @@ function timeAgo(iso: string): string {
   return new Date(t).toLocaleDateString();
 }
 
-/** Agents offered as one-click context in the Ask box (the old quick-action cards). */
-const QUICK_IDS = ["flow-planner", "briefing-agent", "engagement-plan-builder"];
+/** The three quick starts, shown as big buttons inside the Ask box. Each one sets its agent
+ *  as the box's context (same as picking it from the "/" menu). */
+const QUICK: { id: string; title: string; sub: string }[] = [
+  { id: "engagement-plan-builder", title: "Start an engagement plan", sub: "Quarterly goals, segments, budget and campaigns" },
+  { id: "flow-planner", title: "Build a flow", sub: "Turn a campaign into a flow diagram" },
+  { id: "briefing-agent", title: "Compile a brief", sub: "An agency-ready brief from a campaign plan" },
+];
 
 /** The slash-command name an agent answers to, e.g. "/flow-planner". */
 const slashName = (a: RegistryAgent) => `/${a.id}`;
@@ -159,17 +164,21 @@ export function Home({ brands, activeBrand }: { brands: BrandSummary[]; activeBr
               </button>
             </div>
             <div className="v3-ask-foot">
-              {REGISTRY.filter((a) => QUICK_IDS.includes(a.id)).map((a) => {
+              {QUICK.map((q) => {
+                const a = REGISTRY.find((x) => x.id === q.id);
+                if (!a) return null;
                 const soon = a.tags.includes("coming-soon") || !a.route;
+                const on = context?.id === a.id;
                 return (
-                  <button key={a.id} type="button" className="v3-ask-quick" disabled={soon}
-                    title={soon ? "Coming soon" : `Use ${a.name}`} onClick={() => pickContext(a)}>
-                    <Icon name={a.icon} size={12} />{a.name}{soon && <em>soon</em>}
+                  <button key={a.id} type="button" className={`v3-ask-quick ${on ? "on" : ""}`} disabled={soon}
+                    aria-pressed={on} title={soon ? "Coming soon" : undefined} onClick={() => (on ? setContext(null) : pickContext(a))}>
+                    <span className="v3-quick-icon"><Icon name={a.icon} size={16} /></span>
+                    <span className="v3-quick-text"><b>{q.title}</b><span>{soon ? "Coming soon" : q.sub}</span></span>
                   </button>
                 );
               })}
-              <span className="v3-ask-hint">Type <kbd>/</kbd> for all agents</span>
             </div>
+            <div className="v3-ask-hint">Type <kbd>/</kbd> for all agents</div>
           </form>
           {menu.length > 0 && (
             <div className="v3-slash" role="listbox" aria-label="Agents">

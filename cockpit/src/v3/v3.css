@@ -168,15 +168,16 @@ a.v3-new-item:hover { background: var(--primary-light-background); color: var(--
 }
 .v3-ctx button { display: grid; place-items: center; width: 16px; height: 16px; border: none; border-radius: var(--radius-xs); background: transparent; color: var(--primary); cursor: pointer; padding: 0; }
 .v3-ctx button:hover { background: rgba(93, 44, 201, 0.12); }
-.v3-ask-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding-top: 6px; border-top: 1px solid var(--neutral-100); }
+.v3-ask-foot { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding-top: 8px; border-top: 1px solid var(--neutral-100); }
 .v3-ask-quick {
-  display: inline-flex; align-items: center; gap: 5px; padding: 4px 9px; border: none; border-radius: var(--radius-sm); cursor: pointer;
-  font-family: inherit; font-size: 12px; font-weight: 500; color: var(--neutral-700); background: var(--neutral-50); box-shadow: 0 0 0 1px var(--neutral-200);
+  display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: none; border-radius: var(--radius-md); cursor: pointer;
+  text-align: left; font-family: inherit; color: var(--fg); background: var(--neutral-50); box-shadow: 0 0 0 1px var(--neutral-200);
+  transition: box-shadow 160ms ease, transform 160ms ease;
 }
-.v3-ask-quick:not(:disabled):hover { color: var(--primary); box-shadow: 0 0 0 1px var(--primary); }
+.v3-ask-quick:not(:disabled):hover { box-shadow: 0 0 0 1px var(--primary); transform: translateY(-1px); }
+.v3-ask-quick.on { background: var(--primary-light-background); box-shadow: 0 0 0 1.5px var(--primary); }
 .v3-ask-quick:disabled { cursor: default; opacity: .55; }
-.v3-ask-quick em { font-style: normal; font-size: 10.5px; color: var(--muted); }
-.v3-ask-hint { margin-left: auto; font-size: 11.5px; color: var(--muted); }
+.v3-ask-hint { text-align: right; font-size: 11.5px; color: var(--muted); }
 .v3-ask-hint kbd { font-family: inherit; font-size: 11px; padding: 0 5px; border-radius: var(--radius-xs); background: var(--neutral-100); box-shadow: 0 0 0 1px var(--neutral-200); }
 
 .v3-slash {
@@ -296,6 +297,7 @@ a.v3-quick-card:hover { box-shadow: var(--neu-flat-hover); transform: translateY
 
 @media (max-width: 980px) { .v3-apps { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 760px) {
+  .v3-ask-foot { grid-template-columns: 1fr; }
   .v3-apps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .v3-quick, .v3-cats { grid-template-columns: 1fr; }
   .v3-main { padding: 16px; }
