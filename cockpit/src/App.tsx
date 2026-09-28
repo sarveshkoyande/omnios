@@ -10,6 +10,7 @@ import { EngagementPlanPage } from "./components/hierarchy/EngagementPlanPage";
 import { CampaignPage } from "./components/hierarchy/CampaignPage";
 import { FlowPage } from "./components/hierarchy/FlowPage";
 import { CampaignPlanPage } from "./components/campaignplan/CampaignPlanPage";
+import { FlowPlannerPage } from "./components/flowplanner/FlowPlannerPage";
 import { go, href, routeBrand, useRoute, type Route } from "./route";
 import "./cockpit.css";
 
@@ -124,6 +125,7 @@ export default function App() {
   const main = () => {
     switch (route.kind) {
       case "agents": return <AgentLibrary />;
+      case "flow-planner": return <FlowPlannerPage />;
       case "new-brand":
         return <JourneyScreen key="new" brand={null} initialStep="brief" onBrandCreated={onNewBrandComplete}
           onKitChanged={() => setKitVersion((v) => v + 1)} onClose={() => go({ kind: "home" })} />;

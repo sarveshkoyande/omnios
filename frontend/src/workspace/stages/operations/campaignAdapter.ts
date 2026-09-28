@@ -24,6 +24,22 @@ const TYPE_MAP: Record<CampaignFlowNodeType, NodeType> = {
   exit: "end",
   followup: "process",
   closure: "end",
+  // strategy/flow_sop's SOP vocabulary (see CampaignFlowNodeType's doc comment): the
+  // data source is the SOP's own cylinder shape, a plain rule step is a process box, a
+  // segment is a named ending pill, and a send/resend are user-facing tasks (there is no
+  // dedicated "email" shape in this catalog, and a send is, mechanically, a person-facing
+  // action). The panes ARE unconnected (no edges), same as the reference project's SVG,
+  // but they are drawn as "document" rather than "comment" -- autoLayoutPage.ts's dagre
+  // pass deliberately excludes "comment"/"text" nodes from placement (they're meant to be
+  // free-floating notes a user drags by hand), which left every pane stacked invisibly at
+  // this adapter's placeholder (0,0). "document" keeps the panel look while still getting
+  // a real, laid-out position.
+  note: "document",
+  datasource: "database",
+  process: "process",
+  segment: "terminal",
+  touchpoint: "task.user",
+  resend: "task.user",
 };
 
 const ACCENT: Record<CampaignFlowNodeType, string> = {
@@ -35,6 +51,12 @@ const ACCENT: Record<CampaignFlowNodeType, string> = {
   exit: tokens.color.success,
   followup: tokens.color.secondary,
   closure: shade(0.55),
+  note: shade(0.4),
+  datasource: tokens.color.secondary,
+  process: tokens.color.primary,
+  segment: tokens.color.success,
+  touchpoint: tokens.color.primary,
+  resend: tokens.color.warning,
 };
 
 const FILL: Record<CampaignFlowNodeType, string> = {
@@ -46,6 +68,12 @@ const FILL: Record<CampaignFlowNodeType, string> = {
   exit: "#EFF6FF",
   followup: "#F8FBFF",
   closure: "#F1F5F9",
+  note: "#F8F7FF",
+  datasource: "#F0F7FF",
+  process: "#FFFFFF",
+  segment: "#EAF7EF",
+  touchpoint: "#FFFFFF",
+  resend: "#FFF9DB",
 };
 
 const SIZE: Record<CampaignFlowNodeType, { w: number; h: number; resizable: true }> = {
@@ -57,6 +85,12 @@ const SIZE: Record<CampaignFlowNodeType, { w: number; h: number; resizable: true
   exit: { w: 76, h: 76, resizable: true },
   followup: { w: 220, h: 96, resizable: true },
   closure: { w: 76, h: 76, resizable: true },
+  note: { w: 240, h: 140, resizable: true },
+  datasource: { w: 200, h: 100, resizable: true },
+  process: { w: 200, h: 88, resizable: true },
+  segment: { w: 180, h: 72, resizable: true },
+  touchpoint: { w: 220, h: 96, resizable: true },
+  resend: { w: 220, h: 96, resizable: true },
 };
 
 export function applyCampaignNodeVisuals(node: WorkflowNode): WorkflowNode {
@@ -99,6 +133,13 @@ export function campaignFlowToDocument(flow: CampaignFlow, docName = "Campaign O
               content_ref_ready: { type: "boolean", value: n.data.content_ref.ready, label: "Content ready" },
             }
           : {}),
+        // strategy/flow_sop fields (see CampaignFlowNodeType's doc comment).
+        ...(n.data.status ? { sop_status: { type: "string", value: n.data.status, label: "Status" } } : {}),
+        ...(n.data.tbd && n.data.tbd.length
+          ? { sop_tbd: { type: "string", value: n.data.tbd.join(", "), label: "Still TBD" } }
+          : {}),
+        ...(n.data.rationale ? { sop_rationale: { type: "string", value: n.data.rationale, label: "Why" } } : {}),
+        ...(n.data.sop_ref ? { sop_ref: { type: "string", value: n.data.sop_ref, label: "SOP row" } } : {}),
       },
     });
     page.nodes.push(node);

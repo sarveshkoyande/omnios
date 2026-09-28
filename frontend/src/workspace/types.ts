@@ -454,7 +454,13 @@ export interface CampaignSegment {
 
 /** `entry` is the journey's trigger (ad-hoc / API / website sign-up) and `branch` is the
  *  behavioural split on what the HCP clicked — both added with the Journey Builder-shaped
- *  flow in strategy/journey_design.py. */
+ *  flow in strategy/journey_design.py.
+ *
+ *  `note` / `datasource` / `process` / `segment` / `touchpoint` / `resend` are
+ *  strategy/flow_sop's SOP segmentation+journey node vocabulary (that package's own
+ *  __init__.py has the reference source and scope) — `decision` and `exit` are reused
+ *  as-is since both generators mean the same thing by them. strategy/flow_sop/adapter.py
+ *  is what actually produces `CampaignFlowNode`s of these types. */
 export type CampaignFlowNodeType =
   | "entry"
   | "send"
@@ -463,7 +469,13 @@ export type CampaignFlowNodeType =
   | "branch"
   | "exit"
   | "followup"
-  | "closure";
+  | "closure"
+  | "note"
+  | "datasource"
+  | "process"
+  | "segment"
+  | "touchpoint"
+  | "resend";
 
 export interface CampaignFlowNode {
   id: string;
@@ -476,6 +488,16 @@ export interface CampaignFlowNode {
     channel?: string;
     detail?: string;
     content_ref?: { label: string; ready: boolean; branded?: boolean };
+    /** strategy/flow_sop node fields, carried through by adapter.py; see the
+     *  CampaignFlowNodeType doc comment above. */
+    region?: string;
+    lane?: string | null;
+    attrs?: Record<string, unknown>;
+    status?: string | null;
+    tbd?: string[];
+    derived_from?: string[];
+    rationale?: string;
+    sop_ref?: string;
   };
 }
 

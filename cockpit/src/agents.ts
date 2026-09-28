@@ -67,7 +67,7 @@ export const AGENTS: Record<Phase, LibraryAgent[]> = {
       builtOn: "strategy/studio_run.py, strategy/orchestrator.py, strategy/plan_document.py",
     },
     {
-      id: "signal-agent", name: "Signal Agent", icon: "radar", status: "available",
+      id: "signal-agent", name: "Signal Scout", icon: "radar", status: "available",
       summary: "Surfaces the market and competitive signals that should shape the plan.",
       about: "Pulls together what's known about the therapy area, the competitive set and where the brand sits in its lifecycle, so the plan starts from the market as it is.",
       worksFrom: [
@@ -131,6 +131,16 @@ export const AGENTS: Record<Phase, LibraryAgent[]> = {
     },
   ],
   ops: [
+    {
+      id: "flow-planner", name: "Flow Planner", icon: "route", status: "available",
+      summary: "Walks brand → engagement plan → campaign, then builds the SOP segmentation + journey diagram.",
+      about: "Opens on a blank canvas and asks, step by step, which brand, engagement plan and campaign to build a flow for, then generates the SOP-driven segmentation and journey diagram for it.",
+      worksFrom: [
+        { label: "Your picks", detail: "The brand, engagement plan and campaign you select as the agent asks." },
+        { label: "SOP rules", detail: "The Flow Planner SOP's fixed segmentation and journey rules." },
+      ],
+      builtOn: "strategy/flow_sop",
+    },
     {
       id: "journey-builder", name: "Journey Builder", icon: "branch", status: "available",
       summary: "Builds and edits the live engagement journey diagram from plain-English instructions.",

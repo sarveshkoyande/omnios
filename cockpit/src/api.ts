@@ -180,3 +180,24 @@ export function flowTurn(flowId: number, body: { message?: string; ops?: Journey
 export function flowAction(flowId: number, action: "keep" | "undo" | "confirm" | "reopen"): Promise<AnyFlow> {
   return postJSON(`/api/flows/${flowId}/${action}`, {});
 }
+
+/* ---- Flow Planner chat editing (strategy/flow_sop/editor.py, ported from
+   scripts/flow_editor.py) -- "talk to the diagram" ops on top of the SOP generator. ---- */
+
+export function flowSopChatOpening(campaignId: number, audience = "HCP"): Promise<{ reply: string }> {
+  return getJSON(`/api/campaigns/${campaignId}/flow-sop/chat/opening?audience=${enc(audience)}`);
+}
+
+export interface FlowSopChatResult {
+  reply: string;
+  action: string;
+  ops: Record<string, unknown>[];
+  history: string[];
+  svg: string;
+}
+
+export function flowSopChat(campaignId: number, body: {
+  message: string; audience?: string; ops: Record<string, unknown>[]; history: string[];
+}): Promise<FlowSopChatResult> {
+  return postJSON(`/api/campaigns/${campaignId}/flow-sop/chat`, body);
+}

@@ -567,9 +567,7 @@ h1, h2, h3 { font-family: "DM Sans"; font-weight: 600; letter-spacing: -0.01em; 
   transition: transform 220ms ease-out, box-shadow 220ms ease-out;
   animation: agent-card-in 360ms ease-out backwards;
 }
-button.agent-card { cursor: pointer; }
-button.agent-card:hover { transform: translateY(-3px); box-shadow: var(--neu-flat-hover); }
-button.agent-card:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.agent-card:hover { box-shadow: var(--neu-flat-hover); }
 .agent-card-top { display: flex; align-items: center; justify-content: space-between; width: 100%; margin-bottom: 14px; }
 .agent-icon {
   display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto;
@@ -579,17 +577,21 @@ button.agent-card:focus-visible { outline: 2px solid var(--primary); outline-off
 .agent-icon-lg { width: 56px; height: 56px; border-radius: var(--radius-md); }
 .agent-card h3 { font-size: 15.5px; font-weight: 700; margin: 0 0 6px; line-height: 1.35; color: var(--fg); }
 .agent-summary { font-size: 13px; color: var(--muted); line-height: 1.55; margin: 0; }
-.agent-read-more {
-  display: inline-flex; align-items: center; gap: 4px; margin-top: auto; padding-top: 14px;
-  font-size: 12.5px; font-weight: 600; color: var(--primary);
+/* Launch, not the whole card: a real button so it's the one thing on the card that opens
+ * the agent -- scanning the grid no longer risks jumping into one by accident. */
+.agent-launch-btn {
+  display: inline-flex; align-items: center; gap: 6px; margin-top: auto; align-self: flex-start;
+  font-family: inherit; font-size: 12.5px; font-weight: 700; border: none; cursor: pointer;
+  padding: 8px 14px; border-radius: var(--radius-full);
+  background: var(--primary); color: var(--base-white); transition: background 160ms ease, transform 160ms ease;
 }
-button.agent-card:hover .agent-read-more { color: var(--primary-background-hover); }
+.agent-launch-btn:hover { background: var(--primary-background-hover, var(--primary)); transform: translateY(-1px); }
+.agent-launch-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 .agent-status-pill {
   font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
   border-radius: var(--radius-full); padding: 4px 10px;
   background: var(--tone-warning-bg); color: var(--tone-warning-ink);
 }
-.agent-card.is-wip { cursor: default; }
 .agent-card.is-wip .agent-icon { background: var(--neutral-100); color: var(--neutral-500); }
 .agent-card.is-wip h3, .agent-card.is-wip .agent-summary { opacity: .6; }
 
@@ -883,7 +885,66 @@ button.agent-card:hover .agent-read-more { color: var(--primary-background-hover
 }
 
 /* Flow step (plan U7): the shared flow-builder canvas, read-only; edits arrive as chat drafts. */
-.jc-flow-frame { margin-top: 12px; height: 62vh; min-height: 460px; border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--border, rgba(0,0,0,0.12)); }
+.jc-flow-frame { margin-top: 12px; height: 62vh; min-height: 460px; border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--border, rgba(0,0,0,0.12)); background: #FFFFFF; }
+.jc-sop-diagram-toggle { display: flex; gap: 8px; margin-top: 12px; }
+.jc-sop-diagram-frame { padding: 0; }
+.jc-sop-viewport { position: relative; width: 100%; height: 100%; overflow: hidden; cursor: grab; touch-action: none; }
+.jc-sop-viewport:active { cursor: grabbing; }
+.jc-sop-canvas { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
+.jc-sop-diagram-img { display: block; max-width: none; user-select: none; }
+.jc-sop-controls { position: absolute; right: 10px; bottom: 10px; display: flex; flex-direction: column; gap: 4px; }
+.jc-sop-controls button {
+  width: 30px; height: 30px; border-radius: var(--radius-sm); border: 1px solid var(--border, rgba(0,0,0,0.12));
+  background: #FFFFFF; color: #161616; font-size: 15px; font-weight: 700; cursor: pointer; line-height: 1;
+}
+.jc-sop-controls button:hover { background: var(--primary-light-background, #F2F2F2); }
+.jc-sop-controls button[aria-label="Fit view"] { font-size: 10.5px; font-weight: 700; }
+
+/* ---- Flow Planner wizard: an empty page (no canvas frame at all) until the flow is ready.
+   The chat step reuses BrandOverview's own "build something" launcher verbatim
+   (plan-launcher-backdrop/plan-launcher-card, wiz-choice-grid, wiz-form-row -- see that
+   file's PlanLauncher), so this file only adds what's specific to the flow steps. ---- */
+.flow-planner-page { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.flow-planner-canvas {
+  flex: 1; min-height: 420px; margin-top: 12px; border-radius: var(--radius-sm); overflow: hidden;
+  border: 1px solid var(--border, rgba(0,0,0,0.12)); background: #FFFFFF;
+}
+.flow-planner-grounding { display: flex; flex-direction: column; gap: 8px; }
+.flow-planner-grounding p { margin: 0; color: var(--muted); font-size: 13px; }
+.flow-planner-ready-hint { margin: -8px 0 14px; font-size: 12px; color: var(--muted); }
+
+/* ---- Flow Editor: "talk to the diagram" (strategy/flow_sop/editor.py). Same centered-card
+   shape as the wizard step and BrandOverview's launcher (plan-launcher-fab/-backdrop/-card,
+   reused as-is in FlowEditorChat.tsx) -- this only styles what's specific inside that shape:
+   one turn at a time (the question just asked, then the answer), not a growing transcript --
+   so no scroll container, just the current question/thinking/answer stacked. ---- */
+.flow-editor-card { display: flex; flex-direction: column; }
+.flow-editor-turn { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; min-height: 40px; }
+.flow-editor-msg { max-width: 88%; padding: 9px 12px; border-radius: var(--radius-md); font-size: 13px; line-height: 1.5; }
+.flow-editor-msg-agent { align-self: flex-start; background: var(--primary-light-background); color: var(--fg); border-bottom-left-radius: 4px; }
+.flow-editor-msg-user { align-self: flex-end; background: var(--primary); color: var(--base-white); border-bottom-right-radius: 4px; }
+.flow-editor-msg-pending { display: flex; gap: 5px; align-items: center; padding: 12px; }
+.flow-editor-msg-pending span { width: 6px; height: 6px; border-radius: 50%; background: var(--primary); opacity: .4; animation: wiz-thinking-pulse 1s ease-in-out infinite; }
+.flow-editor-msg-pending span:nth-child(2) { animation-delay: .15s; }
+.flow-editor-msg-pending span:nth-child(3) { animation-delay: .3s; }
+
+.fp-modal-overlay {
+  position: fixed; inset: 0; background: rgba(20, 16, 30, 0.42); z-index: 50;
+  display: flex; align-items: center; justify-content: center; padding: 24px;
+}
+.fp-modal {
+  width: min(860px, 100%); max-height: 82vh; display: flex; flex-direction: column;
+  background: var(--base-white); border-radius: var(--radius-md); box-shadow: var(--neu-flat); overflow: hidden;
+}
+.fp-modal-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--neutral-200); }
+.fp-modal-head h2 { margin: 0; font-size: 15px; font-weight: 700; }
+.fp-modal-close { border: none; background: transparent; font-size: 20px; line-height: 1; cursor: pointer; color: var(--muted); }
+.fp-modal-close:hover { color: var(--fg); }
+.fp-modal-master { flex: 1; min-height: 0; height: 52vh; }
+.fp-modal-actions { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 20px; border-top: 1px solid var(--neutral-200); }
+@media (max-width: 720px) {
+  .flow-planner-chat { right: 12px; bottom: 12px; left: 12px; width: auto; }
+}
 .jc-flow-frame.is-draft { outline: 2px dashed var(--tone-warning-ink); outline-offset: 2px; }
 .jc-flow-diagram { position: relative; display: flex; width: 100%; height: 100%; }
 .jc-flow-diagram .react-flow__node, .jc-flow-diagram .react-flow__handle { pointer-events: none; }
@@ -1219,33 +1280,78 @@ a.rail-add-brand { display: inline-grid; place-items: center; color: inherit; te
 /* ---- Timeline: campaigns on a shared horizontal axis so it's clear which one runs when.
    Undated campaigns list below with a one-click way to schedule them. ---- */
 .hier-timeline { display: flex; flex-direction: column; gap: 8px; }
-.hier-timeline-axis { display: flex; flex-direction: column; gap: 6px; }
-.hier-timeline-scale { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--muted); padding-left: 128px; }
-.hier-timeline-track { position: relative; height: 0; margin-left: 128px; }
-.hier-timeline-today { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--tone-warning-ink); z-index: 1; }
-.hier-timeline-row { display: flex; align-items: center; gap: 10px; min-height: 30px; }
-.hier-timeline-label {
-  flex: 0 0 118px; font-size: 12px; font-weight: 600; color: var(--fg); text-decoration: none;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+
+/* Quarter Gantt: label column | week grid | actions column. */
+.gantt {
+  --gantt-label-w: 150px; --gantt-actions-w: 56px; --gantt-grid: rgba(93, 44, 201, 0.12);
+  border: 1px solid var(--gantt-grid); border-radius: var(--radius-sm); overflow: hidden;
+  background: var(--card-bg); font-size: 12px;
 }
-.hier-timeline-label:hover { color: var(--primary); }
-.hier-timeline-lane { position: relative; flex: 1; height: 16px; border-radius: var(--radius-full); box-shadow: var(--neu-inset-sm); }
-.hier-timeline-bar { position: absolute; top: 0; bottom: 0; border-radius: var(--radius-full); background: var(--primary); }
-.hier-timeline-bar.bar-status-draft { background: var(--neutral-400); }
-.hier-timeline-bar.bar-status-in_progress { background: var(--info-foreground); }
-.hier-timeline-bar.bar-status-confirmed { background: var(--success-foreground); }
-.hier-timeline-bar.bar-status-closed { background: var(--neutral-400); }
-.hier-timeline-bar.bar-illustrative {
-  background: repeating-linear-gradient(45deg, var(--neutral-400), var(--neutral-400) 5px, var(--neutral-300) 5px, var(--neutral-300) 10px);
-  opacity: .85;
+.gantt-row { display: flex; align-items: stretch; min-height: 36px; border-top: 1px solid var(--gantt-grid); }
+.gantt-row:first-child { border-top: none; }
+.gantt-rowwrap + .gantt-rowwrap .gantt-row, .gantt-head-weeks + .gantt-rowwrap .gantt-row { border-top: 1px solid var(--gantt-grid); }
+.gantt-label {
+  flex: 0 0 var(--gantt-label-w); display: flex; align-items: center; padding: 0 10px;
+  font-weight: 600; color: var(--fg); text-decoration: none; border-right: 1px solid var(--gantt-grid);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0;
 }
-.hier-timeline-edit-btn {
-  flex: 0 0 auto; font-family: inherit; font-size: 11px; font-weight: 600; border: none; background: transparent;
-  color: var(--primary); cursor: pointer; padding: 0; white-space: nowrap;
+a.gantt-label:hover { color: var(--primary); }
+.gantt-actions { flex: 0 0 var(--gantt-actions-w); display: flex; align-items: center; justify-content: center; border-left: 1px solid var(--gantt-grid); }
+.gantt-head { min-height: 28px; background: var(--surface-card-tinted); }
+.gantt-corner { font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); font-weight: 700; }
+.gantt-months { flex: 1; display: flex; min-width: 0; }
+.gantt-month {
+  flex-basis: 0; display: flex; align-items: center; padding: 0 8px; font-weight: 700; font-size: 11.5px;
+  color: var(--fg); border-left: 1px solid var(--gantt-grid); white-space: nowrap; overflow: hidden;
 }
-.hier-timeline-edit-btn:hover { text-decoration: underline; }
-.hier-timeline-row-editing { min-height: unset; padding: 4px 0; }
-.hier-timeline-row-editing .hier-period { flex-wrap: wrap; }
+.gantt-month:first-child { border-left: none; }
+.gantt-weeks { flex: 1; display: grid; grid-template-columns: var(--gantt-weeks); min-width: 0; }
+.gantt-head-weeks { min-height: 24px; }
+.gantt-week {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.1;
+  border-left: 1px solid var(--gantt-grid); overflow: hidden;
+}
+.gantt-week:first-child, .gantt-cell:first-child { border-left: none; }
+.gantt-week-num { font-size: 9.5px; font-weight: 700; color: var(--muted); }
+.gantt-week-date { font-size: 9.5px; color: var(--muted); opacity: .8; }
+.gantt-lane { position: relative; flex: 1; display: flex; min-width: 0; }
+.gantt-cells { position: absolute; inset: 0; }
+.gantt-cell { border-left: 1px solid var(--gantt-grid); }
+.gantt-today { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--tone-warning-ink); z-index: 2; }
+.gantt-bar {
+  position: absolute; top: 8px; bottom: 8px; border-radius: 6px; background: var(--primary); z-index: 1;
+  display: flex; align-items: center; padding: 0 8px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,.12);
+}
+.gantt-bar.bar-status-draft { background: var(--neutral-400); }
+.gantt-bar.bar-status-in_progress { background: var(--info-foreground); }
+.gantt-bar.bar-status-confirmed { background: var(--success-foreground); }
+.gantt-bar.bar-status-closed { background: var(--neutral-400); }
+.gantt-bar.bar-illustrative {
+  background: repeating-linear-gradient(45deg, var(--neutral-300), var(--neutral-300) 5px, transparent 5px, transparent 10px);
+  border: 1px dashed var(--neutral-400); box-shadow: none;
+}
+.gantt-bar-text { font-size: 10.5px; font-weight: 600; color: #fff; white-space: nowrap; }
+.gantt-outside { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: 11px; color: var(--muted); font-style: italic; }
+.gantt-edit-btn {
+  font-family: inherit; font-size: 11.5px; font-weight: 600; border: 1px solid var(--gantt-grid);
+  background: transparent; color: var(--primary); cursor: pointer; padding: 3px 10px; border-radius: var(--radius-full);
+}
+.gantt-edit-btn:hover, .gantt-edit-btn[aria-expanded="true"] { background: var(--primary-light-background); }
+.gantt-editor {
+  display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; padding: 10px 12px 12px calc(var(--gantt-label-w) + 10px);
+  background: var(--surface-card-tinted); border-top: 1px solid var(--gantt-grid);
+}
+.gantt-editor-field { display: flex; flex-direction: column; gap: 3px; font-size: 10.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.gantt-editor-field .jc-input { font-size: 12.5px; padding: 5px 8px; text-transform: none; letter-spacing: 0; }
+.gantt-editor-arrow { padding-bottom: 7px; color: var(--muted); }
+.gantt-editor-meta { padding-bottom: 7px; font-size: 11.5px; color: var(--muted); min-width: 60px; }
+.gantt-editor-meta.is-error { color: var(--tone-warning-ink); font-weight: 600; }
+.gantt-editor-actions { display: flex; gap: 6px; margin-left: auto; }
+@media (max-width: 640px) {
+  .gantt { --gantt-label-w: 96px; --gantt-actions-w: 48px; }
+  .gantt-week-date { display: none; }
+  .gantt-editor { padding-left: 12px; }
+}
 .hier-campaign-row {
   display: flex; flex-wrap: wrap; align-items: center; gap: 10px; text-decoration: none;
   padding: 12px 14px; border-radius: var(--radius-sm); box-shadow: var(--neu-inset-sm); color: inherit;
@@ -1306,6 +1412,41 @@ a.rail-add-brand { display: inline-grid; place-items: center; color: inherit; te
 .wiz-form { display: flex; flex-direction: column; gap: 14px; }
 .wiz-form-row { display: flex; gap: 10px; }
 .wiz-form-row .jc-input { flex: 1; }
+
+/* The free-text fallback under a wiz-choice-grid (Flow Planner): a quiet "or" rule between
+ *  the cards and a pill-shaped input, not a bare input+button bolted on underneath. */
+.wiz-or-block { margin-top: 16px; }
+.wiz-or-divider { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.wiz-or-divider::before, .wiz-or-divider::after { content: ""; flex: 1; height: 1px; background: var(--neutral-200); }
+.wiz-or-divider span { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+.wiz-text-row {
+  display: flex; align-items: center; gap: 8px; padding: 4px 4px 4px 16px; border-radius: var(--radius-full);
+  background: var(--card-bg); box-shadow: var(--neu-flat-sm);
+}
+.wiz-text-input {
+  flex: 1; border: none; background: transparent; font-family: inherit; font-size: 13px; color: var(--fg);
+  padding: 8px 0; box-shadow: none; min-height: unset;
+}
+.wiz-text-input::placeholder { color: var(--muted); }
+.wiz-text-input:focus { outline: none; box-shadow: none; }
+.wiz-text-input:disabled { opacity: .6; }
+.wiz-text-send {
+  flex: 0 0 auto; width: 32px; height: 32px; border-radius: 50%; border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--primary); color: var(--base-white); transition: opacity 140ms ease;
+}
+.wiz-text-send:disabled { opacity: .4; cursor: default; }
+.wiz-thinking {
+  display: flex; align-items: center; gap: 7px; margin-top: 10px; padding-left: 16px;
+  font-size: 12px; color: var(--muted);
+}
+.wiz-thinking span {
+  width: 5px; height: 5px; border-radius: 50%; background: var(--primary); opacity: .4;
+  animation: wiz-thinking-pulse 1s ease-in-out infinite;
+}
+.wiz-thinking span:nth-child(2) { animation-delay: .15s; }
+.wiz-thinking span:nth-child(3) { animation-delay: .3s; }
+@keyframes wiz-thinking-pulse { 0%, 80%, 100% { opacity: .25; transform: scale(0.85); } 40% { opacity: 1; transform: scale(1); } }
 
 .wiz-list { display: flex; flex-direction: column; gap: 6px; max-height: 280px; overflow-y: auto; }
 .wiz-list-row {

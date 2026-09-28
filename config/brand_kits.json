@@ -1,6 +1,260 @@
 {
   "note": "Brand intelligence kits. Oncomyra (talrenimab) / PharmaOne is a FICTIONAL sample brand; all content is captured verbatim/adapted from the provided Oncomyra Brand Plan & Modular Content Ecosystem document (2026-07-12) and the accompanying creative assets. This is an illustrative planning sample -- NOT approved content, not for external/promotional use. Per the source: material internal contradictions exist (dosing 2.5mg/kg q2w vs 4.8mg/kg q3w; CYP/DDI status) -- no dosing or drug-interaction statement is usable until resolved against the PI. When a plan runs for a brand with a kit, the agents ground the plan in this real brand content instead of synthesizing placeholders.",
   "kits": {
+    "Cardiovex": {
+      "source_label": "Cardiovex demo brand kit",
+      "source_note": "FICTIONAL demo brand -- built to exercise the cockpit UI with a second brand. Not real content, not approved, not for external use.",
+      "company": "Vantorix Bio",
+      "generic": "cardivexumab -- fictitious HFrEF therapy (demo brand only)",
+      "therapy_area": "heart failure",
+      "indication": "Adults with heart failure with reduced ejection fraction (HFrEF), NYHA class II-III",
+      "territories": [
+        "US"
+      ],
+      "fiscal_frame": "Growth",
+      "key_objective": "Increase adoption among high-value HFrEF cardiologists",
+      "market_share": {
+        "current": "6%",
+        "target": "12%"
+      },
+      "tagline": "Confidence in every heartbeat. — Refreshed for Q4",
+      "core_claim": "Help physicians achieve stronger, more consistent disease control in HFrEF.",
+      "positioning_statement": "For cardiologists managing HFrEF patients, Cardiovex is a therapy designed to deliver strong efficacy with a manageable safety profile -- demo content only, not a real clinical claim.",
+      "message_hierarchy": [
+        {
+          "pillar": "Efficacy",
+          "claim": "Strong, consistent reduction in HF hospitalization risk",
+          "evidence": "Demo evidence only -- trial reference DEMO-01"
+        },
+        {
+          "pillar": "Safety",
+          "claim": "A manageable, well-characterized safety profile",
+          "evidence": "Demo evidence only -- no real safety data captured for this brand"
+        },
+        {
+          "pillar": "Patient outcomes",
+          "claim": "Supports patients returning to daily activity",
+          "evidence": "Demo evidence only -- patient-reported outcome reference"
+        },
+        {
+          "pillar": "Differentiation",
+          "claim": "Once-daily oral dosing",
+          "evidence": "Demo evidence only -- convenience claim"
+        }
+      ],
+      "approved_indication": "DEMO CONTENT -- Cardiovex (cardivexumab) is a fictitious brand built to exercise this UI with a second, structurally different brand. No real regulatory indication exists.",
+      "safety_reference": "DEMO CONTENT -- no real safety signals captured for this fictitious brand.",
+      "clinical_data": [
+        {
+          "study": "DEMO-01",
+          "stat": "Demo only",
+          "context": "Fictitious trial reference, demo data only"
+        },
+        {
+          "study": "DEMO-02",
+          "stat": "Demo only",
+          "context": "Fictitious trial reference, demo data only"
+        }
+      ],
+      "tone_pillars": [
+        "Confident",
+        "Evidence-led",
+        "Reassuring",
+        "Patient-centred"
+      ],
+      "voice_do": [
+        "Identify",
+        "manage",
+        "consistent",
+        "evidence-based",
+        "proactive"
+      ],
+      "voice_dont": [
+        "cure",
+        "guaranteed",
+        "breakthrough",
+        "miracle",
+        "risk-free"
+      ],
+      "guardrails": {
+        "dos": [
+          {
+            "category": "Efficacy",
+            "text": "Anchor efficacy claims in the DEMO-01 reference only -- this is demo content, not a real substantiation chain"
+          },
+          {
+            "category": "Fair balance",
+            "text": "Co-present safety context with every efficacy statement, matching the pattern used elsewhere in this app"
+          }
+        ],
+        "donts": [
+          {
+            "category": "Superiority",
+            "text": "Do not imply head-to-head superiority -- no comparator data exists for this fictitious brand"
+          },
+          {
+            "category": "Regulatory",
+            "text": "Do not treat any figure in this kit as real -- it exists to exercise the UI only"
+          }
+        ]
+      },
+      "concepts": [
+        {
+          "id": "CON-DEMO-01",
+          "status": "Active",
+          "name": "Confidence in every heartbeat",
+          "tags": [
+            "Campaign",
+            "HCP"
+          ],
+          "description": "Master concept for the demo brand, pairing the tagline with the efficacy/safety pillars."
+        }
+      ],
+      "message_pool": [
+        "Confidence in every heartbeat.",
+        "Consistent control, every day."
+      ],
+      "claims": [
+        {
+          "id": "CV-EFF-01",
+          "text": "Consistent reduction in HF hospitalization risk",
+          "category": "Efficacy",
+          "status": "draft",
+          "risk": "Medium",
+          "class": "Promotional",
+          "references": [
+            "CV-REF-01"
+          ],
+          "fair_balance": "Required",
+          "note": "Demo content, not a real claim"
+        },
+        {
+          "id": "CV-SAF-01",
+          "text": "Manageable, well-characterized safety profile",
+          "category": "Safety",
+          "status": "draft",
+          "risk": "Low",
+          "class": "Promotional",
+          "references": [
+            "CV-REF-01"
+          ],
+          "fair_balance": "Required",
+          "note": "Demo content, not a real claim"
+        },
+        {
+          "id": "CV-USE-01",
+          "text": "Once-daily oral dosing",
+          "category": "Convenience",
+          "status": "in_review",
+          "risk": "Low",
+          "class": "Promotional",
+          "references": [
+            "CV-REF-02"
+          ],
+          "fair_balance": "Not applicable",
+          "note": "Demo content, not a real claim"
+        }
+      ],
+      "references": [
+        {
+          "id": "CV-REF-01",
+          "title": "DEMO-01 (fictitious trial reference)",
+          "type": "Demo reference",
+          "key_data": "No real data -- demo only",
+          "promo_eligible": true,
+          "note": "Fictitious reference for UI demo purposes"
+        },
+        {
+          "id": "CV-REF-02",
+          "title": "DEMO-02 (fictitious trial reference)",
+          "type": "Demo reference",
+          "key_data": "No real data -- demo only",
+          "promo_eligible": true,
+          "note": "Fictitious reference for UI demo purposes"
+        }
+      ],
+      "components": [],
+      "personas": {
+        "hcp": [
+          {
+            "name": "The Outcomes-Focused Cardiologist",
+            "who": "Manages HFrEF patients across the disease continuum",
+            "tier": "Primary",
+            "voice": "Show me consistent, real-world outcomes -- not just a trial result."
+          },
+          {
+            "name": "The Access-Minded Generalist",
+            "who": "Co-manages HF patients with cardiology",
+            "tier": "Secondary",
+            "voice": "Make it simple to prescribe and easy for my patient to stay on."
+          }
+        ],
+        "patient": [
+          {
+            "name": "The Returning-to-Life Patient",
+            "who": "Wants to get back to daily activity after an HF diagnosis",
+            "tier": "Primary",
+            "voice": "I just want to feel like myself again."
+          }
+        ],
+        "payer": [
+          {
+            "name": "The Value-Focused Payer",
+            "who": "Evaluates HF therapies on total cost of care",
+            "tier": "Primary",
+            "voice": "Show me this reduces hospitalizations, not just symptoms."
+          }
+        ]
+      },
+      "competitors": [
+        {
+          "name": "Demo Comparator A",
+          "threat": "Demo only -- context",
+          "detail": "Fictitious comparator, no real competitive data captured."
+        }
+      ],
+      "care_continuum": {},
+      "identity": {
+        "palette": [
+          {
+            "hex": "#0E5C4A",
+            "name": "Deep Teal",
+            "use": "Primary -- headlines / structure"
+          },
+          {
+            "hex": "#2FA98C",
+            "name": "Sea Green",
+            "use": "Accent"
+          },
+          {
+            "hex": "#EAF5F2",
+            "name": "Mist",
+            "use": "Surface / background tint"
+          },
+          {
+            "hex": "#4B5563",
+            "name": "Slate",
+            "use": "Body text / captions"
+          }
+        ],
+        "typography": "Sora Bold (headings) + Inter Regular (body)"
+      },
+      "brand_personification": {
+        "archetype": "The Steadfast Guide",
+        "traits": [
+          "Confident",
+          "Reliable",
+          "Evidence-based",
+          "Empathetic",
+          "Proactive"
+        ],
+        "narrative": "Cardiovex embodies a seasoned mentor who stands firmly by healthcare professionals, guiding them with a calm, evidence-based approach. It consistently provides the insights and tools needed to proactively manage complex conditions, instilling confidence in both the physician's practice and the patient's journey towards better health."
+      },
+      "lifecycle_stage": "Launch",
+      "success_measure": "New patient starts",
+      "branded": true,
+      "primary_audience": "HCP"
+    },
     "Oncomyra": {
       "source_label": "Oncomyra Brand Plan & Modular Content Ecosystem",
       "source_note": "Illustrative sample -- not approved content, not for external use. Requires PI/ISI/MLR before any asset advances.",
@@ -8,66 +262,269 @@
       "generic": "talrenimab -- a first-in-class* anti-FGFR2 antibody-drug conjugate (ADC) (*source-stated, High MLR risk)",
       "therapy_area": "cholangiocarcinoma",
       "indication": "Previously treated FGFR2 fusion-positive unresectable/metastatic cholangiocarcinoma",
+      "territories": [
+        "US",
+        "EU",
+        "UK",
+        "Japan",
+        "Canada"
+      ],
+      "territory_content": {
+        "EU": {
+          "illustrative": true,
+          "note": "Illustrative placeholder -- no real EU regulatory content has been provided for this brand. Not an approved label; do not use for any real market decision.",
+          "tagline": "Oncomyra in the EU -- illustrative placeholder, real content not yet provided.",
+          "core_claim": "Placeholder only: no EU-specific claim has been captured for this brand yet.",
+          "positioning_statement": "Placeholder only: EU positioning has not been captured. This exists to demonstrate that territory content can differ from the US kit, not to represent a real EU position.",
+          "indication": "Illustrative placeholder -- EU indication wording not yet available.",
+          "approved_indication": "ILLUSTRATIVE PLACEHOLDER -- no EU-approved indication text exists in this kit. This field demonstrates per-territory content only and carries no regulatory meaning.",
+          "fiscal_frame": "Not yet launched in this territory"
+        },
+        "UK": {
+          "illustrative": true,
+          "note": "Illustrative placeholder -- no real UK regulatory content has been provided for this brand. Not an approved label; do not use for any real market decision.",
+          "tagline": "Oncomyra in the UK -- illustrative placeholder, real content not yet provided.",
+          "core_claim": "Placeholder only: no UK-specific claim has been captured for this brand yet.",
+          "positioning_statement": "Placeholder only: UK positioning has not been captured. This exists to demonstrate that territory content can differ from the US kit, not to represent a real UK position.",
+          "indication": "Illustrative placeholder -- UK indication wording not yet available.",
+          "approved_indication": "ILLUSTRATIVE PLACEHOLDER -- no UK-approved indication text exists in this kit. This field demonstrates per-territory content only and carries no regulatory meaning.",
+          "fiscal_frame": "Not yet launched in this territory"
+        },
+        "Japan": {
+          "illustrative": true,
+          "note": "Illustrative placeholder -- no real Japan regulatory content has been provided for this brand. Not an approved label; do not use for any real market decision.",
+          "tagline": "Oncomyra in Japan -- illustrative placeholder, real content not yet provided.",
+          "core_claim": "Placeholder only: no Japan-specific claim has been captured for this brand yet.",
+          "positioning_statement": "Placeholder only: Japan positioning has not been captured. This exists to demonstrate that territory content can differ from the US kit, not to represent a real Japan position.",
+          "indication": "Illustrative placeholder -- Japan indication wording not yet available.",
+          "approved_indication": "ILLUSTRATIVE PLACEHOLDER -- no Japan-approved indication text exists in this kit. This field demonstrates per-territory content only and carries no regulatory meaning.",
+          "fiscal_frame": "Not yet launched in this territory"
+        },
+        "Canada": {
+          "illustrative": true,
+          "note": "Illustrative placeholder -- no real Canada regulatory content has been provided for this brand. Not an approved label; do not use for any real market decision.",
+          "tagline": "Oncomyra in Canada -- illustrative placeholder, real content not yet provided.",
+          "core_claim": "Placeholder only: no Canada-specific claim has been captured for this brand yet.",
+          "positioning_statement": "Placeholder only: Canada positioning has not been captured. This exists to demonstrate that territory content can differ from the US kit, not to represent a real Canada position.",
+          "indication": "Illustrative placeholder -- Canada indication wording not yet available.",
+          "approved_indication": "ILLUSTRATIVE PLACEHOLDER -- no Canada-approved indication text exists in this kit. This field demonstrates per-territory content only and carries no regulatory meaning.",
+          "fiscal_frame": "Not yet launched in this territory"
+        }
+      },
       "fiscal_frame": "Launch / early launch",
       "tagline": "Proven precision, made practical.",
       "core_claim": "Identify FGFR2, act on the evidence, manage with confidence.",
       "positioning_statement": "For oncologists treating previously treated FGFR2 fusion-positive advanced cholangiocarcinoma, Oncomyra is an FGFR2-directed antibody-drug conjugate that delivered a significant overall-survival benefit vs chemotherapy in CLARITY-01 -- supported by fusion-partner-agnostic response and defined management pathways for real-world, comorbid patients.",
       "message_hierarchy": [
-        {"pillar": "Patient identification", "claim": "Test every advanced iCCA patient for FGFR2 fusions -- at diagnosis",
-         "evidence": "FGFR2 fusions occur in ~10-16% of intrahepatic cholangiocarcinoma and act as oncogenic drivers; RNA-based NGS preferred; a negative liquid biopsy needs reflex tissue testing (REF-01, REF-02)"},
-        {"pillar": "Efficacy (CLARITY-01)", "claim": "Significant overall survival vs chemotherapy in FGFR2 fusion-positive cholangiocarcinoma",
-         "evidence": "mOS 12.8 vs 9.1 mo (HR 0.72; 95% CI 0.54-0.96; P=0.008); mPFS 6.4 vs 3.2 mo (HR 0.58; P<0.001) by BICR; ORR 38.7% vs 14.2% vs FOLFOX (REF-01). Open-label design; always with fair balance"},
-        {"pillar": "Mechanism / rationale", "claim": "An FGFR2-directed ADC -- targets FGFR2 from the outside in",
-         "evidence": "Binds the extracellular FGFR2 domain, internalizes, and releases a microtubule-disrupting payload -- a mechanism hypothesized to be less dependent on the kinase pocket that drives TKI resistance (REF-01, REF-02)"},
-        {"pillar": "Safety manageability", "claim": "A known, monitorable profile with defined management",
-         "evidence": "Hyperphosphatemia (on-target class effect) and ocular events managed per algorithm; baseline eye exam + OCT; phosphate monitoring, diet and binders (REF-03). Never present efficacy without balance"}
+        {
+          "pillar": "Patient identification",
+          "claim": "Test every advanced iCCA patient for FGFR2 fusions -- at diagnosis",
+          "evidence": "FGFR2 fusions occur in ~10-16% of intrahepatic cholangiocarcinoma and act as oncogenic drivers; RNA-based NGS preferred; a negative liquid biopsy needs reflex tissue testing (REF-01, REF-02)"
+        },
+        {
+          "pillar": "Efficacy (CLARITY-01)",
+          "claim": "Significant overall survival vs chemotherapy in FGFR2 fusion-positive cholangiocarcinoma",
+          "evidence": "mOS 12.8 vs 9.1 mo (HR 0.72; 95% CI 0.54-0.96; P=0.008); mPFS 6.4 vs 3.2 mo (HR 0.58; P<0.001) by BICR; ORR 38.7% vs 14.2% vs FOLFOX (REF-01). Open-label design; always with fair balance"
+        },
+        {
+          "pillar": "Mechanism / rationale",
+          "claim": "An FGFR2-directed ADC -- targets FGFR2 from the outside in",
+          "evidence": "Binds the extracellular FGFR2 domain, internalizes, and releases a microtubule-disrupting payload -- a mechanism hypothesized to be less dependent on the kinase pocket that drives TKI resistance (REF-01, REF-02)"
+        },
+        {
+          "pillar": "Safety manageability",
+          "claim": "A known, monitorable profile with defined management",
+          "evidence": "Hyperphosphatemia (on-target class effect) and ocular events managed per algorithm; baseline eye exam + OCT; phosphate monitoring, diet and binders (REF-03). Never present efficacy without balance"
+        }
       ],
       "approved_indication": "ILLUSTRATIVE / NOT APPROVED. Studied population: adults with previously treated (>=1 prior line of gemcitabine-based therapy), unresectable locally advanced or metastatic cholangiocarcinoma harboring an FGFR2 fusion or rearrangement (REF-01, REF-03). First-line combination use is INVESTIGATIONAL only. No approved label, ISI, or PI exists in the source set.",
       "safety_reference": "Key signals: hyperphosphatemia (on-target/class), ocular events (dry eye; rarely CSR/RPED), cytopenias, stomatitis, fluid retention/peripheral edema, hepatic monitoring. Fair balance + full ISI mandatory on all promotional materials. Precise AE incidences and all dosing/drug-interaction statements are BLOCKED until source conflicts are resolved against the final PI (see guardrails).",
       "clinical_data": [
-        {"study": "CLARITY-01", "stat": "12.8 vs 9.1", "context": "Median OS, months (HR 0.72; P=0.008)"},
-        {"study": "CLARITY-01", "stat": "6.4 vs 3.2", "context": "Median PFS, months (BICR; P<0.001)"},
-        {"study": "CLARITY-01", "stat": "38.7% vs 14.2%", "context": "Confirmed ORR (P<0.001)"},
-        {"study": "Biomarker", "stat": "P=0.82", "context": "Response consistent across FGFR2 fusion partners"},
-        {"study": "Real-world (N=487)", "stat": "11.2 mo", "context": "mOS in older/sicker RWE population (descriptive)"}
+        {
+          "study": "CLARITY-01",
+          "stat": "12.8 vs 9.1",
+          "context": "Median OS, months (HR 0.72; P=0.008)"
+        },
+        {
+          "study": "CLARITY-01",
+          "stat": "6.4 vs 3.2",
+          "context": "Median PFS, months (BICR; P<0.001)"
+        },
+        {
+          "study": "CLARITY-01",
+          "stat": "38.7% vs 14.2%",
+          "context": "Confirmed ORR (P<0.001)"
+        },
+        {
+          "study": "Biomarker",
+          "stat": "P=0.82",
+          "context": "Response consistent across FGFR2 fusion partners"
+        },
+        {
+          "study": "Real-world (N=487)",
+          "stat": "11.2 mo",
+          "context": "mOS in older/sicker RWE population (descriptive)"
+        }
       ],
-      "tone_pillars": ["Precise & Evidence-Led", "Partner-Oriented (HCP as expert peer)", "Confident, Not Aggressive", "Patient-Centred"],
-      "voice_do": ["Identify", "test", "FGFR2 fusion-positive", "overall survival (with fair balance)", "manage", "monitor", "proactive", "defined algorithm", "consistent across fusion partners", "real-world"],
-      "voice_dont": ["cure", "eliminate", "breakthrough", "game-changing", "best-in-class", "miracle", "guaranteed", "safe (unqualified)", "superior (beyond FOLFOX)", "standard of care (promotional)"],
+      "tone_pillars": [
+        "Precise & Evidence-Led",
+        "Partner-Oriented (HCP as expert peer)",
+        "Confident, Not Aggressive",
+        "Patient-Centred"
+      ],
+      "voice_do": [
+        "Identify",
+        "test",
+        "FGFR2 fusion-positive",
+        "overall survival (with fair balance)",
+        "manage",
+        "monitor",
+        "proactive",
+        "defined algorithm",
+        "consistent across fusion partners",
+        "real-world"
+      ],
+      "voice_dont": [
+        "cure",
+        "eliminate",
+        "breakthrough",
+        "game-changing",
+        "best-in-class",
+        "miracle",
+        "guaranteed",
+        "safe (unqualified)",
+        "superior (beyond FOLFOX)",
+        "standard of care (promotional)"
+      ],
       "guardrails": {
         "dos": [
-          {"category": "Testing", "text": "Lead the market on 'test at diagnosis' for FGFR2 fusions (unbranded / disease-education territory)"},
-          {"category": "Efficacy", "text": "Anchor the branded story in CLARITY-01 OS -- always cite HR + 95% CI + P and the 2L+ FGFR2-positive population"},
-          {"category": "Fair balance", "text": "Co-present prominent safety (hyperphosphatemia, ocular, cytopenias, fluid retention) with every efficacy claim, plus full ISI"},
-          {"category": "Mechanism", "text": "Present MOA differentiation mechanistically only; keep resistance rationale conditional ('may / hypothesized')"},
-          {"category": "Manageability", "text": "Turn the safety profile into a manageability proof point via monitoring algorithms and special-population guidance"},
-          {"category": "Substantiation", "text": "Trace every claim to a reference ID + location; attribute every statistic (VS rate, resistance rate, duration)"}
+          {
+            "category": "Testing",
+            "text": "Lead the market on 'test at diagnosis' for FGFR2 fusions (unbranded / disease-education territory)"
+          },
+          {
+            "category": "Efficacy",
+            "text": "Anchor the branded story in CLARITY-01 OS -- always cite HR + 95% CI + P and the 2L+ FGFR2-positive population"
+          },
+          {
+            "category": "Fair balance",
+            "text": "Co-present prominent safety (hyperphosphatemia, ocular, cytopenias, fluid retention) with every efficacy claim, plus full ISI"
+          },
+          {
+            "category": "Mechanism",
+            "text": "Present MOA differentiation mechanistically only; keep resistance rationale conditional ('may / hypothesized')"
+          },
+          {
+            "category": "Manageability",
+            "text": "Turn the safety profile into a manageability proof point via monitoring algorithms and special-population guidance"
+          },
+          {
+            "category": "Substantiation",
+            "text": "Trace every claim to a reference ID + location; attribute every statistic (VS rate, resistance rate, duration)"
+          }
         ],
         "donts": [
-          {"category": "Superlatives", "text": "No 'best', 'breakthrough', 'game-changing', 'first-in-class' or 'standard of care' without regulatory substantiation"},
-          {"category": "Indication", "text": "No first-line / combination promotion -- it is investigational and medical-only"},
-          {"category": "Comparison", "text": "No superiority vs other FGFR inhibitors -- no head-to-head data exists; only the studied vs-FOLFOX comparison is supported"},
-          {"category": "Survival", "text": "No survival/cure overpromising; no extrapolation of CLARITY-01 figures to individual patients"},
-          {"category": "Safety", "text": "No safety minimization; never present efficacy without balance; never use an unqualified 'well-tolerated'"},
-          {"category": "Dosing / DDI", "text": "Do NOT publish any dosing, schedule, or drug-interaction statement until the source conflicts are resolved against the PI (blocking gate)"},
-          {"category": "Patient", "text": "No patient-facing promotional claims until PI/ISI + regulatory framework exist (patient content is gated)"}
+          {
+            "category": "Superlatives",
+            "text": "No 'best', 'breakthrough', 'game-changing', 'first-in-class' or 'standard of care' without regulatory substantiation"
+          },
+          {
+            "category": "Indication",
+            "text": "No first-line / combination promotion -- it is investigational and medical-only"
+          },
+          {
+            "category": "Comparison",
+            "text": "No superiority vs other FGFR inhibitors -- no head-to-head data exists; only the studied vs-FOLFOX comparison is supported"
+          },
+          {
+            "category": "Survival",
+            "text": "No survival/cure overpromising; no extrapolation of CLARITY-01 figures to individual patients"
+          },
+          {
+            "category": "Safety",
+            "text": "No safety minimization; never present efficacy without balance; never use an unqualified 'well-tolerated'"
+          },
+          {
+            "category": "Dosing / DDI",
+            "text": "Do NOT publish any dosing, schedule, or drug-interaction statement until the source conflicts are resolved against the PI (blocking gate)"
+          },
+          {
+            "category": "Patient",
+            "text": "No patient-facing promotional claims until PI/ISI + regulatory framework exist (patient content is gated)"
+          }
         ]
       },
       "concepts": [
-        {"id": "CON-EFF", "status": "Active", "name": "Proven in Phase III. Practical in practice.", "tags": ["Campaign", "HCP"],
-         "description": "Master efficacy platform: pairs the CLARITY-01 overall-survival result with the manageability story so 'proven' and 'practical' travel together. Always with fair balance and full ISI. (Requires MLR.)"},
-        {"id": "CON-TEST", "status": "Active", "name": "If it's advanced iCCA, test for FGFR2 -- at diagnosis", "tags": ["Disease education", "HCP / Pathologist"],
-         "description": "Largely unbranded testing-education platform. Drives universal, RNA-based NGS profiling at diagnosis; a positive liquid biopsy can initiate therapy, a negative one needs reflex tissue testing so eligible patients aren't missed."},
-        {"id": "CON-MOA", "status": "Active", "name": "Targeting FGFR2 from the outside in", "tags": ["Mechanism", "MSL / Medical"],
-         "description": "Differentiates the ADC mechanism vs kinase-pocket TKIs; resistance rationale kept conditional. Mechanistic, never a comparative-efficacy claim."},
-        {"id": "CON-MANAGE", "status": "Active", "name": "Known profile. Defined management.", "tags": ["Safety", "HCP"],
-         "description": "Converts the safety profile from barrier to manageability: hyperphosphatemia and ocular monitoring algorithms, special-population guidance, treatment continuity."},
-        {"id": "CON-FUSION", "status": "Active", "name": "One fusion detected -- regardless of partner", "tags": ["Patient ID", "HCP / Pathologist"],
-         "description": "De-risks patient selection: response was consistent across major FGFR2 fusion partners (P=0.82), so if a fusion is found the patient may be a candidate regardless of the partner gene."},
-        {"id": "CON-SUPPORT", "status": "Active", "name": "You are not alone", "tags": ["Patient support", "Patient / Caregiver"],
-         "description": "Patient/caregiver support platform (gated on PI/ISI/reg input). Disease-education and support-resource scaffolding only; no product claims, no outcome language until approved."},
-        {"id": "CON-1L", "status": "Emerging", "name": "First-line combination (FUSION-01)", "tags": ["Investigational", "Medical only"],
-         "description": "talrenimab + gemcitabine/cisplatin, Phase Ib/II -- ORR 62.3% vs 41.2%, PFS 9.8 vs 6.4 mo; OS immature; Phase III FUSION-02 planned. MEDICAL-ONLY, investigational -- never promotional."}
+        {
+          "id": "CON-EFF",
+          "status": "Active",
+          "name": "Proven in Phase III. Practical in practice.",
+          "tags": [
+            "Campaign",
+            "HCP"
+          ],
+          "description": "Master efficacy platform: pairs the CLARITY-01 overall-survival result with the manageability story so 'proven' and 'practical' travel together. Always with fair balance and full ISI. (Requires MLR.)"
+        },
+        {
+          "id": "CON-TEST",
+          "status": "Active",
+          "name": "If it's advanced iCCA, test for FGFR2 -- at diagnosis",
+          "tags": [
+            "Disease education",
+            "HCP / Pathologist"
+          ],
+          "description": "Largely unbranded testing-education platform. Drives universal, RNA-based NGS profiling at diagnosis; a positive liquid biopsy can initiate therapy, a negative one needs reflex tissue testing so eligible patients aren't missed."
+        },
+        {
+          "id": "CON-MOA",
+          "status": "Active",
+          "name": "Targeting FGFR2 from the outside in",
+          "tags": [
+            "Mechanism",
+            "MSL / Medical"
+          ],
+          "description": "Differentiates the ADC mechanism vs kinase-pocket TKIs; resistance rationale kept conditional. Mechanistic, never a comparative-efficacy claim."
+        },
+        {
+          "id": "CON-MANAGE",
+          "status": "Active",
+          "name": "Known profile. Defined management.",
+          "tags": [
+            "Safety",
+            "HCP"
+          ],
+          "description": "Converts the safety profile from barrier to manageability: hyperphosphatemia and ocular monitoring algorithms, special-population guidance, treatment continuity."
+        },
+        {
+          "id": "CON-FUSION",
+          "status": "Active",
+          "name": "One fusion detected -- regardless of partner",
+          "tags": [
+            "Patient ID",
+            "HCP / Pathologist"
+          ],
+          "description": "De-risks patient selection: response was consistent across major FGFR2 fusion partners (P=0.82), so if a fusion is found the patient may be a candidate regardless of the partner gene."
+        },
+        {
+          "id": "CON-SUPPORT",
+          "status": "Active",
+          "name": "You are not alone",
+          "tags": [
+            "Patient support",
+            "Patient / Caregiver"
+          ],
+          "description": "Patient/caregiver support platform (gated on PI/ISI/reg input). Disease-education and support-resource scaffolding only; no product claims, no outcome language until approved."
+        },
+        {
+          "id": "CON-1L",
+          "status": "Emerging",
+          "name": "First-line combination (FUSION-01)",
+          "tags": [
+            "Investigational",
+            "Medical only"
+          ],
+          "description": "talrenimab + gemcitabine/cisplatin, Phase Ib/II -- ORR 62.3% vs 41.2%, PFS 9.8 vs 6.4 mo; OS immature; Phase III FUSION-02 planned. MEDICAL-ONLY, investigational -- never promotional."
+        }
       ],
       "message_pool": [
         "Proven precision, made practical -- identify FGFR2, act on the evidence, manage with confidence",
@@ -78,86 +535,1040 @@
         "Known, monitorable safety: hyperphosphatemia and ocular events managed per defined algorithm"
       ],
       "claims": [
-        {"id": "CL-EFF-01", "text": "In CLARITY-01, Oncomyra significantly prolonged median OS vs FOLFOX (12.8 vs 9.1 months; HR 0.72; 95% CI 0.54-0.96; P=0.008)", "category": "Efficacy (OS)", "status": "draft", "risk": "High", "class": "Promotional", "references": ["REF-01"], "fair_balance": "Required -- prominent", "note": "Always cite HR+CI+P; 2L+ FGFR2+ population; open-label design"},
-        {"id": "CL-EFF-02", "text": "Median PFS was 6.4 vs 3.2 months (HR 0.58; 95% CI 0.44-0.76; P<0.001) by blinded independent central review", "category": "Efficacy (PFS)", "status": "draft", "risk": "High", "class": "Promotional", "references": ["REF-01"], "fair_balance": "Required", "note": "BICR strengthens PFS"},
-        {"id": "CL-EFF-03", "text": "Confirmed ORR was 38.7% vs 14.2% (P<0.001)", "category": "Efficacy (ORR)", "status": "draft", "risk": "High", "class": "Promotional", "references": ["REF-01"], "fair_balance": "Required", "note": "Open-label -- note assessment method"},
-        {"id": "CL-EFF-05", "text": "Response was consistent across major FGFR2 fusion partners (BICC1 41.2%, PPHLN1 38.5%, AHCYL1 35.7%, Other 36.9%; P=0.82)", "category": "Efficacy (subgroup)", "status": "draft", "risk": "Medium", "class": "Promotional / Medical", "references": ["REF-02"], "fair_balance": "Required", "note": "Supports 'fusion detected -> candidate regardless of partner'"},
-        {"id": "CL-MOA-01", "text": "Oncomyra (talrenimab) is an anti-FGFR2 ADC that binds the extracellular FGFR2 domain, internalizes, and releases a microtubule-disrupting cytotoxic payload", "category": "Mechanism of action", "status": "draft", "risk": "Medium", "class": "Promotional / Medical", "references": ["REF-01", "REF-02"], "fair_balance": "Std ISI if branded", "note": "Mechanistic only"},
-        {"id": "CL-MOA-02", "text": "This ADC mechanism may be less dependent on the ATP-binding kinase pocket that drives TKI resistance", "category": "MOA / rationale", "status": "in_review", "risk": "High", "class": "Medical-leaning", "references": ["REF-01"], "fair_balance": "If branded, ISI", "note": "Hypothesis-level -- keep conditional ('may / hypothesized'); do NOT state as proven resistance superiority"},
-        {"id": "CL-PID-01", "text": "All patients with unresectable/metastatic iCCA should undergo molecular profiling for FGFR2 fusions at diagnosis", "category": "Patient identification", "status": "approved", "risk": "Low", "class": "Disease education", "references": ["REF-02"], "fair_balance": "N/A (unbranded)", "note": "Ideal unbranded testing driver"},
-        {"id": "CL-PID-02", "text": "RNA-based NGS is preferred over DNA-only NGS for detecting FGFR2 fusions with large intronic breakpoints", "category": "Patient identification", "status": "approved", "risk": "Low", "class": "Disease education / Medical", "references": ["REF-02"], "fair_balance": "N/A", "note": "Don't mandate a named commercial assay beyond source"},
-        {"id": "CL-PID-03", "text": "A positive liquid biopsy is sufficient to initiate therapy; a negative result requires reflex tissue testing (do not rule out therapy on liquid-negative alone)", "category": "Patient identification", "status": "approved", "risk": "Medium", "class": "Disease education / Medical", "references": ["REF-02"], "fair_balance": "N/A", "note": "Critical safety-of-access nuance"},
-        {"id": "CL-DIS-01", "text": "FGFR2 fusions/rearrangements occur in ~10-16% of intrahepatic cholangiocarcinoma and act as oncogenic drivers", "category": "Disease burden", "status": "approved", "risk": "Low", "class": "Disease education", "references": ["REF-01", "REF-05"], "fair_balance": "N/A (unbranded)", "note": "Frames the unmet need; keep unbranded"},
-        {"id": "CL-SAF-01", "text": "Hyperphosphatemia is an on-target class effect of FGFR inhibition and was among the most common AEs; manage with monitoring, low-phosphate diet, and phosphate binders", "category": "Safety", "status": "draft", "risk": "High", "class": "Promotional / Medical", "references": ["REF-03", "REF-01"], "fair_balance": "Core balance", "note": "Incidence CONFLICT (42% vs 58%) -- use PI figure only; omit incidence until then"},
-        {"id": "CL-SAF-02", "text": "Ocular events (dry eye; rarely CSR/RPED) can occur; baseline ophthalmologic exam + OCT and prompt referral for visual symptoms are recommended", "category": "Safety", "status": "draft", "risk": "High", "class": "Promotional / Medical", "references": ["REF-03"], "fair_balance": "Core balance", "note": "Incidence varies by source -- use PI figure"},
-        {"id": "CL-SAF-03", "text": "Cytopenias (neutropenia, anemia, thrombocytopenia) and stomatitis can occur; monitor and manage per algorithm", "category": "Safety", "status": "draft", "risk": "Medium", "class": "Promotional / Medical", "references": ["REF-01", "REF-03"], "fair_balance": "Core balance", "note": "Higher with combination -- do not use combination rates in 2L+ promo"},
-        {"id": "CL-USE-01", "text": "Proactive phosphate monitoring and defined dose-modification algorithms support treatment continuity", "category": "Practical use", "status": "draft", "risk": "Medium", "class": "Promotional / Medical", "references": ["REF-03"], "fair_balance": "Std", "note": "Present algorithm STRUCTURE, not a specific schedule, until dosing resolved"},
-        {"id": "CL-SPEC-01", "text": "Renal: full dose if eGFR >=30; reduced starting dose if eGFR 15-29; not recommended if eGFR <15; efficacy maintained across renal function", "category": "Special population (renal)", "status": "draft", "risk": "High", "class": "Medical / Promotional", "references": ["REF-06"], "fair_balance": "Core balance", "note": "Numeric doses conflict-gated; watch hyperphosphatemia/fluid"},
-        {"id": "CL-SPEC-02", "text": "Hepatic: no adjustment for mild impairment; reduced starting dose for moderate; not recommended for severe; optimize biliary drainage first", "category": "Special population (hepatic)", "status": "draft", "risk": "High", "class": "Medical / Promotional", "references": ["REF-08"], "fair_balance": "Core balance", "note": "Moderate HI ~34% higher free-payload AUC; numeric doses conflict-gated"},
-        {"id": "CL-SPEC-03", "text": "Cardiovascular: pre-existing CVD is not a contraindication; main risk is volume overload; negligible QTc effect; no signal of direct myocardial toxicity", "category": "Special population (CV)", "status": "draft", "risk": "Medium", "class": "Medical / Promotional", "references": ["REF-07"], "fair_balance": "Core balance", "note": "DDI/CYP conflict with REF-03 -- do not make DDI claims until resolved"},
-        {"id": "CL-RWE-01", "text": "In real-world use (N=487), median OS was 11.2 months, PFS 5.8 months, ORR 34.1% -- consistent with trial, in an older/sicker population", "category": "Real-world evidence", "status": "draft", "risk": "Medium", "class": "Medical", "references": ["REF-04"], "fair_balance": "Descriptive", "note": "Retrospective; no superiority/causal claims; promo use limited"},
-        {"id": "CL-COMMIT-01", "text": "Oncomyra is supported by testing-education, monitoring tools, and management resources", "category": "Brand commitment", "status": "draft", "risk": "Low", "class": "Promotional", "references": [], "fair_balance": "N/A", "note": "Illustrative placeholder -- requires confirmation these programs exist"}
+        {
+          "id": "CL-EFF-01",
+          "text": "In CLARITY-01, Oncomyra significantly prolonged median OS vs FOLFOX (12.8 vs 9.1 months; HR 0.72; 95% CI 0.54-0.96; P=0.008)",
+          "category": "Efficacy (OS)",
+          "status": "draft",
+          "risk": "High",
+          "class": "Promotional",
+          "references": [
+            "REF-01"
+          ],
+          "fair_balance": "Required -- prominent",
+          "note": "Always cite HR+CI+P; 2L+ FGFR2+ population; open-label design"
+        },
+        {
+          "id": "CL-EFF-02",
+          "text": "Median PFS was 6.4 vs 3.2 months (HR 0.58; 95% CI 0.44-0.76; P<0.001) by blinded independent central review",
+          "category": "Efficacy (PFS)",
+          "status": "draft",
+          "risk": "High",
+          "class": "Promotional",
+          "references": [
+            "REF-01"
+          ],
+          "fair_balance": "Required",
+          "note": "BICR strengthens PFS"
+        },
+        {
+          "id": "CL-EFF-03",
+          "text": "Confirmed ORR was 38.7% vs 14.2% (P<0.001)",
+          "category": "Efficacy (ORR)",
+          "status": "draft",
+          "risk": "High",
+          "class": "Promotional",
+          "references": [
+            "REF-01"
+          ],
+          "fair_balance": "Required",
+          "note": "Open-label -- note assessment method"
+        },
+        {
+          "id": "CL-EFF-05",
+          "text": "Response was consistent across major FGFR2 fusion partners (BICC1 41.2%, PPHLN1 38.5%, AHCYL1 35.7%, Other 36.9%; P=0.82)",
+          "category": "Efficacy (subgroup)",
+          "status": "draft",
+          "risk": "Medium",
+          "class": "Promotional / Medical",
+          "references": [
+            "REF-02"
+          ],
+          "fair_balance": "Required",
+          "note": "Supports 'fusion detected -> candidate regardless of partner'"
+        },
+        {
+          "id": "CL-MOA-01",
+          "text": "Oncomyra (talrenimab) is an anti-FGFR2 ADC that binds the extracellular FGFR2 domain, internalizes, and releases a microtubule-disrupting cytotoxic payload",
+          "category": "Mechanism of action",
+          "status": "draft",
+          "risk": "Medium",
+          "class": "Promotional / Medical",
+          "references": [
+            "REF-01",
+            "REF-02"
+          ],
+          "fair_balance": "Std ISI if branded",
+          "note": "Mechanistic only"
+        },
+        {
+          "id": "CL-MOA-02",
+          "text": "This ADC mechanism may be less dependent on the ATP-binding kinase pocket that drives TKI resistance",
+          "category": "MOA / rationale",
+          "status": "in_review",
+          "risk": "High",
+          "class": "Medical-leaning",
+          "references": [
+            "REF-01"
+          ],
+          "fair_balance": "If branded, ISI",
+          "note": "Hypothesis-level -- keep conditional ('may / hypothesized'); do NOT state as proven resistance superiority"
+        },
+        {
+          "id": "CL-PID-01",
+          "text": "All patients with unresectable/metastatic iCCA should undergo molecular profiling for FGFR2 fusions at diagnosis",
+          "category": "Patient identification",
+          "status": "approved",
+          "risk": "Low",
+          "class": "Disease education",
+          "references": [
+            "REF-02"
+          ],
+          "fair_balance": "N/A (unbranded)",
+          "note": "Ideal unbranded testing driver"
+        },
+        {
+          "id": "CL-PID-02",
+          "text": "RNA-based NGS is preferred over DNA-only NGS for detecting FGFR2 fusions with large intronic breakpoints",
+          "category": "Patient identification",
+          "status": "approved",
+          "risk": "Low",
+          "class": "Disease education / Medical",
+          "references": [
+            "REF-02"
+          ],
+          "fair_balance": "N/A",
+          "note": "Don't mandate a named commercial assay beyond source"
+        },
+        {
+          "id": "CL-PID-03",
+          "text": "A positive liquid biopsy is sufficient to initiate therapy; a negative result requires reflex tissue testing (do not rule out therapy on liquid-negative alone)",
+          "category": "Patient identification",
+          "status": "approved",
+          "risk": "Medium",
+          "class": "Disease education / Medical",
+          "references": [
+            "REF-02"
+          ],
+          "fair_balance": "N/A",
+          "note": "Critical safety-of-access nuance"
+        },
+        {
+          "id": "CL-DIS-01",
+          "text": "FGFR2 fusions/rearrangements occur in ~10-16% of intrahepatic cholangiocarcinoma and act as oncogenic drivers",
+          "category": "Disease burden",
+          "status": "approved",
+          "risk": "Low",
+          "class": "Disease education",
+          "references": [
+            "REF-01",
+            "REF-05"
+          ],
+          "fair_balance": "N/A (unbranded)",
+          "note": "Frames the unmet need; keep unbranded"
+        },
+        {
+          "id": "CL-SAF-01",
+          "text": "Hyperphosphatemia is an on-target class effect of FGFR inhibition and was among the most common AEs; manage with monitoring, low-phosphate diet, and phosphate binders",
+          "category": "Safety",
+          "status": "draft",
+          "risk": "High",
+          "class": "Promotional / Medical",
+          "references": [
+            "REF-03",
+            "REF-01"
+          ],
+          "fair_balance": "Core balance",
+          "note": "Incidence CONFLICT (42% vs 58%) -- use PI figure only; omit incidence until then"
+        },
+        {
+          "id": "CL-SAF-02",
+          "text": "Ocular events (dry eye; rarely CSR/RPED) can occur; baseline ophthalmologic exam + OCT and prompt referral for visual symptoms are recommended",
+          "category": "Safety",
+          "status": "draft",
+          "risk": "High",
+          "class": "Promotional / Medical",
+          "references": [
+            "REF-03"
+          ],
+          "fair_balance": "Core balance",
+          "note": "Incidence varies by source -- use PI figure"
+        },
+        {
+          "id": "CL-SAF-03",
+          "text": "Cytopenias (neutropenia, anemia, thrombocytopenia) and stomatitis can occur; monitor and manage per algorithm",
+          "category": "Safety",
+          "status": "draft",
+          "risk": "Medium",
+          "class": "Promotional / Medical",
+          "references": [
+            "REF-01",
+            "REF-03"
+          ],
+          "fair_balance": "Core balance",
+          "note": "Higher with combination -- do not use combination rates in 2L+ promo"
+        },
+        {
+          "id": "CL-USE-01",
+          "text": "Proactive phosphate monitoring and defined dose-modification algorithms support treatment continuity",
+          "category": "Practical use",
+          "status": "draft",
+          "risk": "Medium",
+          "class": "Promotional / Medical",
+          "references": [
+            "REF-03"
+          ],
+          "fair_balance": "Std",
+          "note": "Present algorithm STRUCTURE, not a specific schedule, until dosing resolved"
+        },
+        {
+          "id": "CL-SPEC-01",
+          "text": "Renal: full dose if eGFR >=30; reduced starting dose if eGFR 15-29; not recommended if eGFR <15; efficacy maintained across renal function",
+          "category": "Special population (renal)",
+          "status": "draft",
+          "risk": "High",
+          "class": "Medical / Promotional",
+          "references": [
+            "REF-06"
+          ],
+          "fair_balance": "Core balance",
+          "note": "Numeric doses conflict-gated; watch hyperphosphatemia/fluid"
+        },
+        {
+          "id": "CL-SPEC-02",
+          "text": "Hepatic: no adjustment for mild impairment; reduced starting dose for moderate; not recommended for severe; optimize biliary drainage first",
+          "category": "Special population (hepatic)",
+          "status": "draft",
+          "risk": "High",
+          "class": "Medical / Promotional",
+          "references": [
+            "REF-08"
+          ],
+          "fair_balance": "Core balance",
+          "note": "Moderate HI ~34% higher free-payload AUC; numeric doses conflict-gated"
+        },
+        {
+          "id": "CL-SPEC-03",
+          "text": "Cardiovascular: pre-existing CVD is not a contraindication; main risk is volume overload; negligible QTc effect; no signal of direct myocardial toxicity",
+          "category": "Special population (CV)",
+          "status": "draft",
+          "risk": "Medium",
+          "class": "Medical / Promotional",
+          "references": [
+            "REF-07"
+          ],
+          "fair_balance": "Core balance",
+          "note": "DDI/CYP conflict with REF-03 -- do not make DDI claims until resolved"
+        },
+        {
+          "id": "CL-RWE-01",
+          "text": "In real-world use (N=487), median OS was 11.2 months, PFS 5.8 months, ORR 34.1% -- consistent with trial, in an older/sicker population",
+          "category": "Real-world evidence",
+          "status": "draft",
+          "risk": "Medium",
+          "class": "Medical",
+          "references": [
+            "REF-04"
+          ],
+          "fair_balance": "Descriptive",
+          "note": "Retrospective; no superiority/causal claims; promo use limited"
+        },
+        {
+          "id": "CL-COMMIT-01",
+          "text": "Oncomyra is supported by testing-education, monitoring tools, and management resources",
+          "category": "Brand commitment",
+          "status": "draft",
+          "risk": "Low",
+          "class": "Promotional",
+          "references": [],
+          "fair_balance": "N/A",
+          "note": "Illustrative placeholder -- requires confirmation these programs exist"
+        }
       ],
       "references": [
-        {"id": "REF-01", "title": "Oncomyra (talrenimab) CLARITY-01 Phase III", "type": "Pivotal RCT", "key_data": "mOS 12.8 vs 9.1; HR 0.72; PFS 6.4 vs 3.2; ORR 38.7% vs 14.2%", "promo_eligible": true, "note": "Open-label; internal dose/AE conflicts with other docs"},
-        {"id": "REF-02", "title": "Predictive Value of FGFR2 Fusion Status -- Biomarker Study", "type": "Substudy / diagnostic", "key_data": "14.8% prevalence; ORR consistent across partners (P=0.82); NGS-PCR concordance 96.2%", "promo_eligible": true, "note": "Testing behavior; publication metadata unavailable"},
-        {"id": "REF-03", "title": "Clinical Management of Adverse Events -- Talrenimab", "type": "Management guide", "key_data": "Hyperphosphatemia & ocular algorithms; dose ladder", "promo_eligible": true, "note": "Dose & CYP conflicts; AE incidences differ from REF-01"},
-        {"id": "REF-04", "title": "Real-World Outcomes with Talrenimab -- Retrospective", "type": "RWE cohort", "key_data": "N=487; mOS 11.2; ORR 34.1%; ECOG>=2 mOS 7.4", "promo_eligible": false, "note": "Retrospective; descriptive only"},
-        {"id": "REF-05", "title": "Talrenimab + Gemcitabine/Cisplatin First-Line -- FUSION-01", "type": "Phase Ib/II", "key_data": "ORR 62.3% vs 41.2%; PFS 9.8 vs 6.4; HR 0.61", "promo_eligible": false, "note": "MEDICAL-ONLY; investigational; OS immature"},
-        {"id": "REF-06", "title": "Safety in Chronic Kidney Disease: Focused Analysis", "type": "Pooled safety", "key_data": "eGFR-based dosing; hyperphosphatemia higher in CKD", "promo_eligible": true, "note": "Small Stage 4 n; pooled/retrospective"},
-        {"id": "REF-07", "title": "Cardiovascular Safety in Pre-Existing CVD", "type": "Pooled safety", "key_data": "CV-TEAE 24.3% vs 11.5%; QTcF +3.2 ms; not a CYP substrate", "promo_eligible": true, "note": "CYP claim conflicts with REF-03; retrospective"},
-        {"id": "REF-08", "title": "Safety in Hepatic Impairment: Dosing & Management", "type": "Pooled + PK", "key_data": "Moderate HI -> free-payload AUC +34%; dose-reduce moderate; avoid severe", "promo_eligible": true, "note": "Small moderate-HI n; pooled"}
+        {
+          "id": "REF-01",
+          "title": "Oncomyra (talrenimab) CLARITY-01 Phase III",
+          "type": "Pivotal RCT",
+          "key_data": "mOS 12.8 vs 9.1; HR 0.72; PFS 6.4 vs 3.2; ORR 38.7% vs 14.2%",
+          "promo_eligible": true,
+          "note": "Open-label; internal dose/AE conflicts with other docs"
+        },
+        {
+          "id": "REF-02",
+          "title": "Predictive Value of FGFR2 Fusion Status -- Biomarker Study",
+          "type": "Substudy / diagnostic",
+          "key_data": "14.8% prevalence; ORR consistent across partners (P=0.82); NGS-PCR concordance 96.2%",
+          "promo_eligible": true,
+          "note": "Testing behavior; publication metadata unavailable"
+        },
+        {
+          "id": "REF-03",
+          "title": "Clinical Management of Adverse Events -- Talrenimab",
+          "type": "Management guide",
+          "key_data": "Hyperphosphatemia & ocular algorithms; dose ladder",
+          "promo_eligible": true,
+          "note": "Dose & CYP conflicts; AE incidences differ from REF-01"
+        },
+        {
+          "id": "REF-04",
+          "title": "Real-World Outcomes with Talrenimab -- Retrospective",
+          "type": "RWE cohort",
+          "key_data": "N=487; mOS 11.2; ORR 34.1%; ECOG>=2 mOS 7.4",
+          "promo_eligible": false,
+          "note": "Retrospective; descriptive only"
+        },
+        {
+          "id": "REF-05",
+          "title": "Talrenimab + Gemcitabine/Cisplatin First-Line -- FUSION-01",
+          "type": "Phase Ib/II",
+          "key_data": "ORR 62.3% vs 41.2%; PFS 9.8 vs 6.4; HR 0.61",
+          "promo_eligible": false,
+          "note": "MEDICAL-ONLY; investigational; OS immature"
+        },
+        {
+          "id": "REF-06",
+          "title": "Safety in Chronic Kidney Disease: Focused Analysis",
+          "type": "Pooled safety",
+          "key_data": "eGFR-based dosing; hyperphosphatemia higher in CKD",
+          "promo_eligible": true,
+          "note": "Small Stage 4 n; pooled/retrospective"
+        },
+        {
+          "id": "REF-07",
+          "title": "Cardiovascular Safety in Pre-Existing CVD",
+          "type": "Pooled safety",
+          "key_data": "CV-TEAE 24.3% vs 11.5%; QTcF +3.2 ms; not a CYP substrate",
+          "promo_eligible": true,
+          "note": "CYP claim conflicts with REF-03; retrospective"
+        },
+        {
+          "id": "REF-08",
+          "title": "Safety in Hepatic Impairment: Dosing & Management",
+          "type": "Pooled + PK",
+          "key_data": "Moderate HI -> free-payload AUC +34%; dose-reduce moderate; avoid severe",
+          "promo_eligible": true,
+          "note": "Small moderate-HI n; pooled"
+        }
       ],
       "components": [
-        {"id": "MC-BN-HERO", "title": "Science. Precision. Purpose. -- HCP hero banner", "type": "banner", "audience": "HCP", "channel": "Web / paid", "status": "For review", "image": "oncomyra-hcp-hero-science-precision-purpose.png", "claim_links": ["CL-MOA-01"], "description": "Purple molecular hero: 'Science. Precision. Purpose. Focused on advancing care in FGFR2 fusion-positive mUC.' Three pillars -- Targeted Approach, Meaningful Responses, Manageable Safety. CTA 'Explore Clinical Data'. Investigational disclaimer + PI callout.", "branded": true},
-        {"id": "MC-BN-DNA", "title": "Precision biology. Focused on what matters. -- website hero", "type": "webpage", "audience": "HCP", "channel": "Web", "status": "For review", "image": "oncomyra-web-precision-biology.png", "claim_links": ["CL-MOA-01", "CL-DIS-01"], "description": "Light website hero with DNA helix motif: 'Precision biology. Focused on what matters.' Four nav tiles -- About FGFR2 Fusions, Clinical Evidence, Safety Profile, Resources. Investigational disclaimer.", "branded": true},
-        {"id": "MC-BN-DARK", "title": "Advancing care through precision and purpose -- dark HCP hero", "type": "banner", "audience": "HCP", "channel": "Web / paid", "status": "For review", "image": "oncomyra-hcp-hero-dark-advancing-care.png", "claim_links": ["CL-MOA-01"], "description": "Dark navy hero, glowing tumor-cell motif, 'For HCPs' tag: 'Advancing care through precision and purpose.' Pillars -- Precision Focused, Science Led, Patient Centered.", "branded": true},
-        {"id": "MC-BN-SCILED", "title": "Science-led. Patient-focused. -- HCP data banner", "type": "banner", "audience": "HCP", "channel": "Web / email", "status": "For review", "image": "oncomyra-hcp-science-led-patient-focused.png", "claim_links": ["CL-EFF-01"], "description": "DNA-helix banner, 'NEW CLINICAL DATA': 'Science-led. Patient-focused.' Pillars -- Targeted Approach, Meaningful Responses, Manageable Safety. Abbreviation footnotes + investigational disclaimer. CTA 'View Full Results'.", "branded": true},
-        {"id": "MC-BN-IMPACT", "title": "Precision science. Purposeful impact. -- HCP hero", "type": "banner", "audience": "HCP", "channel": "Web / paid", "status": "For review", "image": "oncomyra-hcp-precision-science-purposeful-impact.png", "claim_links": ["CL-MOA-01"], "description": "Lavender hero with tumor + DNA motif: 'Precision science. Purposeful impact.' Four pillars -- Precision Biology, FGFR2 Focused, Patient Impact, Science-led Development. CTA 'Explore Clinical Data'.", "branded": true},
-        {"id": "MC-EM-DATA", "title": "New data. Deeper insight. -- HCP email", "type": "email", "audience": "HCP", "channel": "Email", "status": "For review", "image": "oncomyra-email-new-data-deeper-insight.png", "claim_links": ["CL-EFF-01", "CL-SAF-01"], "description": "HCP clinical-data-update email: 'New data. Deeper insight.' Key highlights -- Targeted approach, Clinical activity, Manageable safety. Signed 'The Oncomyra Medical Team'. Persistent ISI block + boxed-warning callout + unsubscribe/privacy footer.", "branded": true},
-        {"id": "MC-PDF-COVER", "title": "Investigational talrenimab in FGFR2 fusion-positive metastatic cholangiocarcinoma -- PDF cover", "type": "detail_aid", "audience": "HCP", "channel": "PDF / leave-behind", "status": "For review", "image": "oncomyra-pdf-cover-investigational-talrenimab.png", "claim_links": ["CL-MOA-01", "CL-EFF-01"], "description": "Leave-behind cover: 'Investigational talrenimab in FGFR2 Fusion-Positive Metastatic Cholangiocarcinoma -- Science. Precision. Impact.' Icons -- Targeted Mechanism, Clinical Evidence, Patient Impact, Ongoing Innovation. Investigational + PI disclaimer.", "branded": true},
-        {"id": "MC-OBJ-DIFF", "title": "Objection handler: 'How is this different from other FGFR-targeted approaches?'", "type": "detail_aid", "audience": "Field", "channel": "Field", "status": "For review", "image": "oncomyra-objection-handler-differentiation.png", "claim_links": ["CL-MOA-01", "CL-MOA-02"], "description": "Teal field objection-handler card. Possible response: talrenimab is a selective FGFR2 inhibitor with a differentiated binding profile. Key support points -- selective FGFR2 targeting, designed to inhibit oncogenic signaling, data from ongoing studies. 'Always refer to the full Prescribing Information.'", "branded": true},
-        {"id": "MC-TT-SNAP", "title": "Talk track snapshot -- field", "type": "detail_aid", "audience": "Field", "channel": "Field", "status": "For review", "image": "oncomyra-talk-track-snapshot.png", "claim_links": ["CL-MOA-01", "CL-EFF-01", "CL-SAF-01"], "description": "Field talk-track card (For HCP use only, not for promotional use): Opening (investigational, selectively inhibits FGFR2), Unmet Need (limited targeted options), Evidence (encouraging anti-tumor activity, manageable safety), Safety (consistent with prior data), Close (happy to share more).", "branded": true},
-        {"id": "MC-PT-BROCHURE", "title": "You are not alone -- patient/caregiver brochure", "type": "social", "audience": "Patient / Caregiver", "channel": "Patient support", "status": "Gated", "image": "oncomyra-patient-brochure-you-are-not-alone.png", "claim_links": [], "description": "Three-panel patient/caregiver support brochure: 'You are not alone -- support and resources for patients and caregivers.' Sections -- Understanding Your Treatment, Support Along the Way, Help for Caregivers; website, toll-free line, email. Investigational disclaimer. GATED: patient content requires PI/ISI + regulatory input before use.", "branded": true},
-        {"id": "MC-PT-BANNER", "title": "Support through every step -- patient banner", "type": "banner", "audience": "Patient / Caregiver", "channel": "Web", "status": "Gated", "image": "oncomyra-patient-banner-support-through-every-step.png", "claim_links": [], "description": "Patient/caregiver banner: 'Support through every step -- resources and care information for patients and caregivers affected by cholangiocarcinoma.' Treatment Information, Caregiver Resources, Support Services. GATED pending PI/ISI/reg.", "branded": true},
-        {"id": "MC-BRAND-SYS", "title": "Oncomyra brand identity system", "type": "internal", "audience": "Internal", "channel": "Internal", "status": "Reference", "image": "oncomyra-brand-identity-system.png", "claim_links": [], "description": "Brand identity sheet: logo + clear-space, colour palette (Deep Purple #4B2E83, Violet #7B4ACB, Teal #009D9A, Lavender #E9E6F7, Slate Gray #6B7280), typography (Poppins Bold headings, Inter Regular body), icon set (Targeted Approach, Patient Centered, Manageable Safety, Meaningful Impact, Clinical Progress), brand elements + imagery style (Science-led, Precision, Innovation, Humanity, Connection). Tagline: 'Science. Precision. Purpose.'", "branded": true},
-        {"id": "MC-ISI01", "title": "Important Safety Information placeholder", "type": "webpage", "audience": "HCP", "channel": "All", "status": "Placeholder", "image": "", "claim_links": ["CL-SAF-01", "CL-SAF-02", "CL-SAF-03"], "description": "[ISI to be populated from the approved PI -- contraindications, warnings (hyperphosphatemia, ocular, hepatic, embryo-fetal as applicable), common AEs, monitoring.] CANNOT ship without approved ISI.", "branded": true}
+        {
+          "id": "MC-BN-HERO",
+          "title": "Science. Precision. Purpose. -- HCP hero banner",
+          "type": "banner",
+          "audience": "HCP",
+          "channel": "Web / paid",
+          "status": "For review",
+          "image": "oncomyra-hcp-hero-science-precision-purpose.png",
+          "claim_links": [
+            "CL-MOA-01"
+          ],
+          "description": "Purple molecular hero: 'Science. Precision. Purpose. Focused on advancing care in FGFR2 fusion-positive mUC.' Three pillars -- Targeted Approach, Meaningful Responses, Manageable Safety. CTA 'Explore Clinical Data'. Investigational disclaimer + PI callout.",
+          "branded": true
+        },
+        {
+          "id": "MC-BN-DNA",
+          "title": "Precision biology. Focused on what matters. -- website hero",
+          "type": "webpage",
+          "audience": "HCP",
+          "channel": "Web",
+          "status": "For review",
+          "image": "oncomyra-web-precision-biology.png",
+          "claim_links": [
+            "CL-MOA-01",
+            "CL-DIS-01"
+          ],
+          "description": "Light website hero with DNA helix motif: 'Precision biology. Focused on what matters.' Four nav tiles -- About FGFR2 Fusions, Clinical Evidence, Safety Profile, Resources. Investigational disclaimer.",
+          "branded": true
+        },
+        {
+          "id": "MC-BN-DARK",
+          "title": "Advancing care through precision and purpose -- dark HCP hero",
+          "type": "banner",
+          "audience": "HCP",
+          "channel": "Web / paid",
+          "status": "For review",
+          "image": "oncomyra-hcp-hero-dark-advancing-care.png",
+          "claim_links": [
+            "CL-MOA-01"
+          ],
+          "description": "Dark navy hero, glowing tumor-cell motif, 'For HCPs' tag: 'Advancing care through precision and purpose.' Pillars -- Precision Focused, Science Led, Patient Centered.",
+          "branded": true
+        },
+        {
+          "id": "MC-BN-SCILED",
+          "title": "Science-led. Patient-focused. -- HCP data banner",
+          "type": "banner",
+          "audience": "HCP",
+          "channel": "Web / email",
+          "status": "For review",
+          "image": "oncomyra-hcp-science-led-patient-focused.png",
+          "claim_links": [
+            "CL-EFF-01"
+          ],
+          "description": "DNA-helix banner, 'NEW CLINICAL DATA': 'Science-led. Patient-focused.' Pillars -- Targeted Approach, Meaningful Responses, Manageable Safety. Abbreviation footnotes + investigational disclaimer. CTA 'View Full Results'.",
+          "branded": true
+        },
+        {
+          "id": "MC-BN-IMPACT",
+          "title": "Precision science. Purposeful impact. -- HCP hero",
+          "type": "banner",
+          "audience": "HCP",
+          "channel": "Web / paid",
+          "status": "For review",
+          "image": "oncomyra-hcp-precision-science-purposeful-impact.png",
+          "claim_links": [
+            "CL-MOA-01"
+          ],
+          "description": "Lavender hero with tumor + DNA motif: 'Precision science. Purposeful impact.' Four pillars -- Precision Biology, FGFR2 Focused, Patient Impact, Science-led Development. CTA 'Explore Clinical Data'.",
+          "branded": true
+        },
+        {
+          "id": "MC-EM-DATA",
+          "title": "New data. Deeper insight. -- HCP email",
+          "type": "email",
+          "audience": "HCP",
+          "channel": "Email",
+          "status": "For review",
+          "image": "oncomyra-email-new-data-deeper-insight.png",
+          "claim_links": [
+            "CL-EFF-01",
+            "CL-SAF-01"
+          ],
+          "description": "HCP clinical-data-update email: 'New data. Deeper insight.' Key highlights -- Targeted approach, Clinical activity, Manageable safety. Signed 'The Oncomyra Medical Team'. Persistent ISI block + boxed-warning callout + unsubscribe/privacy footer.",
+          "branded": true
+        },
+        {
+          "id": "MC-PDF-COVER",
+          "title": "Investigational talrenimab in FGFR2 fusion-positive metastatic cholangiocarcinoma -- PDF cover",
+          "type": "detail_aid",
+          "audience": "HCP",
+          "channel": "PDF / leave-behind",
+          "status": "For review",
+          "image": "oncomyra-pdf-cover-investigational-talrenimab.png",
+          "claim_links": [
+            "CL-MOA-01",
+            "CL-EFF-01"
+          ],
+          "description": "Leave-behind cover: 'Investigational talrenimab in FGFR2 Fusion-Positive Metastatic Cholangiocarcinoma -- Science. Precision. Impact.' Icons -- Targeted Mechanism, Clinical Evidence, Patient Impact, Ongoing Innovation. Investigational + PI disclaimer.",
+          "branded": true
+        },
+        {
+          "id": "MC-OBJ-DIFF",
+          "title": "Objection handler: 'How is this different from other FGFR-targeted approaches?'",
+          "type": "detail_aid",
+          "audience": "Field",
+          "channel": "Field",
+          "status": "For review",
+          "image": "oncomyra-objection-handler-differentiation.png",
+          "claim_links": [
+            "CL-MOA-01",
+            "CL-MOA-02"
+          ],
+          "description": "Teal field objection-handler card. Possible response: talrenimab is a selective FGFR2 inhibitor with a differentiated binding profile. Key support points -- selective FGFR2 targeting, designed to inhibit oncogenic signaling, data from ongoing studies. 'Always refer to the full Prescribing Information.'",
+          "branded": true
+        },
+        {
+          "id": "MC-TT-SNAP",
+          "title": "Talk track snapshot -- field",
+          "type": "detail_aid",
+          "audience": "Field",
+          "channel": "Field",
+          "status": "For review",
+          "image": "oncomyra-talk-track-snapshot.png",
+          "claim_links": [
+            "CL-MOA-01",
+            "CL-EFF-01",
+            "CL-SAF-01"
+          ],
+          "description": "Field talk-track card (For HCP use only, not for promotional use): Opening (investigational, selectively inhibits FGFR2), Unmet Need (limited targeted options), Evidence (encouraging anti-tumor activity, manageable safety), Safety (consistent with prior data), Close (happy to share more).",
+          "branded": true
+        },
+        {
+          "id": "MC-PT-BROCHURE",
+          "title": "You are not alone -- patient/caregiver brochure",
+          "type": "social",
+          "audience": "Patient / Caregiver",
+          "channel": "Patient support",
+          "status": "Gated",
+          "image": "oncomyra-patient-brochure-you-are-not-alone.png",
+          "claim_links": [],
+          "description": "Three-panel patient/caregiver support brochure: 'You are not alone -- support and resources for patients and caregivers.' Sections -- Understanding Your Treatment, Support Along the Way, Help for Caregivers; website, toll-free line, email. Investigational disclaimer. GATED: patient content requires PI/ISI + regulatory input before use.",
+          "branded": true
+        },
+        {
+          "id": "MC-PT-BANNER",
+          "title": "Support through every step -- patient banner",
+          "type": "banner",
+          "audience": "Patient / Caregiver",
+          "channel": "Web",
+          "status": "Gated",
+          "image": "oncomyra-patient-banner-support-through-every-step.png",
+          "claim_links": [],
+          "description": "Patient/caregiver banner: 'Support through every step -- resources and care information for patients and caregivers affected by cholangiocarcinoma.' Treatment Information, Caregiver Resources, Support Services. GATED pending PI/ISI/reg.",
+          "branded": true
+        },
+        {
+          "id": "MC-BRAND-SYS",
+          "title": "Oncomyra brand identity system",
+          "type": "internal",
+          "audience": "Internal",
+          "channel": "Internal",
+          "status": "Reference",
+          "image": "oncomyra-brand-identity-system.png",
+          "claim_links": [],
+          "description": "Brand identity sheet: logo + clear-space, colour palette (Deep Purple #4B2E83, Violet #7B4ACB, Teal #009D9A, Lavender #E9E6F7, Slate Gray #6B7280), typography (Poppins Bold headings, Inter Regular body), icon set (Targeted Approach, Patient Centered, Manageable Safety, Meaningful Impact, Clinical Progress), brand elements + imagery style (Science-led, Precision, Innovation, Humanity, Connection). Tagline: 'Science. Precision. Purpose.'",
+          "branded": true
+        },
+        {
+          "id": "MC-ISI01",
+          "title": "Important Safety Information placeholder",
+          "type": "webpage",
+          "audience": "HCP",
+          "channel": "All",
+          "status": "Placeholder",
+          "image": "",
+          "claim_links": [
+            "CL-SAF-01",
+            "CL-SAF-02",
+            "CL-SAF-03"
+          ],
+          "description": "[ISI to be populated from the approved PI -- contraindications, warnings (hyperphosphatemia, ocular, hepatic, embryo-fetal as applicable), common AEs, monitoring.] CANNOT ship without approved ISI.",
+          "branded": true
+        }
       ],
       "personas": {
         "hcp": [
-          {"name": "The Precision Specialist (GI / medical oncologist)", "who": "Treats advanced iCCA; decides at/after progression on gemcitabine-based therapy", "tier": "Primary",
-           "voice": "Show me the CLARITY-01 data and how I identify and manage the right patient -- not just start a drug."},
-          {"name": "The Molecular Pathologist", "who": "Runs NGS profiling; gatekeeper of FGFR2 fusion detection", "tier": "Primary",
-           "voice": "RNA-based NGS matters for these fusions -- and a liquid-negative shouldn't rule a patient out."},
-          {"name": "The MSL-engaged Academic", "who": "Mechanistically-minded; wants design, limitations, investigational context", "tier": "Secondary",
-           "voice": "It's open-label -- walk me through the BICR PFS and the fusion-partner analysis."}
+          {
+            "name": "The Precision Specialist (GI / medical oncologist)",
+            "who": "Treats advanced iCCA; decides at/after progression on gemcitabine-based therapy",
+            "tier": "Primary",
+            "voice": "Show me the CLARITY-01 data and how I identify and manage the right patient -- not just start a drug.",
+            "practice_setting": "Oncology clinic managing advanced iCCA patients, focused on applying evidence to real-world patient care.",
+            "goals": "Effectively identify and manage FGFR2 fusion-positive iCCA patients; wants clear, evidence-based pathways for patient selection and safety management, particularly for comorbid patients.",
+            "barriers": "Concerns about identifying the appropriate patients for targeted therapy and managing potential treatment-related adverse events effectively in real-world settings.",
+            "objections": "Skepticism about the differentiation and practical value compared to existing therapies, given the open-label design of CLARITY-01, and potential challenges with safety management.",
+            "message_resonance": "The OS benefit from CLARITY-01, presented with clear, practical guidance on patient identification (FGFR2 fusion testing) and proactive safety management algorithms, particularly for comorbid patients.",
+            "narrative": "This HCP is a pragmatic oncologist focused on delivering tangible benefits to their advanced iCCA patients. They are evidence-driven, seeking clear data from trials like CLARITY-01, but also demand practical guidance on how to apply that evidence to identify the right patients and manage their treatment journey. They are wary of new drugs without a defined pathway for real-world application, especially regarding potential adverse events and differentiation from existing options."
+          },
+          {
+            "name": "The Molecular Pathologist",
+            "who": "Runs NGS profiling; gatekeeper of FGFR2 fusion detection",
+            "tier": "Primary",
+            "voice": "RNA-based NGS matters for these fusions -- and a liquid-negative shouldn't rule a patient out.",
+            "practice_setting": "Specialized pathology lab, likely associated with an academic or large hospital system, performing advanced molecular diagnostics.",
+            "goals": "To ensure the most accurate and comprehensive detection of FGFR2 fusions, advocating for RNA-based NGS and reflex tissue testing for liquid biopsy negatives, to avoid missing eligible patients.",
+            "barriers": "Incomplete or suboptimal FGFR2 fusion testing practices (e.g., sole reliance on liquid biopsy, non-RNA based methods) that may lead to missed diagnoses for eligible patients.",
+            "message_resonance": "Emphasis on the critical role of RNA-based NGS for robust FGFR2 fusion detection and the necessity of reflex tissue testing to confirm liquid biopsy negatives, ensuring no patient is overlooked.",
+            "narrative": "This expert is the gatekeeper of diagnosis, focused on the technical precision and completeness of FGFR2 fusion detection. They advocate for superior testing methods like RNA-based NGS and are concerned about the pitfalls of less rigorous approaches, particularly the risk of false negatives with liquid biopsies. Their primary concern is ensuring every eligible patient is accurately identified for potential targeted therapy."
+          },
+          {
+            "name": "The MSL-engaged Academic",
+            "who": "Mechanistically-minded; wants design, limitations, investigational context",
+            "tier": "Secondary",
+            "voice": "It's open-label -- walk me through the BICR PFS and the fusion-partner analysis.",
+            "practice_setting": "Academic medical center or large research hospital, involved in clinical trials and advanced research.",
+            "goals": "To thoroughly understand the scientific and clinical foundations of the therapy, including trial design, specific efficacy data points, mechanistic differentiation, and the therapy's place in the broader research landscape.",
+            "barriers": "Interpreting efficacy data from open-label trials and understanding the full mechanistic differentiation compared to existing therapies, especially concerning resistance mechanisms.",
+            "channel_preference": "Scientific exchanges with Medical Science Liaisons (MSLs), peer-reviewed publications, and scientific congresses.",
+            "objections": "Concerns regarding potential bias in open-label trial results and any overstated claims, particularly comparative claims against other FGFR inhibitors or definitive statements about hypothetical mechanisms.",
+            "message_resonance": "Detailed scientific discussions on CLARITY-01's design and specific outcomes (e.g., BICR PFS, fusion-partner agnostic response), along with the mechanistic differentiation (e.g., ADC approach, hypothesis regarding TKI resistance), presented with appropriate scientific rigor and transparency regarding study limitations.",
+            "narrative": "This academic physician is a discerning, scientifically-minded expert who values methodological rigor and mechanistic depth. They engage with MSLs to explore clinical trial design, data nuances like BICR PFS and fusion-partner analysis, and the therapy's underlying biological rationale. While they are interested in innovation, they approach new data with a critical eye, especially concerning open-label studies or claims about resistance mechanisms that are still hypothetical."
+          }
         ],
         "patient": [
-          {"name": "The Newly Diagnosed iCCA Patient", "who": "Recently diagnosed advanced cholangiocarcinoma; overwhelmed", "target": "Understand testing & next steps",
-           "voice": "Has my tumor been tested for genetic changes like FGFR2? What happens next?"},
-          {"name": "The Caregiver / Care Partner", "who": "Managing appointments, logistics and support", "target": "Practical support",
-           "voice": "I need clear, practical help -- and to be part of the conversation."}
+          {
+            "name": "The Newly Diagnosed iCCA Patient",
+            "who": "Recently diagnosed advanced cholangiocarcinoma; overwhelmed",
+            "target": "Understand testing & next steps",
+            "voice": "Has my tumor been tested for genetic changes like FGFR2? What happens next?"
+          },
+          {
+            "name": "The Caregiver / Care Partner",
+            "who": "Managing appointments, logistics and support",
+            "target": "Practical support",
+            "voice": "I need clear, practical help -- and to be part of the conversation."
+          }
         ],
         "payer": [
-          {"name": "Market Access / Payer", "who": "Formulary and coverage decision-maker", "target": "Clinical value (no economic data in source)",
-           "voice": "Show me the source-supported clinical value -- the access/economic case isn't built yet."}
+          {
+            "name": "Market Access / Payer",
+            "who": "Formulary and coverage decision-maker",
+            "target": "Clinical value (no economic data in source)",
+            "voice": "Show me the source-supported clinical value -- the access/economic case isn't built yet."
+          }
         ]
       },
       "competitors": [
-        {"name": "Pemigatinib", "threat": "FGFR TKI -- context only", "detail": "Prior FGFR TKI; kinase-pocket inhibitor limited by acquired resistance and off-target toxicity. No head-to-head data -- mechanistic/contextual framing only."},
-        {"name": "Infigratinib", "threat": "FGFR TKI -- context only", "detail": "Prior FGFR TKI referenced contextually. No comparative efficacy/safety claim is supported."},
-        {"name": "Futibatinib (TAS-120)", "threat": "FGFR TKI -- context only", "detail": "Irreversible FGFR inhibitor referenced contextually; no head-to-head vs talrenimab exists."}
+        {
+          "name": "Pemigatinib",
+          "threat": "FGFR TKI -- context only",
+          "detail": "Prior FGFR TKI; kinase-pocket inhibitor limited by acquired resistance and off-target toxicity. No head-to-head data -- mechanistic/contextual framing only."
+        },
+        {
+          "name": "Infigratinib",
+          "threat": "FGFR TKI -- context only",
+          "detail": "Prior FGFR TKI referenced contextually. No comparative efficacy/safety claim is supported."
+        },
+        {
+          "name": "Futibatinib (TAS-120)",
+          "threat": "FGFR TKI -- context only",
+          "detail": "Irreversible FGFR inhibitor referenced contextually; no head-to-head vs talrenimab exists."
+        }
       ],
       "care_continuum": {},
       "identity": {
         "palette": [
-          {"hex": "#4B2E83", "name": "Deep Purple", "use": "Primary -- headlines / structure"},
-          {"hex": "#7B4ACB", "name": "Violet", "use": "Accent"},
-          {"hex": "#009D9A", "name": "Teal", "use": "CTA / active / clinical"},
-          {"hex": "#E9E6F7", "name": "Lavender", "use": "Surface / background tint"},
-          {"hex": "#6B7280", "name": "Slate Gray", "use": "Body text / captions"}
+          {
+            "hex": "#4B2E83",
+            "name": "Deep Purple",
+            "use": "Primary -- headlines / structure"
+          },
+          {
+            "hex": "#7B4ACB",
+            "name": "Violet",
+            "use": "Accent"
+          },
+          {
+            "hex": "#009D9A",
+            "name": "Teal",
+            "use": "CTA / active / clinical"
+          },
+          {
+            "hex": "#E9E6F7",
+            "name": "Lavender",
+            "use": "Surface / background tint"
+          },
+          {
+            "hex": "#6B7280",
+            "name": "Slate Gray",
+            "use": "Body text / captions"
+          }
         ],
         "typography": "Poppins Bold (headings) + Inter Regular (body)"
+      },
+      "lifecycle_stage": "Pre-launch",
+      "key_objective": "Adoption",
+      "success_measure": "New patient starts",
+      "branded": true,
+      "primary_audience": "HCPs"
+    },
+    "Test": {
+      "source_label": "Test (new, not yet set up)",
+      "source_note": "New brand -- created via the cockpit's + Brand flow. No content ingested yet.",
+      "company": "",
+      "generic": "",
+      "therapy_area": "",
+      "indication": "",
+      "territories": [
+        "US"
+      ],
+      "fiscal_frame": "",
+      "tagline": "",
+      "core_claim": "",
+      "positioning_statement": "",
+      "message_hierarchy": [],
+      "approved_indication": "",
+      "safety_reference": "",
+      "clinical_data": [],
+      "tone_pillars": [],
+      "voice_do": [],
+      "voice_dont": [],
+      "guardrails": {
+        "dos": [],
+        "donts": []
+      },
+      "concepts": [],
+      "message_pool": [],
+      "claims": [],
+      "references": [],
+      "components": [],
+      "personas": {
+        "hcp": [],
+        "patient": [],
+        "payer": []
+      },
+      "competitors": [],
+      "care_continuum": {},
+      "identity": {
+        "palette": [],
+        "typography": ""
+      }
+    },
+    "Solaraid": {
+      "source_label": "Solaraid (new, not yet set up)",
+      "source_note": "New brand -- created via the cockpit's + Brand flow. No content ingested yet.",
+      "company": "",
+      "generic": "",
+      "therapy_area": "",
+      "indication": "Chronic Post-Traumatic Cognitive Dysfunction (PTCD)",
+      "territories": [
+        "US"
+      ],
+      "fiscal_frame": "",
+      "tagline": "Restoring Cognitive Clarity",
+      "core_claim": "Solaraid significantly improves overall cognitive function by 35% on the CCFS and reduces chronic cognitive fatigue by 42% in PTCD patients.",
+      "positioning_statement": "For patients with Chronic Post-Traumatic Cognitive Dysfunction (PTCD) who struggle with debilitating cognitive dysfunction, Solaraid is the first targeted treatment that moves beyond symptom management to restore cognitive clarity and function by addressing underlying neurological impairment, enabling them to reclaim their mental sharpness and live fuller lives.",
+      "message_hierarchy": {
+        "overall_core_message": "Restoring Cognitive Clarity",
+        "hcp_messages": [
+          "The First Targeted Therapy for PTCD",
+          "Significant, Sustained Cognitive Improvement",
+          "A Favorable Safety Profile"
+        ],
+        "patient_messages": [
+          "Reclaiming Your Life",
+          "Breaking Through the Brain Fog",
+          "A New Hope for Cognitive Recovery"
+        ]
+      },
+      "approved_indication": "",
+      "safety_reference": "",
+      "clinical_data": [],
+      "tone_pillars": [
+        "Hopeful",
+        "Authoritative",
+        "Empathetic",
+        "Restorative",
+        "Empowering"
+      ],
+      "voice_do": [
+        "Emphasize hope and a positive future, using terms like 'new dawn' or 'pathway to reclaim'.",
+        "Be evidence-based and scientifically credible, citing clinical data and unique mechanisms.",
+        "Clearly explain the unique, targeted mechanism of action as 'the first targeted therapy'.",
+        "Focus on tangible patient benefits and restoration of function, such as 'reclaiming your life' or 'breaking through the brain fog'.",
+        "Use empathetic and empowering language that acknowledges patient struggles while offering solutions."
+      ],
+      "voice_dont": [
+        "Avoid language that suggests mere symptomatic management without addressing underlying issues.",
+        "Do not downplay the severity or frustration of the patient's current condition; acknowledge their challenges empathetically.",
+        "Refrain from making vague claims or promises without clear scientific backing or patient benefit.",
+        "Do not shy away from highlighting the unmet medical need or Solaraid's pioneering position."
+      ],
+      "guardrails": {
+        "dos": [
+          "Emphasize Solaraid as the first targeted treatment designed to restore cognitive clarity and function for Chronic Post-Traumatic Cognitive Dysfunction (PTCD).",
+          "Highlight Solaraid's ability to move beyond mere symptom management to address underlying neurological impairment.",
+          "Stress significant, sustained cognitive improvement, including the 35% mean improvement on the CNS Cognitive Function Scale (CCFS).",
+          "Mention the profound impact on chronic cognitive fatigue, specifically the 42% reduction in self-reported scores.",
+          "Communicate Solaraid's favorable safety and tolerability profile, noting the absence of serious cardiac, hepatic, or neurological safety signals.",
+          "Position Solaraid as offering hope and a path to reclaim mental sharpness and live fuller lives.",
+          "Use patient-centric language focusing on 'Reclaiming Your Life,' 'Breaking Through the Brain Fog,' and 'A New Hope for Cognitive Recovery.'",
+          "Highlight the novel mechanism of action targeting specific neural circuits involved in post-traumatic cognitive recovery."
+        ],
+        "donts": [
+          "Do not describe Solaraid as merely managing symptoms.",
+          "Do not position Solaraid as equivalent to non-specific, symptomatic, or off-label treatments."
+        ]
+      },
+      "concepts": [],
+      "message_pool": [],
+      "claims": [],
+      "references": [],
+      "components": [],
+      "personas": {
+        "hcp": [
+          {
+            "type": "Neurologist",
+            "description": "Specializing in neurorehabilitation or TBI sequelae.",
+            "pain_points": [
+              "Limitations of current symptomatic management (off-label stimulants/antidepressants) with limited success."
+            ],
+            "drivers": [
+              "Seeking evidence-based, targeted therapies",
+              "Desire for tangible improvements in cognitive function and quality of life for patients",
+              "Clinical trial data demonstrating sustained efficacy",
+              "Favorable safety profile",
+              "Novel mechanism of action addressing underlying neural network dysregulation"
+            ]
+          },
+          {
+            "type": "Rehabilitation Physician",
+            "description": "Specializing in neurorehabilitation or TBI sequelae.",
+            "pain_points": [
+              "Limitations of current symptomatic management (off-label stimulants/antidepressants) with limited success."
+            ],
+            "drivers": [
+              "Seeking evidence-based, targeted therapies",
+              "Desire for tangible improvements in cognitive function and quality of life for patients",
+              "Clinical trial data demonstrating sustained efficacy",
+              "Favorable safety profile",
+              "Novel mechanism of action addressing underlying neural network dysregulation"
+            ]
+          },
+          {
+            "type": "Psychiatrist",
+            "description": "Specializing in neurorehabilitation or TBI sequelae.",
+            "pain_points": [
+              "Limitations of current symptomatic management (off-label stimulants/antidepressants) with limited success."
+            ],
+            "drivers": [
+              "Seeking evidence-based, targeted therapies",
+              "Desire for tangible improvements in cognitive function and quality of life for patients",
+              "Clinical trial data demonstrating sustained efficacy",
+              "Favorable safety profile",
+              "Novel mechanism of action addressing underlying neural network dysregulation"
+            ]
+          }
+        ],
+        "patient": [
+          {
+            "type": "Individual with Chronic Post-Traumatic Cognitive Dysfunction (PTCD)",
+            "description": "Aged 18-65, experienced a moderate to severe TBI months or years prior, and continues to suffer from chronic, debilitating cognitive dysfunction.",
+            "symptoms_conditions": [
+              "Persistent memory issues",
+              "Executive dysfunction",
+              "Mental fog",
+              "Struggling with memory recall, concentration, and multitasking"
+            ],
+            "impact": [
+              "Severely impacting quality of life and ability to reintegrate into daily routines",
+              "Difficulty returning to work, managing households, or engaging in hobbies"
+            ],
+            "motivations": [
+              "Highly motivated to regain former cognitive abilities",
+              "Actively seeking solutions beyond coping strategies",
+              "Value treatments that offer real, measurable improvements"
+            ],
+            "frustrations": [
+              "Lack of options that truly restore function rather than just manage symptoms"
+            ]
+          }
+        ],
+        "payer": []
+      },
+      "competitors": [
+        "Psychostimulants (e.g., methylphenidate, modafinil) for fatigue and attention (off-label)",
+        "Cognitive enhancers (e.g., donepezil) for memory (off-label)",
+        "Non-pharmacological interventions like cognitive rehabilitation therapy",
+        "Current standard of care (or lack thereof)",
+        "Patient/physician therapeutic inertia"
+      ],
+      "care_continuum": {},
+      "identity": {
+        "palette": [],
+        "typography": ""
+      },
+      "brand_personification": {
+        "archetype": "The Guiding Pioneer",
+        "traits": [
+          "Hopeful",
+          "Authoritative",
+          "Empathetic",
+          "Clear-headed"
+        ],
+        "narrative": "Solaraid is like a pioneering scientist who, with deep empathy, illuminates a clear path forward. They embody the confidence of groundbreaking discovery, offering a robust, evidence-based solution that restores what was lost. With a steady hand and a hopeful outlook, they guide individuals from the fog of dysfunction towards a future of renewed clarity and reclaimed life."
+      },
+      "key_objective": "To provide a pathway to reclaim mental sharpness and live fuller lives for patients with Chronic Post-Traumatic Cognitive Dysfunction (PTCD), moving beyond mere symptom management."
+    },
+    "NeuroVita": {
+      "source_label": "NeuroVita (new, not yet set up)",
+      "source_note": "New brand -- created via the cockpit's + Brand flow. No content ingested yet.",
+      "company": "",
+      "generic": "",
+      "therapy_area": "",
+      "indication": "Early-stage Progressive Neuro-Atrophy Syndrome (PNAS)",
+      "territories": [
+        "US"
+      ],
+      "fiscal_frame": "",
+      "tagline": "Reclaiming Time, Preserving Self: NeuroVita Offers a New Horizon",
+      "core_claim": "First and only disease-modifying therapy for PNAS, demonstrating a statistically significant 32% reduction in the rate of disease progression.",
+      "positioning_statement": "NeuroVita is the first and only disease-modifying therapy for PNAS, offering a beacon of hope where previously only symptomatic management existed, fundamentally altering the disease trajectory and enabling patients to live more independently for longer.",
+      "message_hierarchy": [
+        {
+          "pillar": "Transformative Disease Modification",
+          "claim": "NeuroVita is the first and only disease-modifying therapy for PNAS.",
+          "evidence": "Document states: 'first and only disease-modifying therapy for PNAS' and 'sole disease-modifying therapy capable of slowing the relentless progression of neuronal atrophy'."
+        },
+        {
+          "pillar": "Clinically Proven Efficacy",
+          "claim": "NeuroVita significantly slows the rate of disease progression in early-stage PNAS patients.",
+          "evidence": "Document states: '32% reduction in the rate of disease progression' and '28% decrease in whole brain volume loss' in the NEURO-PRESERVE Phase 3 trial."
+        },
+        {
+          "pillar": "Enabling Extended Independence & Quality of Life",
+          "claim": "NeuroVita offers patients and caregivers the opportunity to reclaim time and preserve self, by enabling patients to live more independently for longer.",
+          "evidence": "Document states: 'preserving precious time and functionality', 'live more independently for longer', and messaging pillar 'Reclaiming Time, Preserving Self: NeuroVita Offers a New Horizon'."
+        },
+        {
+          "pillar": "Favorable Safety and Convenience",
+          "claim": "NeuroVita provides a well-tolerated oral treatment option suitable for chronic administration.",
+          "evidence": "Document states: 'favorable safety and tolerability profile', 'mild to moderate gastrointestinal disturbances' as most frequent AEs, 'no significant imbalances in serious adverse events', and 'oral administration, promoting ease of use and long-term adherence'."
+        }
+      ],
+      "approved_indication": "",
+      "safety_reference": "",
+      "clinical_data": [],
+      "tone_pillars": [
+        "Pioneering & Transformative",
+        "Hopeful & Empowering",
+        "Scientifically Rigorous & Evidence-Based",
+        "Empathetic & Patient-Centric"
+      ],
+      "voice_do": [
+        "Use precise, evidence-backed language when discussing clinical data and mechanism of action.",
+        "Convey a sense of hope and progress, focusing on the potential for extended independence and improved quality of life.",
+        "Acknowledge the serious nature of PNAS with empathy, while highlighting NeuroVita's unique solution.",
+        "Clearly communicate NeuroVita's 'first-in-class' and 'disease-modifying' status.",
+        "Emphasize the favorable safety profile and oral administration for patient adherence."
+      ],
+      "voice_dont": [
+        "Make unsubstantiated claims or overstate efficacy; always ground statements in clinical evidence.",
+        "Offer false hope or guaranteed outcomes, as PNAS remains a degenerative condition.",
+        "Use overly complex scientific jargon without context, especially when communicating with patients and caregivers.",
+        "Downplay the challenges faced by PNAS patients or their caregivers."
+      ],
+      "guardrails": {
+        "dos": [
+          {
+            "category": "Positioning",
+            "text": "Position NeuroVita as the first and only disease-modifying therapy for PNAS."
+          },
+          {
+            "category": "Positioning",
+            "text": "Position NeuroVita as a crucial intervention that can fundamentally alter the disease trajectory, enabling patients to live more independently for longer."
+          },
+          {
+            "category": "Positioning",
+            "text": "Position NeuroVita as a first-in-class, best-in-class solution for the foreseeable future."
+          },
+          {
+            "category": "Clinical Claims",
+            "text": "Communicate a statistically significant 32% reduction in the rate of disease progression as measured by the primary endpoint, the PNAS-Functional Disability Scale (PNAS-FDS) score (p<0.001)."
+          },
+          {
+            "category": "Clinical Claims",
+            "text": "Communicate a 28% decrease in whole brain volume loss as assessed by MRI (p<0.005)."
+          },
+          {
+            "category": "Clinical Claims",
+            "text": "Communicate significant improvements in specific cognitive domain scores."
+          },
+          {
+            "category": "Safety Claims",
+            "text": "Emphasize NeuroVita's favorable safety and tolerability profile."
+          },
+          {
+            "category": "Safety Claims",
+            "text": "When discussing AEs, mention mild to moderate gastrointestinal disturbances, including nausea (18% vs. 6% placebo) and dyspepsia (11% vs. 4% placebo), and headache (14% vs. 7% placebo)."
+          },
+          {
+            "category": "Safety Claims",
+            "text": "State that there were no significant imbalances in serious adverse events, cardiovascular events, or hepatic safety signals."
+          },
+          {
+            "category": "Messaging",
+            "text": "Focus messaging on preserving precious time and functionality for individuals."
+          },
+          {
+            "category": "Messaging",
+            "text": "For patients and caregivers, use messaging like \"Reclaiming Time, Preserving Self\" and focus on maintaining independence and quality of life."
+          },
+          {
+            "category": "Messaging",
+            "text": "Underscore oral administration, promoting ease of use and long-term adherence."
+          }
+        ],
+        "donts": []
+      },
+      "concepts": [],
+      "message_pool": [],
+      "claims": [],
+      "references": [],
+      "components": [],
+      "personas": {
+        "hcp": [
+          {
+            "name": "Neurologists (Specializing in Neurodegenerative/Movement Disorders)",
+            "who": "HCPs affiliated with academic medical centers and specialized rare disease clinics, early adopters of novel therapies, deeply invested in improving long-term outcomes for patients.",
+            "tier": "Primary",
+            "voice": "Data-driven, scientific, and hopeful, focusing on robust clinical data for slowing disease progression and reducing brain atrophy."
+          },
+          {
+            "name": "General Neurologists",
+            "who": "HCPs who may initially diagnose PNAS.",
+            "tier": "Secondary",
+            "voice": "Educational, guiding, and authoritative, providing critical education and referral pathways to specialists."
+          }
+        ],
+        "patient": [
+          {
+            "name": "Early-stage PNAS Patient",
+            "who": "Individuals 45-65 years old, recently diagnosed with early-stage PNAS, acutely aware of declining cognitive and physical capabilities. Highly motivated to preserve independence and quality of life, actively seeking tangible hope for slowing disease progression, and willing to manage minor side effects for significant clinical benefit.",
+            "tier": "Primary",
+            "voice": "Empathetic, hopeful, and empowering, focusing on reclaiming time and preserving self, maintaining independence and quality of life."
+          }
+        ],
+        "payer": []
+      },
+      "competitors": [
+        {
+          "name": "Symptomatic Treatments (e.g., Physical Therapy, Cognitive Rehabilitation, Cholinesterase Inhibitors)",
+          "threat": "Medium",
+          "detail": "Currently dominate the PNAS landscape by offering symptomatic management (e.g., physical therapy, cognitive rehabilitation, off-label cholinesterase inhibitors) but do not address the underlying disease pathology or slow progression. They represent the current standard of care for symptom management."
+        }
+      ],
+      "care_continuum": {},
+      "identity": {
+        "palette": [],
+        "typography": ""
+      },
+      "brand_personification": {
+        "archetype": "The Guiding Pioneer",
+        "traits": [
+          "Pioneering",
+          "Trustworthy",
+          "Empathetic",
+          "Determined"
+        ],
+        "narrative": "NeuroVita embodies a pioneering spirit, like a visionary leader who charts new territory with unwavering determination and a deep sense of responsibility. This brand is a trusted guide, offering hope and tangible solutions grounded in rigorous scientific proof, while always speaking with profound empathy for those facing life-altering challenges. It leads the way not with bravado, but with the quiet confidence of a proven innovator dedicated to empowering individuals to reclaim their independence and preserve their sense of self."
+      },
+      "lifecycle_stage": "Growth",
+      "key_objective": "Increase awareness",
+      "success_measure": "New patient starts",
+      "branded": false
+    },
+    "SoluVex": {
+      "source_label": "SoluVex (new, not yet set up)",
+      "source_note": "New brand -- created via the cockpit's + Brand flow. No content ingested yet.",
+      "company": "",
+      "generic": "",
+      "therapy_area": "",
+      "indication": "",
+      "territories": [
+        "US"
+      ],
+      "fiscal_frame": "",
+      "tagline": "",
+      "core_claim": "",
+      "positioning_statement": "",
+      "message_hierarchy": [],
+      "approved_indication": "",
+      "safety_reference": "",
+      "clinical_data": [],
+      "tone_pillars": [],
+      "voice_do": [],
+      "voice_dont": [],
+      "guardrails": {
+        "dos": [],
+        "donts": []
+      },
+      "concepts": [],
+      "message_pool": [],
+      "claims": [],
+      "references": [],
+      "components": [],
+      "personas": {
+        "hcp": [],
+        "patient": [],
+        "payer": []
+      },
+      "competitors": [],
+      "care_continuum": {},
+      "identity": {
+        "palette": [],
+        "typography": ""
       }
     }
   }

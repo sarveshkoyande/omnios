@@ -531,27 +531,37 @@ function HcpFunnel({ brand, plan }: { brand: string; plan: TreePlan }) {
 
 const DAY_MS = 86400000;
 const toMs = (d: string) => new Date(`${d}T00:00:00`).getTime();
-const iso = (ms: number) => new Date(ms).toISOString().slice(0, 10);
+const isoLocal = (ms: number) => {
+  const d = new Date(ms);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+const shortDate = (ms: number) => new Date(ms).toLocaleDateString(undefined, { day: "numeric", month: "short" });
 
-/** What range to plot: the campaigns' own dates (start_date/end_date, falling back to
- *  created_at..closed_at-or-today when unset) widened to cover the plan's own period when
- *  it has one -- so a campaign scheduled outside the plan's period is still visible. */
-function timelineDomain(plan: TreePlan, ranges: Map<number, [number, number]>): [number, number] | null {
-  const points: number[] = [];
-  if (plan.period_start) points.push(toMs(plan.period_start));
-  if (plan.period_end) points.push(toMs(plan.period_end));
-  for (const [s, e] of ranges.values()) { points.push(s); points.push(e); }
-  if (points.length === 0) return null;
-  const min = Math.min(...points);
-  const max = Math.max(...points, min + DAY_MS);
-  const pad = Math.max((max - min) * 0.03, DAY_MS);
-  return [min - pad, max + pad];
+/** The calendar quarter the plan runs in: the quarter containing its period_start, else
+ *  today's quarter. Weeks start on Monday and span the quarter edge to edge. */
+function quarterGrid(plan: TreePlan) {
+  const anchor = plan.period_start ? new Date(`${plan.period_start}T00:00:00`) : new Date();
+  const qStartMonth = Math.floor(anchor.getMonth() / 3) * 3;
+  const year = anchor.getFullYear();
+  const start = new Date(year, qStartMonth, 1).getTime();
+  const end = new Date(year, qStartMonth + 3, 1).getTime();
+  const months = [0, 1, 2].map((i) => {
+    const s = new Date(year, qStartMonth + i, 1).getTime();
+    const e = new Date(year, qStartMonth + i + 1, 1).getTime();
+    return { label: new Date(s).toLocaleDateString(undefined, { month: "long", year: "numeric" }), start: s, end: e };
+  });
+  const first = new Date(start);
+  const mondayOffset = (first.getDay() + 6) % 7;
+  const weeks: { start: number; end: number }[] = [];
+  for (let w = new Date(year, qStartMonth, 1 - mondayOffset).getTime(); w < end; w += DAY_MS * 7) {
+    weeks.push({ start: Math.max(w, start), end: Math.min(w + DAY_MS * 7, end) });
+  }
+  return { start, end, months, weeks, label: `Q${qStartMonth / 3 + 1} ${year}` };
 }
 
-/** Campaigns laid out on a shared horizontal axis so it's clear at a glance which one runs
- *  when. A campaign with no real dates gets an illustrative slot instead of being left off
- *  the axis (seeded by campaign, stable across visits) -- shown in a lighter, dashed bar
- *  with a one-click way to confirm its real dates, which replaces the placeholder. */
+/** Campaigns on a quarter Gantt grid (3 months, week columns). A campaign with no real
+ *  dates gets an illustrative slot (seeded, stable across visits), drawn hatched; every row
+ *  has an Edit button to set its real dates. */
 function CampaignTimeline({ brand, plan, onChanged }: { brand: string; plan: TreePlan; onChanged: () => void }) {
   const [editing, setEditing] = useState<number | null>(null);
 
@@ -599,74 +609,132 @@ function CampaignTimeline({ brand, plan, onChanged }: { brand: string; plan: Tre
     return m;
   }, [real, baseWindow, plan.campaigns, brand, plan.id]);
 
-  const domain = timelineDomain(plan, ranges);
+  const q = useMemo(() => quarterGrid(plan), [plan]);
+  const span = q.end - q.start;
+  const pct = (ms: number) => ((Math.min(Math.max(ms, q.start), q.end) - q.start) / span) * 100;
   const today = Date.now();
+  const weekCols = q.weeks.map((w) => `${w.end - w.start}fr`).join(" ");
 
-  const save = (campaignId: number, s: string, e: string) => {
-    scheduleCampaign(campaignId, s || null, e || null).then(() => { setEditing(null); onChanged(); }).catch(() => undefined);
-  };
+  const save = (campaignId: number, s: string, e: string) =>
+    scheduleCampaign(campaignId, s || null, e || null).then(() => { setEditing(null); onChanged(); });
 
   return (
     <div className="hier-timeline">
       <div className="hier-budget-head">
-        <div className="hier-detail-subhead">Timeline</div>
-        {illustrativeIds.size > 0 && <span className="illustrative-tag">Partly illustrative</span>}
+        <div className="hier-detail-subhead">Timeline · {q.label}</div>
+        {illustrativeIds.size > 0 && <span className="illustrative-tag">Hatched = dates not set</span>}
       </div>
-      {domain && (
-        <div className="hier-timeline-axis">
-          <div className="hier-timeline-scale">
-            <span>{iso(domain[0])}</span>
-            <span>{iso(domain[1])}</span>
+
+      <div className="gantt" style={{ ["--gantt-weeks" as string]: weekCols }}>
+        <div className="gantt-row gantt-head">
+          <div className="gantt-label gantt-corner">Campaign</div>
+          <div className="gantt-months">
+            {q.months.map((m) => (
+              <div key={m.label} className="gantt-month" style={{ flexGrow: m.end - m.start }}>{m.label}</div>
+            ))}
           </div>
-          <div className="hier-timeline-track">
-            {domain[0] <= today && today <= domain[1] && (
-              <div className="hier-timeline-today" style={{ left: `${((today - domain[0]) / (domain[1] - domain[0])) * 100}%` }} title="Today" />
-            )}
-          </div>
-          {plan.campaigns.map((c) => {
-            const [s, e] = ranges.get(c.id)!;
-            const illus = illustrativeIds.has(c.id);
-            const left = ((s - domain[0]) / (domain[1] - domain[0])) * 100;
-            const width = Math.max(((e - s) / (domain[1] - domain[0])) * 100, 1.2);
-            if (editing === c.id) {
-              return (
-                <ScheduleRow key={c.id} brand={brand} plan={plan} campaign={c}
-                  onCancel={() => setEditing(null)} onSave={save} />
-              );
-            }
-            return (
-              <div className="hier-timeline-row" key={c.id}>
-                <a className="hier-timeline-label" href={href({ kind: "campaign", brand, planId: plan.id, campaignId: c.id })}>{c.name}</a>
-                <div className="hier-timeline-lane">
-                  <div className={`hier-timeline-bar bar-status-${c.status} ${illus ? "bar-illustrative" : ""}`} style={{ left: `${left}%`, width: `${width}%` }}
-                    title={illus ? "Illustrative -- dates not confirmed" : `${c.start_date ?? "?"} – ${c.end_date ?? "ongoing"}`} />
-                </div>
-                {illus && <button type="button" className="hier-timeline-edit-btn" onClick={() => setEditing(c.id)}>Confirm dates</button>}
-              </div>
-            );
-          })}
+          <div className="gantt-actions" />
         </div>
-      )}
+        <div className="gantt-row gantt-head gantt-head-weeks">
+          <div className="gantt-label" />
+          <div className="gantt-weeks">
+            {q.weeks.map((w, i) => (
+              <div key={w.start} className="gantt-week" title={`Week of ${shortDate(w.start)}`}>
+                <span className="gantt-week-num">W{i + 1}</span>
+                <span className="gantt-week-date">{new Date(w.start).getDate()}</span>
+              </div>
+            ))}
+          </div>
+          <div className="gantt-actions" />
+        </div>
+
+        {plan.campaigns.map((c) => {
+          const [s, e] = ranges.get(c.id)!;
+          const illus = illustrativeIds.has(c.id);
+          const outside = e < q.start || s >= q.end;
+          const left = pct(s);
+          const width = Math.max(pct(e + DAY_MS) - left, 1.5);
+          return (
+            <div key={c.id} className="gantt-rowwrap">
+              <div className="gantt-row">
+                <a className="gantt-label" href={href({ kind: "campaign", brand, planId: plan.id, campaignId: c.id })} title={c.name}>{c.name}</a>
+                <div className="gantt-lane">
+                  <div className="gantt-weeks gantt-cells">
+                    {q.weeks.map((w) => <div key={w.start} className="gantt-cell" />)}
+                  </div>
+                  {q.start <= today && today < q.end && <div className="gantt-today" style={{ left: `${pct(today)}%` }} title="Today" />}
+                  {!outside && (
+                    <div className={`gantt-bar bar-status-${c.status} ${illus ? "bar-illustrative" : ""}`}
+                      style={{ left: `${left}%`, width: `${width}%` }}
+                      title={illus ? "Dates not set" : `${shortDate(s)} – ${shortDate(e)}`}>
+                      {!illus && <span className="gantt-bar-text">{shortDate(s)} – {shortDate(e)}</span>}
+                    </div>
+                  )}
+                  {outside && <span className="gantt-outside">Outside {q.label}</span>}
+                </div>
+                <div className="gantt-actions">
+                  <button type="button" className="gantt-edit-btn" aria-expanded={editing === c.id}
+                    onClick={() => setEditing(editing === c.id ? null : c.id)}>
+                    {editing === c.id ? "Close" : "Edit"}
+                  </button>
+                </div>
+              </div>
+              {editing === c.id && (
+                <ScheduleEditor campaign={c} defaults={[isoLocal(s), isoLocal(e)]} quarter={q}
+                  onCancel={() => setEditing(null)} onSave={save} />
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
 
-function ScheduleRow({ brand, plan, campaign, onCancel, onSave }: {
-  brand: string; plan: TreePlan; campaign: TreeCampaign;
-  onCancel: () => void; onSave: (campaignId: number, start: string, end: string) => void;
+function ScheduleEditor({ campaign, defaults, quarter, onCancel, onSave }: {
+  campaign: TreeCampaign;
+  defaults: [string, string];
+  quarter: { start: number; end: number };
+  onCancel: () => void;
+  onSave: (campaignId: number, start: string, end: string) => Promise<unknown>;
 }) {
-  const [s, setS] = useState(campaign.start_date ?? "");
-  const [e, setE] = useState(campaign.end_date ?? "");
+  const [s, setS] = useState(campaign.start_date ?? defaults[0]);
+  const [e, setE] = useState(campaign.end_date ?? defaults[1]);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const invalid = !!s && !!e && e < s;
+  const days = s && e && !invalid ? Math.round((toMs(e) - toMs(s)) / DAY_MS) + 1 : null;
+
+  const submit = (ev: React.FormEvent) => {
+    ev.preventDefault();
+    if (invalid || busy) return;
+    setBusy(true);
+    setErr(null);
+    onSave(campaign.id, s, e).catch((x) => { setErr(x instanceof Error ? x.message : String(x)); setBusy(false); });
+  };
+
   return (
-    <div className="hier-timeline-row hier-timeline-row-editing">
-      <a className="hier-timeline-label" href={href({ kind: "campaign", brand, planId: plan.id, campaignId: campaign.id })}>{campaign.name}</a>
-      <div className="hier-period">
-        <label>From <input type="date" className="jc-input" value={s} onChange={(ev) => setS(ev.target.value)} /></label>
-        <label>To <input type="date" className="jc-input" value={e} onChange={(ev) => setE(ev.target.value)} /></label>
-        <button type="button" className="jc-btn jc-btn-keep" onClick={() => onSave(campaign.id, s, e)}>Save</button>
+    <form className="gantt-editor" onSubmit={submit} onKeyDown={(ev) => { if (ev.key === "Escape") onCancel(); }}>
+      <label className="gantt-editor-field">
+        <span>Start</span>
+        <input type="date" className="jc-input" value={s} min={isoLocal(quarter.start)} max={isoLocal(quarter.end - DAY_MS)}
+          onChange={(ev) => setS(ev.target.value)} autoFocus />
+      </label>
+      <span className="gantt-editor-arrow" aria-hidden="true">→</span>
+      <label className="gantt-editor-field">
+        <span>End</span>
+        <input type="date" className="jc-input" value={e} min={s || undefined} max={isoLocal(quarter.end - DAY_MS)}
+          onChange={(ev) => setE(ev.target.value)} />
+      </label>
+      <span className={`gantt-editor-meta ${invalid ? "is-error" : ""}`}>
+        {invalid ? "End is before start" : days ? `${days} day${days === 1 ? "" : "s"}` : ""}
+      </span>
+      <div className="gantt-editor-actions">
         <button type="button" className="jc-btn jc-btn-ghost" onClick={onCancel}>Cancel</button>
+        <button type="submit" className="jc-btn jc-btn-keep" disabled={invalid || busy}>{busy ? "Saving…" : "Save"}</button>
       </div>
-    </div>
+      {err && <div className="step-chat-error" role="alert">{err}</div>}
+    </form>
   );
 }
 

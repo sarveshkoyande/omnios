@@ -72,6 +72,11 @@ from strategy import orchestration_gates  # noqa: E402  (Veeva/SFMC read/gate co
 from strategy import campaign_artifacts  # noqa: E402  (Campaign Strategy + Brief â€” the planning stage's two linked artifacts)
 from strategy import brief_document  # noqa: E402  (the Campaign Brief as export markdown, for the Word/PDF download)
 from strategy import campaign_ops  # noqa: E402  (Stage 3 on-demand campaign-flow (re)generation)
+from strategy.flow_sop import planner as flow_sop_planner  # noqa: E402  (SOP segmentation+journey diagram generator)
+from strategy.flow_sop import clarify as flow_sop_clarify  # noqa: E402
+from strategy.flow_sop import demo_brief as flow_sop_demo_brief  # noqa: E402
+from strategy.flow_sop import diagram as flow_sop_diagram  # noqa: E402  (exact SVG rendering, ported from the reference project's app/diagram.py)
+from strategy.flow_sop import editor as flow_sop_editor  # noqa: E402  (chat-driven diagram edits, ported from scripts/flow_editor.py)
 from strategy import process_knowledge  # noqa: E402  (Cognee-backed SME process grounding)
 from strategy import cognee_feedback  # noqa: E402  (human feedback overlay for Cognee grounding)
 from strategy.paths import data_path  # noqa: E402
@@ -1145,6 +1150,93 @@ def api_hierarchy_summary():
 @app.get("/api/campaigns/{campaign_id}/flows")
 def api_list_flows(campaign_id: int):
     return {"flows": _hier(hierarchy.list_flows, campaign_id)}
+
+
+class FlowSopAnswersRequest(BaseModel):
+    answers: dict = {}
+
+
+@app.get("/api/campaigns/{campaign_id}/flow-sop/clarifications")
+def api_flow_sop_clarifications(campaign_id: int, audience: str = "HCP"):
+    """The Flow Planner's SOP-driven clarifying questions for the static demo brief
+    (strategy/flow_sop, ported from the reference project's app/flow/*) -- `campaign_id` is
+    accepted for URL symmetry with the generate route below but not yet consulted, since the
+    generator runs against demo_brief.py rather than live campaign data (see strategy/flow_sop's
+    own scope note)."""
+    values = flow_sop_demo_brief.values_for(audience)
+    return {"questions": flow_sop_clarify.clarifications(values, {})}
+
+
+@app.post("/api/campaigns/{campaign_id}/flow-sop/generate")
+def api_flow_sop_generate(campaign_id: int, audience: str = "HCP", req: FlowSopAnswersRequest | None = None):
+    """Generate the SOP segmentation + journey diagram (strategy/flow_sop) for the static demo
+    brief. `campaign_id` is accepted for URL symmetry, not yet consulted (see strategy/flow_sop's
+    scope note: this generates against demo_brief.py, not live campaign data, until a real
+    intake form exists in OmniOS)."""
+    values = flow_sop_demo_brief.values_for(audience)
+    return flow_sop_planner.generate(values, answers=(req.answers if req else {}))
+
+
+@app.get("/api/campaigns/{campaign_id}/flow-sop/diagram.svg")
+def api_flow_sop_diagram(campaign_id: int, audience: str = "HCP"):
+    """The exact SOP diagram, rendered as SVG by strategy/flow_sop/diagram.py -- ported
+    verbatim from the reference project's app/diagram.py (colours, shapes, legend, panes)
+    rather than routed through the generic flow-builder canvas, which only has a generic
+    node-type catalog and cannot reproduce the SOP's own visual language (per-status legend
+    colours, cylinder/diamond/pill shapes, dashed TBD blocks)."""
+    values = flow_sop_demo_brief.values_for(audience)
+    spec = flow_sop_planner.generate(values)
+    title = f"Campaign {campaign_id} — SOP Segmentation + Journey ({audience})"
+    svg = flow_sop_diagram.flow_svg(spec, title)
+    return Response(content=svg, media_type="image/svg+xml")
+
+
+@app.get("/api/campaigns/{campaign_id}/flow-sop/chat/opening")
+def api_flow_sop_chat_opening(campaign_id: int, audience: str = "HCP"):
+    """The Flow Editor's opening line (strategy/flow_sop/editor.py, ported from
+    scripts/flow_editor.py) -- written by the model about the diagram it just generated,
+    rather than a fixed greeting."""
+    values = flow_sop_demo_brief.values_for(audience)
+    spec = flow_sop_planner.generate(values)
+    blocks = flow_sop_editor.block_list(spec)
+    kinds = sorted({b["type"] for b in blocks})
+    summary = f"{len(blocks)} blocks, {audience} audience. Block kinds present: {', '.join(kinds)}."
+    return {"reply": flow_sop_editor.opening(summary)}
+
+
+class FlowSopChatRequest(BaseModel):
+    message: str
+    audience: str = "HCP"
+    # Every edit already applied this session, in order -- replayed onto a freshly
+    # generated base spec each turn (regeneration is deterministic; the ops carry stable
+    # node ids, not the display codes, which shift as blocks are added/removed).
+    ops: list[dict] = []
+    history: list[str] = []
+
+
+@app.post("/api/campaigns/{campaign_id}/flow-sop/chat")
+def api_flow_sop_chat(campaign_id: int, req: FlowSopChatRequest):
+    """One turn of the Flow Editor (strategy/flow_sop/editor.py): interpret the message
+    against the current block list, apply the resulting edit (or refuse it), and return the
+    updated diagram. The model only decides *which* edit; delete_blocks/add_block/
+    branch_block/move_block/relabel_blocks apply it deterministically in Python."""
+    values = flow_sop_demo_brief.values_for(req.audience)
+    spec = flow_sop_planner.generate(values)
+    for op in req.ops:
+        spec, _ = flow_sop_editor.apply(spec, op)
+
+    blocks = flow_sop_editor.block_list(spec)
+    edit = flow_sop_editor.ask_model(req.message, blocks, history=req.history)
+
+    if edit["action"] in ("done", "unclear"):
+        title = f"Campaign {campaign_id} — SOP Segmentation + Journey ({req.audience})"
+        return {"reply": edit["say"], "action": edit["action"], "ops": req.ops,
+                "history": req.history, "svg": flow_sop_diagram.flow_svg(spec, title)}
+
+    new_spec, said = flow_sop_editor.apply(spec, edit)
+    title = f"Campaign {campaign_id} — SOP Segmentation + Journey ({req.audience})"
+    return {"reply": said, "action": edit["action"], "ops": req.ops + [edit],
+            "history": req.history + [said], "svg": flow_sop_diagram.flow_svg(new_spec, title)}
 
 
 @app.post("/api/campaigns/{campaign_id}/campaign-plan")

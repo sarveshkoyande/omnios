@@ -1,6 +1,12 @@
 import { useState } from "react";
 import { AGENTS, PHASE_TINT, PHASES, type LibraryAgent, type Phase } from "../agents";
+import { go } from "../route";
 import { Icon } from "./Icon";
+
+/** Agents whose card opens a dedicated screen instead of the Read more detail panel. */
+const CARD_ROUTES: Partial<Record<string, () => void>> = {
+  "flow-planner": () => go({ kind: "flow-planner" }),
+};
 
 /** Read more: what the agent does, what it works from, and where it runs. An agent that is on
  *  the product list but not built yet says so instead of claiming live behaviour. */
@@ -47,22 +53,24 @@ function AgentDetail({ agent, onBack }: { agent: LibraryAgent; onBack: () => voi
 
 function AgentCard({ agent, index, onOpen }: { agent: LibraryAgent; index: number; onOpen: () => void }) {
   const wip = agent.status === "wip";
-  const body = (
-    <>
+  const style = { animationDelay: `${index * 30}ms` };
+  return (
+    <div className={`agent-card ${wip ? "is-wip" : ""}`} style={style} aria-disabled={wip || undefined}>
       <div className="agent-card-top">
         <span className="agent-icon"><Icon name={agent.icon} size={20} /></span>
-        {wip && <span className="agent-status-pill">WIP</span>}
+        {wip && <span className="agent-status-pill">Coming soon</span>}
       </div>
       <h3>{agent.name}</h3>
       <p className="agent-summary">{agent.summary}</p>
-      {!wip && <span className="agent-read-more">Read more <Icon name="arrowRight" size={13} /></span>}
-    </>
+      {/* The card itself is no longer clickable -- only Launch opens the agent, so a
+       *  reader can scan the grid without accidentally jumping into one. */}
+      {!wip && (
+        <button type="button" className="agent-launch-btn" onClick={onOpen}>
+          Launch <Icon name="arrowRight" size={13} />
+        </button>
+      )}
+    </div>
   );
-  const style = { animationDelay: `${index * 30}ms` };
-  if (wip) {
-    return <div className="agent-card is-wip" style={style} aria-disabled="true">{body}</div>;
-  }
-  return <button type="button" className="agent-card" style={style} onClick={onOpen}>{body}</button>;
 }
 
 export function AgentLibrary() {
@@ -98,7 +106,7 @@ export function AgentLibrary() {
 
       <div className="agent-grid" key={phase}>
         {AGENTS[phase].map((a, i) => (
-          <AgentCard key={a.id} agent={a} index={i} onOpen={() => setSelected(a)} />
+          <AgentCard key={a.id} agent={a} index={i} onOpen={() => (CARD_ROUTES[a.id] ?? (() => setSelected(a)))()} />
         ))}
       </div>
     </div>

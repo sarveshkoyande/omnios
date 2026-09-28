@@ -11,6 +11,7 @@ import { DriftBanner } from "../DriftBanner";
 import { describeOp, FlowDiagram, IDLE } from "../journey/FlowCanvas";
 import { StepChat, type TurnState } from "../journey/StepChat";
 import { FLOW_ORIGIN, StatusPill } from "./shared";
+import { SopDiagramViewer } from "./SopDiagramViewer";
 
 /** A Campaign Plan's Operations diagram (a "document" flow), shown read-only here; it is
  *  edited in the Campaign Plan's own editor (hierarchy plan KTD7). */
@@ -40,6 +41,10 @@ export function FlowPage({ brand, planId, campaignId, meta, onChanged }: {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [turn, setTurn] = useState<TurnState>(IDLE);
+  // Defaults to the exact SOP rendering (strategy/flow_sop/diagram.py) -- the generic
+  // flow-builder canvas is still there to switch to for chat-driven editing, but it can't
+  // reproduce the SOP's own visual language (legend colours, cylinder/diamond shapes).
+  const [sopView, setSopView] = useState(true);
 
   const reload = useCallback(() => getFlow(meta.id).then(setFlow), [meta.id]);
   useEffect(() => { reload().catch((e) => setError(String(e))); }, [reload]);
@@ -139,7 +144,22 @@ export function FlowPage({ brand, planId, campaignId, meta, onChanged }: {
             <ul className="jc-flow-ops">{draftOps.map((op, i) => <li key={i}>{describeOp(op)}</li>)}</ul>
           </div>
         )}
-        {shown && <div className={f.draft ? "jc-flow-frame is-draft" : "jc-flow-frame"}><FlowDiagram flow={shown} keptCodes={keptCodes} /></div>}
+        {shown && (
+          <div className="jc-sop-diagram-toggle">
+            <button type="button" className={sopView ? "jc-btn jc-btn-ghost" : "jc-btn jc-btn-keep"} onClick={() => setSopView(false)}>Editable canvas</button>
+            <button type="button" className={sopView ? "jc-btn jc-btn-keep" : "jc-btn jc-btn-ghost"} onClick={() => setSopView(true)}>Exact SOP diagram</button>
+          </div>
+        )}
+        {shown && sopView && (
+          <div className="jc-flow-frame jc-sop-diagram-frame">
+            {/* strategy/flow_sop/diagram.py -- the SOP's own colours/shapes/legend, rendered
+             *  server-side as SVG rather than through the generic flow-builder canvas.
+             *  SopDiagramViewer adds pan/zoom around it without touching the SVG itself. */}
+            <SopDiagramViewer alt="SOP segmentation + journey diagram"
+              src={`/api/campaigns/${campaignId}/flow-sop/diagram.svg?audience=HCP`} />
+          </div>
+        )}
+        {shown && !sopView && <div className={f.draft ? "jc-flow-frame is-draft" : "jc-flow-frame"}><FlowDiagram flow={shown} keptCodes={keptCodes} /></div>}
       </section>
       {f.status === "built" && (
         <StepChat brand={brand} step="flow" stepLabel="Flow" question={null} earlierCount={0}
