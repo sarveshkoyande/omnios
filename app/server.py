@@ -76,7 +76,8 @@ from strategy.flow_sop import planner as flow_sop_planner  # noqa: E402  (SOP se
 from strategy.flow_sop import clarify as flow_sop_clarify  # noqa: E402
 from strategy.flow_sop import demo_brief as flow_sop_demo_brief  # noqa: E402
 from strategy.flow_sop import diagram as flow_sop_diagram  # noqa: E402  (exact SVG rendering, ported from the reference project's app/diagram.py)
-from strategy.flow_sop import editor as flow_sop_editor  # noqa: E402  (chat-driven diagram edits, ported from scripts/flow_editor.py)
+from strategy.flow_sop import editor as flow_sop_editor
+from strategy import agent_router  # noqa: E402  (redesign Ask bar: LLM-only agent routing)  # noqa: E402  (chat-driven diagram edits, ported from scripts/flow_editor.py)
 from strategy import process_knowledge  # noqa: E402  (Cognee-backed SME process grounding)
 from strategy import cognee_feedback  # noqa: E402  (human feedback overlay for Cognee grounding)
 from strategy.paths import data_path  # noqa: E402
@@ -1774,6 +1775,24 @@ def api_campaign_artifacts(pid: str, enrich: bool = False):
     if not ctx:
         raise HTTPException(400, "Stage 1 hasn't produced a plan yet â€” run it before composing artifacts.")
     return campaign_artifacts.compose_artifacts(ctx, enrich=enrich)
+
+
+class AskRouteRequest(BaseModel):
+    question: str
+    brand: str | None = None
+    agents: list[dict]
+
+
+@app.post("/api/v3/route-ask")
+def api_v3_route_ask(req: AskRouteRequest):
+    """Redesign Home's Ask bar: which agent(s) fit this question. LLM-only -- a 503 when no LLM
+    is reachable, so the UI says so instead of guessing with keywords."""
+    if not req.question.strip():
+        raise HTTPException(400, "question is empty")
+    try:
+        return agent_router.route_question(req.question.strip(), req.brand, req.agents)
+    except agent_router.AgentRouterUnavailable as exc:
+        raise HTTPException(503, f"Omni's AI isn't reachable right now ({exc}).")
 
 
 @app.get("/api/pharma-intel/summary")

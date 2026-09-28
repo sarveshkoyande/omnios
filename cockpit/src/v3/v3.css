@@ -265,3 +265,9 @@ a.v3-quick-card:hover { box-shadow: var(--neu-flat-hover); transform: translateY
   .v3-quick, .v3-cats { grid-template-columns: 1fr; }
   .v3-main { padding: 16px; }
 }
+
+.v3-ask-thinking { display: flex; gap: 5px; padding: 6px 2px; }
+.v3-ask-thinking span { width: 6px; height: 6px; border-radius: 50%; background: var(--primary); opacity: .4; animation: wiz-thinking-pulse 1s ease-in-out infinite; }
+.v3-ask-thinking span:nth-child(2) { animation-delay: .15s; }
+.v3-ask-thinking span:nth-child(3) { animation-delay: .3s; }
+.v3-ask-error { color: var(--warning-foreground) !important; }

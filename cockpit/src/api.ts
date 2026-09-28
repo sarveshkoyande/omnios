@@ -239,3 +239,14 @@ export function flowSopChat(campaignId: number, body: {
 }): Promise<FlowSopChatResult> {
   return postJSON(`/api/campaigns/${campaignId}/flow-sop/chat`, body);
 }
+
+/* ---- Redesign Ask bar: LLM-only agent routing (strategy/agent_router.py). A 503 means no
+   LLM is reachable -- callers show that plainly rather than guessing. ---- */
+export interface AskRouteResult { agent_ids: string[]; reply: string }
+export function routeAsk(body: {
+  question: string;
+  brand: string | null;
+  agents: { id: string; name: string; summary: string; available: boolean }[];
+}): Promise<AskRouteResult> {
+  return postJSON("/api/v3/route-ask", body);
+}
