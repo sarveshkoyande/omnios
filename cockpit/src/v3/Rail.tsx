@@ -110,7 +110,7 @@ export function Rail({ current, brands, activeBrand, recentBrands, onSelectBrand
               <Icon name="star" size={15} />{expanded && <span>{f.label}</span>}
             </a>
           ))}
-          {favorites.length === 0 && expanded && <div className="v3-nav-empty">Star a brand, app or campaign to pin it here.</div>}
+          {favorites.length === 0 && expanded && <div className="v3-nav-empty">Star a brand, agent or campaign to pin it here.</div>}
         </div>
 
         <div className="v3-rail-user" title={expanded ? undefined : "Account"}>

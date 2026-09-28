@@ -136,7 +136,7 @@ export function Home({ brands, activeBrand }: { brands: BrandSummary[]; activeBr
                 onClick={() => setPhase(on ? "all" : p.id)}>
                 <b>{p.label}</b>
                 <span>{p.tagline}</span>
-                <em><Icon name="layers" size={12} /> {count} apps</em>
+                <em><Icon name="layers" size={12} /> {count} agents</em>
               </button>
             );
           })}
@@ -145,7 +145,7 @@ export function Home({ brands, activeBrand }: { brands: BrandSummary[]; activeBr
 
       <section>
         <h2 className="v3-section-title">
-          {phase === "all" ? "Apps" : `${PHASES.find((p) => p.id === phase)?.label} apps`}
+          {phase === "all" ? "Agents" : `${PHASES.find((p) => p.id === phase)?.label} agents`}
           {phase !== "all" && <button type="button" className="v3-link" onClick={() => setPhase("all")}>Show all</button>}
         </h2>
         <div className="v3-apps">

@@ -5,7 +5,7 @@ import { Icon } from "../components/Icon";
  *  screen yet. Their workspace versions arrive in Phases 3-6. */
 export function AppDetail({ id }: { id: string }) {
   const a = REGISTRY.find((x) => x.id === id);
-  if (!a) return <p className="v3-muted">No app called "{id}".</p>;
+  if (!a) return <p className="v3-muted">No agent called "{id}".</p>;
   return (
     <div className="v3-detail">
       <a className="v3-link" href="#/v3/home"><Icon name="arrowLeft" size={13} /> Home</a>
