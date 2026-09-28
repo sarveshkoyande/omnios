@@ -169,6 +169,21 @@ h1, h2, h3 { font-family: "DM Sans"; font-weight: 600; letter-spacing: -0.01em; 
   flex-direction: column;
   position: relative;
   z-index: 1;
+  transition: flex-basis 200ms ease, padding 200ms ease;
+}
+/* Collapsed: a narrow icon-only dock, so the main page (Flow Planner's chat in particular)
+ *  gets the freed-up width -- brands become initials avatars, section labels and sub-text
+ *  disappear, territory/tree detail for the selected brand hides entirely. */
+.rail-collapsed { flex-basis: 64px; padding: 44px 8px 20px; align-items: center; }
+.rail-collapse-btn {
+  position: absolute; top: 10px; right: 10px; width: 24px; height: 24px; border-radius: var(--radius-full);
+  border: none; background: var(--card-bg); box-shadow: var(--neu-flat-sm); color: var(--muted); cursor: pointer;
+  display: grid; place-items: center; z-index: 2;
+}
+.rail-collapsed .rail-collapse-btn { position: static; margin-bottom: 14px; }
+.rail-collapse-btn:hover { color: var(--accent); box-shadow: var(--neu-inset-sm); }
+.rail-collapsed .rail-item {
+  width: 40px; height: 40px; padding: 0; margin: 0 0 10px; display: grid; place-items: center;
 }
 .rail-brand {
   font-family: "DM Sans"; font-weight: 700; font-size: 16px;
@@ -911,6 +926,63 @@ h1, h2, h3 { font-family: "DM Sans"; font-weight: 600; letter-spacing: -0.01em; 
 }
 .flow-planner-grounding { display: flex; flex-direction: column; gap: 8px; }
 .flow-planner-grounding p { margin: 0; color: var(--muted); font-size: 13px; }
+
+/* ---- Briefing Agent: same blank-until-ready canvas as the Flow Planner (flow-planner-page
+   is reused verbatim), but the canvas holds a scrollable read document instead of a diagram --
+   the real Campaign Strategy + Campaign Brief from strategy/campaign_artifacts.py. ---- */
+.briefing-canvas {
+  flex: 1; min-height: 420px; margin-top: 12px; border-radius: var(--radius-sm); overflow-y: auto;
+  border: 1px solid var(--border, rgba(0,0,0,0.12)); background: #FFFFFF; padding: 32px;
+}
+.briefing-doc { max-width: 880px; margin: 0 auto; display: flex; flex-direction: column; gap: 4px; }
+.briefing-doc h2 { margin: 0 0 4px; font-size: 20px; font-weight: 800; color: var(--fg); }
+.briefing-doc h3 { margin: 0 0 4px; font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+.briefing-section { display: flex; flex-direction: column; gap: 10px; padding: 22px 0; border-bottom: 1px solid var(--neutral-200); }
+.briefing-section:first-child { padding-top: 0; }
+.briefing-section:last-child { border-bottom: none; padding-bottom: 0; }
+.briefing-list { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; color: var(--fg); }
+.briefing-row {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 14px;
+  padding: 10px 12px; border-radius: var(--radius-sm); background: var(--card-bg); font-size: 12.5px;
+}
+
+/* The Flow Planner wizard as an actual chat exchange -- agent bubbles asking/acknowledging,
+ *  a user bubble echoing exactly what was clicked or typed, and quick-reply chips instead of
+ *  the old two-card grid, all inside the same plan-launcher-card shape. Reuses the edit-chat's
+ *  own bubble classes (flow-editor-msg*) so both chats in this app read as one visual system. */
+.fp-chat { display: flex; flex-direction: column; gap: 10px; }
+.fp-quick-replies { display: flex; flex-wrap: wrap; gap: 8px; }
+.fp-chip {
+  display: inline-flex; align-items: center; gap: 6px; font-family: inherit; font-size: 12.5px; font-weight: 600;
+  border: none; cursor: pointer; padding: 9px 14px; border-radius: var(--radius-full);
+  background: var(--primary); color: var(--base-white); transition: transform 140ms ease, opacity 140ms ease;
+}
+.fp-chip:hover { transform: translateY(-1px); }
+.fp-chip:disabled { opacity: .5; cursor: default; transform: none; }
+.fp-chip-muted { background: var(--card-bg); color: var(--muted); box-shadow: var(--neu-flat-sm); }
+
+/* The "building your flow" state: a proper AI-loading checklist -- a spinning icon + label,
+ *  then each step line moving idle -> active (pulsing dot) -> done (check), rather than a
+ *  plain string of chat bubbles. Reused as-is wherever a multi-step generation needs the same
+ *  "generating / assembling / retrieving" treatment. */
+.fp-loading { display: flex; flex-direction: column; gap: 16px; align-items: center; padding: 8px 0 4px; }
+.fp-loading-head { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; color: var(--fg); }
+.fp-loading-spinner { display: inline-flex; color: var(--primary); animation: fp-loading-spin 1.4s linear infinite; }
+@keyframes fp-loading-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.fp-loading-lines { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 380px; }
+.fp-loading-line {
+  display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: var(--muted);
+  transition: color 200ms ease, opacity 200ms ease;
+}
+.fp-loading-line svg { color: var(--primary); flex: 0 0 auto; }
+.fp-loading-line.is-active { color: var(--fg); font-weight: 600; }
+.fp-loading-line.is-idle { opacity: .45; }
+.fp-loading-dot {
+  flex: 0 0 auto; width: 7px; height: 7px; border-radius: 50%; background: var(--muted); opacity: .3;
+}
+.fp-loading-line.is-active .fp-loading-dot {
+  background: var(--primary); opacity: 1; animation: wiz-thinking-pulse 1s ease-in-out infinite;
+}
 .flow-planner-ready-hint { margin: -8px 0 14px; font-size: 12px; color: var(--muted); }
 
 /* ---- Flow Editor: "talk to the diagram" (strategy/flow_sop/editor.py). Same centered-card
@@ -920,7 +992,15 @@ h1, h2, h3 { font-family: "DM Sans"; font-weight: 600; letter-spacing: -0.01em; 
    so no scroll container, just the current question/thinking/answer stacked. ---- */
 .flow-editor-card { display: flex; flex-direction: column; }
 .flow-editor-turn { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; min-height: 40px; }
-.flow-editor-msg { max-width: 88%; padding: 9px 12px; border-radius: var(--radius-md); font-size: 13px; line-height: 1.5; }
+.flow-editor-msg {
+  max-width: 88%; padding: 9px 12px; border-radius: var(--radius-md); font-size: 13px; line-height: 1.5;
+  animation: flow-editor-msg-in 260ms cubic-bezier(.2,.7,.3,1) both;
+}
+@keyframes flow-editor-msg-in { from { opacity: 0; transform: translateY(6px) scale(.98); } to { opacity: 1; transform: none; } }
+/* The question just asked stays on screen (not swapped away) through the whole
+ *  thinking/acknowledging beat that follows it -- a touch more settled than a fresh reply, so
+ *  it doesn't look like it's competing with the bubble actually carrying the news. */
+.flow-editor-msg-anchor { opacity: .92; }
 .flow-editor-msg-agent { align-self: flex-start; background: var(--primary-light-background); color: var(--fg); border-bottom-left-radius: 4px; }
 .flow-editor-msg-user { align-self: flex-end; background: var(--primary); color: var(--base-white); border-bottom-right-radius: 4px; }
 .flow-editor-msg-pending { display: flex; gap: 5px; align-items: center; padding: 12px; }
@@ -942,6 +1022,14 @@ h1, h2, h3 { font-family: "DM Sans"; font-weight: 600; letter-spacing: -0.01em; 
 .fp-modal-close:hover { color: var(--fg); }
 .fp-modal-master { flex: 1; min-height: 0; height: 52vh; }
 .fp-modal-actions { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 20px; border-top: 1px solid var(--neutral-200); }
+
+/* Embedded inside the Flow Planner's own chat card (plan-launcher-card.fp-expanded) instead
+ *  of a second overlay stacked on the first -- no border/shadow/backdrop of its own, and a
+ *  shorter list height since the chat bubble above it and the actions below both take space
+ *  out of the card's already-taller-but-still-capped max-height. */
+.fp-modal-inline { display: flex; flex-direction: column; margin: 0 -4px; }
+.fp-modal-inline .fp-modal-master { height: 40vh; min-height: 260px; }
+.fp-modal-inline .fp-modal-actions { padding: 14px 4px 0; border-top: 1px solid var(--neutral-200); margin-top: 10px; }
 @media (max-width: 720px) {
   .flow-planner-chat { right: 12px; bottom: 12px; left: 12px; width: auto; }
 }
@@ -1372,18 +1460,36 @@ a.gantt-label:hover { color: var(--primary); }
   transition: transform 200ms ease;
 }
 .plan-launcher-fab:hover { transform: scale(1.06); }
+/* The Flow Planner's own reopen fab: once a flow is ready, the edit-chat's fab already
+ *  occupies the usual bottom-right spot, so this one sits to its left instead of stacking on
+ *  top of it when both are minimized at once. */
+.plan-launcher-fab.fp-reopen-fab { right: 104px; }
+@media (max-width: 720px) { .plan-launcher-fab.fp-reopen-fab { right: 90px; } }
 .plan-launcher-backdrop {
   position: fixed; inset: 0; z-index: 39; background: rgba(20, 14, 44, 0.28);
   animation: plan-launcher-fade .2s ease-out;
 }
 @keyframes plan-launcher-fade { from { opacity: 0; } to { opacity: 1; } }
 .plan-launcher-card {
-  position: fixed; left: 50%; bottom: 40px; transform: translateX(-50%); z-index: 40;
+  /* Centered with left/right auto-margins, not a translateX transform -- the card re-renders
+   *  often (every chat tick), and a transform-based center fights the agent-dock-rise
+   *  keyframe (which also animates `transform`), leaving it stuck at the animation's start
+   *  frame under frequent re-renders and silently losing the horizontal centering. */
+  position: fixed; left: 0; right: 0; margin: 0 auto; bottom: 40px; z-index: 40;
   width: min(640px, calc(100vw - 48px)); max-height: min(72vh, 640px); overflow-y: auto;
   background: var(--base-white); border-radius: var(--radius-lg); padding: 28px 32px;
   box-shadow: var(--glass-shadow-hover);
   animation: agent-dock-rise .22s ease-out;
 }
+/* The Flow Planner's own chat card: noticeably wider than the base launcher (it has the
+ *  freed-up width from a collapsed rail to spend, and its picker now lives inline instead of
+ *  in a second popup), and taller only while that picker is actually open -- compact for a
+ *  one-line question, roomy the moment it needs to show a browsable list. */
+.plan-launcher-card.fp-wide {
+  width: min(920px, calc(100vw - 48px)); max-height: min(60vh, 480px);
+  transition: max-height 220ms ease, width 220ms ease;
+}
+.plan-launcher-card.fp-wide.fp-expanded { max-height: min(86vh, 820px); }
 .plan-launcher-close {
   position: absolute; top: 16px; right: 16px; border: none; background: transparent; cursor: pointer;
   color: var(--muted); padding: 4px;
@@ -1413,15 +1519,17 @@ a.gantt-label:hover { color: var(--primary); }
 .wiz-form-row { display: flex; gap: 10px; }
 .wiz-form-row .jc-input { flex: 1; }
 
-/* The free-text fallback under a wiz-choice-grid (Flow Planner): a quiet "or" rule between
- *  the cards and a pill-shaped input, not a bare input+button bolted on underneath. */
-.wiz-or-block { margin-top: 16px; }
-.wiz-or-divider { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-.wiz-or-divider::before, .wiz-or-divider::after { content: ""; flex: 1; height: 1px; background: var(--neutral-200); }
-.wiz-or-divider span { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+/* The free-text fallback under a wiz-choice-grid (Flow Planner): no "or" rule -- just a
+ *  clearly-emphasized pill-shaped input, so it reads as a first-class third option next to
+ *  the two cards rather than an afterthought below them. */
+.wiz-text-block { margin-top: 16px; }
 .wiz-text-row {
   display: flex; align-items: center; gap: 8px; padding: 4px 4px 4px 16px; border-radius: var(--radius-full);
   background: var(--card-bg); box-shadow: var(--neu-flat-sm);
+}
+.wiz-text-row-highlight {
+  background: var(--primary-light-background);
+  box-shadow: 0 0 0 1.5px rgba(93, 44, 201, 0.35), var(--neu-flat-sm);
 }
 .wiz-text-input {
   flex: 1; border: none; background: transparent; font-family: inherit; font-size: 13px; color: var(--fg);
@@ -1478,6 +1586,7 @@ a.gantt-label:hover { color: var(--primary); }
 @media (max-width: 720px) {
   .plan-launcher-fab { right: 18px; bottom: 18px; }
   .plan-launcher-card { left: 18px; right: 18px; transform: none; width: auto; bottom: 18px; }
+  .plan-launcher-card.fp-wide { width: auto; max-height: min(80vh, 720px); }
 }
 
 /* ---- Campaign Plan, native in the Cockpit (brief, planning agent, plan sections) ---- */

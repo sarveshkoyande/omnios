@@ -360,3 +360,48 @@ export interface DocumentFlow {
   document: unknown;
 }
 export type AnyFlow = (JourneyFlow & { kind?: undefined }) | DocumentFlow;
+
+/** GET /api/projects/{pid}/campaign-artifacts (strategy/campaign_artifacts.py) -- the
+ *  Planning stage's two linked, deterministic-from-ctx artifacts. Every field here is a real
+ *  field the backend returns; this is a leaner subset of frontend/src/workspace/types.ts's
+ *  own CampaignArtifactsPayload (which also carries a journey-diagram payload and a technical
+ *  appendix the Briefing Agent's summary view doesn't render), not a separate shape. */
+export interface DecisionRecord {
+  stage_id: string;
+  stage_name: string;
+  section_id: string;
+  decision: string;
+  framework: string;
+  rationale: string;
+  feeds: string[];
+}
+export interface CampaignArtifactsPayload {
+  strategy: {
+    title: string;
+    brand: string;
+    generated_at: string;
+    note: string;
+    records: DecisionRecord[];
+  };
+  brief: {
+    title: string;
+    version: string;
+    generated_at: string;
+    header: { brand: string; therapy_area: string; lifecycle: string; owner: string };
+    snapshot?: { objective: string; brand: string; therapy_area: string; target_audience: string; reason: string };
+    purpose: { program_context: string; trigger_logic: string[]; summary: string };
+    objective: { pillar: string; statement: string; leading_indicators: string[] };
+    audience: {
+      segment: string;
+      eligibility_rules: string[];
+      segments: { name: string; profile: string; volume: number | null; volume_note: string | null; key_characteristics: string[] }[];
+    };
+    comms_strategy: { belief_shift: string; message_ladder: string[]; tone_guardrails: string[]; core_claim: string };
+    deliverables: { asset: string; variants: string; notes: string }[];
+    channel_journey: { anchor: string; mix: { channel: string; pct: number }[]; cadence_note: string };
+    measurement_plan: { kpis: string[]; link_matrix_note: string; test_design: string };
+    risk_register: { risk: string; severity: string; mitigation: string }[];
+    timeline: { window: string; note: string };
+    approvals: { role: string; name: string }[];
+  };
+}

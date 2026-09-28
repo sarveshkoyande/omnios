@@ -1,37 +1,36 @@
-import { useEffect, useState } from "react";
-import { getBrandTree, listBrands } from "../../api";
-import type { BrandSummary, BrandTree, TreeCampaign, TreePlan } from "../../types";
+import { useEffect, useRef, useState } from "react";
+import { createProject, getBrandTree, getCampaignArtifacts, listBrands, postBriefChat, postStudioAnswer } from "../../api";
+import type { BrandSummary, BrandTree, CampaignArtifactsPayload, TreeCampaign, TreePlan } from "../../types";
 import { Icon } from "../Icon";
-import { SopDiagramViewer } from "../hierarchy/SopDiagramViewer";
 import { periodLabel } from "../hierarchy/shared";
-import { FlowEditorChat } from "./FlowEditorChat";
-import { PickerModal, type PickerItem } from "./PickerModal";
+import { PickerModal, type PickerItem } from "../flowplanner/PickerModal";
 
 /**
- * Flow Planner wizard: an empty page until the flow is ready, and BrandOverview's own
- * "build something" launcher card (plan-launcher-backdrop/plan-launcher-card, wiz-choice-grid)
- * reused verbatim for the chat step -- centered, dimmed backdrop, a two-card choice grid, plus
- * a free-text fallback row under the cards. Walks brand -> engagement plan -> campaign, each
- * pick made through a list+detail popup (the same master-detail layout as BrandOverview's plan
- * list), then generates the SOP flow diagram onto the canvas that was blank until then.
- *
- * "New brand" and "Ad-hoc campaign" are stubbed (say so, go no further) -- only the
- * existing-brand / existing-engagement / existing-campaign path is real, by design (this
- * is the path worth shipping first; the other branches are a separate pass).
- *
- * What is picked drives navigation and the on-screen recap only. The generated diagram
- * itself still comes from strategy/flow_sop/demo_brief.py regardless of which campaign was
- * selected -- wiring the picked campaign's own data into the generator is a later step
- * (see strategy/flow_sop's own scope note).
- */
+ * Briefing Agent wizard: the same brand -> engagement plan -> campaign chat wizard as the
+ * Flow Planner (plan-launcher-backdrop/plan-launcher-card.fp-wide, wiz-choice-grid, the
+ * chat-bubble acknowledge/ask/clarify pattern, inline pickers, minimize-and-reopen) --
+ * deliberately duplicated rather than shared, so the two pages can keep evolving their own
+ * copy and pacing independently. Where it differs: the terminal step doesn't build an SVG
+ * diagram, it composes the real Campaign Strategy + Campaign Brief that already exist in this
+ * app -- strategy/campaign_artifacts.py, the same deterministic-from-ctx process the old
+ * Project Studio's own Campaign Artifacts page (frontend/src/workspace/CampaignArtifacts.tsx)
+ * renders -- reached here via the campaign's own `project_id`. A campaign that was never
+ * planned through that Stage 1 (no `project_id`) can now run it right here: "no-plan" offers
+ * to start it, "brief-chat" is the real free-text intake loop (strategy/conversation.py's
+ * interpret_message via /api/chat) that captures brand/budget/lifecycle until it returns
+ * `action: "run"`, and "stage1" drives the real 11-step question sequence (strategy/
+ * studio_run.py) over its actual SSE protocol (GET /api/studio/stream, POST /api/studio/answer)
+ * -- the same endpoints the old Project Studio pages use, not a reimplementation. Each ask's
+ * own `text` already reads as a complete recommendation in prose ("Your broad target is
+ * **X**... Lock this, or steer it another way?"), so this renders it as a single free-text
+ * question rather than porting the old UI's separate recommendation/evidence/option-chip
+ * layout -- a real simplification, not a fake one: nothing here is invented, the full payload
+ * (evidence_basis, options, recommendation) still exists on the event, just not all surfaced.
+ * On `run_done`, strategy/campaign_artifacts.py's own persistence mints the resulting campaign
+ * record from the plan (strategy/campaign_store.py's persist_campaign_from_result) -- it is
+ * not guaranteed to be the exact campaign object this wizard started from; a mismatch here is
+ * a known, accepted follow-up rather than something this page tries to reconcile. */
 
-/** The free-text fallback under the two choice cards -- no "or" divider, just a clearly
- *  highlighted input so it reads as a real third way to answer, not an afterthought. Not just
- *  a binary "new"/"existing" read -- if the text also names a real plan and/or campaign (e.g.
- *  "Cardiovex, Q4 2026 launch, payer follow-up"), send() jumps straight past those steps
- *  instead of asking them one at a time. A brief "thinking" state stands in for the grounding
- *  lookups that answer actually requires (brand tree fetch, name matching), rather than
- *  snapping to the result instantly. */
 function FlowPlannerTextRow({ text, setText, onSend, thinking, placeholder }: {
   text: string; setText: (v: string) => void; onSend: () => void; thinking: boolean; placeholder: string;
 }) {
@@ -49,9 +48,6 @@ function FlowPlannerTextRow({ text, setText, onSend, thinking, placeholder }: {
   );
 }
 
-/** A stable 0..1 value from a seed string, same idea as BrandOverview's own `seeded()` --
- *  used only to pick a consistent illustrative filler per brand, never anything that
- *  pretends to be a measured number. */
 function seeded(seed: string): number {
   let h = 0;
   for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
@@ -62,10 +58,6 @@ const ILLUSTRATIVE_COMPANIES = ["Aurelia Biosciences", "Meridian Therapeutics", 
 const ILLUSTRATIVE_FOCUS = ["cardiometabolic disease", "oncology", "immunology", "neurology", "rare disease"];
 const ILLUSTRATIVE_STAGE = ["pre-launch", "early launch", "in-market growth", "lifecycle expansion", "loss-of-exclusivity defense"];
 
-/** A brand's picker detail card, filled in with a plausible illustrative placeholder
- *  wherever the real brand kit has nothing (several demo brands here have no company/
- *  generic/therapy area set) -- so the right pane is never left looking empty, and every
- *  filled-in field is tagged the same way the rest of this app marks placeholder content. */
 function brandDetail(b: BrandSummary) {
   const real = Boolean(b.company || b.generic || b.therapy_area);
   const r = seeded(b.brand);
@@ -81,17 +73,19 @@ type Step =
   | { kind: "ask-brand" }
   | { kind: "ask-engagement" }
   | { kind: "ask-campaign" }
-  | { kind: "grounding" }
+  | { kind: "no-plan" }
+  | { kind: "brief-chat" }
+  | { kind: "stage1" }
+  | { kind: "briefing" }
   | { kind: "ready" }
   | { kind: "stub"; message: string };
 
+/** One Stage 1 question, as strategy/studio_run.py's "ask" event carries it. `text` already
+ *  reads as a complete, grounded recommendation in prose -- see the file doc comment. */
+type StudioAsk = { ask_id: string; text: string };
+
 type PickerKind = "brand" | "engagement" | "campaign" | null;
 
-/** A short acknowledge-then-act beat, rendered as an actual chat exchange (a user bubble
- *  echoing what was clicked or typed, then one or more agent bubbles) instead of jumping
- *  straight to its effect -- the AI names what it heard first, then says what it's about to
- *  do, then (only after that) actually opens the picker or lands on the next step. "opening"
- *  ends by setting `picker`; "closing" ends by setting `step`. */
 type Phase =
   | { kind: "idle" }
   | { kind: "active"; mode: "opening"; userText: string; lines: string[]; line: number; target: Exclude<PickerKind, null> }
@@ -100,11 +94,6 @@ type Phase =
 
 type Suggestion = { label: string; onPick: () => void };
 
-/** Ranks items by how well their name matches free text typed into the composer -- exact
- *  match, then prefix, then substring, then a shared word -- so a typo or a partial name
- *  ("cardio", "hfref launch") still surfaces the right one or two guesses instead of an
- *  unranked dump. Falls back to the first few items when nothing matches at all, since the
- *  clarifying question always needs *something* to suggest. */
 function closeMatches<T>(items: T[], nameOf: (t: T) => string, query: string, limit = 3): T[] {
   const q = query.toLowerCase().trim();
   const scored = items.map((it) => {
@@ -120,22 +109,17 @@ function closeMatches<T>(items: T[], nameOf: (t: T) => string, query: string, li
   return (matched.length > 0 ? matched : scored).slice(0, limit).map((s) => s.it);
 }
 
-const GROUNDING_LINES = [
-  "Retrieving the campaign's brand kit and engagement plan context…",
-  "Generating the SOP segmentation rules applicable to this audience…",
-  "Assembling the segmentation and journey regions…",
+const BRIEFING_LINES = [
+  "Retrieving the campaign's saved planning context…",
+  "Compiling the Campaign Strategy's decision records…",
+  "Assembling the Campaign Brief…",
 ];
 
-/** What the agent last actually asked, for the current (not-yet-advanced) step -- shown as a
- *  persistent bubble through the whole thinking/opening/clarify beat so the question you're
- *  answering never disappears the moment you click or type; it just stays on screen while the
- *  reply builds underneath it, instead of the view jump-cutting straight to a bare "thinking"
- *  bubble with no context above it. */
 function askLineFor(step: Step, brand: BrandSummary | null, plan: TreePlan | null): string[] {
   switch (step.kind) {
     case "ask-brand":
       return [
-        "Good day. Let us proceed to build your flow journey.",
+        "Good day. Let us proceed to compile a campaign brief.",
         "Would you prefer to begin with a new brand, or would you like to select one of your existing brands?",
       ];
     case "ask-engagement":
@@ -145,7 +129,7 @@ function askLineFor(step: Step, brand: BrandSummary | null, plan: TreePlan | nul
       ];
     case "ask-campaign":
       return [
-        `This flow will be built under the engagement plan “${plan?.name ?? "the plan you selected"}.”`,
+        `This brief will be compiled under the engagement plan “${plan?.name ?? "the plan you selected"}.”`,
         "Would you like to create a new campaign, or would you prefer to select an existing campaign from this plan?",
       ];
     default:
@@ -153,14 +137,13 @@ function askLineFor(step: Step, brand: BrandSummary | null, plan: TreePlan | nul
   }
 }
 
-export function FlowPlannerPage() {
+export function BriefingAgentPage() {
   const [step, setStep] = useState<Step>({ kind: "ask-brand" });
   const [picker, setPicker] = useState<PickerKind>(null);
   const [text, setText] = useState("");
   const [sentText, setSentText] = useState("");
   const [thinking, setThinking] = useState(false);
   const [cardOpen, setCardOpen] = useState(true);
-  const [editedMarkup, setEditedMarkup] = useState<string | null>(null);
   const [phase, setPhase] = useState<Phase>({ kind: "idle" });
 
   const [brands, setBrands] = useState<BrandSummary[] | null>(null);
@@ -168,28 +151,145 @@ export function FlowPlannerPage() {
   const [tree, setTree] = useState<BrandTree | null>(null);
   const [plan, setPlan] = useState<TreePlan | null>(null);
   const [campaign, setCampaign] = useState<TreeCampaign | null>(null);
-  const [groundingLine, setGroundingLine] = useState(0);
+  const [briefingLine, setBriefingLine] = useState(0);
+  const [artifacts, setArtifacts] = useState<CampaignArtifactsPayload | null>(null);
+
+  // Stage 1 (strategy/conversation.py + strategy/studio_run.py), run right here when the
+  // picked campaign has no project yet -- see the file doc comment for the full protocol.
+  const [projectId, setProjectId] = useState<string | null>(null);
+  const [lastAgentLine, setLastAgentLine] = useState("");
+  const [briefThinking, setBriefThinking] = useState(false);
+  const [briefText, setBriefText] = useState("");
+  const [askPending, setAskPending] = useState<StudioAsk | null>(null);
+  const [stage1Text, setStage1Text] = useState("");
+  const [stage1Thinking, setStage1Thinking] = useState(false);
+  const [narrationLines, setNarrationLines] = useState<string[]>([]);
+  const [stage1Error, setStage1Error] = useState<string | null>(null);
+  const [resumeToken, setResumeToken] = useState(0);
+  const esRef = useRef<EventSource | null>(null);
+
+  const effectiveProjectId = projectId ?? campaign?.project_id ?? null;
 
   useEffect(() => { listBrands().then((r) => setBrands(r.brands)).catch(() => setBrands([])); }, []);
 
+  /** The terminal fetch: composes the real Campaign Strategy + Campaign Brief once a project
+   *  exists (either the campaign already had one, or Stage 1 just produced one below). A
+   *  campaign with neither is routed to "no-plan" instead of stubbed outright, since Stage 1
+   *  can now be run from right here. */
   useEffect(() => {
-    if (step.kind !== "grounding") return;
-    setGroundingLine(0);
-    const id = setInterval(() => {
-      setGroundingLine((i) => {
-        if (i + 1 >= GROUNDING_LINES.length) {
-          clearInterval(id);
-          setTimeout(() => { setCardOpen(true); setStep({ kind: "ready" }); }, 500);
-        }
-        return i + 1;
-      });
-    }, 700);
-    return () => clearInterval(id);
-  }, [step.kind]);
+    if (step.kind !== "briefing" || !campaign) return;
+    let cancelled = false;
 
-  /** Advances a "phase" one line at a time, then fires its effect -- opening the picker, or
-   *  landing on the next step -- once every line has been shown. Re-runs on every line bump,
-   *  and the two setTimeout branches below are mutually exclusive per render. */
+    if (!effectiveProjectId) {
+      setStep({ kind: "no-plan" });
+      return;
+    }
+
+    setBriefingLine(0);
+    const id = setInterval(() => {
+      if (!cancelled) setBriefingLine((i) => (i + 1 < BRIEFING_LINES.length ? i + 1 : i));
+    }, 650);
+
+    getCampaignArtifacts(effectiveProjectId)
+      .then((data) => {
+        if (cancelled) return;
+        clearInterval(id);
+        setArtifacts(data);
+        setTimeout(() => { if (!cancelled) { setCardOpen(true); setStep({ kind: "ready" }); } }, 400);
+      })
+      .catch((e) => {
+        if (cancelled) return;
+        clearInterval(id);
+        setStep({ kind: "stub", message: `I was unable to retrieve the Campaign Brief for ${campaign.name}. ${e instanceof Error ? e.message : String(e)}` });
+      });
+    return () => { cancelled = true; clearInterval(id); };
+  }, [step.kind, campaign, effectiveProjectId]);
+
+  /** Stage 1's own SSE protocol: the stream ends at every grounded ask (server-side, by
+   *  design), so this reopens it fresh each time `resumeToken` bumps after an answer is
+   *  recorded, and never while an ask is actually pending an answer. */
+  useEffect(() => {
+    if (step.kind !== "stage1" || !projectId || askPending) return;
+    setStage1Error(null);
+    setNarrationLines([]);
+    const es = new EventSource(`/api/studio/stream?project_id=${encodeURIComponent(projectId)}`);
+    esRef.current = es;
+    es.onmessage = (ev) => {
+      let data: Record<string, unknown>;
+      try { data = JSON.parse(ev.data); } catch { return; }
+      if (data.type === "chat" && typeof data.text === "string") {
+        setNarrationLines((prev) => [...prev.slice(-3), data.text as string]);
+      } else if (data.type === "ask" && !data.auto_assumed) {
+        es.close();
+        setAskPending({ ask_id: String(data.ask_id), text: String(data.text ?? "") });
+      } else if (data.type === "run_done") {
+        es.close();
+        setStep({ kind: "briefing" });
+      } else if (data.type === "error") {
+        es.close();
+        setStage1Error(typeof data.message === "string" ? data.message : "Planning Stage 1 failed unexpectedly.");
+      }
+    };
+    es.onerror = () => {
+      // A network drop mid-stream (not the server's own deliberate close-at-ask, which we
+      // already close ourselves above before this could fire) -- surface it rather than
+      // leaving the loading state spinning forever.
+      es.close();
+      setStage1Error((prev) => prev ?? "Lost the connection to Planning Stage 1. You can try again.");
+    };
+    return () => { es.close(); };
+  }, [step.kind, projectId, resumeToken, askPending]);
+
+  const startPlanning = async () => {
+    if (!campaign) return;
+    setStep({ kind: "brief-chat" });
+    setBriefThinking(true);
+    try {
+      const proj = await createProject(campaign.name || "Untitled plan");
+      setProjectId(proj.id);
+      const agentMsgs = proj.messages.filter((m) => m.role === "agent");
+      const opening = agentMsgs[agentMsgs.length - 1]?.text
+        ?? "Tell me about this campaign's brand, indication and budget, and I'll take it from there.";
+      setLastAgentLine(opening);
+    } catch (e) {
+      setStep({ kind: "stub", message: `I was unable to start Planning for ${campaign.name}. ${e instanceof Error ? e.message : String(e)}` });
+    } finally {
+      setBriefThinking(false);
+    }
+  };
+
+  const sendBrief = async () => {
+    const value = briefText.trim();
+    if (!value || !projectId || briefThinking) return;
+    setBriefText("");
+    setBriefThinking(true);
+    try {
+      const r = await postBriefChat(projectId, value);
+      setLastAgentLine(r.reply);
+      if (r.action === "run") setStep({ kind: "stage1" });
+    } catch (e) {
+      setLastAgentLine(`I ran into a problem recording that: ${e instanceof Error ? e.message : String(e)}. Could you try again?`);
+    } finally {
+      setBriefThinking(false);
+    }
+  };
+
+  const sendStage1Answer = async () => {
+    const value = stage1Text.trim();
+    if (!value || !projectId || !askPending || stage1Thinking) return;
+    setStage1Text("");
+    setStage1Thinking(true);
+    try {
+      await postStudioAnswer(projectId, askPending.ask_id, value);
+      setAskPending(null);
+      setResumeToken((t) => t + 1);
+    } catch (e) {
+      setStage1Error(e instanceof Error ? e.message : String(e));
+    } finally {
+      setStage1Thinking(false);
+    }
+  };
+
   useEffect(() => {
     if (phase.kind !== "active") return;
     if (phase.line + 1 < phase.lines.length) {
@@ -255,9 +355,6 @@ export function FlowPlannerPage() {
     ]);
   };
 
-  /** Shared by both the picker (a direct pick) and the composer (a typed name resolved via
-   *  closeMatches or a clarify suggestion) -- fetches the brand tree, then keeps cascading
-   *  into plan/campaign only when `t` also names one, landing wherever it actually resolves. */
   const resolveFromBrand = async (b: BrandSummary, t: string, userText: string) => {
     setBrand(b);
     setTree(null);
@@ -281,9 +378,9 @@ export function FlowPlannerPage() {
       return;
     }
     setCampaign(c);
-    advance({ kind: "grounding" }, userText, [
+    advance({ kind: "briefing" }, userText, [
       `Understood. I have set the brand to ${b.brand}, the engagement plan to “${p.name},” and the campaign to “${c.name}.”`,
-      "I will now begin building the flow.",
+      "I will now begin compiling the campaign brief.",
     ]);
   };
   const resolveFromPlan = (p: TreePlan, t: string, userText: string) => {
@@ -297,16 +394,16 @@ export function FlowPlannerPage() {
       return;
     }
     setCampaign(c);
-    advance({ kind: "grounding" }, userText, [
+    advance({ kind: "briefing" }, userText, [
       `Understood. The engagement plan has been set to “${p.name}” and the campaign to “${c.name}.”`,
-      "I will now begin building the flow.",
+      "I will now begin compiling the campaign brief.",
     ]);
   };
   const resolveFromCampaign = (c: TreeCampaign, userText: string) => {
     setCampaign(c);
-    advance({ kind: "grounding" }, userText, [
+    advance({ kind: "briefing" }, userText, [
       `Understood. The campaign has been set to “${c.name}.”`,
-      "I will now begin building the flow.",
+      "I will now begin compiling the campaign brief.",
     ]);
   };
 
@@ -315,19 +412,17 @@ export function FlowPlannerPage() {
   const onPickCampaign = (c: TreeCampaign) => { setPicker(null); resolveFromCampaign(c, c.name); };
 
   const restart = () => {
+    esRef.current?.close();
     setStep({ kind: "ask-brand" });
     setBrand(null); setTree(null); setPlan(null); setCampaign(null); setText(""); setSentText(""); setThinking(false);
-    setCardOpen(true); setEditedMarkup(null); setPhase({ kind: "idle" });
+    setCardOpen(true); setArtifacts(null); setPhase({ kind: "idle" });
+    setProjectId(null); setLastAgentLine(""); setBriefThinking(false); setBriefText("");
+    setAskPending(null); setStage1Text(""); setStage1Thinking(false); setNarrationLines([]);
+    setStage1Error(null); setResumeToken(0);
   };
 
   const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-  /** Resolves as far forward as the typed text actually names -- brand, then (if the same
-   *  text also names a real plan) engagement, then (if it also names a real campaign)
-   *  campaign, landing straight on grounding when all three are there. The moment a level
-   *  can't be resolved from the text, the AI asks a clarifying question in chat instead of
-   *  silently opening the picker -- closeMatches() gives it one or two real guesses to offer,
-   *  and "show me the full list" is always there too as an explicit chip. */
   const send = async () => {
     const raw = text.trim();
     if (!raw || thinking) return;
@@ -401,30 +496,24 @@ export function FlowPlannerPage() {
       <div className="hier-head">
         <div>
           <div className="kit-update-eyebrow">Agent Library</div>
-          <h1 className="kit-update-title">Flow Planner</h1>
+          <h1 className="kit-update-title">Briefing Agent</h1>
         </div>
       </div>
 
-      {step.kind === "ready" && campaign && (
-        <div className="flow-planner-canvas">
-          <SopDiagramViewer alt="SOP segmentation + journey diagram" overrideMarkup={editedMarkup}
-            src={`/api/campaigns/${campaign.id}/flow-sop/diagram.svg?audience=HCP`} />
+      {step.kind === "ready" && artifacts && (
+        <div className="briefing-canvas">
+          <BriefingDocument data={artifacts} />
         </div>
       )}
 
-      {/* The card can always be minimized -- clicking outside it (the backdrop) or its own
-       *  close button both just hide it, they don't reset any progress. Once the flow is
-       *  ready the diagram behind it is real and interactive; before that it's still blank,
-       *  but minimizing is available the whole way through, not only once there's something
-       *  to reveal behind it. */}
       {!cardOpen && (
-        <button type="button" className="plan-launcher-fab" aria-label="Reopen Flow Planner" onClick={() => setCardOpen(true)}>
+        <button type="button" className="plan-launcher-fab fp-reopen-fab" aria-label="Reopen Briefing Agent" onClick={() => setCardOpen(true)}>
           <Icon name="sparkles" size={24} />
         </button>
       )}
       {cardOpen && <div className="plan-launcher-backdrop" onClick={() => setCardOpen(false)} />}
       {cardOpen && (
-      <div className={`plan-launcher-card fp-wide ${picker ? "fp-expanded" : ""}`} role="dialog" aria-modal="true" aria-label="Flow Planner">
+      <div className={`plan-launcher-card fp-wide ${picker ? "fp-expanded" : ""}`} role="dialog" aria-modal="true" aria-label="Briefing Agent">
         <button type="button" className="plan-launcher-close" aria-label="Minimize" onClick={() => setCardOpen(false)}>
           <Icon name="close" size={16} />
         </button>
@@ -485,6 +574,7 @@ export function FlowPlannerPage() {
                 <div className="hier-detail-card">
                   <div className="hier-detail-head"><div><span className="hier-detail-name">{c.name}</span></div></div>
                   <p className="hier-detail-summary">{c.status} · {c.flow_count} flow{c.flow_count === 1 ? "" : "s"}</p>
+                  {!c.project_id && <p className="hier-detail-summary">This campaign has no Campaign Plan yet, so a brief cannot be compiled from it.</p>}
                 </div>
               )} />
           </div>
@@ -579,7 +669,7 @@ export function FlowPlannerPage() {
             ))}
             <div className="wiz-choice-grid">
               <button type="button" className="wiz-choice-card" onClick={() => chooseCampaignKind("existing")}>
-                <Icon name="route" size={22} />
+                <Icon name="document" size={22} />
                 <b>Existing campaign</b>
                 <span>Pick from this plan&rsquo;s campaigns.</span>
               </button>
@@ -593,31 +683,84 @@ export function FlowPlannerPage() {
               placeholder={`Or name a campaign, e.g. "${plan?.campaigns[0]?.name ?? "Payer Access Follow-up"}"`} />
           </div>
         )}
-        {step.kind === "grounding" && (
-          <div className="fp-loading">
-            <div className="fp-loading-head">
-              <span className="fp-loading-spinner"><Icon name="sparkles" size={18} /></span>
-              <span>Building your flow&hellip;</span>
-            </div>
-            <div className="fp-loading-lines">
-              {GROUNDING_LINES.map((line, i) => (
-                <div key={i} className={`fp-loading-line ${i < groundingLine ? "is-done" : i === groundingLine ? "is-active" : "is-idle"}`}>
-                  {i < groundingLine ? <Icon name="check" size={13} /> : <span className="fp-loading-dot" />}
-                  <span>{line}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-        {step.kind === "ready" && campaign && (
+        {step.kind === "no-plan" && (
           <div className="fp-chat">
-            <FlowEditorChat campaignId={campaign.id} audience="HCP" onMarkup={setEditedMarkup} embedded />
+            <div className="flow-editor-msg flow-editor-msg-agent">
+              {campaign?.name} does not yet have a Campaign Plan, so there is nothing to compile a brief from yet.
+            </div>
+            <div className="flow-editor-msg flow-editor-msg-agent">
+              Would you like me to run Planning Stage 1 for it now? This runs the full planning question set and will take several minutes.
+            </div>
             <div className="fp-quick-replies">
-              <button type="button" className="fp-chip fp-chip-muted" onClick={restart}>
-                Start another flow <Icon name="arrowRight" size={13} />
+              <button type="button" className="fp-chip" onClick={startPlanning}>Run Planning now</button>
+              <button type="button" className="fp-chip fp-chip-muted" onClick={() => setStep({ kind: "stub", message: `Understood. ${campaign?.name} still has no Campaign Plan to compile a brief from.` })}>
+                Not now
               </button>
             </div>
           </div>
+        )}
+        {step.kind === "brief-chat" && (
+          <div className="fp-chat">
+            <div className="flow-editor-msg flow-editor-msg-agent">{lastAgentLine}</div>
+            {briefThinking && (
+              <div className="flow-editor-msg flow-editor-msg-agent flow-editor-msg-pending"><span /><span /><span /></div>
+            )}
+            <FlowPlannerTextRow text={briefText} setText={setBriefText} onSend={sendBrief} thinking={briefThinking}
+              placeholder="e.g. brand, indication, lifecycle stage, budget…" />
+          </div>
+        )}
+        {step.kind === "stage1" && (
+          <div className="fp-chat">
+            {askPending ? (
+              <>
+                <div className="flow-editor-msg flow-editor-msg-agent">{askPending.text}</div>
+                {stage1Thinking && (
+                  <div className="flow-editor-msg flow-editor-msg-agent flow-editor-msg-pending"><span /><span /><span /></div>
+                )}
+                <FlowPlannerTextRow text={stage1Text} setText={setStage1Text} onSend={sendStage1Answer} thinking={stage1Thinking}
+                  placeholder="Your answer…" />
+              </>
+            ) : stage1Error ? (
+              <>
+                <div className="flow-editor-msg flow-editor-msg-agent">{stage1Error}</div>
+                <div className="fp-quick-replies">
+                  <button type="button" className="fp-chip" onClick={() => { setStage1Error(null); setResumeToken((t) => t + 1); }}>Try again</button>
+                  <button type="button" className="fp-chip fp-chip-muted" onClick={restart}>Start over</button>
+                </div>
+              </>
+            ) : (
+              <div className="fp-loading">
+                <div className="fp-loading-head">
+                  <span className="fp-loading-spinner"><Icon name="sparkles" size={18} /></span>
+                  <span>Running Planning Stage 1&hellip;</span>
+                </div>
+                <div className="fp-loading-lines">
+                  {(narrationLines.length > 0 ? narrationLines : ["Assembling your planning team…"]).map((line, i) => (
+                    <div key={i} className="fp-loading-line is-active"><span className="fp-loading-dot" /><span>{line}</span></div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+        {step.kind === "briefing" && (
+          <div className="fp-chat">
+            {BRIEFING_LINES.slice(0, briefingLine + 1).map((line, i) => (
+              <div key={i} className="flow-editor-msg flow-editor-msg-agent">{line}</div>
+            ))}
+            {briefingLine < BRIEFING_LINES.length - 1 && (
+              <div className="flow-editor-msg flow-editor-msg-agent flow-editor-msg-pending"><span /><span /><span /></div>
+            )}
+          </div>
+        )}
+        {step.kind === "ready" && (
+          <>
+            <h3>Campaign Brief ready for {campaign?.name}.</h3>
+            <p className="flow-planner-ready-hint">Close this card to read the full brief.</p>
+            <button type="button" className="wiz-big-btn" onClick={restart}>
+              Start another briefing <Icon name="arrowRight" size={16} />
+            </button>
+          </>
         )}
         {step.kind === "stub" && (
           <div className="fp-chat">
@@ -631,6 +774,164 @@ export function FlowPlannerPage() {
         )}
       </div>
       )}
+    </div>
+  );
+}
+
+/** The Campaign Strategy + Campaign Brief, read straight off strategy/campaign_artifacts.py's
+ *  real payload -- every value below is a field that endpoint actually returns, none of it
+ *  invented for display. A leaner summary of what frontend/src/workspace/CampaignArtifacts.tsx
+ *  renders in full (that one also carries a journey-diagram projection and a technical
+ *  appendix this view leaves out), not a different or approximated document. */
+function BriefingDocument({ data }: { data: CampaignArtifactsPayload }) {
+  const { strategy, brief } = data;
+  return (
+    <div className="briefing-doc">
+      <section className="briefing-section">
+        <h2>{brief.title}</h2>
+        <p className="flow-planner-ready-hint" style={{ margin: 0 }}>
+          Version {brief.version} · Generated {brief.generated_at}
+        </p>
+        <div className="hier-detail-card">
+          <div className="hier-detail-head"><span className="hier-detail-name">{brief.header.brand}</span></div>
+          <p className="hier-detail-summary">{brief.header.therapy_area} · {brief.header.lifecycle} · Owner: {brief.header.owner}</p>
+          {brief.snapshot && (
+            <>
+              <div className="hier-punch-card">
+                <span className="hier-punch-icon"><Icon name="target" size={18} /></span>
+                <div className="hier-punch-body">
+                  <div className="hier-detail-subhead">Objective</div>
+                  <p className="hier-objective-text">{brief.snapshot.objective}</p>
+                </div>
+              </div>
+              <div className="hier-punch-card">
+                <span className="hier-punch-icon"><Icon name="users" size={18} /></span>
+                <div className="hier-punch-body">
+                  <div className="hier-detail-subhead">Target audience</div>
+                  <p className="hier-objective-text">{brief.snapshot.target_audience}</p>
+                </div>
+              </div>
+              <div className="hier-punch-card">
+                <span className="hier-punch-icon"><Icon name="message" size={18} /></span>
+                <div className="hier-punch-body">
+                  <div className="hier-detail-subhead">Why now</div>
+                  <p className="hier-objective-text">{brief.snapshot.reason}</p>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </section>
+
+      <section className="briefing-section">
+        <h3>Purpose</h3>
+        <p className="hier-detail-summary">{brief.purpose.summary}</p>
+        <p className="hier-detail-summary">{brief.purpose.program_context}</p>
+        {brief.purpose.trigger_logic.length > 0 && (
+          <ul className="briefing-list">{brief.purpose.trigger_logic.map((t, i) => <li key={i}>{t}</li>)}</ul>
+        )}
+      </section>
+
+      <section className="briefing-section">
+        <h3>Objective</h3>
+        <p className="hier-detail-summary"><b>{brief.objective.pillar}</b> — {brief.objective.statement}</p>
+        {brief.objective.leading_indicators.length > 0 && (
+          <ul className="briefing-list">{brief.objective.leading_indicators.map((t, i) => <li key={i}>{t}</li>)}</ul>
+        )}
+      </section>
+
+      <section className="briefing-section">
+        <h3>Audience</h3>
+        <p className="hier-detail-summary">{brief.audience.segment}</p>
+        {brief.audience.eligibility_rules.length > 0 && (
+          <ul className="briefing-list">{brief.audience.eligibility_rules.map((t, i) => <li key={i}>{t}</li>)}</ul>
+        )}
+        {brief.audience.segments.map((s, i) => (
+          <div key={i} className="briefing-row">
+            <div style={{ flex: 1 }}>
+              <b>{s.name}</b>{s.volume != null && <span className="hier-plan-row-sub"> · {s.volume.toLocaleString()}{s.volume_note ? ` (${s.volume_note})` : ""}</span>}
+              <p className="hier-detail-summary" style={{ margin: "4px 0 0" }}>{s.profile}</p>
+            </div>
+          </div>
+        ))}
+      </section>
+
+      <section className="briefing-section">
+        <h3>Communications strategy</h3>
+        <p className="hier-detail-summary"><b>Core claim:</b> {brief.comms_strategy.core_claim}</p>
+        <p className="hier-detail-summary">{brief.comms_strategy.belief_shift}</p>
+        {brief.comms_strategy.message_ladder.length > 0 && (
+          <ul className="briefing-list">{brief.comms_strategy.message_ladder.map((t, i) => <li key={i}>{t}</li>)}</ul>
+        )}
+        {brief.comms_strategy.tone_guardrails.length > 0 && (
+          <p className="hier-detail-summary"><b>Tone guardrails:</b> {brief.comms_strategy.tone_guardrails.join(" · ")}</p>
+        )}
+      </section>
+
+      {brief.deliverables.length > 0 && (
+        <section className="briefing-section">
+          <h3>Deliverables</h3>
+          {brief.deliverables.map((d, i) => (
+            <div key={i} className="briefing-row">
+              <div style={{ flex: 1 }}><b>{d.asset}</b> — {d.variants}</div>
+              <div className="hier-plan-row-sub">{d.notes}</div>
+            </div>
+          ))}
+        </section>
+      )}
+
+      <section className="briefing-section">
+        <h3>Channel mix</h3>
+        <p className="hier-detail-summary">Anchor: {brief.channel_journey.anchor}</p>
+        {brief.channel_journey.mix.map((m, i) => (
+          <div key={i} className="briefing-row">
+            <div style={{ flex: 1 }}>{m.channel}</div>
+            <div><b>{m.pct}%</b></div>
+          </div>
+        ))}
+        <p className="hier-detail-summary">{brief.channel_journey.cadence_note}</p>
+      </section>
+
+      <section className="briefing-section">
+        <h3>Measurement plan</h3>
+        {brief.measurement_plan.kpis.length > 0 && (
+          <ul className="briefing-list">{brief.measurement_plan.kpis.map((t, i) => <li key={i}>{t}</li>)}</ul>
+        )}
+        <p className="hier-detail-summary">{brief.measurement_plan.test_design}</p>
+      </section>
+
+      {brief.risk_register.length > 0 && (
+        <section className="briefing-section">
+          <h3>Risk register</h3>
+          {brief.risk_register.map((r, i) => (
+            <div key={i} className="briefing-row">
+              <div style={{ flex: 1 }}><b>{r.risk}</b> <span className="hier-plan-row-sub">({r.severity})</span></div>
+              <div className="hier-plan-row-sub">{r.mitigation}</div>
+            </div>
+          ))}
+        </section>
+      )}
+
+      <section className="briefing-section">
+        <h3>Timeline &amp; approvals</h3>
+        <p className="hier-detail-summary">{brief.timeline.window} — {brief.timeline.note}</p>
+        {brief.approvals.length > 0 && (
+          <p className="hier-detail-summary">{brief.approvals.map((a) => `${a.role}: ${a.name}`).join(" · ")}</p>
+        )}
+      </section>
+
+      <section className="briefing-section">
+        <h2>{strategy.title}</h2>
+        <p className="hier-detail-summary">{strategy.note}</p>
+        {strategy.records.map((r, i) => (
+          <div key={i} className="hier-detail-card">
+            <div className="hier-detail-head"><span className="hier-detail-name">{r.stage_name}</span></div>
+            <p className="hier-detail-summary"><b>Framework:</b> {r.framework}</p>
+            <p className="hier-detail-summary"><b>Decision:</b> {r.decision}</p>
+            <p className="hier-detail-summary"><b>Rationale:</b> {r.rationale}</p>
+          </div>
+        ))}
+      </section>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import type { AnyFlow, BrandKit, BrandTree, CampaignDrift, HierCampaign, HierPlan, HierarchySummary, BrandSummary, JourneyFlow, JourneyFlowOp, JourneyFlowTurnResult, JourneyQuestion, JourneyState, JourneyStepId, JourneyTurnResult } from "./types";
+import type { AnyFlow, BrandKit, BrandTree, CampaignArtifactsPayload, CampaignDrift, HierCampaign, HierPlan, HierarchySummary, BrandSummary, JourneyFlow, JourneyFlowOp, JourneyFlowTurnResult, JourneyQuestion, JourneyState, JourneyStepId, JourneyTurnResult } from "./types";
 
 async function getJSON<T>(url: string): Promise<T> {
   const res = await fetch(url);
@@ -143,6 +143,44 @@ export function getBrandTree(brand: string): Promise<BrandTree> {
 
 export function getHierarchySummary(): Promise<HierarchySummary> {
   return getJSON("/api/hierarchy/summary");
+}
+
+/** The Briefing Agent's source of truth: strategy/campaign_artifacts.py's deterministic
+ *  Campaign Strategy + Campaign Brief, composed from the Planning stage's saved ctx. Only
+ *  reachable for a campaign whose `project_id` is set (it ran through the old Project
+ *  Studio's Stage 1) -- the caller checks that before calling this. */
+export function getCampaignArtifacts(projectId: string): Promise<CampaignArtifactsPayload> {
+  return getJSON(`/api/projects/${enc(projectId)}/campaign-artifacts`);
+}
+
+/* ---- Old Project Studio's Stage 1 (strategy/conversation.py + strategy/studio_run.py) --
+   reachable from the Briefing Agent when a campaign has no plan yet. Real endpoints, not a
+   parallel implementation: the same /api/projects, /api/chat, /api/studio/stream (SSE) and
+   /api/studio/answer the old Studio pages themselves use. ---- */
+
+export interface StudioProject {
+  id: string;
+  name: string;
+  messages: { role: string; text: string; meta?: Record<string, unknown> }[];
+  state: Record<string, unknown>;
+}
+export function createProject(name: string): Promise<StudioProject> {
+  return postJSON("/api/projects", { name });
+}
+
+export interface BriefChatResult {
+  reply: string;
+  action: "ask" | "run" | string;
+  phase: string;
+}
+/** The free-text brief-capture loop (brand/budget/lifecycle/etc.) that runs before Stage 1's
+ *  own question sequence can start -- `action` flips to "run" the moment enough is captured. */
+export function postBriefChat(projectId: string, message: string): Promise<BriefChatResult> {
+  return postJSON("/api/chat", { project_id: projectId, message });
+}
+
+export function postStudioAnswer(projectId: string, askId: string, value: string): Promise<{ ok: boolean }> {
+  return postJSON("/api/studio/answer", { project_id: projectId, ask_id: askId, value });
 }
 
 export function createPlan(brand: string, body: { name: string; period_start?: string | null; period_end?: string | null }): Promise<HierPlan> {

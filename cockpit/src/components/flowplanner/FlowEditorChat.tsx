@@ -16,22 +16,27 @@ import { Icon } from "../Icon";
  * Asking a new question replaces what's on screen; the previous turn is archived into
  * `history` for context, not shown.
  *
- * Same centered card shape as BrandOverview's own "build something" launcher and the wizard
- * step of this same page (plan-launcher-fab/plan-launcher-backdrop/plan-launcher-card) --
- * not a side panel, and the two never show at once (the wizard's card only shows before a
- * flow is ready, this one only after).
+ * Embedded mode (`embedded`): once the wizard's own card reaches "ready", FlowPlannerPage
+ * keeps that same card open and mounts this chat's turn/composer directly inside it, rather
+ * than closing the wizard into a static "flow ready" summary and popping a second chat FAB
+ * next to the diagram -- one continuous conversation, not two separate ones. In that mode
+ * this component never renders its own fab/backdrop/card shell or the "open" gate; the parent
+ * already provides all of that and this is always considered open.
  */
 
 type Phase = "thinking" | "answered";
 
-export function FlowEditorChat({ campaignId, audience, onMarkup }: {
+export function FlowEditorChat({ campaignId, audience, onMarkup, embedded = false }: {
   campaignId: number;
   audience: string;
   /** Called with the freshly edited SVG markup after an edit is applied, so the diagram
    *  viewer can show it without a re-fetch. */
   onMarkup: (svg: string) => void;
+  /** Render inline inside a parent-provided card instead of this component's own
+   *  fab/backdrop/card. See the doc comment above. */
+  embedded?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(embedded);
   const [phase, setPhase] = useState<Phase>("thinking");
   const [question, setQuestion] = useState<string | null>(null);
   const [answer, setAnswer] = useState<string | null>(null);
@@ -69,6 +74,26 @@ export function FlowEditorChat({ campaignId, audience, onMarkup }: {
       .catch((e) => { setError(e instanceof Error ? e.message : String(e)); setPhase("answered"); });
   };
 
+  const body = (
+    <>
+      <div className="flow-editor-turn">
+        {question && <div className="flow-editor-msg flow-editor-msg-user">{question}</div>}
+        {phase === "thinking" && (
+          <div className="flow-editor-msg flow-editor-msg-agent flow-editor-msg-pending"><span /><span /><span /></div>
+        )}
+        {phase === "answered" && answer && <div className="flow-editor-msg flow-editor-msg-agent">{answer}</div>}
+        {error && <div className="step-chat-error" role="alert">{error}</div>}
+      </div>
+      <form className="wiz-form-row" onSubmit={(e) => { e.preventDefault(); send(); }}>
+        <input className="jc-input" placeholder='e.g. "delete B7" or "rename B3 to Efficacy"'
+          value={text} disabled={phase === "thinking"} onChange={(e) => setText(e.target.value)} />
+        <button type="submit" className="jc-btn jc-btn-keep" disabled={phase === "thinking" || !text.trim()}>Send</button>
+      </form>
+    </>
+  );
+
+  if (embedded) return body;
+
   if (!open) {
     return (
       <button type="button" className="plan-launcher-fab" aria-label="Talk to the diagram" onClick={() => setOpen(true)}>
@@ -85,19 +110,7 @@ export function FlowEditorChat({ campaignId, audience, onMarkup }: {
           <Icon name="close" size={16} />
         </button>
         <h3>Edit this flow.</h3>
-        <div className="flow-editor-turn">
-          {question && <div className="flow-editor-msg flow-editor-msg-user">{question}</div>}
-          {phase === "thinking" && (
-            <div className="flow-editor-msg flow-editor-msg-agent flow-editor-msg-pending"><span /><span /><span /></div>
-          )}
-          {phase === "answered" && answer && <div className="flow-editor-msg flow-editor-msg-agent">{answer}</div>}
-          {error && <div className="step-chat-error" role="alert">{error}</div>}
-        </div>
-        <form className="wiz-form-row" onSubmit={(e) => { e.preventDefault(); send(); }}>
-          <input className="jc-input" placeholder='e.g. "delete B7" or "rename B3 to Efficacy"'
-            value={text} disabled={phase === "thinking"} onChange={(e) => setText(e.target.value)} />
-          <button type="submit" className="jc-btn jc-btn-keep" disabled={phase === "thinking" || !text.trim()}>Send</button>
-        </form>
+        {body}
       </div>
     </>
   );

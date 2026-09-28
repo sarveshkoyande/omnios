@@ -6,6 +6,7 @@ import { Icon } from "./Icon";
 /** Agents whose card opens a dedicated screen instead of the Read more detail panel. */
 const CARD_ROUTES: Partial<Record<string, () => void>> = {
   "flow-planner": () => go({ kind: "flow-planner" }),
+  "briefing-agent": () => go({ kind: "briefing-agent" }),
 };
 
 /** Read more: what the agent does, what it works from, and where it runs. An agent that is on

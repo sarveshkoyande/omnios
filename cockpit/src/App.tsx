@@ -11,6 +11,7 @@ import { CampaignPage } from "./components/hierarchy/CampaignPage";
 import { FlowPage } from "./components/hierarchy/FlowPage";
 import { CampaignPlanPage } from "./components/campaignplan/CampaignPlanPage";
 import { FlowPlannerPage } from "./components/flowplanner/FlowPlannerPage";
+import { BriefingAgentPage } from "./components/briefingagent/BriefingAgentPage";
 import { go, href, routeBrand, useRoute, type Route } from "./route";
 import "./cockpit.css";
 
@@ -53,6 +54,14 @@ function Breadcrumb({ crumbs }: { crumbs: Crumb[] }) {
 
 export default function App() {
   const route = useRoute();
+  // Collapsed by default -- pinning it open is a deliberate opt-in (localStorage "0"),
+  // everything else (unset, or "1") starts collapsed. Hovering it open temporarily
+  // (railHover) never touches this persisted pin.
+  const [railCollapsed, setRailCollapsed] = useState(() => {
+    try { return localStorage.getItem("omni-rail-collapsed") !== "0"; } catch { return true; }
+  });
+  const [railHover, setRailHover] = useState(false);
+  const railExpanded = !railCollapsed || railHover;
   const [brands, setBrands] = useState<BrandSummary[] | null>(null);
   const [knownTerritories, setKnownTerritories] = useState<string[]>([]);
   const [territory, setTerritory] = useState<Record<string, string | null>>({});
@@ -76,6 +85,14 @@ export default function App() {
   useEffect(() => {
     loadBrands().catch((e) => setError(String(e)));
   }, [loadBrands]);
+
+  const toggleRail = () => {
+    setRailCollapsed((v) => {
+      const next = !v;
+      try { localStorage.setItem("omni-rail-collapsed", next ? "1" : "0"); } catch { /* private browsing etc. */ }
+      return next;
+    });
+  };
 
   // One entry point (S-R4): the landing route opens the first brand.
   useEffect(() => {
@@ -126,6 +143,7 @@ export default function App() {
     switch (route.kind) {
       case "agents": return <AgentLibrary />;
       case "flow-planner": return <FlowPlannerPage />;
+      case "briefing-agent": return <BriefingAgentPage />;
       case "new-brand":
         return <JourneyScreen key="new" brand={null} initialStep="brief" onBrandCreated={onNewBrandComplete}
           onKitChanged={() => setKitVersion((v) => v + 1)} onClose={() => go({ kind: "home" })} />;
@@ -174,17 +192,36 @@ export default function App() {
       </header>
 
       <div className="app-shell">
-        <aside className="rail">
-          <div className="rail-section-label">Workspace</div>
-          <a className={`rail-item ${route.kind === "agents" ? "active" : ""}`} href={href({ kind: "agents" })}>Agent Library</a>
+        <aside className={`rail ${!railExpanded ? "rail-collapsed" : ""}`}
+          onMouseEnter={() => setRailHover(true)} onMouseLeave={() => setRailHover(false)}>
+          <button type="button" className="rail-collapse-btn" onClick={toggleRail}
+            aria-label={railCollapsed ? "Pin sidebar open" : "Collapse sidebar"} title={railCollapsed ? "Pin sidebar open" : "Collapse sidebar"}>
+            <Icon name={railCollapsed ? "arrowRight" : "arrowLeft"} size={14} />
+          </button>
 
-          <div className="rail-section-row" style={{ marginTop: 24 }}>
-            <span className="rail-section-label" style={{ marginTop: 0 }}>Brands</span>
-            <a className="rail-add-brand" title="Set up a new brand" aria-label="Set up a new brand" href={href({ kind: "new-brand" })}>
+          {railExpanded && <div className="rail-section-label">Workspace</div>}
+          <a className={`rail-item ${route.kind === "agents" ? "active" : ""}`} href={href({ kind: "agents" })} title="Agent Library">
+            {railExpanded ? "Agent Library" : <Icon name="sparkles" size={18} />}
+          </a>
+
+          {railExpanded && (
+            <div className="rail-section-row" style={{ marginTop: 24 }}>
+              <span className="rail-section-label" style={{ marginTop: 0 }}>Brands</span>
+              <a className="rail-add-brand" title="Set up a new brand" aria-label="Set up a new brand" href={href({ kind: "new-brand" })}>
+                <Icon name="plus" size={14} />
+              </a>
+            </div>
+          )}
+          {!railExpanded && brands && brands.length > 0 && (
+            <a className="rail-add-brand rail-add-brand-collapsed" style={{ margin: "18px auto 8px" }}
+              title="Set up a new brand" aria-label="Set up a new brand" href={href({ kind: "new-brand" })}>
               <Icon name="plus" size={14} />
             </a>
-          </div>
-          {brands?.map((b) => {
+          )}
+          {/* Collapsed: no per-brand row at all -- individual brands only appear once the
+           *  rail is actually expanded (pinned or hovered); the collapsed strip is just the
+           *  Agent Library icon and the "+" for adding a brand. */}
+          {railExpanded && brands?.map((b) => {
             const selected = brand?.toLowerCase() === b.brand.toLowerCase();
             const counts = summary[b.brand];
             return (
@@ -223,7 +260,7 @@ export default function App() {
               </div>
             );
           })}
-          {brands && brands.length === 0 && <div className="rail-empty">No brand kits configured yet.</div>}
+          {railExpanded && brands && brands.length === 0 && <div className="rail-empty">No brand kits configured yet.</div>}
         </aside>
 
         <main className="main">

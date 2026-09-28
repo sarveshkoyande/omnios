@@ -8,6 +8,7 @@ export type Route =
   | { kind: "agents" }
   | { kind: "new-brand" }
   | { kind: "flow-planner" }
+  | { kind: "briefing-agent" }
   | { kind: "brand"; brand: string; tab: "overview" | "workspace" }
   | { kind: "journey"; brand: string; step: JourneyStepId }
   | { kind: "plan"; brand: string; planId: number }
@@ -22,6 +23,7 @@ export function parseRoute(hash: string): Route {
   if (parts[0] === "agents") return { kind: "agents" };
   if (parts[0] === "new-brand") return { kind: "new-brand" };
   if (parts[0] === "flow-planner") return { kind: "flow-planner" };
+  if (parts[0] === "briefing-agent") return { kind: "briefing-agent" };
   if (parts[0] !== "b" || !parts[1]) return { kind: "home" };
   const brand = parts[1];
   if (parts[2] === "workspace") return { kind: "brand", brand, tab: "workspace" };
@@ -45,6 +47,7 @@ export function href(r: Route): string {
     case "agents": return "#/agents";
     case "new-brand": return "#/new-brand";
     case "flow-planner": return "#/flow-planner";
+    case "briefing-agent": return "#/briefing-agent";
     case "brand": return r.tab === "workspace" ? `#/b/${e(r.brand)}/workspace` : `#/b/${e(r.brand)}`;
     case "journey": return `#/b/${e(r.brand)}/journey/${r.step}`;
     case "plan": return `#/b/${e(r.brand)}/p/${r.planId}`;
