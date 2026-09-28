@@ -67,6 +67,16 @@ export const AGENTS: Record<Phase, LibraryAgent[]> = {
       builtOn: "strategy/studio_run.py, strategy/orchestrator.py, strategy/plan_document.py",
     },
     {
+      id: "campaign-planner", name: "Campaign Planner", icon: "target", status: "available",
+      summary: "Decides a campaign's objective, audience, messages, channels and timing, stage by stage.",
+      about: "Walks the campaign decision spine (campaign frame through risks): pre-fills what the brand kit and campaign already say, recommends what it can, and asks only what only you know. Its plan feeds the Flow Planner and the Briefing Agent.",
+      worksFrom: [
+        { label: "Brand kit", detail: "Lifecycle, pillars, core claim, objective, competitors and targets." },
+        { label: "Campaign decision spine", detail: "config/frameworks/campaign_spine.json (S0-S10)." },
+      ],
+      builtOn: "strategy/agent_forms.py, strategy/v3_artifacts.py",
+    },
+    {
       id: "signal-agent", name: "Signal Scout", icon: "radar", status: "available",
       summary: "Surfaces the market and competitive signals that should shape the plan.",
       about: "Pulls together what's known about the therapy area, the competitive set and where the brand sits in its lifecycle, so the plan starts from the market as it is.",
@@ -188,10 +198,11 @@ export interface RegistryAgent extends LibraryAgent {
 
 /** Agents with a redesigned workspace open there; the rest keep their current screen. */
 const AGENT_ROUTES: Record<string, string> = {
-  "flow-planner": "#/flow-planner",
+  "campaign-planner": "#/v3/agent/campaign-planner",
+  "flow-planner": "#/v3/agent/flow-planner",
   "briefing-agent": "#/v3/agent/briefing-agent",
 };
-const NEW_AGENTS = new Set(["flow-planner", "briefing-agent"]);
+const NEW_AGENTS = new Set(["campaign-planner", "flow-planner", "briefing-agent"]);
 
 export const REGISTRY: RegistryAgent[] = (() => {
   const byId = new Map<string, RegistryAgent>();

@@ -118,6 +118,82 @@ def compose_brief(brand: str, inputs: dict, extras: list[dict]) -> dict:
     return {"type": "campaign_brief", "schema_version": 1, "sections": sections}
 
 
+# Which artifact type each agent produces (D4: Campaign plan -> Flow, Brief).
+AGENT_ARTIFACT = {"briefing-agent": "campaign_brief", "campaign-planner": "campaign_plan", "flow-planner": "flow"}
+
+_DERIVATION_SOURCE = {"derive": "Brand data", "confirm": "Confirmed", "ask": "You"}
+
+
+def compose_campaign_plan(inputs: dict, extras: list[dict]) -> dict:
+    """The campaign plan (D5): every framework decision, one section per spine stage."""
+    import agent_forms  # local: agent_forms imports brand_kit too; avoid an import cycle at load
+    fw = agent_forms.load_framework("campaign_spine")
+    sections = []
+    for st in fw["stages"]:
+        fields = []
+        for dp in st["data_points"]:
+            inp = inputs.get(dp["key"]) or {}
+            value = inp.get("value")
+            label = dp["label"][:1].upper() + dp["label"][1:]
+            fields.append({"id": dp["key"].replace(".", "_"), "label": label, "value": value or NEEDS_INPUT,
+                           "source": f"{dp['key']} · {_DERIVATION_SOURCE.get(dp['derivation'], dp['derivation'])}",
+                           "needs_input": not value})
+        sections.append({"id": st["id"], "title": st["name"], "fields": fields})
+    context = [x for x in extras if (x.get("value") or "").strip()]
+    if context:
+        sections.append({"id": "context", "title": "Additional context", "fields": [
+            {"id": f"extra_{i}", "label": x.get("label", "Context"), "value": x["value"].strip(),
+             "source": "You", "needs_input": False} for i, x in enumerate(context)]})
+    return {"type": "campaign_plan", "schema_version": 1, "sections": sections}
+
+
+FLOW_SCHEMA: list[dict] = [
+    {"id": "audience", "title": "Audience", "fields": [
+        {"id": "segment", "label": "Segments", "from": "S2.2"},
+        {"id": "eligibility", "label": "Eligibility rules", "from": "S2.3"},
+    ]},
+    {"id": "messages", "title": "Messages", "fields": [
+        {"id": "lead_message", "label": "Lead message", "from": "S5.2"},
+        {"id": "core_claim", "label": "Core claim", "from": "S5.1"},
+    ]},
+    {"id": "channel", "title": "Channel & cadence", "fields": [
+        {"id": "anchor_channel", "label": "Anchor channel", "from": "S6.2"},
+    ]},
+    {"id": "timing", "title": "Timing", "fields": [
+        {"id": "launch", "label": "Launch", "from": "S9.1"},
+    ]},
+]
+
+
+def compose_flow(inputs: dict) -> dict:
+    """The flow (D3): renders the campaign's structure; it decides nothing new. The diagram
+    itself is produced by strategy/flow_sop and shown in the viewer's Diagram tab."""
+    sections = []
+    for sec in FLOW_SCHEMA:
+        fields = []
+        for f in sec["fields"]:
+            inp = inputs.get(f["from"]) or {}
+            value = inp.get("value")
+            fields.append({"id": f["id"], "label": f["label"], "value": value or NEEDS_INPUT,
+                           "source": f"{f['from']} · {inp.get('label', '')}".strip(" ·"), "needs_input": not value})
+        sections.append({"id": sec["id"], "title": sec["title"], "fields": fields})
+    sections.append({"id": "diagram", "title": "Diagram", "fields": [{
+        "id": "diagram_source", "label": "Diagram source",
+        "value": ("Rendered by the SOP flow generator from its sample brief (Leqvio Fall Push). "
+                  "Feeding this campaign's own plan into the generator is not wired yet."),
+        "source": "strategy/flow_sop", "needs_input": False}]})
+    return {"type": "flow", "schema_version": 1, "sections": sections}
+
+
+def compose_for(agent: str, brand: str, inputs: dict, extras: list[dict]) -> dict:
+    kind = AGENT_ARTIFACT.get(agent, "campaign_brief")
+    if kind == "campaign_plan":
+        return compose_campaign_plan(inputs, extras)
+    if kind == "flow":
+        return compose_flow(inputs)
+    return compose_brief(brand, inputs, extras)
+
+
 def _row(artifact_id: str) -> sqlite3.Row | None:
     return _conn().execute("SELECT * FROM artifacts WHERE id = ?", (artifact_id,)).fetchone()
 
@@ -147,7 +223,7 @@ def generate(agent: str, brand: str, plan_id: int | None, campaign_id: int | Non
              inputs: dict, extras: list[dict]) -> dict:
     """Generate (or regenerate) the artifact for this agent + campaign; a new version either way."""
     db = _conn()
-    body = {"inputs": inputs, "extras": extras, "artifact": compose_brief(brand, inputs, extras)}
+    body = {"inputs": inputs, "extras": extras, "artifact": compose_for(agent, brand, inputs, extras)}
     existing = db.execute("SELECT id FROM artifacts WHERE agent = ? AND brand = ? AND IFNULL(campaign_id, -1) = IFNULL(?, -1)",
                           (agent, brand, campaign_id)).fetchone()
     if existing:
@@ -156,7 +232,7 @@ def generate(agent: str, brand: str, plan_id: int | None, campaign_id: int | Non
     artifact_id = uuid.uuid4().hex[:12]
     now = _now()
     db.execute("INSERT INTO artifacts VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-               (artifact_id, "campaign_brief", agent, brand, plan_id, campaign_id, title, now, now))
+               (artifact_id, AGENT_ARTIFACT.get(agent, "campaign_brief"), agent, brand, plan_id, campaign_id, title, now, now))
     return _add_version(artifact_id, body, "Generated")
 
 

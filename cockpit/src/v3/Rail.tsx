@@ -27,7 +27,8 @@ const BRAND_IQ: NavItem[] = [
  *  workspace versions land (Phases 3–6); the engagement plan waits on M2 (deferred). */
 const NEW_ITEMS: { label: string; href?: string; note?: string }[] = [
   { label: "Start an engagement plan", note: "Coming soon" },
-  { label: "Build a flow", href: "#/flow-planner" },
+  { label: "Plan a campaign", href: "#/v3/agent/campaign-planner" },
+  { label: "Build a flow", href: "#/v3/agent/flow-planner" },
   { label: "Compile a brief", href: "#/v3/agent/briefing-agent" },
 ];
 

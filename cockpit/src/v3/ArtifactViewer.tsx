@@ -1,15 +1,16 @@
 import { useEffect, useState } from "react";
 import type { ArtifactField, GuidelineIssue, V3Artifact } from "../api";
 import { Icon } from "../components/Icon";
+import { SopDiagramViewer } from "../components/hierarchy/SopDiagramViewer";
 
 /** Phase 4 artifact viewer (C9-C11). The brief is a typed object: Overview summarises it,
  *  Detail shows every field with where it came from and lets you edit one field at a time
  *  (each save is a new version), Data is the raw machine-readable form. When `compareTo` is
  *  set (viewing an older version), fields that differ from it are highlighted. */
 
-type Tab = "overview" | "detail" | "data";
+type Tab = "diagram" | "overview" | "detail" | "data";
 
-export function ArtifactViewer({ art, readOnly, compareTo, onEdit, issues, focusField }: {
+export function ArtifactViewer({ art, readOnly, compareTo, onEdit, issues, focusField, diagramMarkup }: {
   art: V3Artifact;
   readOnly: boolean;
   compareTo: V3Artifact | null;
@@ -18,8 +19,12 @@ export function ArtifactViewer({ art, readOnly, compareTo, onEdit, issues, focus
   issues?: GuidelineIssue[];
   /** A field to jump to (from a guideline issue): switches to Detail and scrolls to it. */
   focusField?: { id: string; nonce: number } | null;
+  /** A flow's diagram edited in the Edit-the-flow drawer, shown without re-fetching. */
+  diagramMarkup?: string | null;
 }) {
-  const [tab, setTab] = useState<Tab>("overview");
+  const isFlow = art.type === "flow" && Boolean(art.campaign_id);
+  const [tab, setTab] = useState<Tab>(isFlow ? "diagram" : "overview");
+  const tabs: Tab[] = isFlow ? ["diagram", "overview", "detail", "data"] : ["overview", "detail", "data"];
   const issueMap = new Map<string, GuidelineIssue[]>();
   for (const i of issues ?? []) issueMap.set(i.field_id, [...(issueMap.get(i.field_id) ?? []), i]);
 
@@ -39,12 +44,19 @@ export function ArtifactViewer({ art, readOnly, compareTo, onEdit, issues, focus
   return (
     <div className="v3-av">
       <div className="v3-av-tabs" role="tablist">
-        {(["overview", "detail", "data"] as Tab[]).map((t) => (
+        {tabs.map((t) => (
           <button key={t} type="button" role="tab" aria-selected={tab === t} className={tab === t ? "active" : ""} onClick={() => setTab(t)}>
-            {t === "overview" ? "Overview" : t === "detail" ? "Detail" : "Data"}
+            {t === "diagram" ? "Diagram" : t === "overview" ? "Overview" : t === "detail" ? "Detail" : "Data"}
           </button>
         ))}
       </div>
+
+      {tab === "diagram" && isFlow && (
+        <div className="v3-av-diagram">
+          <SopDiagramViewer alt="Flow diagram" overrideMarkup={diagramMarkup ?? null}
+            src={`/api/campaigns/${art.campaign_id}/flow-sop/diagram.svg?audience=HCP`} />
+        </div>
+      )}
 
       {tab === "overview" && (
         <div className="v3-av-overview">

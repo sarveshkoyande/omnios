@@ -6,6 +6,16 @@ import {
 } from "../api";
 import { ArtifactViewer } from "./ArtifactViewer";
 import { RefineDrawer } from "./RefineDrawer";
+import { FlowEditorChat } from "../components/flowplanner/FlowEditorChat";
+
+/** What each agent's artifact is called, and where it can be handed off to (C14, D4). */
+const ARTIFACT_NOUN: Record<string, string> = { "briefing-agent": "Brief", "campaign-planner": "Campaign plan", "flow-planner": "Flow" };
+const HANDOFF: Record<string, { id: string; label: string }[]> = {
+  "campaign-planner": [{ id: "flow-planner", label: "Build the flow" }, { id: "briefing-agent", label: "Compile the brief" }],
+  "flow-planner": [{ id: "campaign-planner", label: "Open the campaign plan" }, { id: "briefing-agent", label: "Compile the brief" }],
+  "briefing-agent": [{ id: "campaign-planner", label: "Open the campaign plan" }, { id: "flow-planner", label: "Build the flow" }],
+};
+export type Handoff = { brand: string; planId: number | null; campaignId: number | null };
 import { REGISTRY } from "../agents";
 import { Icon } from "../components/Icon";
 import type { BrandSummary, BrandTree } from "../types";
@@ -50,10 +60,12 @@ function stageState(st: FormStage, answers: Answers): "done" | "recommended" | "
   return "done";
 }
 
-export function Workspace({ agentId, artifactId, brands, activeBrand, isFavorite, toggleFavorite }: {
+export function Workspace({ agentId, artifactId, handoff, brands, activeBrand, isFavorite, toggleFavorite }: {
   agentId: string;
   /** Reopen a specific saved artifact (from My work / Recent work). */
   artifactId?: string;
+  /** Opened from another agent's "Send to": work on that exact brand, plan and campaign. */
+  handoff?: Handoff;
   brands: BrandSummary[];
   activeBrand: string | null;
   isFavorite: (type: Favorite["type"], id: string) => boolean;
@@ -88,9 +100,18 @@ export function Workspace({ agentId, artifactId, brands, activeBrand, isFavorite
   const [checking, setChecking] = useState(false);
   const [checkError, setCheckError] = useState<string | null>(null);
   const [focusField, setFocusField] = useState<{ id: string; nonce: number } | null>(null);
+  const [sendOpen, setSendOpen] = useState(false);
+  const [seededFrom, setSeededFrom] = useState<number | null>(null);
+  const [diagramMarkup, setDiagramMarkup] = useState<string | null>(null);
   const loadedKey = useRef<string>("");
   /** Set when reopening a saved artifact, so the tree load selects its plan + campaign. */
   const pendingSelection = useRef<{ planId: number | null; campaignId: number | null } | null>(null);
+
+  useEffect(() => {
+    if (!handoff) return;
+    pendingSelection.current = { planId: handoff.planId, campaignId: handoff.campaignId };
+    setBrand(handoff.brand);
+  }, [handoff]);
 
   useEffect(() => {
     if (!artifactId) return;
@@ -100,7 +121,7 @@ export function Workspace({ agentId, artifactId, brands, activeBrand, isFavorite
     }).catch(() => undefined);
   }, [artifactId]);
 
-  useEffect(() => { if (!brand && !artifactId && brands.length) setBrand(activeBrand ?? brands[0].brand); }, [brand, brands, activeBrand, artifactId]);
+  useEffect(() => { if (!brand && !artifactId && !handoff && brands.length) setBrand(activeBrand ?? brands[0].brand); }, [brand, brands, activeBrand, artifactId]);
 
   useEffect(() => {
     if (!brand) return;
@@ -155,9 +176,24 @@ export function Workspace({ agentId, artifactId, brands, activeBrand, isFavorite
   useEffect(() => {
     if (!brand || !campaignId) return;
     let live = true;
+    setSeededFrom(null);
     findArtifact(agentId, brand, campaignId).then(({ artifacts }) => {
       const a = artifacts[0];
-      if (!live || !a) return;
+      if (!live) return;
+      if (!a) {
+        // No artifact of our own yet: start from this campaign's plan, if one exists (D4). The
+        // plan and every downstream agent share the same framework keys.
+        if (agentId === "campaign-planner") return;
+        findArtifact("campaign-planner", brand, campaignId).then(({ artifacts: plans }) => {
+          const plan = plans[0];
+          if (!live || !plan) return;
+          setAnswers(Object.fromEntries(Object.entries(plan.inputs)
+            .filter(([, v]) => v.derivation !== "derive" && v.value)
+            .map(([k, v]) => [k, { value: v.value as string, confirmed: v.confirmed }])));
+          setSeededFrom(plan.version);
+        }).catch(() => undefined);
+        return;
+      }
       setArtifact(a);
       setTitle(a.title);
       setExtras(a.extras.map((x, i) => ({ id: x.id ?? `${x.label}-${i}`, label: x.label, value: x.value })));
@@ -180,7 +216,9 @@ export function Workspace({ agentId, artifactId, brands, activeBrand, isFavorite
     [stages, answers],
   );
   const doneCount = stages.filter((s) => stageState(s, answers) === "done").length;
-  const docTitle = title || `${campaign?.name ?? "Untitled"} — ${agent?.name === "Briefing Agent" ? "Brief" : agent?.name ?? ""}`;
+  const noun = ARTIFACT_NOUN[agentId] ?? agent?.name ?? "Output";
+  const docTitle = title || `${campaign?.name ?? "Untitled"} — ${noun}`;
+  const handoffHref = (to: string) => `#/v3/agent/${to}/for/${encodeURIComponent(brand ?? "")}/${planId ?? 0}/${campaignId ?? 0}`;
 
   /** Only confirmed or answered values go in; an unconfirmed recommendation stays undecided
    *  (the brief shows "Needs input") rather than being silently accepted. */
@@ -285,6 +323,20 @@ export function Workspace({ agentId, artifactId, brands, activeBrand, isFavorite
               </div>
             )}
           </span>
+          {HANDOFF[agentId] && (
+            <span className="v3-ws-versions">
+              <button type="button" disabled={!campaignId} onClick={() => setSendOpen((o) => !o)} aria-expanded={sendOpen}>Send to</button>
+              {sendOpen && (
+                <div className="v3-new-menu v3-ws-version-menu">
+                  {HANDOFF[agentId].map((h) => (
+                    <a key={h.id} className="v3-ws-version" href={handoffHref(h.id)} onClick={() => setSendOpen(false)}>
+                      <b>{h.label}</b><span>{REGISTRY.find((a) => a.id === h.id)?.name} · same campaign</span>
+                    </a>
+                  ))}
+                </div>
+              )}
+            </span>
+          )}
           <button type="button" className="v3-ws-refine-btn" disabled={!artifact} onClick={() => setRefineOpen((o) => !o)} aria-pressed={refineOpen}>
             <Icon name="sparkles" size={13} /> Refine
           </button>
@@ -357,6 +409,9 @@ export function Workspace({ agentId, artifactId, brands, activeBrand, isFavorite
               )}
             </section>
 
+            {seededFrom !== null && !artifact && (
+              <p className="v3-ws-seeded"><Icon name="check" size={12} /> Pre-filled from this campaign's plan (v{seededFrom}). Review, then Generate.</p>
+            )}
             {form?.framework && (
               <div className="v3-ws-progress">
                 <span>{form.framework.name}</span>
@@ -445,17 +500,28 @@ export function Workspace({ agentId, artifactId, brands, activeBrand, isFavorite
                   {check && check.needs_input.length > 0 && <p className="v3-check-note">{check.needs_input.length} field{check.needs_input.length === 1 ? "" : "s"} still need input and weren't checked.</p>}
                 </div>
               )}
-              <ArtifactViewer art={artifact} readOnly={false} compareTo={null} onEdit={onEdit} issues={check?.issues} focusField={focusField} />
+              <ArtifactViewer art={artifact} readOnly={false} compareTo={null} onEdit={onEdit} issues={check?.issues} focusField={focusField} diagramMarkup={diagramMarkup} />
             </>
           ) : (
             <div className="v3-ws-empty">
               <span className="v3-app-icon lg"><Icon name={agent.icon} size={22} /></span>
-              <b>Your {agent.name === "Briefing Agent" ? "brief" : "output"} appears here</b>
+              <b>Your {noun.toLowerCase()} appears here</b>
               <p>Check the inputs on the left, answer anything marked required, then Generate.</p>
             </div>
           )}
         </section>
-        {refineOpen && artifact && !viewing && (
+        {refineOpen && artifact && !viewing && artifact.type === "flow" && artifact.campaign_id && (
+          <aside className="v3-refine" aria-label="Edit the flow">
+            <div className="v3-refine-head">
+              <b><Icon name="sparkles" size={14} /> Edit the flow</b>
+              <button type="button" aria-label="Close" onClick={() => setRefineOpen(false)}><Icon name="close" size={13} /></button>
+            </div>
+            <div className="v3-refine-body v3-flow-edit">
+              <FlowEditorChat campaignId={artifact.campaign_id} audience="HCP" onMarkup={setDiagramMarkup} embedded />
+            </div>
+          </aside>
+        )}
+        {refineOpen && artifact && !viewing && artifact.type !== "flow" && (
           <RefineDrawer artifact={artifact} onClose={() => setRefineOpen(false)}
             onApplied={(a) => { setArtifact(a); setCheck(null); }} />
         )}

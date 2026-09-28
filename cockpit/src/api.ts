@@ -359,3 +359,7 @@ export function chatAsk(body: {
 }): Promise<{ reply: string; agent_ids: string[] }> {
   return postJSON("/api/v3/chat", body);
 }
+
+export function getStudioProject(id: string): Promise<StudioProject> {
+  return getJSON(`/api/projects/${enc(id)}`);
+}

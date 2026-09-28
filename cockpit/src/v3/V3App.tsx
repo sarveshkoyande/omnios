@@ -44,7 +44,10 @@ export function V3App({ path }: { path: string[] }) {
         toggleFavorite={favs.toggleFavorite} pinned={pinned} setPinned={setPinned} />
       <main className={`v3-main ${isWorkspace ? "v3-main-ws" : ""}`}>
         {isWorkspace ? (
-          <Workspace key={path.join("/")} agentId={path[1]} artifactId={path[2]} brands={brands} activeBrand={scope.activeBrand}
+          <Workspace key={path.join("/")} agentId={path[1]}
+            artifactId={path[2] !== "for" ? path[2] : undefined}
+            handoff={path[2] === "for" && path[3] ? { brand: path[3], planId: Number(path[4]) || null, campaignId: Number(path[5]) || null } : undefined}
+            brands={brands} activeBrand={scope.activeBrand}
             isFavorite={favs.isFavorite} toggleFavorite={favs.toggleFavorite} />
         ) : current === "chat" ? (
           <Chat activeBrand={scope.activeBrand} />

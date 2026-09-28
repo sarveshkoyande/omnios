@@ -567,3 +567,10 @@ a.v3-ask-agent { text-decoration: none; }
 @media (max-width: 1500px) {
   .v3-refine { position: absolute; top: 0; right: 0; bottom: 0; width: 360px; z-index: 6; box-shadow: var(--neu-flat), -12px 0 32px rgba(35, 31, 32, 0.12); }
 }
+
+/* ---- Phase 6: hand-off, flow diagram, flow editing ---- */
+.v3-ws-seeded { margin: 0; display: flex; align-items: center; gap: 6px; padding: 8px 10px; border-radius: var(--radius-sm); font-size: 12px; background: var(--success-light-background); color: var(--success-foreground); }
+.v3-av-diagram { height: calc(100vh - 190px); min-height: 420px; border-radius: var(--radius-md); overflow: hidden; background: #fff; box-shadow: 0 0 0 1px var(--neutral-200); }
+.v3-flow-edit .flow-editor-turn { display: flex; flex-direction: column; gap: 10px; }
+.v3-flow-edit .wiz-form-row { display: flex; gap: 8px; }
+.v3-flow-edit .jc-input { flex: 1; min-width: 0; }

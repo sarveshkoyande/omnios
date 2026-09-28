@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { createProject, getBrandTree, getCampaignArtifacts, listBrands, postBriefChat, postStudioAnswer } from "../../api";
+import { getBrandTree, getCampaignArtifacts, getStudioProject, listBrands, postBriefChat, postStudioAnswer, startCampaignPlan } from "../../api";
 import type { BrandSummary, BrandTree, CampaignArtifactsPayload, TreeCampaign, TreePlan } from "../../types";
 import { Icon } from "../Icon";
 import { periodLabel } from "../hierarchy/shared";
@@ -245,7 +245,10 @@ export function BriefingAgentPage() {
     setStep({ kind: "brief-chat" });
     setBriefThinking(true);
     try {
-      const proj = await createProject(campaign.name || "Untitled plan");
+      // Bound to the campaign at creation (F3): when Stage 1 finishes, its plan updates THIS
+      // campaign instead of persist_campaign_from_result minting a duplicate.
+      const started = await startCampaignPlan(campaign.id);
+      const proj = await getStudioProject(started.project.id);
       setProjectId(proj.id);
       const agentMsgs = proj.messages.filter((m) => m.role === "agent");
       const opening = agentMsgs[agentMsgs.length - 1]?.text
