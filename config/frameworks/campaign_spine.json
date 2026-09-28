@@ -1,0 +1,494 @@
+{
+  "id": "campaign_spine",
+  "name": "Campaign decision spine",
+  "level": "campaign",
+  "note": "Generated from strategy/decision_spine.py (S0-S10) and extended with where each data point's value comes from. Editable: change wording, derivation or prefill here without code (redesign M6). decision_spine.py still drives the backend composition until it is switched to read this file.",
+  "derivation_meaning": {
+    "derive": "Worked out from brand/plan/campaign data (pre-filled when that data exists)",
+    "confirm": "Omni recommends; you confirm or pick another option",
+    "ask": "Only you know this; required"
+  },
+  "agents": {
+    "briefing-agent": {
+      "consumes": [
+        "S0",
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5",
+        "S6",
+        "S7",
+        "S8",
+        "S9",
+        "S10"
+      ],
+      "owns": [
+        "S11"
+      ]
+    },
+    "campaign-planner": {
+      "owns": [
+        "S0",
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5",
+        "S6",
+        "S7",
+        "S8",
+        "S9",
+        "S10"
+      ]
+    },
+    "segmentation-planner": {
+      "owns": [
+        "S2"
+      ]
+    },
+    "channel-planner": {
+      "owns": [
+        "S6"
+      ]
+    },
+    "flow-planner": {
+      "consumes": [
+        "S2",
+        "S5",
+        "S6",
+        "S9"
+      ]
+    }
+  },
+  "stages": [
+    {
+      "id": "S0",
+      "name": "Campaign frame",
+      "decision": "Campaign archetype + program placement (net-new journey vs extension of an existing program)",
+      "framework": "Campaign archetype classifier",
+      "how": "Lifecycle stage + trigger event + existing-journey inventory classify the campaign as launch / growth / defense / retention / reactivation, and as net-new vs extension. Extensions inherit the parent program's templates, consent basis, and source-asset trigger logic.",
+      "feeds": [
+        "Purpose (program context + trigger logic)"
+      ],
+      "data_points": [
+        {
+          "key": "S0.0",
+          "label": "brand + lifecycle stage",
+          "source": "internal",
+          "derivation": "derive",
+          "prefill": {
+            "from": "kit",
+            "path": "lifecycle_stage",
+            "template": "{brand} · {value}"
+          }
+        },
+        {
+          "key": "S0.1",
+          "label": "existing program / journey inventory",
+          "source": "internal",
+          "derivation": "derive",
+          "prefill": {
+            "from": "campaign",
+            "path": "flows[].name",
+            "empty": "No existing flows in this campaign"
+          }
+        },
+        {
+          "key": "S0.2",
+          "label": "campaign trigger ('why now')",
+          "source": "user",
+          "derivation": "ask"
+        },
+        {
+          "key": "S0.3",
+          "label": "net-new vs extension",
+          "source": "user",
+          "derivation": "confirm",
+          "prefill": {
+            "options": [
+              "Net-new journey",
+              "Extension of an existing program"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "S1",
+      "name": "Objective & value",
+      "decision": "Pillar-linked measurable objective + leading indicators",
+      "framework": "Objective cascade",
+      "how": "Brand strategic pillar → behavioral objective (the belief/action shift) → measurable KPI with a benchmark-anchored target. Every asset downstream must trace to the pillar (Vertex brief pattern: 'Patient Activation Pillar: Building Belief').",
+      "feeds": [
+        "Objective (pillar-linked)"
+      ],
+      "data_points": [
+        {
+          "key": "S1.0",
+          "label": "brand strategy pillars",
+          "source": "internal",
+          "derivation": "derive",
+          "prefill": {
+            "from": "kit",
+            "path": "message_hierarchy[].pillar"
+          }
+        },
+        {
+          "key": "S1.1",
+          "label": "belief-shift anchor (BAM A→B)",
+          "source": "internal",
+          "derivation": "derive"
+        },
+        {
+          "key": "S1.2",
+          "label": "objective confirmation",
+          "source": "user",
+          "derivation": "confirm",
+          "prefill": {
+            "recommend": {
+              "from": "kit",
+              "path": "key_objective"
+            }
+          }
+        },
+        {
+          "key": "S1.3",
+          "label": "category engagement benchmarks",
+          "source": "external",
+          "derivation": "derive"
+        }
+      ]
+    },
+    {
+      "id": "S2",
+      "name": "Audience & eligibility",
+      "decision": "Primary segment + rule-level eligibility (triggers, inclusions/exclusions, consent basis)",
+      "framework": "Behavioral segmentation + eligibility-rule composer",
+      "how": "Segment library (HCP: stoppers/trial-list/adopters/advocates axis; patient: program-stage) picks the group; eligibility is then written as executable rules — trigger events, source assets, inclusion/exclusion criteria, consent basis — not persona prose. Waterfall history sanity-checks reachable volume.",
+      "feeds": [
+        "Target Audience & Eligibility"
+      ],
+      "data_points": [
+        {
+          "key": "S2.0",
+          "label": "segment library + affinity profiles",
+          "source": "internal",
+          "derivation": "derive"
+        },
+        {
+          "key": "S2.1",
+          "label": "audience sizing benchmark",
+          "source": "external",
+          "derivation": "derive"
+        },
+        {
+          "key": "S2.2",
+          "label": "primary segment choice",
+          "source": "user",
+          "derivation": "confirm",
+          "prefill": {
+            "options": {
+              "from": "kit",
+              "path": "personas.hcp[].name"
+            }
+          }
+        },
+        {
+          "key": "S2.3",
+          "label": "eligibility triggers / consent basis",
+          "source": "internal",
+          "derivation": "derive"
+        }
+      ]
+    },
+    {
+      "id": "S3",
+      "name": "Insight & belief shift",
+      "decision": "Current belief A → desired belief B, with barriers and drivers",
+      "framework": "BAM chart (A→B shift) + barrier/driver analysis",
+      "how": "The Belief-Attitude-Motivation chart states the single belief the campaign must move and what blocks it; every message rung and channel moment exists to move that belief.",
+      "feeds": [
+        "Communication Strategy (the 'why believe')"
+      ],
+      "data_points": [
+        {
+          "key": "S3.0",
+          "label": "BAM chart / A→B shift",
+          "source": "internal",
+          "derivation": "derive"
+        },
+        {
+          "key": "S3.1",
+          "label": "market research & competitive evidence",
+          "source": "external",
+          "derivation": "derive",
+          "prefill": {
+            "from": "kit",
+            "path": "competitors[].name",
+            "template": "Competitors: {value}"
+          }
+        }
+      ]
+    },
+    {
+      "id": "S4",
+      "name": "Compliance envelope",
+      "decision": "MLR-approved content required (review ladder + PV obligations recorded as technical assumptions)",
+      "framework": "MLR risk-tier classifier + AE/MIR surface scan",
+      "how": "Audience type × content type sets the review rigor: patient-facing branded ⇒ full CRC1 (assume revise-resubmit) → CRC2 (approved-with-changes) → CERT; unbranded-first rule for patients. Any surface collecting patient drug-experience responses (surveys, replies) is flagged as an AE-capture surface with a ~24h PV routing obligation. MLR originates; agents only route.",
+      "feeds": [
+        "Technical Appendix (review + PV assumptions)"
+      ],
+      "data_points": [
+        {
+          "key": "S4.0",
+          "label": "audience type + content type",
+          "source": "internal",
+          "derivation": "derive",
+          "prefill": {
+            "from": "kit",
+            "path": "primary_audience",
+            "template": "{value} audience"
+          }
+        },
+        {
+          "key": "S4.1",
+          "label": "review-ladder assumption",
+          "source": "user",
+          "derivation": "confirm",
+          "prefill": {
+            "options": [
+              "Full review (CRC1 → CRC2 → CERT)",
+              "Expedited review"
+            ],
+            "recommend": {
+              "value": "Full review (CRC1 → CRC2 → CERT)"
+            }
+          }
+        },
+        {
+          "key": "S4.2",
+          "label": "AE/MIR capture surfaces",
+          "source": "internal",
+          "derivation": "derive"
+        }
+      ]
+    },
+    {
+      "id": "S5",
+      "name": "Message architecture",
+      "decision": "Message ladder — lead rung + sequence, grounded in approved claims (job codes where they exist)",
+      "framework": "Message ladder + AFU claims grounding",
+      "how": "Only claims from the approved library ladder up; the first rung is the one the evidence base supports most strongly for this audience. No net-new claims — MLR originates.",
+      "feeds": [
+        "Communication Strategy (message outline + tone guardrails)"
+      ],
+      "data_points": [
+        {
+          "key": "S5.0",
+          "label": "claims / content library",
+          "source": "internal",
+          "derivation": "derive",
+          "prefill": {
+            "from": "kit",
+            "path": "claims[].text",
+            "count": "claims in the library"
+          }
+        },
+        {
+          "key": "S5.1",
+          "label": "brand kit core claim",
+          "source": "internal",
+          "derivation": "derive",
+          "prefill": {
+            "from": "kit",
+            "path": "core_claim"
+          }
+        },
+        {
+          "key": "S5.2",
+          "label": "lead message confirmation",
+          "source": "user",
+          "derivation": "confirm",
+          "prefill": {
+            "options": {
+              "from": "kit",
+              "path": "message_hierarchy[].pillar"
+            },
+            "recommend": {
+              "from": "kit",
+              "path": "message_hierarchy[0].pillar"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "S6",
+      "name": "Channel & journey",
+      "decision": "PP/NPP split, anchor channel, journey logic (triggers, cadence, frequency caps)",
+      "framework": "Channel-affinity scoring + TML targets + journey archetypes",
+      "how": "Segment channel-affinity benchmarks rank channels; the anchor takes the largest share and sets cadence guardrails; journey archetype (trigger-based vs scheduled wave) comes from the campaign frame. A rep touch + digital touch in the same week counts once for frequency.",
+      "feeds": [
+        "Project Overview (sequencing + journey logic)"
+      ],
+      "data_points": [
+        {
+          "key": "S6.0",
+          "label": "channel-affinity benchmarks",
+          "source": "external",
+          "derivation": "derive"
+        },
+        {
+          "key": "S6.1",
+          "label": "brand channel availability",
+          "source": "internal",
+          "derivation": "derive"
+        },
+        {
+          "key": "S6.2",
+          "label": "anchor channel confirmation",
+          "source": "user",
+          "derivation": "confirm",
+          "prefill": {
+            "options": {
+              "from": "toolkit_channels"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "S7",
+      "name": "Deliverables spec",
+      "decision": "Asset list with variant counts, template + modular reuse plan",
+      "framework": "Modular decomposition + reuse-first rule",
+      "how": "Each tactic decomposes into modular assets (hero/body/ISI blocks); existing AFU assets are reused before net-new is briefed; variants are specified for testing (e.g. 2–3 subject lines + preheaders per email for A/B) — the Vertex-brief level of concreteness.",
+      "feeds": [
+        "Activities / Deliverables"
+      ],
+      "data_points": [
+        {
+          "key": "S7.0",
+          "label": "content inventory / DAM",
+          "source": "internal",
+          "derivation": "derive",
+          "prefill": {
+            "from": "kit",
+            "path": "concepts[].name"
+          }
+        },
+        {
+          "key": "S7.1",
+          "label": "variant counts for testing",
+          "source": "user",
+          "derivation": "confirm",
+          "prefill": {
+            "options": [
+              "2–3 subject lines + preheaders per email (A/B)",
+              "Single version, no testing"
+            ],
+            "recommend": {
+              "value": "2–3 subject lines + preheaders per email (A/B)"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "S8",
+      "name": "Measurement & tagging",
+      "decision": "KPI tree, link/tagging matrix approach, UTM taxonomy, test design",
+      "framework": "KPI tree + measurement-plan template",
+      "how": "Leading indicators trace to the objective's pillar; every link carries campaign + job-code tagging (link matrix as a deliverable); A/B design is declared here, not improvised at build.",
+      "feeds": [
+        "Measurement Plan"
+      ],
+      "data_points": [
+        {
+          "key": "S8.0",
+          "label": "leading/lagging indicators",
+          "source": "internal",
+          "derivation": "derive",
+          "prefill": {
+            "from": "kit",
+            "path": "success_measure"
+          }
+        },
+        {
+          "key": "S8.1",
+          "label": "benchmark targets",
+          "source": "external",
+          "derivation": "derive",
+          "prefill": {
+            "from": "kit",
+            "path": "market_share",
+            "template": "Market share {current} → {target}"
+          }
+        }
+      ]
+    },
+    {
+      "id": "S9",
+      "name": "Operational plan",
+      "decision": "RACI, counted review rounds, SLA timeline backward from launch",
+      "framework": "RACI template + backward SLA scheduler",
+      "how": "Owner teams from the activity playbook; review rounds counted up front (extra rounds ⇒ change request); the timeline is backward-scheduled from go-live with the MLR buffer honoured — same engine Engagement Orchestration executes against (~18-day manual baseline, 5-day agentic target).",
+      "feeds": [
+        "Timeline",
+        "Approvals"
+      ],
+      "data_points": [
+        {
+          "key": "S9.0",
+          "label": "team roster / RACI defaults",
+          "source": "internal",
+          "derivation": "derive"
+        },
+        {
+          "key": "S9.1",
+          "label": "launch window / hard date",
+          "source": "user",
+          "derivation": "ask",
+          "prefill": {
+            "from": "campaign",
+            "path": "start_date",
+            "template": "Go-live {value}"
+          }
+        },
+        {
+          "key": "S9.2",
+          "label": "SLA library",
+          "source": "internal",
+          "derivation": "derive"
+        }
+      ]
+    },
+    {
+      "id": "S10",
+      "name": "Risks & assumptions",
+      "decision": "Assumption register + risk flags (AE/MIR, deliverability, consent gaps, patient gating)",
+      "framework": "Pre-mortem checklist (vault gap analysis)",
+      "how": "Every derived assumption is logged; the known failure modes — AE/MIR routing absent, consent provenance untracked, asset expiry unmonitored, silent query failures — are checked against this plan's surfaces and flagged.",
+      "feeds": [
+        "Risk Register",
+        "Assumptions & Mandatories"
+      ],
+      "data_points": [
+        {
+          "key": "S10.0",
+          "label": "derived-assumption log",
+          "source": "internal",
+          "derivation": "derive"
+        },
+        {
+          "key": "S10.1",
+          "label": "patient gating status",
+          "source": "internal",
+          "derivation": "derive"
+        }
+      ]
+    }
+  ]
+}

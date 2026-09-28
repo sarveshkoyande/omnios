@@ -250,3 +250,33 @@ export function routeAsk(body: {
 }): Promise<AskRouteResult> {
   return postJSON("/api/v3/route-ask", body);
 }
+
+/* ---- Redesign workspace: framework-driven input cards (strategy/agent_forms.py) ---- */
+export interface FormDataPoint {
+  key: string;
+  label: string;
+  source: "internal" | "external" | "user" | string;
+  derivation: "derive" | "confirm" | "ask" | string;
+  value: string | null;
+  options: string[];
+  recommendation: string | null;
+}
+export interface FormStage {
+  id: string;
+  name: string;
+  decision: string;
+  framework: string;
+  how: string;
+  feeds: string[];
+  data_points: FormDataPoint[];
+}
+export interface AgentForm {
+  framework: { id: string; name: string; derivation_meaning: Record<string, string> } | null;
+  stages: FormStage[];
+}
+export function getAgentForm(agentId: string, brand: string, planId?: number | null, campaignId?: number | null): Promise<AgentForm> {
+  const q = new URLSearchParams({ brand });
+  if (planId) q.set("plan_id", String(planId));
+  if (campaignId) q.set("campaign_id", String(campaignId));
+  return getJSON(`/api/v3/agents/${enc(agentId)}/form?${q}`);
+}

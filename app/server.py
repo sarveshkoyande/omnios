@@ -77,7 +77,8 @@ from strategy.flow_sop import clarify as flow_sop_clarify  # noqa: E402
 from strategy.flow_sop import demo_brief as flow_sop_demo_brief  # noqa: E402
 from strategy.flow_sop import diagram as flow_sop_diagram  # noqa: E402  (exact SVG rendering, ported from the reference project's app/diagram.py)
 from strategy.flow_sop import editor as flow_sop_editor
-from strategy import agent_router  # noqa: E402  (redesign Ask bar: LLM-only agent routing)  # noqa: E402  (chat-driven diagram edits, ported from scripts/flow_editor.py)
+from strategy import agent_router  # noqa: E402  (redesign Ask bar: LLM-only agent routing)
+from strategy import agent_forms  # noqa: E402  (redesign workspace: framework-driven input cards)  # noqa: E402  (chat-driven diagram edits, ported from scripts/flow_editor.py)
 from strategy import process_knowledge  # noqa: E402  (Cognee-backed SME process grounding)
 from strategy import cognee_feedback  # noqa: E402  (human feedback overlay for Cognee grounding)
 from strategy.paths import data_path  # noqa: E402
@@ -1775,6 +1776,16 @@ def api_campaign_artifacts(pid: str, enrich: bool = False):
     if not ctx:
         raise HTTPException(400, "Stage 1 hasn't produced a plan yet â€” run it before composing artifacts.")
     return campaign_artifacts.compose_artifacts(ctx, enrich=enrich)
+
+
+@app.get("/api/v3/agents/{agent_id}/form")
+def api_v3_agent_form(agent_id: str, brand: str, plan_id: int | None = None, campaign_id: int | None = None):
+    """Redesign workspace (Phase 3): an agent's input cards, generated from its framework config
+    (config/frameworks/*.json) and pre-filled from the brand kit, plan and campaign."""
+    tree = _hier(hierarchy.tree, brand)
+    plan = next((p for p in tree["engagement_plans"] if p["id"] == plan_id), None)
+    campaign = next((c for c in (plan or {}).get("campaigns", []) if c["id"] == campaign_id), None)
+    return agent_forms.build_cards(agent_id, brand, plan, campaign)
 
 
 class AskRouteRequest(BaseModel):

@@ -186,9 +186,10 @@ export interface RegistryAgent extends LibraryAgent {
   tags: ("new" | "coming-soon")[];
 }
 
+/** Agents with a redesigned workspace open there; the rest keep their current screen. */
 const AGENT_ROUTES: Record<string, string> = {
   "flow-planner": "#/flow-planner",
-  "briefing-agent": "#/briefing-agent",
+  "briefing-agent": "#/v3/agent/briefing-agent",
 };
 const NEW_AGENTS = new Set(["flow-planner", "briefing-agent"]);
 

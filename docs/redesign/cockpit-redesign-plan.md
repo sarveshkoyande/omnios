@@ -158,6 +158,7 @@ spacing/radii never leak into the current look) until the final switch-over.
 | R1 | No regex/keyword matching of user text anywhere; LLM-based matching only. Exceptions are confirmed with the user first. |
 | R2 | If the LLM is unreachable, say so plainly and don't guess. |
 | R3 | The brief-capture chat's keyword rules are converted to LLM-only in Phases 3-4. |
+| R4 | Approved exception: the `/` agent menu narrows by command-name prefix as you type. |
 
 ## Open questions
 

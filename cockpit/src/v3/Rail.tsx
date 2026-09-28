@@ -28,7 +28,7 @@ const BRAND_IQ: NavItem[] = [
 const NEW_ITEMS: { label: string; href?: string; note?: string }[] = [
   { label: "Start an engagement plan", note: "Coming soon" },
   { label: "Build a flow", href: "#/flow-planner" },
-  { label: "Compile a brief", href: "#/briefing-agent" },
+  { label: "Compile a brief", href: "#/v3/agent/briefing-agent" },
 ];
 
 export function Rail({ current, brands, activeBrand, recentBrands, onSelectBrand, favorites, isFavorite, toggleFavorite, pinned, setPinned }: {

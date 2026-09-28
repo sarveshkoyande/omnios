@@ -4,6 +4,7 @@ import type { BrandSummary } from "../types";
 import { AppDetail } from "./AppDetail";
 import { Home } from "./Home";
 import { Rail } from "./Rail";
+import { Workspace } from "./Workspace";
 import { useBrandScope, useFavorites, useRailPinned } from "./store";
 import "./v3.css";
 
@@ -31,15 +32,19 @@ export function V3App({ path }: { path: string[] }) {
 
   const current = path.join("/") || "home";
   const page = PAGES[current] ?? PAGES.home;
-  const isHome = current === "home" || !PAGES[current] && path[0] !== "app";
+  const isWorkspace = path[0] === "agent" && Boolean(path[1]);
+  const isHome = current === "home" || (!PAGES[current] && path[0] !== "app" && !isWorkspace);
 
   return (
     <div className="v3">
       <Rail current={current} brands={brands} activeBrand={scope.activeBrand} recentBrands={scope.recentBrands}
         onSelectBrand={scope.selectBrand} favorites={favs.favorites} isFavorite={favs.isFavorite}
         toggleFavorite={favs.toggleFavorite} pinned={pinned} setPinned={setPinned} />
-      <main className="v3-main">
-        {path[0] === "app" ? <AppDetail id={path[1] ?? ""} /> : isHome ? (
+      <main className={`v3-main ${isWorkspace ? "v3-main-ws" : ""}`}>
+        {isWorkspace ? (
+          <Workspace key={path[1]} agentId={path[1]} brands={brands} activeBrand={scope.activeBrand}
+            isFavorite={favs.isFavorite} toggleFavorite={favs.toggleFavorite} />
+        ) : path[0] === "app" ? <AppDetail id={path[1] ?? ""} /> : isHome ? (
           <Home brands={brands} activeBrand={scope.activeBrand} />
         ) : (<>
         <h1 className="v3-page-title">{page.title}</h1>
