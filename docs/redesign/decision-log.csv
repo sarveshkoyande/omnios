@@ -1,0 +1,59 @@
+ID,Area,Decision,Why,Alternative considered,Assumption / risk,Status
+A1,Navigation,"Short grouped nav: + New, Home, My work, Brands & Campaigns, Chat","Current rail is a long brand list; users can't see where work lives. Grouping gives one obvious place per job.","Keep the brand-list rail","Users know the difference between My work and Brands & Campaigns",Confirmed
+A2,Navigation,"Brand IQ section: Brand Kits, Personas, Compliance Guardrails, Market Intelligence","Brand knowledge is the stable input to every agent (Brand plan output); it deserves one home instead of being scattered","Keep brand data inside each brand page","Brand IQ is scoped to the active brand (BR6)",Confirmed
+A3,Navigation,"Favorites for apps, brands, campaigns","Fast return to frequently used items without scanning lists","Rely on Recent work only","Low risk",Confirmed
+A4,Navigation,"Rail collapsible, icon-only, expands on hover","Frees width for the workspace; already built and liked","Always-open rail","Hover doesn't exist on touch; pin toggle kept as fallback",Confirmed
+A5,Navigation,"User avatar + name at the bottom of the rail","Standard pattern; frees the top bar","Keep avatar in the top bar","Low risk",Confirmed
+BR1,Brand scope,"Brand switcher at the top of the nav with search, Pinned, Recent, All brands","Scales to N brands; the user always knows which brand they're in","Per-app brand choice only; Brands page","Switching brands is an extra step for cross-brand users (mitigated by All brands)",Confirmed
+BR2,Brand scope,"Default to the most recently used brand","Most users mostly work on one or two brands","Default to All brands","Low risk",Confirmed
+BR3,Brand scope,"All brands mode: cross-brand recent work tagged by brand; Brand IQ asks to pick","Some users oversee many brands; Brand IQ is inherently per-brand","Hide All brands","Home may get noisy with many brands",Confirmed
+BR4,Brand scope,"Selected brand scopes Recent work, Brand IQ, Ask bar, app pre-fill","Stops agents re-asking what brand you mean","Ask brand inside every app","Low risk",Confirmed
+BR5,Brand scope,"Apps can override the brand without changing the global one","Covers one-off work on another brand","Force a global switch","Two brand contexts could confuse; App settings row shows the override clearly",Confirmed
+BR6,Brand scope,"Brand IQ always follows the active brand","Replaces the ≤2-brand assumption in the original A2","List all brands in Brand IQ","Assumes N brands, 2 typical",Confirmed
+B1,Home,"Home replaces the Agent Library as the landing page","Landing should answer 'what's happening and what's next', not show a catalogue","Keep Agent Library as landing","Low risk",Confirmed
+B2,Home,"Greeting + Ask Omni anything bar (brand-aware)","Fastest path from intent to the right app","Quick actions only","Ask bar needs intent routing to the right app",Confirmed
+B3,Home,"Quick actions: engagement plan, flow, brief","The three most common jobs one click away","More quick actions","List may change as agents are added",Confirmed
+B4,Home,"Categories row = the three phases with app counts","Mirrors how agents are already grouped","Flat app list","Low risk",Confirmed
+B5,Home,"Apps grid with NEW / POPULAR / COMING SOON tags","Replaces Agent Library; unbuilt agents visible but not openable","Separate catalogue page","POPULAR needs usage data or is set manually",Confirmed
+B6,Home,"Recent work list","Reopen work where you left off","None","Needs every run saved (C15)",Confirmed
+B7,Home,"Brand chips on Home","Designed for ≤2 brands","—","Wrong assumption: users can have N brands",Dropped (replaced by BR)
+C1,Workspace,"Two panels: inputs left, output right","Replaces chat-in-a-modal over a blank page; one layout for every agent","Chat-first UI","Low risk",Confirmed
+C2,Workspace,"Top bar: title, save state, Share, Version history","Artifacts are long-lived documents that get reviewed","No top bar","Share needs a permission model later",Confirmed
+C3,Workspace,"App header with Change app","Move between agents without going Home","Back to Home only","Low risk",Confirmed
+C4,Workspace,"App settings row: Brand · Territory · Plan · Campaign","Removes the brand → plan → campaign chat wizard the user disliked","Keep the wizard","Needs good defaults from BR4",Confirmed
+C5,Workspace,"Input cards with empty / done / recommended status, pre-filled","Only ask what isn't already known","Free-text chat questions","Pre-fill quality depends on the brand kit",Confirmed
+C6,Workspace,"Recommended answer + option chips + one-line why","Keeps the backend's grounded recommendations visible instead of a blank text box","Free text only","Low risk",Confirmed
+C7,Workspace,"Add more context chips","Optional extra inputs without cluttering the form","All inputs always visible","Low risk",Confirmed
+C8,Workspace,"Sticky Generate / Stop / Regenerate","Clear single action","Auto-generate","Low risk",Confirmed
+C9,Workspace,"Right panel is an artifact viewer, not a document editor","Omni outputs are structured, machine-readable artifacts (plans, schedules, flows), not prose like Jasper","Rich-text canvas","Every artifact needs a schema (see M)",Confirmed
+C10,Workspace,"View tabs: Overview, Detail, Timeline, Diagram, Data","Same artifact serves humans and machines","Single view","Low risk",Confirmed
+C11,Workspace,"Structured editing only, schema-validated","Free-text editing would break machine-readability","Free-text editing","Some edits may feel constrained",Confirmed
+C12,Workspace,"Check guidelines at field level","Pharma compliance: unapproved claims, missing fair balance, budget totals","Manual review only","Guardrails must be defined per brand",Confirmed
+C13,Workspace,"Refine drawer proposes changes as an accept/reject diff","Nothing silently rewrites a reviewed artifact","Direct overwrite","Low risk",Confirmed
+C14,Workspace,"Hand-off between apps + machine and human exports","No re-typing; downstream systems consume the output","Copy-paste","Export formats per artifact to be defined",Confirmed
+C15,Workspace,"Auto-save every run to My work","Enables Recent work and resume","Manual save","Storage growth",Confirmed
+C16,Workspace,"Versioning with compare and restore","MLR and review need history","No versions","Low risk",Confirmed
+D1,Agents,"Briefing Agent first on the new template; output is a projection of the campaign plan","Currently the worst experience; brief adds no new decisions","Rebuild Flow Planner first","v1 — expected to change",Confirmed v1
+D2,Agents,"Flow Planner on the same template","Consistency","Leave as is","v1",Confirmed v1
+D3,Agents,"Flow Planner only renders campaign structure","Flow decides nothing new; decisions belong to the campaign plan","Staged decision-making inside Flow Planner","v1 — earlier staged-build idea withdrawn",Confirmed v1
+D4,Agents,"Chain: Brand plan → Engagement plan → Campaign plan → (Flow, Brief)","Matches how pharma planning actually cascades","Flow feeds Brief","v1",Confirmed v1
+D5,Agents,"Campaign Planner owns spine S0–S10; specialist agents own their stages","Campaign plan is where campaign decisions are made","Each agent standalone","v1",Confirmed v1
+D6,Agents,"Brand plan + Engagement plan apps wait for M2","No framework exists yet for those levels","Invent one now","v1; blocked on team template",Confirmed v1
+E1,Visual,"Keep Omni identity, fewer curves (radii ~6–10px)","Current look is too curvy","Adopt Jasper's look","Low risk",Confirmed
+E2,Visual,"Keep glassmorphism and the existing look","Approved by seniors","Jasper-style flat white","Only spacing and radii change",Confirmed
+E3,Visual,"Purple only for primary actions, active nav, focus","Gives the eye somewhere to land","Purple everywhere","Low risk",Confirmed
+E4,Visual,"Tighter density type scale","Jasper-like compactness","Keep current padding","Check readability on smaller screens",Confirmed
+E5,Visual,"Status colours only for status; functional legends unchanged","Colour carries meaning","Brand-colour everything","Low risk",Confirmed
+E6,Visual,"All changes through the tokens file","Single source of truth","Hardcoded values","Low risk",Confirmed
+F1,Cleanup,"Remove modal wizards","Replaced by workspace + App settings","Keep both","Removed only after the new version is approved",Confirmed
+F2,Cleanup,"Remove floating chat / reopen FABs","Refine drawer replaces them","Keep","Low risk",Confirmed
+F3,Cleanup,"Stage 1 runs attach to the originating campaign","Current code can mint duplicate campaigns","Accept duplicates","Needs a change to campaign_store persistence",Confirmed
+F4,Cleanup,"Retire Agent Library; single agent registry","Home replaces it","Keep both","Low risk",Confirmed
+F5,Cleanup,"Remove illustrative filler; empty states","Machine-readable artifacts must not contain invented data","Keep filler","Pages may look emptier for sparse brands",Confirmed
+F6,Cleanup,"Track deferred items in the plan","Nothing gets lost","—","Low risk",Confirmed
+M1,Framework,"Every artifact has a framework spec (stages → decision → framework → data points → feeds)","The content model was missing; the UI was being designed without it","Hand-code each agent","Principle",Confirmed (principle)
+M2,Framework,"Define Brand plan + Engagement plan frameworks","Needed before those agents can be built","Invent sections","Needs the team's real template",Deferred
+M3,Framework,"Agents declare which stages they own","Agents become views onto one framework","Isolated agents","Principle",Confirmed (principle)
+M4,Framework,"Input cards generated from data points (derive / confirm / ask)","No more hand-built questionnaires; framework changes are config changes","Hand-coded forms","Principle",Confirmed (principle)
+M5,Framework,"Artifact schema = framework decisions, with traceability","Every field traceable to the stage that produced it","Loose JSON","Principle",Confirmed (principle)
+M6,Framework,"Framework specs as editable config (JSON/YAML)","Experts can change frameworks without a developer","Frameworks in code","Principle; interim uses decision_spine.py",Confirmed (principle)
