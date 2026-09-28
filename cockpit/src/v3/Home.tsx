@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { getBrandTree, routeAsk } from "../api";
+import { getBrandTree, listArtifacts, routeAsk } from "../api";
 import { PHASES, REGISTRY, type Phase, type RegistryAgent } from "../agents";
 import { Icon } from "../components/Icon";
 import { href } from "../route";
@@ -8,7 +8,7 @@ import type { BrandSummary, BrandTree } from "../types";
 /** Phase 2 Home (B1-B6): greeting + Ask bar, quick actions, categories, apps grid and recent
  *  work. Everything is scoped to the active brand, or spans all brands (BR3/BR4). */
 
-type RecentItem = { kind: "Plan" | "Campaign" | "Flow"; name: string; brand: string; updated: string; link: string };
+type RecentItem = { kind: "Plan" | "Campaign" | "Flow" | "Brief"; name: string; brand: string; updated: string; link: string };
 
 function recentFrom(tree: BrandTree): RecentItem[] {
   const out: RecentItem[] = [];
@@ -70,15 +70,23 @@ export function Home({ brands, activeBrand }: { brands: BrandSummary[]; activeBr
     if (scopeBrands.length === 0) { setRecent([]); return; }
     let live = true;
     setRecent(null);
-    Promise.all(scopeBrands.map((b) => getBrandTree(b).catch(() => null)))
-      .then((trees) => {
+    Promise.all([
+      Promise.all(scopeBrands.map((b) => getBrandTree(b).catch(() => null))),
+      listArtifacts(activeBrand).then((r) => r.artifacts).catch(() => []),
+    ])
+      .then(([trees, artifacts]) => {
         if (!live) return;
-        const items = trees.flatMap((t) => (t ? recentFrom(t) : []));
+        const items = [
+          ...trees.flatMap((t) => (t ? recentFrom(t) : [])),
+          ...artifacts.map((a): RecentItem => ({
+            kind: "Brief", name: a.title, brand: a.brand, updated: a.updated_at, link: `#/v3/agent/${a.agent}/${a.id}`,
+          })),
+        ];
         items.sort((a, b) => b.updated.localeCompare(a.updated));
         setRecent(items.slice(0, 8));
       });
     return () => { live = false; };
-  }, [scopeBrands]);
+  }, [scopeBrands, activeBrand]);
 
   const openAgent = (a: RegistryAgent) => { window.location.hash = a.route ?? `#/v3/app/${a.id}`; };
 
@@ -278,7 +286,7 @@ export function Home({ brands, activeBrand }: { brands: BrandSummary[]; activeBr
           {recent?.length === 0 && <div className="v3-recent-empty">Nothing yet{activeBrand ? ` for ${activeBrand}` : ""}.</div>}
           {recent?.map((r) => (
             <a key={`${r.kind}:${r.link}`} className="v3-recent-row" href={r.link}>
-              <Icon name={r.kind === "Flow" ? "route" : r.kind === "Campaign" ? "target" : "document"} size={15} />
+              <Icon name={r.kind === "Flow" ? "route" : r.kind === "Campaign" ? "target" : r.kind === "Brief" ? "sparkles" : "document"} size={15} />
               <span className="v3-recent-name">{r.name}</span>
               <span className="v3-recent-meta">{!activeBrand && <em>{r.brand}</em>}{r.kind}</span>
               <span className="v3-recent-time">{timeAgo(r.updated)}</span>

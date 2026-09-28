@@ -280,3 +280,52 @@ export function getAgentForm(agentId: string, brand: string, planId?: number | n
   if (campaignId) q.set("campaign_id", String(campaignId));
   return getJSON(`/api/v3/agents/${enc(agentId)}/form?${q}`);
 }
+
+/* ---- Redesign Phase 4: typed, versioned artifacts (strategy/v3_artifacts.py) ---- */
+export interface ArtifactField { id: string; label: string; value: string; source: string; needs_input: boolean }
+export interface ArtifactSection { id: string; title: string; fields: ArtifactField[] }
+export interface V3Artifact {
+  id: string; type: string; agent: string; brand: string; plan_id: number | null; campaign_id: number | null;
+  title: string; created_at: string; updated_at: string;
+  version: number; version_reason: string; version_created_at: string;
+  inputs: Record<string, { label: string; derivation: string; value: string | null; confirmed: boolean }>;
+  extras: { id?: string; label: string; value: string }[];
+  artifact: { type: string; schema_version: number; sections: ArtifactSection[] };
+}
+export interface V3ArtifactSummary {
+  id: string; type: string; agent: string; brand: string; plan_id: number | null; campaign_id: number | null;
+  title: string; updated_at: string; version: number;
+}
+export function generateArtifact(body: {
+  agent: string; brand: string; plan_id: number | null; campaign_id: number | null; title: string;
+  inputs: V3Artifact["inputs"]; extras: V3Artifact["extras"];
+}): Promise<V3Artifact> {
+  return postJSON("/api/v3/artifacts", body);
+}
+export function findArtifact(agent: string, brand: string, campaignId: number | null): Promise<{ artifacts: V3Artifact[] }> {
+  const q = new URLSearchParams({ agent, brand });
+  if (campaignId) q.set("campaign_id", String(campaignId));
+  return getJSON(`/api/v3/artifacts?${q}`);
+}
+export function listArtifacts(brand?: string | null): Promise<{ artifacts: V3ArtifactSummary[] }> {
+  return getJSON(`/api/v3/artifacts${brand ? `?brand=${enc(brand)}` : ""}`);
+}
+export function getArtifact(id: string, version?: number): Promise<V3Artifact> {
+  return getJSON(`/api/v3/artifacts/${enc(id)}${version ? `?version=${version}` : ""}`);
+}
+export async function editArtifact(id: string, changes: Record<string, string>): Promise<V3Artifact> {
+  const res = await fetch(`/api/v3/artifacts/${enc(id)}`, {
+    method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ changes }),
+  });
+  if (!res.ok) {
+    const detail = await res.json().catch(() => null);
+    throw new Error(typeof detail?.detail === "string" ? detail.detail : `PATCH artifact -> ${res.status}`);
+  }
+  return res.json();
+}
+export function artifactVersions(id: string): Promise<{ versions: { version: number; created_at: string; reason: string }[] }> {
+  return getJSON(`/api/v3/artifacts/${enc(id)}/versions`);
+}
+export function restoreArtifact(id: string, version: number): Promise<V3Artifact> {
+  return postJSON(`/api/v3/artifacts/${enc(id)}/restore/${version}`, {});
+}

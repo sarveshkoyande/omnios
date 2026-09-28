@@ -78,7 +78,8 @@ from strategy.flow_sop import demo_brief as flow_sop_demo_brief  # noqa: E402
 from strategy.flow_sop import diagram as flow_sop_diagram  # noqa: E402  (exact SVG rendering, ported from the reference project's app/diagram.py)
 from strategy.flow_sop import editor as flow_sop_editor
 from strategy import agent_router  # noqa: E402  (redesign Ask bar: LLM-only agent routing)
-from strategy import agent_forms  # noqa: E402  (redesign workspace: framework-driven input cards)  # noqa: E402  (chat-driven diagram edits, ported from scripts/flow_editor.py)
+from strategy import agent_forms  # noqa: E402  (redesign workspace: framework-driven input cards)
+from strategy import v3_artifacts  # noqa: E402  (redesign workspace: typed, versioned artifacts)  # noqa: E402  (chat-driven diagram edits, ported from scripts/flow_editor.py)
 from strategy import process_knowledge  # noqa: E402  (Cognee-backed SME process grounding)
 from strategy import cognee_feedback  # noqa: E402  (human feedback overlay for Cognee grounding)
 from strategy.paths import data_path  # noqa: E402
@@ -1786,6 +1787,66 @@ def api_v3_agent_form(agent_id: str, brand: str, plan_id: int | None = None, cam
     plan = next((p for p in tree["engagement_plans"] if p["id"] == plan_id), None)
     campaign = next((c for c in (plan or {}).get("campaigns", []) if c["id"] == campaign_id), None)
     return agent_forms.build_cards(agent_id, brand, plan, campaign)
+
+
+class V3GenerateRequest(BaseModel):
+    agent: str
+    brand: str
+    plan_id: int | None = None
+    campaign_id: int | None = None
+    title: str = ""
+    inputs: dict
+    extras: list[dict] = []
+
+
+class V3EditRequest(BaseModel):
+    changes: dict[str, str]
+
+
+@app.post("/api/v3/artifacts")
+def api_v3_generate(req: V3GenerateRequest):
+    """Redesign Phase 4: project the workspace inputs into the typed artifact; a new version each time."""
+    return v3_artifacts.generate(req.agent, req.brand, req.plan_id, req.campaign_id,
+                                 req.title.strip() or "Untitled", req.inputs, req.extras)
+
+
+@app.get("/api/v3/artifacts")
+def api_v3_list_artifacts(brand: str | None = None, agent: str | None = None, campaign_id: int | None = None):
+    if agent and brand:
+        found = v3_artifacts.find(agent, brand, campaign_id)
+        return {"artifacts": [found] if found else []}
+    return {"artifacts": v3_artifacts.list_artifacts(brand)}
+
+
+@app.get("/api/v3/artifacts/{artifact_id}")
+def api_v3_get_artifact(artifact_id: str, version: int | None = None):
+    art = v3_artifacts.get(artifact_id, version)
+    if not art:
+        raise HTTPException(404, "artifact not found")
+    return art
+
+
+@app.patch("/api/v3/artifacts/{artifact_id}")
+def api_v3_edit_artifact(artifact_id: str, req: V3EditRequest):
+    try:
+        return v3_artifacts.edit_fields(artifact_id, req.changes)
+    except KeyError:
+        raise HTTPException(404, "artifact not found")
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
+
+
+@app.get("/api/v3/artifacts/{artifact_id}/versions")
+def api_v3_artifact_versions(artifact_id: str):
+    return {"versions": v3_artifacts.versions(artifact_id)}
+
+
+@app.post("/api/v3/artifacts/{artifact_id}/restore/{version}")
+def api_v3_restore_artifact(artifact_id: str, version: int):
+    try:
+        return v3_artifacts.restore(artifact_id, version)
+    except KeyError:
+        raise HTTPException(404, "version not found")
 
 
 class AskRouteRequest(BaseModel):

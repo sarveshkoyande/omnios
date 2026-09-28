@@ -3,6 +3,7 @@ import { listBrands } from "../api";
 import type { BrandSummary } from "../types";
 import { AppDetail } from "./AppDetail";
 import { Home } from "./Home";
+import { MyWork } from "./MyWork";
 import { Rail } from "./Rail";
 import { Workspace } from "./Workspace";
 import { useBrandScope, useFavorites, useRailPinned } from "./store";
@@ -42,8 +43,10 @@ export function V3App({ path }: { path: string[] }) {
         toggleFavorite={favs.toggleFavorite} pinned={pinned} setPinned={setPinned} />
       <main className={`v3-main ${isWorkspace ? "v3-main-ws" : ""}`}>
         {isWorkspace ? (
-          <Workspace key={path[1]} agentId={path[1]} brands={brands} activeBrand={scope.activeBrand}
+          <Workspace key={path.join("/")} agentId={path[1]} artifactId={path[2]} brands={brands} activeBrand={scope.activeBrand}
             isFavorite={favs.isFavorite} toggleFavorite={favs.toggleFavorite} />
+        ) : current === "work" ? (
+          <MyWork activeBrand={scope.activeBrand} />
         ) : path[0] === "app" ? <AppDetail id={path[1] ?? ""} /> : isHome ? (
           <Home brands={brands} activeBrand={scope.activeBrand} />
         ) : (<>

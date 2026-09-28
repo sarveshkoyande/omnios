@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { getAgentForm, getBrandTree, type AgentForm, type FormDataPoint, type FormStage } from "../api";
+import {
+  artifactVersions, editArtifact, findArtifact, generateArtifact, getAgentForm, getArtifact, getBrandTree, restoreArtifact,
+  type AgentForm, type FormDataPoint, type FormStage, type V3Artifact,
+} from "../api";
+import { ArtifactViewer } from "./ArtifactViewer";
 import { REGISTRY } from "../agents";
 import { Icon } from "../components/Icon";
 import type { BrandSummary, BrandTree } from "../types";
@@ -8,7 +12,8 @@ import type { Favorite } from "./store";
 /** Phase 3 agent workspace (C1-C8): inputs on the left, output on the right. The input cards
  *  are generated from the agent's framework config (config/frameworks/*.json via
  *  /api/v3/agents/{id}/form): derive = pre-filled from data, confirm = recommendation +
- *  options, ask = yours to answer. The output viewer arrives in Phase 4. */
+ *  options, ask = yours to answer. Generate projects those inputs into a typed, versioned
+ *  artifact (Phase 4, strategy/v3_artifacts.py) shown in the viewer on the right. */
 
 type Answer = { value: string; confirmed: boolean };
 type Answers = Record<string, Answer>;
@@ -33,18 +38,20 @@ function pointState(p: FormDataPoint, a?: Answer): "done" | "recommended" | "emp
   return "auto";
 }
 
-/** A stage is empty while a required answer is missing, recommended while a recommendation
- *  still awaits confirmation, and done otherwise (an unpicked confirm with no recommendation
- *  is optional -- the planner decides it at Generate). */
+/** A stage is done only when every ask is answered and every confirm is decided -- the same
+ *  test the brief uses, so a green stage never feeds a "Needs input" brief field. Open picks
+ *  show as empty; only unanswered asks block Generate (see missingAsks). */
 function stageState(st: FormStage, answers: Answers): "done" | "recommended" | "empty" {
-  const states = st.data_points.map((p) => ({ p, s: pointState(p, answers[p.key]) }));
-  if (states.some(({ p, s }) => p.derivation === "ask" && s === "empty")) return "empty";
-  if (states.some(({ s }) => s === "recommended")) return "recommended";
+  const states = st.data_points.map((p) => pointState(p, answers[p.key]));
+  if (states.includes("empty")) return "empty";
+  if (states.includes("recommended")) return "recommended";
   return "done";
 }
 
-export function Workspace({ agentId, brands, activeBrand, isFavorite, toggleFavorite }: {
+export function Workspace({ agentId, artifactId, brands, activeBrand, isFavorite, toggleFavorite }: {
   agentId: string;
+  /** Reopen a specific saved artifact (from My work / Recent work). */
+  artifactId?: string;
   brands: BrandSummary[];
   activeBrand: string | null;
   isFavorite: (type: Favorite["type"], id: string) => boolean;
@@ -67,10 +74,25 @@ export function Workspace({ agentId, brands, activeBrand, isFavorite, toggleFavo
   const [answers, setAnswers] = useState<Answers>({});
   const [extras, setExtras] = useState<ExtraContext[]>([]);
   const [title, setTitle] = useState("");
-  const [generated, setGenerated] = useState<unknown>(null);
+  const [artifact, setArtifact] = useState<V3Artifact | null>(null);
+  const [viewing, setViewing] = useState<V3Artifact | null>(null);
+  const [versionsOpen, setVersionsOpen] = useState(false);
+  const [versionList, setVersionList] = useState<{ version: number; created_at: string; reason: string }[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [genError, setGenError] = useState<string | null>(null);
   const loadedKey = useRef<string>("");
+  /** Set when reopening a saved artifact, so the tree load selects its plan + campaign. */
+  const pendingSelection = useRef<{ planId: number | null; campaignId: number | null } | null>(null);
 
-  useEffect(() => { if (!brand && brands.length) setBrand(activeBrand ?? brands[0].brand); }, [brand, brands, activeBrand]);
+  useEffect(() => {
+    if (!artifactId) return;
+    getArtifact(artifactId).then((a) => {
+      pendingSelection.current = { planId: a.plan_id, campaignId: a.campaign_id };
+      setBrand(a.brand);
+    }).catch(() => undefined);
+  }, [artifactId]);
+
+  useEffect(() => { if (!brand && !artifactId && brands.length) setBrand(activeBrand ?? brands[0].brand); }, [brand, brands, activeBrand, artifactId]);
 
   useEffect(() => {
     if (!brand) return;
@@ -79,6 +101,9 @@ export function Workspace({ agentId, brands, activeBrand, isFavorite, toggleFavo
     getBrandTree(brand).then((t) => {
       if (!live) return;
       setTree(t);
+      const pending = pendingSelection.current;
+      pendingSelection.current = null;
+      if (pending) { setPlanId(pending.planId); setCampaignId(pending.campaignId); return; }
       const plan = t.engagement_plans.find((p) => p.campaigns.length) ?? t.engagement_plans[0];
       setPlanId(plan?.id ?? null);
       setCampaignId(plan?.campaigns[0]?.id ?? null);
@@ -112,9 +137,28 @@ export function Workspace({ agentId, brands, activeBrand, isFavorite, toggleFavo
     setAnswers(d.answers ?? {});
     setExtras(d.extras ?? []);
     setTitle(d.title ?? "");
-    setGenerated(null);
+    setArtifact(null);
+    setViewing(null);
     loadedKey.current = key;
   }, [key]);
+
+  // A saved artifact for this agent + campaign wins over the browser draft: its inputs are
+  // what the saved brief was generated from.
+  useEffect(() => {
+    if (!brand || !campaignId) return;
+    let live = true;
+    findArtifact(agentId, brand, campaignId).then(({ artifacts }) => {
+      const a = artifacts[0];
+      if (!live || !a) return;
+      setArtifact(a);
+      setTitle(a.title);
+      setExtras(a.extras.map((x, i) => ({ id: x.id ?? `${x.label}-${i}`, label: x.label, value: x.value })));
+      setAnswers(Object.fromEntries(Object.entries(a.inputs)
+        .filter(([, v]) => v.derivation !== "derive" && v.value)
+        .map(([k, v]) => [k, { value: v.value as string, confirmed: v.confirmed }])));
+    }).catch(() => undefined);
+    return () => { live = false; };
+  }, [agentId, brand, campaignId]);
   useEffect(() => {
     if (loadedKey.current !== key) return;
     try { localStorage.setItem(key, JSON.stringify({ answers, extras, title })); } catch { /* storage unavailable */ }
@@ -130,18 +174,45 @@ export function Workspace({ agentId, brands, activeBrand, isFavorite, toggleFavo
   const doneCount = stages.filter((s) => stageState(s, answers) === "done").length;
   const docTitle = title || `${campaign?.name ?? "Untitled"} — ${agent?.name === "Briefing Agent" ? "Brief" : agent?.name ?? ""}`;
 
+  /** Only confirmed or answered values go in; an unconfirmed recommendation stays undecided
+   *  (the brief shows "Needs input") rather than being silently accepted. */
   const generate = () => {
-    setGenerated({
-      agent: agentId,
-      framework: form?.framework?.id,
-      brand, territory, plan: plan?.name ?? null, campaign: campaign?.name ?? null,
+    if (!brand) return;
+    setBusy(true);
+    setGenError(null);
+    generateArtifact({
+      agent: agentId, brand, plan_id: planId, campaign_id: campaignId, title: docTitle,
       inputs: Object.fromEntries(stages.flatMap((s) => s.data_points).map((p) => {
         const a = answers[p.key];
-        const value = p.derivation === "derive" ? p.value : a?.value || (p.derivation === "confirm" ? p.recommendation : null);
+        const value = p.derivation === "derive" ? p.value : (a?.confirmed ? a.value : null) || null;
         return [p.key, { label: p.label, derivation: p.derivation, value, confirmed: p.derivation !== "confirm" || Boolean(a?.confirmed) }];
       })),
-      extra_context: extras.filter((x) => x.value.trim()),
-    });
+      extras: extras.filter((x) => x.value.trim()),
+    })
+      .then((a) => { setArtifact(a); setViewing(null); })
+      .catch((e) => setGenError(e instanceof Error ? e.message : String(e)))
+      .finally(() => setBusy(false));
+  };
+
+  const onEdit = async (fieldId: string, value: string) => {
+    if (!artifact) return;
+    setArtifact(await editArtifact(artifact.id, { [fieldId]: value }));
+  };
+
+  const toggleVersions = () => {
+    if (!artifact) return;
+    if (!versionsOpen) artifactVersions(artifact.id).then((r) => setVersionList(r.versions)).catch(() => setVersionList([]));
+    setVersionsOpen((o) => !o);
+  };
+  const viewVersion = (v: number) => {
+    if (!artifact) return;
+    setVersionsOpen(false);
+    if (v === artifact.version) { setViewing(null); return; }
+    getArtifact(artifact.id, v).then(setViewing).catch(() => undefined);
+  };
+  const restoreViewing = () => {
+    if (!artifact || !viewing) return;
+    restoreArtifact(artifact.id, viewing.version).then((a) => { setArtifact(a); setViewing(null); }).catch(() => undefined);
   };
 
   if (!agent) return <p className="v3-muted">No agent called "{agentId}".</p>;
@@ -151,9 +222,26 @@ export function Workspace({ agentId, brands, activeBrand, isFavorite, toggleFavo
     <div className="v3-ws">
       <div className="v3-ws-top">
         <input className="v3-ws-title" value={docTitle} aria-label="Title" onChange={(e) => setTitle(e.target.value)} />
-        <span className="v3-ws-save"><Icon name="document" size={13} /> Draft on this browser</span>
+        <span className="v3-ws-save">
+          {artifact ? <><Icon name="check" size={13} /> Saved · v{artifact.version}</> : <><Icon name="document" size={13} /> Draft on this browser</>}
+        </span>
         <span className="v3-ws-top-actions">
-          <button type="button" disabled title="Arrives with saving (Phase 4)">Version history</button>
+          <span className="v3-ws-versions">
+            <button type="button" disabled={!artifact} onClick={toggleVersions} aria-expanded={versionsOpen}
+              title={artifact ? undefined : "Generate first"}>Version history</button>
+            {versionsOpen && (
+              <div className="v3-new-menu v3-ws-version-menu">
+                {versionList.map((v) => (
+                  <button key={v.version} type="button" className={`v3-ws-version ${(viewing?.version ?? artifact?.version) === v.version ? "active" : ""}`}
+                    onClick={() => viewVersion(v.version)}>
+                    <b>v{v.version}{v.version === artifact?.version ? " · current" : ""}</b>
+                    <span>{v.reason}</span>
+                    <em>{new Date(v.created_at).toLocaleString()}</em>
+                  </button>
+                ))}
+              </div>
+            )}
+          </span>
           <button type="button" disabled title="Arrives in Phase 5">Share</button>
         </span>
       </div>
@@ -277,20 +365,26 @@ export function Workspace({ agentId, brands, activeBrand, isFavorite, toggleFavo
           </div>
 
           <div className="v3-ws-generate">
-            <button type="button" disabled={!form || missingAsks.length > 0} onClick={generate}>
-              {generated ? "Regenerate" : "Generate"}
+            <button type="button" disabled={!form || missingAsks.length > 0 || busy} onClick={generate}>
+              {busy ? "Generating…" : artifact ? "Regenerate" : "Generate"}
             </button>
+            {genError && <span className="v3-ask-error">{genError}</span>}
             {form && missingAsks.length > 0 && <span>Answer {missingAsks.length} required question{missingAsks.length === 1 ? "" : "s"} to generate</span>}
           </div>
         </aside>
 
         <section className="v3-ws-output">
-          {generated ? (
-            <div className="v3-ws-output-inner">
-              <div className="v3-ws-output-tabs"><span className="active">Data</span><span title="Phase 4">Overview</span><span title="Phase 4">Detail</span></div>
-              <p className="v3-muted">These are the structured inputs the brief will be generated from. The brief itself, with its Overview and Detail views, arrives in Phase 4.</p>
-              <pre className="v3-ws-json">{JSON.stringify(generated, null, 2)}</pre>
-            </div>
+          {viewing && artifact ? (
+            <>
+              <div className="v3-ws-viewing">
+                <span>Viewing <b>v{viewing.version}</b> ({viewing.version_reason}). Highlighted fields differ from the current v{artifact.version}.</span>
+                <button type="button" onClick={restoreViewing}>Restore this version</button>
+                <button type="button" className="ghost" onClick={() => setViewing(null)}>Back to current</button>
+              </div>
+              <ArtifactViewer art={viewing} readOnly compareTo={artifact} onEdit={onEdit} />
+            </>
+          ) : artifact ? (
+            <ArtifactViewer art={artifact} readOnly={false} compareTo={null} onEdit={onEdit} />
           ) : (
             <div className="v3-ws-empty">
               <span className="v3-app-icon lg"><Icon name={agent.icon} size={22} /></span>

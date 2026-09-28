@@ -435,3 +435,54 @@ a.v3-quick-card:hover { box-shadow: var(--neu-flat-hover); transform: translateY
 .v3-ws-output-tabs span { padding: 6px 12px; border-radius: var(--radius-sm); font-size: 12.5px; font-weight: 600; color: var(--muted); }
 .v3-ws-output-tabs span.active { background: var(--primary-light-background); color: var(--primary); }
 .v3-ws-json { margin: 0; padding: 12px; border-radius: var(--radius-md); background: var(--neutral-50); box-shadow: 0 0 0 1px var(--neutral-200); font-size: 11.5px; line-height: 1.5; overflow: auto; }
+
+/* ---- Artifact viewer (C9-C11) + versions (C16) ---- */
+.v3-av { padding: 14px 20px 20px; display: flex; flex-direction: column; gap: 14px; }
+.v3-av-tabs { display: flex; gap: 4px; position: sticky; top: 0; z-index: 2; padding: 4px 0 8px; background: linear-gradient(rgba(255,255,255,0.95), rgba(255,255,255,0.8)); }
+.v3-av-tabs button { border: none; background: transparent; cursor: pointer; font-family: inherit; padding: 6px 12px; border-radius: var(--radius-sm); font-size: 12.5px; font-weight: 600; color: var(--muted); }
+.v3-av-tabs button.active { background: var(--primary-light-background); color: var(--primary); }
+.v3-av-complete { display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--muted); }
+.v3-av-bar { flex: 1; height: 6px; border-radius: var(--radius-full); background: var(--neutral-100); overflow: hidden; }
+.v3-av-bar span { display: block; height: 100%; background: var(--success-foreground); }
+.v3-av-snap { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.v3-av-snap-card { display: flex; flex-direction: column; gap: 4px; padding: 12px; border-radius: var(--radius-md); background: var(--base-white); box-shadow: 0 0 0 1px var(--neutral-200); }
+.v3-av-snap-card span { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+.v3-av-snap-card b { font-size: 13px; line-height: 1.45; font-weight: 600; }
+.v3-av-snap-card.missing b, .v3-av-field.missing .v3-av-value { color: var(--warning-foreground); font-style: italic; font-weight: 500; }
+.v3-av-missing { padding: 10px 12px; border-radius: var(--radius-md); background: var(--warning-light-background); }
+.v3-av-missing b { font-size: 12.5px; }
+.v3-av-missing p { margin: 4px 0 0; font-size: 12.5px; line-height: 1.5; }
+.v3-av-sections { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; }
+.v3-av-sec-card { display: flex; flex-direction: column; gap: 3px; padding: 10px 12px; border: none; cursor: pointer; text-align: left; font-family: inherit; border-radius: var(--radius-md); background: var(--neutral-50); box-shadow: 0 0 0 1px var(--neutral-200); color: var(--fg); }
+.v3-av-sec-card:hover { box-shadow: 0 0 0 1px var(--primary); }
+.v3-av-sec-card b { font-size: 13px; }
+.v3-av-sec-card span { font-size: 11.5px; color: var(--muted); }
+.v3-av-detail { display: flex; flex-direction: column; gap: 18px; }
+.v3-av-sec h3 { margin: 0 0 8px; font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+.v3-av-field { padding: 10px 12px; border-radius: var(--radius-md); background: var(--base-white); box-shadow: 0 0 0 1px var(--neutral-200); margin-bottom: 8px; }
+.v3-av-field.changed, .v3-av-snap-card.changed { box-shadow: 0 0 0 1.5px var(--info-foreground); background: var(--info-light-background); }
+.v3-av-field-head { display: flex; align-items: center; gap: 8px; }
+.v3-av-field-head b { font-size: 12.5px; }
+.v3-av-field-head em { flex: 1; font-style: normal; font-size: 11px; color: var(--muted); }
+.v3-av-edit { display: inline-flex; align-items: center; gap: 4px; border: none; background: transparent; cursor: pointer; font-family: inherit; font-size: 11.5px; font-weight: 600; color: var(--primary); padding: 2px 6px; border-radius: var(--radius-xs); }
+.v3-av-edit:hover { background: var(--primary-light-background); }
+.v3-av-value { margin: 6px 0 0; font-size: 13px; line-height: 1.55; white-space: pre-wrap; }
+.v3-av-editor { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+.v3-av-editor textarea { font-family: inherit; font-size: 13px; line-height: 1.5; padding: 8px 10px; border: none; border-radius: var(--radius-sm); resize: vertical; background: var(--neutral-50); box-shadow: 0 0 0 1px var(--neutral-300); color: var(--fg); }
+.v3-av-editor textarea:focus, .v3-av-editor textarea:focus-visible { outline: none; box-shadow: 0 0 0 1px var(--neutral-500); }
+.v3-av-editor-actions { display: flex; justify-content: flex-end; gap: 6px; }
+.v3-av-editor-actions button { border: none; border-radius: var(--radius-sm); padding: 6px 12px; cursor: pointer; font-family: inherit; font-size: 12.5px; font-weight: 600; }
+.v3-av-save { background: var(--primary); color: var(--base-white); }
+.v3-av-cancel { background: transparent; color: var(--neutral-700); box-shadow: 0 0 0 1px var(--neutral-200); }
+
+.v3-ws-versions { position: relative; }
+.v3-ws-version-menu { left: auto; right: 0; width: 280px; max-height: 360px; overflow-y: auto; }
+.v3-ws-version { width: 100%; display: flex; flex-direction: column; gap: 1px; align-items: flex-start; padding: 8px 10px; border: none; border-radius: var(--radius-sm); background: transparent; cursor: pointer; text-align: left; font-family: inherit; color: var(--fg); }
+.v3-ws-version:hover, .v3-ws-version.active { background: var(--primary-light-background); }
+.v3-ws-version b { font-size: 12.5px; }
+.v3-ws-version span { font-size: 12px; color: var(--neutral-700); }
+.v3-ws-version em { font-style: normal; font-size: 11px; color: var(--muted); }
+.v3-ws-viewing { position: sticky; top: 0; z-index: 3; display: flex; align-items: center; gap: 10px; padding: 10px 20px; background: var(--info-light-background); font-size: 12.5px; color: var(--info-foreground); }
+.v3-ws-viewing span { flex: 1; }
+.v3-ws-viewing button { border: none; border-radius: var(--radius-sm); padding: 6px 12px; cursor: pointer; font-family: inherit; font-size: 12px; font-weight: 600; background: var(--primary); color: var(--base-white); }
+.v3-ws-viewing button.ghost { background: transparent; color: var(--info-foreground); box-shadow: 0 0 0 1px currentColor; }
