@@ -175,7 +175,7 @@ def find(agent: str, brand: str, campaign_id: int | None) -> dict | None:
     return get(row["id"]) if row else None
 
 
-def edit_fields(artifact_id: str, changes: dict[str, str]) -> dict:
+def edit_fields(artifact_id: str, changes: dict[str, str], reason: str | None = None) -> dict:
     """Structured edit (C11): only existing field ids, string values. Writes a new version."""
     current = get(artifact_id)
     if not current:
@@ -187,10 +187,10 @@ def edit_fields(artifact_id: str, changes: dict[str, str]) -> dict:
         raise ValueError(f"Unknown field(s): {', '.join(unknown)}")
     for k, v in changes.items():
         v = str(v).strip()
-        known[k].update({"value": v or NEEDS_INPUT, "needs_input": not v, "source": "Edited by you"})
+        known[k].update({"value": v or NEEDS_INPUT, "needs_input": not v, "source": "Refined" if reason else "Edited by you"})
     labels = ", ".join(known[k]["label"] for k in changes)
     return _add_version(artifact_id, {"inputs": current["inputs"], "extras": current["extras"], "artifact": art},
-                        f"Edited {labels}")
+                        reason or f"Edited {labels}")
 
 
 def restore(artifact_id: str, version: int) -> dict:

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import type { ArtifactField, V3Artifact } from "../api";
+import { useEffect, useState } from "react";
+import type { ArtifactField, GuidelineIssue, V3Artifact } from "../api";
 import { Icon } from "../components/Icon";
 
 /** Phase 4 artifact viewer (C9-C11). The brief is a typed object: Overview summarises it,
@@ -9,13 +9,26 @@ import { Icon } from "../components/Icon";
 
 type Tab = "overview" | "detail" | "data";
 
-export function ArtifactViewer({ art, readOnly, compareTo, onEdit }: {
+export function ArtifactViewer({ art, readOnly, compareTo, onEdit, issues, focusField }: {
   art: V3Artifact;
   readOnly: boolean;
   compareTo: V3Artifact | null;
   onEdit: (fieldId: string, value: string) => Promise<void>;
+  /** Check guidelines results (C12), highlighted on their fields. */
+  issues?: GuidelineIssue[];
+  /** A field to jump to (from a guideline issue): switches to Detail and scrolls to it. */
+  focusField?: { id: string; nonce: number } | null;
 }) {
   const [tab, setTab] = useState<Tab>("overview");
+  const issueMap = new Map<string, GuidelineIssue[]>();
+  for (const i of issues ?? []) issueMap.set(i.field_id, [...(issueMap.get(i.field_id) ?? []), i]);
+
+  useEffect(() => {
+    if (!focusField) return;
+    setTab("detail");
+    const t = setTimeout(() => document.getElementById(`v3-field-${focusField.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" }), 60);
+    return () => clearTimeout(t);
+  }, [focusField]);
   const sections = art.artifact.sections;
   const fields = sections.flatMap((s) => s.fields);
   const missing = fields.filter((f) => f.needs_input);
@@ -69,19 +82,38 @@ export function ArtifactViewer({ art, readOnly, compareTo, onEdit }: {
           {sections.map((s) => (
             <section key={s.id} className="v3-av-sec">
               <h3>{s.title}</h3>
-              {s.fields.map((f) => <FieldRow key={f.id} f={f} readOnly={readOnly} changed={changed(f)} onEdit={onEdit} />)}
+              {s.fields.map((f) => <FieldRow key={f.id} f={f} readOnly={readOnly} changed={changed(f)} onEdit={onEdit} issues={issueMap.get(f.id)} />)}
             </section>
           ))}
         </div>
       )}
 
       {tab === "data" && <pre className="v3-ws-json">{JSON.stringify(art.artifact, null, 2)}</pre>}
+
+      {/* Print / PDF export (C14): the whole brief, every section, only visible when printing. */}
+      <div className="v3-print">
+        <h1>{art.title}</h1>
+        <p>{art.brand} · version {art.version} · {new Date(art.version_created_at).toLocaleString()}</p>
+        {sections.map((s) => (
+          <section key={s.id}>
+            <h2>{s.title}</h2>
+            <table>
+              <tbody>
+                {s.fields.map((f) => (
+                  <tr key={f.id}><th>{f.label}</th><td>{f.value}</td><td className="src">{f.source}</td></tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+        ))}
+      </div>
     </div>
   );
 }
 
-function FieldRow({ f, readOnly, changed, onEdit }: {
+function FieldRow({ f, readOnly, changed, onEdit, issues }: {
   f: ArtifactField; readOnly: boolean; changed: boolean; onEdit: (fieldId: string, value: string) => Promise<void>;
+  issues?: GuidelineIssue[];
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
@@ -95,7 +127,7 @@ function FieldRow({ f, readOnly, changed, onEdit }: {
   };
 
   return (
-    <div className={`v3-av-field ${f.needs_input ? "missing" : ""} ${changed ? "changed" : ""}`}>
+    <div id={`v3-field-${f.id}`} className={`v3-av-field ${f.needs_input ? "missing" : ""} ${changed ? "changed" : ""} ${issues?.length ? `issue ${issues[0].severity}` : ""}`}>
       <div className="v3-av-field-head">
         <b>{f.label}</b>
         <em>{f.source}</em>
@@ -115,6 +147,12 @@ function FieldRow({ f, readOnly, changed, onEdit }: {
       ) : (
         <p className="v3-av-value">{f.value}</p>
       )}
+      {issues?.map((i, n) => (
+        <div key={n} className={`v3-av-issue ${i.severity}`}>
+          <b>{i.severity === "high" ? "High risk" : i.severity === "medium" ? "Check" : "Minor"}: {i.issue}</b>
+          {i.suggestion && <span>{i.suggestion}</span>}
+        </div>
+      ))}
     </div>
   );
 }

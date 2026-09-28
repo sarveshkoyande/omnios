@@ -79,7 +79,9 @@ from strategy.flow_sop import diagram as flow_sop_diagram  # noqa: E402  (exact 
 from strategy.flow_sop import editor as flow_sop_editor
 from strategy import agent_router  # noqa: E402  (redesign Ask bar: LLM-only agent routing)
 from strategy import agent_forms  # noqa: E402  (redesign workspace: framework-driven input cards)
-from strategy import v3_artifacts  # noqa: E402  (redesign workspace: typed, versioned artifacts)  # noqa: E402  (chat-driven diagram edits, ported from scripts/flow_editor.py)
+from strategy import v3_artifacts  # noqa: E402  (redesign workspace: typed, versioned artifacts)
+from strategy import v3_assist  # noqa: E402  (redesign: Refine, Check guidelines, Chat)
+from strategy.llm_json import LLMUnavailable  # noqa: E402  # noqa: E402  (chat-driven diagram edits, ported from scripts/flow_editor.py)
 from strategy import process_knowledge  # noqa: E402  (Cognee-backed SME process grounding)
 from strategy import cognee_feedback  # noqa: E402  (human feedback overlay for Cognee grounding)
 from strategy.paths import data_path  # noqa: E402
@@ -1801,6 +1803,7 @@ class V3GenerateRequest(BaseModel):
 
 class V3EditRequest(BaseModel):
     changes: dict[str, str]
+    reason: str | None = None
 
 
 @app.post("/api/v3/artifacts")
@@ -1829,7 +1832,7 @@ def api_v3_get_artifact(artifact_id: str, version: int | None = None):
 @app.patch("/api/v3/artifacts/{artifact_id}")
 def api_v3_edit_artifact(artifact_id: str, req: V3EditRequest):
     try:
-        return v3_artifacts.edit_fields(artifact_id, req.changes)
+        return v3_artifacts.edit_fields(artifact_id, req.changes, req.reason)
     except KeyError:
         raise HTTPException(404, "artifact not found")
     except ValueError as exc:
@@ -1847,6 +1850,73 @@ def api_v3_restore_artifact(artifact_id: str, version: int):
         return v3_artifacts.restore(artifact_id, version)
     except KeyError:
         raise HTTPException(404, "version not found")
+
+
+class V3RefineRequest(BaseModel):
+    instruction: str
+
+
+class V3ChatRequest(BaseModel):
+    question: str
+    brand: str | None = None
+    agents: list[dict]
+
+
+def _v3_llm(fn, *args):
+    try:
+        return fn(*args)
+    except LLMUnavailable as exc:
+        raise HTTPException(503, f"Omni's AI isn't reachable right now ({exc}).")
+
+
+@app.post("/api/v3/artifacts/{artifact_id}/refine")
+def api_v3_refine(artifact_id: str, req: V3RefineRequest):
+    """Phase 5 (C13): proposed field changes for the user to accept or reject. Writes nothing."""
+    art = v3_artifacts.get(artifact_id)
+    if not art:
+        raise HTTPException(404, "artifact not found")
+    if not req.instruction.strip():
+        raise HTTPException(400, "instruction is empty")
+    return _v3_llm(v3_assist.refine, art, req.instruction.strip())
+
+
+@app.post("/api/v3/artifacts/{artifact_id}/check")
+def api_v3_check(artifact_id: str):
+    """Phase 5 (C12): field-level compliance check against the brand's guardrails."""
+    art = v3_artifacts.get(artifact_id)
+    if not art:
+        raise HTTPException(404, "artifact not found")
+    return _v3_llm(v3_assist.check, art)
+
+
+@app.get("/api/v3/artifacts/{artifact_id}/export.csv")
+def api_v3_export_csv(artifact_id: str, version: int | None = None):
+    """Phase 5 (C14): the artifact as a flat table (section, field, value, source)."""
+    import csv
+    import io
+    art = v3_artifacts.get(artifact_id, version)
+    if not art:
+        raise HTTPException(404, "artifact not found")
+    buf = io.StringIO()
+    w = csv.writer(buf)
+    w.writerow(["section", "field_id", "field", "value", "source", "needs_input"])
+    for sec in art["artifact"]["sections"]:
+        for f in sec["fields"]:
+            w.writerow([sec["title"], f["id"], f["label"], f["value"], f["source"], f["needs_input"]])
+    from urllib.parse import quote
+    name = f"{art['title'] or 'brief'} v{art['version']}.csv".replace("/", "-")
+    ascii_name = name.encode("ascii", "replace").decode("ascii").replace("?", "-")
+    # BOM so Excel reads the file as UTF-8; RFC 5987 filename* keeps the real (non-ASCII) title.
+    return Response("﻿" + buf.getvalue(), media_type="text/csv; charset=utf-8",
+                    headers={"Content-Disposition": f"attachment; filename=\"{ascii_name}\"; filename*=UTF-8''{quote(name)}"})
+
+
+@app.post("/api/v3/chat")
+def api_v3_chat(req: V3ChatRequest):
+    """Phase 5: brand-grounded Chat. LLM-only; 503 when unreachable."""
+    if not req.question.strip():
+        raise HTTPException(400, "question is empty")
+    return _v3_llm(v3_assist.chat, req.question.strip(), req.brand, req.agents)
 
 
 class AskRouteRequest(BaseModel):

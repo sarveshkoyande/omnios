@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  artifactVersions, editArtifact, findArtifact, generateArtifact, getAgentForm, getArtifact, getBrandTree, restoreArtifact,
-  type AgentForm, type FormDataPoint, type FormStage, type V3Artifact,
+  artifactCsvUrl, artifactVersions, checkArtifact, editArtifact, findArtifact, generateArtifact, getAgentForm, getArtifact,
+  getBrandTree, restoreArtifact,
+  type AgentForm, type FormDataPoint, type FormStage, type GuidelineCheck, type V3Artifact,
 } from "../api";
 import { ArtifactViewer } from "./ArtifactViewer";
+import { RefineDrawer } from "./RefineDrawer";
 import { REGISTRY } from "../agents";
 import { Icon } from "../components/Icon";
 import type { BrandSummary, BrandTree } from "../types";
@@ -80,6 +82,12 @@ export function Workspace({ agentId, artifactId, brands, activeBrand, isFavorite
   const [versionList, setVersionList] = useState<{ version: number; created_at: string; reason: string }[]>([]);
   const [busy, setBusy] = useState(false);
   const [genError, setGenError] = useState<string | null>(null);
+  const [refineOpen, setRefineOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
+  const [check, setCheck] = useState<GuidelineCheck | null>(null);
+  const [checking, setChecking] = useState(false);
+  const [checkError, setCheckError] = useState<string | null>(null);
+  const [focusField, setFocusField] = useState<{ id: string; nonce: number } | null>(null);
   const loadedKey = useRef<string>("");
   /** Set when reopening a saved artifact, so the tree load selects its plan + campaign. */
   const pendingSelection = useRef<{ planId: number | null; campaignId: number | null } | null>(null);
@@ -197,6 +205,30 @@ export function Workspace({ agentId, artifactId, brands, activeBrand, isFavorite
   const onEdit = async (fieldId: string, value: string) => {
     if (!artifact) return;
     setArtifact(await editArtifact(artifact.id, { [fieldId]: value }));
+    setCheck(null);
+  };
+
+  /** C12: LLM pre-review against the brand's guardrails; results stay until the brief changes. */
+  const runCheck = () => {
+    if (!artifact) return;
+    setChecking(true);
+    setCheckError(null);
+    checkArtifact(artifact.id)
+      .then(setCheck)
+      .catch((e) => setCheckError(e instanceof Error ? e.message : String(e)))
+      .finally(() => setChecking(false));
+  };
+
+  /** C14 exports: JSON (machine), CSV (table), PDF (the browser's print-to-PDF of the full brief). */
+  const exportJson = () => {
+    if (!artifact) return;
+    const blob = new Blob([JSON.stringify({ ...artifact.artifact, meta: { id: artifact.id, title: artifact.title, brand: artifact.brand, version: artifact.version } }, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `${artifact.title || "brief"} v${artifact.version}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    setExportOpen(false);
   };
 
   const toggleVersions = () => {
@@ -242,7 +274,20 @@ export function Workspace({ agentId, artifactId, brands, activeBrand, isFavorite
               </div>
             )}
           </span>
-          <button type="button" disabled title="Arrives in Phase 5">Share</button>
+          <button type="button" disabled={!artifact || checking} onClick={runCheck}>{checking ? "Checking…" : "Check guidelines"}</button>
+          <span className="v3-ws-versions">
+            <button type="button" disabled={!artifact} onClick={() => setExportOpen((o) => !o)} aria-expanded={exportOpen}>Export</button>
+            {exportOpen && artifact && (
+              <div className="v3-new-menu v3-ws-version-menu">
+                <button type="button" className="v3-ws-version" onClick={() => { setExportOpen(false); window.print(); }}><b>PDF</b><span>Print or save the full brief</span></button>
+                <a className="v3-ws-version" href={artifactCsvUrl(artifact.id)} onClick={() => setExportOpen(false)}><b>CSV</b><span>One row per field, for spreadsheets</span></a>
+                <button type="button" className="v3-ws-version" onClick={exportJson}><b>JSON</b><span>Machine-readable, for other systems</span></button>
+              </div>
+            )}
+          </span>
+          <button type="button" className="v3-ws-refine-btn" disabled={!artifact} onClick={() => setRefineOpen((o) => !o)} aria-pressed={refineOpen}>
+            <Icon name="sparkles" size={13} /> Refine
+          </button>
         </span>
       </div>
 
@@ -384,7 +429,24 @@ export function Workspace({ agentId, artifactId, brands, activeBrand, isFavorite
               <ArtifactViewer art={viewing} readOnly compareTo={artifact} onEdit={onEdit} />
             </>
           ) : artifact ? (
-            <ArtifactViewer art={artifact} readOnly={false} compareTo={null} onEdit={onEdit} />
+            <>
+              {(check || checkError) && (
+                <div className={`v3-check ${checkError ? "error" : check && check.issues.length ? "issues" : "clean"}`}>
+                  <div className="v3-check-head">
+                    <b>{checkError ? "Couldn't check guidelines" : check!.issues.length ? `${check!.issues.length} guideline issue${check!.issues.length === 1 ? "" : "s"}` : "No guideline issues found"}</b>
+                    <button type="button" aria-label="Dismiss" onClick={() => { setCheck(null); setCheckError(null); }}><Icon name="close" size={12} /></button>
+                  </div>
+                  <p>{checkError ?? check!.summary}</p>
+                  {check?.issues.map((i, n) => (
+                    <button key={n} type="button" className={`v3-check-item ${i.severity}`} onClick={() => setFocusField({ id: i.field_id, nonce: Date.now() })}>
+                      <b>{i.label}</b><span>{i.issue}</span>
+                    </button>
+                  ))}
+                  {check && check.needs_input.length > 0 && <p className="v3-check-note">{check.needs_input.length} field{check.needs_input.length === 1 ? "" : "s"} still need input and weren't checked.</p>}
+                </div>
+              )}
+              <ArtifactViewer art={artifact} readOnly={false} compareTo={null} onEdit={onEdit} issues={check?.issues} focusField={focusField} />
+            </>
           ) : (
             <div className="v3-ws-empty">
               <span className="v3-app-icon lg"><Icon name={agent.icon} size={22} /></span>
@@ -393,6 +455,10 @@ export function Workspace({ agentId, artifactId, brands, activeBrand, isFavorite
             </div>
           )}
         </section>
+        {refineOpen && artifact && !viewing && (
+          <RefineDrawer artifact={artifact} onClose={() => setRefineOpen(false)}
+            onApplied={(a) => { setArtifact(a); setCheck(null); }} />
+        )}
       </div>
     </div>
   );

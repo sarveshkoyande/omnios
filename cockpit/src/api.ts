@@ -329,3 +329,33 @@ export function artifactVersions(id: string): Promise<{ versions: { version: num
 export function restoreArtifact(id: string, version: number): Promise<V3Artifact> {
   return postJSON(`/api/v3/artifacts/${enc(id)}/restore/${version}`, {});
 }
+
+/* ---- Redesign Phase 5: Refine, Check guidelines, Chat, exports (strategy/v3_assist.py) ---- */
+export interface RefineChange { field_id: string; label: string; old_value: string; new_value: string; why: string }
+export function refineArtifact(id: string, instruction: string): Promise<{ reply: string; changes: RefineChange[] }> {
+  return postJSON(`/api/v3/artifacts/${enc(id)}/refine`, { instruction });
+}
+export async function applyRefinement(id: string, changes: Record<string, string>, reason: string): Promise<V3Artifact> {
+  const res = await fetch(`/api/v3/artifacts/${enc(id)}`, {
+    method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ changes, reason }),
+  });
+  if (!res.ok) {
+    const detail = await res.json().catch(() => null);
+    throw new Error(typeof detail?.detail === "string" ? detail.detail : `PATCH artifact -> ${res.status}`);
+  }
+  return res.json();
+}
+export interface GuidelineIssue { field_id: string; label: string; severity: "high" | "medium" | "low"; issue: string; suggestion: string }
+export interface GuidelineCheck { summary: string; issues: GuidelineIssue[]; needs_input: { field_id: string; label: string }[] }
+export function checkArtifact(id: string): Promise<GuidelineCheck> {
+  return postJSON(`/api/v3/artifacts/${enc(id)}/check`, {});
+}
+export function artifactCsvUrl(id: string, version?: number): string {
+  return `/api/v3/artifacts/${enc(id)}/export.csv${version ? `?version=${version}` : ""}`;
+}
+export function chatAsk(body: {
+  question: string; brand: string | null;
+  agents: { id: string; name: string; summary: string; available: boolean }[];
+}): Promise<{ reply: string; agent_ids: string[] }> {
+  return postJSON("/api/v3/chat", body);
+}
