@@ -179,12 +179,31 @@ export const AGENTS: Record<Phase, LibraryAgent[]> = {
  *  the Ops entry (the SOP segmentation + journey planner that actually exists) wins. */
 export interface RegistryAgent extends LibraryAgent {
   phase: Phase;
+  /** Where the agent opens today, when it has a working screen of its own. */
+  route?: string;
+  /** Home's card tags (B5). Only factual ones: NEW = built recently, COMING SOON = not
+   *  built yet. POPULAR is left out until there is usage data to back it. */
+  tags: ("new" | "coming-soon")[];
 }
+
+const AGENT_ROUTES: Record<string, string> = {
+  "flow-planner": "#/flow-planner",
+  "briefing-agent": "#/briefing-agent",
+};
+const NEW_AGENTS = new Set(["flow-planner", "briefing-agent"]);
 
 export const REGISTRY: RegistryAgent[] = (() => {
   const byId = new Map<string, RegistryAgent>();
   for (const p of PHASES) {
-    for (const a of AGENTS[p.id]) byId.set(a.id, { ...a, phase: p.id });
+    for (const a of AGENTS[p.id]) {
+      const comingSoon = a.status === "wip" || a.inDevelopment === true;
+      byId.set(a.id, {
+        ...a,
+        phase: p.id,
+        route: AGENT_ROUTES[a.id],
+        tags: [...(NEW_AGENTS.has(a.id) ? ["new" as const] : []), ...(comingSoon ? ["coming-soon" as const] : [])],
+      });
+    }
   }
   return [...byId.values()];
 })();

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { listBrands } from "../api";
 import type { BrandSummary } from "../types";
+import { AppDetail } from "./AppDetail";
+import { Home } from "./Home";
 import { Rail } from "./Rail";
 import { useBrandScope, useFavorites, useRailPinned } from "./store";
 import "./v3.css";
@@ -29,6 +31,7 @@ export function V3App({ path }: { path: string[] }) {
 
   const current = path.join("/") || "home";
   const page = PAGES[current] ?? PAGES.home;
+  const isHome = current === "home" || !PAGES[current] && path[0] !== "app";
 
   return (
     <div className="v3">
@@ -36,6 +39,9 @@ export function V3App({ path }: { path: string[] }) {
         onSelectBrand={scope.selectBrand} favorites={favs.favorites} isFavorite={favs.isFavorite}
         toggleFavorite={favs.toggleFavorite} pinned={pinned} setPinned={setPinned} />
       <main className="v3-main">
+        {path[0] === "app" ? <AppDetail id={path[1] ?? ""} /> : isHome ? (
+          <Home brands={brands} activeBrand={scope.activeBrand} />
+        ) : (<>
         <h1 className="v3-page-title">{page.title}</h1>
         <p className="v3-page-sub">
           {scope.activeBrand ? <>Scoped to <b>{scope.activeBrand}</b></> : "All brands"}
@@ -56,6 +62,7 @@ export function V3App({ path }: { path: string[] }) {
             <p className="v3-muted">This page is built in {page.phase}.</p>
           </div>
         )}
+        </>)}
       </main>
     </div>
   );
