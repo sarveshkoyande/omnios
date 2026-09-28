@@ -37,11 +37,11 @@ function timeAgo(iso: string): string {
   return new Date(t).toLocaleDateString();
 }
 
-const QUICK_ACTIONS: { title: string; sub: string; icon: "document" | "route" | "target"; to?: string }[] = [
-  { title: "Start an engagement plan", sub: "Quarterly goals, segments, budget and campaigns", icon: "target" },
-  { title: "Build a flow", sub: "Turn a campaign into a flow diagram", icon: "route", to: "#/flow-planner" },
-  { title: "Compile a brief", sub: "An agency-ready brief from a campaign plan", icon: "document", to: "#/briefing-agent" },
-];
+/** Agents offered as one-click context in the Ask box (the old quick-action cards). */
+const QUICK_IDS = ["flow-planner", "briefing-agent", "engagement-plan-builder"];
+
+/** The slash-command name an agent answers to, e.g. "/flow-planner". */
+const slashName = (a: RegistryAgent) => `/${a.id}`;
 
 export function Home({ brands, activeBrand }: { brands: BrandSummary[]; activeBrand: string | null }) {
   const [ask, setAsk] = useState("");
@@ -51,6 +51,8 @@ export function Home({ brands, activeBrand }: { brands: BrandSummary[]; activeBr
     { question: string; status: "done"; text: string; agents: RegistryAgent[] } |
     { question: string; status: "error"; text: string } | null
   >(null);
+  const [context, setContext] = useState<RegistryAgent | null>(null);
+  const [menuIndex, setMenuIndex] = useState(0);
   const [phase, setPhase] = useState<Phase | "all">("all");
   const [recent, setRecent] = useState<RecentItem[] | null>(null);
 
@@ -73,13 +75,36 @@ export function Home({ brands, activeBrand }: { brands: BrandSummary[]; activeBr
     return () => { live = false; };
   }, [scopeBrands]);
 
-  /** LLM-only routing (strategy/agent_router.py) -- no keyword matching anywhere. */
-  const submitAsk = () => {
-    const question = ask.trim();
-    if (!question || reply?.status === "thinking") return;
-    setReply({ question, status: "thinking" });
+  const openAgent = (a: RegistryAgent) => { window.location.hash = a.route ?? `#/v3/app/${a.id}`; };
+
+  const resetBox = () => {
     setAsk("");
     if (askRef.current) askRef.current.style.height = "auto";
+  };
+
+  /** Slash commands: a lone "/word" in the box opens the agent menu, like Claude's /skills.
+   *  The menu narrows by the command-name prefix you've typed after the slash. */
+  const slashQuery = /^\/\S*$/.test(ask) ? ask.slice(1).toLowerCase() : null;
+  const menu = slashQuery === null ? [] : [...REGISTRY]
+    .filter((a) => a.id.startsWith(slashQuery) || a.name.toLowerCase().startsWith(slashQuery))
+    .sort((x, y) => Number(x.tags.includes("coming-soon")) - Number(y.tags.includes("coming-soon")));
+
+  const pickContext = (a: RegistryAgent) => {
+    if (a.tags.includes("coming-soon")) return;
+    setContext(a);
+    resetBox();
+    setMenuIndex(0);
+    askRef.current?.focus();
+  };
+
+  /** With an agent chosen as context, Send goes straight to it -- no routing needed. Without
+   *  one, the question is routed by the LLM (strategy/agent_router.py), never by keywords. */
+  const submitAsk = () => {
+    const question = ask.trim();
+    if (context) { openAgent(context); return; }
+    if (!question || reply?.status === "thinking") return;
+    setReply({ question, status: "thinking" });
+    resetBox();
     routeAsk({
       question,
       brand: activeBrand,
@@ -92,25 +117,77 @@ export function Home({ brands, activeBrand }: { brands: BrandSummary[]; activeBr
       .catch((e) => setReply({ question, status: "error", text: e instanceof Error ? e.message : String(e) }));
   };
 
-  const apps = phase === "all" ? REGISTRY : REGISTRY.filter((a) => a.phase === phase);
-  const openAgent = (a: RegistryAgent) => { window.location.hash = a.route ?? `#/v3/app/${a.id}`; };
+  const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (menu.length > 0) {
+      if (e.key === "ArrowDown") { e.preventDefault(); setMenuIndex((i) => (i + 1) % menu.length); return; }
+      if (e.key === "ArrowUp") { e.preventDefault(); setMenuIndex((i) => (i - 1 + menu.length) % menu.length); return; }
+      if (e.key === "Enter" || e.key === "Tab") { e.preventDefault(); pickContext(menu[Math.min(menuIndex, menu.length - 1)]); return; }
+      if (e.key === "Escape") { e.preventDefault(); resetBox(); return; }
+    }
+    if (e.key === "Backspace" && !ask && context) { setContext(null); return; }
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submitAsk(); }
+  };
 
+  const apps = phase === "all" ? REGISTRY : REGISTRY.filter((a) => a.phase === phase);
   return (
     <div className="v3-home">
       <section className="v3-hero">
         <h1>Hi there,<br />how can I help today?</h1>
-        <form className="v3-ask" onSubmit={(e) => { e.preventDefault(); submitAsk(); }}>
-          <Icon name="sparkles" size={16} />
-          <textarea ref={askRef} rows={1} value={ask}
-            onChange={(e) => {
-              setAsk(e.target.value);
-              e.target.style.height = "auto";
-              e.target.style.height = `${Math.min(e.target.scrollHeight, 160)}px`;
-            }}
-            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submitAsk(); } }}
-            placeholder={activeBrand ? `Ask Omni anything about ${activeBrand}…` : "Ask Omni anything…"} />
-          <button type="submit" disabled={!ask.trim() || reply?.status === "thinking"}>Send</button>
-        </form>
+        <div className="v3-ask-wrap">
+          <form className="v3-ask" onSubmit={(e) => { e.preventDefault(); submitAsk(); }}>
+            <div className="v3-ask-row">
+              <Icon name="sparkles" size={16} />
+              {context && (
+                <span className="v3-ctx">
+                  <Icon name={context.icon} size={13} />{context.name}
+                  <button type="button" aria-label={`Remove ${context.name}`} onClick={() => setContext(null)}><Icon name="close" size={11} /></button>
+                </span>
+              )}
+              <textarea ref={askRef} rows={1} value={ask}
+                onChange={(e) => {
+                  setAsk(e.target.value);
+                  setMenuIndex(0);
+                  e.target.style.height = "auto";
+                  e.target.style.height = `${Math.min(e.target.scrollHeight, 160)}px`;
+                }}
+                onKeyDown={onKeyDown}
+                placeholder={context
+                  ? `Add a note for ${context.name} (optional), then Send`
+                  : activeBrand ? `Ask Omni anything about ${activeBrand}… or type / for agents` : "Ask Omni anything… or type / for agents"} />
+              <button type="submit" className="v3-ask-send" disabled={!context && (!ask.trim() || slashQuery !== null || reply?.status === "thinking")}>
+                {context ? "Open" : "Send"}
+              </button>
+            </div>
+            <div className="v3-ask-foot">
+              {REGISTRY.filter((a) => QUICK_IDS.includes(a.id)).map((a) => {
+                const soon = a.tags.includes("coming-soon") || !a.route;
+                return (
+                  <button key={a.id} type="button" className="v3-ask-quick" disabled={soon}
+                    title={soon ? "Coming soon" : `Use ${a.name}`} onClick={() => pickContext(a)}>
+                    <Icon name={a.icon} size={12} />{a.name}{soon && <em>soon</em>}
+                  </button>
+                );
+              })}
+              <span className="v3-ask-hint">Type <kbd>/</kbd> for all agents</span>
+            </div>
+          </form>
+          {menu.length > 0 && (
+            <div className="v3-slash" role="listbox" aria-label="Agents">
+              {menu.map((a, i) => {
+                const soon = a.tags.includes("coming-soon");
+                return (
+                  <button key={a.id} type="button" role="option" aria-selected={i === menuIndex} disabled={soon}
+                    className={`v3-slash-item ${i === menuIndex ? "active" : ""}`}
+                    onMouseEnter={() => setMenuIndex(i)} onMouseDown={(e) => { e.preventDefault(); pickContext(a); }}>
+                    <span className="v3-app-icon"><Icon name={a.icon} size={14} /></span>
+                    <span className="v3-slash-text"><b>{a.name}</b><span>{soon ? "Coming soon" : a.summary}</span></span>
+                    <code>{slashName(a)}</code>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
         {reply && (
           <div className="v3-ask-reply">
             <div className="v3-ask-q">{reply.question}</div>
@@ -139,20 +216,6 @@ export function Home({ brands, activeBrand }: { brands: BrandSummary[]; activeBr
             )}
           </div>
         )}
-      </section>
-
-      <section className="v3-quick">
-        {QUICK_ACTIONS.map((q) => {
-          const inner = (
-            <>
-              <span className="v3-quick-icon"><Icon name={q.icon} size={16} /></span>
-              <span className="v3-quick-text"><b>{q.title}</b><span>{q.to ? q.sub : "Coming soon"}</span></span>
-            </>
-          );
-          return q.to
-            ? <a key={q.title} className="v3-quick-card" href={q.to}>{inner}</a>
-            : <div key={q.title} className="v3-quick-card disabled" aria-disabled="true">{inner}</div>;
-        })}
       </section>
 
       <section>

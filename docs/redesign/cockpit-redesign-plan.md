@@ -58,9 +58,9 @@ separate route until approved.
 |---|---|---|
 | B1 | Home replaces the Agent Library as the landing page | ✅ |
 | B2 | Greeting card + **Ask Omni anything…** bar (brand-aware) | ✅ |
-| B3 | Quick actions: Start an engagement plan, Build a flow, Compile a brief | ✅ |
+| B3 | Quick actions **inside the Ask box**: type `/` for any agent (context chip, Send opens it); top three agents as one-click chips | ✅ (revised) |
 | B4 | Categories row: the three phases with app counts, filters the grid | ✅ |
-| B5 | Apps grid with NEW / POPULAR / COMING SOON tags | ✅ |
+| B5 | **Agents** grid, 4 per row, full descriptions; NEW / COMING SOON tags (POPULAR once usage data exists) | ✅ (revised) |
 | B6 | Recent work: brand · type · time, reopens where you left off | ✅ |
 | B7 | Brand chips on Home (≤2 brands) | ❌ replaced by BR |
 
@@ -150,6 +150,14 @@ spacing/radii never leak into the current look) until the final switch-over.
 | 6 | Campaign Planner + Flow Planner on the template; fix duplicate campaigns | D2–D5, F3 | Campaign → Flow → Brief chain end to end |
 | 7 | Cleanup and switch-over: remove old wizards/FABs/filler, make v3 the default | F1, F2, F5 | Sign-off; `pre-redesign` tag stays as rollback |
 | Later | Brand plan + Engagement plan frameworks and apps | M2, D6 | Needs the team's template |
+
+## Standing rules
+
+| ID | Rule |
+|---|---|
+| R1 | No regex/keyword matching of user text anywhere; LLM-based matching only. Exceptions are confirmed with the user first. |
+| R2 | If the LLM is unreachable, say so plainly and don't guess. |
+| R3 | The brief-capture chat's keyword rules are converted to LLM-only in Phases 3-4. |
 
 ## Open questions
 
