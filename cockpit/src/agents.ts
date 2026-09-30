@@ -68,13 +68,14 @@ export const AGENTS: Record<Phase, LibraryAgent[]> = {
     },
     {
       id: "campaign-planner", name: "Campaign Planner", icon: "target", status: "available",
-      summary: "Decides a campaign's objective, audience, messages, channels and timing, stage by stage.",
-      about: "Walks the campaign decision spine (campaign frame through risks): pre-fills what the brand kit and campaign already say, recommends what it can, and asks only what only you know. Its plan feeds the Flow Planner and the Briefing Agent.",
+      summary: "Turns your campaign brief into an approved briefing document and a deployable Salesforce journey.",
+      about: "Reads your brief, typed or uploaded, asks only about what's genuinely missing, reviews the remaining assumptions with you, and writes the Campaign Briefing Document. Once you approve it, seven agents (Document Analyst, Salesforce Architect, Flow QA Tester, Visual Designer, Tester Agent, Flow Validator and Technical Writer) build the Salesforce Flow specification and the journey diagram, ready to deploy to your org. Its plan feeds the Flow Planner and the Briefing Agent.",
       worksFrom: [
-        { label: "Brand kit", detail: "Lifecycle, pillars, core claim, objective, competitors and targets." },
-        { label: "Campaign decision spine", detail: "config/frameworks/campaign_spine.json (S0-S10)." },
+        { label: "Your brief", detail: "Typed requirements or an uploaded PDF, DOCX, TXT or MD brief, plus your answers to the agent's questions." },
+        { label: "Brand kit", detail: "The brand's indication, claims, safety reference and guardrails, when the brief is about this brand." },
+        { label: "Salesforce org", detail: "The connected org's objects and fields (or the standard objects) for the flow, and the Metadata API for the deploy." },
       ],
-      builtOn: "strategy/agent_forms.py, strategy/v3_artifacts.py",
+      builtOn: "strategy/campaign_creator",
     },
     {
       id: "signal-agent", name: "Signal Scout", icon: "radar", status: "available",
@@ -100,13 +101,14 @@ export const AGENTS: Record<Phase, LibraryAgent[]> = {
     },
     {
       id: "segmentation-planner", name: "Segmentation Planner", icon: "layers", status: "available",
-      summary: "Sizes and chooses the HCP segments a campaign should lead with.",
-      about: "Proposes segments inside your broad audience, sized against the addressable HCP universe, and asks which to lead with before the plan's targeting sections are written.",
+      summary: "Turns a plain-English audience into a sized Salesforce Data Cloud segment.",
+      about: "Describe the HCPs you want to reach. The agent asks which email consent statuses to include, writes the Data Cloud SQL on the HCP segmentation data, sizes the segment with a live count, and creates and publishes it in Data Cloud once you confirm. When Data Cloud rejects the SQL, its Tester Agent fixes it and tries again.",
       worksFrom: [
-        { label: "HCP 360 panel", detail: "Specialty, geography, segment and prescribing data behind every audience count." },
-        { label: "Target Customer Group template", detail: "The toolkit's ABCD segmentation, adoption ladder and digital-preference split." },
+        { label: "Your request", detail: "The audience in your own words, plus the consent statuses you pick and the segment's name." },
+        { label: "Data Cloud dataset", detail: "The HCP segmentation data model object's columns and their real values, read from Data Cloud." },
+        { label: "Salesforce Data Cloud", detail: "The Query API for the record count and the Segments API to create and publish the segment." },
       ],
-      builtOn: "strategy/segment_profile.py, strategy/hcp_panel_metrics.py",
+      builtOn: "strategy/segmentation",
     },
     {
       id: "channel-planner", name: "Channel Planner", icon: "smartphone", status: "available",
@@ -199,10 +201,11 @@ export interface RegistryAgent extends LibraryAgent {
 /** Agents with a redesigned workspace open there; the rest keep their current screen. */
 const AGENT_ROUTES: Record<string, string> = {
   "campaign-planner": "#/v3/agent/campaign-planner",
+  "segmentation-planner": "#/v3/agent/segmentation-planner",
   "flow-planner": "#/v3/agent/flow-planner",
   "briefing-agent": "#/v3/agent/briefing-agent",
 };
-const NEW_AGENTS = new Set(["campaign-planner", "flow-planner", "briefing-agent"]);
+const NEW_AGENTS = new Set(["campaign-planner", "segmentation-planner", "flow-planner", "briefing-agent"]);
 
 export const REGISTRY: RegistryAgent[] = (() => {
   const byId = new Map<string, RegistryAgent>();

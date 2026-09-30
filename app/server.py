@@ -16,8 +16,8 @@ import sys
 import threading
 import time
 
-from fastapi import FastAPI, File, Form, HTTPException, Query, UploadFile
-from fastapi.responses import FileResponse, Response, StreamingResponse
+from fastapi import FastAPI, File, Form, HTTPException, Query, Request, UploadFile
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -81,6 +81,11 @@ from strategy import agent_router  # noqa: E402  (redesign Ask bar: LLM-only age
 from strategy import agent_forms  # noqa: E402  (redesign workspace: framework-driven input cards)
 from strategy import v3_artifacts  # noqa: E402  (redesign workspace: typed, versioned artifacts)
 from strategy import v3_assist  # noqa: E402  (redesign: Refine, Check guidelines, Chat)
+from strategy.campaign_creator import service as cc_service  # noqa: E402  (Campaign Planner: Camille's create-campaign flow)
+from strategy.campaign_creator import jobs as cc_jobs  # noqa: E402
+from strategy.campaign_creator import salesforce as cc_salesforce  # noqa: E402
+from strategy.campaign_creator import briefing as cc_briefing  # noqa: E402
+from strategy.segmentation import service as seg_service  # noqa: E402  (Segmentation Planner: Camille's Segmentation Agent)
 from strategy.llm_json import LLMUnavailable  # noqa: E402  # noqa: E402  (chat-driven diagram edits, ported from scripts/flow_editor.py)
 from strategy import process_knowledge  # noqa: E402  (Cognee-backed SME process grounding)
 from strategy import cognee_feedback  # noqa: E402  (human feedback overlay for Cognee grounding)
@@ -1976,6 +1981,332 @@ def api_v3_route_ask(req: AskRouteRequest):
         return agent_router.route_question(req.question.strip(), req.brand, req.agents)
     except agent_router.AgentRouterUnavailable as exc:
         raise HTTPException(503, f"Omni's AI isn't reachable right now ({exc}).")
+
+
+# --------------------------------------------------------------------------------------------- #
+# Campaign Planner (Cockpit v3 "campaign-planner"): Camille's create-campaign flow --
+# intake -> clarifying questions -> assumption review -> Campaign Briefing Document ->
+# seven-agent journey blueprint -> Salesforce deploy (strategy/campaign_creator). Each thinking
+# step is a background job: the POST returns {job_id}; GET .../events streams it (SSE).
+# --------------------------------------------------------------------------------------------- #
+_SF_COOKIE = "omni_sf"
+
+
+def _cc(fn, *args, **kwargs):
+    try:
+        return fn(*args, **kwargs)
+    except cc_jobs.Busy as exc:
+        raise HTTPException(409, str(exc))
+    except KeyError as exc:
+        raise HTTPException(404, str(exc).strip("'\""))
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
+
+
+def _sf_conn(request: Request) -> dict | None:
+    return cc_salesforce.connection(request.cookies.get(_SF_COOKIE))
+
+
+class CCOpenRequest(BaseModel):
+    brand: str | None = None
+    plan_id: int | None = None
+    campaign_id: int | None = None
+
+
+class CCTitleRequest(BaseModel):
+    title: str
+
+
+class CCAnswersRequest(BaseModel):
+    answers: str
+
+
+class CCAssumptionsRequest(BaseModel):
+    mode: str  # "accept" | "resolve"
+    resolved: str = ""
+
+
+class CCUpdateRequest(BaseModel):
+    modifications: str
+
+
+class CCBlueprintRequest(BaseModel):
+    feedback: str | None = None
+
+
+@app.post("/api/campaign-planner/sessions")
+def api_cc_open(req: CCOpenRequest):
+    """The Campaign Planner session for this brand + campaign (created on first open)."""
+    return _cc(cc_service.open_session, req.brand, req.plan_id, req.campaign_id)
+
+
+@app.get("/api/campaign-planner/sessions/by-artifact/{artifact_id}")
+def api_cc_by_artifact(artifact_id: str):
+    found = cc_service.session_for_artifact(artifact_id)
+    if not found:
+        raise HTTPException(404, "no campaign planner session for this artifact")
+    return found
+
+
+@app.get("/api/campaign-planner/sessions/{session_id}")
+def api_cc_get(session_id: str):
+    return _cc(cc_service.get_view, session_id)
+
+
+@app.patch("/api/campaign-planner/sessions/{session_id}")
+def api_cc_rename(session_id: str, req: CCTitleRequest):
+    return _cc(cc_service.rename, session_id, req.title)
+
+
+@app.post("/api/campaign-planner/sessions/{session_id}/analyze")
+async def api_cc_analyze(session_id: str, prompt: str = Form(""), auto_assume: str = Form("false"),
+                         file: UploadFile | None = File(None)):
+    """Camille /campaign-briefing/generate: typed requirements and/or a PDF/DOCX/TXT/MD brief."""
+    content = await file.read() if file is not None else None
+    name = (file.filename or "brief") if file is not None else None
+    flag = str(auto_assume).strip().lower() in ("1", "true", "yes", "on")
+    return await asyncio.to_thread(_cc, cc_service.analyze, session_id, prompt, name, content, flag)
+
+
+@app.post("/api/campaign-planner/sessions/{session_id}/answers")
+def api_cc_answers(session_id: str, req: CCAnswersRequest):
+    return _cc(cc_service.answer_questions, session_id, req.answers)
+
+
+@app.post("/api/campaign-planner/sessions/{session_id}/assumptions")
+def api_cc_assumptions(session_id: str, req: CCAssumptionsRequest):
+    return _cc(cc_service.review_assumptions, session_id, req.mode, req.resolved)
+
+
+@app.post("/api/campaign-planner/sessions/{session_id}/briefing/update")
+def api_cc_update_briefing(session_id: str, req: CCUpdateRequest):
+    return _cc(cc_service.update_briefing, session_id, req.modifications)
+
+
+@app.get("/api/campaign-planner/sessions/{session_id}/briefing/versions")
+def api_cc_briefing_versions(session_id: str):
+    return {"versions": _cc(cc_service.briefing_versions, session_id)}
+
+
+@app.get("/api/campaign-planner/sessions/{session_id}/briefing/versions/{version}")
+def api_cc_briefing_version(session_id: str, version: int):
+    return _cc(cc_service.briefing_version, session_id, version)
+
+
+@app.post("/api/campaign-planner/sessions/{session_id}/briefing/restore/{version}")
+def api_cc_restore_briefing(session_id: str, version: int):
+    return _cc(cc_service.restore_briefing, session_id, version)
+
+
+@app.get("/api/campaign-planner/sessions/{session_id}/briefing.{fmt}")
+def api_cc_briefing_export(session_id: str, fmt: str):
+    """The Campaign Briefing Document as Word or PDF (same renderer as the plan exports)."""
+    if fmt not in ("docx", "pdf"):
+        raise HTTPException(404, "unknown export format")
+    view = _cc(cc_service.get_view, session_id)
+    briefing = view["state"].get("briefing")
+    if not briefing:
+        raise HTTPException(404, "no Campaign Briefing Document yet")
+    title = briefing.get("campaignName") or "Campaign Briefing Document"
+    md = cc_briefing.as_markdown(briefing)
+    fname = f"{_safe_filename(title)}-campaign-briefing.{fmt}"
+    if fmt == "docx":
+        data = plan_export.markdown_to_docx(md, title)
+        media = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    else:
+        data = plan_export.markdown_to_pdf(md, title)
+        media = "application/pdf"
+    return Response(data, media_type=media, headers={"Content-Disposition": f'attachment; filename="{fname}"'})
+
+
+@app.post("/api/campaign-planner/sessions/{session_id}/blueprint")
+def api_cc_blueprint(session_id: str, req: CCBlueprintRequest, request: Request):
+    """Camille /flows/generate-stream on the approved brief (or a refinement with `feedback`).
+    Uses the connected Salesforce org's objects when this browser has connected one."""
+    return _cc(cc_service.build_blueprint, session_id, req.feedback, _sf_conn(request))
+
+
+@app.post("/api/campaign-planner/sessions/{session_id}/deploy")
+def api_cc_deploy(session_id: str, request: Request):
+    """Camille /flows/deploy: Flow XML -> package -> Salesforce Metadata API, as a job."""
+    return _cc(cc_service.deploy, session_id, _sf_conn(request))
+
+
+@app.get("/api/campaign-planner/sessions/{session_id}/flow-package.zip")
+def api_cc_flow_package(session_id: str):
+    """The deployable Flow package (package.xml + flows/<name>.flow-meta.xml)."""
+    name, data = _cc(cc_service.flow_package, session_id)
+    return Response(data, media_type="application/zip", headers={"Content-Disposition": f'attachment; filename="{name}"'})
+
+
+@app.post("/api/campaign-planner/sessions/{session_id}/reset")
+def api_cc_reset(session_id: str):
+    return _cc(cc_service.reset, session_id)
+
+
+@app.post("/api/campaign-planner/sessions/{session_id}/cancel")
+def api_cc_cancel(session_id: str):
+    return _cc(cc_service.cancel, session_id)
+
+
+@app.get("/api/campaign-planner/sessions/{session_id}/events")
+def api_cc_events(session_id: str, job_id: str, request: Request, after: int = 0):
+    """A job's events as server-sent events, from event number `after` (or Last-Event-ID)."""
+    job = cc_jobs.get(job_id)
+    if not job or job.session_id != session_id:
+        raise HTTPException(404, "that step is no longer running")
+    try:
+        after = max(after, int(request.headers.get("last-event-id") or 0))
+    except ValueError:
+        pass
+    return StreamingResponse(cc_jobs.sse(job, after), media_type="text/event-stream",
+                             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no", "Connection": "keep-alive"})
+
+
+def _safe_return_to(value: str | None) -> str:
+    """Only same-site paths (never an absolute or protocol-relative URL)."""
+    v = (value or "").strip()
+    if not v.startswith("/") or v.startswith("//") or "\\" in v:
+        return "/#/v3/agent/campaign-planner"
+    return v
+
+
+@app.get("/api/salesforce/status")
+def api_sf_status(request: Request):
+    return cc_salesforce.status(request.cookies.get(_SF_COOKIE))
+
+
+@app.get("/api/salesforce/connect")
+def api_sf_connect(request: Request, return_to: str | None = None, hop: int = 0):
+    """Start the Salesforce OAuth web-server flow (Camille /auth/salesforce/connect)."""
+    if not cc_salesforce.configured():
+        return HTMLResponse("<p>Salesforce isn't configured on this server. Set SALESFORCE_CLIENT_ID, "
+                            "SALESFORCE_CLIENT_SECRET and SALESFORCE_REDIRECT_URI (see "
+                            "strategy/campaign_creator/salesforce.py).</p>", status_code=400)
+    origin = cc_salesforce.callback_origin()
+    if origin and origin[1].lower() != request.url.netloc.lower() and not hop:
+        # Opened on another host name for this server (127.0.0.1 vs localhost): start over on
+        # the callback's host, or the callback wouldn't see the cookie set here. Hosts only --
+        # behind a TLS proxy the scheme seen here differs from the public one. One hop at most.
+        from urllib.parse import urlencode as _urlencode
+        query = _urlencode({"return_to": _safe_return_to(return_to), "hop": 1})
+        return RedirectResponse(f"{origin[0]}://{origin[1]}/api/salesforce/connect?{query}", status_code=302)
+    sid = request.cookies.get(_SF_COOKIE) or cc_salesforce.new_sid()
+    resp = RedirectResponse(cc_salesforce.authorize_url(sid, _safe_return_to(return_to)), status_code=302)
+    resp.set_cookie(_SF_COOKIE, sid, httponly=True, samesite="lax", secure=request.url.scheme == "https", path="/")
+    return resp
+
+
+@app.get("/api/salesforce/callback")
+def api_sf_callback(request: Request, code: str | None = None, state: str | None = None,
+                    error: str | None = None, error_description: str | None = None):
+    """Salesforce redirects here after sign-in (Camille /auth/salesforce/callback)."""
+    import html as _html
+    back = "/#/v3/agent/campaign-planner"
+    if error or not code or not state:
+        msg = error_description or error or "Salesforce didn't return a sign-in code."
+        return HTMLResponse(f"<p>Salesforce sign-in did not complete: {_html.escape(msg)}</p>"
+                            f"<p><a href=\"{back}\">Back to the Campaign Planner</a></p>", status_code=400)
+    try:
+        target = cc_salesforce.complete_login(request.cookies.get(_SF_COOKIE) or "", code, state)
+    except Exception as exc:  # noqa: BLE001 -- shown to the user instead of a stack trace
+        return HTMLResponse(f"<p>Salesforce sign-in failed: {_html.escape(str(exc))}</p>"
+                            f"<p><a href=\"{back}\">Back to the Campaign Planner</a></p>", status_code=400)
+    return RedirectResponse(_safe_return_to(target), status_code=302)
+
+
+@app.post("/api/salesforce/disconnect")
+def api_sf_disconnect(request: Request):
+    cc_salesforce.disconnect(request.cookies.get(_SF_COOKIE))
+    return cc_salesforce.status(None)
+
+
+# ---- Segmentation Planner (strategy/segmentation: Camille's Segmentation Agent) ----------
+# Plain steps return the session; thinking steps (SQL, size, creation) return {job_id} and
+# stream from .../events, exactly like the Campaign Planner (they share the job registry).
+
+class SegQueryRequest(BaseModel):
+    text: str
+
+
+class SegConsentRequest(BaseModel):
+    values: list[str] = []  # empty = skip the consent filter
+
+
+class SegNameRequest(BaseModel):
+    name: str = ""  # empty = the suggested name
+
+
+@app.post("/api/segmentation-planner/sessions")
+def api_seg_open(req: CCOpenRequest):
+    """The Segmentation Planner session for this brand + campaign (created on first open)."""
+    return _cc(seg_service.open_session, req.brand, req.plan_id, req.campaign_id)
+
+
+@app.get("/api/segmentation-planner/sessions/{session_id}")
+def api_seg_get(session_id: str):
+    return _cc(seg_service.get_view, session_id)
+
+
+@app.patch("/api/segmentation-planner/sessions/{session_id}")
+def api_seg_rename(session_id: str, req: CCTitleRequest):
+    return _cc(seg_service.rename, session_id, req.title)
+
+
+@app.post("/api/segmentation-planner/sessions/{session_id}/query")
+def api_seg_query(session_id: str, req: SegQueryRequest):
+    return _cc(seg_service.submit_query, session_id, req.text)
+
+
+@app.post("/api/segmentation-planner/sessions/{session_id}/consent")
+def api_seg_consent(session_id: str, req: SegConsentRequest):
+    return _cc(seg_service.answer_consent, session_id, req.values)
+
+
+@app.post("/api/segmentation-planner/sessions/{session_id}/name")
+def api_seg_name(session_id: str, req: SegNameRequest):
+    return _cc(seg_service.set_name, session_id, req.name)
+
+
+@app.post("/api/segmentation-planner/sessions/{session_id}/create")
+def api_seg_create(session_id: str):
+    return _cc(seg_service.create, session_id)
+
+
+@app.post("/api/segmentation-planner/sessions/{session_id}/discard")
+def api_seg_discard(session_id: str):
+    return _cc(seg_service.discard, session_id)
+
+
+@app.post("/api/segmentation-planner/sessions/{session_id}/reset")
+def api_seg_reset(session_id: str):
+    return _cc(seg_service.reset, session_id)
+
+
+@app.post("/api/segmentation-planner/sessions/{session_id}/cancel")
+def api_seg_cancel(session_id: str):
+    return _cc(seg_service.cancel, session_id)
+
+
+@app.get("/api/segmentation-planner/sessions/{session_id}/events")
+def api_seg_events(session_id: str, job_id: str, request: Request, after: int = 0):
+    """A step's events as server-sent events, from event number `after` (or Last-Event-ID)."""
+    job = cc_jobs.get(job_id)
+    if not job or job.session_id != session_id:
+        raise HTTPException(404, "that step is no longer running")
+    try:
+        after = max(after, int(request.headers.get("last-event-id") or 0))
+    except ValueError:
+        pass
+    return StreamingResponse(cc_jobs.sse(job, after), media_type="text/event-stream",
+                             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no", "Connection": "keep-alive"})
+
+
+@app.get("/api/segmentation-planner/dataset")
+def api_seg_dataset(refresh: bool = False):
+    """The data model object's columns with their real values and ranges (the Dataset tab);
+    `refresh` re-reads them from Data Cloud."""
+    return seg_service.dataset_view(refresh)
 
 
 @app.get("/api/pharma-intel/summary")

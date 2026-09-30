@@ -9,6 +9,8 @@ import { Home } from "./Home";
 import { MyWork } from "./MyWork";
 import { Rail } from "./Rail";
 import { Workspace } from "./Workspace";
+import { CampaignPlanner } from "./campaignplanner/CampaignPlanner";
+import { SegmentationPlanner } from "./segmentation/SegmentationPlanner";
 import { useBrandScope, useFavorites, useRailPinned } from "./store";
 import "./v3.css";
 
@@ -45,7 +47,18 @@ export function V3App({ path }: { path: string[] }) {
         onSelectBrand={scope.selectBrand} favorites={favs.favorites} isFavorite={favs.isFavorite}
         toggleFavorite={favs.toggleFavorite} pinned={pinned} setPinned={setPinned} />
       <main className={`v3-main ${isWorkspace ? "v3-main-ws" : ""}`}>
-        {isWorkspace ? (
+        {isWorkspace && path[1] === "campaign-planner" ? (
+          <CampaignPlanner key={path.join("/")}
+            artifactId={path[2] !== "for" ? path[2] : undefined}
+            handoff={path[2] === "for" && path[3] ? { brand: path[3], planId: Number(path[4]) || null, campaignId: Number(path[5]) || null } : undefined}
+            brands={brands} activeBrand={scope.activeBrand}
+            isFavorite={favs.isFavorite} toggleFavorite={favs.toggleFavorite} />
+        ) : isWorkspace && path[1] === "segmentation-planner" ? (
+          <SegmentationPlanner key={path.join("/")}
+            handoff={path[2] === "for" && path[3] ? { brand: path[3], planId: Number(path[4]) || null, campaignId: Number(path[5]) || null } : undefined}
+            brands={brands} activeBrand={scope.activeBrand}
+            isFavorite={favs.isFavorite} toggleFavorite={favs.toggleFavorite} />
+        ) : isWorkspace ? (
           <Workspace key={path.join("/")} agentId={path[1]}
             artifactId={path[2] !== "for" ? path[2] : undefined}
             handoff={path[2] === "for" && path[3] ? { brand: path[3], planId: Number(path[4]) || null, campaignId: Number(path[5]) || null } : undefined}

@@ -1,0 +1,70 @@
+/* Segmentation Planner (Camille's Segmentation Agent) inside the v3 workspace layout. Builds on
+   the Campaign Planner's v3-cc-* styles (imported alongside); only what's new is here. Scoped
+   under .v3 and drawn from the cockpit.css :root tokens. */
+
+/* ---- welcome (Camille's Seg-welcome) ---- */
+.v3 .v3-seg-example {
+  display: block; width: 100%; text-align: left; padding: 8px 10px; cursor: pointer; border: none;
+  border-radius: var(--radius-sm); font-family: inherit; font-size: 12.5px; line-height: 1.45; color: var(--neutral-700);
+  background: var(--base-white); box-shadow: 0 0 0 1px var(--neutral-200);
+}
+.v3 .v3-seg-example:hover { box-shadow: 0 0 0 1px var(--primary); color: var(--primary); }
+
+/* ---- consent chips (Camille's Seg-consent-btn) ---- */
+.v3 .v3-seg-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.v3 .v3-seg-chip {
+  display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; cursor: pointer; border: none;
+  border-radius: var(--radius-full); font-family: inherit; font-size: 12.5px; font-weight: 600; color: var(--neutral-700);
+  background: var(--neutral-50); box-shadow: 0 0 0 1px var(--neutral-200);
+}
+.v3 .v3-seg-chip:hover:not(:disabled) { box-shadow: 0 0 0 1px var(--primary); color: var(--primary); }
+.v3 .v3-seg-chip.on { background: var(--primary-light-background); color: var(--primary); box-shadow: 0 0 0 1.5px var(--primary); }
+.v3 .v3-seg-chip:disabled { cursor: default; }
+.v3 .v3-seg-chip:disabled:not(.on) { opacity: .55; }
+.v3 .v3-seg-chip.small { padding: 3px 8px; font-size: 11.5px; font-weight: 500; }
+.v3 .v3-seg-check {
+  width: 14px; height: 14px; border-radius: var(--radius-xs); display: grid; place-items: center;
+  box-shadow: inset 0 0 0 1.5px var(--neutral-400); background: var(--base-white); color: var(--base-white);
+}
+.v3 .v3-seg-chip.on .v3-seg-check { background: var(--primary); box-shadow: none; }
+.v3 .v3-seg-answered { margin: 0; font-size: 12px; color: var(--success-foreground); font-weight: 600; }
+
+/* ---- SQL card (Camille's Seg-sql-card) ---- */
+.v3 .v3-seg-sql-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.v3 .v3-seg-sql-head b { font-size: 13px; color: var(--primary); }
+.v3 .v3-seg-text { margin: 0; font-size: 12.5px; line-height: 1.5; color: var(--fg); }
+.v3 .v3-seg-text.muted { color: var(--muted); font-size: 12px; }
+.v3 .v3-seg-desc { margin: 0; font-size: 12px; line-height: 1.5; color: var(--muted); font-style: italic; }
+.v3 .v3-seg-code { max-height: 220px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.v3 .v3-seg-code.big { max-height: 420px; font-size: 11.5px; }
+.v3 .v3-seg-fix { margin: 0; display: flex; align-items: flex-start; gap: 6px; font-size: 11.5px; color: var(--success-foreground); line-height: 1.45; }
+.v3 .v3-seg-note { margin: 0; font-size: 11.5px; line-height: 1.45; color: var(--muted); word-break: break-word; }
+
+/* ---- naming question ---- */
+.v3 .v3-seg-name { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; padding: 8px 12px; border-radius: var(--radius-md); border-bottom-left-radius: var(--radius-xs); background: var(--base-white); box-shadow: 0 0 0 1px var(--neutral-200); }
+.v3 .v3-seg-warn-msg .v3-seg-name { background: var(--warning-light-background); box-shadow: 0 0 0 1px var(--warning-light-background); }
+
+/* ---- record count / success (Camille's count-confirm and Seg-success cards) ---- */
+.v3 .v3-seg-count.warn:not(.done) { box-shadow: 0 0 0 1px var(--warning-light-background), 0 4px 14px rgba(86, 58, 168, 0.05); }
+.v3 .v3-cc-card-icon.ok { background: var(--success-light-background); color: var(--success-foreground); }
+.v3 .v3-seg-success { box-shadow: 0 0 0 1px var(--success-light-background), 0 4px 14px rgba(86, 58, 168, 0.05); }
+.v3 .v3-seg-success > a { align-self: flex-start; }
+.v3 .v3-seg-rows { margin: 0; display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; font-size: 12.5px; }
+.v3 .v3-seg-rows dt { color: var(--muted); font-weight: 600; }
+.v3 .v3-seg-rows dd { margin: 0; color: var(--fg); word-break: break-word; }
+.v3 .v3-seg-rows dd.mono, .v3 .v3-seg .v3-cc-facts code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11.5px; font-weight: 500; }
+
+/* ---- right pane ---- */
+.v3 .v3-seg-sqlblock { display: flex; flex-direction: column; gap: 6px; }
+.v3 .v3-seg-created .v3-cc-bp-sec-head b { flex: 1; min-width: 0; }
+.v3 .v3-seg-dmo { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 15px !important; word-break: break-all; }
+.v3 .v3-seg-col { display: flex; flex-direction: column; gap: 5px; padding: 8px 0; border-top: 1px solid var(--neutral-100); }
+.v3 .v3-seg-col:first-of-type { border-top: none; }
+.v3 .v3-seg-col-name { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; }
+.v3 .v3-seg-col-name code { font-size: 11.5px; padding: 1px 5px; border-radius: var(--radius-xs); background: var(--neutral-100); color: var(--neutral-800); }
+.v3 .v3-seg-col-name span { font-size: 11.5px; color: var(--muted); }
+.v3 .v3-seg .v3-cc-table code { font-size: 11px; }
+
+/* ---- composer extras ---- */
+.v3 .v3-seg-suggest { align-self: flex-end; white-space: nowrap; }
+.v3 .v3-seg-subhint { margin-top: 6px; }

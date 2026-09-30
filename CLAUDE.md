@@ -124,6 +124,41 @@ the same resilience idiom: attempt the call, catch broadly, fall back to a deter
 rules-based path — the app must degrade gracefully (rules engine only), never hard-fail,
 when the LLM is unavailable or misconfigured.
 
+**Cockpit Campaign Planner** (`#/v3/agent/campaign-planner`, a port of Camille's "create
+campaign"): backend `strategy/campaign_creator/` (routes `/api/campaign-planner/*` and
+`/api/salesforce/*` in `server.py`), frontend `cockpit/src/v3/campaignplanner/`. Brief →
+up to 3 questions → assumptions → an 11-section Campaign Briefing → a 7-agent journey
+blueprint (Analyst, Architect, QA, Designer ⇄ Tester, Validator, Writer) → a Salesforce Flow.
+Each step is a background job whose events stream over replayable SSE; a job saves the session
+only when it succeeds. Every agent has a rules fallback, whose output is thin, so the planner
+really needs a model. Its model is chosen in `strategy/campaign_creator/llm.py`:
+- First choice: Camille's own OpenAI-compatible gateway, via `LITELLM_BASE_URL` + `LITELLM_API_KEY`
+  (+ `LITELLM_MODEL`, default `gpt-5`), called over httpx.
+- Otherwise: the app's Foundry/Gemini provider.
+
+Deploy needs `SALESFORCE_CLIENT_ID`/`SALESFORCE_CLIENT_SECRET`/`SALESFORCE_REDIRECT_URI`
+(`http://localhost:8731/api/salesforce/callback`, which must also be registered on the Connected
+App), with optional `SALESFORCE_LOGIN_URL`. OAuth tokens live in server memory, so a restart
+means connecting again.
+The Cockpit builds with `cd cockpit && npm run build` into `app/static/cockpit`.
+
+**Cockpit Segmentation Planner** (`#/v3/agent/segmentation-planner`, a port of Camille's
+Segmentation Agent): backend `strategy/segmentation/` (routes `/api/segmentation-planner/*`),
+frontend `cockpit/src/v3/segmentation/`. It reuses the Campaign Planner's job registry and model
+layer (`campaign_creator/jobs.py`, `llm.py`). The flow:
+1. Plain-English audience → email-consent card → Data Cloud DBT SQL on
+   `hcp_segmentation_dummy_dataset_camille__dlm`.
+2. Name → live record count on the Query API (`ssot/queryv2`).
+3. Confirm → duplicate-name check, create (Segments API), publish.
+
+A "Tester Agent" model call fixes SQL that Data Cloud rejects, up to twice per step.
+
+Data Cloud uses Camille's `DC_*` settings (a password-flow token endpoint, client id and secret,
+username and password, and `DC_API_VERSION`). The prompt's column values are the data's real ones:
+they are profiled live and cached for 6 hours, with `config/segmentation_dataset.json` as the
+fallback snapshot (refresh it with `dataset.write_snapshot()`). Query API rows are arrays;
+`datacloud.query()` maps them to dicts through `metadata[col].placeInOrder`.
+
 **Design tokens**: `frontend/src/theme/tokens.ts` is the literal single source of truth for
 color/spacing/radius (`frontend/src/theme/theme.ts` derives the MUI theme from it, nothing
 else should hardcode raw hex/rgba). `DESIGN_BRIEF.md` documents the intended "light liquid

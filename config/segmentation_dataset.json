@@ -1,0 +1,281 @@
+{
+  "dmo": "hcp_segmentation_dummy_dataset_camille__dlm",
+  "profiled_at": "2026-09-29T19:31:00Z",
+  "row_count": 50000,
+  "note": "Written by strategy.segmentation.dataset.write_snapshot() from the live Data Cloud data model object; used when Data Cloud can't be reached. Values are in order of frequency.",
+  "columns": {
+    "brand__c": {
+      "values": [
+        "Zenthera",
+        "Corvexis",
+        "Fyntrixa",
+        "Averixa",
+        "Elunara",
+        "Qurevia",
+        "Lumivexa",
+        "Norvanta",
+        "Belvanta",
+        "Dalyvera"
+      ]
+    },
+    "speciality__c": {
+      "values": [
+        "Hematology/Oncology",
+        "Internal Medicine",
+        "Hematology (Internal Medicine)",
+        "Family Medicine",
+        "Hematology (Pathology)"
+      ]
+    },
+    "sub_specialty__c": {
+      "values": [
+        "General Internal Medicine",
+        "Primary Care Internal Medicine",
+        "Hospital Medicine",
+        "GI Oncology",
+        "Breast Oncology",
+        "Thoracic Oncology",
+        "Hematologic Oncology",
+        "Medical Oncology",
+        "Malignant Hematology",
+        "Benign Hematology",
+        "Coagulation Disorders",
+        "Adult Primary Care",
+        "General Family Medicine",
+        "Community Medicine",
+        "Hematopathology",
+        "Molecular Pathology",
+        "Clinical Pathology"
+      ]
+    },
+    "indication__c": {
+      "values": [
+        "Chronic Lymphocytic Leukemia",
+        "Multiple Myeloma",
+        "Non-Hodgkin Lymphoma",
+        "Acute Myeloid Leukemia",
+        "Anemia",
+        "Myelodysplastic Syndromes",
+        "Supportive Care",
+        "Early Diagnostic Workup"
+      ]
+    },
+    "state__c": {
+      "values": [
+        "WA",
+        "GA",
+        "IN",
+        "FL",
+        "OH",
+        "MA",
+        "VA",
+        "WI",
+        "IL",
+        "NC",
+        "MI",
+        "PA",
+        "MD"
+      ]
+    },
+    "practice_setting__c": {
+      "values": [
+        "Private Practice",
+        "Integrated Delivery Network",
+        "Oncology Network",
+        "Community Hospital",
+        "Academic Medical Center"
+      ]
+    },
+    "email_consent_status__c": {
+      "values": [
+        "Opted In",
+        "Opted Out",
+        "No Response"
+      ]
+    },
+    "sms_consent_status__c": {
+      "values": [
+        "Opted Out",
+        "Opted In",
+        "No Response"
+      ]
+    },
+    "rep_contact_allowed__c": {
+      "values": [
+        "Yes",
+        "No"
+      ]
+    },
+    "current_segment__c": {
+      "values": [
+        "Established Awareness",
+        "High Awareness",
+        "Growing Awareness",
+        "Low Awareness"
+      ]
+    },
+    "hcp_status__c": {
+      "values": [
+        "Active",
+        "Inactive",
+        "Retired",
+        "Deceased"
+      ]
+    },
+    "active_journey_flag__c": {
+      "values": [
+        "No",
+        "Yes"
+      ]
+    },
+    "preferred_channel__c": {
+      "values": [
+        "Rep",
+        "Email",
+        "Web",
+        "None",
+        "Programmatic",
+        "EHR",
+        "SMS"
+      ]
+    },
+    "years_in_practice__c": {
+      "range": [
+        "3",
+        "40"
+      ]
+    },
+    "decile__c": {
+      "range": [
+        "1",
+        "10"
+      ]
+    },
+    "trx_last_month__c": {
+      "range": [
+        "0",
+        "79"
+      ]
+    },
+    "trx_prev_6_months__c": {
+      "range": [
+        "0",
+        "542"
+      ]
+    },
+    "nrx_last_month__c": {
+      "range": [
+        "0",
+        "22"
+      ]
+    },
+    "brand_trx_12m__c": {
+      "range": [
+        "0",
+        "568"
+      ]
+    },
+    "category_trx_12m__c": {
+      "range": [
+        "0",
+        "1191"
+      ]
+    },
+    "competitor_trx_12m__c": {
+      "range": [
+        "0",
+        "1035"
+      ]
+    },
+    "trx_growth_rate__c": {
+      "range": [
+        "-0.95",
+        "0.333"
+      ]
+    },
+    "emails_delivered__c": {
+      "range": [
+        "0",
+        "35"
+      ]
+    },
+    "email_opens__c": {
+      "range": [
+        "0",
+        "35"
+      ]
+    },
+    "email_clicks__c": {
+      "range": [
+        "0",
+        "7"
+      ]
+    },
+    "ehr_impressions__c": {
+      "range": [
+        "0",
+        "180"
+      ]
+    },
+    "prog_impressions__c": {
+      "range": [
+        "0",
+        "950"
+      ]
+    },
+    "prog_clicks__c": {
+      "range": [
+        "0",
+        "12"
+      ]
+    },
+    "web_visits__c": {
+      "range": [
+        "0",
+        "9"
+      ]
+    },
+    "rep_calls__c": {
+      "range": [
+        "0",
+        "9"
+      ]
+    },
+    "channels_engaged__c": {
+      "range": [
+        "0",
+        "5"
+      ]
+    },
+    "engagement_score__c": {
+      "range": [
+        "0",
+        "20"
+      ]
+    },
+    "days_since_last_engagement__c": {
+      "range": [
+        "1",
+        "365"
+      ]
+    },
+    "last_campaign_date__c": {
+      "range": [
+        "2025-09-24",
+        "2026-09-23"
+      ]
+    },
+    "last_engagement_date__c": {
+      "range": [
+        "2025-09-24",
+        "2026-09-23"
+      ]
+    },
+    "suppression_until_date__c": {
+      "range": [
+        "2026-10-04",
+        "2027-03-23"
+      ]
+    }
+  }
+}

@@ -28,6 +28,7 @@ const BRAND_IQ: NavItem[] = [
 const NEW_ITEMS: { label: string; href?: string; note?: string }[] = [
   { label: "Start an engagement plan", note: "Coming soon" },
   { label: "Plan a campaign", href: "#/v3/agent/campaign-planner" },
+  { label: "Create a segment", href: "#/v3/agent/segmentation-planner" },
   { label: "Build a flow", href: "#/v3/agent/flow-planner" },
   { label: "Compile a brief", href: "#/v3/agent/briefing-agent" },
 ];
