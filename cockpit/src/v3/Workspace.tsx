@@ -80,7 +80,6 @@ export function Workspace({ agentId, artifactId, handoff, brands, activeBrand, i
   const [planId, setPlanId] = useState<number | null>(null);
   const [campaignId, setCampaignId] = useState<number | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [switcherOpen, setSwitcherOpen] = useState(false);
 
   const [form, setForm] = useState<AgentForm | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
@@ -360,18 +359,6 @@ export function Workspace({ agentId, artifactId, handoff, brands, activeBrand, i
               </div>
             </div>
 
-            <div className="v3-ws-change">
-              <button type="button" className="v3-ws-change-btn" onClick={() => setSwitcherOpen((o) => !o)}>
-                <Icon name="layers" size={13} /> Change agent <Icon name="chevronDown" size={12} />
-              </button>
-              {switcherOpen && (
-                <div className="v3-new-menu v3-ws-switch">
-                  {REGISTRY.filter((a) => !a.tags.includes("coming-soon")).map((a) => (
-                    <a key={a.id} className="v3-new-item" href={a.route ?? `#/v3/app/${a.id}`} onClick={() => setSwitcherOpen(false)}>{a.name}</a>
-                  ))}
-                </div>
-              )}
-            </div>
 
             <section className={`v3-ws-settings ${settingsOpen ? "open" : ""}`}>
               <button type="button" className="v3-ws-settings-row" onClick={() => setSettingsOpen((o) => !o)} aria-expanded={settingsOpen}>
