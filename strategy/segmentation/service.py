@@ -21,7 +21,7 @@ import uuid
 
 from strategy.campaign_creator import jobs, llm
 
-from . import datacloud, dataset, prompts, rules, sqltools, store
+from . import datacloud, dataset, prompts, sqltools, store
 
 MAX_HEAL = 2  # Camille's MAX_RETRIES: the Tester Agent's fixes per step
 BUSY = "The Segmentation Planner is already working on a step."
@@ -298,27 +298,32 @@ def _generate(run: _Run, query: str) -> None:
         run.progress(prog, "profiling", "Data Cloud", "Reading the dataset's current values from Data Cloud...")
     prof = dataset.profile(refresh=True)
 
+    # OmniOS rules R1/R2: the request is only ever read by the model. When it is unavailable or
+    # returns nothing usable, stop with a plain message -- no SQL is built from keywords.
     result, source, note = None, "ai", None
-    if llm.available():
-        run.progress(prog, "generating", "Segmentation Agent", "Generating Data Cloud SQL query from your requirements...")
-        try:
-            data, usage = llm.complete_json(prompts.generation_user(query), system=prompts.generation_system(prof),
-                                            should_stop=run.stop)
-            run.tokens(usage)
-            if isinstance(data, dict) and str(data.get("sql") or "").strip() and str(data.get("segmentName") or "").strip():
-                result = data
-            else:
-                note = "The AI model didn't return a usable SQL query, so this one was built by rules."
-        except llm.Cancelled:
-            raise
-        except Exception as exc:  # noqa: BLE001 -- OmniOS rule: degrade to rules, never hard-fail
-            print(f"[segmentation] SQL generation failed, using rules: {exc}")
-            note = f"The AI call failed ({exc}), so this SQL was built by rules."
-    else:
-        note = "No AI model is configured, so this SQL was built by rules."
+    if not llm.available():
+        run.finish_progress(prog)
+        run.fail("No AI model is configured, so no SQL was written. Omni doesn't build segment SQL from "
+                 "keywords - configure the model (or check its key) and try again.")
+        return
+    run.progress(prog, "generating", "Segmentation Agent", "Generating Data Cloud SQL query from your requirements...")
+    try:
+        data, usage = llm.complete_json(prompts.generation_user(query), system=prompts.generation_system(prof),
+                                        should_stop=run.stop)
+        run.tokens(usage)
+        if isinstance(data, dict) and str(data.get("sql") or "").strip() and str(data.get("segmentName") or "").strip():
+            result = data
+    except llm.Cancelled:
+        raise
+    except Exception as exc:  # noqa: BLE001 -- report honestly, never guess
+        print(f"[segmentation] SQL generation failed: {exc}")
+        run.finish_progress(prog)
+        run.fail(f"The AI model couldn't be reached ({exc}), so no SQL was written. Try again in a moment.")
+        return
     if result is None:
-        run.progress(prog, "generating", "Segmentation Agent", "Building the SQL query by rules...")
-        result, source = rules.build(query, prof), "rules"
+        run.finish_progress(prog)
+        run.fail("The AI model didn't return a usable SQL query. Try rephrasing the audience, or try again.")
+        return
 
     sql = sqltools.sanitize(str(result["sql"]))
     issues = sqltools.problems(sql)

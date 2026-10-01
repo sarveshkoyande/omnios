@@ -590,8 +590,8 @@ def validate_rules(spec: dict, requirements: str = "") -> dict:
         recs.append("Add a consent check (for example HasOptedOutOfEmail) before the first send.")
     if s["scheduled_paths"]:
         recs.append("Scheduled paths run relative to the triggering record's save time; confirm that matches the journey's day count.")
-    if re.search(r"\b(sms|whatsapp|text message)\b", requirements or "", re.IGNORECASE):
-        recs.append("SMS and WhatsApp require Marketing Cloud or a custom integration; only Email is native to Salesforce Flow.")
+    # (A keyword scan of the requirements for SMS/WhatsApp used to sit here; removed under rule
+    # R1 -- the AI Flow Validator covers channel feasibility when the model is available.)
     return {"isValid": bool(s["total"]), "warnings": warnings, "recommendations": recs}
 
 

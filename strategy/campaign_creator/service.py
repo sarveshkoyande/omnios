@@ -295,23 +295,25 @@ def _answers_block(state: dict) -> str | None:
 
 
 def _generate_briefing(run: _Run, prog: dict, context: str, answers: str | None) -> None:
-    """Generate the briefing (or assemble it by rules), then commit it as a new version."""
+    """Generate the briefing with the model, then commit it as a new version.
+
+    OmniOS rules R1/R2: the brief is only ever read by the model. When the model is unavailable
+    or fails, the run stops with a plain message -- no briefing is assembled from keywords."""
     state = run.state
     source, note = "ai", None
-    b = None
-    if llm.available():
-        try:
-            b, usage = bf.generate(run.with_ws(context), answers, should_stop=run.stop)
-            run.tokens(usage)
-        except llm.Cancelled:
-            raise
-        except Exception as exc:  # noqa: BLE001 -- OmniOS rule: degrade to rules, never hard-fail
-            print(f"[campaign-creator] briefing generation failed, using rules: {exc}")
-            source, note = "rules", f"The AI call failed ({exc}), so this briefing was assembled from your text by rules."
-    else:
-        source, note = "rules", "No AI model is configured, so this briefing was assembled from your text by rules."
-    if b is None:
-        b = bf.rules_briefing(context, run.ws)
+    if not llm.available():
+        run.fail("No AI model is configured, so the briefing wasn't written. Omni doesn't guess a briefing "
+                 "from keywords - configure the model (or check its key) and try again.")
+        return
+    try:
+        b, usage = bf.generate(run.with_ws(context), answers, should_stop=run.stop)
+        run.tokens(usage)
+    except llm.Cancelled:
+        raise
+    except Exception as exc:  # noqa: BLE001 -- report honestly, never guess
+        print(f"[campaign-creator] briefing generation failed: {exc}")
+        run.fail(f"The AI model couldn't be reached ({exc}), so the briefing wasn't written. Try again in a moment.")
+        return
     run.progress(prog, "complete", "Campaign Consultant", "Campaign Briefing Document generated successfully!")
     prog["status"] = "done"
     run.update_item(prog)

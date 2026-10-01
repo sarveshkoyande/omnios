@@ -4,7 +4,8 @@ Prompts are Camille's (index.js BRIEFING_ANALYSIS_PROMPT, BRIEFING_GENERATION_PR
 inline ambiguity-review prompt of /campaign-briefing/answer, BRIEFING_UPDATE_PROMPT), with two
 additions for OmniOS: an optional workspace block (the brand, engagement plan and campaign the
 planner is scoped to, plus the brand kit's key facts) and the explicit decisions list the
-generation step records as keyDecisions. When no model is configured, `rules_briefing`
+generation step records as keyDecisions. When no model is configured the run stops (rules R1/R2);
+`rules_briefing` (removed)
 assembles the document from the typed text alone and marks every gap "Not specified by user".
 """
 from __future__ import annotations
@@ -471,88 +472,6 @@ def normalize_briefing(raw) -> dict:
 
 
 # ------------------------------------------------------------------ rules fallback ------
-
-_FIELD_PATTERNS = (
-    ("brandName", r"brand\s*name[:\s]+([^\n]+)"),
-    ("productName", r"product\s*name[:\s]+([^\n]+)"),
-    ("therapeuticArea", r"therapeutic\s*area[:\s]+([^\n]+)"),
-    ("indication", r"(?:approved\s*)?indication[:\s]+([^\n]+)"),
-    ("campaignObjective", r"campaign\s*objective[:\s]+([^\n]+)"),
-    ("targetMarket", r"target\s*market[:\s]+([^\n]+)"),
-    ("campaignType", r"campaign\s*type[:\s]+([^\n]+)"),
-    ("hcpSpecialties", r"(?:primary\s*)?hcp\s*specialties[:\s]+([^\n]+)"),
-    # Not in Camille: common labels its parser missed. Each needs "Label:" (with the colon), and
-    # all but the first at the start of a line; a key Camille's own pattern found is kept.
-    ("campaignName", r"campaign\s*name\s*:\s*([^\n]+)"),
-    ("brandName", r"(?m)^\s*brand\s*:\s*([^\n]+)"),
-    ("campaignObjective", r"(?m)^\s*(?:primary\s+|main\s+|campaign\s+)?objectives?\s*:\s*([^\n]+)"),
-    ("targetAudience", r"(?m)^\s*(?:target|primary)\s+audiences?\s*:\s*([^\n]+)"),
-    ("kpis", r"(?m)^\s*(?:kpis?|success\s+metrics)\s*:\s*([^\n]+)"),
-)
-
-
-def parse_labelled_fields(text: str) -> dict:
-    """Camille's parseInitialInput: "Label: value" lines from the brief."""
-    fields = {}
-    for key, pattern in _FIELD_PATTERNS:
-        if key in fields:
-            continue
-        m = re.search(pattern, text or "", flags=re.IGNORECASE)
-        if m and m.group(1).strip():
-            fields[key] = m.group(1).strip()
-    return fields
-
-
-_DAY_LINE = re.compile(r"^\s*[-*•]?\s*((?:day|days|week|weeks)\s*\d+(?:\s*[-–to]+\s*\d+)?)\s*[:\-–—.)]\s*(.+)$", re.IGNORECASE)
-
-
-def rules_briefing(requirements: str, workspace: dict | None = None) -> dict:
-    """The briefing without a model: only what the text states in labelled lines ("Brand Name:
-    X") or day-by-day lines ("Day 3: ..."); every other section reads "Not specified by user".
-    (Camille's own offline template filled sections with canned numbers; this does not.)"""
-    ws = workspace or {}
-    f = parse_labelled_fields(requirements)
-    named = [x for x in (f.get("brandName"), f.get("productName")) if x]
-    ws_brand = str(ws.get("brand") or "").strip().lower()
-    # The workspace's brand-kit facts only apply when the brief is about that brand.
-    kit = (ws.get("kit") or {}) if (not named or (ws_brand and any(ws_brand in n.lower() for n in named))) else {}
-    brand = f.get("brandName") or f.get("productName") or ws.get("brand") or ""
-    flow = []
-    for line in (requirements or "").splitlines():
-        m = _DAY_LINE.match(line)
-        if m:
-            action = m.group(2).strip()
-            flow.append({"timing": m.group(1).strip().title(), "stage": " ".join(action.split()[:6]), "actions": action})
-    first_line = next((ln.strip() for ln in (requirements or "").splitlines() if ln.strip()), "")
-    segments = []
-    if f.get("hcpSpecialties"):
-        segments.append({"name": "Primary audience", "hcpSpecialty": f["hcpSpecialties"], "segmentType": NOT_SPECIFIED,
-                         "details": [], "messageFocus": NOT_SPECIFIED})
-    return normalize_briefing({
-        "campaignName": f.get("campaignName") or (
-            f"Brand {brand}" if named else (ws.get("campaign_name") or (f"Brand {brand}" if brand else "Campaign Briefing"))),
-        "campaignOverview": {
-            "objective": f.get("campaignObjective") or first_line[:400] or NOT_SPECIFIED,
-            "product": f.get("productName") or brand or NOT_SPECIFIED,
-            "indication": f.get("indication") or kit.get("approved_indication") or kit.get("indication") or NOT_SPECIFIED,
-            "primaryAudience": f.get("hcpSpecialties") or f.get("targetAudience") or NOT_SPECIFIED,
-            "primaryChannel": f.get("campaignType") or NOT_SPECIFIED,
-            "complianceRole": kit.get("safety_reference") or NOT_SPECIFIED,
-        },
-        "keyDecisions": [],
-        "audienceSegmentation": {"rule": NOT_SPECIFIED, "segments": segments},
-        "sfmcCapabilities": [],
-        "journeyEntryCriteria": [],
-        "designPrinciples": [],
-        "journeyFlow": flow,
-        "decisionLogic": {"keyQuestion": NOT_SPECIFIED, "rules": []},
-        "operationalRules": [],
-        "measurementReporting": [{"tier": "KPIs", "metrics": f["kpis"]}] if f.get("kpis") else [],
-        "journeyEndGoals": NOT_SPECIFIED,
-    })
-
-
-# ------------------------------------------------------------------ text + export -------
 
 def as_text(b: dict) -> str:
     """The briefing as readable text, for the blueprint agents' prompt."""
