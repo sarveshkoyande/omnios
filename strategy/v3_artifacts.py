@@ -119,7 +119,7 @@ def compose_brief(brand: str, inputs: dict, extras: list[dict]) -> dict:
 
 
 # Which artifact type each agent produces (D4: Campaign plan -> Flow, Brief).
-AGENT_ARTIFACT = {"briefing-agent": "campaign_brief", "campaign-planner": "campaign_plan", "flow-planner": "flow"}
+AGENT_ARTIFACT = {"brief-compiler": "campaign_brief", "briefing-agent": "campaign_brief", "campaign-planner": "campaign_plan", "flow-planner": "flow"}
 
 _DERIVATION_SOURCE = {"derive": "Brand data", "confirm": "Confirmed", "ask": "You"}
 

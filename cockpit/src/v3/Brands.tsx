@@ -48,7 +48,7 @@ export function Brands({ brands, activeBrand }: { brands: BrandSummary[]; active
                       <td className="v3-brands-next">
                         <a href={`#/v3/agent/campaign-planner/${scope}`}>Plan</a>
                         <a href={`#/v3/agent/flow-planner/${scope}`}>Flow</a>
-                        <a href={`#/v3/agent/briefing-agent/${scope}`}>Brief</a>
+                        <a href={`#/v3/agent/brief-compiler/${scope}`}>Brief</a>
                       </td>
                     </tr>
                   );

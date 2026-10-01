@@ -9,24 +9,6 @@
     "ask": "Only you know this; required"
   },
   "agents": {
-    "briefing-agent": {
-      "consumes": [
-        "S0",
-        "S1",
-        "S2",
-        "S3",
-        "S4",
-        "S5",
-        "S6",
-        "S7",
-        "S8",
-        "S9",
-        "S10"
-      ],
-      "owns": [
-        "S11"
-      ]
-    },
     "campaign-planner": {
       "owns": [
         "S0",
@@ -58,6 +40,42 @@
         "S5",
         "S6",
         "S9"
+      ]
+    },
+    "brief-compiler": {
+      "consumes": [
+        "S0",
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5",
+        "S6",
+        "S7",
+        "S8",
+        "S9",
+        "S10"
+      ],
+      "owns": [
+        "S11"
+      ]
+    },
+    "briefing-agent": {
+      "consumes": [
+        "S0",
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5",
+        "S6",
+        "S7",
+        "S8",
+        "S9",
+        "S10"
+      ],
+      "owns": [
+        "S11"
       ]
     }
   },

@@ -953,7 +953,7 @@ def _spine_values(b: dict) -> dict:
 
 
 def _sync_artifact(session_id: str) -> None:
-    """Publish the briefing as this campaign's "campaign-planner" artifact (a new version per
+    """Publish the briefing as this campaign's "briefing-agent" artifact (a new version per
     briefing version): it lists under My work and seeds the downstream agents' workspaces."""
     try:
         sess = _load(session_id)
@@ -968,7 +968,7 @@ def _sync_artifact(session_id: str) -> None:
             campaign = next((c for c in (plan or {}).get("campaigns", []) if c["id"] == sess["campaign_id"]), None)
         except Exception:  # noqa: BLE001 -- an unknown brand still gets an artifact
             pass
-        form = agent_forms.build_cards("campaign-planner", sess["brand"], plan, campaign)
+        form = agent_forms.build_cards("briefing-agent", sess["brand"], plan, campaign)
         inputs = {}
         for st in form.get("stages", []):
             for p in st["data_points"]:
@@ -982,7 +982,7 @@ def _sync_artifact(session_id: str) -> None:
         version = sess["state"].get("briefing_version")
         extras = [{"label": "Campaign Briefing Document",
                    "value": f"{b.get('campaignName') or 'Campaign'} — briefing v{version}, built in the Campaign Planner."}]
-        art = v3_artifacts.generate("campaign-planner", sess["brand"], sess["plan_id"], sess["campaign_id"],
+        art = v3_artifacts.generate("briefing-agent", sess["brand"], sess["plan_id"], sess["campaign_id"],
                                     sess["title"] or "Campaign plan", inputs, extras)
         if art and art.get("id") != sess["artifact_id"]:
             store.set_fields(session_id, artifact_id=art["id"])

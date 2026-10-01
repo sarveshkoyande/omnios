@@ -2167,7 +2167,7 @@ def _safe_return_to(value: str | None) -> str:
     """Only same-site paths (never an absolute or protocol-relative URL)."""
     v = (value or "").strip()
     if not v.startswith("/") or v.startswith("//") or "\\" in v:
-        return "/#/v3/agent/campaign-planner"
+        return "/#/v3/agent/briefing-agent"
     return v
 
 

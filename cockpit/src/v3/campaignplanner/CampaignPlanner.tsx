@@ -13,13 +13,13 @@ import { ReasoningDrawer } from "./Pipeline";
 import { useCampaignPlanner } from "./useCampaignPlanner";
 import "./campaignPlanner.css";
 
-/** The Campaign Planner (Cockpit v3 "campaign-planner"): Camille's create-campaign flow in the
+/** The Briefing Agent (Cockpit v3 "briefing-agent"; was "campaign-planner" in MR !1): Camille's create-campaign flow in the
  *  Cockpit's workspace layout -- the conversation with the agents on the left (intake,
  *  clarifying questions, assumption review, the blueprint agents at work), the Campaign
  *  Briefing Document and the Journey Blueprint on the right. Scoped to a brand, engagement
  *  plan and campaign like every workspace; the backend is strategy/campaign_creator. */
 
-const HANDOFF = [{ id: "flow-planner", label: "Build the flow" }, { id: "briefing-agent", label: "Compile the brief" }];
+const HANDOFF = [{ id: "flow-planner", label: "Build the flow" }, { id: "brief-compiler", label: "Compile the brief" }];
 const STAGES = ["Intake", "Clarification", "Campaign brief", "Blueprint", "Deployment", "Salesforce"];
 const ACCEPT = ".pdf,.docx,.txt,.md";
 type Handoff = { brand: string; planId: number | null; campaignId: number | null };
@@ -93,7 +93,7 @@ export function CampaignPlanner({ artifactId, handoff, brands, activeBrand, isFa
   isFavorite: (type: Favorite["type"], id: string) => boolean;
   toggleFavorite: (fav: Favorite) => void;
 }) {
-  const agent = REGISTRY.find((a) => a.id === "campaign-planner");
+  const agent = REGISTRY.find((a) => a.id === "briefing-agent");
   const planner = useCampaignPlanner();
   const { session, running, sf } = planner;
   const st = session?.state ?? null;
@@ -191,7 +191,7 @@ export function CampaignPlanner({ artifactId, handoff, brands, activeBrand, isFa
   const stepIdx = st ? stageIndex(st, running?.kind ?? null) : 0;
   const fav = agent ? isFavorite("app", agent.id) : false;
   const handoffHref = (to: string) => `#/v3/agent/${to}/for/${encodeURIComponent(brand ?? "")}/${planId ?? 0}/${campaignId ?? 0}`;
-  const returnTo = `/#/v3/agent/campaign-planner/for/${encodeURIComponent(brand ?? "")}/${planId ?? 0}/${campaignId ?? 0}`;
+  const returnTo = `/#/v3/agent/briefing-agent/for/${encodeURIComponent(brand ?? "")}/${planId ?? 0}/${campaignId ?? 0}`;
   const liveIds = planner.liveIds;
 
   const saveTitle = () => {

@@ -42,7 +42,7 @@ function timeAgo(iso: string): string {
 const QUICK: { id: string; title: string; sub: string }[] = [
   { id: "campaign-planner", title: "Plan a campaign", sub: "Objective, audience, messages, channels, timing" },
   { id: "flow-planner", title: "Build a flow", sub: "Turn a campaign plan into a flow diagram" },
-  { id: "briefing-agent", title: "Compile a brief", sub: "An agency-ready brief from a campaign plan" },
+  { id: "brief-compiler", title: "Compile a brief", sub: "An agency-ready brief from a campaign plan" },
 ];
 
 /** The slash-command name an agent answers to, e.g. "/flow-planner". */

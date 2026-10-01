@@ -30,7 +30,8 @@ const NEW_ITEMS: { label: string; href?: string; note?: string }[] = [
   { label: "Plan a campaign", href: "#/v3/agent/campaign-planner" },
   { label: "Create a segment", href: "#/v3/agent/segmentation-planner" },
   { label: "Build a flow", href: "#/v3/agent/flow-planner" },
-  { label: "Compile a brief", href: "#/v3/agent/briefing-agent" },
+  { label: "Compile a brief", href: "#/v3/agent/brief-compiler" },
+  { label: "Brief to Salesforce journey", href: "#/v3/agent/briefing-agent" },
 ];
 
 export function Rail({ current, brands, activeBrand, recentBrands, onSelectBrand, favorites, isFavorite, toggleFavorite, pinned, setPinned }: {

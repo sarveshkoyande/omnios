@@ -9,11 +9,11 @@ import { RefineDrawer } from "./RefineDrawer";
 import { FlowEditorChat } from "../components/flowplanner/FlowEditorChat";
 
 /** What each agent's artifact is called, and where it can be handed off to (C14, D4). */
-const ARTIFACT_NOUN: Record<string, string> = { "briefing-agent": "Brief", "campaign-planner": "Campaign plan", "flow-planner": "Flow" };
+const ARTIFACT_NOUN: Record<string, string> = { "brief-compiler": "Brief", "campaign-planner": "Campaign plan", "flow-planner": "Flow" };
 const HANDOFF: Record<string, { id: string; label: string }[]> = {
-  "campaign-planner": [{ id: "flow-planner", label: "Build the flow" }, { id: "briefing-agent", label: "Compile the brief" }],
-  "flow-planner": [{ id: "campaign-planner", label: "Open the campaign plan" }, { id: "briefing-agent", label: "Compile the brief" }],
-  "briefing-agent": [{ id: "campaign-planner", label: "Open the campaign plan" }, { id: "flow-planner", label: "Build the flow" }],
+  "campaign-planner": [{ id: "flow-planner", label: "Build the flow" }, { id: "brief-compiler", label: "Compile the brief" }],
+  "flow-planner": [{ id: "campaign-planner", label: "Open the campaign plan" }, { id: "brief-compiler", label: "Compile the brief" }],
+  "brief-compiler": [{ id: "campaign-planner", label: "Open the campaign plan" }, { id: "flow-planner", label: "Build the flow" }],
 };
 export type Handoff = { brand: string; planId: number | null; campaignId: number | null };
 import { REGISTRY } from "../agents";

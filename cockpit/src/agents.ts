@@ -68,8 +68,18 @@ export const AGENTS: Record<Phase, LibraryAgent[]> = {
     },
     {
       id: "campaign-planner", name: "Campaign Planner", icon: "target", status: "available",
+      summary: "Decides a campaign's objective, audience, messages, channels and timing, stage by stage.",
+      about: "Walks the campaign decision spine (campaign frame through risks): pre-fills what the brand kit and campaign already say, recommends what it can, and asks only what only you know. Its plan feeds the Flow Planner and the Brief Compiler.",
+      worksFrom: [
+        { label: "Brand kit", detail: "Lifecycle, pillars, core claim, objective, competitors and targets." },
+        { label: "Campaign decision spine", detail: "config/frameworks/campaign_spine.json (S0-S10)." },
+      ],
+      builtOn: "strategy/agent_forms.py, strategy/v3_artifacts.py",
+    },
+    {
+      id: "briefing-agent", name: "Briefing Agent", icon: "document", status: "available",
       summary: "Turns your campaign brief into an approved briefing document and a deployable Salesforce journey.",
-      about: "Reads your brief, typed or uploaded, asks only about what's genuinely missing, reviews the remaining assumptions with you, and writes the Campaign Briefing Document. Once you approve it, seven agents (Document Analyst, Salesforce Architect, Flow QA Tester, Visual Designer, Tester Agent, Flow Validator and Technical Writer) build the Salesforce Flow specification and the journey diagram, ready to deploy to your org. Its plan feeds the Flow Planner and the Briefing Agent.",
+      about: "Reads your brief, typed or uploaded, asks only about what's genuinely missing, reviews the remaining assumptions with you, and writes the Campaign Briefing Document. Once you approve it, seven agents (Document Analyst, Salesforce Architect, Flow QA Tester, Visual Designer, Tester Agent, Flow Validator and Technical Writer) build the Salesforce Flow specification and the journey diagram, ready to deploy to your org. Its briefing feeds the Flow Planner and the Brief Compiler.",
       worksFrom: [
         { label: "Your brief", detail: "Typed requirements or an uploaded PDF, DOCX, TXT or MD brief, plus your answers to the agent's questions." },
         { label: "Brand kit", detail: "The brand's indication, claims, safety reference and guardrails, when the brief is about this brand." },
@@ -132,7 +142,7 @@ export const AGENTS: Record<Phase, LibraryAgent[]> = {
       builtOn: "strategy/campaign_ops.py, strategy/brand_journey.py",
     },
     {
-      id: "briefing-agent", name: "Briefing Agent", icon: "document", status: "available",
+      id: "brief-compiler", name: "Brief Compiler", icon: "document", status: "available",
       summary: "Turns the plan's decisions into a campaign brief an agency can execute.",
       about: "Writes the Campaign Strategy and Campaign Brief from the plan's decisions: purpose, audience rules, messaging, deliverables, measurement and risks. Every section names the decision it came from.",
       worksFrom: [
@@ -204,8 +214,9 @@ const AGENT_ROUTES: Record<string, string> = {
   "segmentation-planner": "#/v3/agent/segmentation-planner",
   "flow-planner": "#/v3/agent/flow-planner",
   "briefing-agent": "#/v3/agent/briefing-agent",
+  "brief-compiler": "#/v3/agent/brief-compiler",
 };
-const NEW_AGENTS = new Set(["campaign-planner", "segmentation-planner", "flow-planner", "briefing-agent"]);
+const NEW_AGENTS = new Set(["campaign-planner", "segmentation-planner", "flow-planner", "briefing-agent", "brief-compiler"]);
 
 export const REGISTRY: RegistryAgent[] = (() => {
   const byId = new Map<string, RegistryAgent>();
