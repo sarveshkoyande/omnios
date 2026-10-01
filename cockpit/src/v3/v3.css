@@ -584,3 +584,46 @@ a.v3-ask-agent { text-decoration: none; }
 .v3-brands-table th { text-align: left; font-weight: 600; font-size: 11px; color: var(--neutral-500); padding: 6px 8px; border-bottom: 1px solid var(--neutral-200); }
 .v3-brands-table td { padding: 7px 8px; border-bottom: 1px solid var(--neutral-100); }
 .v3-brands-next { display: flex; gap: 10px; }
+
+/* Category cards are filters: a check circle shows state, the chosen one is tinted, others dim. */
+.v3-cat { position: relative; transition: opacity .15s, background .15s, box-shadow .15s; }
+.v3-cat-check { position: absolute; top: 12px; right: 12px; width: 18px; height: 18px; border-radius: 50%;
+  display: grid; place-items: center; box-shadow: inset 0 0 0 1.5px var(--neutral-300); color: #fff; }
+.v3-cat.active { background: var(--primary-light-background); border-top-color: var(--primary); }
+.v3-cat.active .v3-cat-check { background: var(--primary); box-shadow: none; }
+.v3-cats.filtering .v3-cat:not(.active) { opacity: .6; }
+.v3-cats.filtering .v3-cat:not(.active):hover { opacity: 1; }
+
+/* Category toggle: the classic Agent Library pill switcher, in v3's tighter radii. */
+.v3-seg { display: inline-flex; gap: 2px; padding: 3px; border-radius: 10px; background: var(--card-bg);
+  backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); box-shadow: var(--neu-flat-sm); max-width: 100%; overflow-x: auto; }
+.v3-seg-tab { display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap;
+  border: none; background: transparent; color: var(--muted); padding: 7px 14px; border-radius: 8px; cursor: pointer; transition: background .18s, color .18s; }
+.v3-seg-tab:hover { color: var(--fg); }
+.v3-seg-tab.active { background: var(--primary); color: var(--base-white); }
+.v3-seg-count { font-size: 11px; font-weight: 600; padding: 1px 6px; border-radius: 6px; background: var(--neutral-100); color: var(--neutral-600); }
+.v3-seg-tab.active .v3-seg-count { background: rgba(255,255,255,.22); color: var(--base-white); }
+.v3-seg-tagline { margin: 8px 0 0; font-size: 12.5px; color: var(--muted); }
+
+.v3-seg { display: flex; width: fit-content; margin: 0 auto; }
+.v3-seg-tagline { text-align: center; }
+
+/* ---- Brand Kits page ---- */
+.v3-kit-fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px 18px; margin: 0; }
+.v3-kit-fields dt { font-size: 11px; font-weight: 600; color: var(--neutral-500); text-transform: uppercase; letter-spacing: .03em; }
+.v3-kit-fields dd { margin: 2px 0 0; font-size: 13px; line-height: 1.45; }
+.v3-kit-needs { color: var(--warning-foreground, #b45309); font-style: italic; font-size: 12.5px; }
+.v3-kit-src { color: var(--neutral-500); font-size: 11.5px; }
+.v3-kit-h3 { font-size: 12.5px; margin: 14px 0 6px; color: var(--neutral-700); }
+.v3-kit-list { margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.6; }
+.v3-kit-tablewrap { overflow-x: auto; }
+.v3-kit-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+.v3-kit-card { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 8px; background: var(--primary-light-background); }
+.v3-kit-card em { font-style: normal; font-size: 11px; font-weight: 700; color: var(--primary); letter-spacing: .05em; }
+.v3-kit-card .v3-kit-fields { grid-template-columns: 1fr; }
+.v3-kit-forecast { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; align-items: flex-end; }
+.v3-kit-forecast > div { display: flex; flex-direction: column; padding: 8px 12px; border-radius: 8px; background: var(--neutral-50, #f8fafc); box-shadow: 0 0 0 1px var(--neutral-200); }
+.v3-kit-forecast span { font-size: 11px; color: var(--neutral-500); }
+.v3-kit-forecast b { font-size: 16px; }
+.v3-kit-forecast small { font-size: 11px; color: var(--neutral-500); }
+.v3-kit-local { font-size: 12px; padding: 6px 10px; border-radius: 6px; background: var(--primary-light-background); display: inline-block; }

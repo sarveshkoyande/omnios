@@ -1316,6 +1316,47 @@ def api_brand_kit(brand: str, territory: str | None = None):
     return {"brand": brand, "kit": brand_kit.resolve_territory(kit, territory)}
 
 
+@app.post("/api/brand-kits/{brand}/public-sources/refresh")
+def api_brand_kit_refresh_public(brand: str):
+    """Re-fetch the product profile from FDA / Drugs@FDA / NIH MeSH / PubChem. Only the
+    `product_profile` block is replaced; plan-sourced fields are never overwritten (the brand
+    plan is the source of truth). Per-source failures come back in `product_profile.errors`."""
+    from strategy import public_sources
+    kit = brand_kit.kit_for(brand)
+    if not kit:
+        raise HTTPException(404, f"no brand kit for '{brand}'")
+    q = kit.get("public_source_query") or {}
+    if not q.get("generic"):
+        raise HTTPException(400, "This kit has no public_source_query.generic (the INN) to look up.")
+    profile = public_sources.fetch_product_profile(q["generic"], q.get("condition") or kit.get("indication", ""))
+    return {"brand": brand, "kit": brand_kit.apply_diff(brand, {"product_profile": profile})}
+
+
+@app.get("/api/brand-kits/{brand}/compliance")
+def api_brand_compliance(brand: str):
+    """The company-level compliance profile this brand inherits (SOPs, approval workflow,
+    suppressions, channel rules) plus the public regulatory baseline. `profile` is null when
+    the brand has no profile assigned yet -- shown as a gap, never filled with a guess."""
+    from strategy import compliance
+    return {"brand": brand, "profile": compliance.for_brand(brand)}
+
+
+@app.post("/api/brand-kits/{brand}/audience-sources/refresh")
+def api_brand_kit_refresh_audience(brand: str):
+    """Re-fetch audience intelligence for the Personas page: PubMed key opinion leaders,
+    ClinicalTrials.gov trial footprint, MedlinePlus patient resources. Replaces only
+    `audience_intel`; persona definitions from the brand plan are never touched."""
+    from strategy import public_sources
+    kit = brand_kit.kit_for(brand)
+    if not kit:
+        raise HTTPException(404, f"no brand kit for '{brand}'")
+    q = kit.get("audience_query") or {}
+    if not q.get("condition"):
+        raise HTTPException(400, "This kit has no audience_query.condition to look up.")
+    intel = public_sources.fetch_audience_intel(q["condition"], q.get("intervention", ""), q.get("pubmed_term") or q["condition"])
+    return {"brand": brand, "kit": brand_kit.apply_diff(brand, {"audience_intel": intel})}
+
+
 @app.get("/api/brand-kits/{brand}/sample-pdf")
 def api_brand_kit_sample_pdf(brand: str):
     """A generated "Brand Plan" PDF for this brand's own committed kit -- the sample

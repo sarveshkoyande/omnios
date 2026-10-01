@@ -1,0 +1,115 @@
+{
+  "note": "Company-level compliance: campaign SOPs, approval workflow, suppressions and channel rules. Brands inherit their company's profile; brand-level claims, safety text and do/don'ts stay in the brand kit. Every item names its source: an SOP document, 'Recommended practice' (industry norm, to confirm with the client) or a public regulation.",
+  "brands": {
+    "Cablivi": {
+      "profile": "novartis",
+      "status": "template",
+      "status_note": "Sanofi SOPs haven't been provided. Cablivi uses the Novartis Flow Planner SOPs as a template; replace them once Sanofi's are uploaded. The brand plan itself only says to follow the local approval process (slide 2)."
+    }
+  },
+  "profiles": {
+    "novartis": {
+      "company": "Novartis",
+      "documents": [
+        {"id": "SOP-01", "title": "Flow Planner — DTC Campaign, Segmentation Page", "version": "v0.5 draft", "date": "2026-08-19", "file": "SOP-01_FlowPlanner_DTC_Segmentation_v0.5.docx"},
+        {"id": "SOP-02", "title": "Flow Planner — HCP Target List Campaign, Segmentation Page", "version": "v0.1 draft", "date": "2026-08-19", "file": "SOP-02_FlowPlanner_HCP_Segmentation_v0.1.docx"},
+        {"id": "FLOW-RULES", "title": "Flow SOP rules (block text, suppressions, task owners)", "version": "seed", "date": "", "file": "assets/seed/flow_sop_rules.json"}
+      ],
+      "approval_workflow": {
+        "source": "Recommended practice (no MLR SOP provided). The brand plan's own assets carry approval codes such as MAT-IT-2500107 and MAT-GLB-2405864 (slides 28-29), consistent with this flow.",
+        "steps": [
+          {"step": "Brief", "owner": "Brand / marketing", "what": "Campaign brief with objective, audience, key messages and claims to be used", "sla": "—"},
+          {"step": "Content draft", "owner": "Agency / content team", "what": "Copy and design built only from approved claims, with references annotated", "sla": "—"},
+          {"step": "Medical review", "owner": "Medical affairs", "what": "Scientific accuracy; every claim matches its reference; on-label only", "sla": "5 working days"},
+          {"step": "Legal review", "owner": "Legal", "what": "Comparative claims, trademarks, privacy and consent wording", "sla": "3 working days"},
+          {"step": "Regulatory review", "owner": "Regulatory affairs", "what": "Fair balance, safety information (ISI) placement, label consistency", "sla": "3 working days"},
+          {"step": "Approval & job code", "owner": "MLR committee", "what": "Final sign-off; a unique approval code (e.g. MAT-XX-#######) printed on the asset", "sla": "—"},
+          {"step": "Local approval", "owner": "Country affiliate", "what": "Local review before use in each market (required by the brand plan, slide 2)", "sla": "Per market"},
+          {"step": "Expiry & re-review", "owner": "Brand / MLR", "what": "Assets expire (typically 12-24 months) or on any label change; withdraw or re-approve", "sla": "—"}
+        ]
+      },
+      "campaign_sops": [
+        {"id": "SOP-01", "audience": "DTC", "name": "DTC enrollment campaign — segmentation page", "applies_when": "The campaign is triggered by an enrollment form sign-up (HQE 1.4.1 = Yes)",
+         "inputs": ["HQE form — Generic section (campaign name, code, goal)", "HQE form — OMS Enrollment section (sources, codes, Q&A pairs)", "Survey metadata sheet"],
+         "steps": [
+           {"n": 1, "title": "Confirm the inputs are complete", "rule": "Start only when both inputs are gathered at pre-planning."},
+           {"n": 2, "title": "Extract the campaign goal's rules", "rule": "Pull out the enrollment source, segment names and business rules before drawing anything."},
+           {"n": 3, "title": "Build the kit code", "rule": "Source and Fulfilment Campaign Code both carry the Generic campaign code; the kit legend below is constant."},
+           {"n": 4, "title": "List every enrollment source", "rule": "One entry per source with its campaign source code, including sources the flow doesn't use."},
+           {"n": 5, "title": "Draw the entry", "rule": "Campaign code, the selected enrollment source and dispositions 4 & 26 only."},
+           {"n": 6, "title": "Deduplicate", "rule": "Dedupe and pick the disposition by latest response timestamp to set cadence timing."},
+           {"n": 7, "title": "Apply eligibility checks in order", "rule": "Hidden consent Q&A pairs first, then MDS suppressions (valid email), then campaign-specific Q&A — wording verbatim."},
+           {"n": 8, "title": "Handle transitions and source-specific paths", "rule": "Unbranded→branded transitions merge into the branded segment; source-specific Q&A splits into parallel journeys."},
+           {"n": 9, "title": "Place the segment", "rule": "Segment name comes from the campaign goal; it's the last node on the page."}
+         ],
+         "open_items": ["Segment name should be an explicit field, not free text (B1)", "Draw all hidden consent pairs or a subset? (B2)", "Where parallel journeys reconverge (B3)", "Entry source for non-enrollment campaigns (B4)"],
+         "source": "SOP-01 v0.5"},
+        {"id": "SOP-02", "audience": "HCP", "name": "HCP target-list campaign — segmentation page", "applies_when": "The audience is an MDS target list, not enrollment sign-ups (HQE 1.4.1 = No)",
+         "inputs": ["HQE form — section 1.7 HCP Campaigns", "Campaign goal free text"],
+         "steps": [
+           {"n": 1, "title": "Title block", "rule": "Campaign name and campaign source code."},
+           {"n": 2, "title": "Kit legend and task owners", "rule": "Six-state kit legend; a task-responsibility key whose colours mark the nodes each team owns."},
+           {"n": 3, "title": "Reference panels", "rule": "List the MDS suppressions and any extra business rules (HQE 1.7.13)."},
+           {"n": 4, "title": "Entry and suppression stack", "rule": "Draw the full suppression stack in the fixed order — even suppressions that exclude nobody. It is a compliance record."},
+           {"n": 5, "title": "Segments", "rule": "Specialty-based segments from HQE 1.7.5, names taken as given."},
+           {"n": 6, "title": "Version history", "rule": "Version, date, change and author for every substantive change."}
+         ],
+         "open_items": ["Is the task-owner team list fixed per campaign? (A1)", "Confirm the canonical suppression order and that none may be omitted (A3)", "Restricted-state list fixed or per campaign? (A5)", "Mixed HCP/DTC campaigns — which SOP governs? (A7)"],
+         "source": "SOP-02 v0.1"}
+      ],
+      "suppressions": {
+        "DTC": {"source": "SOP-01 v0.5, step 7 and Annex A", "rules": [
+          {"check": "Age 18+", "code": "Q12161 → 18226 Yes", "why": "Adults only"},
+          {"check": "Campaign opt-in", "code": "Q5000 → 5001 Yes", "why": "Consent to this campaign"},
+          {"check": "Company-wide opt-in", "code": "Q4110 → 4111 Yes", "why": "Consent to company communications (Novartis in the template)"},
+          {"check": "Therapy-class opt-in", "code": "Q4100 → 4101 Yes", "why": "Consent to therapy-area communications"},
+          {"check": "Notice language accepted", "code": "Q4180 → 4181 Yes", "why": "Privacy notice"},
+          {"check": "Consent to use email", "code": "Q11000 → 14185 Yes", "why": "Email channel consent"},
+          {"check": "Retargeting opt-in", "code": "Q50610 → 62162 Yes", "why": "Needed before any paid-media retargeting"},
+          {"check": "Valid email (MDS)", "code": "MDS check", "why": "Deliverability"}
+        ]},
+        "HCP": {"source": "SOP-02 v0.1, section 3.4 (reference order)", "rules": [
+          {"check": "Best contact", "code": "IMDNA Email Master", "why": "Valid email; no-DM-address and invalid-DM exclusions"},
+          {"check": "Global suppression by channel", "code": "EM / DM / PH", "why": "Company-level do-not-contact (Novartis in the template)"},
+          {"check": "Brand suppression by channel", "code": "Brand list", "why": "Brand-level opt-outs"},
+          {"check": "Kaiser HCP scrub", "code": "IMDNA Kaiser list, per campaign code", "why": "Institutional no-contact agreement"},
+          {"check": "University of Rochester suppression", "code": "IMDNA list, per campaign code", "why": "Institutional no-contact agreement"},
+          {"check": "Opted out", "code": "IMDNA OneTrust", "why": "Individual opt-out"},
+          {"check": "State suppression", "code": "IMDNA Master Profile", "why": "Restricted US states (e.g. marketing-restriction laws)"},
+          {"check": "Specialty include / exclude", "code": "HQE 1.7.11–1.7.12", "why": "Only where supplied"},
+          {"check": "On the target list", "code": "MDS target list", "why": "Final qualification"}
+        ]}
+      },
+      "task_owners": {"DTC": ["MDS", "SFMC"], "HCP": ["GlassBox", "Advanced Analytics", "SFET", "Adobe"], "source": "SOP-01 / SOP-02"},
+      "channel_rules": [
+        {"channel": "Email (promotional)", "rule": "Send only with email consent; include unsubscribe; honour opt-outs within 10 business days; ISI or a link to it in every promotional email", "source": "CAN-SPAM Act; FDA OPDP fair-balance expectations"},
+        {"channel": "Email (rep-triggered)", "rule": "Approved templates only; reps may not edit claims", "source": "Recommended practice"},
+        {"channel": "Paid social / display", "rule": "Unbranded ads carry no product name or claim; branded ads need ISI or a one-click link; retargeting only with retargeting opt-in", "source": "FDA guidance on character-limited media; SOP-01 Q50610"},
+        {"channel": "Website", "rule": "HCP-only content behind an HCP gate; patient site in plain language with full ISI", "source": "Recommended practice"},
+        {"channel": "Webinars / events", "rule": "Speaker slides MLR-approved; off-label questions routed to Medical Information", "source": "PhRMA Code; recommended practice"},
+        {"channel": "Frequency", "rule": "No more than 1 promotional email per HCP per week per brand unless the campaign type allows (cadence set per campaign type)", "source": "Recommended practice; flow rules campaign_type_cadence"}
+      ],
+      "prelaunch_checklist": [
+        {"item": "Every asset has an MLR approval code and an expiry date", "source": "Recommended practice"},
+        {"item": "Every claim traces to an approved claim and reference", "source": "Recommended practice"},
+        {"item": "ISI / fair balance present or linked on every promotional asset", "source": "21 CFR 202.1"},
+        {"item": "Local approval obtained for each market", "source": "Brand plan slide 2"},
+        {"item": "Segmentation page built per SOP-01 (DTC) or SOP-02 (HCP)", "source": "SOP-01 / SOP-02"},
+        {"item": "Full suppression stack drawn in the reference order", "source": "SOP-02 rule 2"},
+        {"item": "Consent checks applied before any send or retargeting", "source": "SOP-01 step 7"},
+        {"item": "Version history row added for this change", "source": "SOP-02 section 3.6"},
+        {"item": "First-use submission to FDA (Form FDA 2253) planned for US promotional materials", "source": "21 CFR 314.81 / 601.12"}
+      ]
+    }
+  },
+  "regulatory_baseline": [
+    {"name": "FDA prescription drug advertising (fair balance)", "region": "US", "what": "Promotion must be truthful, balanced between benefit and risk, and consistent with the label", "ref": "21 CFR 202.1", "url": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-C/part-202"},
+    {"name": "Form FDA 2253 — first-use submission", "region": "US", "what": "Promotional materials submitted to FDA (OPDP) at the time of first use", "ref": "21 CFR 314.81(b)(3)(i); 601.12(f)(4)", "url": "https://www.fda.gov/drugs/office-prescription-drug-promotion"},
+    {"name": "PhRMA Code on Interactions with HCPs", "region": "US", "what": "Rules on HCP interactions, speaker programmes, meals and educational items", "ref": "PhRMA Code (2022)", "url": "https://phrma.org/codes"},
+    {"name": "EFPIA Code of Practice", "region": "EU", "what": "Promotion to HCPs, interactions, disclosure of transfers of value", "ref": "EFPIA Code", "url": "https://www.efpia.eu/relationships-code/"},
+    {"name": "No DTC advertising of prescription drugs", "region": "EU", "what": "Prescription medicines can't be advertised to the public; patient content must be disease-awareness only", "ref": "Directive 2001/83/EC, Art. 88", "url": "https://eur-lex.europa.eu/eli/dir/2001/83/oj"},
+    {"name": "CAN-SPAM", "region": "US", "what": "Commercial email: accurate sender, unsubscribe, opt-outs honoured within 10 business days", "ref": "15 U.S.C. 7701", "url": "https://www.ftc.gov/business-guidance/resources/can-spam-act-compliance-guide-business"},
+    {"name": "GDPR & ePrivacy consent", "region": "EU", "what": "Consent or another lawful basis for processing; prior consent for marketing email", "ref": "GDPR Art. 6-7; ePrivacy Directive Art. 13", "url": "https://gdpr-info.eu/"},
+    {"name": "HIPAA (patient data)", "region": "US", "what": "Protected health information from covered entities needs authorisation for marketing use", "ref": "45 CFR 164.508(a)(3)", "url": "https://www.hhs.gov/hipaa/"}
+  ]
+}

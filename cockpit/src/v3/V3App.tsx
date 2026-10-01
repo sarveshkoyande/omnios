@@ -3,6 +3,7 @@ import { listBrands } from "../api";
 import type { BrandSummary } from "../types";
 import { AppDetail } from "./AppDetail";
 import { Brands } from "./Brands";
+import { BrandKitPage, GuardrailsPage, MarketIntelPage, PersonasPage } from "./BrandKitPage";
 import { Chat } from "./Chat";
 import { Home } from "./Home";
 import { MyWork } from "./MyWork";
@@ -52,6 +53,14 @@ export function V3App({ path }: { path: string[] }) {
             isFavorite={favs.isFavorite} toggleFavorite={favs.toggleFavorite} />
         ) : current === "chat" ? (
           <Chat activeBrand={scope.activeBrand} />
+        ) : current === "iq/kits" ? (
+          <BrandKitPage activeBrand={scope.activeBrand} brands={brands} />
+        ) : current === "iq/personas" ? (
+          <PersonasPage activeBrand={scope.activeBrand} brands={brands} />
+        ) : current === "iq/guardrails" ? (
+          <GuardrailsPage activeBrand={scope.activeBrand} brands={brands} />
+        ) : current === "iq/intel" ? (
+          <MarketIntelPage activeBrand={scope.activeBrand} brands={brands} />
         ) : current === "brands" ? (
           <Brands brands={brands} activeBrand={scope.activeBrand} />
         ) : current === "work" ? (

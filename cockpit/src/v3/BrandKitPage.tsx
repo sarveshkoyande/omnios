@@ -1,0 +1,695 @@
+import { useEffect, useState } from "react";
+import { getBrandKit, getCompliance, refreshAudienceSources, refreshPublicSources } from "../api";
+import { Icon } from "../components/Icon";
+import "./iq.css";
+
+/** The four Brand IQ pages (Brand Kits, Personas, Compliance Guardrails, Market Intelligence).
+ *  All read the same kit; each lays out its own slice of it. Items carry their source (a
+ *  brand-plan slide, the FDA label, NIH MeSH...) and anything missing says "Needs input".
+ *  Template vs plan (docs/redesign/brand-kit-template.md): the kit's sections are the same for
+ *  every brand; plan-specific content (imperatives, growth frame, KPIs) lives under `plans[]`
+ *  and the pages read the active plan's copy of it. */
+
+type Any = Record<string, unknown>;
+const txt = (v: unknown) => (v === null || v === undefined ? "" : String(v));
+const arr = (v: unknown) => (Array.isArray(v) ? (v as Any[]) : []);
+const needs = (v: unknown) => !v || (Array.isArray(v) && !v.length) || (typeof v === "string" && v.startsWith("Needs input"));
+const SI_TONE: Record<string, string> = { FIND: "find", TREAT: "treat", MAINTAIN: "maintain" };
+
+const planKey = (brand: string) => `omni-v3-plan-${brand}`;
+
+function useKit(activeBrand: string | null, brands: { brand: string }[]) {
+  const brand = activeBrand ?? brands[0]?.brand ?? null;
+  const [raw, setRaw] = useState<Any | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [planId, setPlanIdState] = useState<string | null>(null);
+  useEffect(() => {
+    if (!brand) return;
+    setRaw(null); setError(null);
+    try { setPlanIdState(localStorage.getItem(planKey(brand))); } catch { setPlanIdState(null); }
+    getBrandKit(brand).then((r) => setRaw(r.kit as unknown as Any)).catch((e) => setError(String(e)));
+  }, [brand]);
+  const setPlanId = (id: string) => {
+    setPlanIdState(id);
+    try { if (brand) localStorage.setItem(planKey(brand), id); } catch { /* storage unavailable */ }
+  };
+  const plans = arr(raw?.plans);
+  const plan = plans.find((x) => x.id === planId) ?? plans.find((x) => x.id === raw?.active_plan) ?? plans[0] ?? null;
+  // Pages read plan content as if it were on the kit; kits without plans keep their flat fields.
+  const kit = raw ? ({ ...raw, ...(plan ?? {}), plan_meta: plan } as Any) : null;
+  return { brand, kit, error, plans, plan, setPlanId, setRaw };
+}
+
+type PageProps = { activeBrand: string | null; brands: { brand: string }[] };
+
+function PlanSwitcher({ p }: { p: ReturnType<typeof useKit> }) {
+  if (!p.plans.length) return null;
+  return (
+    <label className="v3-iq-plan">
+      <span>Plan</span>
+      <select value={txt(p.plan?.id)} onChange={(e) => p.setPlanId(e.target.value)}>
+        {p.plans.map((x) => <option key={txt(x.id)} value={txt(x.id)}>{txt(x.name)}</option>)}
+      </select>
+    </label>
+  );
+}
+
+const PAGE_ICON: Record<string, IconName> = { "Brand Kit": "document", Personas: "persona", "Compliance Guardrails": "shield", "Market Intelligence": "radar" };
+
+function Shell({ title, sub, p, children }: { title: string; sub: string; p: ReturnType<typeof useKit>; children: (k: Any) => React.ReactNode }) {
+  if (!p.brand) return <p className="v3-empty">No brands yet.</p>;
+  return (
+    <div className="v3-iq">
+      <header className="v3-iq-head">
+        <span className="v3-iq-head-icon"><Icon name={PAGE_ICON[title] ?? "layers"} size={20} /></span>
+        <div className="v3-iq-head-text">
+          <h1 className="v3-page-title">{title}</h1>
+          <p className="v3-page-sub">{sub} · <b>{p.brand}</b>{p.kit ? <> · {txt(p.kit.source_label)}</> : null}</p>
+        </div>
+        <PlanSwitcher p={p} />
+      </header>
+      {p.error ? <p className="v3-empty">Couldn't load {p.brand}: {p.error}</p>
+        : !p.kit ? <p className="v3-empty">Loading…</p> : children(p.kit)}
+    </div>
+  );
+}
+
+const Needs = ({ what }: { what?: string }) => <span className="v3-iq-needs">Needs input{what ? ` — ${what}` : ""}</span>;
+const Src = ({ s }: { s: unknown }) => (s ? <small className="v3-iq-src">{txt(s)}</small> : null);
+type IconName = Parameters<typeof Icon>[0]["name"];
+/** Section icons, keyed by the section's own title (our labels, not user text). */
+const BLOCK_ICON: [string, IconName][] = [
+  ["Key objectives", "target"], ["Product profile", "flask"], ["Competition", "scale"], ["Positioning", "sparkles"],
+  ["Evidence", "document"], ["Voice", "mic"], ["Unmet need", "alertTriangle"], ["Market access", "wallet"], ["Current plan", "map"], ["Healthcare", "users"], ["Patients", "heartPulse"], ["Key opinion", "star"], ["Where the treaters", "map"], ["Patient education", "document"],
+  ["Patient journey", "route"], ["Do", "check"], ["Don't", "close"], ["Words", "message"], ["References", "link"],
+  ["Approved claims", "shield"], ["Approval workflow", "branch"], ["Pre-launch", "check"], ["Campaign SOPs", "document"], ["Eligibility", "users"], ["Channel rules", "mail"], ["Label", "flask"], ["Regulatory", "scale"], ["Sales forecast", "barChart"], ["Where growth", "layers"], ["KPIs", "target"],
+  ["Competitive", "scale"], ["Clinical", "flask"], ["What has worked", "star"], ["Message pillars", "sparkles"],
+  ["Key messages", "message"], ["Tone", "mic"], ["Strategic", "target"], ["Activation", "route"],
+];
+function Block({ title, sub, children, action }: { title: string; sub?: string; children: React.ReactNode; action?: React.ReactNode }) {
+  const icon = BLOCK_ICON.find(([t]) => title.startsWith(t))?.[1] ?? "layers";
+  return (
+    <section className="v3-iq-block">
+      <h2><span className="v3-iq-h-icon"><Icon name={icon} size={15} /></span>{title}{sub && <span className="v3-iq-h-sub">{sub}</span>}{action && <div className="v3-iq-block-act">{action}</div>}</h2>
+      {children}
+    </section>
+  );
+}
+const SiTag = ({ id }: { id: unknown }) => <span className={`v3-iq-si v3-iq-si-${SI_TONE[txt(id)] ?? "other"}`}>{txt(id)}</span>;
+
+/** A label section from the FDA label: the first sentences, with a link to the full label. */
+function LabelText({ f, max = 220 }: { f: Any | undefined; max?: number }) {
+  const [open, setOpen] = useState(false);
+  if (!f || !f.value) return <Needs />;
+  const s = txt(f.value);
+  const long = s.length > max;
+  return (<>
+    <p className="v3-iq-label-text">{long && !open ? `${s.slice(0, max)}…` : s}</p>
+    {long && <button type="button" className="v3-iq-more" onClick={() => setOpen((o) => !o)}>{open ? "Show less" : "Show more"}</button>}
+    <a className="v3-iq-src" href={txt(f.url)} target="_blank" rel="noreferrer">{txt(f.source)} · fetched {txt(f.fetched_at)} ↗</a>
+  </>);
+}
+
+/** A plain table over records; `src` adds a small source line under each row's first cell. */
+function Tbl({ rows, cols, src }: { rows: Any[]; cols: [string, string][]; src?: boolean }) {
+  if (!rows.length) return <Needs />;
+  return (
+    <div className="v3-iq-tablewrap">
+      <table className="v3-iq-table">
+        <thead><tr>{cols.map(([, l]) => <th key={l}>{l}</th>)}</tr></thead>
+        <tbody>{rows.map((r, i) => (
+          <tr key={i}>{cols.map(([c], j) => (
+            <td key={c}>{txt(r[c]) || <Needs />}{src && j === 0 && r.source ? <Src s={r.source} /> : null}</td>
+          ))}</tr>
+        ))}</tbody>
+      </table>
+    </div>
+  );
+}
+
+const THREAT_TONE = (t: string) => (t.startsWith("High") ? "high" : t.startsWith("Medium") ? "med" : "low");
+
+/* ------------------------------------------------------------------ Brand Kits: the template */
+export function BrandKitPage(props: PageProps) {
+  const p = useKit(props.activeBrand, props.brands);
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshError, setRefreshError] = useState<string | null>(null);
+  const refresh = () => {
+    if (!p.brand) return;
+    setRefreshing(true); setRefreshError(null);
+    refreshPublicSources(p.brand).then((r) => p.setRaw(r.kit as unknown as Any))
+      .catch((e) => setRefreshError(String(e))).finally(() => setRefreshing(false));
+  };
+  return (
+    <Shell title="Brand Kit" sub="The same sections for every brand" p={p}>{(k) => {
+      const pp = (k.product_profile ?? {}) as Record<string, Any>;
+      const mesh = (pp.mesh_condition?.value ?? null) as Any | null;
+      const struct = (pp.structure?.value ?? null) as Any | null;
+      const approval = (pp.us_approval?.value ?? null) as Any | null;
+      const plan = k.plan_meta as Any | null;
+      const sis = arr(k.strategic_imperatives);
+      const fc = k.forecast as { sales_meur?: Record<string, number>; source?: string } | undefined;
+      const years = fc?.sales_meur ? Object.keys(fc.sales_meur) : [];
+      const maxSale = Math.max(1, ...years.map((y) => fc!.sales_meur![y]));
+      const objectives = arr(k.key_objectives);
+      return (<>
+        {/* 1. Identity header */}
+        <section className="v3-iq-profile v3-iq-id2">
+          <div className="v3-iq-profile-id">
+            <div className="v3-iq-profile-mark">{txt(p.brand).slice(0, 1)}</div>
+            <div>
+              <h2>{p.brand}</h2>
+              <p>{needs(k.generic) ? <Needs what="generic" /> : txt(k.generic)}</p>
+              <div className="v3-iq-profile-tags">
+                {!needs(k.company) && <span>{txt(k.company)}</span>}
+                {!needs(k.lifecycle_stage) && <span className="stage">{txt(k.lifecycle_stage)}</span>}
+                {!needs(k.therapy_area) && <span>{txt(k.therapy_area)}</span>}
+                {arr(k.territories).length > 0 && <span>{(k.territories as string[]).join(" · ")}</span>}
+              </div>
+            </div>
+          </div>
+          <dl className="v3-iq-idfacts">
+            <div><dt>Indication</dt><dd>{needs(k.indication) ? <Needs /> : txt(k.indication)}</dd></div>
+            <div><dt>Condition (NIH MeSH)</dt><dd>{mesh ? <>{txt(mesh.name)} <code>{txt(mesh.id)}</code><small>{arr(mesh.categories).map(String).join(" › ")}</small></> : <Needs />}</dd></div>
+            <div><dt>US approval</dt><dd>{approval?.date ? <>{txt(approval.date)} <code>{txt(approval.application)}</code></> : <Needs />}</dd></div>
+            <div><dt>Labeler (FDA)</dt><dd>{txt(pp.labeler?.value) || <Needs />}</dd></div>
+          </dl>
+        </section>
+
+        {/* Unmet need */}
+        {Boolean(k.unmet_need) && (() => {
+          const u = k.unmet_need as Any;
+          return (
+            <Block title="Unmet need" sub="Why this brand matters">
+              <p className="v3-iq-lede-lg">{txt(u.summary)}</p>
+              <div className="v3-iq-factrow">
+                {arr(u.facts).map((f) => (<div key={txt(f.label)} title={txt(f.source)}><b>{txt(f.value)}</b><span>{txt(f.label)}</span></div>))}
+              </div>
+              <Tbl rows={arr(u.gaps)} cols={[["gap", "Gap"], ["detail", "What happens today"], ["who", "Who it affects"]]} src />
+            </Block>
+          );
+        })()}
+
+        {/* 2. Key objectives */}
+        <Block title="Key objectives" sub={`${objectives.length}`}>
+          {objectives.length ? (
+            <Tbl rows={objectives.map((o, i) => ({ ...o, n: i + 1 }))} cols={[["n", "#"], ["objective", "Objective"], ["measure", "Measure (baseline → target)"], ["target_date", "By"], ["priority", "Priority"]]} src />
+          ) : <p>{needs(k.key_objective) ? <Needs /> : txt(k.key_objective)}</p>}
+        </Block>
+
+        {/* 3. Product profile (public sources) */}
+        <Block title="Product profile" sub="FDA label, Drugs@FDA, NIH MeSH, PubChem"
+          action={<button type="button" className="v3-iq-btn" onClick={refresh} disabled={refreshing}>{refreshing ? "Refreshing…" : "Refresh from public sources"}</button>}>
+          {refreshError && <p className="v3-iq-needs">Couldn't refresh: {refreshError}</p>}
+          {Object.keys((pp.errors as Any) ?? {}).length > 0 && <p className="v3-iq-needs">Some sources didn't answer: {Object.keys(pp.errors as Any).join(", ")}</p>}
+          {!k.product_profile ? <Needs what="no public-source lookup yet" /> : (
+            <div className="v3-iq-pp">
+              <div className="v3-iq-pp-mol">
+                <em>Molecule & structure</em>
+                {struct?.kind === "small_molecule" ? (<>
+                  <img src={txt(struct.image)} alt={`${txt(k.generic)} 2D structure`} />
+                  <p><b>{txt(struct.formula)}</b> · {txt(struct.weight)} g/mol</p>
+                  <small>{txt(struct.iupac)}</small>
+                </>) : (<>
+                  <div className="v3-iq-bio">Biologic</div>
+                  <LabelText f={pp.molecule_description} max={200} />
+                  <small className="v3-iq-src">{txt(struct?.note)}</small>
+                </>)}
+              </div>
+              <div className="v3-iq-pp-grid">
+                <div><em>Mechanism of action</em><LabelText f={pp.mechanism_of_action} /></div>
+                <div><em>Approved indication</em><LabelText f={pp.indication} /></div>
+                <div><em>Dosing & forms</em><LabelText f={pp.dosing} /></div>
+                <div><em>Key safety</em><p className="v3-iq-label-text"><b>{txt(pp.boxed_warning?.value).startsWith("No boxed") ? "No boxed warning." : "Boxed warning: "}</b></p><LabelText f={pp.warnings} /></div>
+              </div>
+            </div>
+          )}
+        </Block>
+
+        {/* 4. Competition: comparison grid, our brand first */}
+        <Block title="Competition" sub="Threat levels proposed by the agent — confirm or change">
+          {arr(k.competitors).length ? (() => {
+            const self = k.competition_self as Any | undefined;
+            const cols = [...(self ? [{ ...self, _self: true }] : []), ...arr(k.competitors)];
+            const rows: [string, string][] = [["type", "Type"], ["status", "Status"], ["strength", "Strength"], ["weakness", "Weakness"], ["counter", "How we win"], ["threat", "Threat"]];
+            return (
+              <div className="v3-iq-tablewrap">
+                <table className="v3-iq-grid">
+                  <thead><tr><th />{cols.map((c) => <th key={txt(c.name)} className={c._self ? "self" : ""}>{txt(c.name)}</th>)}</tr></thead>
+                  <tbody>{rows.map(([f, l]) => (
+                    <tr key={f}><th>{l}</th>{cols.map((c) => (
+                      <td key={txt(c.name)} className={c._self ? "self" : ""}>
+                        {f === "threat" ? (c._self ? "—" : <span className={`v3-iq-threat ${THREAT_TONE(txt(c.threat))}`} title={txt(c.threat_reason)}>{txt(c.threat)}{c.threat_status === "proposed" ? " · proposed" : ""}</span>)
+                          : f === "counter" && c._self ? "—" : (txt(c[f] ?? (f === "counter" ? c.differentiation : "")) || <Needs />)}
+                      </td>))}</tr>
+                  ))}</tbody>
+                </table>
+              </div>
+            );
+          })() : <Needs />}
+        </Block>
+
+        {/* Market access */}
+        {Boolean(k.market_access) && (() => {
+          const m = k.market_access as Any;
+          return (
+            <Block title="Market access" sub={m.status === "to_confirm" ? "To confirm" : undefined}>
+              <div className="v3-iq-access">
+                <div><em>Value story</em><p>{txt(m.value_story)}</p></div>
+                <div><em>Access barriers</em><ul>{arr(m.barriers).map((b) => <li key={String(b)}>{String(b)}</li>)}</ul></div>
+                <div><em>Launches</em><ul>{arr(m.launches).map((l) => <li key={txt(l.country)}><b>{txt(l.country)}</b> · {txt(l.timing)}</li>)}</ul></div>
+              </div>
+              <Src s={m.source} />
+            </Block>
+          );
+        })()}
+
+        {/* 5. Positioning & message */}
+        <Block title="Positioning & message">
+          <div className="v3-iq-posline">
+            <div><em>Positioning</em><p>{needs(k.positioning_statement) ? <Needs /> : txt(k.positioning_statement)}</p></div>
+            <div><em>Big Idea</em><p>{txt(k.tagline) || <Needs />}</p></div>
+            <div><em>Core claim</em><p>{txt(k.core_claim) || <Needs />}</p></div>
+          </div>
+          <h3 className="v3-iq-h3">Message matrix</h3>
+          <Tbl rows={arr(k.message_hierarchy)} cols={[["pillar", "Pillar"], ["claim", "Claim"], ["evidence", "Proof / reference"]]} />
+          {arr(k.messages_by_persona).length > 0 && <p className="v3-iq-note">Messages, tone and content for each persona are on the <a href="#/v3/iq/personas">Personas</a> page.</p>}
+        </Block>
+
+        {/* 6. Evidence */}
+        <Block title="Evidence & references">
+          <Tbl rows={arr(k.clinical_data)} cols={[["study", "Study"], ["stat", "Result"], ["context", "Source"]]} />
+          <h3 className="v3-iq-h3">References</h3>
+          <Tbl rows={arr(k.references).map((r) => ({ ...r, promo: r.promo_eligible ? "Promo eligible" : "Not for promo" }))} cols={[["id", "ID"], ["title", "Reference"], ["type", "Type"], ["key_data", "Key data"], ["promo", "Use"]]} />
+        </Block>
+
+        {/* 7. Voice & tone */}
+        {(() => {
+          const v = k.voice as Any | undefined;
+          return (
+            <Block title="Voice & tone" sub={v?.status === "to_confirm" ? "Drafted from the brand plan — to confirm" : undefined}>
+              <div className="v3-iq-voice-top">
+                <div><em>Personality</em><b>{txt((k.brand_personification as Any | undefined)?.archetype) || "—"}</b>
+                  <div className="v3-iq-chips">{(k.tone_pillars as string[] | undefined ?? []).map((t) => <span key={t}>{t}</span>)}</div></div>
+                <div><em>Register</em><p>{txt(v?.register) || <Needs />}</p></div>
+                <div><em>Reading level</em><p>{txt(v?.reading_level) || <Needs />}</p></div>
+              </div>
+              {v ? (<>
+                <h3 className="v3-iq-h3">Principles — say this, not that</h3>
+                <div className="v3-iq-saynot">
+                  {arr(v.principles).map((x) => (
+                    <article key={txt(x.principle)}>
+                      <b>{txt(x.principle)}</b>
+                      <p className="say"><span>Say</span>{txt(x.say)}</p>
+                      <p className="not"><span>Not</span>{txt(x.not)}</p>
+                    </article>
+                  ))}
+                </div>
+                <p className="v3-iq-note">Tone for each audience is on the <a href="#/v3/iq/personas">Personas</a> page.</p>
+                <div className="v3-iq-words" style={{ marginTop: 14 }}>
+                  <div><em>Preferred terms</em><Tbl rows={arr(v.vocabulary)} cols={[["use", "Use"], ["instead_of", "Instead of"]]} /></div>
+                  <div><em>Never say</em><div className="v3-iq-chips neg">{arr(v.avoid).map((w) => <span key={String(w)}>{String(w)}</span>)}</div></div>
+                </div>
+              </>) : <Needs what="voice principles, tone by audience, vocabulary" />}
+            </Block>
+          );
+        })()}
+
+        {/* 8. Brand plan summary (plan layer) */}
+        {plan && (
+          <Block title={`Current plan: ${txt(plan.name)}`} sub={`${txt(plan.scope)} · from the uploaded brand plan`}>
+            {sis.length > 0 && (
+              <div className="v3-iq-si-grid">
+                {sis.map((si) => (
+                  <article key={txt(si.id)} className={`v3-iq-si-card v3-iq-si-${SI_TONE[txt(si.id)] ?? "other"}`}>
+                    <SiTag id={si.id} />
+                    <h3>{txt(si.imperative)}</h3>
+                    <p className="v3-iq-si-obj">{txt(si.activation_objective)}</p>
+                    <dl>
+                      <dt>Segment</dt><dd>{txt(si.segment)}</dd>
+                      <dt className="pos">Driver</dt><dd>{txt(si.driver)}</dd>
+                      <dt className="neg">Barrier</dt><dd>{txt(si.barrier)}</dd>
+                    </dl>
+                  </article>
+                ))}
+              </div>
+            )}
+            {years.length > 0 && (
+              <div className="v3-iq-plangrow">
+                <em>Growth frame</em>
+                <div className="v3-iq-profile-nums"><b>{fc!.sales_meur![years[0]]}</b><span>→</span><b>{fc!.sales_meur![years[years.length - 1]]}</b><small>M€ · {years[0]}–{years[years.length - 1]}</small></div>
+                <div className="v3-iq-spark">{years.map((y) => <i key={y} title={`${y}: ${fc!.sales_meur![y]} M€`} style={{ height: `${(fc!.sales_meur![y] / maxSale) * 100}%` }} />)}</div>
+                <small>{txt(k.fiscal_frame)} · KPIs and full forecast in Market Intelligence</small>
+              </div>
+            )}
+          </Block>
+        )}
+      </>);
+    }}</Shell>
+  );
+}
+
+/* ------------------------------------------------------------------ Personas */
+function PersonaCard({ x, acts, audience }: { x: Any; acts: Any[]; audience: string }) {
+  const sis = arr(x.si).map(String);
+  const channels = [...new Set(acts.filter((a) => sis.includes(txt(a.si)) && txt(a.audience) === audience).map((a) => txt(a.channel)))];
+  return (
+    <article className="v3-iq-pcard">
+      <header>
+        <div className="v3-iq-avatar">{txt(x.name).slice(0, 1)}</div>
+        <div className="v3-iq-pcard-title">
+          <h3>{txt(x.name)}</h3>
+          <span>{txt(x.specialties || x.who)}</span>
+        </div>
+        {Boolean(x.tier) && <span className={`v3-iq-tier ${txt(x.tier).toLowerCase()}`}>{txt(x.tier)}</span>}
+      </header>
+      {Boolean(x.voice) && <blockquote>“{txt(x.voice)}”</blockquote>}
+      {sis.length > 0 && <div className="v3-iq-persona-si">Targeted by {sis.map((s) => <SiTag key={s} id={s} />)}</div>}
+      <div className="v3-iq-pcard-grid">
+        <div><em>How they behave</em>{arr(x.behaviours).length ? <ul>{arr(x.behaviours).map((b) => <li key={String(b)}>{String(b)}</li>)}</ul> : <Needs />}</div>
+        <div><em>What holds them back</em><p>{txt(x.barrier) || <Needs />}</p><em>Moment that matters</em><p>{txt(x.moment) || <Needs />}</p></div>
+      </div>
+      <div className="v3-iq-pcard-msg">
+        <em>Key message</em><p>{txt(x.key_message) || <Needs />}</p>
+        <div className="v3-iq-pcard-row"><span><b>Tone</b> {txt(x.tone) || "—"}</span>{channels.length > 0 && <span><b>Channels</b> {channels.join(" · ")}</span>}</div>
+      </div>
+      {Boolean(x.content_have || x.content_develop) && (
+        <div className="v3-iq-pcard-grid">
+          <div><em>Content we have</em><p>{txt(x.content_have) || "—"}</p></div>
+          <div><em>Content to develop</em><p>{txt(x.content_develop) || "—"}</p></div>
+        </div>
+      )}
+      <Src s={x.source} />
+    </article>
+  );
+}
+
+export function PersonasPage(props: PageProps) {
+  const p = useKit(props.activeBrand, props.brands);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const refresh = () => {
+    if (!p.brand) return;
+    setBusy(true); setErr(null);
+    refreshAudienceSources(p.brand).then((r) => p.setRaw(r.kit as unknown as Any)).catch((e) => setErr(String(e))).finally(() => setBusy(false));
+  };
+  return (
+    <Shell title="Personas" sub="Who we engage, and what moves them" p={p}>{(k) => {
+      const ps = (k.personas ?? {}) as { hcp?: Any[]; patient?: Any[]; caregiver?: Any[] };
+      const acts = arr(k.activities);
+      const stages = arr((k.care_continuum as Any | undefined)?.stages);
+      const ai = (k.audience_intel ?? null) as Record<string, Any> | null;
+      const kol = ai?.kol_publications?.value as Any | undefined;
+      const tf = ai?.trial_footprint?.value as Any | undefined;
+      const pr = arr(ai?.patient_resources?.value);
+      const maxPapers = Math.max(1, ...arr(kol?.authors).map((a) => Number(a.papers)));
+      const maxSites = Math.max(1, ...arr(tf?.sites_by_country).map((c) => Number(c.sites)));
+      return (<>
+        <div className="v3-iq-aud-summary">
+          <div><b>{ps.hcp?.length ?? 0}</b><span>HCP personas</span></div>
+          <div><b>{(ps.patient?.length ?? 0) + (ps.caregiver?.length ?? 0)}</b><span>Patient & caregiver</span></div>
+          <div><b>{arr(kol?.authors).length || "—"}</b><span>Key opinion leaders (PubMed)</span></div>
+          <div><b>{arr(tf?.sites_by_country).length || "—"}</b><span>Countries with trial sites</span></div>
+        </div>
+        <p className="v3-iq-lede">{txt(k.primary_audience) || <Needs what="primary audience" />}</p>
+
+        <Block title="Healthcare professionals" sub={`${ps.hcp?.length ?? 0} personas`}>
+          {ps.hcp?.length ? <div className="v3-iq-pcards">{ps.hcp.map((x) => <PersonaCard key={txt(x.name)} x={x} acts={acts} audience="HCP" />)}</div> : <Needs />}
+        </Block>
+        <Block title="Patients" sub="and caregivers">
+          {(ps.patient?.length || ps.caregiver?.length) ? (
+            <div className="v3-iq-pcards">
+              {[...(ps.patient ?? []), ...(ps.caregiver ?? [])].map((x) => <PersonaCard key={txt(x.name)} x={x} acts={acts} audience="Patient" />)}
+            </div>
+          ) : <Needs />}
+          {stages.length > 0 && (<>
+            <h3 className="v3-iq-h3">Patient journey</h3>
+            <ol className="v3-iq-journey">
+              {stages.map((s, i) => (<li key={i}><span>{i + 1}</span><b>{txt(s.stage)}</b><p>{txt(s.patient)}</p><Src s={s.source} /></li>))}
+            </ol>
+          </>)}
+        </Block>
+
+        <Block title="Key opinion leaders" sub="Most-published authors, last 6 years (PubMed)"
+          action={<button type="button" className="v3-iq-btn" onClick={refresh} disabled={busy}>{busy ? "Refreshing…" : "Refresh from public sources"}</button>}>
+          {err && <p className="v3-iq-needs">Couldn't refresh: {err}</p>}
+          {Object.keys((ai?.errors as Any) ?? {}).length > 0 && <p className="v3-iq-needs">Some sources didn't answer: {Object.keys(ai!.errors as Any).join(", ")}</p>}
+          {arr(kol?.authors).length ? (<>
+            <div className="v3-iq-tablewrap">
+              <table className="v3-iq-table">
+                <thead><tr><th>Author</th><th>Papers</th><th>Most recent</th></tr></thead>
+                <tbody>{arr(kol!.authors).map((a) => (
+                  <tr key={txt(a.author)}>
+                    <td>{txt(a.author)}</td>
+                    <td className="v3-iq-barcell"><i style={{ width: `${(Number(a.papers) / maxPapers) * 100}%` }} /><span>{txt(a.papers)}</span></td>
+                    <td><a href={txt(a.url)} target="_blank" rel="noreferrer">{txt(a.latest_title)}</a> <small>({txt(a.latest_year)})</small></td>
+                  </tr>
+                ))}</tbody>
+              </table>
+            </div>
+            <a className="v3-iq-src" href={txt(ai?.kol_publications?.url)} target="_blank" rel="noreferrer">PubMed · {txt(kol!.papers_scanned)} papers scanned · fetched {txt(ai?.kol_publications?.fetched_at)} ↗</a>
+          </>) : <Needs what="no publication data yet" />}
+        </Block>
+
+        <Block title="Where the treaters are" sub="Trial sites and investigators (ClinicalTrials.gov)">
+          {tf ? (
+            <div className="v3-iq-tf">
+              <div className="v3-iq-hbars">
+                {arr(tf.sites_by_country).slice(0, 10).map((c) => (
+                  <div key={txt(c.country)}><span>{txt(c.country)}</span><i style={{ width: `${(Number(c.sites) / maxSites) * 100}%` }} /><b>{txt(c.sites)}</b></div>
+                ))}
+              </div>
+              <div>
+                <em>Principal investigators</em>
+                {arr(tf.investigators).length ? arr(tf.investigators).map((i) => (
+                  <div key={txt(i.nct)} className="v3-iq-ref"><code>{txt(i.nct)}</code><div><b>{txt(i.name)}</b><span>{txt(i.affiliation)}</span></div></div>
+                )) : <p className="v3-iq-note">Most trials list a sponsor contact rather than a named investigator.</p>}
+                <p className="v3-iq-note">{txt(tf.studies)} studies · <a href={txt(ai?.trial_footprint?.url)} target="_blank" rel="noreferrer">open on ClinicalTrials.gov ↗</a></p>
+              </div>
+            </div>
+          ) : <Needs what="no trial data yet" />}
+        </Block>
+
+        <Block title="Patient education resources" sub="MedlinePlus (NIH)">
+          {pr.length ? <div className="v3-iq-comp">{pr.map((r) => (
+            <article key={txt(r.url)}><b><a href={txt(r.url)} target="_blank" rel="noreferrer">{txt(r.title)} ↗</a></b><Src s="MedlinePlus, National Library of Medicine" /></article>
+          ))}</div> : <Needs what="no patient resources found" />}
+          <p className="v3-iq-note">Patient advocacy groups aren't available from a public API yet — add them by hand for now.</p>
+        </Block>
+      </>);
+    }}</Shell>
+  );
+}
+
+/* ------------------------------------------------------------------ Compliance Guardrails */
+function Seg({ options, value, onChange }: { options: string[]; value: string; onChange: (v: string) => void }) {
+  return (
+    <div className="v3-seg v3-iq-seg" role="tablist">
+      {options.map((o) => <button key={o} type="button" role="tab" aria-selected={o === value} className={`v3-seg-tab ${o === value ? "active" : ""}`} onClick={() => onChange(o)}>{o}</button>)}
+    </div>
+  );
+}
+
+export function GuardrailsPage(props: PageProps) {
+  const p = useKit(props.activeBrand, props.brands);
+  const [cp, setCp] = useState<Any | null | undefined>(undefined);
+  const [sopAud, setSopAud] = useState("DTC");
+  const [supAud, setSupAud] = useState("DTC");
+  useEffect(() => {
+    if (!p.brand) return;
+    setCp(undefined);
+    getCompliance(p.brand).then((r) => setCp(r.profile as Any | null)).catch(() => setCp(null));
+  }, [p.brand]);
+  return (
+    <Shell title="Compliance Guardrails" sub="SOPs, approvals and what we can say" p={p}>{(k) => {
+      const g = (k.guardrails ?? {}) as { dos?: Any[]; donts?: Any[] };
+      const label: [string, unknown][] = [["Approved indication", k.approved_indication], ["Safety reference", k.safety_reference]];
+      const sops = arr(cp?.campaign_sops);
+      const sop = sops.find((s) => s.audience === sopAud) ?? sops[0];
+      const sup = ((cp?.suppressions ?? {}) as Record<string, Any>)[supAud];
+      const wf = arr((cp?.approval_workflow as Any | undefined)?.steps);
+      return (<>
+        {cp === undefined ? <p className="v3-empty">Loading compliance profile…</p> : cp === null ? (
+          <div className="v3-iq-banner warn"><b>No company SOPs assigned to {p.brand}.</b> Upload the company's campaign SOPs to fill this page.</div>
+        ) : (<>
+          {cp.status === "template" && (
+            <div className="v3-iq-banner warn"><b>Template: {txt(cp.company)} SOPs.</b> {txt(cp.status_note)}</div>
+          )}
+          <div className="v3-iq-aud-summary">
+            <div><b>{sops.length}</b><span>Campaign SOPs</span></div>
+            <div><b>{wf.length}</b><span>Approval steps</span></div>
+            <div><b>{Object.values((cp.suppressions ?? {}) as Record<string, Any>).reduce((n, s) => n + arr(s.rules).length, 0)}</b><span>Eligibility checks</span></div>
+            <div><b>{arr(cp.regulatory_baseline).length}</b><span>Regulations referenced</span></div>
+          </div>
+
+          <Block title="Approval workflow" sub="Medical, legal, regulatory (MLR) review">
+            <ol className="v3-iq-flow">
+              {wf.map((s, i) => (
+                <li key={txt(s.step)}><span>{i + 1}</span><b>{txt(s.step)}</b><small>{txt(s.owner)}{s.sla && s.sla !== "—" ? ` · ${txt(s.sla)}` : ""}</small><p>{txt(s.what)}</p></li>
+              ))}
+            </ol>
+            <Src s={(cp.approval_workflow as Any | undefined)?.source} />
+          </Block>
+
+          <Block title="Pre-launch checklist" sub="Every campaign, before it goes live">
+            <ul className="v3-iq-check">
+              {arr(cp.prelaunch_checklist).map((c) => <li key={txt(c.item)}><span>✓</span><div><p>{txt(c.item)}</p><small>{txt(c.source)}</small></div></li>)}
+            </ul>
+          </Block>
+
+          <Block title="Campaign SOPs" sub={arr(cp.documents).map((d) => `${txt(d.id)} ${txt(d.version)}`).join(" · ")}>
+            <Seg options={sops.map((s) => txt(s.audience))} value={txt(sop?.audience)} onChange={setSopAud} />
+            {sop && (
+              <div className="v3-iq-sop">
+                <div className="v3-iq-sop-head">
+                  <b>{txt(sop.name)}</b>
+                  <span>Applies when: {txt(sop.applies_when)}</span>
+                  <div className="v3-iq-chips">{arr(sop.inputs).map((x) => <span key={String(x)}>{String(x)}</span>)}</div>
+                </div>
+                <ol className="v3-iq-steps">
+                  {arr(sop.steps).map((s) => <li key={txt(s.n)}><span>{txt(s.n)}</span><div><b>{txt(s.title)}</b><p>{txt(s.rule)}</p></div></li>)}
+                </ol>
+                {arr(sop.open_items).length > 0 && (
+                  <div className="v3-iq-open"><em>Open items in this SOP</em><ul>{arr(sop.open_items).map((o) => <li key={String(o)}>{String(o)}</li>)}</ul></div>
+                )}
+                <Src s={sop.source} />
+              </div>
+            )}
+          </Block>
+
+          <Block title="Eligibility & suppressions" sub="Checked in this order before anyone enters a flow">
+            <Seg options={Object.keys((cp.suppressions ?? {}) as Any)} value={supAud} onChange={setSupAud} />
+            {sup ? (<>
+              <div style={{ marginTop: 12 }}>
+                <Tbl rows={arr(sup.rules).map((r, i) => ({ ...r, n: i + 1 }))} cols={[["n", "#"], ["check", "Check"], ["code", "Where it comes from"], ["why", "Why"]]} />
+              </div>
+              <Src s={sup.source} />
+            </>) : <Needs />}
+          </Block>
+
+          <Block title="Channel rules">
+            <Tbl rows={arr(cp.channel_rules)} cols={[["channel", "Channel"], ["rule", "Rule"], ["source", "Source"]]} />
+          </Block>
+        </>)}
+
+        <Block title="Label & safety" sub="Brand-level, from the FDA label">
+          <div className="v3-iq-label">
+            {label.map(([l, v]) => (
+              <article key={l} className={needs(v) ? "missing" : "ok"}>
+                <em>{l}</em>
+                <p>{needs(v) ? "Not captured yet — the agents won't check copy against it until it's added." : (txt(v).length > 320 ? `${txt(v).slice(0, 320)}…` : txt(v))}</p>
+              </article>
+            ))}
+          </div>
+        </Block>
+        <div className="v3-iq-dodont">
+          <Block title="Do" sub={`${g.dos?.length ?? 0}`}>
+            {g.dos?.length ? g.dos.map((r, i) => <div key={i} className="v3-iq-rule do"><span>✓</span><div><em>{txt(r.category)}</em><p>{txt(r.text)}</p></div></div>) : <Needs />}
+          </Block>
+          <Block title="Don't" sub={`${g.donts?.length ?? 0}`}>
+            {g.donts?.length ? g.donts.map((r, i) => <div key={i} className="v3-iq-rule dont"><span>✕</span><div><em>{txt(r.category)}</em><p>{txt(r.text)}</p></div></div>) : <Needs />}
+          </Block>
+        </div>
+        <Block title="Words to use and avoid">
+          <div className="v3-iq-words">
+            <div><em>Use</em><div className="v3-iq-chips">{(k.voice_do as string[] | undefined)?.length ? (k.voice_do as string[]).map((w) => <span key={w}>{w}</span>) : <Needs />}</div></div>
+            <div><em>Avoid</em><div className="v3-iq-chips neg">{(k.voice_dont as string[] | undefined)?.length ? (k.voice_dont as string[]).map((w) => <span key={w}>{w}</span>) : <Needs />}</div></div>
+          </div>
+        </Block>
+        <Block title="References" sub="Evidence claims may cite">
+          <Tbl rows={arr(k.references).map((r) => ({ ...r, promo: r.promo_eligible ? "Promo eligible" : "Not for promo" }))} cols={[["id", "ID"], ["title", "Reference"], ["key_data", "Key data"], ["promo", "Use"]]} />
+        </Block>
+
+        {cp && arr(cp.regulatory_baseline).length > 0 && (
+          <Block title="Regulatory baseline" sub="Public regulations every campaign must respect">
+            <div className="v3-iq-tablewrap">
+              <table className="v3-iq-table">
+                <thead><tr><th>Regulation</th><th>Region</th><th>What it requires</th><th>Reference</th></tr></thead>
+                <tbody>{arr(cp.regulatory_baseline).map((r) => (
+                  <tr key={txt(r.name)}><td>{txt(r.name)}</td><td>{txt(r.region)}</td><td>{txt(r.what)}</td>
+                    <td><a href={txt(r.url)} target="_blank" rel="noreferrer">{txt(r.ref)} ↗</a></td></tr>
+                ))}</tbody>
+              </table>
+            </div>
+          </Block>
+        )}
+      </>);
+    }}</Shell>
+  );
+}
+
+/* ------------------------------------------------------------------ Market Intelligence */
+export function MarketIntelPage(props: PageProps) {
+  const p = useKit(props.activeBrand, props.brands);
+  return (
+    <Shell title="Market Intelligence" sub="Forecast, KPIs, competition and what has worked" p={p}>{(k) => {
+      const fc = k.forecast as { patients?: Record<string, number>; sales_meur?: Record<string, number>; source?: string } | undefined;
+      const years = fc?.sales_meur ? Object.keys(fc.sales_meur) : [];
+      const max = Math.max(1, ...years.map((y) => fc!.sales_meur![y]));
+      const growth = arr(k.growth_opportunities);
+      const ms = k.market_share as Any | undefined;
+      return (<>
+        <div className="v3-iq-stats">
+          <div><em>Market share / penetration</em><b>{ms ? txt(ms.current) : <Needs />}</b>{ms && <span>Target: {txt(ms.target)}</span>}</div>
+          <div><em>Success measure</em><b className="sm">{txt(k.success_measure) || <Needs />}</b></div>
+        </div>
+
+        {years.length > 0 && (
+          <Block title="Sales forecast" sub="M€ and patients">
+            <div className="v3-iq-bars">
+              {years.map((y) => (
+                <div key={y} className="v3-iq-bar">
+                  <b>{fc!.sales_meur![y]}</b>
+                  <div style={{ height: `${(fc!.sales_meur![y] / max) * 140}px` }} />
+                  <span>{y}</span><small>{fc!.patients?.[y]?.toLocaleString()} pts</small>
+                </div>
+              ))}
+            </div>
+            <Src s={fc?.source} />
+          </Block>
+        )}
+
+        {growth.length > 0 && (
+          <Block title="Where growth comes from">
+            <div className="v3-iq-split">
+              {growth.map((g) => <div key={txt(g.id)} className={`v3-iq-si-${SI_TONE[txt(g.id)] ?? "other"}`} style={{ flex: parseFloat(txt(g.share)) || 1 }}><b>{txt(g.share)}</b><span>{txt(g.id)}</span></div>)}
+            </div>
+            <div className="v3-iq-split-legend">{growth.map((g) => <span key={txt(g.id)}><SiTag id={g.id} /> {txt(g.name)}{g.value ? ` · ${txt(g.value)}` : ""}</span>)}</div>
+          </Block>
+        )}
+
+        {arr(k.kpis).length > 0 && (
+          <Block title="KPIs" sub="Baseline → target">
+            <div className="v3-iq-kpis">
+              {arr(k.kpis).map((x, i) => (
+                <article key={i}><SiTag id={x.si} /><b>{txt(x.kpi)}</b><span>Baseline: {txt(x.baseline)}</span><small>{txt(x.data_source)}</small></article>
+              ))}
+            </div>
+          </Block>
+        )}
+
+        <Block title="Competitive landscape">
+          {arr(k.competitors).length ? <div className="v3-iq-comp">{arr(k.competitors).map((c) => (
+            <article key={txt(c.name)}><div><b>{txt(c.name)}</b><span className="v3-iq-tier secondary">{txt(c.threat)}</span></div><p>{txt(c.differentiation ?? c.detail)}</p></article>
+          ))}</div> : <Needs />}
+        </Block>
+
+        {arr(k.clinical_data).length > 0 && (
+          <Block title="Clinical evidence">
+            <div className="v3-iq-comp">{arr(k.clinical_data).map((c) => (
+              <article key={txt(c.study)}><div><b>{txt(c.study)}</b></div><p>{txt(c.stat)}</p><Src s={c.context} /></article>
+            ))}</div>
+          </Block>
+        )}
+
+        {arr(k.proof_points).length > 0 && (
+          <Block title="What has worked" sub="Past local campaigns">
+            <div className="v3-iq-comp">{arr(k.proof_points).map((c) => (
+              <article key={txt(c.name)}><div><b>{txt(c.name)}</b></div><p>{txt(c.result)}</p><Src s={c.source} /></article>
+            ))}</div>
+          </Block>
+        )}
+      </>);
+    }}</Shell>
+  );
+}

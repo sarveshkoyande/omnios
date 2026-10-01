@@ -1570,6 +1570,1272 @@
         "palette": [],
         "typography": ""
       }
+    },
+    "Cablivi": {
+      "source_label": "Cablivi Global Brand Plan 2026 (Sanofi) + FDA / NIH public sources",
+      "source_note": "Brand plan is the source of truth; FDA label, Drugs@FDA and NIH MeSH fill what the plan doesn't cover. Every field names its source.",
+      "company": "Sanofi",
+      "generic": "caplacizumab (anti-vWF Nanobody)",
+      "therapy_area": "Rare haematology - thrombotic microangiopathy",
+      "indication": "Acquired thrombotic thrombocytopenic purpura (aTTP / iTTP), first and relapse events",
+      "territories": [
+        "US",
+        "EU",
+        "Japan"
+      ],
+      "fiscal_frame": "Growth - 288 M EUR (2026) to 354 M EUR (2029), 7% CAGR",
+      "key_objective": "Frontline Cablivi for ALL aTTP events: find naive patients, treat 100% of events frontline, maintain treatment duration per label",
+      "market_share": {
+        "current": "46% patient penetration US / 48% key markets (YTD)",
+        "target": "47% US / 49% key markets by end '26"
+      },
+      "lifecycle_stage": "Late stage / growth",
+      "success_measure": "Frontline use to 50% (naive) and 65% (relapsed) by Q4 2026; ER/ICU aTTP awareness 64% to 85%",
+      "branded": "branded",
+      "primary_audience": "HCPs - Diagnosers/Referrers (ER/ICU, neurology, IM, lab) and Treaters/Experts (haematology, nephrology)",
+      "tagline": "First & Best-In-Class treatment reducing aTTP morbidities and mortality to improve & save lives",
+      "core_claim": "Cablivi inhibits microthrombi formation and prevents organ damage",
+      "positioning_statement": "Frontline Cablivi for ALL aTTP patients to inhibit microthrombi formation and prevent organ damage",
+      "message_hierarchy": [
+        {
+          "pillar": "Unique MoA",
+          "claim": "First and only approved targeted therapy (anti-vWF Nanobody) to inhibit microthrombi in aTTP",
+          "evidence": "Brand plan deck, slide 7 - reasons to believe"
+        },
+        {
+          "pillar": "Outcomes",
+          "claim": "Reduction in mortality, refractoriness, exacerbations and recurrences during treatment",
+          "evidence": "HERCULES, TITAN; Capla1000 (Coppo 2025) - Brand plan deck, slide 7 - RTBs"
+        },
+        {
+          "pillar": "Guidelines",
+          "claim": "Recommended in ISTH TTP guidelines for initial and relapsing events",
+          "evidence": "Brand plan deck, slide 7 - RTBs"
+        },
+        {
+          "pillar": "Resource value",
+          "claim": "Fewer PEX days (-38%), ICU stay (-65%) and hospital stay (-31%) vs PEX + IST alone",
+          "evidence": "Scully NEJM 2019 - Brand plan deck, slide 14 - value proposition"
+        }
+      ],
+      "approved_indication": "1 INDICATIONS AND USAGE CABLIVI is indicated for the treatment of adult and pediatric patients 12 years of age and older with acquired thrombotic thrombocytopenic purpura (aTTP), in combination with plasma exchange and immunosuppressive therapy. CABLIVI is a von Willebrand factor (vWF)-directed antibody fragment indicated for the treatment of adult and pediatric patients 12 years of age and older with acquired thrombotic thrombocytopenic purpura (aTTP), in combination with plasma exchange and immunosuppressive therapy. ( 1 )",
+      "safety_reference": "5 WARNINGS AND PRECAUTIONS Hemorrhage: Serious and fatal bleeding can occur. Risk of bleeding is increased in patients with underlying coagulopathies or on concomitant antiplatelet agents or anticoagulants. If clinically significant bleeding occurs, interrupt treatment. Withhold CABLIVI 7 days prior to elective surgery, dental procedures, or other invasive interventions. ( 5.1 ) 5.1 Hemorrhage CABLIVI increases the risk of bleeding [see Adverse Reactions (6.1) ] . In clinical studies, severe bleeding adverse reactions of epistaxis, gingival bleeding, upper gastrointestinal hemorrhage, and metrorrhagia were each reported in 1% of subjects. Overall, bleeding events occurred in approximately 58% of patients on CABLIVI versus 43% of patients on placebo. In the postmarketing setting, cases of life-threatening and fatal bleeding were reported in patients receiving CABLIVI. The risk of bleeding is increased in patients with underlying coagulopathies (e.g., hemophilia, other coagulation factor deficiencies). It is also increased with concomitant use of CABLIVI with drugs affecting hemostasis and coagulation [see Drug Interactions (7) and Clinical Pharmacology (12.3) ] . Avoid concomitant use of CABLIVI with antiplatelet agents, thrombolytic drugs, heparin, or anticoagulants. Interrupt use of CABLIVI if clinically significant bleeding occurs. If needed, von Willebrand factor concentrate may be administered to rapidly correct hemostasis. If CABLIVI is restarted, monitor closely for signs of bleeding. Withhold CABLIVI for 7 days prior to elective surgery, dental procedures or other invasive interventions. If emergency surgery is needed, the use of von Willebrand factor concentrate may be considered to correct hemostasis. After the risk of surgical bleeding has resolved, and CABLIVI is resumed, monitor closely for signs of bleeding.",
+      "clinical_data": [
+        {
+          "study": "HERCULES (Scully NEJM 2019)",
+          "stat": "PEX 5.8 vs 9.4 days (-38%); ICU 3.4 vs 9.7 days (-65%); hospital 9.9 vs 14.4 days (-31%)",
+          "context": "Brand plan deck, slide 14 - value proposition"
+        },
+        {
+          "study": "Capla1000 (Coppo, eClinicalMedicine 2025)",
+          "stat": "iTTP 3-month mortality reduced 4.2-fold vs control",
+          "context": "Brand plan deck, slide 14 - value proposition"
+        },
+        {
+          "study": "Mayari",
+          "stat": "Cablivi without PEX - results pending; off-label today",
+          "context": "Brand plan deck, slide 7 - RTBs - use subject to label change"
+        }
+      ],
+      "tone_pillars": [
+        "Pioneering",
+        "Decisive",
+        "Robust",
+        "Comprehensive",
+        "Forward-thinking"
+      ],
+      "voice_do": [
+        "aTTP event (first or relapse)",
+        "frontline",
+        "inhibits microthrombi formation",
+        "helps prevent organ damage",
+        "plasma exchange (PEX)"
+      ],
+      "voice_dont": [
+        "cure",
+        "guaranteed",
+        "miracle",
+        "risk-free",
+        "without PEX (off-label)",
+        "only for severe patients"
+      ],
+      "brand_personification": {
+        "archetype": "Innovative Life-Saver",
+        "traits": [
+          "Pioneering",
+          "Decisive",
+          "Robust",
+          "Comprehensive",
+          "Forward-thinking"
+        ],
+        "narrative": "First and best-in-class; acts rapidly to inhibit microthrombi and organ damage; backed by clinical and growing real-world data. (Brand plan deck, slide 7 - brand personality)"
+      },
+      "guardrails": {
+        "dos": [
+          {
+            "category": "Approval",
+            "text": "Follow local approval process before implementing any action (Brand plan deck, slide 2 - disclaimer)"
+          }
+        ],
+        "donts": [
+          {
+            "category": "Off-label",
+            "text": "Do not promote Cablivi without PEX - off-label until Mayari read-out and label change (Brand plan deck, slide 16 - footnote)"
+          },
+          {
+            "category": "Aspirational",
+            "text": "Do not present aspirational or unapproved-market statements as approved use (Brand plan deck, slide 2 - disclaimer)"
+          }
+        ]
+      },
+      "concepts": [
+        {
+          "id": "CAB-BIG-IDEA",
+          "status": "Active",
+          "name": "First & Best-In-Class",
+          "tags": [
+            "Big Idea",
+            "HCP"
+          ],
+          "description": "Reducing aTTP morbidities and mortality to improve & save lives. Brand plan deck, slide 15 - Big Idea"
+        },
+        {
+          "id": "CAB-SEE-THINK",
+          "status": "Planned",
+          "name": "ER/ICU See & Think aTTP",
+          "tags": [
+            "Campaign",
+            "FIND"
+          ],
+          "description": "Globalise Italy's ER/ICU campaign: ruler, RTE, poster. Brand plan deck, slide 19 - content"
+        }
+      ],
+      "message_pool": [
+        "aTTP is a medical emergency for my patients",
+        "Cablivi is the first and only approved aTTP treatment reducing morbidities and mortality in patients needing immediate intervention",
+        "Cablivi demonstrates a favourable benefit/risk profile upon frontline treatment, incl. reduced mortality risk in the acute phase",
+        "Cablivi is first and best-in-class treatment for aTTP patients"
+      ],
+      "claims": [],
+      "components": [],
+      "references": [
+        {
+          "id": "CAB-REF-01",
+          "title": "Scully M et al. NEJM 2019;380(4):335-346 (HERCULES)",
+          "type": "Pivotal trial",
+          "key_data": "PEX, ICU and hospital stay reductions",
+          "promo_eligible": true,
+          "note": "Brand plan deck, slide 14 - refs"
+        },
+        {
+          "id": "CAB-REF-02",
+          "title": "Coppo P et al. eClinicalMedicine 2025;82:103168 (Capla1000)",
+          "type": "RWE",
+          "key_data": "4.2-fold 3-month mortality reduction",
+          "promo_eligible": true,
+          "note": "Brand plan deck, slide 14 - refs"
+        },
+        {
+          "id": "CAB-REF-03",
+          "title": "Sullivan et al. JMCP March 2025",
+          "type": "Cost-effectiveness",
+          "key_data": "Cablivi cost-effective in the US",
+          "promo_eligible": false,
+          "note": "Brand plan deck, slide 14 - refs"
+        }
+      ],
+      "personas": {
+        "hcp": [
+          {
+            "name": "Diagnoser/Referrer - Altruist",
+            "who": "ER/ICU, neurologists, internal medicine, lab physicians; sees aTTP at admission; low TMA/TTP awareness",
+            "tier": "Primary",
+            "voice": "aTTP is a medical emergency for my patients",
+            "segment": "Diagnoser/Referrer",
+            "si": [
+              "FIND"
+            ],
+            "specialties": "ER/ICU, neurology, internal medicine, lab physicians",
+            "behaviours": [
+              "Sees aTTP patients at admission",
+              "Low awareness of TMA/TTP",
+              "Symptoms look non-specific, so diagnosis is delayed"
+            ],
+            "barrier": "Doesn't think of TTP; doesn't treat it as an emergency",
+            "moment": "First hours after admission, before referral",
+            "source": "Brand plan 2026, slide 9 - segments; Brand plan 2026, slide 15 - messages",
+            "tone": "Alert, practical, fast to scan",
+            "focus": "Recognise TMA/TTP, act as an emergency",
+            "key_message": "aTTP is a medical emergency for my patients",
+            "content_have": "TMA/aTTP education; GO DOCTOR! game; diagnostic algorithm & predictive scoring; recorded webinars",
+            "content_develop": "ER/ICU See & Think campaign; Faces of TTP; AI avatar content; new uTTP.com content"
+          },
+          {
+            "name": "Treater - Altruist",
+            "who": "Haematologists/nephrologists who treat; understands treating all events frontline",
+            "tier": "Primary",
+            "voice": "I need to intervene immediately to save lives",
+            "segment": "Treater",
+            "si": [
+              "TREAT"
+            ],
+            "specialties": "Haematology, nephrology",
+            "behaviours": [
+              "Diagnoses and treats, or treats only",
+              "Wants to save lives quickly"
+            ],
+            "barrier": "Needs confidence to act at clinical diagnosis",
+            "moment": "At clinical diagnosis, before ADAMTS13 results",
+            "source": "Brand plan 2026, slide 9 - segments; Brand plan 2026, slide 16 - adoption ladder",
+            "tone": "Compassionate, outcome-led",
+            "focus": "Save lives, reduce morbidity",
+            "key_message": "Cablivi is the first and only approved aTTP treatment reducing morbidities and mortality in patients needing immediate intervention",
+            "content_have": "Faces of TTP testimonials; digital patient case cards; 5 reasons to prescribe; Capla1000 reprint",
+            "content_develop": "Burden of PEX compendium; Mayari materials; best-practice webinars"
+          },
+          {
+            "name": "Treater - Cautioner",
+            "who": "Waits for ADAMTS13 confirmation or reserves Cablivi for severe patients",
+            "tier": "Primary",
+            "voice": "Show me the benefit/risk case for frontline use",
+            "segment": "Treater",
+            "si": [
+              "TREAT",
+              "MAINTAIN"
+            ],
+            "specialties": "Haematology, nephrology",
+            "behaviours": [
+              "Waits for ADAMTS13 confirmation",
+              "Selects patients by perceived severity",
+              "May stop treatment early"
+            ],
+            "barrier": "Cost concerns; wants more benefit/risk evidence",
+            "moment": "Treatment decision and end-of-treatment decision",
+            "source": "Brand plan 2026, slide 9 - segments; Brand plan 2026, slide 11 - barriers",
+            "tone": "Measured, evidence-heavy",
+            "focus": "Favourable benefit/risk, guideline backing",
+            "key_message": "Cablivi demonstrates a favourable benefit/risk profile upon frontline treatment, incl. reduced mortality risk in the acute phase",
+            "content_have": "Capla1000 and RWE reprints; ISTH guidelines; clinical trial data; case cards",
+            "content_develop": "Reprint on all guidelines; Burden of PEX compendium; Mayari materials"
+          },
+          {
+            "name": "Treater/Expert - Hero",
+            "who": "Expert/influencer; can influence peers",
+            "tier": "Secondary",
+            "voice": "I want the first and best-in-class option and the newest data",
+            "segment": "Expert/Influencer",
+            "si": [
+              "TREAT",
+              "MAINTAIN"
+            ],
+            "specialties": "Haematology experts, TTP centres",
+            "behaviours": [
+              "Treats all aTTP patients frontline",
+              "Influences peers and guidelines"
+            ],
+            "barrier": "Wants new data (Mayari, RWE on duration)",
+            "moment": "Congresses, advisory boards, guideline work",
+            "source": "Brand plan 2026, slide 9 - segments; Brand plan 2026, slide 16 - adoption ladder",
+            "tone": "Forward-looking, peer-level",
+            "focus": "First and best-in-class, new data",
+            "key_message": "Cablivi is first and best-in-class treatment for aTTP patients",
+            "content_have": "Capla1000 and RWE reprints; data on new treatment options",
+            "content_develop": "Mayari publication and materials; best-practice webinars"
+          }
+        ],
+        "patient": [
+          {
+            "name": "Acute aTTP patient",
+            "who": "Young adult (30-50) in an acute first or relapse event; relies on the care team",
+            "tier": "Primary",
+            "voice": "Hope and reassurance during an unpredictable, life-threatening disease",
+            "si": [
+              "FIND",
+              "MAINTAIN"
+            ],
+            "behaviours": [
+              "Non-specific symptoms, then rapid deterioration",
+              "Little say in treatment while acute",
+              "Moves from hospital to home treatment"
+            ],
+            "barrier": "Fear and confusion; risk of stopping treatment early",
+            "moment": "Discharge and home treatment",
+            "source": "Brand plan 2026, slide 10 - experience journey",
+            "tone": "Reassuring, hopeful, plain",
+            "focus": "Understanding the emergency, staying on treatment"
+          }
+        ],
+        "caregiver": [
+          {
+            "name": "Family caregiver",
+            "who": "Partner or parent of a young adult with aTTP",
+            "tier": "Secondary",
+            "voice": "Help me understand what's happening and what to watch for at home",
+            "si": [
+              "MAINTAIN"
+            ],
+            "behaviours": [
+              "Present at the acute event",
+              "Supports home treatment and adherence"
+            ],
+            "barrier": "Not aware of exacerbation risk if treatment stops early",
+            "moment": "Discharge and follow-up",
+            "source": "Brand plan 2026, slide 11 - other stakeholders",
+            "tone": "Reassuring, hopeful, plain",
+            "focus": "Understanding the emergency, staying on treatment"
+          }
+        ]
+      },
+      "competitors": [
+        {
+          "name": "Plasma exchange (PEX) + immunosuppression",
+          "type": "Standard of care",
+          "status": "Marketed (current standard)",
+          "differentiation": "Cablivi is added on top of PEX/IST and targets microthrombi formation, which PEX alone does not",
+          "threat": "High",
+          "threat_reason": "Default treatment; some treaters stop at PEX or wait for ADAMTS13 before adding Cablivi (plan slides 6, 11)",
+          "threat_status": "proposed",
+          "source": "Brand plan 2026, slide 6 - situation; Brand plan 2026, slide 11 - barriers",
+          "strength": "Established standard; in every guideline; familiar",
+          "weakness": "Doesn't stop microthrombi formation; long ICU stays; 10-25% mortality",
+          "counter": "Add Cablivi at clinical diagnosis to inhibit microthrombi - fewer PEX days (-38%) and ICU days (-65%)"
+        },
+        {
+          "name": "Rituximab (frontline / pre-emptive)",
+          "type": "Adjacent therapy",
+          "status": "Marketed (off-label in iTTP in many markets)",
+          "differentiation": "Reduces recurrences, so fewer relapse events to treat - shrinks the pool rather than competing head-on",
+          "threat": "Medium",
+          "threat_reason": "Plan notes increased rituximab use reduces the number of recurrences (slide 6)",
+          "threat_status": "proposed",
+          "source": "Brand plan 2026, slide 6 - situation",
+          "strength": "Reduces relapses",
+          "weakness": "Doesn't act on the acute microthrombi",
+          "counter": "Complementary: rituximab for relapse prevention, Cablivi for the acute event"
+        },
+        {
+          "name": "rADAMTS13 (Takeda)",
+          "type": "Pipeline",
+          "status": "Pre-phase 3 in iTTP",
+          "differentiation": "Replaces the deficient enzyme; Cablivi's plan claims no direct competition until at least 2029",
+          "threat": "Low (rising after 2029)",
+          "threat_reason": "Not expected before 2029 per plan (slide 7); being tracked in the 2026 HCP ATU (slide 20)",
+          "threat_status": "proposed",
+          "source": "Brand plan 2026, slide 7 - RTBs; Brand plan 2026, slide 20 - activities",
+          "strength": "Addresses the root enzyme deficiency",
+          "weakness": "Pre-phase 3; years from market",
+          "counter": "Build frontline habit and real-world evidence now; Mayari data"
+        }
+      ],
+      "care_continuum": {
+        "stages": [
+          {
+            "stage": "Recognise the problem",
+            "patient": "Non-specific symptoms; rapid deterioration; emergency care",
+            "source": "Brand plan deck, slide 10 - experience journey"
+          },
+          {
+            "stage": "Find the right treatment",
+            "patient": "aTTP diagnosis; relies on care team for treatment choice",
+            "source": "Brand plan deck, slide 10 - experience journey"
+          },
+          {
+            "stage": "Take treatment and see it work",
+            "patient": "Platelet normalisation; hospital-to-home transition",
+            "source": "Brand plan deck, slide 10 - experience journey"
+          }
+        ]
+      },
+      "identity": {},
+      "plans": [
+        {
+          "id": "global-2026",
+          "name": "2026 Global Brand Plan",
+          "scope": "Global",
+          "year": 2026,
+          "source": "2026 RILZA Global Editorial Plan.pptx (Cablivi Global Brand Plan 2026)",
+          "strategic_imperatives": [
+            {
+              "id": "FIND",
+              "imperative": "Get DIAGNOSERS/REFERRERS to RECOGNIZE TTP",
+              "segment": "Diagnoser/Referrer",
+              "insight": "If TTP is left untreated, microthrombi form, leading to organ damage",
+              "driver": "aTTP is an acute life-threatening emergency with mortality up to 90%",
+              "barrier": "Low awareness of TMA/aTTP and lack of fast diagnosis",
+              "activation_objective": "Get diagnosers (e.g. ER/ICU) to THINK ABOUT TTP (TMA) and understand aTTP is a medical emergency",
+              "other_stakeholders": "Get PATIENTS to increase awareness of aTTP burden of disease",
+              "source": "Brand plan deck, slide 11 - SI summary; Brand plan deck, slide 15 - activation"
+            },
+            {
+              "id": "TREAT",
+              "imperative": "Get TREATERS to ADOPT Cablivi FRONTLINE for ALL events",
+              "segment": "Treater / Expert",
+              "insight": "Cablivi is the first and only targeted drug approved for acute events of aTTP",
+              "driver": "Improve outcomes and reduce mortality; no data supporting use only in subgroups",
+              "barrier": "Cost concerns, reserving for severe patients, waiting for ADAMTS13 confirmation",
+              "activation_objective": "Adopt Cablivi frontline for all patients at clinical diagnosis, instead of waiting for ADAMTS13 or treating severe patients only",
+              "other_stakeholders": "HCPs understand the value story while countering cost perceptions; patients/caregivers educated on clinical value",
+              "source": "Brand plan deck, slide 11 - SI summary; Brand plan deck, slide 16 - activation"
+            },
+            {
+              "id": "MAINTAIN",
+              "imperative": "Get TREATERS to FULFILL treatment per LABEL",
+              "segment": "Treater / Expert",
+              "insight": "Cablivi reduces the risk of exacerbations",
+              "driver": "Interest in alternative treatment paradigms",
+              "barrier": "Need for more RWE on treatment duration",
+              "activation_objective": "Complete treatment per label; avoid early termination",
+              "other_stakeholders": "Patients/caregivers aware of exacerbation risk; more enrolment in patient support services",
+              "source": "Brand plan deck, slide 11 - SI summary"
+            }
+          ],
+          "growth_opportunities": [
+            {
+              "id": "FIND",
+              "name": "Find naive patients",
+              "share": "50%",
+              "value": "~26 M EUR by 2029",
+              "source": "Brand plan deck, slide 8 - topline"
+            },
+            {
+              "id": "TREAT",
+              "name": "Treat 100% of aTTP events frontline",
+              "share": "40%",
+              "value": "",
+              "source": "Brand plan deck, slide 8 - topline"
+            },
+            {
+              "id": "MAINTAIN",
+              "name": "Maintain optimal treatment duration",
+              "share": "10%",
+              "value": "~6 M EUR",
+              "source": "Brand plan deck, slide 8 - topline"
+            }
+          ],
+          "forecast": {
+            "patients": {
+              "2026": 2274,
+              "2027": 3133,
+              "2028": 3532,
+              "2029": 3720
+            },
+            "sales_meur": {
+              "2026": 288,
+              "2027": 317,
+              "2028": 339,
+              "2029": 354
+            },
+            "source": "Brand plan deck, slide 12 - forecast"
+          },
+          "kpis": [
+            {
+              "si": "FIND",
+              "kpi": "ER/ICU awareness of TMA/aTTP to 85% by Q4 2026",
+              "baseline": "64% (global)",
+              "data_source": "Global ATU (annual)",
+              "source": "Brand plan deck, slide 23 - KPIs"
+            },
+            {
+              "si": "FIND",
+              "kpi": "Cablivi.AI live in 5 new markets by end '26",
+              "baseline": "Geo-data collection ongoing",
+              "data_source": "OneAI platform & Veeva",
+              "source": "Brand plan deck, slide 23 - KPIs"
+            },
+            {
+              "si": "TREAT",
+              "kpi": "Patient penetration 47% US / 49% key markets by end '26",
+              "baseline": "46% US / 48% KM",
+              "data_source": "Patient Collect",
+              "source": "Brand plan deck, slide 23 - KPIs"
+            },
+            {
+              "si": "TREAT",
+              "kpi": "Frontline use 50% naive / 65% relapsed by Q4 2026",
+              "baseline": "35% naive / 58% relapsed",
+              "data_source": "Global ATU (annual)",
+              "source": "Brand plan deck, slide 23 - KPIs"
+            },
+            {
+              "si": "TREAT",
+              "kpi": "HCPs not prescribing due to cost down to 15% by Q4 2026",
+              "baseline": "20% (global)",
+              "data_source": "Global ATU (annual)",
+              "source": "Brand plan deck, slide 23 - KPIs"
+            },
+            {
+              "si": "MAINTAIN",
+              "kpi": "Average treatment duration at least 35 days in 2026",
+              "baseline": "35 days (Q1 2025)",
+              "data_source": "Performance dashboard (monthly)",
+              "source": "Brand plan deck, slide 23 - KPIs"
+            }
+          ],
+          "activities": [
+            {
+              "si": "FIND",
+              "audience": "HCP",
+              "activity": "Cablivi.AI scale-up: predict aTTP patients in real time at HCO level; 5 new markets (NL, KSA, UAE, FR, TW)",
+              "channel": "OneAI platform + Veeva alerts",
+              "lead": "Global Digital & Marketing",
+              "timing": "2026",
+              "source": "Brand plan deck, slide 18 - activities"
+            },
+            {
+              "si": "FIND",
+              "audience": "HCP",
+              "activity": "ER/ICU global webinar with case discussion (focus JP, ES)",
+              "channel": "Webinar (SpotMe)",
+              "lead": "Global Marketing",
+              "timing": "Q3 2026",
+              "source": "Brand plan deck, slide 18 - activities"
+            },
+            {
+              "si": "FIND",
+              "audience": "HCP",
+              "activity": "AI-powered avatar helping HCPs identify aTTP and expedite diagnosis",
+              "channel": "Digital / web",
+              "lead": "Global Marketing",
+              "timing": "Q2-Q3 2026",
+              "source": "Brand plan deck, slide 18 - activities"
+            },
+            {
+              "si": "FIND",
+              "audience": "HCP",
+              "activity": "understandingTTP.com update and SEO - new cases, ER/ICU focus",
+              "channel": "Web",
+              "lead": "Global Marketing",
+              "timing": "Q1-Q2 2026",
+              "source": "Brand plan deck, slide 18 - activities"
+            },
+            {
+              "si": "FIND",
+              "audience": "HCP",
+              "activity": "GO DOCTOR! serious game for ER/ICU - localise in 10+ markets",
+              "channel": "Digital / web",
+              "lead": "Local Marketing",
+              "timing": "2026",
+              "source": "Brand plan deck, slide 18 - activities"
+            },
+            {
+              "si": "FIND",
+              "audience": "Patient",
+              "activity": "Rare Disease Day awareness",
+              "channel": "Social media",
+              "lead": "Global Marketing, Corp Comms",
+              "timing": "Feb 2026",
+              "source": "Brand plan deck, slide 19 - activities"
+            },
+            {
+              "si": "FIND",
+              "audience": "Patient",
+              "activity": "International TTP Day campaign",
+              "channel": "Social media",
+              "lead": "Global Marketing, Corp Comms",
+              "timing": "Sep 2026",
+              "source": "Brand plan deck, slide 19 - activities"
+            },
+            {
+              "si": "FIND",
+              "audience": "HCP",
+              "activity": "ER/ICU See & Think aTTP campaign (ruler, RTE, poster)",
+              "channel": "Print / digital / RTE",
+              "lead": "Global Marketing",
+              "timing": "Q1-Q2 2026",
+              "source": "Brand plan deck, slide 19 - content"
+            },
+            {
+              "si": "TREAT",
+              "audience": "HCP",
+              "activity": "Global treater webinar on best practice - Capla1000 focus",
+              "channel": "Webinar (SpotMe)",
+              "lead": "Global Marketing",
+              "timing": "Q1 2026",
+              "source": "Brand plan deck, slide 20 - activities"
+            },
+            {
+              "si": "TREAT",
+              "audience": "HCP",
+              "activity": "Commercial advisory board on Capla1000 and aTTP management",
+              "channel": "F2F / hybrid",
+              "lead": "Global Marketing",
+              "timing": "Q2 2026",
+              "source": "Brand plan deck, slide 20 - activities"
+            },
+            {
+              "si": "TREAT",
+              "audience": "HCP",
+              "activity": "China KOL speaker tour - peer-to-peer education",
+              "channel": "F2F",
+              "lead": "Global & China Marketing",
+              "timing": "Mid 2026",
+              "source": "Brand plan deck, slide 20 - activities"
+            },
+            {
+              "si": "TREAT",
+              "audience": "HCP",
+              "activity": "Revamp global campaign with MoA focus (microthrombi, organ damage, mortality)",
+              "channel": "Digital",
+              "lead": "Global Marketing",
+              "timing": "H2 2025 - Q2 2026",
+              "source": "Brand plan deck, slide 20 - content"
+            },
+            {
+              "si": "MAINTAIN",
+              "audience": "HCP",
+              "activity": "Mini-webinar on early termination and exacerbation risk (EHA/ISTH)",
+              "channel": "Digital",
+              "lead": "Global SciComm/Medical",
+              "timing": "Q4 2026",
+              "source": "Brand plan deck, slide 21 - activities"
+            },
+            {
+              "si": "MAINTAIN",
+              "audience": "Patient",
+              "activity": "Improve patient support programme enrolment (e.g. US, IL, CO)",
+              "channel": "Hybrid",
+              "lead": "Local PSS/PSP & Marketing",
+              "timing": "2026",
+              "source": "Brand plan deck, slide 21 - activities"
+            }
+          ],
+          "proof_points": [
+            {
+              "name": "GO DOCTOR! serious game",
+              "result": "10,359 gameplays, 28K visits, ~78 countries, 92% improved knowledge, 8.0/10 recommend",
+              "source": "Brand plan deck, slide 32 - best practice"
+            },
+            {
+              "name": "Google campaign (DE)",
+              "result": "~540k impressions, 501 conversions, 10 EUR per landing-page visit - cheapest channel",
+              "source": "Brand plan deck, slide 33 - best practice"
+            },
+            {
+              "name": "The Hematology Podcast",
+              "result": "22K downloads since 2021; ~5K EUR per episode",
+              "source": "Brand plan deck, slide 35 - best practice"
+            },
+            {
+              "name": "PulsePoint HCP365 (US)",
+              "result": "46,152 identified NPIs (+82%) for retargeting",
+              "source": "Brand plan deck, slide 36 - best practice"
+            }
+          ]
+        }
+      ],
+      "active_plan": "global-2026",
+      "key_objectives": [
+        {
+          "objective": "Find naive aTTP patients faster",
+          "measure": "ER/ICU awareness of TMA/aTTP 64% -> 85%",
+          "target_date": "Q4 2026",
+          "priority": "Primary",
+          "source": "Brand plan 2026, slide 23 - KPIs"
+        },
+        {
+          "objective": "Treat 100% of aTTP events frontline",
+          "measure": "Frontline use 35% -> 50% (naive), 58% -> 65% (relapsed)",
+          "target_date": "Q4 2026",
+          "priority": "Primary",
+          "source": "Brand plan 2026, slide 23 - KPIs"
+        },
+        {
+          "objective": "Maintain treatment duration per label",
+          "measure": "Average treatment duration >= 35 days",
+          "target_date": "2026",
+          "priority": "Secondary",
+          "source": "Brand plan 2026, slide 23 - KPIs"
+        },
+        {
+          "objective": "Launch excellence in Taiwan, Turkey and China",
+          "measure": "Launch performance vs B26",
+          "target_date": "End '25 / Q2 '26 / Q4 '26",
+          "priority": "Secondary",
+          "source": "Brand plan 2026, slide 23 - KPIs"
+        }
+      ],
+      "product_profile": {
+        "fetched_at": "2026-09-30",
+        "errors": {},
+        "labeler": {
+          "value": "Genzyme Corporation",
+          "source": "FDA label (DailyMed) v18, 20260424",
+          "url": "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=2348f06e-8004-4040-832e-e9e86a39f905",
+          "fetched_at": "2026-09-30"
+        },
+        "brand_names": {
+          "value": [
+            "Cablivi"
+          ],
+          "source": "FDA label (DailyMed) v18, 20260424",
+          "url": "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=2348f06e-8004-4040-832e-e9e86a39f905",
+          "fetched_at": "2026-09-30"
+        },
+        "route": {
+          "value": null,
+          "source": "FDA label (DailyMed) v18, 20260424",
+          "url": "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=2348f06e-8004-4040-832e-e9e86a39f905",
+          "fetched_at": "2026-09-30"
+        },
+        "pharm_class": {
+          "value": null,
+          "source": "FDA label (DailyMed) v18, 20260424",
+          "url": "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=2348f06e-8004-4040-832e-e9e86a39f905",
+          "fetched_at": "2026-09-30"
+        },
+        "indication": {
+          "value": "1 INDICATIONS AND USAGE CABLIVI is indicated for the treatment of adult and pediatric patients 12 years of age and older with acquired thrombotic thrombocytopenic purpura (aTTP), in combination with plasma exchange and immunosuppressive therapy. CABLIVI is a von Willebrand factor (vWF)-directed antibody fragment indicated for the treatment of adult and pediatric patients 12 years of age and older with acquired thrombotic thrombocytopenic purpura (aTTP), in combination with plasma exchange and immunosuppressive therapy. ( 1 )",
+          "source": "FDA label (DailyMed) v18, 20260424 · indications and usage",
+          "url": "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=2348f06e-8004-4040-832e-e9e86a39f905",
+          "fetched_at": "2026-09-30"
+        },
+        "mechanism_of_action": {
+          "value": "12.1 Mechanism of Action Caplacizumab-yhdp targets the A1-domain of vWF, and inhibits the interaction between vWF and platelets, thereby reducing both vWF-mediated platelet adhesion and platelet consumption.",
+          "source": "FDA label (DailyMed) v18, 20260424 · mechanism of action",
+          "url": "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=2348f06e-8004-4040-832e-e9e86a39f905",
+          "fetched_at": "2026-09-30"
+        },
+        "molecule_description": {
+          "value": "11 DESCRIPTION Caplacizumab-yhdp is a von Willebrand factor (vWF)-directed antibody fragment that consists of two identical humanized building blocks, linked by a three-alanine linker. Caplacizumab-yhdp is produced in Escherichia coli by recombinant DNA technology and has an approximate molecular weight of 28 kDa. CABLIVI (caplacizumab-yhdp) for injection is a sterile, white, preservative-free, lyophilized powder. Each single-dose vial delivers 11 mg caplacizumab-yhdp, anhydrous citric acid (0.18 mg), polysorbate 80 (0.10 mg), sucrose (62 mg), and trisodium citrate dihydrate (4.91 mg). After reconstitution with 1 mL of Sterile Water for Injection, USP, the final concentration is 11 mg/mL, at a pH of approximately 6.5.",
+          "source": "FDA label (DailyMed) v18, 20260424 · description",
+          "url": "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=2348f06e-8004-4040-832e-e9e86a39f905",
+          "fetched_at": "2026-09-30"
+        },
+        "dosing": {
+          "value": "2 DOSAGE AND ADMINISTRATION CABLIVI should be administered upon the initiation of plasma exchange therapy. The recommended dose of CABLIVI is as follows: ( 2.1 ) First day of treatment: 11 mg bolus intravenous injection at least 15 minutes prior to plasma exchange followed by an 11 mg subcutaneous injection after completion of plasma exchange on day 1. Subsequent treatment during daily plasma exchange: 11 mg subcutaneous injection once daily following plasma exchange. Treatment after the plasma exchange period: 11 mg subcutaneous injection once daily for 30 days beyond the last plasma exchange. If after initial treatment course, sign(s) of persistent underlying disease such as suppressed ADAMTS13 activity levels remain present, treatment may be extended for a maximum of 28 days. Discontinue CABLIVI if the patient experiences more than 2 recurrences of aTTP, while on CABLIVI. The first dose should be administered by a healthcare provider as a bolus intravenous injection. Administer subsequent doses subcutaneously in the abdomen. ( 2.3 ) 2.1 Recommended Dose and Schedules CABLIVI should be administered upon initiation of plasma exchange therapy. The recommended dose of CABLIVI is as follows: First day of treatment : 11 mg bolus intravenous injection at least 15 minutes prior to plasma exchange followed by an 11 mg subcutaneous injection after completion of plasma exchange on day 1. Subsequent days of treatment during daily plasma exchange : 11 mg subcutaneous injection once daily following plasma exchange. Treatment after plasma exchange period : 11 mg subcutaneous injection once daily continuing for 30 days following the last daily plasma exchange. If after initial treatment course, sign(s) of persistent underlying disease such as suppressed ADAMTS13 activity levels remain present, treatment may be extended for a maximum of 28 days. Discontinue CABLIVI if the patient experiences more than 2 recurrences of aTTP, while on CABLIVI. Avoid concomitant use of antiplatelet agents or anticoagulants [see Warnings and Precautions (5.1) ]. Missed Dose Administer the first dose of CABLIVI intravenously before the initial plasma exchange. If the administration of the first intravenous dose of CABLIVI is missed and plasma exchange is already administered, administer the first CABLIVI dose intravenously and administer the next dose subcutaneously on the following day according to the usual dosing schedule. If a dose of CABLIVI is missed during the plasma exchange period, it should be given as soon as possible. If a dose of CABLIVI is missed after the plasma exchange period, it can be administered within 12 hours of the scheduled time of administration. Beyond 12 hours, the missed dose should be skipped and the next daily dose administered according to the usual dosing schedule. 2.2 Discontinuation for Surgery and Other Interventions Withhold CABLIVI treatment 7 days prior to elective surgery, dental procedures, or other invasive interventions [see Warnings and Precautions (5.1) ] . 2.3 Reconstitution and Administration Instructions The first dose of CABLIVI should be administered by a healthcare provider as a bolus intravenous injection. Administer subsequent doses subcutaneously in the abdomen. Avoid injections around the navel. Do not administer consecutive injections in the same abdominal quadrant. Adult patients may self-inject, or adult caregivers may inject CABLIVI subcutaneously after proper instruction on the preparation and administration of CABLIVI, including aseptic technique [see Instructions for Use ] if a healthcare provider determines that it is appropriate. In pediatric patients 12 years of age and older, CABLIVI must be administered by a healthcare provider or an adult caregiver. If the carton was not stored at room temperature, allow the CABLIVI vial and diluent syringe to reach room temperature [25°C to 30°C (77°F to 86°F)] by holding them in your hands for 10 seconds. Do not use any other way to warm up the vial and syringe. Reconstitute CABLIVI before administration using the provided syringe containing 1 mL Sterile Water for Injection, USP, to yield an 11 mg/mL single-dose solution. Using aseptic technique throughout the preparation of the solution, attach the vial adapter to the vial containing CABLIVI. Remove the plastic cap from the syringe and attach it to the vial adapter by twisting it clockwise until it cannot twist any further. Slowly push the syringe plunger down until the syringe is empty. Do not remove the syringe from the vial adapter. Gently swirl the vial until the cake or powder is completely dissolved. Do not shake. Visually inspect that the reconstituted solution is clear and colorless. Withdraw all of the clear, colorless reconstituted solution from the vial into the syringe. Label the CABLIVI syringe. Administer the full amount of reconstituted solution. For the initial intravenous injection, if using an intravenous line, the glass syringe should be connected to a standard Luer lock and flushed with either 0.9% Sodium Chloride Injection, USP, or 5% Dextrose Injection, USP. Use the CABLIVI solution immediately. If not, use CABLIVI within 4 hours after reconstitution when stored in the refrigerator at 2°C to 8°C (36°F to 46°F).",
+          "source": "FDA label (DailyMed) v18, 20260424 · dosage and administration",
+          "url": "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=2348f06e-8004-4040-832e-e9e86a39f905",
+          "fetched_at": "2026-09-30"
+        },
+        "dosage_forms": {
+          "value": "3 DOSAGE FORMS AND STRENGTHS For injection: 11 mg as a white lyophilized powder in a single-dose vial. For injection: 11 mg as a lyophilized powder in a single-dose vial. ( 3 )",
+          "source": "FDA label (DailyMed) v18, 20260424 · dosage forms and strengths",
+          "url": "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=2348f06e-8004-4040-832e-e9e86a39f905",
+          "fetched_at": "2026-09-30"
+        },
+        "boxed_warning": {
+          "value": "No boxed warning in the current label",
+          "source": "FDA label (DailyMed) v18, 20260424",
+          "url": "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=2348f06e-8004-4040-832e-e9e86a39f905",
+          "fetched_at": "2026-09-30"
+        },
+        "warnings": {
+          "value": "5 WARNINGS AND PRECAUTIONS Hemorrhage: Serious and fatal bleeding can occur. Risk of bleeding is increased in patients with underlying coagulopathies or on concomitant antiplatelet agents or anticoagulants. If clinically significant bleeding occurs, interrupt treatment. Withhold CABLIVI 7 days prior to elective surgery, dental procedures, or other invasive interventions. ( 5.1 ) 5.1 Hemorrhage CABLIVI increases the risk of bleeding [see Adverse Reactions (6.1) ] . In clinical studies, severe bleeding adverse reactions of epistaxis, gingival bleeding, upper gastrointestinal hemorrhage, and metrorrhagia were each reported in 1% of subjects. Overall, bleeding events occurred in approximately 58% of patients on CABLIVI versus 43% of patients on placebo. In the postmarketing setting, cases of life-threatening and fatal bleeding were reported in patients receiving CABLIVI. The risk of bleeding is increased in patients with underlying coagulopathies (e.g., hemophilia, other coagulation factor deficiencies). It is also increased with concomitant use of CABLIVI with drugs affecting hemostasis and coagulation [see Drug Interactions (7) and Clinical Pharmacology (12.3) ] . Avoid concomitant use of CABLIVI with antiplatelet agents, thrombolytic drugs, heparin, or anticoagulants. Interrupt use of CABLIVI if clinically significant bleeding occurs. If needed, von Willebrand factor concentrate may be administered to rapidly correct hemostasis. If CABLIVI is restarted, monitor closely for signs of bleeding. Withhold CABLIVI for 7 days prior to elective surgery, dental procedures or other invasive interventions. If emergency surgery is needed, the use of von Willebrand factor concentrate may be considered to correct hemostasis. After the risk of surgical bleeding has resolved, and CABLIVI is resumed, monitor closely for signs of bleeding.",
+          "source": "FDA label (DailyMed) v18, 20260424 · warnings and cautions",
+          "url": "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=2348f06e-8004-4040-832e-e9e86a39f905",
+          "fetched_at": "2026-09-30"
+        },
+        "contraindications": {
+          "value": "4 CONTRAINDICATIONS CABLIVI is contraindicated in patients with a previous severe hypersensitivity reaction to caplacizumab-yhdp or to any of the excipients. Hypersensitivity reactions have included urticaria [see Adverse Reactions (6.1) ] . Previous severe hypersensitivity reaction to caplacizumab-yhdp or any of the excipients. ( 4 )",
+          "source": "FDA label (DailyMed) v18, 20260424 · contraindications",
+          "url": "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=2348f06e-8004-4040-832e-e9e86a39f905",
+          "fetched_at": "2026-09-30"
+        },
+        "label_version": {
+          "value": {
+            "version": "18",
+            "effective": "20260424",
+            "set_id": "2348f06e-8004-4040-832e-e9e86a39f905"
+          },
+          "source": "FDA label (DailyMed) v18, 20260424",
+          "url": "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=2348f06e-8004-4040-832e-e9e86a39f905",
+          "fetched_at": "2026-09-30"
+        },
+        "us_approval": {
+          "value": {
+            "application": "BLA761112",
+            "date": "2019-02-06"
+          },
+          "source": "Drugs@FDA",
+          "url": "https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=761112",
+          "fetched_at": "2026-09-30"
+        },
+        "mesh_condition": {
+          "value": {
+            "id": "D011697",
+            "name": "Purpura, Thrombotic Thrombocytopenic",
+            "tree": "C15.378.100.802.687.680",
+            "categories": [
+              "Hemic and Lymphatic Diseases",
+              "Hematologic Diseases",
+              "Blood Coagulation Disorders",
+              "Purpura",
+              "Purpura, Thrombocytopenic"
+            ]
+          },
+          "source": "NIH MeSH",
+          "url": "https://meshb.nlm.nih.gov/record/ui?ui=D011697",
+          "fetched_at": "2026-09-30"
+        },
+        "structure": {
+          "value": {
+            "kind": "biologic_or_not_found",
+            "note": "No PubChem compound: typical for biologics (antibodies, nanobodies). See the molecule description from the label."
+          },
+          "source": "PubChem",
+          "url": "https://pubchem.ncbi.nlm.nih.gov/#query=caplacizumab",
+          "fetched_at": "2026-09-30"
+        }
+      },
+      "approval_dates": [
+        {
+          "region": "US",
+          "value": "2019-02-06",
+          "source": "Drugs@FDA BLA761112"
+        }
+      ],
+      "public_source_query": {
+        "generic": "caplacizumab",
+        "condition": "Purpura, Thrombotic Thrombocytopenic"
+      },
+      "unmet_need": {
+        "summary": "aTTP is a rare, sudden medical emergency: without fast diagnosis and treatment, microthrombi cause organ damage and death within days.",
+        "facts": [
+          {
+            "label": "Mortality if untreated",
+            "value": "up to 90%",
+            "source": "Brand plan 2026, slide 7 - unmet need"
+          },
+          {
+            "label": "Mortality with PEX + immunosuppression",
+            "value": "10-25%",
+            "source": "Brand plan 2026, slide 14 - unmet need"
+          },
+          {
+            "label": "Incidence",
+            "value": "~4.5 cases / million / year",
+            "source": "Brand plan 2026, slide 23 - KPI footnote"
+          },
+          {
+            "label": "Typical patient age",
+            "value": "30-50 (young adults)",
+            "source": "Brand plan 2026, slide 14 - unmet need"
+          },
+          {
+            "label": "Frontline use today",
+            "value": "35% naive · 58% relapsed",
+            "source": "Brand plan 2026, slide 23 - KPIs"
+          },
+          {
+            "label": "ER/ICU awareness of TMA/aTTP",
+            "value": "64%",
+            "source": "Brand plan 2026, slide 23 - KPIs"
+          }
+        ],
+        "gaps": [
+          {
+            "gap": "Late recognition",
+            "detail": "Non-specific symptoms; diagnosers in ER/ICU have low TMA/aTTP awareness, so diagnosis and treatment start late.",
+            "who": "Diagnosers / Referrers",
+            "source": "Brand plan 2026, slide 7 - unmet need; Brand plan 2026, slide 9 - segments"
+          },
+          {
+            "gap": "Waiting to treat",
+            "detail": "Treaters wait for ADAMTS13 confirmation or reserve Cablivi for severe patients, while microthrombi keep forming.",
+            "who": "Treaters",
+            "source": "Brand plan 2026, slide 7 - unmet need; Brand plan 2026, slide 11 - barriers"
+          },
+          {
+            "gap": "Stopping too early",
+            "detail": "Early termination raises the risk of exacerbations; more real-world data on duration is needed.",
+            "who": "Treaters / Experts",
+            "source": "Brand plan 2026, slide 11 - barriers"
+          },
+          {
+            "gap": "Long-term damage",
+            "detail": "Organ ischaemia during the episode can leave lasting neurocognitive impairment and poor quality of life.",
+            "who": "Patients",
+            "source": "Brand plan 2026, slide 14 - unmet need"
+          },
+          {
+            "gap": "Resource burden",
+            "detail": "Long ICU and hospital stays with daily plasma exchange.",
+            "who": "Payers / hospitals",
+            "source": "Brand plan 2026, slide 14 - value proposition"
+          }
+        ]
+      },
+      "voice": {
+        "status": "to_confirm",
+        "note": "Drafted by the agent from the brand plan - to confirm",
+        "register": "Urgent but never alarmist; clinical and precise; confident, backed by data.",
+        "reading_level": "HCP: specialist clinical language. Patient: plain language, about age 12 reading level.",
+        "principles": [
+          {
+            "principle": "Lead with urgency, not fear",
+            "say": "aTTP is a medical emergency - every hour counts.",
+            "not": "Your patients will die without Cablivi."
+          },
+          {
+            "principle": "Every event, frontline",
+            "say": "Treat every aTTP event frontline, at clinical diagnosis.",
+            "not": "Consider Cablivi for your most severe patients."
+          },
+          {
+            "principle": "Show the mechanism",
+            "say": "Cablivi inhibits microthrombi formation and helps prevent organ damage.",
+            "not": "Cablivi cures TTP."
+          },
+          {
+            "principle": "Evidence in every claim",
+            "say": "In Capla1000, 3-month mortality fell 4.2-fold vs control.",
+            "not": "Cablivi dramatically saves lives."
+          },
+          {
+            "principle": "Partner, don't lecture",
+            "say": "Supporting your decision in a life-threatening emergency.",
+            "not": "You should stop waiting for ADAMTS13."
+          }
+        ],
+        "by_audience": [
+          {
+            "audience": "Diagnosers (ER/ICU)",
+            "tone": "Alert, practical, fast to scan",
+            "focus": "Recognise TMA/TTP, act as an emergency",
+            "source": "Brand plan 2026, slide 15 - Diagnoser messages"
+          },
+          {
+            "audience": "Treaters - Altruist",
+            "tone": "Compassionate, outcome-led",
+            "focus": "Save lives, reduce morbidity",
+            "source": "Brand plan 2026, slide 16 - Treater messages"
+          },
+          {
+            "audience": "Treaters - Cautioner",
+            "tone": "Measured, evidence-heavy",
+            "focus": "Favourable benefit/risk, guideline backing",
+            "source": "Brand plan 2026, slide 16 - Treater messages"
+          },
+          {
+            "audience": "Experts - Hero",
+            "tone": "Forward-looking, peer-level",
+            "focus": "First and best-in-class, new data",
+            "source": "Brand plan 2026, slide 16 - Treater messages"
+          },
+          {
+            "audience": "Patients & caregivers",
+            "tone": "Reassuring, hopeful, plain",
+            "focus": "Understanding the emergency, staying on treatment",
+            "source": "Brand plan 2026, slide 7 - emotional benefit"
+          }
+        ],
+        "vocabulary": [
+          {
+            "use": "aTTP event (first or relapse)",
+            "instead_of": "attack, episode"
+          },
+          {
+            "use": "frontline",
+            "instead_of": "first choice, add-on"
+          },
+          {
+            "use": "inhibits microthrombi formation",
+            "instead_of": "dissolves clots"
+          },
+          {
+            "use": "helps prevent organ damage",
+            "instead_of": "prevents all damage"
+          },
+          {
+            "use": "plasma exchange (PEX)",
+            "instead_of": "dialysis, plasma therapy"
+          }
+        ],
+        "avoid": [
+          "cure",
+          "guaranteed",
+          "miracle",
+          "risk-free",
+          "without PEX (off-label)",
+          "only for severe patients"
+        ]
+      },
+      "messages_by_persona": [
+        {
+          "persona": "Diagnoser/Referrer - Altruist",
+          "message": "aTTP is a medical emergency for my patients",
+          "existing": "TMA/aTTP education; GO DOCTOR! game; diagnostic algorithm & predictive scoring; recorded webinars",
+          "to_develop": "ER/ICU See & Think campaign; Faces of TTP; AI avatar content; new uTTP.com content",
+          "source": "Brand plan 2026, slide 15 - messages & content"
+        },
+        {
+          "persona": "Treater - Altruist",
+          "message": "Cablivi is the first and only approved aTTP treatment reducing morbidities and mortality in patients needing immediate intervention",
+          "existing": "Faces of TTP testimonials; digital patient case cards; 5 reasons to prescribe; Capla1000 reprint",
+          "to_develop": "Burden of PEX compendium; Mayari materials; best-practice webinars",
+          "source": "Brand plan 2026, slide 16 - messages & content"
+        },
+        {
+          "persona": "Treater - Cautioner",
+          "message": "Cablivi demonstrates a favourable benefit/risk profile upon frontline treatment, incl. reduced mortality risk in the acute phase",
+          "existing": "Capla1000 and RWE reprints; ISTH guidelines; clinical trial data; case cards",
+          "to_develop": "Reprint on all guidelines; Burden of PEX compendium; Mayari materials",
+          "source": "Brand plan 2026, slide 16 - messages & content"
+        },
+        {
+          "persona": "Treater/Expert - Hero",
+          "message": "Cablivi is first and best-in-class treatment for aTTP patients",
+          "existing": "Capla1000 and RWE reprints; data on new treatment options",
+          "to_develop": "Mayari publication and materials; best-practice webinars",
+          "source": "Brand plan 2026, slide 16 - messages & content"
+        }
+      ],
+      "competition_self": {
+        "name": "Cablivi",
+        "type": "Targeted anti-vWF therapy",
+        "status": "Marketed (US 2019)",
+        "strength": "Only approved targeted therapy; ISTH-recommended; mortality benefit in RWE",
+        "weakness": "Cost perception; bleeding risk; used late or stopped early"
+      },
+      "market_access": {
+        "status": "to_confirm",
+        "note": "From the brand plan; payer detail by country still needed",
+        "value_story": "Adding Cablivi to PEX + IST cuts PEX days by 38%, plasma volume by 41%, ICU stay by 65% and hospital stay by 31%; cost-effective in the US.",
+        "barriers": [
+          "Cost concerns: 20% of HCPs don't prescribe for cost reasons (target 15%)",
+          "Reserved for severe patients"
+        ],
+        "launches": [
+          {
+            "country": "Taiwan",
+            "timing": "End 2025"
+          },
+          {
+            "country": "Turkey",
+            "timing": "Q2 2026"
+          },
+          {
+            "country": "China",
+            "timing": "Q4 2026"
+          }
+        ],
+        "source": "Brand plan 2026, slide 7 - payers; Brand plan 2026, slide 14 - economic value; Brand plan 2026, slide 23 - KPIs"
+      },
+      "audience_query": {
+        "condition": "thrombotic thrombocytopenic purpura",
+        "intervention": "caplacizumab",
+        "pubmed_term": "caplacizumab OR \"acquired thrombotic thrombocytopenic purpura\""
+      },
+      "audience_intel": {
+        "fetched_at": "2026-09-30",
+        "errors": {},
+        "kol_publications": {
+          "value": {
+            "papers_scanned": 200,
+            "query": "(caplacizumab OR \"acquired thrombotic thrombocytopenic purpura\") AND (2020:2026[dp])",
+            "authors": [
+              {
+                "author": "Coppo P",
+                "papers": 17,
+                "latest_title": "Natural History and Treatment Outcomes of Congenital Thrombotic Thrombocytopenic Purpura: A Retrospective Longitudinal Cohort Study.",
+                "latest_year": "2026",
+                "pmid": "42603082",
+                "url": "https://pubmed.ncbi.nlm.nih.gov/42603082/"
+              },
+              {
+                "author": "Scully M",
+                "papers": 13,
+                "latest_title": "Recurrent thrombocytopenia in immune thrombotic thrombocytopenic purpura during the caplacizumab era.",
+                "latest_year": "2026",
+                "pmid": "42469136",
+                "url": "https://pubmed.ncbi.nlm.nih.gov/42469136/"
+              },
+              {
+                "author": "Veyradier A",
+                "papers": 10,
+                "latest_title": "Natural History and Treatment Outcomes of Congenital Thrombotic Thrombocytopenic Purpura: A Retrospective Longitudinal Cohort Study.",
+                "latest_year": "2026",
+                "pmid": "42603082",
+                "url": "https://pubmed.ncbi.nlm.nih.gov/42603082/"
+              },
+              {
+                "author": "Peyvandi F",
+                "papers": 10,
+                "latest_title": "Pharmacodynamics of Caplacizumab in Healthy Volunteers and Phase 2/3 Trial Patients with Immune-mediated Thrombotic Thrombocytopenic Purpura.",
+                "latest_year": "2026",
+                "pmid": "42456747",
+                "url": "https://pubmed.ncbi.nlm.nih.gov/42456747/"
+              },
+              {
+                "author": "Matsumoto M",
+                "papers": 10,
+                "latest_title": "Recurrent Thrombocytopenia During Caplacizumab Therapy in Acute Immune-Mediated Thrombotic Thrombocytopenic Purpura.",
+                "latest_year": "2026",
+                "pmid": "41230797",
+                "url": "https://pubmed.ncbi.nlm.nih.gov/41230797/"
+              },
+              {
+                "author": "Lämmle B",
+                "papers": 9,
+                "latest_title": "A microfluidic approach reveals ongoing disease activity in thrombotic thrombocytopenic purpura patients despite clinical remission.",
+                "latest_year": "2025",
+                "pmid": "40639763",
+                "url": "https://pubmed.ncbi.nlm.nih.gov/40639763/"
+              },
+              {
+                "author": "Sakai K",
+                "papers": 8,
+                "latest_title": "Recurrent Thrombocytopenia During Caplacizumab Therapy in Acute Immune-Mediated Thrombotic Thrombocytopenic Purpura.",
+                "latest_year": "2026",
+                "pmid": "41230797",
+                "url": "https://pubmed.ncbi.nlm.nih.gov/41230797/"
+              },
+              {
+                "author": "Zheng XL",
+                "papers": 8,
+                "latest_title": "2025 focused update of the 2020 ISTH guidelines for management of thrombotic thrombocytopenic purpura.",
+                "latest_year": "2025",
+                "pmid": "40533296",
+                "url": "https://pubmed.ncbi.nlm.nih.gov/40533296/"
+              },
+              {
+                "author": "Knöbl P",
+                "papers": 7,
+                "latest_title": "Unintended Interruption of Caplacizumab Therapy Can Compromise Outcomes in Immune-Mediated Thrombotic Thrombocytopenic Purpura: Lessons from Two Clinical Cases.",
+                "latest_year": "2026",
+                "pmid": "42739607",
+                "url": "https://pubmed.ncbi.nlm.nih.gov/42739607/"
+              },
+              {
+                "author": "Joly BS",
+                "papers": 7,
+                "latest_title": "Natural History and Treatment Outcomes of Congenital Thrombotic Thrombocytopenic Purpura: A Retrospective Longitudinal Cohort Study.",
+                "latest_year": "2026",
+                "pmid": "42603082",
+                "url": "https://pubmed.ncbi.nlm.nih.gov/42603082/"
+              }
+            ]
+          },
+          "source": "PubMed",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/?term=%28caplacizumab%20OR%20%22acquired%20thrombotic%20thrombocytopenic%20purpura%22%29%20AND%20%282020%3A2026%5Bdp%5D%29",
+          "fetched_at": "2026-09-30"
+        },
+        "trial_footprint": {
+          "value": {
+            "studies": 12,
+            "sites_by_country": [
+              {
+                "country": "France",
+                "sites": 72
+              },
+              {
+                "country": "United States",
+                "sites": 44
+              },
+              {
+                "country": "Germany",
+                "sites": 23
+              },
+              {
+                "country": "Italy",
+                "sites": 23
+              },
+              {
+                "country": "Spain",
+                "sites": 16
+              },
+              {
+                "country": "Japan",
+                "sites": 14
+              },
+              {
+                "country": "Belgium",
+                "sites": 14
+              },
+              {
+                "country": "Israel",
+                "sites": 14
+              },
+              {
+                "country": "Australia",
+                "sites": 13
+              },
+              {
+                "country": "United Kingdom",
+                "sites": 11
+              },
+              {
+                "country": "Turkey (Türkiye)",
+                "sites": 10
+              },
+              {
+                "country": "Czechia",
+                "sites": 8
+              },
+              {
+                "country": "Canada",
+                "sites": 7
+              },
+              {
+                "country": "Switzerland",
+                "sites": 6
+              },
+              {
+                "country": "Hungary",
+                "sites": 5
+              },
+              {
+                "country": "Netherlands",
+                "sites": 5
+              },
+              {
+                "country": "Austria",
+                "sites": 4
+              },
+              {
+                "country": "Martinique",
+                "sites": 2
+              },
+              {
+                "country": "Reunion",
+                "sites": 2
+              },
+              {
+                "country": "Bulgaria",
+                "sites": 1
+              },
+              {
+                "country": "Romania",
+                "sites": 1
+              }
+            ],
+            "investigators": [
+              {
+                "name": "Linus Völker, MD",
+                "affiliation": "Department II of Internal Medicine, University of Cologne",
+                "nct": "NCT04985318",
+                "url": "https://clinicaltrials.gov/study/NCT04985318"
+              },
+              {
+                "name": "Lucas Kühne, MD",
+                "affiliation": "Department II of Internal Medicine, University Hospital of Cologne",
+                "nct": "NCT05876221",
+                "url": "https://clinicaltrials.gov/study/NCT05876221"
+              }
+            ]
+          },
+          "source": "ClinicalTrials.gov",
+          "url": "https://clinicaltrials.gov/search?cond=thrombotic%20thrombocytopenic%20purpura&intr=caplacizumab",
+          "fetched_at": "2026-09-30"
+        },
+        "patient_resources": {
+          "value": [
+            {
+              "title": "Platelet Disorders",
+              "url": "https://medlineplus.gov/plateletdisorders.html",
+              "snippet": " Platelets, also known as thrombocytes, are blood cells. They form in your bone marrow, a sponge-like tissue in your bones. Platelets play a major role in blood  ... "
+            },
+            {
+              "title": "Blood Clots",
+              "url": "https://medlineplus.gov/bloodclots.html",
+              "snippet": "What is a blood clot? A blood clot is a mass of blood that forms when platelets, proteins, and cells in the blood stick together. When you get hurt, your  ... "
+            }
+          ],
+          "source": "MedlinePlus (NIH)",
+          "url": "https://medlineplus.gov/search?query=thrombotic%20thrombocytopenic%20purpura",
+          "fetched_at": "2026-09-30"
+        }
+      }
     }
   }
 }

@@ -47,14 +47,25 @@ def kit_file_mtime() -> str | None:
 KNOWN_TERRITORIES = ["US", "EU", "UK", "Japan", "Canada"]
 
 
-@functools.lru_cache(maxsize=1)
-def _load() -> dict:
-    if not KITS_JSON.exists():
+def _local_kits_path():
+    """Kits built from confidential sources (e.g. a real brand plan deck) live here, under
+    DATA_DIR (gitignored), never in the committed config/brand_kits.json."""
+    from paths import data_path
+    return data_path("brand_kits_local.json")
+
+
+def _read_kits(path) -> dict:
+    if not path.exists():
         return {}
     try:
-        return json.loads(KITS_JSON.read_text(encoding="utf-8")).get("kits", {})
+        return json.loads(path.read_text(encoding="utf-8")).get("kits", {})
     except (OSError, json.JSONDecodeError):
         return {}
+
+
+@functools.lru_cache(maxsize=1)
+def _load() -> dict:
+    return {**_read_kits(KITS_JSON), **_read_kits(_local_kits_path())}
 
 
 def list_brands() -> list[dict]:
@@ -102,15 +113,17 @@ def apply_diff(brand: str, fields: dict) -> dict:
     Clears `_load()`'s cache so the change is visible on the next read without a server
     restart -- the staleness gap that made an earlier session's direct-JSON-edit need a
     manual restart to show up."""
-    if not KITS_JSON.exists():
-        raise FileNotFoundError(str(KITS_JSON))
-    data = json.loads(KITS_JSON.read_text(encoding="utf-8"))
+    # A local-only kit is edited in place in its own (gitignored) file.
+    target = _local_kits_path() if brand.strip().lower() in {k.lower() for k in _read_kits(_local_kits_path())} else KITS_JSON
+    if not target.exists():
+        raise FileNotFoundError(str(target))
+    data = json.loads(target.read_text(encoding="utf-8"))
     kits = data.get("kits", {})
     key = next((k for k in kits if k.lower() == brand.strip().lower()), None)
     if key is None:
         raise KeyError(f"no brand kit for '{brand}'")
     kits[key].update(fields)
-    KITS_JSON.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    target.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     _load.cache_clear()
     return kits[key]
 

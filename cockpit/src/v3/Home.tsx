@@ -237,20 +237,19 @@ export function Home({ brands, activeBrand }: { brands: BrandSummary[]; activeBr
 
       <section>
         <h2 className="v3-section-title">Categories</h2>
-        <div className="v3-cats">
-          {PHASES.map((p) => {
-            const count = REGISTRY.filter((a) => a.phase === p.id).length;
+        <div className="v3-seg" role="tablist" aria-label="Agent categories">
+          {[{ id: "all", label: "All" }, ...PHASES].map((p) => {
             const on = phase === p.id;
+            const count = p.id === "all" ? REGISTRY.length : REGISTRY.filter((a) => a.phase === p.id).length;
             return (
-              <button key={p.id} type="button" className={`v3-cat ${on ? "active" : ""}`} aria-pressed={on}
-                onClick={() => setPhase(on ? "all" : p.id)}>
-                <b>{p.label}</b>
-                <span>{p.tagline}</span>
-                <em><Icon name="layers" size={12} /> {count} agents</em>
+              <button key={p.id} type="button" role="tab" aria-selected={on}
+                className={`v3-seg-tab ${on ? "active" : ""}`} onClick={() => setPhase(p.id as typeof phase)}>
+                {p.label}<span className="v3-seg-count">{count}</span>
               </button>
             );
           })}
         </div>
+        {phase !== "all" && <p className="v3-seg-tagline">{PHASES.find((p) => p.id === phase)?.tagline}</p>}
       </section>
 
       <section>

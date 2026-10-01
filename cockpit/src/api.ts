@@ -28,6 +28,15 @@ export function listBrands(): Promise<{ brands: BrandSummary[]; known_territorie
 /** `territory` is the real gate, not a display filter -- the server 404s if this brand
  *  isn't configured for the requested market rather than silently returning a different
  *  territory's content. */
+export function refreshPublicSources(brand: string): Promise<{ brand: string; kit: BrandKit }> {
+  return postJSON(`/api/brand-kits/${encodeURIComponent(brand)}/public-sources/refresh`, {});
+}
+export function getCompliance(brand: string): Promise<{ brand: string; profile: Record<string, unknown> | null }> {
+  return getJSON(`/api/brand-kits/${encodeURIComponent(brand)}/compliance`);
+}
+export function refreshAudienceSources(brand: string): Promise<{ brand: string; kit: BrandKit }> {
+  return postJSON(`/api/brand-kits/${encodeURIComponent(brand)}/audience-sources/refresh`, {});
+}
 export function getBrandKit(brand: string, territory?: string): Promise<{ brand: string; kit: BrandKit }> {
   const q = territory ? `?territory=${encodeURIComponent(territory)}` : "";
   return getJSON(`/api/brand-kits/${encodeURIComponent(brand)}${q}`);
