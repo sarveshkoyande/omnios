@@ -80,6 +80,7 @@ from strategy.flow_sop import editor as flow_sop_editor
 from strategy import agent_router  # noqa: E402  (redesign Ask bar: LLM-only agent routing)
 from strategy import agent_forms  # noqa: E402  (redesign workspace: framework-driven input cards)
 from strategy import v3_artifacts  # noqa: E402  (redesign workspace: typed, versioned artifacts)
+from strategy import engagement_plans  # noqa: E402  (engagement plans: next N months for one brand)
 from strategy import v3_assist  # noqa: E402  (redesign: Refine, Check guidelines, Chat)
 from strategy.campaign_creator import service as cc_service  # noqa: E402  (Campaign Planner: Camille's create-campaign flow)
 from strategy.campaign_creator import jobs as cc_jobs  # noqa: E402
@@ -1857,6 +1858,75 @@ def api_v3_generate(req: V3GenerateRequest):
     """Redesign Phase 4: project the workspace inputs into the typed artifact; a new version each time."""
     return v3_artifacts.generate(req.agent, req.brand, req.plan_id, req.campaign_id,
                                  req.title.strip() or "Untitled", req.inputs, req.extras)
+
+
+class EngagementPlanCreate(BaseModel):
+    brand: str
+    industry: str = "pharma"
+    months: int | None = None
+    start: str | None = None
+    title: str | None = None
+
+
+class EngagementPlanSave(BaseModel):
+    body: dict
+    reason: str = "Edited"
+    meta: dict | None = None
+
+
+@app.get("/api/engagement/frameworks/{industry}")
+def api_engagement_framework(industry: str):
+    """The industry framework (labels, lifecycle lens, funnel stages, channels, fixed moments)."""
+    try:
+        return engagement_plans.framework(industry)
+    except KeyError as e:
+        raise HTTPException(404, str(e))
+
+
+@app.post("/api/engagement-plans")
+def api_engagement_plan_create(req: EngagementPlanCreate):
+    """A new engagement plan for one brand; period defaults to 6 months."""
+    try:
+        return engagement_plans.create(req.brand, req.industry, req.months, req.start, req.title)
+    except KeyError as e:
+        raise HTTPException(404, str(e))
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+@app.get("/api/engagement-plans")
+def api_engagement_plan_list(brand: str | None = None):
+    return {"plans": engagement_plans.list_plans(brand)}
+
+
+@app.get("/api/engagement-plans/{plan_id}")
+def api_engagement_plan_get(plan_id: str, version: int | None = None):
+    plan = engagement_plans.get(plan_id, version)
+    if not plan:
+        raise HTTPException(404, f"no engagement plan '{plan_id}'")
+    return plan
+
+
+@app.put("/api/engagement-plans/{plan_id}")
+def api_engagement_plan_save(plan_id: str, req: EngagementPlanSave):
+    """Save the whole plan body as a new version (full overwrite, like the flow builder)."""
+    try:
+        return engagement_plans.save(plan_id, req.body, req.reason, req.meta)
+    except KeyError:
+        raise HTTPException(404, f"no engagement plan '{plan_id}'")
+
+
+@app.get("/api/engagement-plans/{plan_id}/versions")
+def api_engagement_plan_versions(plan_id: str):
+    return {"versions": engagement_plans.versions(plan_id)}
+
+
+@app.post("/api/engagement-plans/{plan_id}/restore/{version}")
+def api_engagement_plan_restore(plan_id: str, version: int):
+    try:
+        return engagement_plans.restore(plan_id, version)
+    except KeyError:
+        raise HTTPException(404, f"no version {version} of '{plan_id}'")
 
 
 @app.get("/api/v3/artifacts")

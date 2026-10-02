@@ -1,0 +1,53 @@
+{
+  "id": "engagement_investment_banking",
+  "kind": "engagement",
+  "industry": "investment_banking",
+  "name": "Engagement plan — Investment banking",
+  "note": "Second industry framework (docs/redesign/engagement-plan.md, decision 5). Same sections as pharma; vocabulary, lifecycle, funnel, channels, fixed moments and the gatekeeper differ. No 'agents' key on purpose.",
+  "period": {"default_months": 6, "options_months": [3, 6, 9, 12]},
+  "vocabulary": {
+    "audience": "Client segment",
+    "audience_examples": ["Corporate clients (CFOs, treasurers, boards)", "Institutional investors", "Private equity sponsors", "Coverage bankers (internal)"],
+    "shift": "Relationship / behaviour shift",
+    "gatekeeper": "Compliance review (incl. information barriers)",
+    "objective_examples": ["Mandates from covered clients 3 -> 6", "Share of wallet in target sector 8% -> 12%", "Investor conference meetings booked +40%"]
+  },
+  "lifecycle_lens": [
+    {"id": "originate", "label": "Originate", "meaning": "Build coverage and relevance with target clients"},
+    {"id": "win", "label": "Win mandate", "meaning": "Be selected for the next deal"},
+    {"id": "expand", "label": "Expand wallet share", "meaning": "Win more products and deals from existing clients"}
+  ],
+  "funnel_stages": {
+    "client": ["Covered", "Engaged", "Pitched", "Mandated"],
+    "investor": ["Covered", "Engaged", "Meeting held", "Order placed"]
+  },
+  "campaign_types": ["Thought leadership", "Sector / deal insight", "Investor event / roadshow", "Product cross-sell", "Client re-engagement", "Market-update series"],
+  "channels": {
+    "owned": ["Email (research / insights)", "Client portal", "Webinar", "Podcast"],
+    "paid": ["Financial press sponsorship", "LinkedIn paid", "Conference sponsorship"],
+    "earned": ["Media commentary", "League table rankings", "Speaking slots"],
+    "field": ["Banker meeting", "Senior coverage call", "Client dinner / event"]
+  },
+  "fixed_moment_types": ["Earnings season", "Deal window / blackout", "Investor conference", "Central bank rate decision", "Fiscal year-end", "Regulatory change", "League table cut-off"],
+  "frequency_caps": {"client_marketing_email_per_week": 1},
+  "clarify_topics": [
+    "Which client segments are priority this period",
+    "Deals or mandates already in the pipeline",
+    "Relative budget weight per objective",
+    "Information-barrier constraints (which teams can't contact which clients)",
+    "Blackout periods in this window"
+  ],
+  "sections": [
+    {"id": "frame", "title": "Plan frame"},
+    {"id": "situation", "title": "Situation & baseline"},
+    {"id": "objectives", "title": "Objectives"},
+    {"id": "audiences", "title": "Client segment priorities"},
+    {"id": "shifts", "title": "Shift map"},
+    {"id": "portfolio", "title": "Campaign portfolio"},
+    {"id": "channels", "title": "Channel & frequency"},
+    {"id": "timeline", "title": "Timeline"},
+    {"id": "budget", "title": "Relative budget"},
+    {"id": "measurement", "title": "Measurement & governance"},
+    {"id": "risks", "title": "Risks & dependencies"}
+  ]
+}

@@ -372,3 +372,38 @@ export function chatAsk(body: {
 export function getStudioProject(id: string): Promise<StudioProject> {
   return getJSON(`/api/projects/${enc(id)}`);
 }
+
+/* ---- Engagement plans (docs/redesign/engagement-plan.md): next N months for one brand ---- */
+export type EngagementIndustry = "pharma" | "investment_banking";
+export interface EngagementPlan {
+  id: string; brand: string; industry: EngagementIndustry; title: string;
+  period_start: string; period_end: string; months: number; status: string;
+  brand_iq_plan: string | null; created_at: string; updated_at: string;
+  version: number; version_reason?: string; version_at?: string;
+  /** True when the brand's active Brand IQ plan has changed since this plan was built. */
+  stale?: boolean;
+  body?: Record<string, unknown>;
+}
+export function getEngagementFramework(industry: EngagementIndustry): Promise<Record<string, unknown>> {
+  return getJSON(`/api/engagement/frameworks/${industry}`);
+}
+export function createEngagementPlan(body: { brand: string; industry?: EngagementIndustry; months?: number; start?: string; title?: string }): Promise<EngagementPlan> {
+  return postJSON("/api/engagement-plans", body);
+}
+export function listEngagementPlans(brand?: string): Promise<{ plans: EngagementPlan[] }> {
+  return getJSON(`/api/engagement-plans${brand ? `?brand=${encodeURIComponent(brand)}` : ""}`);
+}
+export function getEngagementPlan(id: string, version?: number): Promise<EngagementPlan> {
+  return getJSON(`/api/engagement-plans/${id}${version ? `?version=${version}` : ""}`);
+}
+export async function saveEngagementPlan(id: string, body: Record<string, unknown>, reason: string, meta?: Record<string, unknown>): Promise<EngagementPlan> {
+  const r = await fetch(`/api/engagement-plans/${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ body, reason, meta }) });
+  if (!r.ok) throw new Error(`${r.status} ${await r.text()}`);
+  return r.json();
+}
+export function engagementPlanVersions(id: string): Promise<{ versions: { version: number; created_at: string; reason: string }[] }> {
+  return getJSON(`/api/engagement-plans/${id}/versions`);
+}
+export function restoreEngagementPlan(id: string, version: number): Promise<EngagementPlan> {
+  return postJSON(`/api/engagement-plans/${id}/restore/${version}`, {});
+}
