@@ -385,35 +385,35 @@ export interface EngagementPlan {
   body?: Record<string, unknown>;
 }
 export function getEngagementFramework(industry: EngagementIndustry): Promise<Record<string, unknown>> {
-  return getJSON(`/api/engagement/frameworks/${industry}`);
+  return getJSON(`/api/v3/engagement/frameworks/${industry}`);
 }
 export function createEngagementPlan(body: { brand: string; industry?: EngagementIndustry; months?: number; start?: string; title?: string }): Promise<EngagementPlan> {
-  return postJSON("/api/engagement-plans", body);
+  return postJSON("/api/v3/engagement-plans", body);
 }
 export function listEngagementPlans(brand?: string): Promise<{ plans: EngagementPlan[] }> {
-  return getJSON(`/api/engagement-plans${brand ? `?brand=${encodeURIComponent(brand)}` : ""}`);
+  return getJSON(`/api/v3/engagement-plans${brand ? `?brand=${encodeURIComponent(brand)}` : ""}`);
 }
 export function getEngagementPlan(id: string, version?: number): Promise<EngagementPlan> {
-  return getJSON(`/api/engagement-plans/${id}${version ? `?version=${version}` : ""}`);
+  return getJSON(`/api/v3/engagement-plans/${id}${version ? `?version=${version}` : ""}`);
 }
 export async function saveEngagementPlan(id: string, body: Record<string, unknown>, reason: string, meta?: Record<string, unknown>): Promise<EngagementPlan> {
-  const r = await fetch(`/api/engagement-plans/${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ body, reason, meta }) });
+  const r = await fetch(`/api/v3/engagement-plans/${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ body, reason, meta }) });
   if (!r.ok) throw new Error(`${r.status} ${await r.text()}`);
   return r.json();
 }
 export function engagementPlanVersions(id: string): Promise<{ versions: { version: number; created_at: string; reason: string }[] }> {
-  return getJSON(`/api/engagement-plans/${id}/versions`);
+  return getJSON(`/api/v3/engagement-plans/${id}/versions`);
 }
 export function restoreEngagementPlan(id: string, version: number): Promise<EngagementPlan> {
-  return postJSON(`/api/engagement-plans/${id}/restore/${version}`, {});
+  return postJSON(`/api/v3/engagement-plans/${id}/restore/${version}`, {});
 }
 /* Engagement Planner agent steps (strategy/engagement_agent.py). A 503 means the model was
    unreachable and nothing was guessed; the message says so. */
-export function engagementRead(id: string): Promise<EngagementPlan> { return postJSON(`/api/engagement-plans/${id}/agent/read`, {}); }
-export function engagementClarify(id: string): Promise<EngagementPlan> { return postJSON(`/api/engagement-plans/${id}/agent/clarify`, {}); }
+export function engagementRead(id: string): Promise<EngagementPlan> { return postJSON(`/api/v3/engagement-plans/${id}/agent/read`, {}); }
+export function engagementClarify(id: string): Promise<EngagementPlan> { return postJSON(`/api/v3/engagement-plans/${id}/agent/clarify`, {}); }
 export function engagementAnswer(id: string, answers: Record<string, string>, autoAssume = false): Promise<EngagementPlan> {
-  return postJSON(`/api/engagement-plans/${id}/agent/answers`, { answers, auto_assume: autoAssume });
+  return postJSON(`/api/v3/engagement-plans/${id}/agent/answers`, { answers, auto_assume: autoAssume });
 }
 export function engagementDraft(id: string, assumptionDecisions?: Record<string, { status: string; note?: string }>): Promise<EngagementPlan> {
-  return postJSON(`/api/engagement-plans/${id}/agent/draft`, { assumption_decisions: assumptionDecisions ?? null });
+  return postJSON(`/api/v3/engagement-plans/${id}/agent/draft`, { assumption_decisions: assumptionDecisions ?? null });
 }

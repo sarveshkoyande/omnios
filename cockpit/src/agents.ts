@@ -67,6 +67,16 @@ export const AGENTS: Record<Phase, LibraryAgent[]> = {
       builtOn: "strategy/studio_run.py, strategy/orchestrator.py, strategy/plan_document.py",
     },
     {
+      id: "engagement-planner", name: "Engagement Planner", icon: "layers", status: "available",
+      summary: "Plans the next 6 months for a brand: who to engage, what must change, which campaigns, when.",
+      about: "Reads Brand IQ (the brand plan, kit, personas, compliance and market intelligence), asks only what's genuinely missing, reviews its assumptions with you, then drafts objectives, the audience-by-objective shift map, the campaign portfolio, a timeline and a relative budget. Each campaign opens the Campaign Planner.",
+      worksFrom: [
+        { label: "Brand IQ", detail: "The active brand plan, Brand Kit, Personas, Compliance Guardrails and Market Intelligence." },
+        { label: "Industry framework", detail: "config/frameworks/engagement_<industry>.json (pharma, investment banking)." },
+      ],
+      builtOn: "strategy/engagement_agent.py, strategy/engagement_plans.py",
+    },
+    {
       id: "campaign-planner", name: "Campaign Planner", icon: "target", status: "available",
       summary: "Decides a campaign's objective, audience, messages, channels and timing, stage by stage.",
       about: "Walks the campaign decision spine (campaign frame through risks): pre-fills what the brand kit and campaign already say, recommends what it can, and asks only what only you know. Its plan feeds the Flow Planner and the Brief Compiler.",
@@ -210,13 +220,14 @@ export interface RegistryAgent extends LibraryAgent {
 
 /** Agents with a redesigned workspace open there; the rest keep their current screen. */
 const AGENT_ROUTES: Record<string, string> = {
+  "engagement-planner": "#/v3/agent/engagement-planner",
   "campaign-planner": "#/v3/agent/campaign-planner",
   "segmentation-planner": "#/v3/agent/segmentation-planner",
   "flow-planner": "#/v3/agent/flow-planner",
   "briefing-agent": "#/v3/agent/briefing-agent",
   "brief-compiler": "#/v3/agent/brief-compiler",
 };
-const NEW_AGENTS = new Set(["campaign-planner", "segmentation-planner", "flow-planner", "briefing-agent", "brief-compiler"]);
+const NEW_AGENTS = new Set(["engagement-planner", "campaign-planner", "segmentation-planner", "flow-planner", "briefing-agent", "brief-compiler"]);
 
 export const REGISTRY: RegistryAgent[] = (() => {
   const byId = new Map<string, RegistryAgent>();

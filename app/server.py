@@ -1874,7 +1874,7 @@ class EngagementPlanSave(BaseModel):
     meta: dict | None = None
 
 
-@app.get("/api/engagement/frameworks/{industry}")
+@app.get("/api/v3/engagement/frameworks/{industry}")
 def api_engagement_framework(industry: str):
     """The industry framework (labels, lifecycle lens, funnel stages, channels, fixed moments)."""
     try:
@@ -1883,7 +1883,7 @@ def api_engagement_framework(industry: str):
         raise HTTPException(404, str(e))
 
 
-@app.post("/api/engagement-plans")
+@app.post("/api/v3/engagement-plans")
 def api_engagement_plan_create(req: EngagementPlanCreate):
     """A new engagement plan for one brand; period defaults to 6 months."""
     try:
@@ -1894,12 +1894,12 @@ def api_engagement_plan_create(req: EngagementPlanCreate):
         raise HTTPException(400, str(e))
 
 
-@app.get("/api/engagement-plans")
+@app.get("/api/v3/engagement-plans")
 def api_engagement_plan_list(brand: str | None = None):
     return {"plans": engagement_plans.list_plans(brand)}
 
 
-@app.get("/api/engagement-plans/{plan_id}")
+@app.get("/api/v3/engagement-plans/{plan_id}")
 def api_engagement_plan_get(plan_id: str, version: int | None = None):
     plan = engagement_plans.get(plan_id, version)
     if not plan:
@@ -1907,7 +1907,7 @@ def api_engagement_plan_get(plan_id: str, version: int | None = None):
     return plan
 
 
-@app.put("/api/engagement-plans/{plan_id}")
+@app.put("/api/v3/engagement-plans/{plan_id}")
 def api_engagement_plan_save(plan_id: str, req: EngagementPlanSave):
     """Save the whole plan body as a new version (full overwrite, like the flow builder)."""
     try:
@@ -1916,12 +1916,12 @@ def api_engagement_plan_save(plan_id: str, req: EngagementPlanSave):
         raise HTTPException(404, f"no engagement plan '{plan_id}'")
 
 
-@app.get("/api/engagement-plans/{plan_id}/versions")
+@app.get("/api/v3/engagement-plans/{plan_id}/versions")
 def api_engagement_plan_versions(plan_id: str):
     return {"versions": engagement_plans.versions(plan_id)}
 
 
-@app.post("/api/engagement-plans/{plan_id}/restore/{version}")
+@app.post("/api/v3/engagement-plans/{plan_id}/restore/{version}")
 def api_engagement_plan_restore(plan_id: str, version: int):
     try:
         return engagement_plans.restore(plan_id, version)
@@ -1949,25 +1949,25 @@ def _engagement_step(fn, *args):
         raise HTTPException(503, f"The AI model couldn't be reached ({e}), so this step wasn't run. Nothing was guessed - try again in a moment.")
 
 
-@app.post("/api/engagement-plans/{plan_id}/agent/read")
+@app.post("/api/v3/engagement-plans/{plan_id}/agent/read")
 def api_engagement_agent_read(plan_id: str):
     from strategy import engagement_agent
     return _engagement_step(engagement_agent.read, plan_id)
 
 
-@app.post("/api/engagement-plans/{plan_id}/agent/clarify")
+@app.post("/api/v3/engagement-plans/{plan_id}/agent/clarify")
 def api_engagement_agent_clarify(plan_id: str):
     from strategy import engagement_agent
     return _engagement_step(engagement_agent.clarify, plan_id)
 
 
-@app.post("/api/engagement-plans/{plan_id}/agent/answers")
+@app.post("/api/v3/engagement-plans/{plan_id}/agent/answers")
 def api_engagement_agent_answers(plan_id: str, req: EngagementAnswers):
     from strategy import engagement_agent
     return _engagement_step(engagement_agent.answer, plan_id, req.answers, req.auto_assume)
 
 
-@app.post("/api/engagement-plans/{plan_id}/agent/draft")
+@app.post("/api/v3/engagement-plans/{plan_id}/agent/draft")
 def api_engagement_agent_draft(plan_id: str, req: EngagementDraft):
     from strategy import engagement_agent
     return _engagement_step(engagement_agent.draft, plan_id, req.assumption_decisions)
