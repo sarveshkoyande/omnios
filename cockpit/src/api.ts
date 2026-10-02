@@ -34,6 +34,9 @@ export function refreshPublicSources(brand: string): Promise<{ brand: string; ki
 export function getCompliance(brand: string): Promise<{ brand: string; profile: Record<string, unknown> | null }> {
   return getJSON(`/api/brand-kits/${encodeURIComponent(brand)}/compliance`);
 }
+export function proposeKitContent(brand: string, force = false): Promise<{ brand: string; kit: BrandKit }> {
+  return postJSON(`/api/brand-kits/${encodeURIComponent(brand)}/propose${force ? "?force=true" : ""}`, {});
+}
 export function getClientData(brand: string): Promise<Record<string, unknown>> {
   return getJSON(`/api/brand-kits/${encodeURIComponent(brand)}/client-data`);
 }

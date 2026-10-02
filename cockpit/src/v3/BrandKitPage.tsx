@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getBrandKit, getClientData, getCompliance, refreshAudienceSources, refreshPublicSources } from "../api";
+import { getBrandKit, getClientData, getCompliance, proposeKitContent, refreshAudienceSources, refreshPublicSources } from "../api";
 import { Icon } from "../components/Icon";
 import "./iq.css";
 
@@ -56,6 +56,30 @@ function PlanSwitcher({ p }: { p: ReturnType<typeof useKit> }) {
 
 const PAGE_ICON: Record<string, IconName> = { "Brand Kit": "document", Personas: "persona", "Compliance Guardrails": "shield", "Market Intelligence": "radar" };
 
+/** Says which sections Omni proposed (brands without an uploaded plan), and drafts the rest. */
+function ProposalBar({ p }: { p: ReturnType<typeof useKit> }) {
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const proposals = (p.kit?.proposals ?? {}) as Record<string, unknown>;
+  const n = Object.keys(proposals).length;
+  const hasPlan = arr(p.kit?.plans).length > 0;
+  if (hasPlan && !n) return null;
+  const run = () => {
+    if (!p.brand) return;
+    setBusy(true); setErr(null);
+    proposeKitContent(p.brand).then((r) => p.setRaw(r.kit as unknown as Any)).catch((e) => setErr(String(e))).finally(() => setBusy(false));
+  };
+  return (
+    <div className="v3-iq-banner warn v3-iq-propbar">
+      <span>{n
+        ? <><b>{n} sections proposed by Omni</b> from the FDA label and US evidence — review and confirm before use: {Object.keys(proposals).map((k) => k.replace(/_/g, " ")).join(", ")}.</>
+        : <><b>No brand plan uploaded.</b> Omni can draft the empty sections (personas, positioning, messages, voice, guardrails, unmet need, competition) from public evidence, each marked as proposed.</>}</span>
+      <button type="button" className="v3-iq-btn" disabled={busy} onClick={run}>{busy ? "Drafting…" : n ? "Fill remaining gaps" : "Propose missing content"}</button>
+      {err && <small>{err}</small>}
+    </div>
+  );
+}
+
 function Shell({ title, sub, p, children }: { title: string; sub: string; p: ReturnType<typeof useKit>; children: (k: Any) => React.ReactNode }) {
   if (!p.brand) return <p className="v3-empty">No brands yet.</p>;
   return (
@@ -68,6 +92,7 @@ function Shell({ title, sub, p, children }: { title: string; sub: string; p: Ret
         </div>
         <PlanSwitcher p={p} />
       </header>
+      {p.kit && <ProposalBar p={p} />}
       {p.error ? <p className="v3-empty">Couldn't load {p.brand}: {p.error}</p>
         : !p.kit ? <p className="v3-empty">Loading…</p> : children(p.kit)}
     </div>
@@ -207,7 +232,7 @@ export function BrandKitPage(props: PageProps) {
 
         {arr(k.indications).length > 0 && (
           <Block title="Indications" sub={`${arr(k.indications).length} on the label`}>
-            <Tbl rows={arr(k.indications)} cols={[["name", "Indication"], ["population", "Population"], ["line", "Line / setting"], ["criteria", "Criteria"]]} />
+            <Tbl rows={arr(k.indications).map((i) => ({ ...i, line: i.line || "—", criteria: i.criteria || "—" }))} cols={[["name", "Indication"], ["population", "Population"], ["line", "Line / setting"], ["criteria", "Criteria"]]} />
           </Block>
         )}
 
@@ -236,7 +261,7 @@ export function BrandKitPage(props: PageProps) {
         <Block title="Key objectives" sub={`${objectives.length}`}>
           {objectives.length ? (
             <Tbl rows={objectives.map((o, i) => ({ ...o, n: i + 1 }))} cols={[["n", "#"], ["objective", "Objective"], ["measure", "Measure (baseline → target)"], ["target_date", "By"], ["priority", "Priority"]]} src />
-          ) : <p>{needs(k.key_objective) ? <Needs /> : txt(k.key_objective)}</p>}
+          ) : <p>{needs(k.key_objective) ? <span className="v3-muted">Set by an uploaded brand plan, or proposed by the <a href="#/v3/agent/engagement-planner">Engagement Planner</a> from the diagnosis.</span> : txt(k.key_objective)}</p>}
         </Block>
 
         {/* 3. Product profile (public sources) */}

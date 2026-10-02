@@ -1347,6 +1347,20 @@ def api_brand_compliance(brand: str):
     return {"brand": brand, "profile": compliance.for_brand(brand)}
 
 
+@app.post("/api/brand-kits/{brand}/propose")
+def api_brand_kit_propose(brand: str, force: bool = False):
+    """Draft the brand's empty brand-content sections (personas, positioning, messages, voice,
+    guardrails, unmet need, competition) from the evidence the kit holds -- each marked
+    'proposed' with sources (strategy/kit_proposer.py). No model -> 503, nothing written."""
+    from strategy import kit_proposer
+    try:
+        return {"brand": brand, "kit": kit_proposer.propose(brand, force)}
+    except KeyError:
+        raise HTTPException(404, f"no brand kit for '{brand}'")
+    except kit_proposer.LLMUnavailable as e:
+        raise HTTPException(503, f"The AI model couldn't be reached ({e}), so nothing was proposed. Try again in a moment.")
+
+
 @app.get("/api/brand-kits/{brand}/client-data")
 def api_brand_client_data(brand: str):
     """Client data for the planning engines: HCP deciles, accounts, access, field force, reach,

@@ -2982,7 +2982,7 @@
       "source_note": "No brand plan uploaded. Built from public sources; situation, audiences and competitors are proposals to confirm.",
       "company": "A-S Medication Solutions",
       "generic": "empagliflozin",
-      "therapy_area": "",
+      "therapy_area": "Cardiovascular Disease and Diabetes",
       "indication": "Reduce risk of CV death and hospitalization for heart failure; Reduce risk of CV death; Improve glycemic control",
       "territories": [
         "US"
@@ -2990,188 +2990,422 @@
       "lifecycle_stage": "growth",
       "success_measure": "",
       "branded": "",
-      "primary_audience": "",
+      "primary_audience": "Cardiologists treating heart failure",
       "fiscal_frame": "",
       "tagline": "",
-      "core_claim": "",
-      "positioning_statement": "",
-      "message_hierarchy": [],
+      "core_claim": "Jardiance provides comprehensive benefits by reducing the risk of cardiovascular death and hospitalization for heart failure in adults with heart failure, reducing cardiovascular death in adults with type 2 diabetes and established cardiovascular disease, and improving glycemic control in adults with type 2 diabetes.",
+      "positioning_statement": "For adult patients with heart failure or type 2 diabetes mellitus with established cardiovascular disease who need improved cardiovascular outcomes and glycemic control, Jardiance is the SGLT2 inhibitor that provides statistically significant reductions in cardiovascular death, hospitalization for heart failure, and HbA1c because of its proven efficacy across these indications.",
+      "message_hierarchy": [
+        {
+          "pillar": "Cardiovascular Benefit in Heart Failure",
+          "claim": "JARDIANCE reduces the risk of cardiovascular death and hospitalization for heart failure in adults with heart failure.",
+          "evidence": "FDA label · indications"
+        },
+        {
+          "pillar": "Cardiovascular Benefit in Type 2 Diabetes with CVD",
+          "claim": "JARDIANCE reduces the risk of cardiovascular death in adults with type 2 diabetes mellitus and established cardiovascular disease.",
+          "evidence": "FDA label · indications"
+        },
+        {
+          "pillar": "Glycemic Control",
+          "claim": "JARDIANCE improves glycemic control as an adjunct to diet and exercise in adults with type 2 diabetes mellitus.",
+          "evidence": "FDA label · clinical studies (Monotherapy Study, Add-On Combination Therapy with Metformin)"
+        },
+        {
+          "pillar": "HbA1c Reduction",
+          "claim": "JARDIANCE 25 mg reduced HbA1c by -0.9% compared to placebo in a monotherapy study.",
+          "evidence": "FDA label · clinical studies (Monotherapy Study)"
+        },
+        {
+          "pillar": "Body Weight Reduction",
+          "claim": "JARDIANCE 25 mg resulted in a -3.9% change from baseline in body weight compared to a 2.0% change for glimepiride at Week 52.",
+          "evidence": "FDA label · clinical studies (Active-Controlled Study versus Glimepiride in Combination with Metformin)"
+        }
+      ],
       "approved_indication": "1 INDICATIONS AND USAGE JARDIANCE is indicated: to reduce the risk of cardiovascular death and hospitalization for heart failure in adults with heart failure. to reduce the risk of cardiovascular death in adults with type 2 diabetes mellitus and established cardiovascular disease. as an adjunct to diet and exercise to improve glycemic control in adults with type 2 diabetes mellitus. JARDIANCE is a sodium-glucose co-transporter 2 (SGLT2) inhibitor indicated: To reduce the risk of cardiovascular death and hospitalization for heart failure in adults with heart failure. ( 1 ) To reduce the risk of cardiovascular death in adults with type 2 diabetes mellitus and established cardiovascular disease. ( 1 ) As an adjunct to diet and exercise to improve glycemic control in adults with type 2 diabetes mellitus. ( 1 ) Limitations of Use: Not recommended in patients with type 1 diabetes mellitus. It may increase the risk of diabetic ketoacidosis in these patients. ( 1 ) Not recommended for use to improve glycemic control in adults with type 2 diabetes mellitus with an eGFR less than 30 mL/min/1.73 m 2 ( 1 ) Limitations of Use JARDIANCE is not recommended in patients with type 1 diabetes mellitus. It may increase the risk of diabetic ketoacidosis in these patients [see Warnings and Precautions (5.1) ] . JARDIANCE is not recommended for use to improve glycemic control in adults with type 2 diabetes mellitus with an eGFR less than 30 mL/min/1.73 m 2 . JARDIANCE is likely to be ineffective in this setting based upon its mechanism of action.",
       "safety_reference": "5 WARNINGS AND PRECAUTIONS Ketoacidosis: Assess patients who present with signs and symptoms of metabolic acidosis for ketoacidosis, regardless of blood glucose level. If suspected, discontinue JARDIANCE, evaluate and treat promptly. Before initiating JARDIANCE, consider risk factors for ketoacidosis. Patients on JARDIANCE may require monitoring and temporary discontinuation of therapy in clinical situations known to predispose to ketoacidosis. ( 5.1 ) Volume Depletion: Before initiating JARDIANCE, assess volume status and renal function in patients with impaired renal function, elderly patients, or patients on loop diuretics. Monitor for signs and symptoms during therapy. ( 5.2 , 6.1 ) Urosepsis and Pyelonephritis: Evaluate patients for signs and symptoms of urinary tract infections and treat promptly, if indicated ( 5.3 ) Hypoglycemia: Consider lowering the dose of insulin secretagogue or insulin to reduce the risk of hypoglycemia when initiating JARDIANCE ( 5.4 ) Necrotizing Fasciitis of the Perineum (Fournier's Gangrene): Serious, life-threatening cases have occurred in both females and males. Assess patients presenting with pain or tenderness, erythema, or swelling in the genital or perineal area, along with fever or malaise. If suspected, institute prompt treatment. ( 5.5 ) Genital Mycotic Infections: Monitor and treat as appropriate ( 5.6 ) Hypersensitivity Reactions: Serious hypersensitivity reactions (e.g., angioedema) have occurred with JARDIANCE. If hypersensitivity reactions occur, discontinue JARDIANCE, treat promptly, and monitor until signs and symptoms resolve. ( 5.7 ) 5.1 Ketoacidosis Reports of ketoacidosis, a serious life-threatening condition requiring urgent hospitalization have been identified in clinical trials and postmarketing surveillance in patients with type 1 and type 2 diabetes mellitus receiving sodium glucose co-transporter-2 (SGLT2) inhibitors, including JARDIANCE. Fatal cases of ketoacidosis have been reported in patients taking JARDIANCE. In placebo-controlled trials of patients with type 1 diabetes, the risk of ketoacidosis was increased in patients who received SGLT2 inhibitors compared to patients who received placebo. JARDIANCE is not indicated for the treatment of patients with type 1 diabetes mellitus [see Indications and Usage (1) ] . Patients treated with JARDIANCE who present with signs and symptoms consistent with severe metabolic acidosis should be assessed for ketoacidosis regardless of presenting blood glucose levels, as ketoacidosis associated with JARDIANCE may be present even if blood glucose levels are less than 250 mg/dL. If ketoacidosis is suspected, JARDIANCE should be discontinued, patient should be evaluated, and prompt treatment should be instituted. Treatment of ketoacidosis may require insulin, fluid and carbohydrate replacement. In many of the postmarketing reports, and particularly in patients with type 1 diabetes, the presence of ketoacidosis was not immediately recognized and institution of treatment was delayed because presenting blood glucose levels were below those typically expected for diabetic ketoacidosis (often less than 250 mg/dL). Signs and symptoms at presentation were consistent with dehydration and severe metabolic acidosis and included nausea, vomiting, abdominal pain, generalized malaise, and shortness of breath. In some but not all cases, factors predisposing to ketoacidosis such as insulin dose reduction, acute febrile illness, reduced caloric intake, surgery, pancreatic disorders suggesting insulin deficiency (e.g., type 1 diabetes, history of pancreatitis or pancreatic surgery), and alcohol abuse were identified. Before initiating JARDIANCE, consider factors in the patient history that may predispose to ketoacidosis including pancreatic insulin deficiency from any cause, caloric restriction, and alcohol abuse. For patients who undergo scheduled surgery, consider temporarily discontinuing JARDIANCE for at least 3 days prior to surgery [see Clinical Pharmacology (12.2 , 12.3) ] . Consider monitoring for ketoacidosis and temporarily discontinuing JARDIANCE in other clinical situations known to predispose to ketoacidosis (e.g., prolonged fasting due to acute illness or post-surgery). Ensure risk factors for ketoacidosis are resolved prior to restarting JARDIANCE. Educate patients on the signs and symptoms of ketoacidosis and instruct patients to discontinue JARDIANCE and seek medical attention immediately if signs and symptoms occur. 5.2 Volume Depletion JARDIANCE can cause intravascular volume depletion which may sometimes manifest as symptomatic hypotension or acute transient changes in creatinine [see Adverse Reactions (6.1) ] . There have been post-marketing reports of acute kidney injury, some requiring hospitalization and dialysis, in patients with type 2 diabetes mellitus receiving SGLT2 inhibitors, including JARDIANCE. Patients with impaired renal function (eGFR less than 60 mL/min/1.73 m 2 ), elderly patients, or patients on loop diuretics may be at increased risk for volume depletion or hypotension. Before initiating JARDIANCE in patients with one or more of these characteristics, assess volume status and renal function. In patients with volume depletion, correct this condition before initiating JARDIANCE. Monitor for signs and symptoms of volume depletion, and renal function after initiating therapy. 5.3 Urosepsis and Pyelonephritis There have been reports of serious urinary tract infections including urosepsis and pyelonephritis requiring hospitalization in patients receiving SGLT2 inhibitors, including JARDIANCE. Treatment with SGLT2 inhibitors increases the risk for urinary tract infections. Evaluate patients for signs and symptoms of urinary tract infections and treat promptly, if indicated [see Adverse Reactions (6) ] . 5.4 Hypoglycemia with Concomitant Use with Insulin and Insulin Secretagogues Insulin and insulin secretagogues are known to cause hypoglycemia. The risk of hypoglycemia is increased when JARDIANCE is used in combination with insulin secretagogues (e.g., sulfonylurea) or insulin [see Adverse Reactions (6.1) ] . Therefore, a lower dose of the insulin secretagogue or insulin may be required to reduce the risk of hypoglycemia when used in combination with JARDIANCE. 5.5 Necrotizing Fasciitis of the Perineum (Fournier's Gangrene) Reports of necrotizing fasciitis of the perineum (Fournier's gangrene), a rare but serious and life-threatening necrotizing infection requiring urgent surgical intervention, have been identified in patients with diabetes mellitus receiving SGLT2 inhibitors, including JARDIANCE. Cases have been reported in both females and males. Serious outcomes have included hospitalization, multiple surgeries, and death. Patients treated with JARDIANCE presenting with pain or tenderness, erythema, or swelling in the genital or perineal area, along with fever or malaise, should be assessed for necrotizing fasciitis. If suspected, start treatment immediately with broad-spectrum antibiotics and, if necessary, surgical debridement. Discontinue JARDIANCE, closely monitor blood glucose levels, and provide appropriate alternative therapy for glycemic control. 5.6 Genital Mycotic Infections JARDIANCE increases the risk for genital mycotic infections [see Adverse Reactions (6.1) ] . Patients with a history of chronic or recurrent genital mycotic infections were more likely to develop genital mycotic infections. Monitor and treat as appropriate. 5.7 Hypersensitivity Reactions There have been postmarketing reports of serious hypersensitivity reactions (e.g., angioedema) in patients treated with JARDIANCE. If a hypersensitivity reaction occurs, discontinue JARDIANCE; treat promptly per standard of care, and monitor until signs and symptoms resolve. JARDIANCE is contraindicated in patients with hypersensitivity to empagliflozin or any of the excipients in JARDIANCE [see Contraindications (4) ] .",
-      "clinical_data": [],
-      "tone_pillars": [],
-      "voice_do": [],
-      "voice_dont": [],
+      "clinical_data": [
+        {
+          "study": "Monotherapy Study",
+          "stat": "JARDIANCE 10 mg provided a statistically significant reduction in HbA1c of -0.7% (97.5% CI: -0.9, -0.6) compared to placebo.",
+          "context": "Glycemic Control in Patients with Type 2 Diabetes Mellitus"
+        },
+        {
+          "study": "Monotherapy Study",
+          "stat": "JARDIANCE 25 mg provided a statistically significant reduction in HbA1c of -0.9% (97.5% CI: -1.0, -0.7) compared to placebo.",
+          "context": "Glycemic Control in Patients with Type 2 Diabetes Mellitus"
+        },
+        {
+          "study": "Add-On Combination Therapy with Metformin",
+          "stat": "JARDIANCE 10 mg + Metformin provided a statistically significant reduction in HbA1c of -0.6% (95% CI: -0.7, -0.4) compared to placebo + metformin.",
+          "context": "Glycemic Control in Patients with Type 2 Diabetes Mellitus"
+        },
+        {
+          "study": "Add-On Combination Therapy with Metformin",
+          "stat": "JARDIANCE 25 mg + Metformin provided a statistically significant reduction in HbA1c of -0.6% (95% CI: -0.8, -0.5) compared to placebo + metformin.",
+          "context": "Glycemic Control in Patients with Type 2 Diabetes Mellitus"
+        },
+        {
+          "study": "Active-Controlled Study versus Glimepiride in Combination with Metformin",
+          "stat": "At Week 52, JARDIANCE 25 mg + Metformin lowered HbA1c by -0.7%, which was non-inferior to glimepiride + Metformin (-0.7%), with a difference of -0.07% (97.5% CI: -0.15, 0.01).",
+          "context": "Glycemic Control in Patients with Type 2 Diabetes Mellitus"
+        },
+        {
+          "study": "Add-On Combination with Insulin with or without Metformin and/or Sulfonylureas (Week 78)",
+          "stat": "JARDIANCE 25 mg + Insulin provided a statistically significant reduction in HbA1c of -0.7% (97.5% CI: -0.9, -0.5) compared to placebo + Insulin.",
+          "context": "Glycemic Control in Patients with Type 2 Diabetes Mellitus"
+        }
+      ],
+      "tone_pillars": [
+        "Authoritative",
+        "Evidence-Based",
+        "Patient-Centered",
+        "Comprehensive",
+        "Proactive"
+      ],
+      "voice_do": [
+        "Reduce the risk of cardiovascular death and hospitalization for heart failure",
+        "Established cardiovascular disease",
+        "Adjunct to diet and exercise",
+        "Glycemic control"
+      ],
+      "voice_dont": [
+        "Casual language",
+        "Overly technical jargon without explanation",
+        "Exaggerated claims",
+        "Undermining the role of other therapies",
+        "Making promises about absolute outcomes"
+      ],
       "guardrails": {
-        "dos": [],
-        "donts": []
+        "dos": [
+          {
+            "category": "Indication",
+            "text": "JARDIANCE is indicated to reduce the risk of cardiovascular death and hospitalization for heart failure in adults with heart failure. (FDA label · Indications and Usage)"
+          },
+          {
+            "category": "Indication",
+            "text": "JARDIANCE is indicated to reduce the risk of cardiovascular death in adults with type 2 diabetes mellitus and established cardiovascular disease. (FDA label · Indications and Usage)"
+          },
+          {
+            "category": "Indication",
+            "text": "JARDIANCE is indicated as an adjunct to diet and exercise to improve glycemic control in adults with type 2 diabetes mellitus. (FDA label · Indications and Usage)"
+          },
+          {
+            "category": "Monitoring",
+            "text": "Assess patients who present with signs and symptoms of metabolic acidosis for ketoacidosis, regardless of blood glucose level. (FDA label · Warnings and Precautions 5.1)"
+          },
+          {
+            "category": "Monitoring",
+            "text": "Before initiating JARDIANCE, assess volume status and renal function in patients with impaired renal function, elderly patients, or patients on loop diuretics. Monitor for signs and symptoms during therapy. (FDA label · Warnings and Precautions 5.2)"
+          },
+          {
+            "category": "Monitoring",
+            "text": "Evaluate patients for signs and symptoms of urinary tract infections and treat promptly, if indicated. (FDA label · Warnings and Precautions 5.3)"
+          },
+          {
+            "category": "Dose Adjustment",
+            "text": "Consider lowering the dose of insulin secretagogue or insulin to reduce the risk of hypoglycemia when initiating JARDIANCE. (FDA label · Warnings and Precautions 5.4)"
+          },
+          {
+            "category": "Action for Adverse Events",
+            "text": "If necrotizing fasciitis of the perineum is suspected, institute prompt treatment with broad-spectrum antibiotics and, if necessary, surgical debridement. Discontinue JARDIANCE, closely monitor blood glucose levels, and provide appropriate alternative therapy for glycemic control. (FDA label · Warnings and Precautions 5.5)"
+          },
+          {
+            "category": "Action for Adverse Events",
+            "text": "If a hypersensitivity reaction occurs, discontinue JARDIANCE; treat promptly per standard of care, and monitor until signs and symptoms resolve. (FDA label · Warnings and Precautions 5.7)"
+          }
+        ],
+        "donts": [
+          {
+            "category": "Population Limitation",
+            "text": "JARDIANCE is not recommended in patients with type 1 diabetes mellitus. It may increase the risk of diabetic ketoacidosis in these patients. (FDA label · Limitations of Use 1)"
+          },
+          {
+            "category": "Population Limitation",
+            "text": "JARDIANCE is not recommended for use to improve glycemic control in adults with type 2 diabetes mellitus with an eGFR less than 30 mL/min/1.73 m2. JARDIANCE is likely to be ineffective in this setting based upon its mechanism of action. (FDA label · Limitations of Use 1)"
+          },
+          {
+            "category": "Contraindication",
+            "text": "Do not use in patients with hypersensitivity to empagliflozin or any of the excipients in JARDIANCE, reactions such as angioedema have occurred. (FDA label · Contraindications 4)"
+          },
+          {
+            "category": "Contraindication",
+            "text": "Do not use in patients on dialysis. (FDA label · Contraindications 4)"
+          },
+          {
+            "category": "Ketoacidosis",
+            "text": "Do not delay assessment for ketoacidosis if metabolic acidosis is suspected, even if blood glucose levels are less than 250 mg/dL. (FDA label · Warnings and Precautions 5.1)"
+          }
+        ]
       },
       "concepts": [],
       "message_pool": [],
       "claims": [],
-      "references": [],
+      "references": [
+        {
+          "id": "Jardiance Monotherapy Study",
+          "title": "A double-blind, placebo-controlled study to evaluate the efficacy and safety of JARDIANCE monotherapy.",
+          "type": "Pivotal Clinical Trial",
+          "key_data": "Statistically significant reductions in HbA1c, FPG, and body weight at Week 24 for JARDIANCE 10 mg and 25 mg vs. placebo.",
+          "promo_eligible": true
+        },
+        {
+          "id": "Jardiance Add-On to Metformin Study",
+          "title": "A double-blind, placebo-controlled study to evaluate the efficacy and safety of JARDIANCE in combination with metformin.",
+          "type": "Pivotal Clinical Trial",
+          "key_data": "Statistically significant reductions in HbA1c, FPG, and body weight at Week 24 for JARDIANCE 10 mg and 25 mg + Metformin vs. placebo + Metformin.",
+          "promo_eligible": true
+        },
+        {
+          "id": "Jardiance vs Glimepiride Study",
+          "title": "A double-blind, glimepiride-controlled study comparing JARDIANCE to glimepiride as add-on therapy in patients inadequately controlled on metformin.",
+          "type": "Pivotal Clinical Trial",
+          "key_data": "JARDIANCE 25 mg was non-inferior to glimepiride in lowering HbA1c at Week 52 and Week 104, with significant reductions in body weight and systolic blood pressure.",
+          "promo_eligible": true
+        },
+        {
+          "id": "Jardiance Add-On to Insulin Study (78 Weeks)",
+          "title": "A double-blind, placebo-controlled study to evaluate the efficacy of JARDIANCE as add-on therapy to insulin over 78 weeks.",
+          "type": "Pivotal Clinical Trial",
+          "key_data": "Statistically significant reductions in HbA1c, FPG, and body weight at Week 78 for JARDIANCE 10 mg and 25 mg + Insulin vs. placebo + Insulin.",
+          "promo_eligible": true
+        }
+      ],
       "components": [],
       "personas": {
-        "hcp": [],
-        "patient": [],
-        "payer": []
+        "hcp": [
+          {
+            "name": "Dr. Eleanor Vance — The Heart-Focused Innovator",
+            "specialties": "Cardiology",
+            "who": "Cardiologists who manage adult patients diagnosed with heart failure, seeking to optimize patient outcomes by reducing CV death and hospitalization.",
+            "tier": "Primary",
+            "behaviours": [
+              "Actively seeks new therapies to improve heart failure outcomes.",
+              "Evaluates clinical trial data rigorously before adoption.",
+              "Prioritizes therapies with established cardiovascular benefits beyond symptomatic relief."
+            ],
+            "barrier": "May be hesitant to adopt therapies traditionally associated with diabetes management for heart failure patients without diabetes.",
+            "moment": "When reviewing new guideline recommendations or compelling clinical data for heart failure management.",
+            "key_message": "JARDIANCE reduces the risk of cardiovascular death and hospitalization for heart failure in adults with heart failure.",
+            "tone": "Authoritative, scientific, patient-centric.",
+            "voice": "ILLUSTRATIVE QUOTE: 'My heart failure patients need therapies that do more than just manage symptoms; they need to live longer and avoid repeat hospital visits. I'm always looking for strong evidence of hard outcomes.'",
+            "source": "FDA label · indications · Audience Segment: Cardiologists treating heart failure"
+          },
+          {
+            "name": "Dr. David Chen — The Holistic Endocrinologist",
+            "specialties": "Endocrinology",
+            "who": "Endocrinologists managing adult patients with type 2 diabetes mellitus who also have established cardiovascular disease.",
+            "tier": "Primary",
+            "behaviours": [
+              "Integrates glycemic control with cardiovascular risk reduction.",
+              "Stays current on guidelines for T2DM and CVD management.",
+              "Educates patients on the broader benefits of their medications."
+            ],
+            "barrier": "May prioritize newer GLP-1 RAs for weight loss or A1c lowering, potentially overlooking SGLT2i benefits if not explicitly focused on CV outcomes.",
+            "moment": "When a patient with T2DM and established CVD requires initiation or intensification of therapy, or when current therapy isn't adequately addressing CV risk.",
+            "key_message": "JARDIANCE reduces the risk of cardiovascular death in adults with type 2 diabetes mellitus and established cardiovascular disease.",
+            "tone": "Evidence-based, comprehensive, proactive.",
+            "voice": "ILLUSTRATIVE QUOTE: 'For my patients with type 2 diabetes and heart disease, it's not just about their A1c. Their cardiovascular health is paramount. I need therapies that address both effectively.'",
+            "source": "FDA label · indications · Audience Segment: Endocrinologists treating type 2 diabetes with CVD"
+          },
+          {
+            "name": "Dr. Sarah Miller — The Pragmatic Primary Care Provider",
+            "specialties": "General Practice / Primary Care",
+            "who": "GPs/PCPs who manage a broad range of chronic conditions, including type 2 diabetes and early-stage heart failure.",
+            "tier": "Primary",
+            "behaviours": [
+              "Seeks practical, guideline-aligned treatments for common chronic diseases.",
+              "Values ease of use and patient tolerability for long-term adherence.",
+              "May refer complex cases but manages stable chronic conditions in-house."
+            ],
+            "barrier": "Lack of time for in-depth education on multi-indication drugs, may stick to familiar prescribing patterns, or feel uncomfortable initiating for heart failure without specialist input, especially if NT-proBNP criteria are a hurdle.",
+            "moment": "When a patient with T2DM presents with existing CVD or early signs of heart failure, or during annual health checks where multiple risk factors are present.",
+            "key_message": "JARDIANCE improves glycemic control as an adjunct to diet and exercise in adults with type 2 diabetes mellitus and offers cardiovascular benefits in both T2DM with CVD and heart failure.",
+            "tone": "Clear, supportive, actionable.",
+            "voice": "ILLUSTRATIVE QUOTE: 'I see so many patients with both diabetes and heart issues. I need simple, effective tools that I can trust to make a real difference, without adding too much complexity to their regimen.'",
+            "source": "FDA label · indications · patient_flow_us (t2dm-cv-death, Initiated, 'failure to achieve the predefined NT-proBNP inclusion threshold') · Audience Segment: General Practitioners / Primary Care Physicians"
+          }
+        ],
+        "patient": [
+          {
+            "name": "Mr. Robert Johnson — The Informed Self-Advocate",
+            "specialties": "N/A",
+            "who": "Adults diagnosed with type 2 diabetes mellitus and established cardiovascular disease, who are proactive about their health and seek to understand their treatment options.",
+            "tier": "Secondary",
+            "behaviours": [
+              "Researches their conditions and medications online.",
+              "Asks questions during doctor's appointments.",
+              "Committed to adhering to treatment if they understand the benefits.",
+              "Concerned about long-term health and preventing future cardiovascular events."
+            ],
+            "barrier": "May not fully understand the specific cardiovascular benefits of an SGLT2 inhibitor beyond glycemic control, or may be swayed by side effect profiles or costs.",
+            "moment": "After a cardiovascular event, during routine check-ups, or when discussing new treatment options with their endocrinologist or cardiologist.",
+            "key_message": "JARDIANCE can help reduce your risk of cardiovascular death if you have type 2 diabetes and established cardiovascular disease.",
+            "tone": "Empathetic, clear, empowering.",
+            "voice": "ILLUSTRATIVE QUOTE: 'My doctor always talks about my A1c, but I'm really worried about having another heart attack. I want to know what medications can help protect my heart in the long run.'",
+            "source": "FDA label · indications · Audience Segment: Adult Patients with Type 2 Diabetes and CVD"
+          },
+          {
+            "name": "Ms. Evelyn Reed — The Hopeful Heart Patient",
+            "specialties": "N/A",
+            "who": "Adults diagnosed with heart failure, looking for ways to improve their quality of life and reduce hospitalizations.",
+            "tier": "Secondary",
+            "behaviours": [
+              "Follows doctor's advice closely to manage their condition.",
+              "Seeks to understand how medications can improve daily living and prevent worsening of their condition.",
+              "Concerned about the impact of heart failure on their independence and family."
+            ],
+            "barrier": "May be unaware of specific medication options for heart failure, especially those originally known for diabetes, or may have concerns about polypharmacy.",
+            "moment": "Following a heart failure hospitalization, during discussions about managing their heart failure symptoms, or when seeking ways to reduce the risk of future events.",
+            "key_message": "If you have heart failure, JARDIANCE can help reduce your risk of cardiovascular death and hospital stays for heart failure.",
+            "tone": "Supportive, reassuring, informative.",
+            "voice": "ILLUSTRATIVE QUOTE: 'My heart failure has really impacted my life. I just want to feel better and not end up back in the hospital again. What can help me stay out of there?'",
+            "source": "FDA label · indications · Audience Segment: Adult Patients with Heart Failure"
+          }
+        ],
+        "caregiver": [
+          {
+            "name": "Mr. Michael Davis — The Dedicated Support System",
+            "specialties": "N/A",
+            "who": "Caregivers for adult patients with heart failure or type 2 diabetes and established cardiovascular disease, who are actively involved in managing the patient's health.",
+            "tier": "Secondary",
+            "behaviours": [
+              "Attends doctor's appointments with the patient.",
+              "Helps manage medication schedules and refills.",
+              "Researches conditions and treatment options to ensure the best care.",
+              "Concerned about the patient's well-being, quality of life, and preventing adverse events."
+            ],
+            "barrier": "May not understand the nuances of different medications or how they specifically contribute to cardiovascular protection, or may be overwhelmed by information.",
+            "moment": "When the patient receives a new diagnosis, during medication reviews with HCPs, or when observing changes in the patient's health status.",
+            "key_message": "As a caregiver, understanding how JARDIANCE can help reduce the risk of cardiovascular death and hospitalizations for heart failure or in type 2 diabetes with CVD can empower you to support your loved one's health.",
+            "tone": "Empathetic, clear, practical.",
+            "voice": "ILLUSTRATIVE QUOTE: 'I'm trying to do everything I can to help my spouse manage their heart failure/diabetes. I need to understand what these medicines do and how they fit into the bigger picture to keep them healthy and out of the hospital.'",
+            "source": "FDA label · indications · Audience Segment: Adult Patients with Heart Failure · Audience Segment: Adult Patients with Type 2 Diabetes and CVD"
+          }
+        ]
       },
       "competitors": [
         {
           "name": "Dipeptidyl peptidase-4 inhibitors (DPP-4i)",
           "type": "alternative",
-          "status": null,
-          "threat": null,
-          "threat_status": "proposed",
+          "status": "Not captured",
+          "strength": "Not captured",
+          "weakness": "Not captured",
+          "counter": "Not captured",
+          "threat": "Medium",
+          "threat_reason": "While an alternative for glycemic control, DPP-4is generally lack the broad cardiovascular and heart failure benefits of SGLT2 inhibitors like Jardiance, making them less of a direct threat in specific CV indications.",
           "source": "PubMed 30690856, 38509341, 40550404",
-          "indication": "t2dm-cv-death"
+          "threat_status": "proposed"
         },
         {
           "name": "Glucagon-like peptide-1 receptor agonists (GLP-1 RAs)",
           "type": "alternative",
-          "status": null,
-          "threat": null,
-          "threat_status": "proposed",
+          "status": "Not captured",
+          "strength": "Not captured",
+          "weakness": "GLP-1 RA users were more likely to discontinue therapy (HR=1.39, p <0.001) compared to SGLT2i users. Reasons may include tolerance, side effects, glucose control, preferences for oral medications, patient costs, and access to medications.",
+          "counter": "Patients using GLP-1 RAs were more likely to discontinue therapy, potentially due to tolerance, side effects, or a preference for oral medications. Jardiance is an oral medication, which may offer a preference benefit.",
+          "threat": "Medium",
+          "threat_reason": "GLP-1 RAs are strong competitors for glycemic control and also offer cardiovascular benefits, but may have higher discontinuation rates compared to SGLT2i users.",
           "source": "PubMed 30528435, 30690856, 40550404, 41984016, 40119283, 41165079",
-          "indication": "t2dm-cv-death"
+          "threat_status": "proposed"
         },
         {
           "name": "Liraglutide",
           "type": "direct",
-          "status": null,
-          "threat": null,
-          "threat_status": "proposed",
+          "status": "Not captured",
+          "strength": "Not captured",
+          "weakness": "Not captured",
+          "counter": "Not captured",
+          "threat": "Medium",
+          "threat_reason": "As a GLP-1 RA, liraglutide shares some cardiovascular benefits with SGLT2 inhibitors and is a strong competitor for glycemic control in T2DM with CVD.",
           "source": "PubMed 30528435, 30690856, 29031006, 41984016",
-          "indication": "t2dm-cv-death"
+          "threat_status": "proposed"
         },
         {
           "name": "Canagliflozin",
           "type": "direct",
-          "status": null,
-          "threat": null,
-          "threat_status": "proposed",
+          "status": "Not captured",
+          "strength": "Not captured",
+          "weakness": "Not captured",
+          "counter": "Not captured",
+          "threat": "High",
+          "threat_reason": "Canagliflozin is another SGLT2 inhibitor, directly competing in the same therapeutic class for indications like T2DM and heart failure.",
           "source": "PubMed 30690856, 41984016",
-          "indication": "t2dm-cv-death"
+          "threat_status": "proposed"
         },
         {
           "name": "Dapagliflozin",
           "type": "direct",
-          "status": null,
-          "threat": null,
-          "threat_status": "proposed",
+          "status": "Not captured",
+          "strength": "Not captured",
+          "weakness": "Among patients not suitable for gliflozin treatment (36%), the major determinant of ineligibility was the failure to achieve the predefined NT-proBNP inclusion threshold.",
+          "counter": "For patients with heart failure where NT-proBNP levels are a determinant of eligibility for some SGLT2 inhibitors, Jardiance's label does not specify NT-proBNP criteria for its heart failure indication, potentially offering a broader eligible patient population.",
+          "threat": "High",
+          "threat_reason": "Dapagliflozin is a direct SGLT2 inhibitor competitor with similar indications, particularly in heart failure and T2DM.",
           "source": "PubMed 36917048, 35777490, 34454968, 41984016",
-          "indication": "t2dm-cv-death"
+          "threat_status": "proposed"
         },
         {
           "name": "Sitagliptin",
           "type": "placebo proxy",
-          "status": null,
-          "threat": null,
-          "threat_status": "proposed",
+          "status": "Not captured",
+          "strength": "Not captured",
+          "weakness": "Not captured",
+          "counter": "Not captured",
+          "threat": "Low",
+          "threat_reason": "Sitagliptin is a DPP-4 inhibitor, primarily for glycemic control, and does not offer the same broad cardiovascular and heart failure benefits as Jardiance.",
           "source": "PubMed 42556854, 40886075, 37259575",
-          "indication": "t2dm-cv-death"
+          "threat_status": "proposed"
         },
         {
           "name": "Sotagliflozin",
           "type": "direct",
-          "status": null,
-          "threat": null,
-          "threat_status": "proposed",
+          "status": "Not captured",
+          "strength": "Not captured",
+          "weakness": "Not captured",
+          "counter": "Not captured",
+          "threat": "High",
+          "threat_reason": "Sotagliflozin is an SGLT1/2 inhibitor, providing similar and potentially broader mechanisms of action, directly competing in the diabetes and heart failure space.",
           "source": "PubMed 38878007",
-          "indication": "t2dm-cv-death"
+          "threat_status": "proposed"
         },
         {
           "name": "Finerenone",
           "type": "alternative",
-          "status": null,
-          "threat": null,
-          "threat_status": "proposed",
+          "status": "Not captured",
+          "strength": "Not captured",
+          "weakness": "Not captured",
+          "counter": "Not captured",
+          "threat": "Medium",
+          "threat_reason": "Finerenone is a non-steroidal mineralocorticoid receptor antagonist with benefits in chronic kidney disease and T2DM, offering an alternative pathway for CV and renal protection, but not directly for glycemic control in the same way as SGLT2 inhibitors.",
           "source": "PubMed 39380152, 37314801, 42244376",
-          "indication": "t2dm-cv-death"
-        },
-        {
-          "name": "Tirzepatide",
-          "type": "direct",
-          "status": null,
-          "threat": null,
-          "threat_status": "proposed",
-          "source": "PubMed 42556854, 40886075",
-          "indication": "t2dm-cv-death"
-        },
-        {
-          "name": "Semaglutide",
-          "type": "direct",
-          "status": null,
-          "threat": null,
-          "threat_status": "proposed",
-          "source": "PubMed 30528435, 40886075, 40183412, 40908778, 41984016, 41165079",
-          "indication": "t2dm-cv-death"
-        },
-        {
-          "name": "Ertugliflozin",
-          "type": "direct",
-          "status": null,
-          "threat": null,
-          "threat_status": "proposed",
-          "source": "PubMed 41984016",
-          "indication": "t2dm-cv-death"
-        },
-        {
-          "name": "Sulfonylureas",
-          "type": "alternative",
-          "status": null,
-          "threat": null,
-          "threat_status": "proposed",
-          "source": "PubMed 34180939",
-          "indication": "t2dm-cv-death"
-        },
-        {
-          "name": "Insulin",
-          "type": "alternative",
-          "status": null,
-          "threat": null,
-          "threat_status": "proposed",
-          "source": "PubMed 38015216, 30690856",
-          "indication": "t2dm-cv-death"
-        },
-        {
-          "name": "Glyburide",
-          "type": "alternative",
-          "status": null,
-          "threat": null,
-          "threat_status": "proposed",
-          "source": "PubMed 38015216",
-          "indication": "t2dm-cv-death"
-        },
-        {
-          "name": "warfarin",
-          "type": "alternative",
-          "status": null,
-          "threat": null,
-          "threat_status": "proposed",
-          "source": "PubMed 30015405",
-          "indication": "hf-cv-death-hospitalization"
-        },
-        {
-          "name": "aspirin",
-          "type": "alternative",
-          "status": null,
-          "threat": null,
-          "threat_status": "proposed",
-          "source": "PubMed 30015405",
-          "indication": "hf-cv-death-hospitalization"
-        },
-        {
-          "name": "glucagon-like peptide-1 receptor agonists",
-          "type": "alternative",
-          "status": null,
-          "threat": null,
-          "threat_status": "proposed",
-          "source": "PubMed 40512658",
-          "indication": "hf-cv-death-hospitalization"
+          "threat_status": "proposed"
         }
       ],
-      "care_continuum": {},
+      "care_continuum": {
+        "stages": [
+          {
+            "stage": "Prevalent Disease Identification",
+            "patient": "Patients with heart failure (6.2 million adults) or type 2 diabetes mellitus with established cardiovascular disease are identified in the general population. Many with preclinical HF are not yet recognized.",
+            "source": "PubMed 35908767 (2022) · PubMed 41919388 · PubMed 41045906"
+          },
+          {
+            "stage": "Diagnosis and Initial Management",
+            "patient": "Patients are diagnosed with heart failure or type 2 diabetes mellitus. Initial treatments are prescribed, but there's a risk of early rehospitalization for heart failure (11% within 30 days) and challenges in achieving guideline eligibility for advanced therapies (13-31% for SGLT-2 inhibitors in real-world T2DM).",
+            "source": "indications · PubMed 29082629 · PubMed 35908767 (2022) · PubMed 40550404"
+          },
+          {
+            "stage": "Treatment Initiation",
+            "patient": "Eligible patients are initiated on therapy. For heart failure, some may be deemed ineligible due to specific clinical criteria (e.g., NT-proBNP thresholds), leading to missed opportunities for SGLT2i initiation (36% in one study). For T2DM, a significant proportion (45% in HF) are initiated.",
+            "source": "PubMed 34454968 (2021)"
+          },
+          {
+            "stage": "Long-term Persistence and Adherence",
+            "patient": "Patients continue therapy over time. Persistence at 12 months for SGLT2i in T2DM with CV risk and obesity is 47%. Discontinuation can occur due to side effects, patient preference, or cost, with GLP-1 RA users being more likely to discontinue than SGLT2i users.",
+            "source": "PubMed 41165079 (2026)"
+          }
+        ]
+      },
       "identity": {
         "palette": [],
         "typography": ""
@@ -5282,6 +5516,280 @@
           "VT": 647464,
           "DC": 678972
         }
+      },
+      "messages_by_persona": [
+        {
+          "persona": "Dr. Eleanor Vance — The Evidence-Driven Cardiologist",
+          "message": "JARDIANCE reduces the risk of cardiovascular death and hospitalization for heart failure in adults with heart failure.",
+          "existing": "FDA label · indications",
+          "to_develop": "Case studies showcasing successful Jardiance initiation in diverse heart failure patient profiles, including those without T2DM. Educational materials that clarify real-world applicability of trial criteria versus FDA label recommendations for heart failure."
+        },
+        {
+          "persona": "Dr. Marcus Chen — The Integrated Endocrinologist",
+          "message": "JARDIANCE reduces the risk of cardiovascular death in adults with type 2 diabetes mellitus and established cardiovascular disease and improves glycemic control.",
+          "existing": "FDA label · indications · FDA label · clinical studies (Monotherapy Study, Add-On Combination Therapy with Metformin)",
+          "to_develop": "Resources addressing common patient concerns about SGLT2i side effects and strategies for improving persistence. Comparative data (where appropriate and on-label) on patient experience and adherence between SGLT2i and other GLP-1 RAs."
+        },
+        {
+          "persona": "Dr. Sarah Rodriguez — The Proactive PCP",
+          "message": "JARDIANCE offers cardiovascular and glycemic benefits for appropriate adult patients with type 2 diabetes mellitus or heart failure.",
+          "existing": "FDA label · indications",
+          "to_develop": "Simplified guidelines or decision-support tools for identifying T2DM and heart failure patients who are ideal candidates for Jardiance, based on real-world characteristics. Quick reference guides on when to initiate Jardiance versus refer to a specialist."
+        },
+        {
+          "persona": "Mr. David Miller — The Informed Heart Failure Patient",
+          "message": "JARDIANCE helps reduce the risk of returning to the hospital for heart failure and the risk of cardiovascular death.",
+          "existing": "Not captured",
+          "to_develop": "Patient-friendly brochures and website content explaining Jardiance's benefits for heart failure in simple terms, emphasizing reduction in hospitalizations. Testimonials from patients (if permissible) sharing positive experiences on Jardiance for heart failure."
+        },
+        {
+          "persona": "Ms. Lena Gupta — The Health-Conscious Diabetic with CVD",
+          "message": "JARDIANCE helps manage your type 2 diabetes and significantly reduces your risk of cardiovascular death.",
+          "existing": "Not captured",
+          "to_develop": "Materials highlighting the dual benefits of Jardiance for both blood sugar control and heart protection. FAQs addressing common concerns about side effects and how to manage them for long-term adherence."
+        },
+        {
+          "persona": "Mr. Robert Johnson — The Dedicated Care Partner",
+          "message": "JARDIANCE can help reduce the chances of your loved one going back to the hospital for heart failure and reduce the risk of cardiovascular death.",
+          "existing": "Not captured",
+          "to_develop": "Information specifically for caregivers, explaining how Jardiance works and what to expect, focusing on its potential to improve patient outcomes and quality of life. Resources on how caregivers can support medication adherence."
+        }
+      ],
+      "voice": {
+        "register": "Formal but approachable",
+        "reading_level": "High school reading level (approx. 10th grade)",
+        "principles": [
+          {
+            "principle": "Focus on the patient journey and improved outcomes.",
+            "say": "Jardiance helps reduce the risk of cardiovascular death and hospitalization for heart failure, supporting a healthier future for your patients.",
+            "not": "Jardiance works by inhibiting SGLT2, leading to glucosuria and natriuresis, which contributes to its cardiorenal benefits."
+          },
+          {
+            "principle": "Be clear and concise about multi-indication benefits.",
+            "say": "Jardiance offers proven benefits for adults with heart failure, and for those with type 2 diabetes with established cardiovascular disease.",
+            "not": "Jardiance is indicated for multiple conditions, including HF and T2DM, with specific populations and criteria."
+          },
+          {
+            "principle": "Emphasize evidence-based efficacy directly from the label.",
+            "say": "Clinical studies demonstrate Jardiance's ability to reduce the risk of cardiovascular death and hospitalization for heart failure in adults with heart failure. (FDA label · clinical studies)",
+            "not": "Many patients have seen significant improvements in their heart health with Jardiance."
+          },
+          {
+            "principle": "Maintain a tone of medical authority and scientific rigor.",
+            "say": "The established efficacy and safety profile of Jardiance support its role in managing these complex chronic conditions.",
+            "not": "Jardiance is a great choice for patients looking to feel better."
+          },
+          {
+            "principle": "Highlight the role of Jardiance in addressing unmet needs in patient management.",
+            "say": "Jardiance helps address gaps in care where patients with heart failure or type 2 diabetes with established CVD are not achieving optimal outcomes.",
+            "not": "Jardiance is a new and exciting drug."
+          }
+        ],
+        "by_audience": [
+          {
+            "audience": "Cardiologists treating heart failure",
+            "tone": "Empowering, Data-Driven",
+            "focus": "Emphasize robust clinical evidence for CV death and HF hospitalization reduction, facilitating proactive patient management and guideline adherence."
+          },
+          {
+            "audience": "Endocrinologists treating type 2 diabetes with CVD",
+            "tone": "Collaborative, Outcome-Oriented",
+            "focus": "Reinforce Jardiance's established role in reducing CV death for T2DM patients with established CVD, supporting comprehensive diabetes and cardiovascular risk management."
+          },
+          {
+            "audience": "General Practitioners / Primary Care Physicians",
+            "tone": "Supportive, Educational",
+            "focus": "Provide clear, actionable information on Jardiance's broad benefits across heart failure and type 2 diabetes with CVD, aiding in early identification and appropriate initiation/referral."
+          },
+          {
+            "audience": "Adult Patients with Heart Failure",
+            "tone": "Reassuring, Informative",
+            "focus": "Explain how Jardiance can help reduce serious heart-related events, promoting understanding and engagement in their treatment plan."
+          },
+          {
+            "audience": "Adult Patients with Type 2 Diabetes and CVD",
+            "tone": "Encouraging, Benefit-Focused",
+            "focus": "Communicate the specific cardiovascular protection Jardiance offers beyond blood sugar control, fostering adherence and proactive health management."
+          }
+        ],
+        "vocabulary": [
+          {
+            "use": "Reduce the risk of cardiovascular death and hospitalization for heart failure",
+            "instead_of": "Improve heart health outcomes"
+          },
+          {
+            "use": "Established cardiovascular disease",
+            "instead_of": "Heart problems"
+          },
+          {
+            "use": "Adjunct to diet and exercise",
+            "instead_of": "In addition to lifestyle changes"
+          },
+          {
+            "use": "Glycemic control",
+            "instead_of": "Blood sugar management"
+          }
+        ],
+        "avoid": [
+          "Casual language",
+          "Overly technical jargon without explanation",
+          "Exaggerated claims",
+          "Undermining the role of other therapies",
+          "Making promises about absolute outcomes"
+        ],
+        "status": "to_confirm",
+        "note": "Drafted by Omni from the FDA label and public evidence — to confirm"
+      },
+      "unmet_need": {
+        "summary": "Despite available treatments, a significant number of patients with type 2 diabetes and established cardiovascular disease, and those with heart failure, are not achieving optimal outcomes. Key gaps exist in patient identification, initiation of appropriate therapy, and long-term persistence with treatment, leading to preventable cardiovascular events and hospitalizations.",
+        "facts": [
+          {
+            "label": "Adults with heart failure in the US",
+            "value": "6.2 million",
+            "source": "PubMed 35908767 (2022)"
+          },
+          {
+            "label": "Median eligibility for SGLT2 inhibitor trials in real-world T2DM patients",
+            "value": "13-31%",
+            "source": "PubMed 40550404 (2025)"
+          },
+          {
+            "label": "Patients with HFrEF eligible for SGLT2i initiation (based on DAPA-HF/EMPEROR-Reduced criteria excluding NT-proBNP)",
+            "value": "86%",
+            "source": "PubMed 34454968 (2021)"
+          },
+          {
+            "label": "Persistence with SGLT2i therapy at 12 months in Medicare Advantage T2DM beneficiaries with CV risk and obesity",
+            "value": "47%",
+            "source": "PubMed 41165079 (2026)"
+          }
+        ],
+        "gaps": [
+          {
+            "gap": "Low guideline eligibility in real-world patients for SGLT-2 inhibitor trials",
+            "detail": "Observational studies show a median of only 13% to 31% eligibility for SGLT-2 inhibitor trials in real-world patients, suggesting that trial populations may not fully represent the broader patient population who could benefit.",
+            "who": "Patients with type 2 diabetes, potentially limiting access to beneficial therapies.",
+            "source": "PubMed 40550404 (2025)"
+          },
+          {
+            "gap": "Barriers to treatment initiation for heart failure patients",
+            "detail": "Among patients deemed ineligible for gliflozin treatment (36% in one study), the primary reason was failure to meet NT-proBNP inclusion thresholds, which, if excluded (as per FDA label guidance for dapagliflozin and empagliflozin eligibility), would increase eligibility to 86%. This suggests a potential under-utilization based on specific trial criteria not always mirroring real-world applicability.",
+            "who": "Adults with heart failure who could benefit from SGLT2 inhibitors but are overlooked due to restrictive diagnostic criteria or specific biomarker levels.",
+            "source": "PubMed 34454968 (2021)"
+          },
+          {
+            "gap": "Lack of persistence with SGLT2i therapy",
+            "detail": "Only 47% of Medicare Advantage beneficiaries with type 2 diabetes, cardiovascular risk, and obesity persisted with SGLT2i therapy at 12 months. GLP-1 RA users were more likely to discontinue (HR=1.39, p <0.001) compared to SGLT2i users, with reasons possibly including tolerance, side effects, glucose control, preferences for oral medications, patient costs, and access to medications.",
+            "who": "Patients with type 2 diabetes and cardiovascular risk, potentially missing out on long-term protective effects.",
+            "source": "PubMed 41165079 (2026)"
+          }
+        ]
+      },
+      "competition_self": {
+        "name": "Jardiance",
+        "type": "SGLT2 inhibitor",
+        "status": "growth",
+        "strength": "Reduces the risk of cardiovascular death and hospitalization for heart failure in adults with heart failure. Reduces the risk of cardiovascular death in adults with type 2 diabetes mellitus and established cardiovascular disease. Improves glycemic control as an adjunct to diet and exercise in adults with type 2 diabetes mellitus. Demonstrated HbA1c reduction (-0.9% for 25 mg) and body weight reduction (-3.9% for 25 mg vs glimepiride at Week 52).",
+        "weakness": "Eligibility for SGLT2 inhibitor trials can be limited in real-world patients (median 13%-31%). For heart failure, a major determinant of ineligibility for gliflozin treatment (36%) was the failure to achieve the predefined NT-proBNP inclusion threshold."
+      },
+      "approval_dates": [
+        {
+          "region": "US",
+          "value": "2014-08-01",
+          "source": "Drugs@FDA NDA204629"
+        }
+      ],
+      "proposals": {
+        "clinical_data": {
+          "status": "proposed",
+          "engine": "kit_proposer.evidence",
+          "date": "2026-10-02"
+        },
+        "references": {
+          "status": "proposed",
+          "engine": "kit_proposer.evidence",
+          "date": "2026-10-02"
+        },
+        "message_hierarchy": {
+          "status": "proposed",
+          "engine": "kit_proposer.evidence",
+          "date": "2026-10-02"
+        },
+        "core_claim": {
+          "status": "proposed",
+          "engine": "kit_proposer.evidence",
+          "date": "2026-10-02"
+        },
+        "positioning_statement": {
+          "status": "proposed",
+          "engine": "kit_proposer.evidence",
+          "date": "2026-10-02"
+        },
+        "therapy_area": {
+          "status": "proposed",
+          "engine": "kit_proposer.evidence",
+          "date": "2026-10-02"
+        },
+        "primary_audience": {
+          "status": "proposed",
+          "engine": "kit_proposer.evidence",
+          "date": "2026-10-02"
+        },
+        "care_continuum": {
+          "status": "proposed",
+          "engine": "kit_proposer.personas",
+          "date": "2026-10-02"
+        },
+        "messages_by_persona": {
+          "status": "proposed",
+          "engine": "kit_proposer.personas",
+          "date": "2026-10-02"
+        },
+        "voice": {
+          "status": "proposed",
+          "engine": "kit_proposer.voice",
+          "date": "2026-10-02"
+        },
+        "tone_pillars": {
+          "status": "proposed",
+          "engine": "kit_proposer.voice",
+          "date": "2026-10-02"
+        },
+        "voice_do": {
+          "status": "proposed",
+          "engine": "kit_proposer.voice",
+          "date": "2026-10-02"
+        },
+        "voice_dont": {
+          "status": "proposed",
+          "engine": "kit_proposer.voice",
+          "date": "2026-10-02"
+        },
+        "unmet_need": {
+          "status": "proposed",
+          "engine": "kit_proposer.voice",
+          "date": "2026-10-02"
+        },
+        "competition_self": {
+          "status": "proposed",
+          "engine": "kit_proposer.competition",
+          "date": "2026-10-02"
+        },
+        "personas": {
+          "status": "proposed",
+          "engine": "kit_proposer.personas",
+          "date": "2026-10-02"
+        },
+        "competitors": {
+          "status": "proposed",
+          "engine": "kit_proposer.competition",
+          "date": "2026-10-02"
+        },
+        "guardrails": {
+          "status": "proposed",
+          "engine": "kit_proposer.voice",
+          "date": "2026-10-02"
+        }
       }
     },
     "Keytruda": {
@@ -5289,7 +5797,7 @@
       "source_note": "No brand plan uploaded. Built from public sources; situation, audiences and competitors are proposals to confirm.",
       "company": "Merck Sharp & Dohme LLC",
       "generic": "pembrolizumab",
-      "therapy_area": "",
+      "therapy_area": "Oncology",
       "indication": "Unresectable or Metastatic Melanoma; Adjuvant Treatment for Stage IIB, IIC, or III Melanoma; First-Line Metastatic Nonsquamous NSCLC with Chemo; First-Line Metastatic Squamous NSCLC with Chemo; First-Line NSCLC with PD-L1 (TPS ≥1%) as Single Agent; Metastatic NSCLC with PD-L1 Post-Platinum Chemo …",
       "territories": [
         "US"
@@ -5297,188 +5805,435 @@
       "lifecycle_stage": "maturity",
       "success_measure": "",
       "branded": "",
-      "primary_audience": "",
+      "primary_audience": "Medical Oncologists (NSCLC Focus)",
       "fiscal_frame": "",
       "tagline": "",
-      "core_claim": "",
-      "positioning_statement": "",
-      "message_hierarchy": [],
+      "core_claim": "KEYTRUDA offers broad and significant survival benefits across multiple advanced cancers, including melanoma and non-small cell lung cancer, both as monotherapy and in combination with chemotherapy.",
+      "positioning_statement": "For medical oncologists treating patients with advanced melanoma or NSCLC, KEYTRUDA is the leading immuno-oncology therapy that provides statistically significant improvements in overall survival and progression-free survival because of its proven mechanism of action as a PD-1 blocking antibody and extensive clinical evidence across a broad range of indications.",
+      "message_hierarchy": [
+        {
+          "pillar": "Broad Efficacy in Melanoma",
+          "claim": "KEYTRUDA significantly improves overall survival and progression-free survival in patients with unresectable or metastatic melanoma who are ipilimumab-naive.",
+          "evidence": "FDA label · clinical studies (KEYNOTE-006)"
+        },
+        {
+          "pillar": "Adjuvant Treatment for Melanoma",
+          "claim": "KEYTRUDA offers a statistically significant improvement in recurrence-free survival and distant metastasis-free survival for patients with completely resected Stage IIB, IIC, or III melanoma.",
+          "evidence": "FDA label · clinical studies (KEYNOTE-716, KEYNOTE-054)"
+        },
+        {
+          "pillar": "First-Line NSCLC Treatment",
+          "claim": "KEYTRUDA in combination with chemotherapy significantly improves overall survival and progression-free survival as first-line treatment for patients with metastatic nonsquamous NSCLC.",
+          "evidence": "FDA label · clinical studies (KEYNOTE-189)"
+        },
+        {
+          "pillar": "Multiple Oncology Indications",
+          "claim": "KEYTRUDA is approved across a wide range of advanced cancers, including melanoma, NSCLC, HNSCC, cHL, PMBCL, urothelial carcinoma, MSI-H/dMMR solid tumors, gastric/GEJ adenocarcinoma, esophageal/GEJ carcinoma, cervical cancer, HCC, biliary tract cancer, Merkel cell carcinoma, RCC, endometrial carcinoma, TMB-H solid tumors, cSCC, TNBC, and ovarian/fallopian tube/primary peritoneal carcinoma.",
+          "evidence": "FDA label · indications"
+        }
+      ],
       "approved_indication": "1 INDICATIONS AND USAGE KEYTRUDA is a programmed death receptor-1 (PD-1)-blocking antibody indicated: Melanoma for the treatment of patients with unresectable or metastatic melanoma. ( 1.1 ) for the adjuvant treatment of adult and pediatric (12 years and older) patients with Stage IIB, IIC, or III melanoma following complete resection. ( 1.1 ) Non-Small Cell Lung Cancer (NSCLC) in combination with pemetrexed and platinum chemotherapy, as first-line treatment of patients with metastatic nonsquamous NSCLC, with no EGFR or ALK genomic tumor aberrations. ( 1.2 ) in combination with carboplatin and either paclitaxel or paclitaxel protein-bound, as first-line treatment of patients with metastatic squamous NSCLC. ( 1.2 ) as a single agent for the first-line treatment of patients with NSCLC expressing PD-L1 [Tumor Proportion Score (TPS) ≥1%] as determined by an FDA-authorized test, with no EGFR or ALK genomic tumor aberrations, and is: Stage III where patients are not candidates for surgical resection or definitive chemoradiation, or metastatic. ( 1.2 , 2.1 ) as a single agent for the treatment of patients with metastatic NSCLC whose tumors express PD-L1 (TPS ≥1%) as determined by an FDA-authorized test, with disease progression on or after platinum-containing chemotherapy. Patients with EGFR or ALK genomic tumor aberrations should have disease progression on FDA-approved therapy for these aberrations prior to receiving KEYTRUDA. ( 1.2 , 2.1 ) for the treatment of patients with resectable (tumors ≥4 cm or node positive) NSCLC in combination with platinum-containing chemotherapy as neoadjuvant treatment, and then continued as a single agent as adjuvant treatment after surgery. ( 1.2 ) as a single agent, for adjuvant treatment following resection and platinum-based chemotherapy for adult patients with Stage IB (T2a ≥4 cm), II, or IIIA NSCLC. ( 1.2 ) Malignant Pleural Mesothelioma (MPM) in combination with pemetrexed and platinum chemotherapy, as first-line treatment of adult patients with unresectable advanced or metastatic MPM. ( 1.3 ) Head and Neck Squamous Cell Cancer (HNSCC) for the treatment of adult patients with resectable locally advanced HNSCC whose tumors express PD-L1 [Combined Positive Score (CPS) ≥1] as determined by an FDA-authorized test, as a single agent as neoadjuvant treatment, continued as adjuvant treatment in combination with radiotherapy (RT) with or without cisplatin and then as a single agent. ( 1.4 ) in combination with platinum and FU for the first-line treatment of patients with metastatic or with unresectable, recurrent HNSCC. ( 1.4 ) as a single agent for the first-line treatment of patients with metastatic or with unresectable, recurrent HNSCC whose tumors express PD-L1 [Combined Positive Score (CPS) ≥1] as determined by an FDA-authorized test. ( 1.4 , 2.1 ) as a single agent for the treatment of patients with recurrent or metastatic HNSCC with disease progression on or after platinum-containing chemotherapy. ( 1.4 ) Classical Hodgkin Lymphoma (cHL) for the treatment of adult patients with relapsed or refractory cHL. ( 1.5 ) for the treatment of pediatric patients with refractory cHL, or cHL that has relapsed after 2 or more lines of therapy. ( 1.5 ) Primary Mediastinal Large B-Cell Lymphoma (PMBCL) for the treatment of adult and pediatric patients with refractory PMBCL, or who have relapsed after 2 or more prior lines of therapy. ( 1.6 ) Limitations of Use : KEYTRUDA is not recommended for treatment of patients with PMBCL who require urgent cytoreductive therapy. Urothelial Cancer in combination with enfortumab vedotin-ejfv, for the treatment of adult patients with locally advanced or metastatic urothelial cancer. ( 1.7 ) as a single agent for the treatment of patients with locally advanced or metastatic urothelial carcinoma who: are not eligible for any platinum-containing chemotherapy, or who have disease progression during or following platinum-containing chemotherapy or within 12 months of neoadjuvant or adjuvant treatment with platinum-containing chemotherapy. ( 1.7 ) in combination with enfortumab vedotin-ejfv, as neoadjuvant treatment and then continued after cystectomy as adjuvant treatment of adult patients with muscle invasive bladder cancer (MIBC). ( 1.7 ) as a single agent for the treatment of patients with Bacillus Calmette-Guerin (BCG)-unresponsive, high-risk, non-muscle invasive bladder cancer (NMIBC) with carcinoma in situ (CIS) with or without papillary tumors who are ineligible for or have elected not to undergo cystectomy. ( 1.7 ) Microsatellite Instability-High or Mismatch Repair Deficient Cancer for the treatment of adult and pediatric patients with unresectable or metastatic microsatellite instability-high (MSI-H) or mismatch repair deficient (dMMR) solid tumors, as determined by an FDA-authorized test, that have progressed following prior treatment and who have no satisfactory alternative treatment options. ( 1.8 , 2.1 ) Microsatellite Instability-High or Mismatch Repair Deficient Colorectal Cancer (CRC) for the treatment of patients with unresectable or metastatic MSI-H or dMMR colorectal cancer (CRC) as determined by an FDA-authorized test. ( 1.9 , 2.1 ) Gastric Cancer in combination with trastuzumab, fluoropyrimidine- and platinum-containing chemotherapy, for the first-line treatment of adults with locally advanced unresectable or metastatic HER2-positive gastric or gastroesophageal junction (GEJ) adenocarcinoma whose tumors express PD-L1 (CPS ≥1) as determined by an FDA-authorized test. ( 1.10 ) in combination with fluoropyrimidine- and platinum-containing chemotherapy, for the first-line treatment of adults with locally advanced unresectable or metastatic HER2-negative gastric or gastroesophageal junction (GEJ) adenocarcinoma whose tumors express PD-L1 (CPS ≥1) as determined by an FDA-authorized test. ( 1.10 ) Esophageal Cancer for the treatment of patients with locally advanced or metastatic esophageal or gastroesophageal junction (GEJ) (tumors with epicenter 1 to 5 centimeters above the GEJ) carcinoma that is not amenable to surgical resection or definitive chemoradiation either: in combination with platinum- and fluoropyrimidine-based chemotherapy for patients whose tumors express PD-L1 (CPS ≥1) as determined by an FDA-authorized test, or as a single agent after one or more prior lines of systemic therapy for patients with tumors of squamous cell histology that express PD-L1 (CPS ≥10) as determined by an FDA-authorized test. ( 1.11 , 2.1 ) Cervical Cancer in combination with chemoradiotherapy, for the treatment of patients with locally advanced cervical cancer involving the lower third of the vagina, with or without extension to pelvic sidewall, or hydronephrosis/non-functioning kidney, or spread to adjacent pelvic organs (FIGO 2014 Stage III-IVA). ( 1.12 ) in combination with chemotherapy, with or without bevacizumab, for the treatment of patients with persistent, recurrent, or metastatic cervical cancer whose tumors express PD-L1 (CPS ≥1) as determined by an FDA-authorized test. ( 1.12 , 2.1 ) as a single agent for the treatment of patients with recurrent or metastatic cervical cancer with disease progression on or after chemotherapy whose tumors express PD-L1 (CPS ≥1) as determined by an FDA-authorized test. ( 1.12 , 2.1 ) Hepatocellular Carcinoma (HCC) for the treatment of patients with HCC secondary to hepatitis B who have received prior systemic therapy other than a PD-1/PD-L1-containing regimen. ( 1.13 ) Biliary Tract Cancer (BTC) in combination with gemcitabine and cisplatin, for the treatment of patients with locally advanced unresectable or metastatic biliary tract cancer. ( 1.14 ) Merkel Cell Carcinoma (MCC) for the treatment of adult and pediatric patients with recurrent locally advanced or metastatic Merkel cell carcinoma. ( 1.15 ) Renal Cell Carcinoma (RCC) in combination with axitinib, for the first-line treatment of adult patients with advanced RCC. ( 1.16 ) in combination with lenvatinib, for the first-line treatment of adult patients with advanced RCC. ( 1.16 ) for the adjuvant treatment of patients with RCC at intermediate-high or high risk of recurrence following nephrectomy, or following nephrectomy and resection of metastatic lesions. ( 1.16 ) in combination with belzutifan, for the adjuvant treatment of adult patients with RCC with a clear cell component (ccRCC) at intermediate-high or high risk of recurrence following nephrectomy, or following nephrectomy and resection of metastatic lesions. ( 1.16 ) Endometrial Carcinoma in combination with carboplatin and paclitaxel, followed by KEYTRUDA as a single agent, for the treatment of adult patients with primary advanced or recurrent endometrial carcinoma. ( 1.17 ) in combination with lenvatinib, for the treatment of adult patients with advanced endometrial carcinoma that is mismatch repair proficient (pMMR) or not MSI-H as determined by an FDA-authorized test, who have disease progression following prior systemic therapy in any setting and are not candidates for curative surgery or radiation. ( 1.17 , 2.1 ) as a single agent, for the treatment of adult patients with advanced endometrial carcinoma that is MSI-H or dMMR, as determined by an FDA-authorized test, who have disease progression following prior systemic therapy in any setting and are not candidates for curative surgery or radiation. ( 1.17 , 2.1 ) Tumor Mutational Burden-High (TMB-H) Cancer for the treatment of adult and pediatric patients with unresectable or metastatic tumor mutational burden-high (TMB-H) [≥10 mutations/megabase (mut/Mb)] solid tumors, as determined by an FDA-authorized test, that have progressed following prior treatment and who have no satisfactory alternative treatment options. 1 ( 1.18 , 2.1 ) Limitations of Use : The safety and effectiveness of KEYTRUDA in pediatric patients with TMB-H central nervous system cancers have not been established. Cutaneous Squamous Cell Carcinoma (cSCC) for the treatment of patients with recurrent or metastatic cSCC or locally advanced cSCC that is not curable by surgery or radiation. ( 1.19 ) Triple-Negative Breast Cancer (TNBC) for the treatment of patients with high-risk early-stage TNBC in combination with chemotherapy as neoadjuvant treatment, and then continued as a single agent as adjuvant treatment after surgery. ( 1.20 ) in combination with sacituzumab govitecan-hziy, for the first-line treatment of adult patients with unresectable locally advanced or metastatic TNBC whose tumors express PD-L1 (CPS ≥10) as determined by an FDA-authorized test. ( 1.20 , 2.1 ) in combination with chemotherapy, for the treatment of patients with locally recurrent unresectable or metastatic TNBC whose tumors express PD-L1 (CPS ≥10) as determined by an FDA-authorized test. ( 1.20 , 2.1 ) Ovarian Cancer in combination with paclitaxel, with or without bevacizumab, for the treatment of adult patients with platinum-resistant epithelial ovarian, fallopian tube, or primary peritoneal carcinoma whose tumors express PD-L1 (CPS ≥1) as determined by an FDA-authorized test, and who have received one or two prior systemic treatment regimens. ( 1.21 , 2.1 ) 1 This indication is approved under accelerated approval based on tumor response rate and durability of response. Continued approval for this indication may be contingent upon verification and description of clinical benefit in the confirmatory trials. 1.1 Melanoma KEYTRUDA ® is indicated for the treatment of patients with unresectable or metastatic melanoma. KEYTRUDA is indicated for the adjuvant treatment of adult and pediatric (12 years and older) patients with Stage IIB, IIC, or III melanoma following complete resection. 1.2 Non-Small Cell Lung Cancer KEYTRUDA, in combination with pemetrexed and platinum chemotherapy, is indicated for the first-line treatment of patients with metastatic nonsquamous non-small cell lung cancer (NSCLC), with no EGFR or ALK genomic tumor aberrations. KEYTRUDA, in combination with carboplatin and either paclitaxel or paclitaxel protein-bound, is indicated for the first-line treatment of patients with metastatic squamous NSCLC. KEYTRUDA, as a single agent, is indicated for the first-line treatment of patients with NSCLC expressing PD-L1 [Tumor Proportion Score (TPS) ≥1%] as determined by an FDA-authorized test [see Dosage and Administration (2.1) ] , with no EGFR or ALK genomic tumor aberrations, and is: Stage III where patients are not candidates for surgical resection or definitive chemoradiation, or metastatic. KEYTRUDA, as a single agent, is indicated for the treatment of patients with metastatic NSCLC whose tumors express PD-L1 (TPS ≥1%) as determined by an FDA-authorized test [see Dosage and Administration (2.1) ] , with disease progression on or after platinum-containing chemotherapy. Patients with EGFR or ALK genomic tumor aberrations should have disease progression on FDA-approved therapy for these aberrations prior to receiving KEYTRUDA. KEYTRUDA is indicated for the treatment of patients with resectable (tumors ≥4 cm or node positive) NSCLC in combination with platinum-containing chemotherapy as neoadjuvant treatment, and then continued as a single agent as adjuvant treatment after surgery. KEYTRUDA, as a single agent, is indicated as adjuvant treatment following resection and platinum-based chemotherapy for adult patients with Stage IB (T2a ≥4 cm), II, or IIIA NSCLC. 1.3 Malignant Pleural Mesothelioma KEYTRUDA, in combination with pemetrexed and platinum chemotherapy, is indicated for the first-line treatment of adult patients with unresectable advanced or metastatic malignant pleural mesothelioma (MPM). 1.4 Head and Neck Squamous Cell Cancer KEYTRUDA is indicated for the treatment of adult patients with resectable locally advanced HNSCC whose tumors express PD-L1 [Combined Positive Score (CPS) ≥1] as determined by an FDA-authorized test [see Dosage and Administration (2.1) ] , as a single agent as neoadjuvant treatment, continued as adjuvant treatment in combination with radiotherapy (RT) with or without cisplatin and then as a single agent. KEYTRUDA, in combination with platinum and fluorouracil (FU), is indicated for the first-line treatment of patients with metastatic or with unresectable, recurrent head and neck squamous cell carcinoma (HNSCC). KEYTRUDA, as a single agent, is indicated for the first-line treatment of patients with metastatic or with unresectable, recurrent HNSCC whose tumors express PD-L1 [Combined Positive Score (CPS) ≥1] as determined by an FDA-authorized test [see Dosage and Administration (2.1) ] . KEYTRUDA, as a single agent, is indicated for the treatment of patients with recurrent or metastatic HNSCC with disease progression on or after platinum-containing chemotherapy. 1.5 Classical Hodgkin Lymphoma KEYTRUDA is indicated for the treatment of adult patients with relapsed or refractory classical Hodgkin lymphoma (cHL). KEYTRUDA is indicated for the treatment of pediatric patients with refractory cHL, or cHL that has relapsed after 2 or more lines of therapy. 1.6 Primary Mediastinal Large B-Cell Lymphoma KEYTRUDA is indicated for the treatment of adult and pediatric patients with refractory primary mediastinal large B-cell lymphoma (PMBCL), or who have relapsed after 2 or more prior lines of therapy. Limitations of Use : KEYTRUDA is not recommended for treatment of patients with PMBCL who require urgent cytoreductive therapy. 1.7 Urothelial Cancer KEYTRUDA, in combination with enfortumab vedotin-ejfv, is indicated for the treatment of adult patients with locally advanced or metastatic urothelial cancer. KEYTRUDA, as a single agent, is indicated for the treatment of patients with locally advanced or metastatic urothelial carcinoma: who are not eligible for any platinum-containing chemotherapy, or who have disease progression during or following platinum-containing chemotherapy or within 12 months of neoadjuvant or adjuvant treatment with platinum-containing chemotherapy. KEYTRUDA, in combination with enfortumab vedotin-ejfv, as neoadjuvant treatment and then continued after cystectomy as adjuvant treatment, is indicated for the treatment of adult patients with muscle invasive bladder cancer (MIBC). KEYTRUDA, as a single agent, is indicated for the treatment of patients with Bacillus Calmette-Guerin (BCG)-unresponsive, high-risk, non-muscle invasive bladder cancer (NMIBC) with carcinoma in situ (CIS) with or without papillary tumors who are ineligible for or have elected not to undergo cystectomy. 1.8 Microsatellite Instability-High or Mismatch Repair Deficient Cancer KEYTRUDA is indicated for the treatment of adult and pediatric patients with unresectable or metastatic microsatellite instability-high (MSI-H) or mismatch repair deficient (dMMR) solid tumors, as determined by an FDA-authorized test, that have progressed following prior treatment and who have no satisfactory alternative treatment options [see Dosage and Administration (2.1) ] . 1.9 Microsatellite Instability-High or Mismatch Repair Deficient Colorectal Cancer KEYTRUDA is indicated for the treatment of patients with unresectable or metastatic MSI-H or dMMR colorectal cancer (CRC) as determined by an FDA-authorized test [see Dosage and Administration (2.1) ] . 1.10 Gastric Cancer KEYTRUDA, in combination with trastuzumab, fluoropyrimidine- and platinum-containing chemotherapy, is indicated for the first-line treatment of adults with locally advanced unresectable or metastatic HER2-positive gastric or gastroesophageal junction (GEJ) adenocarcinoma whose tumors express PD-L1 (CPS ≥1) as determined by an FDA-authorized test [see Dosage and Administration (2.1) ] . KEYTRUDA, in combination with fluoropyrimidine- and platinum-containing chemotherapy, is indicated for the first-line treatment of adults with locally advanced unresectable or metastatic HER2-negative gastric or gastroesophageal junction (GEJ) adenocarcinoma whose tumors express PD-L1 (CPS ≥ 1) as determined by an FDA-authorized test [see Dosage and Administration (2.1) ] . 1.11 Esophageal Cancer KEYTRUDA is indicated for the treatment of patients with locally advanced or metastatic esophageal or gastroesophageal junction (GEJ) (tumors with epicenter 1 to 5 centimeters above the GEJ) carcinoma that is not amenable to surgical resection or definitive chemoradiation either: in combination with platinum- and fluoropyrimidine-based chemotherapy for patients with tumors that express PD-L1 (CPS ≥ 1) as determined by an FDA-authorized test [see Dosage and Administration (2.1) ] , or as a single agent after one or more prior lines of systemic therapy for patients with tumors of squamous cell histology that express PD-L1 (CPS ≥10) as determined by an FDA-authorized test [see Dosage and Administration (2.1) ] . 1.12 Cervical Cancer KEYTRUDA, in combination with chemoradiotherapy (CRT), is indicated for the treatment of patients with locally advanced cervical cancer involving the lower third of the vagina, with or without extension to pelvic sidewall, or hydronephrosis/non-functioning kidney, or spread to adjacent pelvic organs (FIGO 2014 Stage III-IVA). KEYTRUDA, in combination with chemotherapy, with or without bevacizumab, is indicated for the treatment of patients with persistent, recurrent, or metastatic cervical cancer whose tumors express PD-L1 (CPS ≥1) as determined by an FDA-authorized test [see Dosage and Administration (2.1) ]. KEYTRUDA, as a single agent, is indicated for the treatment of patients with recurrent or metastatic cervical cancer with disease progression on or after chemotherapy whose tumors express PD-L1 (CPS ≥1) as determined by an FDA-authorized test [see Dosage and Administration (2.1) ] . 1.13 Hepatocellular Carcinoma KEYTRUDA is indicated for the treatment of patients with hepatocellular carcinoma (HCC) secondary to hepatitis B who have received prior systemic therapy other than a PD-1/PD-L1-containing regimen. 1.14 Biliary Tract Cancer KEYTRUDA, in combination with gemcitabine and cisplatin, is indicated for the treatment of patients with locally advanced unresectable or metastatic biliary tract cancer (BTC). 1.15 Merkel Cell Carcinoma KEYTRUDA is indicated for the treatment of adult and pediatric patients with recurrent locally advanced or metastatic Merkel cell carcinoma (MCC). 1.16 Renal Cell Carcinoma KEYTRUDA, in combination with axitinib, is indicated for the first-line treatment of adult patients with advanced renal cell carcinoma (RCC). KEYTRUDA, in combination with lenvatinib, is indicated for the first-line treatment of adult patients with advanced RCC. KEYTRUDA is indicated for the adjuvant treatment of patients with RCC at intermediate-high or high risk of recurrence following nephrectomy, or following nephrectomy and resection of metastatic lesions [see Clinical Studies (14.16) ] . KEYTRUDA, in combination with belzutifan, is indicated for the adjuvant treatment of adult patients with RCC with a clear cell component (ccRCC) at intermediate-high or high risk of recurrence following nephrectomy, or following nephrectomy and resection of metastatic lesions. 1.17 Endometrial Carcinoma KEYTRUDA, in combination with carboplatin and paclitaxel, followed by KEYTRUDA as a single agent, is indicated for the treatment of adult patients with primary advanced or recurrent endometrial carcinoma. KEYTRUDA, in combination with lenvatinib, is indicated for the treatment of adult patients with advanced endometrial carcinoma that is mismatch repair proficient (pMMR) or not MSI-H as determined by an FDA-authorized test, who have disease progression following prior systemic therapy in any setting and are not candidates for curative surgery or radiation [see Dosage and Administration (2.1) ] . KEYTRUDA, as a single agent, is indicated for the treatment of adult patients with advanced endometrial carcinoma that is MSI-H or dMMR, as determined by an FDA-authorized test, who have disease progression following prior systemic therapy in any setting and are not candidates for curative surgery or radiation [see Dosage and Administration (2.1) ] . 1.18 Tumor Mutational Burden-High Cancer KEYTRUDA is indicated for the treatment of adult and pediatric patients with unresectable or metastatic tumor mutational burden-high (TMB-H) [≥10 mutations/megabase (mut/Mb)] solid tumors, as determined by an FDA-authorized test [see Dosage and Administration (2.1) ] , that have progressed following prior treatment and who have no satisfactory alternative treatment options. This indication is approved under accelerated approval based on tumor response rate and durability of response [see Clinical Studies (14.18) ] . Continued approval for this indication may be contingent upon verification and description of clinical benefit in the confirmatory trials. Limitations of Use : The safety and effectiveness of KEYTRUDA in pediatric patients with TMB-H central nervous system cancers have not been established. 1.19 Cutaneous Squamous Cell Carcinoma KEYTRUDA is indicated for the treatment of patients with recurrent or metastatic cutaneous squamous cell carcinoma (cSCC) or locally advanced cSCC that is not curable by surgery or radiation. 1.20 Triple-Negative Breast Cancer KEYTRUDA is indicated for the treatment of patients with high-risk early-stage triple-negative breast cancer (TNBC) in combination with chemotherapy as neoadjuvant treatment, and then continued as a single agent as adjuvant treatment after surgery. KEYTRUDA, in combination with sacituzumab govitecan-hziy, is indicated for the first-line treatment of adult patients with unresectable locally advanced or metastatic TNBC whose tumors express PD-L1 (CPS ≥10) as determined by an FDA-authorized test [see Dosage and Administration (2.1) ] . KEYTRUDA, in combination with chemotherapy, is indicated for the treatment of patients with locally recurrent unresectable or metastatic TNBC whose tumors express PD-L1 (CPS ≥10) as determined by an FDA-authorized test [see Dosage and Administration (2.1) ] . 1.21 Ovarian Cancer KEYTRUDA, in combination with paclitaxel, with or without bevacizumab, is indicated for the treatment of adult patients with platinum-resistant epithelial ovarian, fallopian tube, or primary peritoneal carcinoma whose tumors express PD-L1 (CPS ≥1) as determined by an FDA-authorized test [see Dosage and Administration (2.1) ] , and who have received one or two prior systemic treatment regimens.",
       "safety_reference": "5 WARNINGS AND PRECAUTIONS Immune-Mediated Adverse Reactions ( 5.1 ) Immune-mediated adverse reactions, which may be severe or fatal, can occur in any organ system or tissue, including the following: immune-mediated pneumonitis, immune-mediated colitis, immune-mediated hepatitis, immune-mediated endocrinopathies, immune-mediated nephritis with renal dysfunction, immune-mediated dermatologic adverse reactions, and solid organ transplant rejection. Monitor for early identification and management. Evaluate liver enzymes, creatinine, and thyroid function at baseline and periodically during treatment. Withhold or permanently discontinue based on severity and type of reaction. Infusion-related reactions: Interrupt, slow the rate of infusion, or permanently discontinue KEYTRUDA based on the severity of reaction. ( 5.2 ) Complications of allogeneic HSCT: Fatal and other serious complications can occur in patients who receive allogeneic HSCT before or after being treated with a PD-1/PD-L1 blocking antibody. ( 5.3 ) Treatment of patients with multiple myeloma with a PD-1 or PD-L1 blocking antibody in combination with a thalidomide analogue plus dexamethasone is not recommended outside of controlled clinical trials. ( 5.4 ) Embryo-Fetal toxicity: Can cause fetal harm. Advise females of reproductive potential of the potential risk to a fetus and to use effective method of contraception. ( 5.5 , 8.1 , 8.3 ) 5.1 Severe and Fatal Immune-Mediated Adverse Reactions KEYTRUDA is a monoclonal antibody that belongs to a class of drugs that bind to either the programmed death-receptor 1 (PD-1) or the PD-ligand 1 (PD-L1), blocking the PD-1/PD-L1 pathway, thereby removing inhibition of the immune response, potentially breaking peripheral tolerance and inducing immune-mediated adverse reactions. Important immune-mediated adverse reactions listed under WARNINGS AND PRECAUTIONS may not include all possible severe and fatal immune-mediated adverse reactions. Immune-mediated adverse reactions, which may be severe or fatal, can occur in any organ system or tissue and can affect more than one body system simultaneously. Immune-mediated adverse reactions can occur at any time after starting treatment with a PD-1/PD-L1 blocking antibody. While immune-mediated adverse reactions usually manifest during treatment with PD-1/PD-L1 blocking antibodies, immune-mediated adverse reactions can also manifest after discontinuation of PD-1/PD-L1 blocking antibodies. Early identification and management of immune-mediated adverse reactions are essential to ensure safe use of PD-1/PD-L1 blocking antibodies. Monitor patients closely for symptoms and signs that may be clinical manifestations of underlying immune-mediated adverse reactions. Evaluate liver enzymes, creatinine, and thyroid function at baseline and periodically during treatment. For patients with TNBC treated with KEYTRUDA in the neoadjuvant setting, monitor blood cortisol at baseline, prior to surgery, and as clinically indicated. In cases of suspected immune-mediated adverse reactions, initiate appropriate workup to exclude alternative etiologies, including infection. Institute medical management promptly, including specialty consultation as appropriate. Withhold or permanently discontinue KEYTRUDA depending on severity [see Dosage and Administration (2.3) ] . In general, if KEYTRUDA requires interruption or discontinuation, administer systemic corticosteroid therapy (1 to 2 mg/kg/day prednisone or equivalent) until improvement to Grade 1 or less. Upon improvement to Grade 1 or less, initiate corticosteroid taper and continue to taper over at least 1 month. Consider administration of other systemic immunosuppressants in patients whose immune-mediated adverse reactions are not controlled with corticosteroid therapy. Toxicity management guidelines for adverse reactions that do not necessarily require systemic steroids (e.g., endocrinopathies and dermatologic reactions) are discussed below. Immune-Mediated Pneumonitis KEYTRUDA can cause immune-mediated pneumonitis. The incidence of pneumonitis is higher in patients who have received prior thoracic radiation. Immune-mediated pneumonitis occurred in 3.4% (94/2799) of patients receiving KEYTRUDA, including fatal (0.1%), Grade 4 (0.3%), Grade 3 (0.9%), and Grade 2 (1.3%) adverse reactions. Systemic corticosteroids were required in 67% (63/94) of patients with pneumonitis. Pneumonitis led to permanent discontinuation of KEYTRUDA in 1.3% (36) of patients and withholding of KEYTRUDA in 0.9% (26) of patients. All patients who were withheld reinitiated KEYTRUDA after symptom improvement; of these, 23% had recurrence of pneumonitis. Pneumonitis resolved in 59% of the 94 patients. In clinical studies enrolling 389 adult patients with cHL who received KEYTRUDA as a single agent, pneumonitis occurred in 31 (8%) patients, including Grades 3-4 pneumonitis in 2.3% of patients. Patients received high-dose corticosteroids for a median duration of 10 days (range: 2 days to 53 months). Pneumonitis rates were similar in patients with and without prior thoracic radiation. Pneumonitis led to discontinuation of KEYTRUDA in 21 (5.4%) patients. Of the patients who developed pneumonitis, 42% interrupted KEYTRUDA, 68% discontinued KEYTRUDA, and 77% had resolution. In a clinical study enrolling 580 adult patients with resected NSCLC (KEYNOTE-091) who received KEYTRUDA as a single agent for adjuvant treatment, pneumonitis occurred in 41 (7%) patients, including fatal (0.2%), Grade 4 (0.3%), and Grade 3 (1%) adverse reactions. Patients received high-dose corticosteroids for a median duration of 10 days (range: 1 day to 2.3 months). Pneumonitis led to discontinuation of KEYTRUDA in 26 (4.5%) of patients. Of the patients who developed pneumonitis, 54% interrupted KEYTRUDA, 63% discontinued KEYTRUDA, and 71% had resolution. Immune-Mediated Colitis KEYTRUDA can cause immune-mediated colitis, which may present with diarrhea. Cytomegalovirus (CMV) infection/reactivation has been reported in patients with corticosteroid-refractory immune-mediated colitis. In cases of corticosteroid-refractory colitis, consider repeating infectious workup to exclude alternative etiologies. Immune-mediated colitis occurred in 1.7% (48/2799) of patients receiving KEYTRUDA, including Grade 4 (<0.1%), Grade 3 (1.1%), and Grade 2 (0.4%) adverse reactions. Systemic corticosteroids were required in 69% (33/48) of patients with colitis. Additional immunosuppressant therapy was required in 4.2% of patients. Colitis led to permanent discontinuation of KEYTRUDA in 0.5% (15) of patients and withholding of KEYTRUDA in 0.5% (13) of patients. All patients who were withheld reinitiated KEYTRUDA after symptom improvement; of these, 23% had recurrence of colitis. Colitis resolved in 85% of the 48 patients. Hepatotoxicity and Immune-Mediated Hepatitis KEYTRUDA as a Single Agent KEYTRUDA can cause immune-mediated hepatitis. Immune-mediated hepatitis occurred in 0.7% (19/2799) of patients receiving KEYTRUDA, including Grade 4 (<0.1%), Grade 3 (0.4%), and Grade 2 (0.1%) adverse reactions. Systemic corticosteroids were required in 68% (13/19) of patients with hepatitis. Eleven percent of these patients required additional immunosuppressant therapy. Hepatitis led to permanent discontinuation of KEYTRUDA in 0.2% (6) of patients and withholding of KEYTRUDA in 0.3% (9) of patients. All patients who were withheld reinitiated KEYTRUDA after symptom improvement; of these, none had recurrence of hepatitis. Hepatitis resolved in 79% of the 19 patients. KEYTRUDA with Axitinib KEYTRUDA in combination with axitinib can cause hepatic toxicity with higher than expected frequencies of Grades 3 and 4 ALT and AST elevations compared to KEYTRUDA alone. Monitor liver enzymes before initiation of and periodically throughout treatment. Consider more frequent monitoring of liver enzymes as compared to when the drugs are administered as single agents. For elevated liver enzymes, interrupt KEYTRUDA and axitinib, and consider administering corticosteroids as needed [see Dosage and Administration (2.3) ] . With the combination of KEYTRUDA and axitinib, Grades 3 and 4 increased ALT (20%) and increased AST (13%) were seen. Fifty-nine percent of the patients with increased ALT received systemic corticosteroids. In patients with ALT ≥3 times ULN (Grades 2-4, n=116), ALT resolved to Grades 0-1 in 94%. Among the 92 patients who were rechallenged with either KEYTRUDA (n=3) or axitinib (n=34) administered as a single agent or with both (n=55), recurrence of ALT ≥3 times ULN was observed in 1 patient receiving KEYTRUDA, 16 patients receiving axitinib, and 24 patients receiving both KEYTRUDA and axitinib. All patients with a recurrence of ALT ≥3 ULN subsequently recovered from the event. Immune-Mediated Endocrinopathies Adrenal Insufficiency KEYTRUDA can cause primary or secondary adrenal insufficiency. For Grade 2 or higher adrenal insufficiency, initiate symptomatic treatment, including hormone replacement as clinically indicated. Withhold KEYTRUDA depending on severity [see Dosage and Administration (2.3) ]. Adrenal insufficiency occurred in 0.8% (22/2799) of patients receiving KEYTRUDA, including Grade 4 (<0.1%), Grade 3 (0.3%), and Grade 2 (0.3%) adverse reactions. Systemic corticosteroids were required in 77% (17/22) of patients with adrenal insufficiency; of these, the majority remained on systemic corticosteroids. Adrenal insufficiency led to permanent discontinuation of KEYTRUDA in <0.1% (1) of patients and withholding of KEYTRUDA in 0.3% (8) of patients. All patients who were withheld reinitiated KEYTRUDA after symptom improvement. Hypophysitis KEYTRUDA can cause immune-mediated hypophysitis. Hypophysitis can present with acute symptoms associated with mass effect such as headache, photophobia, or visual field defects. Hypophysitis can cause hypopituitarism. Initiate hormone replacement as indicated. Withhold or permanently discontinue KEYTRUDA depending on severity [see Dosage and Administration (2.3) ] . Hypophysitis occurred in 0.6% (17/2799) of patients receiving KEYTRUDA, including Grade 4 (<0.1%), Grade 3 (0.3%), and Grade 2 (0.2%) adverse reactions. Systemic corticosteroids were required in 94% (16/17) of patients with hypophysitis; of these, the majority remained on systemic corticosteroids. Hypophysitis led to permanent discontinuation of KEYTRUDA in 0.1% (4) of patients and withholding of KEYTRUDA in 0.3% (7) of patients. All patients who were withheld reinitiated KEYTRUDA after symptom improvement. Thyroid Disorders KEYTRUDA can cause immune-mediated thyroid disorders. Thyroiditis can present with or without endocrinopathy. Hypothyroidism can follow hyperthyroidism. Initiate hormone replacement for hypothyroidism or institute medical management of hyperthyroidism as clinically indicated. Withhold or permanently discontinue KEYTRUDA depending on severity [see Dosage and Administration (2.3) ]. Thyroiditis occurred in 0.6% (16/2799) of patients receiving KEYTRUDA, including Grade 2 (0.3%). No patients discontinued KEYTRUDA due to thyroiditis. KEYTRUDA was withheld in <0.1% (1) of patients. Hyperthyroidism occurred in 3.4% (96/2799) of patients receiving KEYTRUDA, including Grade 3 (0.1%) and Grade 2 (0.8%). Hyperthyroidism led to permanent discontinuation of KEYTRUDA in <0.1% (2) of patients and withholding of KEYTRUDA in 0.3% (7) of patients. All patients who were withheld reinitiated KEYTRUDA after symptom improvement. The incidence of new or worsening hyperthyroidism was higher in 580 patients with resected NSCLC, occurring in 11% of patients receiving KEYTRUDA as a single agent as adjuvant treatment (KEYNOTE-091), including Grade 3 (0.2%) hyperthyroidism. Hypothyroidism occurred in 8% (237/2799) of patients receiving KEYTRUDA, including Grade 3 (0.1%) and Grade 2 (6.2%). Hypothyroidism led to permanent discontinuation of KEYTRUDA in <0.1% (1) of patients and withholding of KEYTRUDA in 0.5% (14) of patients. All patients who were withheld reinitiated KEYTRUDA after symptom improvement. The majority of patients with hypothyroidism required long-term thyroid hormone replacement. The incidence of new or worsening hypothyroidism was higher in 1185 patients with HNSCC, occurring in 16% of patients receiving KEYTRUDA as a single agent or in combination with platinum and FU, including Grade 3 (0.3%) hypothyroidism. The incidence of new or worsening hypothyroidism was higher in 389 patients with cHL (17%) receiving KEYTRUDA as a single agent, including Grade 1 (6.2%) and Grade 2 (10.8%) hypothyroidism. The incidence of new or worsening hypothyroidism was higher in 580 patients with resected NSCLC, occurring in 22% of patients receiving KEYTRUDA as a single agent as adjuvant treatment (KEYNOTE-091), including Grade 3 (0.3%) hypothyroidism. Type 1 Diabetes Mellitus, which can present with Diabetic Ketoacidosis Monitor patients for hyperglycemia or other signs and symptoms of diabetes. Initiate treatment with insulin as clinically indicated. Withhold KEYTRUDA depending on severity [see Dosage and Administration (2.3) ] . Type 1 diabetes mellitus occurred in 0.2% (6/2799) of patients receiving KEYTRUDA. Type 1 diabetes mellitus led to permanent discontinuation in <0.1% (1) of patients and withholding of KEYTRUDA in <0.1% (1) of patients. All patients who were withheld reinitiated KEYTRUDA after symptom improvement. All patients with Type 1 diabetes mellitus required long-term insulin therapy. Immune-Mediated Nephritis with Renal Dysfunction KEYTRUDA can cause immune-mediated nephritis. Immune-mediated nephritis occurred in 0.3% (9/2799) of patients receiving KEYTRUDA, including Grade 4 (<0.1%), Grade 3 (0.1%), and Grade 2 (0.1%) adverse reactions. Systemic corticosteroids were required in 89% (8/9) of patients with nephritis. Nephritis led to permanent discontinuation of KEYTRUDA in 0.1% (3) of patients and withholding of KEYTRUDA in 0.1% (3) of patients. All patients who were withheld reinitiated KEYTRUDA after symptom improvement; of these, none had recurrence of nephritis. Nephritis resolved in 56% of the 9 patients. Immune-Mediated Dermatologic Adverse Reactions KEYTRUDA can cause immune-mediated rash or dermatitis. Exfoliative dermatitis, including Stevens Johnson Syndrome, DRESS, and toxic epidermal necrolysis (TEN), has occurred with PD-1/PD-L1 blocking antibodies. Topical emollients and/or topical corticosteroids may be adequate to treat mild to moderate non-exfoliative rashes. Withhold or permanently discontinue KEYTRUDA depending on severity [see Dosage and Administration (2.3) ] . Immune-mediated dermatologic adverse reactions occurred in 1.4% (38/2799) of patients receiving KEYTRUDA, including Grade 3 (1%) and Grade 2 (0.1%) adverse reactions. Systemic corticosteroids were required in 40% (15/38) of patients with immune-mediated dermatologic adverse reactions. Immune-mediated dermatologic adverse reactions led to permanent discontinuation of KEYTRUDA in 0.1% (2) of patients and withholding of KEYTRUDA in 0.6% (16) of patients. All patients who were withheld reinitiated KEYTRUDA after symptom improvement; of these, 6% had recurrence of immune-mediated dermatologic adverse reactions. Immune-mediated dermatologic adverse reactions resolved in 79% of the 38 patients. Other Immune-Mediated Adverse Reactions The following clinically significant immune-mediated adverse reactions occurred at an incidence of <1% (unless otherwise noted) in patients who received KEYTRUDA or were reported with the use of other PD-1/PD-L1 blocking antibodies. Severe or fatal cases have been reported for some of these adverse reactions. Cardiac/Vascular: Myocarditis, pericarditis, vasculitis Nervous System: Meningitis, encephalitis, myelitis and demyelination, myasthenic syndrome/myasthenia gravis (including exacerbation), Guillain-Barré syndrome, nerve paresis, autoimmune neuropathy Ocular: Uveitis, iritis and other ocular inflammatory toxicities can occur. Some cases can be associated with retinal detachment. Various grades of visual impairment, including blindness, can occur. If uveitis occurs in combination with other immune-mediated adverse reactions, consider a Vogt-Koyanagi-Harada-like syndrome, as this may require treatment with systemic steroids to reduce the risk of permanent vision loss. Gastrointestinal: Pancreatitis, to include increases in serum amylase and lipase levels, gastritis, duodenitis Musculoskeletal and Connective Tissue: Myositis/polymyositis, rhabdomyolysis (and associated sequelae, including renal failure), arthritis (1.5%), polymyalgia rheumatica Endocrine: Hypoparathyroidism Hematologic/Immune: Hemolytic anemia, aplastic anemia, hemophagocytic lymphohistiocytosis, systemic inflammatory response syndrome, histiocytic necrotizing lymphadenitis (Kikuchi lymphadenitis), sarcoidosis, immune thrombocytopenic purpura, solid organ transplant rejection, other transplant (including corneal graft) rejection Other: Myocarditis-Myositis-Myasthenia Gravis (or Myasthenia-Like) Overlap Syndrome, reported as the co-occurrence of either two or all three adverse reactions. 5.2 Infusion-Related Reactions KEYTRUDA can cause severe or life-threatening infusion-related reactions, including hypersensitivity and anaphylaxis, which have been reported in 0.2% of 2799 patients receiving KEYTRUDA. Monitor patients for signs and symptoms of infusion-related reactions including rigors, chills, wheezing, pruritus, flushing, rash, hypotension, hypoxemia, and fever. Interrupt or slow the rate of infusion for mild (Grade 1) or moderate (Grade 2) infusion-related reactions. For severe (Grade 3) or life-threatening (Grade 4) infusion-related reactions, stop infusion and permanently discontinue KEYTRUDA [see Dosage and Administration (2.3) ] . 5.3 Complications of Allogeneic HSCT Fatal and other serious complications can occur in patients who receive allogeneic hematopoietic stem cell transplantation (HSCT) before or after being treated with a PD-1/PD-L1 blocking antibody. Transplant-related complications include hyperacute graft-versus-host-disease (GVHD), acute GVHD, chronic GVHD, hepatic veno-occlusive disease (VOD) after reduced intensity conditioning, and steroid-requiring febrile syndrome (without an identified infectious cause). These complications may occur despite intervening therapy between PD-1/PD-L1 blockade and allogeneic HSCT. Follow patients closely for evidence of transplant-related complications and intervene promptly. Consider the benefit versus risks of treatment with a PD-1/PD-L1 blocking antibody prior to or after an allogeneic HSCT. 5.4 Increased Mortality in Patients with Multiple Myeloma when KEYTRUDA is Added to a Thalidomide Analogue and Dexamethasone In two randomized trials in patients with multiple myeloma, the addition of KEYTRUDA to a thalidomide analogue plus dexamethasone, a use for which no PD-1 or PD-L1 blocking antibody is indicated, resulted in increased mortality. Treatment of patients with multiple myeloma with a PD-1 or PD-L1 blocking antibody in combination with a thalidomide analogue plus dexamethasone is not recommended outside of controlled trials. 5.5 Embryo-Fetal Toxicity Based on its mechanism of action, KEYTRUDA can cause fetal harm when administered to a pregnant woman. Animal models link the PD-1/PD-L1 signaling pathway with maintenance of pregnancy through induction of maternal immune tolerance to fetal tissue. Advise women of the potential risk to a fetus. Advise females of reproductive potential to use effective contraception during treatment with KEYTRUDA and for 4 months after the last dose [see Use in Specific Populations (8.1 , 8.3) ].",
-      "clinical_data": [],
-      "tone_pillars": [],
-      "voice_do": [],
-      "voice_dont": [],
+      "clinical_data": [
+        {
+          "study": "KEYNOTE-006",
+          "stat": "Overall Survival: Hazard Ratio 0.63 (95% CI: 0.47, 0.83) for KEYTRUDA 10 mg/kg every 2 weeks compared to ipilimumab.",
+          "context": "14.1 Melanoma · Ipilimumab-Naive Melanoma"
+        },
+        {
+          "study": "KEYNOTE-006",
+          "stat": "Progression-Free Survival: Hazard Ratio 0.58 (95% CI: 0.46, 0.72) for KEYTRUDA 10 mg/kg every 2 weeks compared to ipilimumab.",
+          "context": "14.1 Melanoma · Ipilimumab-Naive Melanoma"
+        },
+        {
+          "study": "KEYNOTE-716",
+          "stat": "Recurrence-Free Survival: Hazard Ratio 0.65 (95% CI: 0.46, 0.92) for KEYTRUDA 200 mg every 3 weeks compared to placebo.",
+          "context": "14.1 Melanoma · Adjuvant Treatment of Resected Stage IIB or IIC Melanoma"
+        },
+        {
+          "study": "KEYNOTE-054",
+          "stat": "Recurrence-Free Survival: Hazard Ratio 0.57 (95% CI: 0.46, 0.70) for KEYTRUDA 200 mg every 3 weeks compared to placebo.",
+          "context": "14.1 Melanoma · Adjuvant Treatment of Stage III Resected Melanoma"
+        },
+        {
+          "study": "KEYNOTE-189",
+          "stat": "Overall Survival: Median 22.0 months (95% CI: 19.5, 24.5) for KEYTRUDA + pemetrexed + platinum chemotherapy vs 10.6 months (95% CI: 8.7, 13.6) for placebo + pemetrexed + platinum chemotherapy. HR 0.56 (95% CI: 0.46, 0.69).",
+          "context": "14.2 Non-Small Cell Lung Cancer · First-line treatment of metastatic nonsquamous NSCLC with pemetrexed and platinum chemotherapy"
+        },
+        {
+          "study": "KEYNOTE-189",
+          "stat": "Progression-Free Survival: Median 8.8 months (95% CI: 7.6, 9.2) for KEYTRUDA + pemetrexed + platinum chemotherapy vs 4.9 months (95% CI: 4.7, 5.5) for placebo + pemetrexed + platinum chemotherapy. HR 0.52 (95% CI: 0.43, 0.64).",
+          "context": "14.2 Non-Small Cell Lung Cancer · First-line treatment of metastatic nonsquamous NSCLC with pemetrexed and platinum chemotherapy"
+        }
+      ],
+      "tone_pillars": [
+        "Authoritative",
+        "Precise",
+        "Empathetic",
+        "Comprehensive",
+        "Evidence-based"
+      ],
+      "voice_do": [
+        "immune-mediated adverse reactions",
+        "overall survival (OS)",
+        "progression-free survival (PFS)",
+        "recurrence-free survival (RFS)",
+        "FDA-authorized test",
+        "unresectable or metastatic",
+        "adjuvant treatment",
+        "neoadjuvant treatment",
+        "biomarker",
+        "indications"
+      ],
+      "voice_dont": [
+        "guarantees",
+        "absolute statements of efficacy without qualification",
+        "unsubstantiated claims",
+        "informal slang or jargon not medically appropriate",
+        "exaggerated emotional language",
+        "downplaying risks or adverse events"
+      ],
       "guardrails": {
-        "dos": [],
-        "donts": []
+        "dos": [
+          {
+            "category": "Indication Limits",
+            "text": "Administer KEYTRUDA for the adjuvant treatment of adult and pediatric (12 years and older) patients with Stage IIB, IIC, or III melanoma following complete resection. (FDA label · indications 1.1)"
+          },
+          {
+            "category": "Indication Limits",
+            "text": "Administer KEYTRUDA as a single agent for the first-line treatment of patients with NSCLC expressing PD-L1 [Tumor Proportion Score (TPS) ≥1%] as determined by an FDA-authorized test, with no EGFR or ALK genomic tumor aberrations. (FDA label · indications 1.2, 2.1)"
+          },
+          {
+            "category": "Monitoring",
+            "text": "Monitor for early identification and management of immune-mediated adverse reactions. Evaluate liver enzymes, creatinine, and thyroid function at baseline and periodically during treatment. (FDA label · warnings and precautions 5.1)"
+          },
+          {
+            "category": "Adverse Reaction Management",
+            "text": "Withhold or permanently discontinue KEYTRUDA depending on severity of immune-mediated adverse reactions. Institute medical management promptly, including specialty consultation as appropriate. (FDA label · warnings and precautions 5.1)"
+          }
+        ],
+        "donts": [
+          {
+            "category": "Limitations of Use",
+            "text": "Do not recommend KEYTRUDA for treatment of patients with PMBCL who require urgent cytoreductive therapy. (FDA label · indications 1.6)"
+          },
+          {
+            "category": "Safety Warnings",
+            "text": "Do not treat patients with multiple myeloma with a PD-1 or PD-L1 blocking antibody in combination with a thalidomide analogue plus dexamethasone outside of controlled clinical trials. (FDA label · warnings and precautions 5.4)"
+          },
+          {
+            "category": "Embryo-Fetal Toxicity",
+            "text": "Do not use in pregnant females without advising them of the potential risk to a fetus. Advise females of reproductive potential to use an effective method of contraception. (FDA label · warnings and precautions 5.5, 8.1, 8.3)"
+          },
+          {
+            "category": "Contraindications",
+            "text": "Do not claim any contraindications for KEYTRUDA, as none are listed. (FDA label · contraindications 4)"
+          }
+        ]
       },
       "concepts": [],
       "message_pool": [],
       "claims": [],
-      "references": [],
+      "references": [
+        {
+          "id": "KEYNOTE-006",
+          "title": "KEYNOTE-006 (NCT01866319)",
+          "type": "clinical_study",
+          "key_data": "Statistically significant improvements in OS and PFS for KEYTRUDA compared to ipilimumab in ipilimumab-naive melanoma.",
+          "promo_eligible": true
+        },
+        {
+          "id": "KEYNOTE-002",
+          "title": "KEYNOTE-002 (NCT01704287)",
+          "type": "clinical_study",
+          "key_data": "Statistically significant improvement in PFS for KEYTRUDA compared to chemotherapy in ipilimumab-refractory melanoma.",
+          "promo_eligible": true
+        },
+        {
+          "id": "KEYNOTE-716",
+          "title": "KEYNOTE-716 (NCT03553836)",
+          "type": "clinical_study",
+          "key_data": "Statistically significant improvement in RFS and DMFS for KEYTRUDA compared with placebo in adjuvant treatment of resected Stage IIB or IIC melanoma.",
+          "promo_eligible": true
+        },
+        {
+          "id": "KEYNOTE-054",
+          "title": "KEYNOTE-054 (NCT02362594)",
+          "type": "clinical_study",
+          "key_data": "Statistically significant improvement in RFS and DMFS for KEYTRUDA compared with placebo in adjuvant treatment of Stage III resected melanoma.",
+          "promo_eligible": true
+        },
+        {
+          "id": "KEYNOTE-189",
+          "title": "KEYNOTE-189 (NCT02578680)",
+          "type": "clinical_study",
+          "key_data": "Statistically significant improvement in OS and PFS for KEYTRUDA in combination with pemetrexed and platinum chemotherapy in first-line metastatic nonsquamous NSCLC.",
+          "promo_eligible": true
+        },
+        {
+          "id": "KEYNOTE-407",
+          "title": "KEYNOTE-407 (NCT02775435)",
+          "type": "clinical_study",
+          "key_data": "Evaluated KEYTRUDA in combination with carboplatin and either paclitaxel or paclitaxel protein-bound in first-line metastatic squamous NSCLC.",
+          "promo_eligible": true
+        }
+      ],
       "components": [],
       "personas": {
-        "hcp": [],
-        "patient": [],
-        "payer": []
+        "hcp": [
+          {
+            "name": "Dr. Anya Sharma — The Confident Integrator",
+            "specialties": "Medical Oncology (NSCLC Focus)",
+            "who": "An oncologist with extensive experience in treating Non-Small Cell Lung Cancer. She is well-versed in immunotherapy and actively seeks to integrate the most effective treatments into her practice, often considering combination therapies.",
+            "tier": "Primary",
+            "behaviours": [
+              "Seeks combination therapies for optimal patient outcomes.",
+              "Stays updated on new clinical trial data for NSCLC.",
+              "Prefers treatments with established efficacy across diverse patient profiles."
+            ],
+            "barrier": "Potential for immune-related adverse events with combination therapies.",
+            "moment": "When reviewing a newly diagnosed metastatic NSCLC patient's pathology report, especially those eligible for first-line combination therapy.",
+            "key_message": "KEYTRUDA in combination with chemotherapy significantly improves overall survival and progression-free survival as first-line treatment for patients with metastatic nonsquamous NSCLC.",
+            "tone": "Authoritative, results-driven, supportive of evidence-based practice.",
+            "voice": "As an ILLUSTRATIVE quote: 'For my metastatic NSCLC patients, especially nonsquamous, the data supporting KEYTRUDA with chemo in the first-line is compelling. I'm always looking for treatments that move the needle on survival, and this combination consistently delivers.'",
+            "source": "FDA label · clinical studies (KEYNOTE-189)"
+          },
+          {
+            "name": "Dr. Ben Carter — The Precise Diagnostician",
+            "specialties": "Pathology",
+            "who": "A pathologist crucial for accurate biomarker testing (PD-L1, MSI-H/dMMR, TMB-H) that determines eligibility for Keytruda across various cancer types.",
+            "tier": "Secondary",
+            "behaviours": [
+              "Ensures precise and timely biomarker testing.",
+              "Communicates biomarker results clearly to oncologists.",
+              "Seeks to understand the clinical implications of various biomarker cut-offs.",
+              "Aware of FDA-authorized tests required for specific indications."
+            ],
+            "barrier": "Complexity and variability in biomarker testing requirements across numerous indications.",
+            "moment": "When interpreting immunohistochemistry or molecular testing results for a biopsy, particularly when a treatment like Keytruda is being considered based on biomarker status.",
+            "key_message": "Accurate and timely biomarker testing for PD-L1, MSI-H/dMMR, and TMB-H, using FDA-authorized tests, is critical for identifying patients eligible for KEYTRUDA across its diverse indications.",
+            "tone": "Analytical, meticulous, informative.",
+            "voice": "As an ILLUSTRATIVE quote: 'The sheer number of Keytruda indications, each with its own biomarker criteria – whether it’s PD-L1 TPS ≥1%, CPS ≥1, MSI-H, or TMB-H ≥10 mut/Mb – means our lab's precision and adherence to FDA-authorized tests are non-negotiable for guiding treatment decisions.'",
+            "source": "FDA label · indications"
+          },
+          {
+            "name": "Dr. Olivia Chen — The Early Intervener",
+            "specialties": "Medical Oncology (Melanoma Focus)",
+            "who": "An oncologist specializing in melanoma, focusing on both metastatic and adjuvant treatment strategies to prevent recurrence.",
+            "tier": "Primary",
+            "behaviours": [
+              "Prioritizes recurrence prevention in resected melanoma.",
+              "Evaluates treatment options for various stages of melanoma.",
+              "Educates patients on the importance of adjuvant therapy.",
+              "Monitors for potential immune-related adverse events during and after therapy."
+            ],
+            "barrier": "Balancing the benefits of adjuvant therapy with potential adverse events and patient quality of life.",
+            "moment": "When consulting with a patient post-melanoma resection, discussing adjuvant treatment options to reduce recurrence risk.",
+            "key_message": "KEYTRUDA offers a statistically significant improvement in recurrence-free survival and distant metastasis-free survival for patients with completely resected Stage IIB, IIC, or III melanoma.",
+            "tone": "Proactive, empathetic, evidence-driven.",
+            "voice": "As an ILLUSTRATIVE quote: 'After a complete resection of Stage IIB, IIC, or III melanoma, my goal is to keep that cancer from coming back. The data on KEYTRUDA for adjuvant treatment, showing improved recurrence-free survival, gives me confidence in preventing distant metastasis.'",
+            "source": "FDA label · clinical studies (KEYNOTE-716, KEYNOTE-054)"
+          },
+          {
+            "name": "Dr. Marcus Thorne — The Broad Spectrum Specialist",
+            "specialties": "Medical Oncology (Emerging Indications Focus)",
+            "who": "An oncologist who manages a wide variety of cancer types, including those for which Keytruda has more recently gained approval, such as Merkel Cell Carcinoma or Biliary Tract Cancer.",
+            "tier": "Primary",
+            "behaviours": [
+              "Seeks to understand Keytruda's efficacy in less common tumor types.",
+              "Navigates complex treatment guidelines for niche indications.",
+              "Engages in continuous learning to stay abreast of label expansions.",
+              "Considers available options for patients with limited treatment alternatives."
+            ],
+            "barrier": "Lack of familiarity with specific efficacy data and patient selection criteria for newer or less common Keytruda indications.",
+            "moment": "When a patient presents with a rare or advanced cancer that has progressed on initial therapies, prompting a search for broader treatment options.",
+            "key_message": "KEYTRUDA is approved across a wide range of advanced cancers, including Merkel Cell Carcinoma and biliary tract cancer, offering a valuable treatment option for these populations.",
+            "tone": "Inquisitive, comprehensive, patient-focused.",
+            "voice": "As an ILLUSTRATIVE quote: 'It's incredible how many different cancers KEYTRUDA now covers. I've got patients with Merkel cell or biliary tract cancer where options are limited, so knowing Keytruda's proven efficacy in these areas broadens my treatment arsenal significantly.'",
+            "source": "FDA label · indications"
+          }
+        ],
+        "patient": [
+          {
+            "name": "Sarah Miller — The Informed Advocate",
+            "specialties": "Melanoma Patient (Stage IIB, IIC, or III)",
+            "who": "A proactive patient recently diagnosed with Stage IIB, IIC, or III melanoma who has undergone complete resection. She is actively researching treatment options to prevent recurrence and is seeking comprehensive information to make informed decisions.",
+            "tier": "Primary",
+            "behaviours": [
+              "Researches treatment options online and consults with multiple specialists.",
+              "Seeks clear information on efficacy, safety, and quality of life implications.",
+              "Engages her care team with questions and preferences.",
+              "Values long-term outcomes, especially recurrence prevention."
+            ],
+            "barrier": "Overwhelm from complex medical information and uncertainty about treatment choices.",
+            "moment": "After her surgery, when discussing adjuvant therapy options with her oncologist to reduce the risk of her melanoma returning.",
+            "key_message": "If you have completely resected Stage IIB, IIC, or III melanoma, KEYTRUDA has been shown to significantly improve recurrence-free survival and distant metastasis-free survival.",
+            "tone": "Empathetic, clear, hopeful.",
+            "voice": "As an ILLUSTRATIVE quote: 'My biggest fear is the melanoma coming back. My doctor mentioned adjuvant therapy, and I want to understand how it can really help me stay cancer-free in the long run. I need clear facts about my best options.'",
+            "source": "FDA label · clinical studies (KEYNOTE-716, KEYNOTE-054)"
+          },
+          {
+            "name": "John Davis — The Metastatic NSCLC Fighter",
+            "specialties": "Metastatic Non-Small Cell Lung Cancer Patient",
+            "who": "A patient recently diagnosed with metastatic nonsquamous NSCLC, seeking the most effective first-line treatment to extend his life and maintain quality of life.",
+            "tier": "Primary",
+            "behaviours": [
+              "Relies heavily on his oncologist's recommendations.",
+              "Concerned about prognosis and managing side effects.",
+              "Open to combination therapies that offer better outcomes.",
+              "Seeks to understand treatment impact on daily life."
+            ],
+            "barrier": "Fear of disease progression and significant treatment side effects that impact quality of life.",
+            "moment": "During the initial consultation after receiving his metastatic NSCLC diagnosis, discussing first-line treatment plans with his oncologist.",
+            "key_message": "For metastatic nonsquamous NSCLC, KEYTRUDA in combination with chemotherapy significantly improves overall survival and progression-free survival as a first-line treatment option.",
+            "tone": "Reassuring, empowering, focused on extending life and improving outcomes.",
+            "voice": "As an ILLUSTRATIVE quote: 'This diagnosis is a lot to take in. My doctor is talking about a combination treatment. I want to know if this is the strongest option to fight this, to give me the best chance at more time and a good quality of life.'",
+            "source": "FDA label · clinical studies (KEYNOTE-189)"
+          }
+        ],
+        "caregiver": [
+          {
+            "name": "Maria Rodriguez — The Dedicated Supporter",
+            "specialties": "Caregiver for Metastatic NSCLC Patient",
+            "who": "The primary caregiver for a patient with metastatic nonsquamous NSCLC. She is deeply involved in treatment discussions, managing appointments, and supporting her loved one through therapy.",
+            "tier": "Primary",
+            "behaviours": [
+              "Advocates for the best possible care for her loved one.",
+              "Manages treatment schedules and medication adherence.",
+              "Researches information to understand the disease and treatment options.",
+              "Monitors for side effects and communicates concerns to the care team."
+            ],
+            "barrier": "Emotional burden, logistical challenges of care, and difficulty interpreting complex medical information.",
+            "moment": "When attending oncology appointments with her loved one, asking questions about the efficacy, safety, and practical aspects of recommended treatments.",
+            "key_message": "KEYTRUDA, in combination with chemotherapy, has shown significant improvements in overall survival and progression-free survival for first-line metastatic nonsquamous NSCLC. Understanding the treatment plan and potential side effects can help you support your loved one effectively.",
+            "tone": "Supportive, informative, practical.",
+            "voice": "As an ILLUSTRATIVE quote: 'My husband just got diagnosed with lung cancer, and it's metastatic. I need to know what this combination therapy means for him, not just the science, but what our daily life will look like, how we manage side effects, and if it's truly his best shot.'",
+            "source": "FDA label · clinical studies (KEYNOTE-189)"
+          }
+        ]
       },
       "competitors": [
         {
           "name": "Standard of Care (SOC) alone",
           "type": "standard of care",
-          "status": null,
-          "threat": null,
-          "threat_status": "proposed",
-          "source": "PubMed 41730003, 42560690",
-          "indication": "hnscc-resectable-locally-advanced-neoadjuvant-adjuvant"
+          "status": "established",
+          "strength": "Well-understood, widely available, often includes established chemotherapies or targeted therapies, potentially lower initial cost.",
+          "weakness": "May have lower efficacy, particularly in advanced or relapsed settings, and may be associated with significant side effects depending on the specific regimen.",
+          "counter": "KEYTRUDA offers statistically significant improvements in overall survival, progression-free survival, recurrence-free survival, or distant metastasis-free survival across various indications compared to SOC alone or in combination with chemotherapy, as seen in trials like KEYNOTE-006, KEYNOTE-716, KEYNOTE-054, and KEYNOTE-189, where it demonstrated superiority in specified patient populations.",
+          "threat": "High",
+          "threat_reason": "SOC is the baseline for all new treatments, and in many indications, it remains a strong competitor, especially for patients who may not be eligible for or cannot tolerate immunotherapy, or in settings where the incremental benefit of KEYTRUDA is not considered substantial enough by prescribers or payers. E.g., for some patients, the risks of immune-related adverse events might outweigh the benefit over SOC, or economic factors might favor SOC.",
+          "source": "FDA label · clinical studies (KEYNOTE-006, KEYNOTE-716, KEYNOTE-054, KEYNOTE-189); PubMed 41730003, 42560690",
+          "threat_status": "proposed"
         },
         {
           "name": "PDS0101 with Pembrolizumab",
           "type": "direct",
-          "status": null,
-          "threat": null,
-          "threat_status": "proposed",
+          "status": "pipeline",
+          "strength": "Not captured",
+          "weakness": "Not captured",
+          "counter": "Not captured",
+          "threat": "Medium",
+          "threat_reason": "While PDS0101 is in combination with pembrolizumab (KEYTRUDA), any novel combination therapy could potentially demonstrate superior efficacy or safety in specific populations, thereby limiting KEYTRUDA's single-agent use or market share within those segments. The 'pipeline' status implies it is not yet on the market, but its eventual approval could shift treatment paradigms.",
           "source": "PubMed 42752531",
-          "indication": "hnscc-resectable-locally-advanced-neoadjuvant-adjuvant"
+          "threat_status": "proposed"
         },
         {
           "name": "Cemiplimab",
           "type": "direct",
-          "status": null,
-          "threat": null,
-          "threat_status": "proposed",
+          "status": "approved",
+          "strength": "Not captured",
+          "weakness": "Not captured",
+          "counter": "Not captured",
+          "threat": "High",
+          "threat_reason": "Cemiplimab is another PD-1 blocking antibody, indicating direct competition within the same mechanism of action and potentially for the same patient populations. Its efficacy and safety profile in shared indications will directly challenge KEYTRUDA's market position. It is approved for certain indications (e.g., cSCC and basal cell carcinoma), putting it in direct competition for some of KEYTRUDA's indications.",
           "source": "PubMed 40237556",
-          "indication": "hnscc-resectable-locally-advanced-neoadjuvant-adjuvant"
+          "threat_status": "proposed"
         },
         {
           "name": "Triptolide",
           "type": "pipeline",
-          "status": null,
-          "threat": null,
-          "threat_status": "proposed",
+          "status": "pipeline",
+          "strength": "Not captured",
+          "weakness": "Not captured",
+          "counter": "Not captured",
+          "threat": "Low",
+          "threat_reason": "Triptolide is a pipeline compound, suggesting it is in early stages of development. Its mechanism of action and target indications are not specified, making its direct competitive threat uncertain and likely distant.",
           "source": "PubMed 42823180",
-          "indication": "hnscc-resectable-locally-advanced-neoadjuvant-adjuvant"
-        },
-        {
-          "name": "Porphyromonas gingivalis-Derived Phosphoglycerol-isoC17:0-Dihydroceramide (PGDHC)",
-          "type": "pipeline",
-          "status": null,
-          "threat": null,
-          "threat_status": "proposed",
-          "source": "PubMed 42781096",
-          "indication": "hnscc-resectable-locally-advanced-neoadjuvant-adjuvant"
-        },
-        {
-          "name": "Anti-CD44 treatment",
-          "type": "pipeline",
-          "status": null,
-          "threat": null,
-          "threat_status": "proposed",
-          "source": "PubMed 42618717",
-          "indication": "hnscc-resectable-locally-advanced-neoadjuvant-adjuvant"
-        },
-        {
-          "name": "Pharmacological blockade of PI3K-γ or PI3K-δ",
-          "type": "pipeline",
-          "status": null,
-          "threat": null,
-          "threat_status": "proposed",
-          "source": "PubMed 42618717",
-          "indication": "hnscc-resectable-locally-advanced-neoadjuvant-adjuvant"
+          "threat_status": "proposed"
         },
         {
           "name": "sunitinib",
           "type": "standard of care",
-          "status": null,
-          "threat": null,
-          "threat_status": "proposed",
-          "source": "PubMed 32697113, 37146227, 39642774, 36576173, 32884346, 31465470",
-          "indication": "rcc-advanced-first-line-axitinib"
+          "status": "established",
+          "strength": "Established efficacy in RCC (e.g., first-line advanced RCC), oral administration, well-understood side effect profile.",
+          "weakness": "Associated with a range of side effects including fatigue, diarrhea, hand-foot syndrome, and hypertension, which can impact patient quality of life and adherence. May not offer the same long-term survival benefits as immunotherapy combinations in certain patient subgroups.",
+          "counter": "KEYTRUDA in combination with axitinib or lenvatinib has demonstrated superior efficacy compared to sunitinib monotherapy in first-line advanced RCC, offering improved overall survival and progression-free survival (e.g., KEYNOTE-426, KEYNOTE-581). Discontinuation rates due to toxicity for pembrolizumab + axitinib were 10.7% (both drugs), which may be comparable or lower than sunitinib monotherapy (15% for TKI monotherapy for mRCC).",
+          "threat": "High",
+          "threat_reason": "Sunitinib is an established first-line treatment for advanced RCC and a common comparator in clinical trials. While KEYTRUDA combinations have shown superiority, sunitinib remains a viable option, especially where cost-effectiveness or specific patient profiles might favor its use. It sets a high bar for new therapies in this space.",
+          "source": "FDA label · clinical studies (KEYNOTE-426, KEYNOTE-581); PubMed 32697113, 37146227, 39642774, 36576173, 32884346, 31465470, 28732453",
+          "threat_status": "proposed"
         },
         {
           "name": "pazopanib",
           "type": "direct",
-          "status": null,
-          "threat": null,
-          "threat_status": "proposed",
+          "status": "approved",
+          "strength": "Established efficacy as a TKI in RCC, oral administration, provides an alternative to sunitinib with a potentially different side effect profile.",
+          "weakness": "Similar to sunitinib, pazopanib can cause significant side effects including fatigue, diarrhea, liver enzyme elevations, and hypertension. May not offer the same long-term survival benefits as immunotherapy combinations in certain patient subgroups.",
+          "counter": "KEYTRUDA combinations (e.g., with axitinib or lenvatinib) have demonstrated superior efficacy over TKIs like pazopanib in first-line advanced RCC. Specific comparative data to pazopanib for KEYTRUDA monotherapy or combination are not captured in the provided evidence but are generally established within the class.",
+          "threat": "Medium",
+          "threat_reason": "Pazopanib is another TKI used in RCC, representing a direct treatment alternative. Its position as an established therapy means it will capture a portion of the market, particularly in settings where a TKI monotherapy is preferred or considered sufficient.",
           "source": "PubMed 32697113, 31465470",
-          "indication": "rcc-advanced-first-line-axitinib"
+          "threat_status": "proposed"
         },
         {
           "name": "avelumab/axitinib",
           "type": "direct",
-          "status": null,
-          "threat": null,
-          "threat_status": "proposed",
+          "status": "approved",
+          "strength": "Combination therapy with an immune checkpoint inhibitor and a TKI, offering synergistic effects in RCC. Avelumab is a PD-L1 inhibitor.",
+          "weakness": "Combination therapy may increase the incidence and severity of adverse events, including immune-related and TKI-related toxicities. Discontinuation rates due to toxicity for pembrolizumab + axitinib (10.7%) suggest managing combined toxicities can be challenging.",
+          "counter": "KEYTRUDA (pembrolizumab) in combination with axitinib demonstrated superior efficacy compared to sunitinib in first-line advanced RCC (KEYNOTE-426). While avelumab/axitinib is a similar combination, specific comparative efficacy data between pembrolizumab/axitinib and avelumab/axitinib is not provided, but both are strong options in this space.",
+          "threat": "High",
+          "threat_reason": "Avelumab in combination with axitinib is a direct competitor in the first-line advanced RCC setting, using a similar strategy of combining an immune checkpoint inhibitor with a TKI. It will compete for the same patient population and market share, requiring KEYTRUDA to differentiate on efficacy, safety, or other factors.",
           "source": "PubMed 32697113, 32884346, 36576173",
-          "indication": "rcc-advanced-first-line-axitinib"
-        },
-        {
-          "name": "cabozantinib",
-          "type": "direct",
-          "status": null,
-          "threat": null,
-          "threat_status": "proposed",
-          "source": "PubMed 32697113, 31465470",
-          "indication": "rcc-advanced-first-line-axitinib"
+          "threat_status": "proposed"
         },
         {
           "name": "nivolumab/ipilimumab",
           "type": "direct",
-          "status": null,
-          "threat": null,
-          "threat_status": "proposed",
+          "status": "approved",
+          "strength": "Combination of two immune checkpoint inhibitors (PD-1 and CTLA-4), offering a distinct mechanism of action with proven efficacy in several cancers, including RCC.",
+          "weakness": "Known for a higher incidence of immune-related adverse events due to the combination of two checkpoint inhibitors, potentially leading to higher rates of treatment discontinuation. This combination can be more challenging to manage for some patients.",
+          "counter": "KEYTRUDA in combination with axitinib demonstrated superior efficacy compared to sunitinib in first-line advanced RCC (KEYNOTE-426). While nivolumab/ipilimumab is another strong immunotherapy option in RCC, specific comparative data to KEYTRUDA combinations are not provided. KEYTRUDA's combination with TKIs (e.g., axitinib, lenvatinib) may offer different toxicity profiles or efficacy benefits for specific patient subgroups compared to dual immunotherapy.",
+          "threat": "High",
+          "threat_reason": "Nivolumab/ipilimumab is a highly effective and established immunotherapy combination for first-line advanced RCC, representing a significant direct competitor. Its robust efficacy profile and distinct mechanism (dual immunotherapy) appeal to a similar patient population, requiring strong differentiation for KEYTRUDA.",
           "source": "PubMed 32697113, 39127872, 32884346",
-          "indication": "rcc-advanced-first-line-axitinib"
-        },
-        {
-          "name": "lenvatinib plus pembrolizumab",
-          "type": "direct",
-          "status": null,
-          "threat": null,
-          "threat_status": "proposed",
-          "source": "PubMed 39642774",
-          "indication": "rcc-advanced-first-line-axitinib"
-        },
-        {
-          "name": "lenvatinib plus everolimus",
-          "type": "direct",
-          "status": null,
-          "threat": null,
-          "threat_status": "proposed",
-          "source": "PubMed 39642774",
-          "indication": "rcc-advanced-first-line-axitinib"
-        },
-        {
-          "name": "sorafenib",
-          "type": "alternative",
-          "status": null,
-          "threat": null,
-          "threat_status": "proposed",
-          "source": "PubMed 28732453",
-          "indication": "rcc-advanced-first-line-axitinib"
-        },
-        {
-          "name": "everolimus",
-          "type": "alternative",
-          "status": null,
-          "threat": null,
-          "threat_status": "proposed",
-          "source": "PubMed 31465470",
-          "indication": "rcc-advanced-first-line-axitinib"
-        },
-        {
-          "name": "nivolumab",
-          "type": "alternative",
-          "status": null,
-          "threat": null,
-          "threat_status": "proposed",
-          "source": "PubMed 29473436, 31465470",
-          "indication": "rcc-advanced-first-line-axitinib"
+          "threat_status": "proposed"
         }
       ],
-      "care_continuum": {},
+      "care_continuum": {
+        "stages": [
+          {
+            "stage": "Diagnosis and Initial Staging",
+            "patient": "Patient receives a cancer diagnosis (e.g., melanoma, NSCLC, RCC) and undergoes initial staging and necessary biomarker testing.",
+            "source": "indications"
+          },
+          {
+            "stage": "Treatment Planning and Initiation",
+            "patient": "Oncologist determines eligibility for Keytruda based on indication, line of therapy, and biomarker status. Patient starts Keytruda, potentially in combination with other agents.",
+            "source": "indications"
+          },
+          {
+            "stage": "Active Treatment and Monitoring",
+            "patient": "Patient receives regular Keytruda infusions and is monitored for efficacy, disease progression, and adverse events. Caregivers provide support and help manage side effects.",
+            "source": "PubMed 39392156 (2024) · PubMed 32884346 (2020) · PubMed 35143542 (2022) · PubMed 32066646 (2020) · PubMed 42166160 (2024)"
+          },
+          {
+            "stage": "Disease Progression or Treatment Discontinuation",
+            "patient": "If disease progresses, or treatment is discontinued due to adverse events or completion of adjuvant therapy, the patient and care team consider next steps.",
+            "source": "PubMed 39392156 (2024) · PubMed 32884346 (2020) · PubMed 42166160 (2024)"
+          }
+        ]
+      },
       "identity": {
         "palette": [],
         "typography": ""
@@ -7226,6 +7981,337 @@
           "WY": 584057,
           "AK": 733406,
           "DC": 678972
+        }
+      },
+      "messages_by_persona": [
+        {
+          "persona": "Dr. Anya Sharma — The Confident Integrator",
+          "message": "KEYTRUDA in combination with chemotherapy significantly improves overall survival and progression-free survival as first-line treatment for patients with metastatic nonsquamous NSCLC.",
+          "existing": "FDA label · clinical studies (KEYNOTE-189)",
+          "to_develop": "Case studies demonstrating successful integration of KEYTRUDA + chemo in diverse real-world NSCLC patient populations; comparative data presentations against other first-line options focusing on long-term outcomes; resources on managing combination-specific adverse events."
+        },
+        {
+          "persona": "Dr. Ben Carter — The Precise Diagnostician",
+          "message": "Accurate and timely biomarker testing for PD-L1, MSI-H/dMMR, and TMB-H, using FDA-authorized tests, is critical for identifying patients eligible for KEYTRUDA across its diverse indications.",
+          "existing": "FDA label · indications",
+          "to_develop": "Educational materials detailing specific biomarker testing requirements and FDA-authorized tests for each KEYTRUDA indication; quick reference guides for pathologists on biomarker interpretation and reporting; webinars on emerging biomarker insights and challenges."
+        },
+        {
+          "persona": "Dr. Olivia Chen — The Early Intervener",
+          "message": "KEYTRUDA offers a statistically significant improvement in recurrence-free survival and distant metastasis-free survival for patients with completely resected Stage IIB, IIC, or III melanoma.",
+          "existing": "FDA label · clinical studies (KEYNOTE-716, KEYNOTE-054)",
+          "to_develop": "Patient education materials on the benefits of adjuvant therapy in melanoma; data summaries highlighting long-term recurrence prevention in KEYNOTE-716 and KEYNOTE-054; tools to help oncologists identify high-risk patients post-resection."
+        },
+        {
+          "persona": "Dr. Marcus Thorne — The Broad Spectrum Specialist",
+          "message": "KEYTRUDA is approved across a wide range of advanced cancers, including Merkel Cell Carcinoma and biliary tract cancer, offering a valuable treatment option for these populations.",
+          "existing": "FDA label · indications",
+          "to_develop": "Disease-specific fact sheets for less common indications with concise efficacy and safety data; peer-to-peer learning opportunities with specialists in these emerging indications; summaries of real-world evidence for these populations where available."
+        },
+        {
+          "persona": "Sarah Miller — The Informed Advocate",
+          "message": "If you have completely resected Stage IIB, IIC, or III melanoma, KEYTRUDA has been shown to significantly improve recurrence-free survival and distant metastasis-free survival.",
+          "existing": "FDA label · clinical studies (KEYNOTE-716, KEYNOTE-054)",
+          "to_develop": "Patient-friendly brochures explaining adjuvant melanoma treatment, benefits, and common side effects; interactive online resources with FAQs and patient testimonials (if permissible); discussion guides for patient-oncologist conversations about adjuvant therapy."
+        },
+        {
+          "persona": "John Davis — The Metastatic NSCLC Fighter",
+          "message": "For metastatic nonsquamous NSCLC, KEYTRUDA in combination with chemotherapy significantly improves overall survival and progression-free survival as a first-line treatment option.",
+          "existing": "FDA label · clinical studies (KEYNOTE-189)",
+          "to_develop": "Simplified explanations of survival benefits and how they translate to quality of life; practical advice on managing common side effects of combination therapy; information on patient support programs."
+        },
+        {
+          "persona": "Maria Rodriguez — The Dedicated Supporter",
+          "message": "KEYTRUDA, in combination with chemotherapy, has shown significant improvements in overall survival and progression-free survival for first-line metastatic nonsquamous NSCLC. Understanding the treatment plan and potential side effects can help you support your loved one effectively.",
+          "existing": "FDA label · clinical studies (KEYNOTE-189)",
+          "to_develop": "Caregiver guides for managing immunotherapy-related side effects; resources for navigating the healthcare system and insurance; emotional support resources for caregivers; practical tips for maintaining quality of life during treatment."
+        }
+      ],
+      "voice": {
+        "register": "Formal but accessible",
+        "reading_level": "University (for HCPs); High School (for patients/caregivers)",
+        "principles": [
+          {
+            "principle": "Be Evidence-Based and On-Label",
+            "say": "KEYTRUDA, in combination with platinum and FU, is indicated for the first-line treatment of patients with metastatic or with unresectable, recurrent HNSCC. (FDA label · indications)",
+            "not": "KEYTRUDA is the best treatment for all HNSCC patients."
+          },
+          {
+            "principle": "Focus on Patient Outcomes and Clinical Relevance",
+            "say": "For patients with resectable Stage IIB, IIC, or III melanoma, KEYTRUDA provides significant improvement in recurrence-free survival. (FDA label · clinical studies (KEYNOTE-716, KEYNOTE-054))",
+            "not": "KEYTRUDA works better than placebo for melanoma."
+          },
+          {
+            "principle": "Maintain Scientific Precision for HCPs",
+            "say": "Biomarker testing for PD-L1 (TPS ≥1% or CPS ≥1), MSI-H/dMMR, or TMB-H (≥10 mut/Mb) using an FDA-authorized test is critical for determining KEYTRUDA eligibility across various indications. (FDA label · indications)",
+            "not": "You need to test for some markers."
+          },
+          {
+            "principle": "Be Empathetic and Empowering for Patients/Caregivers",
+            "say": "Understanding the treatment plan, including potential benefits and side effects of KEYTRUDA in combination with chemotherapy, can help you support your loved one through first-line metastatic nonsquamous NSCLC treatment. (FDA label · clinical studies (KEYNOTE-189))",
+            "not": "Here are the complex clinical trial results for KEYTRUDA."
+          },
+          {
+            "principle": "Acknowledge Limitations and Safety Information",
+            "say": "Immune-mediated adverse reactions, which may be severe or fatal, can occur in any organ system or tissue with KEYTRUDA. Monitor patients closely for symptoms and signs. (FDA label · warnings and precautions)",
+            "not": "KEYTRUDA is completely safe."
+          }
+        ],
+        "by_audience": [
+          {
+            "audience": "Medical Oncologists",
+            "tone": "Authoritative, Scientific, Results-Oriented",
+            "focus": "Clinical data, survival outcomes, biomarker criteria, treatment algorithms, safety management."
+          },
+          {
+            "audience": "Pathologists",
+            "tone": "Precise, Informative, Technical",
+            "focus": "Biomarker testing methodologies, FDA-authorized tests, cut-off values, diagnostic accuracy, integration into clinical pathways."
+          },
+          {
+            "audience": "Oncology Nurses / Navigators",
+            "tone": "Supportive, Practical, Educational",
+            "focus": "Patient education, side effect management strategies, adherence support, logistical aspects of treatment, patient advocacy."
+          },
+          {
+            "audience": "Patients and Caregivers",
+            "tone": "Empathetic, Clear, Reassuring",
+            "focus": "Treatment benefits, quality of life, understanding risks, shared decision-making, support resources."
+          }
+        ],
+        "vocabulary": [
+          {
+            "use": "immune-mediated adverse reactions",
+            "instead_of": "side effects"
+          },
+          {
+            "use": "overall survival (OS)",
+            "instead_of": "how long you live"
+          },
+          {
+            "use": "progression-free survival (PFS)",
+            "instead_of": "how long before the cancer grows"
+          },
+          {
+            "use": "recurrence-free survival (RFS)",
+            "instead_of": "how long before the cancer comes back"
+          },
+          {
+            "use": "FDA-authorized test",
+            "instead_of": "special test"
+          },
+          {
+            "use": "unresectable or metastatic",
+            "instead_of": "advanced cancer"
+          },
+          {
+            "use": "adjuvant treatment",
+            "instead_of": "treatment after surgery"
+          },
+          {
+            "use": "neoadjuvant treatment",
+            "instead_of": "treatment before surgery"
+          },
+          {
+            "use": "biomarker",
+            "instead_of": "cancer marker"
+          },
+          {
+            "use": "indications",
+            "instead_of": "what it treats"
+          }
+        ],
+        "avoid": [
+          "guarantees",
+          "absolute statements of efficacy without qualification",
+          "unsubstantiated claims",
+          "informal slang or jargon not medically appropriate",
+          "exaggerated emotional language",
+          "downplaying risks or adverse events"
+        ],
+        "status": "to_confirm",
+        "note": "Drafted by Omni from the FDA label and public evidence — to confirm"
+      },
+      "unmet_need": {
+        "summary": "Despite advances in RCC treatment, significant unmet needs persist in early diagnosis, equitable access to clinical trials, and mitigating treatment discontinuations due to adverse events or disease progression. Disparities in mortality and trial representation highlight the need for improved screening, biomarker integration, and supportive care, particularly for minority populations.",
+        "facts": [
+          {
+            "label": "Mortality disparity for Black RCC patients",
+            "value": "22.4%",
+            "source": "PubMed 42521664"
+          },
+          {
+            "label": "Mortality disparity for White RCC patients",
+            "value": "21.7%",
+            "source": "PubMed 42521664"
+          },
+          {
+            "label": "Underrepresentation of Black patients in RCC ICI trials",
+            "value": "<4%",
+            "source": "PubMed 31099618"
+          },
+          {
+            "label": "Discontinuation rate of pembrolizumab + axitinib due to toxicity in advanced RCC",
+            "value": "10.7%",
+            "source": "PubMed 32884346"
+          },
+          {
+            "label": "Discontinuation rate of axitinib due to AEs in advanced RCC",
+            "value": "7.8%",
+            "source": "PubMed 42166160"
+          },
+          {
+            "label": "Discontinuation rate of pembrolizumab due to AEs in advanced RCC",
+            "value": "9.6%",
+            "source": "PubMed 42166160"
+          },
+          {
+            "label": "Discontinuation rate due to disease progression for axitinib in advanced RCC",
+            "value": "78.7%",
+            "source": "PubMed 42166160"
+          },
+          {
+            "label": "Discontinuation rate due to disease progression for pembrolizumab in advanced RCC",
+            "value": "75.3%",
+            "source": "PubMed 42166160"
+          },
+          {
+            "label": "Increase in risk of irAE with co-occurring infections",
+            "value": "80%",
+            "source": "PubMed 35143542"
+          }
+        ],
+        "gaps": [
+          {
+            "gap": "Early diagnosis and preventive strategies in RCC.",
+            "detail": "The overall incidence of RCC is continuously increasing, and the COVID-19 era led to a significant reduction in incidence rates, suggesting potential for delayed diagnoses.",
+            "who": "General population and at-risk individuals for RCC.",
+            "source": "PubMed 40358845, 38760399"
+          },
+          {
+            "gap": "Equity in access to advanced RCC treatments and clinical trials.",
+            "detail": "Black patients have higher 5-year cumulative incidence of death (22.4% vs. 21.7% in whites) and are significantly underrepresented (<4%) in ICI clinical trials for RCC.",
+            "who": "Black and AIAN patients with RCC, and minority U.S. populations seeking access to clinical trials.",
+            "source": "PubMed 42521664, 31099618"
+          },
+          {
+            "gap": "Improved biomarker integration for patient stratification and treatment selection.",
+            "detail": "A single biomarker for ICI patient selection may not be feasible; integration of multiple biologic components is likely needed. Mutations in TP53 or SMARCA4 lead to shorter time on active surveillance (7.5 vs 14.2 months), indicating a need for more precise tools.",
+            "who": "Patients with mRCC, and healthcare providers making treatment decisions.",
+            "source": "PubMed 30450335, 34980496"
+          },
+          {
+            "gap": "Mitigating treatment discontinuations due to adverse events.",
+            "detail": "10.7% of patients discontinued pembrolizumab + axitinib due to toxicity. Treatment interruption/discontinuation occurred in 43% of HNSCC patients due to irAEs. An 80% increased risk of irAEs was observed in subjects with co-occurring infections, often leading to suspension or discontinuation of therapy.",
+            "who": "Patients on KEYTRUDA combination therapies (e.g., with axitinib or chemotherapy), particularly those with co-occurring infections or who experience irAEs.",
+            "source": "PubMed 32884346, 39392156, 35143542"
+          }
+        ]
+      },
+      "competition_self": {
+        "name": "Keytruda",
+        "type": "direct",
+        "status": "approved",
+        "strength": "KEYTRUDA has broad efficacy across a wide range of advanced cancers, including melanoma, NSCLC, HNSCC, cHL, PMBCL, urothelial carcinoma, MSI-H/dMMR solid tumors, gastric/GEJ adenocarcinoma, esophageal/GEJ carcinoma, cervical cancer, HCC, biliary tract cancer, Merkel cell carcinoma, RCC, endometrial carcinoma, TMB-H solid tumors, cSCC, TNBC, and ovarian/fallopian tube/primary peritoneal carcinoma. It has demonstrated significant improvements in overall survival, progression-free survival, recurrence-free survival, or distant metastasis-free survival in many indications, often in first-line settings or as adjuvant therapy. It is a well-established brand in the oncology market.",
+        "weakness": "Like all immune checkpoint inhibitors, KEYTRUDA is associated with immune-related adverse events (irAEs) that can be severe and lead to treatment interruption or discontinuation (e.g., 43% interruption/discontinuation due to irAEs in HNSCC patients in one study). Its intravenous administration requires clinic visits. It often requires biomarker testing, which can be a barrier to access for some patients. Its cost is also a factor, although specific access information is not provided here."
+      },
+      "approval_dates": [
+        {
+          "region": "US",
+          "value": "2014-09-04",
+          "source": "Drugs@FDA BLA125514"
+        }
+      ],
+      "proposals": {
+        "clinical_data": {
+          "status": "proposed",
+          "engine": "kit_proposer.evidence",
+          "date": "2026-10-02"
+        },
+        "references": {
+          "status": "proposed",
+          "engine": "kit_proposer.evidence",
+          "date": "2026-10-02"
+        },
+        "message_hierarchy": {
+          "status": "proposed",
+          "engine": "kit_proposer.evidence",
+          "date": "2026-10-02"
+        },
+        "core_claim": {
+          "status": "proposed",
+          "engine": "kit_proposer.evidence",
+          "date": "2026-10-02"
+        },
+        "positioning_statement": {
+          "status": "proposed",
+          "engine": "kit_proposer.evidence",
+          "date": "2026-10-02"
+        },
+        "therapy_area": {
+          "status": "proposed",
+          "engine": "kit_proposer.evidence",
+          "date": "2026-10-02"
+        },
+        "primary_audience": {
+          "status": "proposed",
+          "engine": "kit_proposer.evidence",
+          "date": "2026-10-02"
+        },
+        "personas": {
+          "status": "proposed",
+          "engine": "kit_proposer.personas",
+          "date": "2026-10-02"
+        },
+        "care_continuum": {
+          "status": "proposed",
+          "engine": "kit_proposer.personas",
+          "date": "2026-10-02"
+        },
+        "messages_by_persona": {
+          "status": "proposed",
+          "engine": "kit_proposer.personas",
+          "date": "2026-10-02"
+        },
+        "voice": {
+          "status": "proposed",
+          "engine": "kit_proposer.voice",
+          "date": "2026-10-02"
+        },
+        "tone_pillars": {
+          "status": "proposed",
+          "engine": "kit_proposer.voice",
+          "date": "2026-10-02"
+        },
+        "voice_do": {
+          "status": "proposed",
+          "engine": "kit_proposer.voice",
+          "date": "2026-10-02"
+        },
+        "voice_dont": {
+          "status": "proposed",
+          "engine": "kit_proposer.voice",
+          "date": "2026-10-02"
+        },
+        "guardrails": {
+          "status": "proposed",
+          "engine": "kit_proposer.voice",
+          "date": "2026-10-02"
+        },
+        "unmet_need": {
+          "status": "proposed",
+          "engine": "kit_proposer.voice",
+          "date": "2026-10-02"
+        },
+        "competitors": {
+          "status": "proposed",
+          "engine": "kit_proposer.competition",
+          "date": "2026-10-02"
+        },
+        "competition_self": {
+          "status": "proposed",
+          "engine": "kit_proposer.competition",
+          "date": "2026-10-02"
         }
       }
     }
