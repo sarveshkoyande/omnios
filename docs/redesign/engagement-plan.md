@@ -1,3 +1,8 @@
+> **Superseded in part by [engagement-plan-v2.md](engagement-plan-v2.md)** (2026-10-02): pharma only (no
+> industry selector / investment banking), brand-situation archetypes instead of a Cablivi-shaped
+> framework, a diagnose → options → stress-test agent flow, and a Brand IQ rethink. Decisions on
+> period, one brand per plan, relative budget and the separate store still stand.
+
 # Engagement Plan — design thinking
 
 Status: thinking draft (2026-10-02, updated with decisions). Not built yet.
