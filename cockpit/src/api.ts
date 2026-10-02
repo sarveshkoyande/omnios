@@ -374,9 +374,8 @@ export function getStudioProject(id: string): Promise<StudioProject> {
 }
 
 /* ---- Engagement plans (docs/redesign/engagement-plan.md): next N months for one brand ---- */
-export type EngagementIndustry = "pharma" | "investment_banking";
 export interface EngagementPlan {
-  id: string; brand: string; industry: EngagementIndustry; title: string;
+  id: string; brand: string; industry: string; title: string;
   period_start: string; period_end: string; months: number; status: string;
   brand_iq_plan: string | null; created_at: string; updated_at: string;
   version: number; version_reason?: string; version_at?: string;
@@ -384,10 +383,10 @@ export interface EngagementPlan {
   stale?: boolean;
   body?: Record<string, unknown>;
 }
-export function getEngagementFramework(industry: EngagementIndustry): Promise<Record<string, unknown>> {
-  return getJSON(`/api/v3/engagement/frameworks/${industry}`);
+export function getEngagementFramework(archetype?: string): Promise<Record<string, unknown>> {
+  return getJSON(`/api/v3/engagement/framework${archetype ? `?archetype=${archetype}` : ""}`);
 }
-export function createEngagementPlan(body: { brand: string; industry?: EngagementIndustry; months?: number; start?: string; title?: string }): Promise<EngagementPlan> {
+export function createEngagementPlan(body: { brand: string; months?: number; start?: string; title?: string }): Promise<EngagementPlan> {
   return postJSON("/api/v3/engagement-plans", body);
 }
 export function listEngagementPlans(brand?: string): Promise<{ plans: EngagementPlan[] }> {
@@ -407,13 +406,13 @@ export function engagementPlanVersions(id: string): Promise<{ versions: { versio
 export function restoreEngagementPlan(id: string, version: number): Promise<EngagementPlan> {
   return postJSON(`/api/v3/engagement-plans/${id}/restore/${version}`, {});
 }
-/* Engagement Planner agent steps (strategy/engagement_agent.py). A 503 means the model was
+/* Engagement Planner agent v2 steps (strategy/engagement_agent.py). A 503 means the model was
    unreachable and nothing was guessed; the message says so. */
-export function engagementRead(id: string): Promise<EngagementPlan> { return postJSON(`/api/v3/engagement-plans/${id}/agent/read`, {}); }
-export function engagementClarify(id: string): Promise<EngagementPlan> { return postJSON(`/api/v3/engagement-plans/${id}/agent/clarify`, {}); }
-export function engagementAnswer(id: string, answers: Record<string, string>, autoAssume = false): Promise<EngagementPlan> {
-  return postJSON(`/api/v3/engagement-plans/${id}/agent/answers`, { answers, auto_assume: autoAssume });
-}
-export function engagementDraft(id: string, assumptionDecisions?: Record<string, { status: string; note?: string }>): Promise<EngagementPlan> {
-  return postJSON(`/api/v3/engagement-plans/${id}/agent/draft`, { assumption_decisions: assumptionDecisions ?? null });
-}
+const epStep = (id: string, step: string, body: unknown = {}): Promise<EngagementPlan> => postJSON(`/api/v3/engagement-plans/${id}/agent/${step}`, body);
+export const engagementRead = (id: string) => epStep(id, "read");
+export const engagementClassify = (id: string, override?: Record<string, string>) => epStep(id, "classify", { override: override ?? null });
+export const engagementDiagnose = (id: string) => epStep(id, "diagnose");
+export const engagementOptions = (id: string, answers: Record<string, string>) => epStep(id, "options", { answers });
+export const engagementChoose = (id: string, ids: string[], note?: string) => epStep(id, "choose", { ids, note: note ?? null });
+export const engagementDraft = (id: string) => epStep(id, "draft");
+export const engagementCheck = (id: string) => epStep(id, "check");

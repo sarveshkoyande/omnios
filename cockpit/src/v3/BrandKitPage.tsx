@@ -79,7 +79,7 @@ const Src = ({ s }: { s: unknown }) => (s ? <small className="v3-iq-src">{txt(s)
 type IconName = Parameters<typeof Icon>[0]["name"];
 /** Section icons, keyed by the section's own title (our labels, not user text). */
 const BLOCK_ICON: [string, IconName][] = [
-  ["Key objectives", "target"], ["Product profile", "flask"], ["Competition", "scale"], ["Positioning", "sparkles"],
+  ["Key objectives", "target"], ["Brand situation", "radar"], ["Indications", "document"], ["Patient flow", "route"], ["Audience segments", "users"], ["Product profile", "flask"], ["Competition", "scale"], ["Positioning", "sparkles"],
   ["Evidence", "document"], ["Voice", "mic"], ["Unmet need", "alertTriangle"], ["Market access", "wallet"], ["Current plan", "map"], ["Healthcare", "users"], ["Patients", "heartPulse"], ["Key opinion", "star"], ["Where the treaters", "map"], ["Patient education", "document"],
   ["Patient journey", "route"], ["Do", "check"], ["Don't", "close"], ["Words", "message"], ["References", "link"],
   ["Approved claims", "shield"], ["Approval workflow", "branch"], ["Pre-launch", "check"], ["Campaign SOPs", "document"], ["Eligibility", "users"], ["Channel rules", "mail"], ["Label", "flask"], ["Regulatory", "scale"], ["Sales forecast", "barChart"], ["Where growth", "layers"], ["KPIs", "target"],
@@ -189,6 +189,48 @@ export function BrandKitPage(props: PageProps) {
             </Block>
           );
         })()}
+
+        {/* Brand IQ core (engagement-plan-v2.md section 3): situation, indications, patient flow */}
+        {Boolean(k.brand_situation) && (() => {
+          const bs = k.brand_situation as Any;
+          return (
+            <Block title="Brand situation" sub={txt(bs.status) === "proposed" ? "Proposed from public sources — confirm in the Engagement Planner" : txt(bs.status)}>
+              <div className="v3-iq-facts">
+                <div><em>Lifecycle</em><span>{txt(bs.lifecycle) || <Needs />}</span></div>
+                <div><em>Therapy type</em><span>{txt(bs.archetype) || <Needs />}</span></div>
+                <div><em>Access</em><span>{txt(bs.access) || <Needs />}</span></div>
+              </div>
+              {arr(bs.evidence).length > 0 && <ul className="v3-ep-plain" style={{ marginTop: 10 }}>{arr(bs.evidence).map((e, i) => <li key={i}>{txt(e.point)} <small className="v3-iq-src" style={{ display: "inline" }}>({txt(e.source)})</small></li>)}</ul>}
+            </Block>
+          );
+        })()}
+
+        {arr(k.indications).length > 0 && (
+          <Block title="Indications" sub={`${arr(k.indications).length} on the label`}>
+            <Tbl rows={arr(k.indications)} cols={[["name", "Indication"], ["population", "Population"], ["line", "Line / setting"], ["criteria", "Criteria"]]} />
+          </Block>
+        )}
+
+        {arr(k.patient_flow).length > 0 && (
+          <Block title="Patient flow" sub="Where patients are lost — real-world figures, each verified as match or proxy">
+            {arr(k.patient_flow).map((f) => (
+              <div key={txt(f.indication_id)} style={{ marginBottom: 14 }}>
+                <h3 className="v3-iq-h3">{txt(arr(k.indications).find((i) => i.id === f.indication_id)?.name) || txt(f.indication_id)}</h3>
+                <div className="v3-iq-tablewrap"><table className="v3-iq-table"><thead><tr><th>Stage</th><th>Figure</th><th>What it measures</th><th>Source</th></tr></thead>
+                  <tbody>{arr(f.stages).map((st) => (
+                    <tr key={txt(st.stage)}>
+                      <td>{txt(st.stage)}</td>
+                      <td>{st.value != null && st.value !== "" ? `${txt(st.value)} ${txt(st.unit)}` : <span className="v3-iq-needs">Gap</span>}
+                        {st.verdict === "proxy" && <small className="v3-iq-src">Proxy: {txt(st.caveat)}</small>}
+                        {Boolean(st.rejected) && <small className="v3-iq-src">A figure was found but rejected: {txt((st.rejected as Any).reason)}</small>}</td>
+                      <td>{txt(st.what)}</td>
+                      <td>{st.url ? <a href={txt(st.url)} target="_blank" rel="noreferrer">{txt(st.source)} ↗</a> : <span className="v3-iq-src">{txt(st.source)}</span>}</td>
+                    </tr>
+                  ))}</tbody></table></div>
+              </div>
+            ))}
+          </Block>
+        )}
 
         {/* 2. Key objectives */}
         <Block title="Key objectives" sub={`${objectives.length}`}>
@@ -412,6 +454,11 @@ export function PersonasPage(props: PageProps) {
           <div><b>{arr(tf?.sites_by_country).length || "—"}</b><span>Countries with trial sites</span></div>
         </div>
         <p className="v3-iq-lede">{txt(k.primary_audience) || <Needs what="primary audience" />}</p>
+        {arr(k.audience_segments).length > 0 && (
+          <Block title="Audience segments" sub="On the adoption ladder">
+            <Tbl rows={arr(k.audience_segments)} cols={[["name", "Segment"], ["who", "Who"], ["ladder_rung", "Ladder rung"], ["ladder_reason", "Why that rung"], ["status", "Status"]]} />
+          </Block>
+        )}
 
         <Block title="Healthcare professionals" sub={`${ps.hcp?.length ?? 0} personas`}>
           {ps.hcp?.length ? <div className="v3-iq-pcards">{ps.hcp.map((x) => <PersonaCard key={txt(x.name)} x={x} acts={acts} audience="HCP" />)}</div> : <Needs />}

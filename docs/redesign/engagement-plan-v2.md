@@ -1,6 +1,6 @@
 # Engagement Plan v2 — a pharma template for any brand (and a Brand IQ rethink)
 
-Status: thinking draft (2026-10-02). **Supersedes** the industry-agnostic parts of
+Status: **built** (2026-10-02, steps 1-6 below; see 'Build status'). **Supersedes** the industry-agnostic parts of
 `engagement-plan.md`; keeps its decisions on period, one brand per plan, relative budget and the
 separate store. Not built yet.
 
@@ -211,3 +211,18 @@ build time, not assumed.
 15. IQVIA — Pharma Brand Strategy / Innovating a Pharma Commercial Model: https://www.iqvia.com/locations/united-states/solutions/life-sciences/pharma-brand-strategy
 16. FDA — Jardiance label (2025): https://www.accessdata.fda.gov/drugsatfda_docs/label/2025/204629s063lbl.pdf
 17. NCBI Bookshelf — Clinical Review, Pembrolizumab (Keytruda): https://www.ncbi.nlm.nih.gov/books/NBK616198/
+
+## Build status (2026-10-02)
+
+| Step | State | Where |
+|---|---|---|
+| 1 Brand IQ core | Done: situation, indications list, patient flow, audience segments; shown on Brand Kit / Personas | `config/brand_kits.json`, `BrandKitPage.tsx` |
+| 2 Archetype frameworks | Done as one file (6 archetypes + lifecycle + access); industry selector and investment banking removed | `config/frameworks/engagement_archetypes.json` |
+| 3 Jardiance + Keytruda from public sources | Done: FDA label (brand-matched), Drugs@FDA (earliest original), MeSH, PubMed per-stage queries; figures verified match / proxy / reject | `strategy/brand_builder.py` |
+| 4 Agent: classify, diagnose, root causes, options | Done | `strategy/engagement_agent.py` |
+| 5 Draft on chosen option; feasibility + red team | Done (feasibility is deterministic; red team is model) | same |
+| 6 Run all three brands | Done: Jardiance -> in-hospital HF initiation; Keytruda -> first-line uptake / AE-driven interruption; Cablivi -> frontline initiation | -- |
+
+Known limits: openFDA's Jardiance label is the 2023 version (no CKD indication yet); PubMed figures
+are best-available and often proxies; "Diagnosed" stages are usually gaps; Create campaign plan
+does not yet pre-fill the Campaign Planner.

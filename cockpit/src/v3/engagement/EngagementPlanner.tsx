@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  createEngagementPlan, engagementAnswer, engagementClarify, engagementDraft, engagementRead,
-  getEngagementFramework, getEngagementPlan, listEngagementPlans,
-  type EngagementIndustry, type EngagementPlan,
+  createEngagementPlan, engagementCheck, engagementChoose, engagementClassify, engagementDiagnose,
+  engagementDraft, engagementOptions, engagementRead, getEngagementFramework, getEngagementPlan,
+  listEngagementPlans, type EngagementPlan,
 } from "../../api";
 import { Icon } from "../../components/Icon";
 import type { BrandSummary } from "../../types";
@@ -10,17 +10,17 @@ import "../campaignplanner/campaignPlanner.css";
 import "../iq.css";
 import "./engagement.css";
 
-/** The Engagement Planner (docs/redesign/engagement-plan.md): the next N months for one brand.
- *  Left: the agent conversation, the way the Briefing Agent works (read, ask <=3 questions,
- *  review <=3 assumptions, draft). Right: the plan -- Overview (with funnels), Shift map,
- *  Portfolio, Timeline, Budget. Brand IQ is the only input; every item names its source. */
+/** The Engagement Planner v2 (docs/redesign/engagement-plan-v2.md): the next N months for one
+ *  pharma brand. Left: the agent conversation -- read Brand IQ, classify the brand's situation,
+ *  diagnose where patients are lost, root causes and strategic options, you choose, it drafts,
+ *  then feasibility + red team. Right: the diagnosis and the plan. Brand IQ is the only input. */
 
 type Any = Record<string, unknown>;
 const txt = (v: unknown) => (v === null || v === undefined ? "" : String(v));
 const arr = (v: unknown) => (Array.isArray(v) ? (v as Any[]) : []);
-const STEPS = ["Frame", "Read", "Clarify", "Assumptions", "Draft"];
-const STEP_INDEX: Record<string, number> = { read: 1, clarify: 2, assumptions: 3, draft: 4 };
-type Tab = "overview" | "shifts" | "portfolio" | "timeline" | "budget";
+const STEPS = ["Frame", "Read", "Classify", "Diagnose", "Options", "Draft", "Check"];
+const STEP_INDEX: Record<string, number> = { read: 1, classify: 2, diagnose: 3, options: 4, decide: 4, draft: 5, check: 6 };
+type Tab = "diagnosis" | "overview" | "shifts" | "portfolio" | "timeline" | "budget" | "checks";
 
 function errText(e: unknown): string {
   const s = String(e);
@@ -39,36 +39,39 @@ export function EngagementPlanner({ brands, activeBrand, planId }: { brands: Bra
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [months, setMonths] = useState(6);
-  const [industry, setIndustry] = useState<EngagementIndustry>("pharma");
   const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [autoAssume, setAutoAssume] = useState(false);
-  const [decisions, setDecisions] = useState<Record<string, { status: string; note?: string }>>({});
-  const [tab, setTab] = useState<Tab>("overview");
+  const [override, setOverride] = useState<Record<string, string>>({});
+  const [picked, setPicked] = useState<string[]>([]);
+  const [note, setNote] = useState("");
+  const [tab, setTab] = useState<Tab>("diagnosis");
 
   const refreshList = useCallback(() => {
     if (!brand) return;
     listEngagementPlans(brand).then((r) => setPlans(r.plans)).catch(() => setPlans([]));
   }, [brand]);
   useEffect(refreshList, [refreshList]);
+  useEffect(() => { getEngagementFramework().then(setFw).catch(() => setFw(null)); }, []);
 
   useEffect(() => {
     if (!planId) { setPlan(null); return; }
-    // Starting a plan sets the URL to its id; don't reload a plan we already hold.
     setPlan((cur) => {
       if (cur?.id !== planId) getEngagementPlan(planId).then(setPlan).catch((e) => setError(errText(e)));
       return cur?.id === planId ? cur : null;
     });
   }, [planId]);
 
-  useEffect(() => {
-    const ind = (plan?.industry ?? industry) as EngagementIndustry;
-    getEngagementFramework(ind).then(setFw).catch(() => setFw(null));
-  }, [plan?.industry, industry]);
-
   const body = (plan?.body ?? {}) as Any;
   const agent = (body.agent ?? {}) as Any;
-  const stepIdx = plan ? (STEP_INDEX[txt(agent.step)] ?? 0) : 0;
-  const drafted = agent.step === "draft";
+  const step = txt(agent.step);
+  const stepIdx = plan ? (STEP_INDEX[step] ?? 0) : 0;
+  const cls = (body.classification ?? null) as Any | null;
+  const bucket = (body.bucket ?? null) as Any | null;
+  const options = arr(body.options);
+  const rec = (body.recommendation ?? null) as Any | null;
+  const drafted = step === "draft" || step === "check";
+
+  useEffect(() => { if (rec?.id && !picked.length) setPicked([txt(rec.id)]); }, [rec?.id]);  // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (drafted) setTab("overview"); }, [drafted]);
 
   const run = async (label: string, fn: () => Promise<EngagementPlan>) => {
     setBusy(label); setError(null);
@@ -79,22 +82,32 @@ export function EngagementPlanner({ brands, activeBrand, planId }: { brands: Bra
 
   const start = async () => {
     if (!brand) return;
-    const p = await run("Creating the plan…", () => createEngagementPlan({ brand, industry, months }));
+    const p = await run("Creating the plan…", () => createEngagementPlan({ brand, months }));
     if (!p) return;
     window.location.hash = `#/v3/agent/engagement-planner/${p.id}`;
-    const r = await run("Reading Brand IQ…", () => engagementRead(p.id));
-    if (r) await run("Looking for real gaps…", () => engagementClarify(p.id));
+    if (!(await run("Reading Brand IQ…", () => engagementRead(p.id)))) return;
+    if (!(await run("Classifying the brand's situation…", () => engagementClassify(p.id)))) return;
+    await run("Diagnosing where patients are lost…", () => engagementDiagnose(p.id));
   };
 
-  const submitAnswers = async () => {
+  const reclassify = async () => {
     if (!plan) return;
-    const r = await run("Checking assumptions…", () => engagementAnswer(plan.id, answers, autoAssume));
-    if (r && autoAssume) await run("Drafting the plan…", () => engagementDraft(plan.id));
+    if (!(await run("Updating the situation…", () => engagementClassify(plan.id, override)))) return;
+    await run("Re-diagnosing…", () => engagementDiagnose(plan.id));
+    setOverride({});
   };
 
-  const doDraft = () => plan && run("Drafting the plan…", () => engagementDraft(plan.id, decisions));
+  const seeOptions = () => plan && run("Finding root causes and options…", () => engagementOptions(plan.id, answers));
+
+  const decideAndDraft = async () => {
+    if (!plan || !picked.length) return;
+    if (!(await run("Recording your choice…", () => engagementChoose(plan.id, picked, note || undefined)))) return;
+    if (!(await run("Drafting the plan…", () => engagementDraft(plan.id)))) return;
+    await run("Checking feasibility and red-teaming…", () => engagementCheck(plan.id));
+  };
 
   if (!brand) return <p className="v3-empty">Add a brand first: an engagement plan belongs to one brand.</p>;
+  const lifecycle = arr(fw?.lifecycle), archetypes = arr(fw?.archetypes), access = arr(fw?.access);
 
   return (
     <div className="v3-ws v3-cc v3-ep">
@@ -105,7 +118,7 @@ export function EngagementPlanner({ brands, activeBrand, planId }: { brands: Bra
           {plans.length > 0 && (
             <select className="v3-ep-select" value={plan?.id ?? ""} onChange={(e) => { window.location.hash = e.target.value ? `#/v3/agent/engagement-planner/${e.target.value}` : "#/v3/agent/engagement-planner"; }}>
               <option value="">+ New plan</option>
-              {plans.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
+              {plans.map((p) => <option key={p.id} value={p.id}>{p.title} (v{p.version})</option>)}
             </select>
           )}
         </span>
@@ -118,7 +131,7 @@ export function EngagementPlanner({ brands, activeBrand, planId }: { brands: Bra
               <span className="v3-app-icon lg"><Icon name="map" size={20} /></span>
               <div className="v3-ws-head-text">
                 <h1>Engagement Planner</h1>
-                <p>Plans the next months for {brand}: who to engage, what must change, which campaigns, when. Reads Brand IQ only.</p>
+                <p>Finds where {brand} loses patients, why, and what would move the people behind it — then plans the next months around it.</p>
               </div>
             </div>
 
@@ -142,12 +155,6 @@ export function EngagementPlanner({ brands, activeBrand, planId }: { brands: Bra
                     {((fw?.period as Any | undefined)?.options_months as number[] | undefined ?? [3, 6, 9, 12]).map((m) => <option key={m} value={m}>{m} months{m === 6 ? " (default)" : ""}</option>)}
                   </select>
                 </label>
-                <label className="v3-ep-field"><span>Industry</span>
-                  <select value={industry} onChange={(e) => setIndustry(e.target.value as EngagementIndustry)}>
-                    <option value="pharma">Pharma</option>
-                    <option value="investment_banking">Investment banking</option>
-                  </select>
-                </label>
                 <button type="button" className="v3-cc-btn primary wide" disabled={!!busy} onClick={start}>Start planning</button>
               </section>
             )}
@@ -155,19 +162,35 @@ export function EngagementPlanner({ brands, activeBrand, planId }: { brands: Bra
             {plan && arr(body.sources).length > 0 && (
               <section className="v3-ep-card">
                 <b>Read from Brand IQ</b>
-                <p className="v3-muted">{arr(body.sources).length} items from {txt(agent.brand_iq_plan) || "the active plan"}.</p>
                 <div className="v3-ep-srcs">
                   {Object.entries(arr(body.sources).reduce<Record<string, number>>((m, s) => { m[txt(s.page)] = (m[txt(s.page)] ?? 0) + 1; return m; }, {}))
                     .map(([page, n]) => <span key={page}>{page} · {n}</span>)}
                 </div>
-                {arr(agent.gaps).map((g) => <p key={txt(g.what)} className="v3-iq-needs">Missing in Brand IQ: {txt(g.what)} ({txt(g.page)})</p>)}
+                {arr(agent.gaps).map((g) => <p key={txt(g.what)} className="v3-iq-needs">{txt(g.what)} ({txt(g.page)})</p>)}
               </section>
             )}
 
-            {plan && agent.step === "clarify" && (
+            {plan && cls && (
               <section className="v3-ep-card">
-                <b>{arr(agent.questions).length ? "A few questions" : "No questions needed"}</b>
-                {arr(agent.questions).map((q) => (
+                <b>Brand situation {txt(cls.status) === "confirmed" ? "· confirmed" : txt(cls.status) === "from brand plan" ? "· from the brand plan" : "· proposed"}</b>
+                {([["lifecycle", "Lifecycle", lifecycle], ["archetype", "Therapy type", archetypes], ["access", "Access", access]] as [string, string, Any[]][]).map(([k, label, opts]) => (
+                  <label key={k} className="v3-ep-field"><span>{label}</span>
+                    <select value={override[k] ?? txt(cls[k])} onChange={(e) => setOverride((o) => ({ ...o, [k]: e.target.value }))} disabled={!!busy}>
+                      {!cls[k] && <option value="">Needs input</option>}
+                      {opts.map((o) => <option key={txt(o.id)} value={txt(o.id)}>{txt(o.label)}</option>)}
+                    </select>
+                  </label>
+                ))}
+                {arr(cls.evidence).length > 0 && <ul className="v3-ep-evidence">{arr(cls.evidence).map((e, i) => <li key={i}>{txt(e.point)} <small className="v3-muted">({txt(e.source)})</small></li>)}</ul>}
+                {Object.keys(override).length > 0 && <button type="button" className="v3-cc-btn wide" disabled={!!busy} onClick={reclassify}>Confirm and re-diagnose</button>}
+              </section>
+            )}
+
+            {plan && bucket && step === "diagnose" && (
+              <section className="v3-ep-card">
+                <b>{arr(bucket.questions).length ? "Questions from the diagnosis" : "The diagnosis is complete"}</b>
+                <p className="v3-muted">The diagnosis is on the right. Answer what you can; skip what you don't know.</p>
+                {arr(bucket.questions).map((q) => (
                   <div key={txt(q.id)} className="v3-ep-q">
                     <p>{txt(q.question)}</p>
                     {Boolean(q.why) && <small className="v3-muted">{txt(q.why)}</small>}
@@ -181,52 +204,51 @@ export function EngagementPlanner({ brands, activeBrand, planId }: { brands: Bra
                       onChange={(e) => setAnswers((a) => ({ ...a, [txt(q.id)]: e.target.value }))} />
                   </div>
                 ))}
-                <label className="v3-cc-toggle"><input type="checkbox" checked={autoAssume} onChange={(e) => setAutoAssume(e.target.checked)} /> Auto-assume — accept the agent's assumptions and draft straight away</label>
-                <button type="button" className="v3-cc-btn primary wide" disabled={!!busy} onClick={submitAnswers}>Continue</button>
+                <button type="button" className="v3-cc-btn primary wide" disabled={!!busy} onClick={seeOptions}>See strategic options</button>
               </section>
             )}
 
-            {plan && agent.step === "assumptions" && (
+            {plan && options.length > 0 && (step === "options" || step === "decide") && (
               <section className="v3-ep-card">
-                <b>{arr(body.assumptions).length ? "Assumptions to check" : "No assumptions needed"}</b>
-                {arr(body.assumptions).map((a) => {
-                  const d = decisions[txt(a.id)]?.status ?? "accepted";
+                <b>Choose a strategy</b>
+                <p className="v3-muted">Pick one, or several to combine.</p>
+                {options.map((o) => {
+                  const on = picked.includes(txt(o.id));
                   return (
-                    <div key={txt(a.id)} className="v3-ep-q">
-                      <p>{txt(a.text)}</p>
-                      <div className="v3-ep-opts">
-                        <button type="button" className={`v3-ep-opt ${d === "accepted" ? "on" : ""}`} onClick={() => setDecisions((m) => ({ ...m, [txt(a.id)]: { status: "accepted" } }))}>Accept</button>
-                        <button type="button" className={`v3-ep-opt ${d === "changed" ? "on" : ""}`} onClick={() => setDecisions((m) => ({ ...m, [txt(a.id)]: { status: "changed", note: m[txt(a.id)]?.note } }))}>Change</button>
-                        <button type="button" className={`v3-ep-opt ${d === "rejected" ? "on" : ""}`} onClick={() => setDecisions((m) => ({ ...m, [txt(a.id)]: { status: "rejected" } }))}>Reject</button>
-                      </div>
-                      {d === "changed" && <input className="v3-ep-input" placeholder="What should it assume instead?" value={decisions[txt(a.id)]?.note ?? ""}
-                        onChange={(e) => setDecisions((m) => ({ ...m, [txt(a.id)]: { status: "changed", note: e.target.value } }))} />}
-                    </div>
+                    <button key={txt(o.id)} type="button" className={`v3-ep-option ${on ? "on" : ""}`}
+                      onClick={() => setPicked((p) => (on ? p.filter((x) => x !== txt(o.id)) : [...p, txt(o.id)]))}>
+                      <span className="v3-ep-option-top"><b>{txt(o.id)} · {txt(o.name)}</b>{rec?.id === o.id && <em>Recommended</em>}</span>
+                      <span>{txt(o.thesis)}</span>
+                      <span className="v3-ep-option-meta">Cost {txt(o.relative_cost)} · Risk {txt(o.risk)} · {txt(o.time_to_effect)}</span>
+                      <span className="v3-ep-option-give"><b>You give up:</b> {txt(o.trade_off)}</span>
+                    </button>
                   );
                 })}
-                <button type="button" className="v3-cc-btn primary wide" disabled={!!busy} onClick={doDraft}>Draft the plan</button>
+                {Boolean(rec?.why) && <p className="v3-ep-rec"><b>Why {txt(rec?.id)}:</b> {txt(rec?.why)}</p>}
+                <input className="v3-ep-input" placeholder="Anything to add for the draft (optional)" value={note} onChange={(e) => setNote(e.target.value)} />
+                <button type="button" className="v3-cc-btn primary wide" disabled={!!busy || !picked.length} onClick={decideAndDraft}>Draft the plan</button>
               </section>
             )}
 
             {plan && drafted && (
               <section className="v3-ep-card">
-                <b>Plan drafted</b>
-                <p className="v3-muted">Review it on the right. Each campaign can open the Campaign Planner pre-filled for this brand.</p>
-                <button type="button" className="v3-cc-btn wide" disabled={!!busy} onClick={doDraft}>Redraft</button>
+                <b>Plan drafted{step === "check" ? " and checked" : ""}</b>
+                <p className="v3-muted">See Checks for feasibility issues and the red team. Each campaign can open the Campaign Planner.</p>
+                <button type="button" className="v3-cc-btn wide" disabled={!!busy} onClick={() => plan && run("Re-running options…", () => engagementOptions(plan.id, (agent.answers as Record<string, string>) ?? {}))}>Revisit the strategy</button>
               </section>
             )}
           </div>
         </aside>
 
         <section className="v3-ws-output v3-ep-out">
-          {!drafted ? (
+          {!bucket ? (
             <div className="v3-ws-empty">
               <Icon name="map" size={28} />
-              <b>Your engagement plan appears here</b>
-              <span>Frame it on the left. The agent reads Brand IQ, asks only what's missing, then drafts objectives, the shift map, campaigns, timeline and relative budget.</span>
+              <b>The diagnosis and plan appear here</b>
+              <span>The agent reads Brand IQ, classifies the brand's situation and maps where patients are lost before proposing any campaign.</span>
             </div>
           ) : (
-            <PlanView plan={plan!} fw={fw} tab={tab} setTab={setTab} />
+            <PlanView plan={plan!} tab={tab} setTab={setTab} drafted={drafted} ladder={arr(fw?.adoption_ladder).map(String)} />
           )}
         </section>
       </div>
@@ -234,79 +256,115 @@ export function EngagementPlanner({ brands, activeBrand, planId }: { brands: Bra
   );
 }
 
-/* ------------------------------------------------------------------ the plan */
+/* ------------------------------------------------------------------ views */
 
 function Src({ s }: { s: unknown }) {
   return s ? <small className="v3-iq-src">Source: {Array.isArray(s) ? s.join(", ") : txt(s)}</small> : null;
 }
 
-/** Funnel in the look of the classic brand overview's HcpFunnel, fed only with the plan's real
- *  values: the shape tapers by stage; the text shows today -> target, or "Needs input". */
-function Funnel({ audience, stages }: { audience: Any; stages: string[] }) {
-  const f = (audience.funnel ?? {}) as Record<string, { today?: unknown; target?: unknown }>;
-  const widths = [100, 84, 68, 52, 40];
+/** The leaky bucket: the classic funnel shape, fed only with real values. Leak stages are
+ *  marked; stages with no figure say so. */
+function Bucket({ bucket }: { bucket: Any }) {
+  const stages = arr(bucket.stages);
+  const leakStages = new Set(arr(bucket.leaks).map((l) => txt(l.stage)));
+  const widths = stages.map((_, i) => 100 - i * (60 / Math.max(stages.length - 1, 1)));
   return (
-    <article className="v3-ep-funnel">
-      <b>{txt(audience.name)}</b>
+    <div className="v3-ep-bucket">
       <div className="hier-funnel-shape">
         {stages.map((st, i) => {
-          const v = f[st] ?? {};
-          const has = v.today != null || v.target != null;
-          const next = widths[i + 1] ?? widths[i] * 0.8;
+          const next = widths[i + 1] ?? widths[i] * 0.85;
           const bottom = (next / widths[i]) * 100;
+          const has = st.value !== null && st.value !== undefined && st.value !== "";
           return (
-            <div key={st} className={`hier-funnel-seg hier-funnel-seg-${Math.min(i, 3)}`}
-              style={{ width: `${widths[i] ?? 36}%`, clipPath: `polygon(0 0, 100% 0, ${50 + bottom / 2}% 100%, ${50 - bottom / 2}% 100%)` }}>
-              <span className="hier-funnel-seg-label">{st}</span>
-              <span className="hier-funnel-seg-value">{has ? `${txt(v.today) || "?"} → ${txt(v.target) || "?"}` : "Needs input"}</span>
+            <div key={txt(st.stage)} className={`hier-funnel-seg hier-funnel-seg-${Math.min(i, 3)} ${leakStages.has(txt(st.stage)) ? "leak" : ""}`}
+              style={{ width: `${widths[i]}%`, clipPath: `polygon(0 0, 100% 0, ${50 + bottom / 2}% 100%, ${50 - bottom / 2}% 100%)` }}
+              title={[txt(st.what), txt(st.caveat), txt(st.source)].filter(Boolean).join(" · ")}>
+              <span className="hier-funnel-seg-label">{txt(st.stage)}{leakStages.has(txt(st.stage)) ? " · leak" : ""}</span>
+              <span className="hier-funnel-seg-value">{has ? `${txt(st.value)}${txt(st.unit) === "%" ? "%" : ` ${txt(st.unit)}`}${st.verdict === "proxy" ? " (proxy)" : ""}` : "No figure"}</span>
             </div>
           );
         })}
       </div>
-      <small className="v3-muted">{txt(audience.why_now)}</small>
-    </article>
+      <table className="v3-iq-table v3-ep-bucket-table"><thead><tr><th>Stage</th><th>Figure</th><th>What it measures</th><th>Source</th></tr></thead>
+        <tbody>{stages.map((st) => (
+          <tr key={txt(st.stage)}><td>{txt(st.stage)}</td><td>{st.value != null && st.value !== "" ? `${txt(st.value)} ${txt(st.unit)}` : <span className="v3-iq-needs">Gap</span>}{st.verdict === "proxy" && <small className="v3-iq-src">Proxy: {txt(st.caveat)}</small>}</td><td>{txt(st.what)}</td><td className="v3-iq-src">{txt(st.source)}</td></tr>
+        ))}</tbody></table>
+    </div>
   );
 }
 
-function PlanView({ plan, fw, tab, setTab }: { plan: EngagementPlan; fw: Any | null; tab: Tab; setTab: (t: Tab) => void }) {
+function Ladder({ rungs, today, target }: { rungs: string[]; today: string; target: string }) {
+  const t0 = rungs.indexOf(today), t1 = rungs.indexOf(target);
+  return (
+    <div className="v3-ep-ladder">
+      {rungs.map((r, i) => (
+        <span key={r} className={`${i === t0 ? "today" : ""} ${i === t1 ? "target" : ""} ${t0 >= 0 && t1 >= 0 && i > t0 && i < t1 ? "between" : ""}`}>{r}</span>
+      ))}
+    </div>
+  );
+}
+
+function PlanView({ plan, tab, setTab, drafted, ladder }: { plan: EngagementPlan; tab: Tab; setTab: (t: Tab) => void; drafted: boolean; ladder: string[] }) {
   const b = (plan.body ?? {}) as Any;
+  const bucket = (b.bucket ?? {}) as Any;
   const objectives = arr(b.objectives), audiences = arr(b.audiences), shifts = arr(b.shifts), campaigns = arr(b.campaigns);
-  const funnels = (fw?.funnel_stages ?? {}) as Record<string, string[]>;
   const owned = useMemo(() => new Set(campaigns.flatMap((c) => arr(c.shift_refs).map(String))), [campaigns]);
-  const orphans = shifts.filter((s) => !owned.has(`${txt(s.audience_id)}:${txt(s.objective_id)}`));
   const audName = (id: unknown) => txt(audiences.find((a) => a.id === id)?.name) || txt(id);
   const objName = (id: unknown) => txt(objectives.find((o) => o.id === id)?.objective) || txt(id);
-  const sit = (b.situation ?? {}) as Any;
+  const checks = (b.checks ?? null) as Any | null;
+  const tabs: [Tab, string][] = [["diagnosis", "Diagnosis"], ...(drafted ? ([["overview", "Overview"], ["shifts", "Shift map"], ["portfolio", "Portfolio"], ["timeline", "Timeline"], ["budget", "Budget & KPIs"], ["checks", `Checks${checks ? ` (${arr(checks.feasibility).length + arr(checks.red_team).length})` : ""}`]] as [Tab, string][]) : [])];
 
   return (
     <div className="v3-ep-plan">
-      <div className="v3-ws-output-tabs v3-ep-tabs">
-        {(["overview", "shifts", "portfolio", "timeline", "budget"] as Tab[]).map((t) => (
-          <button key={t} type="button" className={tab === t ? "active" : ""} onClick={() => setTab(t)}>
-            {{ overview: "Overview", shifts: "Shift map", portfolio: "Portfolio", timeline: "Timeline", budget: "Budget & KPIs" }[t]}
-          </button>
-        ))}
+      <div className="v3-ep-tabs">
+        {tabs.map(([t, l]) => <button key={t} type="button" className={tab === t ? "active" : ""} onClick={() => setTab(t)}>{l}</button>)}
       </div>
 
-      {tab === "overview" && (<>
-        <div className={`v3-iq-banner ${orphans.length ? "warn" : "ok"}`}>
-          {orphans.length ? `${orphans.length} shift(s) have no campaign yet.` : `Every shift is owned by a campaign · ${campaigns.length} campaigns · ${objectives.length} objectives`}
+      {tab === "diagnosis" && (<>
+        <h3 className="v3-iq-h3">Where {plan.brand} loses patients — {txt(bucket.indication)}</h3>
+        {Boolean(bucket.why_this_indication) && <p className="v3-ep-why">{txt(bucket.why_this_indication)}</p>}
+        <Bucket bucket={bucket} />
+        <h3 className="v3-iq-h3">Leaks</h3>
+        <div className="v3-ep-leaks">
+          {arr(bucket.leaks).map((l) => (
+            <article key={txt(l.id)} className={txt(l.size)}>
+              <div className="v3-iq-comp2-top"><b>{txt(l.id)} · {txt(l.stage)}</b><span className={`v3-iq-threat ${txt(l.size) === "large" ? "high" : txt(l.size) === "medium" ? "med" : "low"}`}>{txt(l.size)}</span></div>
+              <p>{txt(l.finding)}</p>
+              <Src s={l.evidence} />
+            </article>
+          ))}
         </div>
-        {Boolean(sit.narrative) && <p className="v3-iq-lede-lg">{txt(sit.narrative)}</p>}
+        {arr(bucket.natural_attrition).length > 0 && (<><h3 className="v3-iq-h3">Natural attrition (not a marketing leak)</h3><ul className="v3-ep-plain">{arr(bucket.natural_attrition).map((x, i) => <li key={i}>{String(x)}</li>)}</ul></>)}
+        {arr(bucket.gaps).length > 0 && (<><h3 className="v3-iq-h3">Data gaps</h3><ul className="v3-ep-plain">{arr(bucket.gaps).map((x, i) => <li key={i} className="v3-iq-needs">{String(x)}</li>)}</ul></>)}
+        {arr(b.root_causes).length > 0 && (<>
+          <h3 className="v3-iq-h3">Root causes</h3>
+          <div className="v3-iq-tablewrap"><table className="v3-iq-table"><thead><tr><th>Leak</th><th>Audience</th><th>Ladder rung</th><th>Belief</th><th>Behaviour</th></tr></thead>
+            <tbody>{arr(b.root_causes).map((r, i) => (<tr key={i}><td>{txt(r.leak)}</td><td>{txt(r.audience)}</td><td>{txt(r.ladder_rung)}</td><td>{txt(r.belief)}</td><td>{txt(r.behaviour)}</td></tr>))}</tbody></table></div>
+        </>)}
+      </>)}
+
+      {tab === "overview" && (<>
+        {Boolean(((b.situation ?? {}) as Any).narrative) && <p className="v3-iq-lede-lg">{txt(((b.situation ?? {}) as Any).narrative)}</p>}
         <h3 className="v3-iq-h3">Objectives</h3>
         <div className="v3-iq-objs">
           {objectives.map((o, i) => (
             <article key={txt(o.id)} className={txt(o.priority).toLowerCase()}>
-              <div className="v3-iq-obj-top"><span className="v3-iq-obj-n">{i + 1}</span><span className="v3-iq-tier">{txt(o.priority)}</span></div>
+              <div className="v3-iq-obj-top"><span className="v3-iq-obj-n">{i + 1}</span><span className="v3-iq-tier">{txt(o.priority)}{o.leak ? ` · ${txt(o.leak)}` : ""}</span></div>
               <b>{txt(o.objective)}</b>
-              <span>{txt(o.baseline)} → {txt(o.target)}{o.by ? ` · by ${txt(o.by)}` : ""}</span>
+              <span>{txt(o.kpi)}{o.baseline || o.target ? ` · ${txt(o.baseline) || "?"} → ${txt(o.target) || "?"}` : ""}{o.by ? ` · by ${txt(o.by)}` : ""}</span>
               <Src s={o.source} />
             </article>
           ))}
         </div>
-        <h3 className="v3-iq-h3">Audience funnels — today → target</h3>
-        <div className="v3-ep-funnels">
-          {audiences.map((a) => <Funnel key={txt(a.id)} audience={a} stages={funnels[txt(a.funnel_type)] ?? Object.keys((a.funnel ?? {}) as Any)} />)}
+        <h3 className="v3-iq-h3">Audiences on the adoption ladder — today → target</h3>
+        <div className="v3-ep-auds">
+          {audiences.map((a) => (
+            <article key={txt(a.id)}>
+              <b>{txt(a.name)}</b>
+              <Ladder rungs={ladder} today={txt(a.ladder_today)} target={txt(a.ladder_target)} />
+              <small className="v3-muted">{txt(a.why_now)}</small>
+            </article>
+          ))}
         </div>
       </>)}
 
@@ -321,6 +379,7 @@ function PlanView({ plan, fw, tab, setTab }: { plan: EngagementPlan; fw: Any | n
                 return (
                   <td key={txt(o.id)} className={s ? (orphan ? "orphan" : "") : "empty"}>
                     {s ? (<div className="v3-ep-shift">
+                      {Boolean(s.ladder_move) && <span className="v3-iq-tier primary">{txt(s.ladder_move)}</span>}
                       <p><em>From</em>{txt(s.from)}</p>
                       <p><em>To</em><b>{txt(s.to)}</b></p>
                       <p><em>Barrier</em>{txt(s.barrier)}</p>
@@ -342,7 +401,7 @@ function PlanView({ plan, fw, tab, setTab }: { plan: EngagementPlan; fw: Any | n
           {campaigns.map((c) => (
             <article key={txt(c.id)}>
               <div className="v3-iq-comp2-top"><b>{txt(c.name)}</b><span className="v3-iq-tier">{txt(c.weight).replace(/%$/, "")}% budget</span></div>
-              <span className="v3-iq-comp2-meta">{txt(c.type)} · {txt(c.start)} → {txt(c.end)} · {arr(c.audience_ids).map(audName).join(", ")}</span>
+              <span className="v3-iq-comp2-meta">{txt(c.type)} · {txt(c.start)} → {txt(c.end)} · {arr(c.audience_ids).map(audName).join(", ")}{c.content ? ` · content: ${txt(c.content)}` : ""}</span>
               <p><em>Message</em>{txt(c.message)}</p>
               <p><em>Shifts</em>{arr(c.shift_refs).map((r) => { const [a, o] = String(r).split(":"); return `${audName(a)} → ${objName(o)}`; }).join("; ")}</p>
               <p><em>Channels</em>{arr(c.channels).map(String).join(" · ")}</p>
@@ -384,6 +443,18 @@ function PlanView({ plan, fw, tab, setTab }: { plan: EngagementPlan; fw: Any | n
         <div className="v3-iq-tablewrap"><table className="v3-iq-table"><thead><tr><th>Risk</th><th>Likelihood</th><th>Impact</th><th>Mitigation</th></tr></thead>
           <tbody>{arr(b.risks).map((r, i) => (<tr key={i}><td>{txt(r.risk)}</td><td>{txt(r.likelihood)}</td><td>{txt(r.impact)}</td><td>{txt(r.mitigation)}</td></tr>))}</tbody></table></div>
       </>)}
+
+      {tab === "checks" && (checks ? (<>
+        <h3 className="v3-iq-h3">Feasibility</h3>
+        {arr(checks.feasibility).length ? arr(checks.feasibility).map((f, i) => (
+          <div key={i} className="v3-iq-rule dont"><span>!</span><div><em>{txt(f.check)} · {txt(f.severity)}</em><p>{txt(f.issue)}</p><small className="v3-muted">Fix: {txt(f.fix)}</small></div></div>
+        )) : <p className="v3-ep-ok">No feasibility issues: every shift has a campaign, dates and budgets add up, approval lead times and audience load are within limits.</p>}
+        <h3 className="v3-iq-h3">Red team</h3>
+        {arr(checks.red_team).map((r, i) => (
+          <div key={i} className="v3-ep-red"><span className={`v3-iq-threat ${txt(r.severity) === "high" ? "high" : txt(r.severity) === "medium" ? "med" : "low"}`}>{txt(r.severity)}</span>
+            <div><b>{txt(r.issue)}</b><p>{txt(r.why_it_matters)}</p><p><em>Fix</em>{txt(r.fix)}</p></div></div>
+        ))}
+      </>) : <p className="v3-muted">Not checked yet.</p>)}
     </div>
   );
 }
