@@ -1,0 +1,91 @@
+{
+  "id": "engagement_archetypes",
+  "kind": "engagement",
+  "name": "Pharma engagement-plan archetypes",
+  "note": "docs/redesign/engagement-plan-v2.md section 1. A brand is classified on lifecycle x therapy archetype x access; the archetype picks the patient-flow stages (the 'leaky bucket'), typical leaks, audiences and Brand IQ modules. Editable without code. No 'agents' key on purpose (agent_forms only matches the campaign spine).",
+  "period": {"default_months": 6, "options_months": [3, 6, 9, 12]},
+  "lifecycle": [
+    {"id": "pre_launch", "label": "Pre-launch", "focus": "Shape the market: disease awareness, unmet need, KOL advocacy, access readiness"},
+    {"id": "launch", "label": "Launch (0-2 years)", "focus": "Awareness, positioning and rapid uptake among early adopters; access pull-through"},
+    {"id": "growth", "label": "Growth", "focus": "Expand use: new segments, new indications, move the early majority"},
+    {"id": "maturity", "label": "Maturity", "focus": "Differentiate, defend share, retain and deepen use; efficiency"},
+    {"id": "pre_loe", "label": "Pre-LoE (<= 3 years to loss of exclusivity)", "focus": "Protect value, life-cycle management (new formulation / indication), prepare switch"},
+    {"id": "post_loe", "label": "Post-LoE", "focus": "Decide who stays on brand, manage decline, tender / price strategy"}
+  ],
+  "access": [
+    {"id": "open", "label": "Open access"},
+    {"id": "restricted", "label": "Restricted (prior auth / step edit)"},
+    {"id": "hospital", "label": "Hospital / tender"},
+    {"id": "price_negotiated", "label": "Price-negotiated or HTA-limited"}
+  ],
+  "adoption_ladder": ["Unaware", "Aware", "Interested", "Trialled", "Adopter", "Advocate"],
+  "archetypes": [
+    {
+      "id": "rare_acute", "label": "Rare / acute",
+      "patient_flow": ["Symptom onset", "Suspected", "Diagnosed", "Treated at the right time", "Treatment completed"],
+      "typical_leaks": ["Recognition / suspicion", "Speed to diagnosis and treatment", "Early stopping"],
+      "audiences": ["Emergency / ICU physicians", "Specialists at reference centres", "Lab physicians", "Patients and caregivers", "Patient advocacy groups"],
+      "modules": ["diagnosis_acceleration"],
+      "question_bank": ["Time from presentation to diagnosis", "Which centres treat most patients", "Share of events treated at clinical suspicion"]
+    },
+    {
+      "id": "oncology", "label": "Oncology (biomarker-driven)",
+      "patient_flow": ["Diagnosed", "Tested (required biomarkers)", "Biomarker-eligible", "Treated in the indicated line", "Stays on therapy"],
+      "typical_leaks": ["Biomarker testing (rate, completeness, turnaround)", "Line-of-therapy choice", "Early discontinuation"],
+      "audiences": ["Medical oncologists", "Pathologists", "Tumour boards", "Oncology nurses / navigators", "Payers", "Patients and caregivers"],
+      "modules": ["testing_biomarkers", "multi_indication"],
+      "question_bank": ["Testing rate before first-line treatment", "Which indications are priority", "Competitor share in the target line"]
+    },
+    {
+      "id": "chronic_primary", "label": "Chronic primary care",
+      "patient_flow": ["Prevalent", "Diagnosed", "Guideline-eligible", "Initiated", "Persistent at 12 months", "Adherent"],
+      "typical_leaks": ["Treatment initiation (clinical inertia)", "Specialist-to-primary-care handover", "Persistence and adherence"],
+      "audiences": ["General practitioners / primary care", "Relevant specialists", "Pharmacists", "Payers / formulary committees", "Patients and caregivers"],
+      "modules": ["initiation_adherence", "multi_indication"],
+      "question_bank": ["Eligible-but-untreated share", "12-month persistence", "Which specialty initiates most"]
+    },
+    {
+      "id": "specialty_biologic", "label": "Specialty biologic / injectable",
+      "patient_flow": ["Diagnosed", "Referred to specialist", "Prescribed", "Access approved", "Started", "Persistent"],
+      "typical_leaks": ["Prior authorisation / access abandonment", "Hub enrolment friction", "Switching to competitors"],
+      "audiences": ["Specialists", "Office / access staff", "Payers", "Hub and specialty pharmacy", "Nurses", "Patients"],
+      "modules": ["access_hub"],
+      "question_bank": ["Prior-auth approval rate and time", "Hub enrolment rate", "Persistence at 12 months"]
+    },
+    {
+      "id": "vaccine", "label": "Vaccine",
+      "patient_flow": ["Eligible", "Recommended by HCP", "Administered", "Series completed"],
+      "typical_leaks": ["HCP recommendation", "Hesitancy", "Series completion", "Season timing"],
+      "audiences": ["Primary care", "Pharmacists", "Public health bodies", "Parents / patients"],
+      "modules": ["season_recommendation"],
+      "question_bank": ["Coverage vs target", "Recommendation status by body", "Season calendar"]
+    },
+    {
+      "id": "biosimilar_loe", "label": "Biosimilar / LoE-competing",
+      "patient_flow": ["On reference product", "Switch considered", "Switched", "Retained"],
+      "typical_leaks": ["Switching", "Tender loss", "Formulary exclusion"],
+      "audiences": ["Hospital procurement", "Payers", "Pharmacists", "Specialists", "Patients"],
+      "modules": ["loe_lifecycle"],
+      "question_bank": ["Tender calendar", "Share of switched patients", "Price corridor"]
+    }
+  ],
+  "modules": {
+    "diagnosis_acceleration": {"label": "Diagnosis acceleration", "holds": ["Time to diagnosis", "Referral / reference centres", "Red-flag symptoms"]},
+    "testing_biomarkers": {"label": "Testing & biomarkers", "holds": ["Required tests per indication", "Testing rates", "Turnaround", "Labs"]},
+    "initiation_adherence": {"label": "Initiation & adherence", "holds": ["Eligible-but-untreated pool", "Titration", "Persistence curve", "Refill / adherence data"]},
+    "access_hub": {"label": "Access & hub", "holds": ["Formulary status", "Prior-auth rules", "Hub enrolment", "Price negotiation impact"]},
+    "multi_indication": {"label": "Multi-indication", "holds": ["Priority per indication", "Sequencing", "Cannibalisation"]},
+    "loe_lifecycle": {"label": "LoE & lifecycle", "holds": ["LoE dates by market", "Next-gen / reformulation", "Switch strategy"]},
+    "season_recommendation": {"label": "Season & recommendation", "holds": ["Recommending bodies", "Season calendar"]}
+  },
+  "campaign_types": ["Disease awareness (unbranded)", "Diagnosis / testing", "Launch", "Adoption", "Initiation", "Adherence / persistence", "Access & pull-through", "Medical education", "Event / congress", "Defend / retain"],
+  "channels": {
+    "owned": ["Email", "Website / HCP portal", "Webinar", "Patient support programme", "Hub services"],
+    "paid": ["Paid social", "Programmatic display", "Search", "Medical publishers", "EHR point-of-care"],
+    "earned": ["Congress presence", "KOL / peer-to-peer", "PR", "Patient advocacy"],
+    "field": ["Rep visit (F2F)", "Remote rep / e-detail", "MSL interaction", "Key account manager"]
+  },
+  "fixed_moment_types": ["Congress", "Label change / approval", "Data read-out / publication", "Guideline update", "Awareness day", "Launch in market", "Formulary / tender decision", "LoE", "Budget / fiscal cut-off"],
+  "frequency_caps": {"hcp_promotional_email_per_week": 1, "patient_email_per_week": 2, "hcp_campaigns_in_parallel": 2},
+  "mlr_lead_time_weeks": 4
+}

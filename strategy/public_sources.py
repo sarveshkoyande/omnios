@@ -38,10 +38,20 @@ def _fact(value, source: str, url: str) -> dict:
     return {"value": value, "source": source, "url": url, "fetched_at": _today()}
 
 
-def fda_label(generic: str) -> dict:
-    """The current FDA label for `generic`, section by section, from openFDA."""
-    q = f'openfda.generic_name:"{generic}"'
-    res = _get("https://api.fda.gov/drug/label.json", {"search": q, "limit": 1})["results"][0]
+def fda_label(generic: str, brand: str | None = None) -> dict:
+    """The current FDA label for `generic`, section by section, from openFDA. With `brand`, the
+    label must carry that brand name -- a generic alone can match a combination product
+    (empagliflozin -> Synjardy)."""
+    if brand:
+        q = f'openfda.brand_name:"{brand}" AND openfda.generic_name:"{generic}"'
+        hits = _get("https://api.fda.gov/drug/label.json", {"search": q, "limit": 10})["results"]
+        # exact single-ingredient match first (the brand's own label, not a combination)
+        exact = [h for h in hits if [g.lower() for g in h.get("openfda", {}).get("generic_name", [])] == [generic.lower()]
+                 and brand.lower() in [b.lower() for b in h.get("openfda", {}).get("brand_name", [])]]
+        res = (exact or hits)[0]
+    else:
+        q = f'openfda.generic_name:"{generic}"'
+        res = _get("https://api.fda.gov/drug/label.json", {"search": q, "limit": 1})["results"][0]
     of = res.get("openfda", {})
     set_id = res.get("set_id")
     url = f"https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid={set_id}" if set_id else "https://open.fda.gov"
@@ -60,17 +70,27 @@ def fda_label(generic: str) -> dict:
         "boxed_warning": _fact(_first(res, "boxed_warning") or "No boxed warning in the current label", src, url),
         "warnings": sec("warnings_and_cautions"),
         "contraindications": sec("contraindications"),
+        "clinical_studies": sec("clinical_studies"),
         "label_version": _fact({"version": res.get("version"), "effective": res.get("effective_time"), "set_id": set_id}, src, url),
     }
 
 
-def fda_approval(generic: str) -> dict:
-    """Application number and original approval date from Drugs@FDA."""
+def fda_approval(generic: str, brand: str | None = None) -> dict:
+    """Application number and original approval date from Drugs@FDA. With `brand`, only that
+    brand's applications count, and the EARLIEST original approval wins -- a generic can also
+    match later applications (pembrolizumab -> the 2025 subcutaneous Keytruda Qlex BLA)."""
     q = f'openfda.generic_name:"{generic}"'
-    res = _get("https://api.fda.gov/drug/drugsfda.json", {"search": q, "limit": 1})["results"][0]
-    orig = next((s for s in res.get("submissions", []) if s.get("submission_type") == "ORIG"), {})
-    d = orig.get("submission_status_date")
-    appl = res.get("application_number")
+    results = _get("https://api.fda.gov/drug/drugsfda.json", {"search": q, "limit": 20})["results"]
+    if brand:
+        mine = [r for r in results if any((p.get("brand_name") or "").lower() == brand.lower() for p in r.get("products", []))]
+        results = mine or results
+    best = None
+    for r in results:
+        for sub in r.get("submissions", []):
+            if sub.get("submission_type") == "ORIG" and sub.get("submission_status_date"):
+                if best is None or sub["submission_status_date"] < best[1]:
+                    best = (r.get("application_number"), sub["submission_status_date"])
+    appl, d = best or (results[0].get("application_number") if results else None, None)
     url = f"https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo={(appl or '')[3:]}"
     return {"us_approval": _fact({"application": appl, "date": f"{d[:4]}-{d[4:6]}-{d[6:]}" if d else None}, "Drugs@FDA", url)}
 
@@ -213,4 +233,30 @@ def fetch_audience_intel(condition: str, intervention: str, pubmed_term: str) ->
             out.update(fn())
         except Exception as e:  # noqa: BLE001 -- report, never raise
             out["errors"][name] = f"{type(e).__name__}: {e}"
+    return out
+
+
+def pubmed_abstracts(term: str, n: int = 10, years: int = 8) -> list[dict]:
+    """Recent PubMed abstracts for `term` (title, year, abstract text, PMID, URL) -- raw material
+    for the model to extract cited real-world figures from. Nothing is interpreted here."""
+    import xml.etree.ElementTree as ET
+    this_year = _dt.date.today().year
+    q = f"({term}) AND ({this_year - years}:{this_year}[dp])"
+    ids = _get("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi",
+               {"db": "pubmed", "term": q, "retmax": n, "retmode": "json", "sort": "relevance"})["esearchresult"]["idlist"]
+    if not ids:
+        return []
+    url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?" + urllib.parse.urlencode(
+        {"db": "pubmed", "id": ",".join(ids), "retmode": "xml"})
+    with urllib.request.urlopen(urllib.request.Request(url, headers=_UA), timeout=TIMEOUT) as r:
+        root = ET.fromstring(r.read())
+    out = []
+    for art in root.iter("PubmedArticle"):
+        pmid = art.findtext(".//PMID")
+        title = "".join(art.find(".//ArticleTitle").itertext()) if art.find(".//ArticleTitle") is not None else ""
+        abstract = " ".join("".join(t.itertext()) for t in art.iter("AbstractText"))
+        year = art.findtext(".//PubDate/Year") or (art.findtext(".//PubDate/MedlineDate") or "")[:4]
+        if abstract:
+            out.append({"pmid": pmid, "title": title, "year": year, "abstract": abstract[:2500],
+                        "url": f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/"})
     return out

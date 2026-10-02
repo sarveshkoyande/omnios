@@ -1862,7 +1862,6 @@ def api_v3_generate(req: V3GenerateRequest):
 
 class EngagementPlanCreate(BaseModel):
     brand: str
-    industry: str = "pharma"
     months: int | None = None
     start: str | None = None
     title: str | None = None
@@ -1874,11 +1873,11 @@ class EngagementPlanSave(BaseModel):
     meta: dict | None = None
 
 
-@app.get("/api/v3/engagement/frameworks/{industry}")
-def api_engagement_framework(industry: str):
-    """The industry framework (labels, lifecycle lens, funnel stages, channels, fixed moments)."""
+@app.get("/api/v3/engagement/framework")
+def api_engagement_framework(archetype: str | None = None):
+    """The pharma archetype framework (lifecycle, archetypes with patient-flow stages, channels...)."""
     try:
-        return engagement_plans.framework(industry)
+        return engagement_plans.framework(archetype)
     except KeyError as e:
         raise HTTPException(404, str(e))
 
@@ -1887,7 +1886,7 @@ def api_engagement_framework(industry: str):
 def api_engagement_plan_create(req: EngagementPlanCreate):
     """A new engagement plan for one brand; period defaults to 6 months."""
     try:
-        return engagement_plans.create(req.brand, req.industry, req.months, req.start, req.title)
+        return engagement_plans.create(req.brand, req.months, req.start, req.title)
     except KeyError as e:
         raise HTTPException(404, str(e))
     except ValueError as e:

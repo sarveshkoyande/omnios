@@ -25,12 +25,20 @@ sys.path.insert(0, str(Path(__file__).parent))
 from paths import data_path  # noqa: E402
 
 _FRAMEWORKS = Path(__file__).resolve().parent.parent / "config" / "frameworks"
-INDUSTRIES = {"pharma": "engagement_pharma", "investment_banking": "engagement_investment_banking"}
+# Pharma only (engagement-plan-v2.md). Brands differ by situation: lifecycle x archetype x access.
+ARCHETYPES_FILE = "engagement_archetypes"
 DEFAULT_MONTHS = 6
 
 # The plan body's shape. Empty lists/None mean "not decided yet" and render as "Needs input".
 EMPTY_BODY = {
     "situation": {"narrative": None, "baselines": [], "changes": [], "lessons": []},
+    # v2 diagnosis chain: classify -> bucket -> root causes -> options -> chosen option
+    "classification": None,  # {lifecycle, archetype, access, evidence: [{point, source}], status}
+    "bucket": None,          # {indication, stages: [{stage, value, unit, conversion, source, year}], leaks: [...], gaps: [...]}
+    "root_causes": [],       # {leak, audience, ladder_rung, belief, behaviour, evidence: [source]}
+    "options": [],           # {id, name, thesis, leaks_addressed, impact, relative_cost, risk, time_to_effect, trade_off}
+    "chosen_option": None,   # {ids: [...], note}
+    "checks": None,          # {feasibility: [...], red_team: [...]}
     "objectives": [],      # {id, objective, kpi, baseline, target, by, serves, priority, source}
     "audiences": [],       # {id, name, size, lifecycle, why_now, funnel: {stage: {today, target}}, source}
     "shifts": [],          # {audience_id, objective_id, from, to, barrier, message, proof, moment, source}
@@ -69,11 +77,16 @@ def _now() -> str:
     return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
 
-def framework(industry: str) -> dict:
-    fid = INDUSTRIES.get(industry)
-    if not fid:
-        raise KeyError(f"no engagement framework for industry '{industry}' (have: {', '.join(INDUSTRIES)})")
-    return json.loads((_FRAMEWORKS / f"{fid}.json").read_text(encoding="utf-8"))
+def framework(archetype: str | None = None) -> dict:
+    """The pharma archetype framework; with `archetype`, that archetype is also returned under
+    "archetype" (its patient flow, typical leaks, audiences, modules)."""
+    fw = json.loads((_FRAMEWORKS / f"{ARCHETYPES_FILE}.json").read_text(encoding="utf-8"))
+    if archetype:
+        arch = next((a for a in fw["archetypes"] if a["id"] == archetype), None)
+        if not arch:
+            raise KeyError(f"no archetype '{archetype}' (have: {', '.join(a['id'] for a in fw['archetypes'])})")
+        fw = {**fw, "archetype": arch}
+    return fw
 
 
 def _add_months(d: _dt.date, months: int) -> _dt.date:
@@ -103,14 +116,12 @@ def _latest(plan_id: str) -> sqlite3.Row | None:
     return _conn().execute("SELECT * FROM versions WHERE plan_id=? ORDER BY version DESC LIMIT 1", (plan_id,)).fetchone()
 
 
-def create(brand: str, industry: str = "pharma", months: int | None = None, start: str | None = None,
-           title: str | None = None) -> dict:
+def create(brand: str, months: int | None = None, start: str | None = None, title: str | None = None) -> dict:
     """A new, empty engagement plan for one brand (decision 2). Period defaults to 6 months from
     the first of next month; the user can pick another length (decision 1)."""
     import brand_kit
     if not brand_kit.kit_for(brand):
         raise KeyError(f"no brand kit for '{brand}'")
-    framework(industry)  # validates the industry
     months = int(months or DEFAULT_MONTHS)
     if months < 1 or months > 24:
         raise ValueError("months must be between 1 and 24")
@@ -121,7 +132,7 @@ def create(brand: str, industry: str = "pharma", months: int | None = None, star
     now = _now()
     db = _conn()
     db.execute("INSERT INTO plans VALUES (?,?,?,?,?,?,?,?,?,?,?)",
-               (pid, brand_kit.canonical_key(brand), industry,
+               (pid, brand_kit.canonical_key(brand), "pharma",
                 title or f"{brand_kit.canonical_key(brand)} engagement plan {s:%b %Y} - {e:%b %Y}",
                 s.isoformat(), e.isoformat(), months, "draft", _active_brand_iq_plan(brand), now, now))
     db.execute("INSERT INTO versions VALUES (?,?,?,?,?)", (pid, 1, now, "Created", json.dumps(EMPTY_BODY)))
