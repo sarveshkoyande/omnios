@@ -2992,7 +2992,7 @@
       "branded": "",
       "primary_audience": "Cardiologists treating heart failure",
       "fiscal_frame": "",
-      "tagline": "",
+      "tagline": "Jardiance: Comprehensive Heart and Diabetes Protection. Redefining Lifelong Care.",
       "core_claim": "Jardiance provides comprehensive benefits by reducing the risk of cardiovascular death and hospitalization for heart failure in adults with heart failure, reducing cardiovascular death in adults with type 2 diabetes and established cardiovascular disease, and improving glycemic control in adults with type 2 diabetes.",
       "positioning_statement": "For adult patients with heart failure or type 2 diabetes mellitus with established cardiovascular disease who need improved cardiovascular outcomes and glycemic control, Jardiance is the SGLT2 inhibitor that provides statistically significant reductions in cardiovascular death, hospitalization for heart failure, and HbA1c because of its proven efficacy across these indications.",
       "message_hierarchy": [
@@ -5789,7 +5789,66 @@
           "status": "proposed",
           "engine": "kit_proposer.voice",
           "date": "2026-10-02"
+        },
+        "tagline": {
+          "status": "ai_generated",
+          "engine": "kit_proposer.big_idea",
+          "date": "2026-10-02"
         }
+      },
+      "big_idea": {
+        "text": "Jardiance: Comprehensive Heart and Diabetes Protection. Redefining Lifelong Care.",
+        "insight": "Patients with chronic conditions like heart failure and type 2 diabetes with established cardiovascular disease are constantly worried about the cumulative impact of their conditions, fearing preventable events like hospitalizations and even death, which significantly diminish their quality of life and independence. They are actively seeking treatments that offer protection beyond just managing symptoms or blood sugar, aiming for a more secure and healthier future.",
+        "reasoning": "This Big Idea addresses the core insight that patients (Mr. Robert Johnson, Ms. Evelyn Reed) and their caregivers (Mr. Michael Davis) desire not just symptom management but tangible, long-term 'protection' against serious cardiovascular events like CV death and hospitalizations for heart failure. The phrase 'Comprehensive Heart and Diabetes Protection' directly speaks to Jardiance's multi-indication benefits in both heart failure and T2DM with CVD, offering a unified solution. 'Redefining Lifelong Care' reinforces the long-term nature of these chronic conditions and positions Jardiance as a foundational therapy that changes the trajectory of disease. It answers the patient's concern about 'protecting my heart in the long run' (Mr. Robert Johnson) and 'not end up back in the hospital again' (Ms. Evelyn Reed). The 'lifelong care' aspect also speaks to the importance of persistence, addressing the leak of 47% persistence at 12 months for SGLT2i therapy, by positioning Jardiance as essential for ongoing well-being.",
+        "draws_on": [
+          {
+            "what": "Patients with heart failure looking for ways to improve their quality of life and reduce hospitalizations.",
+            "source": "personas · patient · Ms. Evelyn Reed"
+          },
+          {
+            "what": "Patients with type 2 diabetes and established cardiovascular disease concerned about long-term health and preventing future cardiovascular events.",
+            "source": "personas · patient · Mr. Robert Johnson"
+          },
+          {
+            "what": "Jardiance reduces the risk of CV death and hospitalization for heart failure.",
+            "source": "FDA label · indications"
+          },
+          {
+            "what": "Jardiance reduces the risk of CV death in adults with type 2 diabetes mellitus and established cardiovascular disease.",
+            "source": "FDA label · indications"
+          },
+          {
+            "what": "Only 47% persistence with SGLT2i therapy at 12 months, highlighting a need for sustained engagement.",
+            "source": "PubMed 41165079 (2026) · patient_flow_us (t2dm-cv-death) · leaks"
+          }
+        ],
+        "why_not_competitors": "Many direct competitors (other SGLT2is like dapagliflozin, canagliflozin) also offer similar cardiovascular benefits. However, 'Comprehensive Heart and Diabetes Protection' leverages Jardiance's established leadership and broad indications to claim a holistic approach that competitors may not articulate as powerfully or consistently. GLP-1 RAs (e.g., liraglutide) also offer CV benefits, but our focus on 'protection' and 'lifelong care' differentiates from their primary positioning often centered on weight loss or glycemic control. The 'redefining lifelong care' component emphasizes a proactive, long-term management strategy, setting it apart from drugs that may be perceived as more symptom-focused or for singular indications.",
+        "alternatives": [
+          {
+            "idea": "Jardiance: Guarding Hearts, Guiding Futures. For Diabetes and Heart Failure.",
+            "why_not_chosen": "While 'Guarding Hearts, Guiding Futures' is evocative, it's less direct about the 'comprehensive' nature of Jardiance's benefits across both indications. 'Redefining Lifelong Care' provides a stronger sense of transformative, ongoing management, which is crucial for chronic conditions where persistence is an issue."
+          },
+          {
+            "idea": "Jardiance: Beyond Blood Sugar. Protecting Your Cardiovascular Journey.",
+            "why_not_chosen": "This alternative is strong for the T2DM with CVD audience but may not fully resonate with the pure heart failure audience, who may not be thinking 'beyond blood sugar.' The chosen Big Idea explicitly includes 'Heart and Diabetes Protection,' covering both core indications equally."
+          },
+          {
+            "idea": "Jardiance: Your Partner in Heart Health and Diabetes Management.",
+            "why_not_chosen": "'Your Partner' can feel a bit generic and less authoritative. It doesn't convey the strong, evidence-based 'protection' aspect as clearly as the chosen Big Idea. It's also less 'ownable' and distinctive compared to 'Comprehensive Heart and Diabetes Protection. Redefining Lifelong Care.'"
+          }
+        ],
+        "fit_check": {
+          "on_label": true,
+          "notes": "The Big Idea focuses on 'protection' against CV death and hospitalization for heart failure, and 'lifelong care,' which directly aligns with Jardiance's FDA-approved indications to reduce these risks in relevant populations. It also covers 'diabetes protection' by referring to its role in T2DM with established CVD and glycemic control. No claims are made beyond what is supported by the label."
+        },
+        "generated_at": "2026-10-02",
+        "status": "ai_generated",
+        "history": [
+          {
+            "text": "Jardiance: Advancing Protection for a Healthier Heart and Future.",
+            "generated_at": "2026-10-02"
+          }
+        ]
       }
     },
     "Keytruda": {
@@ -5807,7 +5866,7 @@
       "branded": "",
       "primary_audience": "Medical Oncologists (NSCLC Focus)",
       "fiscal_frame": "",
-      "tagline": "",
+      "tagline": "Beyond expectations, beyond measure. A new standard in oncology.",
       "core_claim": "KEYTRUDA offers broad and significant survival benefits across multiple advanced cancers, including melanoma and non-small cell lung cancer, both as monotherapy and in combination with chemotherapy.",
       "positioning_statement": "For medical oncologists treating patients with advanced melanoma or NSCLC, KEYTRUDA is the leading immuno-oncology therapy that provides statistically significant improvements in overall survival and progression-free survival because of its proven mechanism of action as a PD-1 blocking antibody and extensive clinical evidence across a broad range of indications.",
       "message_hierarchy": [
@@ -8312,7 +8371,61 @@
           "status": "proposed",
           "engine": "kit_proposer.competition",
           "date": "2026-10-02"
+        },
+        "tagline": {
+          "status": "ai_generated",
+          "engine": "kit_proposer.big_idea",
+          "date": "2026-10-02"
         }
+      },
+      "big_idea": {
+        "text": "Beyond expectations, beyond measure. A new standard in oncology.",
+        "insight": "Oncologists, particularly those treating more prevalent cancers like NSCLC and melanoma (Dr. Anya Sharma, Dr. Olivia Chen), are highly confident in Keytruda's established efficacy but are also keenly aware of the growing number of indications and the complexity of managing a broad patient population. For patients (Sarah Miller, John Davis) and caregivers (Maria Rodriguez), the paramount concern is achieving the best possible outcome – extending life and preventing recurrence – while navigating the uncertainties of cancer treatment.",
+        "reasoning": "The chosen Big Idea, 'Beyond expectations, beyond measure. A new standard in oncology.', addresses the core insight by acknowledging Keytruda's extensive and growing label ('beyond measure' in terms of indications and scientific understanding) and its consistent delivery of significant patient outcomes ('beyond expectations'). This idea resonates with the 'Confident Integrator' (Dr. Anya Sharma) and 'Early Intervener' (Dr. Olivia Chen) oncologists by affirming their trust in Keytruda's established efficacy while also hinting at its expansive utility. For patients and caregivers, it offers a sense of reassurance and hope, suggesting that Keytruda pushes the boundaries of what's possible in cancer treatment. The phrase 'A new standard in oncology' subtly positions Keytruda as a leader and a benchmark, which is fitting for a mature, market-leading product with a broad label.",
+        "draws_on": [
+          {
+            "what": "Keytruda's extensive list of indications across many different cancer types, including melanoma, NSCLC, HNSCC, cHL, PMBCL, urothelial cancer, MSI-H/dMMR solid tumors, gastric/GEJ adenocarcinoma, esophageal/GEJ carcinoma, cervical cancer, HCC, biliary tract cancer, Merkel cell carcinoma, RCC, endometrial carcinoma, TMB-H solid tumors, cSCC, TNBC, and ovarian/fallopian tube/primary peritoneal carcinoma.",
+            "source": "FDA label · indications"
+          },
+          {
+            "what": "Keytruda's statistically significant improvements in overall survival and progression-free survival in patients with unresectable or metastatic melanoma (KEYNOTE-006) and in combination with chemotherapy for metastatic nonsquamous NSCLC (KEYNOTE-189), as well as improved recurrence-free survival for adjuvant melanoma (KEYNOTE-716, KEYNOTE-054).",
+            "source": "FDA label · clinical studies (KEYNOTE-006, KEYNOTE-716, KEYNOTE-054, KEYNOTE-189)"
+          },
+          {
+            "what": "Persona Dr. Anya Sharma (The Confident Integrator): 'For my metastatic NSCLC patients, especially nonsquamous, the data supporting KEYTRUDA with chemo in the first-line is compelling. I'm always looking for treatments that move the needle on survival, and this combination consistently delivers.'",
+            "source": "Dr. Anya Sharma — The Confident Integrator persona"
+          },
+          {
+            "what": "Persona Dr. Olivia Chen (The Early Intervener): 'After a complete resection of Stage IIB, IIC, or III melanoma, my goal is to keep that cancer from coming back. The data on KEYTRUDA for adjuvant treatment, showing improved recurrence-free survival, gives me confidence in preventing distant metastasis.'",
+            "source": "Dr. Olivia Chen — The Early Intervener persona"
+          },
+          {
+            "what": "Persona John Davis (The Metastatic NSCLC Fighter): 'I want to know if this is the strongest option to fight this, to give me the best chance at more time and a good quality of life.'",
+            "source": "John Davis — The Metastatic NSCLC Fighter persona"
+          }
+        ],
+        "why_not_competitors": "Competitors like nivolumab/ipilimumab, cemiplimab, and standard of care (SOC) therapies, while effective in specific indications, do not possess the same breadth of indications and depth of clinical evidence across such a diverse range of advanced cancers as Keytruda. The phrase 'new standard' suggests leadership and comprehensive impact, distinguishing Keytruda from competitors that may be strong in specific niches but lack the overarching presence and demonstrated efficacy across the oncology landscape. It also avoids making direct comparative claims against specific clinical trial results, instead focusing on the overall brand impact.",
+        "alternatives": [
+          {
+            "idea": "Keytruda: Redefining possibilities in cancer care.",
+            "why_not_chosen": "While 'redefining possibilities' is good, it's slightly less active and comprehensive than 'beyond expectations, beyond measure.' It doesn't capture the sheer volume of data and indications as effectively as 'beyond measure,' nor does it evoke the consistent over-performance implied by 'beyond expectations.' It's also a more generic phrase used by several brands."
+          },
+          {
+            "idea": "The proven leader in immune-oncology.",
+            "why_not_chosen": "This idea is true and concise, but it's too direct and less evocative. It might appeal to 'Confident Integrator' oncologists but lacks the emotional resonance for patients/caregivers and doesn't fully express the expansive impact and continuous innovation suggested by 'beyond expectations, beyond measure.' It also risks sounding too much like a boast rather than a statement of fact demonstrated by continuous progress."
+          },
+          {
+            "idea": "Expanding horizons, extending lives.",
+            "why_not_chosen": "This idea focuses on the outcomes but is less unique to Keytruda. 'Expanding horizons' speaks to the broad indications, and 'extending lives' to the survival benefit, but it lacks the confident, definitive tone of 'a new standard' and the compelling emotional draw of 'beyond expectations.' It's a bit too generic and could apply to many oncology treatments."
+          }
+        ],
+        "fit_check": {
+          "on_label": true,
+          "notes": "The Big Idea focuses on 'expectations' and 'measure' (implying scientific data and breadth) and positions Keytruda as 'a new standard,' which is supported by its extensive label and numerous indications with survival benefits. It does not make any specific efficacy or safety claims that are off-label, nor does it guarantee outcomes. The language aligns with the brand's authoritative, precise, and empathetic voice, while avoiding unsubstantiated claims or exaggerations."
+        },
+        "generated_at": "2026-10-02",
+        "status": "ai_generated",
+        "history": []
       }
     }
   }

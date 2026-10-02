@@ -37,6 +37,9 @@ export function getCompliance(brand: string): Promise<{ brand: string; profile: 
 export function proposeKitContent(brand: string, force = false): Promise<{ brand: string; kit: BrandKit }> {
   return postJSON(`/api/brand-kits/${encodeURIComponent(brand)}/propose${force ? "?force=true" : ""}`, {});
 }
+export function regenerateBigIdea(brand: string): Promise<{ brand: string; kit: BrandKit }> {
+  return postJSON(`/api/brand-kits/${encodeURIComponent(brand)}/big-idea`, {});
+}
 export function getClientData(brand: string): Promise<Record<string, unknown>> {
   return getJSON(`/api/brand-kits/${encodeURIComponent(brand)}/client-data`);
 }
