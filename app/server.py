@@ -1930,11 +1930,15 @@ def api_engagement_plan_restore(plan_id: str, version: int):
 
 class EngagementAnswers(BaseModel):
     answers: dict = {}
-    auto_assume: bool = False
 
 
-class EngagementDraft(BaseModel):
-    assumption_decisions: dict | None = None
+class EngagementClassify(BaseModel):
+    override: dict | None = None
+
+
+class EngagementChoose(BaseModel):
+    ids: list[str]
+    note: str | None = None
 
 
 def _engagement_step(fn, *args):
@@ -1944,6 +1948,8 @@ def _engagement_step(fn, *args):
         return fn(*args)
     except KeyError:
         raise HTTPException(404, "no such engagement plan")
+    except ValueError as e:
+        raise HTTPException(400, str(e))
     except engagement_agent.LLMUnavailable as e:
         raise HTTPException(503, f"The AI model couldn't be reached ({e}), so this step wasn't run. Nothing was guessed - try again in a moment.")
 
@@ -1954,22 +1960,40 @@ def api_engagement_agent_read(plan_id: str):
     return _engagement_step(engagement_agent.read, plan_id)
 
 
-@app.post("/api/v3/engagement-plans/{plan_id}/agent/clarify")
-def api_engagement_agent_clarify(plan_id: str):
+@app.post("/api/v3/engagement-plans/{plan_id}/agent/classify")
+def api_engagement_agent_classify(plan_id: str, req: EngagementClassify):
     from strategy import engagement_agent
-    return _engagement_step(engagement_agent.clarify, plan_id)
+    return _engagement_step(engagement_agent.classify, plan_id, req.override)
 
 
-@app.post("/api/v3/engagement-plans/{plan_id}/agent/answers")
-def api_engagement_agent_answers(plan_id: str, req: EngagementAnswers):
+@app.post("/api/v3/engagement-plans/{plan_id}/agent/diagnose")
+def api_engagement_agent_diagnose(plan_id: str):
     from strategy import engagement_agent
-    return _engagement_step(engagement_agent.answer, plan_id, req.answers, req.auto_assume)
+    return _engagement_step(engagement_agent.diagnose, plan_id)
+
+
+@app.post("/api/v3/engagement-plans/{plan_id}/agent/options")
+def api_engagement_agent_options(plan_id: str, req: EngagementAnswers):
+    from strategy import engagement_agent
+    return _engagement_step(engagement_agent.options, plan_id, req.answers)
+
+
+@app.post("/api/v3/engagement-plans/{plan_id}/agent/choose")
+def api_engagement_agent_choose(plan_id: str, req: EngagementChoose):
+    from strategy import engagement_agent
+    return _engagement_step(engagement_agent.choose, plan_id, req.ids, req.note)
 
 
 @app.post("/api/v3/engagement-plans/{plan_id}/agent/draft")
-def api_engagement_agent_draft(plan_id: str, req: EngagementDraft):
+def api_engagement_agent_draft(plan_id: str):
     from strategy import engagement_agent
-    return _engagement_step(engagement_agent.draft, plan_id, req.assumption_decisions)
+    return _engagement_step(engagement_agent.draft, plan_id)
+
+
+@app.post("/api/v3/engagement-plans/{plan_id}/agent/check")
+def api_engagement_agent_check(plan_id: str):
+    from strategy import engagement_agent
+    return _engagement_step(engagement_agent.check, plan_id)
 
 
 @app.get("/api/v3/artifacts")
