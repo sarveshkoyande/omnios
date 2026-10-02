@@ -68,7 +68,9 @@ def patient_flow(brand: str, inn: str, indication: dict, archetype: dict) -> dic
                          "studies reporting the share of patients passing that stage for this indication (e.g. "
                          "'testing rate', 'proportion of eligible patients prescribed', 'underuse', 'persistence', "
                          "'adherence', 'time to diagnosis'). Use PubMed syntax with the condition and the drug class "
-                         "or drug; avoid trial-efficacy terms. Keep each query short.\n"
+                         "or drug; avoid trial-efficacy terms. Omni plans for the UNITED STATES: every query must "
+                         "target US studies -- add (\"United States\"[MeSH Terms] OR US OR Medicare OR \"commercial "
+                         "claims\" OR VA) or a similar US filter. Keep each query short.\n"
                          'Shape: {"queries":[{"stage":"","query":""}]}',
                          {"indication": indication, "condition": cond, "drug": inn, "drug_class": cls,
                           "stages": archetype["patient_flow"]}, max_tokens=1200)
@@ -87,8 +89,9 @@ def patient_flow(brand: str, inn: str, indication: dict, archetype: dict) -> dic
                         "and year it comes from and the population/setting it applies to. The value is ALWAYS the share "
                         "of patients who PASS that stage (e.g. '% still on therapy'); if an abstract reports the opposite "
                         "('96% discontinued'), convert it (4%) and say so in `what`. Absolute counts (e.g. prevalence in "
-                        "millions) keep their own unit. Prefer figures specific to "
-                        "this indication and drug class. A stage with no figure in the abstracts gets value null. Then "
+                        "millions) keep their own unit. Omni plans for the UNITED STATES: use US figures; record the "
+                        "country of the study in `setting`. Prefer figures specific to the US, this indication and drug "
+                        "class. A stage with no figure in the abstracts gets value null. Then "
                         "list the leaks the evidence supports (where patients are lost) and any competitors / alternative "
                         "treatments the abstracts name for this indication.\n"
                         'Shape: {"stages":[{"stage":"","value":null,"unit":"%","what":"","setting":"","pmid":null,"year":null}],'
@@ -118,9 +121,11 @@ def _verify_stages(stages: list[dict], abstracts: list[dict], indication: dict) 
     by_pmid = {a["pmid"]: a for a in abstracts}
     out = complete_json(_SYS + "\nCheck each candidate figure against its abstract and give a verdict:\n"
                         "- match: it measures the share of patients passing that patient-flow stage, in this "
-                        "indication's setting (or an absolute count for a prevalence stage).\n"
+                        "indication's setting, in a UNITED STATES population (or an absolute US count for a "
+                        "prevalence stage).\n"
                         "- proxy: the same KIND of measure for that stage, but a nearby setting (earlier disease stage, "
-                        "related population, trial baseline, other country); give the caveat in one short sentence.\n"
+                        "related population, trial baseline) -- or a non-US study, which can never be a match; give the "
+                        "caveat in one short sentence (name the country when it isn't the US).\n"
                         "- reject: a different kind of measure -- survival, response, efficacy, biomarker POSITIVITY "
                         "(not a testing rate), or a different stage.\n"
                         'Shape: {"checks":[{"stage":"","verdict":"match|proxy|reject","caveat":"","reason":""}]}',
@@ -199,6 +204,11 @@ def build_public_kit(brand: str, inn: str, condition_for_mesh: str, priority_ind
                                     "source": "PubMed " + ", ".join(map(str, c.get("pmids") or [])),
                                     "indication": f["indication_id"]}
     segments = propose_audiences(brand, fw["archetype"], indications)
+    import us_geography
+    try:
+        geography = us_geography.build(brand, indications)
+    except Exception as e:  # noqa: BLE001 -- geography is additive; report and continue
+        geography = {"country": "US", "layers": [], "error": str(e)}
 
     key = brand_kit.canonical_key(brand)
     if not key:
@@ -218,6 +228,7 @@ def build_public_kit(brand: str, inn: str, condition_for_mesh: str, priority_ind
         "patient_flow": flows,
         "competitors": list(competitors.values()),
         "audience_segments": segments,
+        "us_geography": geography,
         "lifecycle_stage": situation.get("lifecycle"),
     }
     return brand_kit.apply_diff(brand, fields)

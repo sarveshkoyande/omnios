@@ -324,6 +324,17 @@ function PlanView({ plan, tab, setTab, drafted, ladder }: { plan: EngagementPlan
         <h3 className="v3-iq-h3">Where {plan.brand} loses patients — {txt(bucket.indication)}</h3>
         {Boolean(bucket.why_this_indication) && <p className="v3-ep-why">{txt(bucket.why_this_indication)}</p>}
         <Bucket bucket={bucket} />
+        {Boolean(bucket.geography) && (() => {
+          const geo = bucket.geography as Any;
+          return (<>
+            <h3 className="v3-iq-h3">Where in the US</h3>
+            <div className="v3-ep-geo">
+              <div><em>Priority states</em>{arr(geo.priority_states).map((x) => <p key={txt(x.state)}><b>{txt(x.state)}</b> {txt(x.why)}</p>)}</div>
+              <div><em>White space</em>{arr(geo.white_space).length ? arr(geo.white_space).map((x) => <p key={txt(x.state)}><b>{txt(x.state)}</b> {txt(x.why)}</p>) : <p className="v3-muted">None identified</p>}</div>
+              {arr(geo.accounts).length > 0 && <div><em>Key accounts</em>{arr(geo.accounts).map((x, i) => <p key={i}>{String(x)}</p>)}</div>}
+            </div>
+          </>);
+        })()}
         <h3 className="v3-iq-h3">Leaks</h3>
         <div className="v3-ep-leaks">
           {arr(bucket.leaks).map((l) => (
@@ -402,6 +413,7 @@ function PlanView({ plan, tab, setTab, drafted, ladder }: { plan: EngagementPlan
             <article key={txt(c.id)}>
               <div className="v3-iq-comp2-top"><b>{txt(c.name)}</b><span className="v3-iq-tier">{txt(c.weight).replace(/%$/, "")}% budget</span></div>
               <span className="v3-iq-comp2-meta">{txt(c.type)} · {txt(c.start)} → {txt(c.end)} · {arr(c.audience_ids).map(audName).join(", ")}{c.content ? ` · content: ${txt(c.content)}` : ""}</span>
+              {Boolean(c.geography || c.target_hcps) && <span className="v3-iq-comp2-meta"><Icon name="map" size={11} /> {Array.isArray(c.geography) ? (c.geography as unknown[]).join(", ") : txt(c.geography) || "National"}{c.target_hcps ? ` · ~${Number(c.target_hcps).toLocaleString()} HCPs` : ""}</span>}
               <p><em>Message</em>{txt(c.message)}</p>
               <p><em>Shifts</em>{arr(c.shift_refs).map((r) => { const [a, o] = String(r).split(":"); return `${audName(a)} → ${objName(o)}`; }).join("; ")}</p>
               <p><em>Channels</em>{arr(c.channels).map(String).join(" · ")}</p>
@@ -416,7 +428,7 @@ function PlanView({ plan, tab, setTab, drafted, ladder }: { plan: EngagementPlan
       {tab === "timeline" && <Timeline plan={plan} campaigns={campaigns} moments={arr(b.fixed_moments)} />}
 
       {tab === "budget" && (<>
-        {(["by_objective", "by_audience", "by_channel"] as const).map((k) => {
+        {(["by_objective", "by_audience", "by_channel", "by_region"] as const).map((k) => {
           const m = ((b.budget ?? {}) as Any)[k] as Record<string, number> | undefined;
           const entries = Object.entries(m ?? {});
           const max = Math.max(1, ...entries.map(([, v]) => Number(v)));

@@ -153,7 +153,7 @@ def profile(refresh: bool = True, force: bool = False) -> dict:
         cached, at = _CACHE["profile"], _CACHE["at"]
         if cached and (not refresh or (not force and time.time() - at < _TTL_S)):
             return cached
-        if refresh and datacloud.configured():
+        if refresh and datacloud.is_live():
             try:
                 live = _profile_live()
                 _CACHE.update(profile=live, at=time.time())

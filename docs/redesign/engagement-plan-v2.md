@@ -226,3 +226,39 @@ build time, not assumed.
 Known limits: openFDA's Jardiance label is the 2023 version (no CKD indication yet); PubMed figures
 are best-available and often proxies; "Diagnosed" stages are usually gaps; Create campaign plan
 does not yet pre-fill the Campaign Planner.
+
+## US geography & client data (2026-10-02)
+
+**Scope is the United States** (assumed everywhere; not asked). Strategy is national; effort is
+concentrated where the opportunity is — which is what US brand teams do: target by HCP potential
+(deciles), key accounts (IDNs, health systems, cancer centres), formulary access by state/payer,
+and disease burden by state, executed through regions → districts → territories.
+
+**Evidence is US-specific.** `strategy/brand_builder.py` writes PubMed queries with a US filter
+(`"United States"[MeSH]`, Medicare, commercial claims, VA), records the study country, and the
+verification pass only accepts a US population as a *match* — a non-US study can at best be a
+*proxy*, with the country named in the caveat.
+
+**Public geography layer** (`strategy/us_geography.py`): CDC PLACES county estimates rolled up to
+states (population-weighted crude prevalence + estimated adults affected), cached under
+`DATA_DIR/geo_cache`. The model picks which PLACES measures approximate the brand's indications
+(diabetes / high blood pressure / CHD for Jardiance, cancer for Keytruda, none for a rare disease
+like Cablivi). Stored on the kit as `us_geography`; shown on Market Intelligence.
+
+**Client data — synthetic until connected** (`strategy/client_data.py`): HCP universe by segment ×
+state with deciles, key accounts, formulary access by state, field force (reps, calls/month, by
+region), channel reach/consent by segment, market share and TRx by region. Generated per brand
+with a fixed seed, sized realistically (the model estimates US headcounts per segment; state
+split by CDC population), written to `DATA_DIR/client_data/<brand>.json` with `"synthetic": true`
+and labelled SYNTHETIC wherever it appears. Replace with real data of the same shape and
+`"synthetic": false`.
+
+**Engagement Planner uses both:** grounding items `geo:*` and `client:*`; the diagnosis names
+priority states, white space and accounts; campaigns carry `geography` and `target_hcps`; the
+budget adds a `by_region` split; feasibility checks field capacity (target HCPs vs rep calls) and
+consent reach (email-led campaigns vs email-reachable share).
+
+**Segmentation Planner without Salesforce** (`strategy/segmentation/local_store.py`): when the
+`DC_*` settings are missing, `datacloud.py` routes every call to a generated SQLite copy of the HCP
+table (20,000 synthetic rows with the snapshot's real columns and value lists), with a local
+segments table — so SQL, live counts, duplicate checks, create and publish all work. The UI says so.

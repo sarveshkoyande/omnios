@@ -124,40 +124,30 @@ the same resilience idiom: attempt the call, catch broadly, fall back to a deter
 rules-based path — the app must degrade gracefully (rules engine only), never hard-fail,
 when the LLM is unavailable or misconfigured.
 
-**Cockpit Campaign Planner** (`#/v3/agent/campaign-planner`, a port of Camille's "create
-campaign"): backend `strategy/campaign_creator/` (routes `/api/campaign-planner/*` and
-`/api/salesforce/*` in `server.py`), frontend `cockpit/src/v3/campaignplanner/`. Brief →
-up to 3 questions → assumptions → an 11-section Campaign Briefing → a 7-agent journey
-blueprint (Analyst, Architect, QA, Designer ⇄ Tester, Validator, Writer) → a Salesforce Flow.
-Each step is a background job whose events stream over replayable SSE; a job saves the session
-only when it succeeds. Every agent has a rules fallback, whose output is thin, so the planner
-really needs a model. Its model is chosen in `strategy/campaign_creator/llm.py`:
-- First choice: Camille's own OpenAI-compatible gateway, via `LITELLM_BASE_URL` + `LITELLM_API_KEY`
-  (+ `LITELLM_MODEL`, default `gpt-5`), called over httpx.
-- Otherwise: the app's Foundry/Gemini provider.
+**Cockpit v3 agents** (`cockpit/src/v3/`, routes `#/v3/agent/<id>`):
+- `campaign-planner` — Campaign Planner: framework workspace over `config/frameworks/campaign_spine.json`.
+- `brief-compiler` — Brief Compiler (was "Briefing Agent" before MR !1): brief from the plan's decisions.
+- `briefing-agent` — Briefing Agent (MR !1, a port of Camille's create-campaign): brief → ≤3 questions →
+  assumptions → Campaign Briefing → 7-agent blueprint → Salesforce Flow. Backend `strategy/campaign_creator/`
+  (routes `/api/campaign-planner/*`, `/api/salesforce/*`), frontend `cockpit/src/v3/campaignplanner/`.
+  Model: Camille's gateway (`LITELLM_*`, default gpt-5) else the app's Foundry/Gemini provider.
+  Deploy needs `SALESFORCE_CLIENT_ID/SECRET/REDIRECT_URI` (+ optional `SALESFORCE_LOGIN_URL`).
+- `segmentation-planner` — Segmentation Planner (MR !1, Camille's Segmentation Agent): plain-English audience →
+  consent → Data Cloud SQL → name → count → create + publish. Backend `strategy/segmentation/`. With `DC_*`
+  configured it uses the real org; **without them `datacloud.py` routes to `segmentation/local_store.py`**, a
+  generated SQLite copy of the HCP table (synthetic rows, real columns/values) with a local segments table.
+- `engagement-planner` — Engagement Planner (docs/redesign/engagement-plan-v2.md): next N months for one US
+  brand. Classify situation → diagnose the patient-flow leaky bucket (US geography included) → root causes +
+  options → draft → feasibility + red team. `strategy/engagement_agent.py`, `engagement_plans.py`,
+  `config/frameworks/engagement_archetypes.json`; routes `/api/v3/engagement-plans/*`.
 
-Deploy needs `SALESFORCE_CLIENT_ID`/`SALESFORCE_CLIENT_SECRET`/`SALESFORCE_REDIRECT_URI`
-(`http://localhost:8731/api/salesforce/callback`, which must also be registered on the Connected
-App), with optional `SALESFORCE_LOGIN_URL`. OAuth tokens live in server memory, so a restart
-means connecting again.
-The Cockpit builds with `cd cockpit && npm run build` into `app/static/cockpit`.
+**LLM-only rule**: free text a person typed is read only by the model — no regex/keyword matching of it; with no
+model a step stops with a plain message instead of guessing. (MR !1's keyword fallbacks were removed.)
 
-**Cockpit Segmentation Planner** (`#/v3/agent/segmentation-planner`, a port of Camille's
-Segmentation Agent): backend `strategy/segmentation/` (routes `/api/segmentation-planner/*`),
-frontend `cockpit/src/v3/segmentation/`. It reuses the Campaign Planner's job registry and model
-layer (`campaign_creator/jobs.py`, `llm.py`). The flow:
-1. Plain-English audience → email-consent card → Data Cloud DBT SQL on
-   `hcp_segmentation_dummy_dataset_camille__dlm`.
-2. Name → live record count on the Query API (`ssot/queryv2`).
-3. Confirm → duplicate-name check, create (Segments API), publish.
-
-A "Tester Agent" model call fixes SQL that Data Cloud rejects, up to twice per step.
-
-Data Cloud uses Camille's `DC_*` settings (a password-flow token endpoint, client id and secret,
-username and password, and `DC_API_VERSION`). The prompt's column values are the data's real ones:
-they are profiled live and cached for 6 hours, with `config/segmentation_dataset.json` as the
-fallback snapshot (refresh it with `dataset.write_snapshot()`). Query API rows are arrays;
-`datacloud.query()` maps them to dicts through `metadata[col].placeInOrder`.
+**Brand IQ data**: kits in `config/brand_kits.json`. Public sources (`strategy/public_sources.py`,
+`brand_builder.py`): FDA label/Drugs@FDA, NIH MeSH, PubMed (US studies only), ClinicalTrials.gov, MedlinePlus;
+US geography from CDC PLACES (`us_geography.py`). **Client data is synthetic** (`client_data.py`, flagged
+`"synthetic": true`) until real HCP/access/field/consent feeds exist. Company SOPs: `config/compliance_profiles.json`.
 
 **Design tokens**: `frontend/src/theme/tokens.ts` is the literal single source of truth for
 color/spacing/radius (`frontend/src/theme/theme.ts` derives the MUI theme from it, nothing

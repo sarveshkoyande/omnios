@@ -80,7 +80,7 @@ def view(sess: dict) -> dict:
         "state": sess["state"],
         "job": {"id": job.id, "kind": job.kind} if job else None,
         "llm": {"available": llm.available(), "engine": llm.engine_label()},
-        "datacloud": {"configured": datacloud.configured()},
+        "datacloud": {"configured": datacloud.configured(), "mode": datacloud.mode()},
     }
 
 
@@ -294,7 +294,7 @@ def _generate(run: _Run, query: str) -> None:
     state = run.state
     prog = run.item({"kind": "progress", "title": "Segmentation Agent", "status": "running", "steps": []})
     run.progress(prog, "analyzing", "Segmentation Agent", "Analyzing your natural language query...")
-    if datacloud.configured() and dataset.is_stale():
+    if datacloud.is_live() and dataset.is_stale():
         run.progress(prog, "profiling", "Data Cloud", "Reading the dataset's current values from Data Cloud...")
     prof = dataset.profile(refresh=True)
 

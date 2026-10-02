@@ -23,6 +23,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 import brand_kit  # noqa: E402
+import client_data  # noqa: E402
 import compliance  # noqa: E402
 import engagement_plans as ep  # noqa: E402
 from llm_json import LLMUnavailable, complete_json  # noqa: E402
@@ -101,6 +102,28 @@ def read(plan_id: str) -> dict:
         for i, r in enumerate(cp.get("channel_rules") or []):
             g.append(_item(f"compliance:channel:{i}", "Compliance", "Channel rule", _pick(r, ("channel", "rule"))))
 
+    # US geography (public, CDC PLACES) and client data (synthetic until real feeds exist).
+    for li, layer in enumerate((kit.get("us_geography") or {}).get("layers") or []):
+        top = sorted(layer.get("states") or [], key=lambda x: -(x.get("est_cases") or 0))[:10]
+        hi = sorted(layer.get("states") or [], key=lambda x: -(x.get("prevalence_pct") or 0))[:8]
+        g.append(_item(f"geo:{li}", "Market Intelligence · US geography",
+                       f"CDC PLACES {layer.get('measure')} ({layer.get('fit')} for {layer.get('for_indication')})",
+                       {"most_cases": [{"state": x["state"], "est_cases": x["est_cases"], "prevalence_pct": x["prevalence_pct"]} for x in top],
+                        "highest_prevalence": [{"state": x["state"], "prevalence_pct": x["prevalence_pct"]} for x in hi],
+                        "source": layer.get("source")}))
+    try:
+        cd = client_data.summary(plan["brand"])
+        label = "Client data (SYNTHETIC stand-in)" if cd.get("synthetic") else "Client data"
+        g.append(_item("client:hcps", "Client data", f"{label}: HCPs by segment (top 3 deciles)", cd["hcps_by_segment"]))
+        g.append(_item("client:states", "Client data", f"{label}: top states by high-decile HCPs", cd["top_states_by_high_decile_hcps"]))
+        g.append(_item("client:access", "Client data", f"{label}: lowest-access states (formulary)", cd["lowest_access_states"]))
+        g.append(_item("client:field", "Client data", f"{label}: field force", cd["field_force"]))
+        g.append(_item("client:reach", "Client data", f"{label}: channel reach % by segment", cd["channel_reach_pct"]))
+        g.append(_item("client:share", "Client data", f"{label}: market share % by region", cd["market_share_pct_by_region"]))
+        g.append(_item("client:accounts", "Client data", f"{label}: key accounts", cd["accounts"]))
+    except Exception:  # noqa: BLE001 -- client data is additive
+        pass
+
     gaps = []
     if not kit.get("patient_flow"):
         gaps.append({"what": "Patient flow (where patients are lost)", "page": "Brand Kit"})
@@ -129,7 +152,10 @@ def _frame(plan: dict, fw: dict) -> dict:
 
 def _role(plan: dict) -> str:
     return ("You are a senior pharmaceutical brand and omnichannel engagement strategist. You plan the next "
-            f"{plan['months']} months for ONE brand. You reason like a brand team: find where patients are lost, "
+            f"{plan['months']} months for ONE brand in the UNITED STATES: national strategy, with effort concentrated "
+            "where the opportunity is (high-prevalence states, high-decile HCPs, key accounts, access). Client data "
+            "marked SYNTHETIC is a realistic stand-in: use it, and say so where it drives a choice. "
+            "You reason like a brand team: find where patients are lost, "
             "why, which audience's belief or behaviour causes it, and what would move them. Use ONLY the grounding "
             "(Brand IQ) and the user's answers; never invent facts, figures or claims. Cite grounding ids. "
             "ALWAYS reply with a single JSON object matching the requested shape -- no prose, no markdown.")
@@ -180,7 +206,11 @@ def diagnose(plan_id: str) -> dict:
               "note it separately in `natural_attrition`. List data gaps. Then write up to "
               f"{MAX_QUESTIONS} questions for the brand team that come from THIS diagnosis (missing numbers that would "
               "change which leak is biggest, contradictions, priorities between indications) -- never generic.\n"
-              'Shape: {"indication":"","why_this_indication":"","stages":[{"stage":"","value":null,"unit":"","what":"",'
+              "Also say WHERE in the US the opportunity concentrates: priority states (high prevalence or many "
+              "cases, many high-decile HCPs) and white space (high prevalence but low access or thin coverage), "
+              "citing geo:/client: ids.\n"
+              'Shape: {"indication":"","why_this_indication":"","geography":{"priority_states":[{"state":"","why":""}],'
+              '"white_space":[{"state":"","why":""}],"accounts":[""]},"stages":[{"stage":"","value":null,"unit":"","what":"",'
               '"verdict":"match|proxy|none","caveat":"","source":""}],"conversions":[{"from":"","to":"","rate":""}],'
               '"leaks":[{"id":"L1","stage":"","finding":"","size":"large|medium|unknown","evidence":[""]}],'
               '"natural_attrition":[""],"gaps":[""],"questions":[{"id":"q1","question":"","why":"","options":[""]}]}')
@@ -244,9 +274,10 @@ _SHAPE = {
     "shifts": [{"audience_id": "a1", "objective_id": "o1", "from": "belief/behaviour today", "to": "target", "ladder_move": "Aware -> Trialled",
                 "barrier": "", "message": "", "proof": "", "moment": "", "source": ""}],
     "campaigns": [{"id": "c1", "name": "", "type": "", "audience_ids": ["a1"], "shift_refs": ["a1:o1"], "message": "",
-                   "channels": [""], "start": "YYYY-MM", "end": "YYYY-MM", "weight": 25, "content": "exists|adapt|new", "kpi": "", "source": ""}],
+                   "channels": [""], "start": "YYYY-MM", "end": "YYYY-MM", "weight": 25, "content": "exists|adapt|new",
+                   "geography": "National | state codes | named accounts", "target_hcps": 0, "kpi": "", "source": ""}],
     "fixed_moments": [{"date": "YYYY-MM", "label": "", "type": "", "source": ""}],
-    "budget": {"by_objective": {"o1": 40}, "by_audience": {"a1": 50}, "by_channel": {"Email": 20}},
+    "budget": {"by_objective": {"o1": 40}, "by_audience": {"a1": 50}, "by_channel": {"Email": 20}, "by_region": {"South": 40}},
     "measurement": {"kpi_tree": [{"objective_id": "o1", "kpi": "", "leading_indicators": [""]}], "review_cadence": ""},
     "risks": [{"risk": "", "likelihood": "", "impact": "", "mitigation": ""}],
 }
@@ -269,7 +300,10 @@ def draft(plan_id: str) -> dict:
               "- Every shift owned by at least one campaign; reuse brand-plan activities when they fit. Campaign "
               f"dates inside the period; first launches no earlier than {fw['mlr_lead_time_weeks']} weeks after the "
               "start (MLR review) unless the content already exists.\n"
-              "- Budget is RELATIVE (% per breakdown, ~100), never money. Campaign `weight` is a number.\n"
+              "- Budget is RELATIVE (% per breakdown, ~100), never money. Campaign `weight` is a number. Add a "
+              "by_region split (Northeast / Midwest / South / West) that follows the diagnosed geography.\n"
+              "- Each campaign has a `geography` (National, or priority states / accounts) and `target_hcps` (how "
+              "many HCPs it targets, from the client data's high-decile counts for its audiences and geography).\n"
               "- Every item names its source (grounding id, 'answer', 'option A', or 'proposed from diagnosis').\n"
               "Reply with the JSON object only.")
     out = complete_json(system, {"shape": _SHAPE, "frame": _frame(plan, fw), "classification": cls,
@@ -320,6 +354,28 @@ def _feasibility(plan: dict, fw: dict) -> list[dict]:
             issues.append({"check": "MLR lead time", "severity": "medium",
                            "issue": f"'{c.get('name')}' starts in month {i0 + 1} with {c.get('content') or 'unknown'} content; MLR needs ~{lead} weeks",
                            "fix": "Start later, or use existing approved content first"})
+    try:
+        cd = client_data.summary(plan["brand"])
+        field = cd["field_force"]
+        field_names = set((fw.get("channels") or {}).get("field") or [])
+        needed = sum(int(c.get("target_hcps") or 0) for c in camps if set(c.get("channels") or []) & field_names)
+        if needed and needed > field["capacity_calls_per_month"] * 0.8:
+            issues.append({"check": "Field capacity", "severity": "high",
+                           "issue": f"Field campaigns target ~{needed:,} HCPs a month; {field['reps']} reps give ~{field['capacity_calls_per_month']:,} calls ({'synthetic' if cd.get('synthetic') else 'client'} data)",
+                           "fix": "Narrow to top deciles / priority states, or move part to remote and digital"})
+        reach = cd["channel_reach_pct"]
+        aud_names = {a.get("id"): a.get("name") for a in b.get("audiences") or []}
+        for c in camps:
+            if "Email" not in (c.get("channels") or []):
+                continue
+            for aid in c.get("audience_ids") or []:
+                pct = (reach.get(aud_names.get(aid) or "") or {}).get("Email")
+                if pct is not None and pct < 40:
+                    issues.append({"check": "Consent reach", "severity": "medium",
+                                   "issue": f"'{c.get('name')}' leans on email, but only {pct}% of {aud_names.get(aid)} are email-reachable",
+                                   "fix": "Add rep, EHR or programmatic channels for the rest"})
+    except Exception:  # noqa: BLE001 -- client data is additive
+        pass
     cap = fw["frequency_caps"].get("hcp_campaigns_in_parallel", 2)
     for a in b.get("audiences") or []:
         for m in range(plan["months"]):

@@ -53,9 +53,20 @@ def _cfg() -> dict:
             "password": e.get("DC_PASSWORD", ""), "version": (e.get("DC_API_VERSION", "").strip() or "v64.0")}
 
 
-def configured() -> bool:
+def is_live() -> bool:
+    """True when the DC_* settings point at a real Data Cloud org."""
     c = _cfg()
     return all(c[k] for k in ("login_url", "client_id", "client_secret", "username", "password"))
+
+
+def configured() -> bool:
+    """Segments can be sized and created: against the real org when it's configured, otherwise
+    against the generated local stand-in (segmentation/local_store.py)."""
+    return True
+
+
+def mode() -> str:
+    return "live" if is_live() else "local"
 
 
 def api_version() -> str:
@@ -96,8 +107,8 @@ def _raise_for(resp: requests.Response, what: str) -> None:
 
 def authenticate(force: bool = False) -> dict:
     """{access_token, instance_url} (instance URL without a trailing slash)."""
-    if not configured():
-        raise DataCloudError("Data Cloud isn't configured on this server.")
+    if not is_live():
+        return {"access_token": "local", "instance_url": "local", "mode": "local"}
     with _LOCK:
         if not force and _AUTH["token"] and time.time() - _AUTH["at"] < _TOKEN_TTL_S:
             return {"access_token": _AUTH["token"], "instance_url": _AUTH["instance_url"]}
@@ -141,6 +152,9 @@ def _call(method: str, path: str, what: str, *, timeout: float, headers: dict | 
 
 def query(sql: str, timeout: float = 30) -> list[dict]:
     """Rows as {column: value} dicts, whatever shape the Query API returned them in."""
+    if not is_live():
+        from . import local_store
+        return local_store.query(sql)
     body = _call("POST", f"/services/data/{api_version()}/ssot/queryv2", "Data Cloud query", timeout=timeout,
                  json={"sql": sql}, headers={"Content-Type": "application/json"})
     meta = body.get("metadata") or {}
@@ -163,6 +177,9 @@ def count(sql: str) -> int:
 
 def segment_names() -> list[str]:
     """The display names of every segment in the org, all pages."""
+    if not is_live():
+        from . import local_store
+        return local_store.segment_names()
     names: list[str] = []
     offset = 0
     for _ in range(50):
@@ -202,6 +219,9 @@ def build_payload(name: str, description: str, sql: str, dev_name: str) -> dict:
 
 
 def create_segment(payload: dict) -> str:
+    if not is_live():
+        from . import local_store
+        return local_store.create_segment(payload)
     body = _call("POST", f"/services/data/{api_version()}/ssot/segments", "Segment creation", timeout=60,
                  json=payload, headers={"Content-Type": "application/json"})
     seg_id = body.get("marketSegmentId") if isinstance(body, dict) else None
@@ -212,9 +232,15 @@ def create_segment(payload: dict) -> str:
 
 
 def publish(segment_id: str) -> None:
+    if not is_live():
+        from . import local_store
+        return local_store.publish(segment_id)
     _call("POST", f"/services/data/{api_version()}/ssot/segments/{segment_id}/actions/publish", "Publishing",
           timeout=60, headers={"Content-Length": "0"})
 
 
 def segment_url(segment_id: str) -> str:
+    if not is_live():
+        from . import local_store
+        return local_store.segment_url(segment_id)
     return f"{authenticate()['instance_url']}/lightning/r/MarketSegment/{segment_id}/view"

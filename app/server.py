@@ -1347,6 +1347,16 @@ def api_brand_compliance(brand: str):
     return {"brand": brand, "profile": compliance.for_brand(brand)}
 
 
+@app.get("/api/brand-kits/{brand}/client-data")
+def api_brand_client_data(brand: str):
+    """Client data for the planning engines: HCP deciles, accounts, access, field force, reach,
+    share. SYNTHETIC (flagged) until real feeds are connected -- see strategy/client_data.py."""
+    from strategy import client_data
+    if not brand_kit.kit_for(brand):
+        raise HTTPException(404, f"no brand kit for '{brand}'")
+    return client_data.summary(brand)
+
+
 @app.post("/api/brand-kits/{brand}/audience-sources/refresh")
 def api_brand_kit_refresh_audience(brand: str):
     """Re-fetch audience intelligence for the Personas page: PubMed key opinion leaders,
@@ -2437,6 +2447,16 @@ def api_seg_events(session_id: str, job_id: str, request: Request, after: int = 
         pass
     return StreamingResponse(cc_jobs.sse(job, after), media_type="text/event-stream",
                              headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no", "Connection": "keep-alive"})
+
+
+@app.get("/api/segmentation-planner/local-segments/{segment_id}")
+def api_segmentation_local_segment(segment_id: str):
+    """A segment created against the local stand-in (Data Cloud not connected)."""
+    from strategy.segmentation import local_store
+    seg = local_store.get_segment(segment_id)
+    if not seg:
+        raise HTTPException(404, f"no local segment '{segment_id}'")
+    return {**seg, **local_store.info()}
 
 
 @app.get("/api/segmentation-planner/dataset")

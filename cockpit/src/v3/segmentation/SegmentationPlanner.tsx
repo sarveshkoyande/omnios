@@ -248,7 +248,10 @@ export function SegmentationPlanner({ handoff, brands, activeBrand, isFavorite, 
             </ol>
 
             {session && !llmOn && (
-              <p className="v3-cc-banner info">No AI model is configured on this server, so the SQL is built by rules from the exact dataset values your request names.</p>
+              <p className="v3-cc-banner info">No AI model is configured on this server, so the planner can't write SQL. Configure the model and try again — Omni doesn't build SQL from keywords.</p>
+            )}
+            {session && session.datacloud.mode === "local" && (
+              <p className="v3-cc-banner info">Data Cloud isn't connected, so segments are sized and created against a generated local copy of the HCP table (synthetic rows with the real columns and values). Set the DC_* settings to use your org.</p>
             )}
             {session && !dcOn && (
               <p className="v3-cc-banner warn">Data Cloud isn't connected on this server: the planner writes the SQL, but can't size or create segments. Set the DC_* settings to connect it.</p>

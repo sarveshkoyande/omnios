@@ -78,7 +78,7 @@ export interface SegSession {
   state: SegState;
   job: { id: string; kind: string } | null;
   llm: { available: boolean; engine: string };
-  datacloud: { configured: boolean };
+  datacloud: { configured: boolean; mode?: "live" | "local" };
 }
 
 export type SegEvent = { seq: number } & (

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getBrandKit, getCompliance, refreshAudienceSources, refreshPublicSources } from "../api";
+import { getBrandKit, getClientData, getCompliance, refreshAudienceSources, refreshPublicSources } from "../api";
 import { Icon } from "../components/Icon";
 import "./iq.css";
 
@@ -666,6 +666,69 @@ export function GuardrailsPage(props: PageProps) {
 }
 
 /* ------------------------------------------------------------------ Market Intelligence */
+/** US geography (public): CDC PLACES state prevalence for the brand's populations. */
+function UsGeography({ kit }: { kit: Any }) {
+  const layers = arr((kit.us_geography as Any | undefined)?.layers);
+  const [i, setI] = useState(0);
+  if (!layers.length) return null;
+  const layer = layers[Math.min(i, layers.length - 1)];
+  const states = arr(layer.states);
+  const byCases = [...states].sort((a, b) => Number(b.est_cases) - Number(a.est_cases)).slice(0, 12);
+  const maxCases = Math.max(1, ...byCases.map((s) => Number(s.est_cases)));
+  const byRate = [...states].sort((a, b) => Number(b.prevalence_pct) - Number(a.prevalence_pct)).slice(0, 8);
+  return (
+    <Block title="US geography" sub={txt(layer.source)}>
+      {layers.length > 1 && (
+        <div className="v3-ep-tabs" style={{ marginBottom: 10 }}>
+          {layers.map((l, j) => <button key={txt(l.measure)} type="button" className={j === i ? "active" : ""} onClick={() => setI(j)}>{txt(l.measure)} · {txt(l.fit)} for {txt(l.for_indication).slice(0, 40)}</button>)}
+        </div>
+      )}
+      <div className="v3-iq-tf">
+        <div>
+          <em>Most adults affected (estimated)</em>
+          <div className="v3-iq-hbars">
+            {byCases.map((s) => <div key={txt(s.state)}><span>{txt(s.name)}</span><i style={{ width: `${(Number(s.est_cases) / maxCases) * 100}%` }} /><b>{(Number(s.est_cases) / 1000).toFixed(0)}k</b></div>)}
+          </div>
+        </div>
+        <div>
+          <em>Highest prevalence</em>
+          {byRate.map((s) => <div key={txt(s.state)} className="v3-iq-ref"><code>{txt(s.state)}</code><div><b>{txt(s.prevalence_pct)}%</b><span>{txt(s.name)} · {txt(s.region)}</span></div></div>)}
+          <a className="v3-iq-src" href={txt(layer.url)} target="_blank" rel="noreferrer">CDC PLACES ↗</a>
+        </div>
+      </div>
+    </Block>
+  );
+}
+
+/** Client data the engines plan with -- SYNTHETIC (and labelled so) until real feeds exist. */
+function ClientData({ brand }: { brand: string }) {
+  const [d, setD] = useState<Any | null>(null);
+  useEffect(() => { getClientData(brand).then(setD).catch(() => setD(null)); }, [brand]);
+  if (!d) return null;
+  const field = (d.field_force ?? {}) as Any;
+  const segs = (d.hcps_by_segment ?? {}) as Record<string, Any>;
+  const reach = (d.channel_reach_pct ?? {}) as Record<string, Record<string, number>>;
+  const channels = Object.keys(Object.values(reach)[0] ?? {});
+  return (
+    <Block title="Client data" sub={d.synthetic ? "SYNTHETIC stand-in — replace with real HCP, access, field and consent data" : "Connected"}>
+      {Boolean(d.synthetic) && <div className="v3-iq-banner warn">{txt(d.note)}</div>}
+      <div className="v3-iq-stats" style={{ marginTop: 10 }}>
+        <div><em>Field force</em><b>{txt(field.reps)} reps</b><span>~{Number(field.capacity_calls_per_month).toLocaleString()} calls / month</span></div>
+        <div><em>Market share by region</em><b className="sm">{Object.entries((d.market_share_pct_by_region ?? {}) as Record<string, number>).map(([r, v]) => `${r} ${v}%`).join(" · ")}</b></div>
+      </div>
+      <h3 className="v3-iq-h3">HCPs by segment</h3>
+      <Tbl rows={Object.entries(segs).map(([name, v]) => ({ name, hcps: Number(v.hcps).toLocaleString(), top: Number(v.top3_deciles).toLocaleString() }))} cols={[["name", "Segment"], ["hcps", "HCPs"], ["top", "Top 3 deciles"]]} />
+      <h3 className="v3-iq-h3">Channel reach (% of segment reachable)</h3>
+      <div className="v3-iq-tablewrap"><table className="v3-iq-table"><thead><tr><th>Segment</th>{channels.map((c) => <th key={c}>{c}</th>)}</tr></thead>
+        <tbody>{Object.entries(reach).map(([seg, r]) => <tr key={seg}><td>{seg}</td>{channels.map((c) => <td key={c}>{r[c]}%</td>)}</tr>)}</tbody></table></div>
+      <div className="v3-iq-dodont" style={{ marginTop: 12 }}>
+        <div><h3 className="v3-iq-h3">Top states by high-decile HCPs</h3><Tbl rows={arr(d.top_states_by_high_decile_hcps).map((x) => ({ ...x, top3: Number(x.top3).toLocaleString() }))} cols={[["state", "State"], ["top3", "Top-3-decile HCPs"]]} /></div>
+        <div><h3 className="v3-iq-h3">Lowest formulary access</h3><Tbl rows={arr(d.lowest_access_states).map((x) => ({ ...x, u: `${x.unrestricted_pct}%`, pa: `${x.pa_required_pct}%` }))} cols={[["state", "State"], ["u", "Unrestricted"], ["pa", "PA required"]]} /></div>
+      </div>
+    </Block>
+  );
+}
+
 export function MarketIntelPage(props: PageProps) {
   const p = useKit(props.activeBrand, props.brands);
   return (
@@ -676,6 +739,8 @@ export function MarketIntelPage(props: PageProps) {
       const growth = arr(k.growth_opportunities);
       const ms = k.market_share as Any | undefined;
       return (<>
+        <UsGeography kit={k} />
+        {p.brand && <ClientData brand={p.brand} />}
         <div className="v3-iq-stats">
           <div><em>Market share / penetration</em><b>{ms ? txt(ms.current) : <Needs />}</b>{ms && <span>Target: {txt(ms.target)}</span>}</div>
           <div><em>Success measure</em><b className="sm">{txt(k.success_measure) || <Needs />}</b></div>
