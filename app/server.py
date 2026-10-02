@@ -1929,6 +1929,50 @@ def api_engagement_plan_restore(plan_id: str, version: int):
         raise HTTPException(404, f"no version {version} of '{plan_id}'")
 
 
+class EngagementAnswers(BaseModel):
+    answers: dict = {}
+    auto_assume: bool = False
+
+
+class EngagementDraft(BaseModel):
+    assumption_decisions: dict | None = None
+
+
+def _engagement_step(fn, *args):
+    """Run an Engagement Planner step; no model -> an honest 503, never a guess (R1/R2)."""
+    from strategy import engagement_agent
+    try:
+        return fn(*args)
+    except KeyError:
+        raise HTTPException(404, "no such engagement plan")
+    except engagement_agent.LLMUnavailable as e:
+        raise HTTPException(503, f"The AI model couldn't be reached ({e}), so this step wasn't run. Nothing was guessed - try again in a moment.")
+
+
+@app.post("/api/engagement-plans/{plan_id}/agent/read")
+def api_engagement_agent_read(plan_id: str):
+    from strategy import engagement_agent
+    return _engagement_step(engagement_agent.read, plan_id)
+
+
+@app.post("/api/engagement-plans/{plan_id}/agent/clarify")
+def api_engagement_agent_clarify(plan_id: str):
+    from strategy import engagement_agent
+    return _engagement_step(engagement_agent.clarify, plan_id)
+
+
+@app.post("/api/engagement-plans/{plan_id}/agent/answers")
+def api_engagement_agent_answers(plan_id: str, req: EngagementAnswers):
+    from strategy import engagement_agent
+    return _engagement_step(engagement_agent.answer, plan_id, req.answers, req.auto_assume)
+
+
+@app.post("/api/engagement-plans/{plan_id}/agent/draft")
+def api_engagement_agent_draft(plan_id: str, req: EngagementDraft):
+    from strategy import engagement_agent
+    return _engagement_step(engagement_agent.draft, plan_id, req.assumption_decisions)
+
+
 @app.get("/api/v3/artifacts")
 def api_v3_list_artifacts(brand: str | None = None, agent: str | None = None, campaign_id: int | None = None):
     if agent and brand:

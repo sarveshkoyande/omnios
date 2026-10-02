@@ -407,3 +407,13 @@ export function engagementPlanVersions(id: string): Promise<{ versions: { versio
 export function restoreEngagementPlan(id: string, version: number): Promise<EngagementPlan> {
   return postJSON(`/api/engagement-plans/${id}/restore/${version}`, {});
 }
+/* Engagement Planner agent steps (strategy/engagement_agent.py). A 503 means the model was
+   unreachable and nothing was guessed; the message says so. */
+export function engagementRead(id: string): Promise<EngagementPlan> { return postJSON(`/api/engagement-plans/${id}/agent/read`, {}); }
+export function engagementClarify(id: string): Promise<EngagementPlan> { return postJSON(`/api/engagement-plans/${id}/agent/clarify`, {}); }
+export function engagementAnswer(id: string, answers: Record<string, string>, autoAssume = false): Promise<EngagementPlan> {
+  return postJSON(`/api/engagement-plans/${id}/agent/answers`, { answers, auto_assume: autoAssume });
+}
+export function engagementDraft(id: string, assumptionDecisions?: Record<string, { status: string; note?: string }>): Promise<EngagementPlan> {
+  return postJSON(`/api/engagement-plans/${id}/agent/draft`, { assumption_decisions: assumptionDecisions ?? null });
+}
