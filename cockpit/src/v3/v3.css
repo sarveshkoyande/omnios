@@ -270,8 +270,8 @@ a.v3-quick-card:hover { box-shadow: var(--neu-flat-hover); transform: translateY
 .v3-tag { font-size: 10px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; padding: 2px 6px; border-radius: var(--radius-xs); }
 .v3-tag.new { background: var(--success-light-background); color: var(--success-foreground); }
 .v3-tag.soon { background: var(--neutral-100); color: var(--neutral-600); }
-.v3-tag.launch { border: 0; cursor: pointer; font-family: inherit; background: var(--neutral-100); color: var(--neutral-600); }
-.v3-tag.launch:hover { background: var(--neutral-200, #e4e4e7); color: var(--neutral-800, #27272a); }
+.v3-tag.launch { border: 0; cursor: pointer; font-family: inherit; background: var(--primary); color: var(--base-white); }
+.v3-tag.launch:hover { filter: brightness(1.12); }
 
 .v3-recent {
   display: flex; flex-direction: column; border-radius: var(--radius-lg); overflow: hidden;

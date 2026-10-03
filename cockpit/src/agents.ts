@@ -214,12 +214,6 @@ export interface RegistryAgent extends LibraryAgent {
 /** Agents with a redesigned workspace open there; the rest keep their current screen. */
 const AGENT_ROUTES: Record<string, string> = {
   "brand-iq": "#/v3/iq/kits",
-  "signal-agent": "#/v3/iq/intel",
-  "brand-persona-builder": "#/v3/iq/personas",
-  // Channel selection runs as the Campaign Planner's channels stage; it has no screen of its own.
-  "channel-planner": "#/v3/agent/campaign-planner",
-  // The journey editor lives in the project workspace's Operations tab.
-  "journey-builder": "/v2",
   "engagement-planner": "#/v3/agent/engagement-planner",
   "campaign-planner": "#/v3/agent/campaign-planner",
   "segmentation-planner": "#/v3/agent/segmentation-planner",
@@ -233,7 +227,8 @@ export const REGISTRY: RegistryAgent[] = (() => {
   const byId = new Map<string, RegistryAgent>();
   for (const p of PHASES) {
     for (const a of AGENTS[p.id]) {
-      const comingSoon = a.status === "wip" || a.inDevelopment === true;
+      // Launchable only when a real agent runs behind a screen of its own (AGENT_ROUTES).
+      const comingSoon = a.status === "wip" || a.inDevelopment === true || !AGENT_ROUTES[a.id];
       byId.set(a.id, {
         ...a,
         phase: p.id,
