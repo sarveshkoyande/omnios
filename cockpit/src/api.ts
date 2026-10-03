@@ -44,11 +44,18 @@ export interface BrandIqSkill { id: string; name: string; does: string; llm: boo
 export function listBrandIqSkills(): Promise<{ skills: BrandIqSkill[] }> {
   return getJSON(`/api/brand-iq/skills`);
 }
-export function uploadBrandPlan(brand: string, file: File | null, notes: string): Promise<{ filename: string | null; chars: number; has_notes: boolean }> {
+export function uploadBrandPlan(brand: string, files: File[], notes: string): Promise<{ filename: string | null; chars: number; has_notes: boolean }> {
   const form = new FormData();
-  if (file) form.append("file", file);
+  files.forEach((f) => form.append("files", f));
   form.append("notes", notes);
   return postForm(`/api/brand-kits/${encodeURIComponent(brand)}/brand-plan`, form);
+}
+/** Any step-by-step agent's intake: dropped documents + typed notes (strategy/agent_intake.py). */
+export function uploadAgentIntake(agent: string, key: string, files: File[], notes: string): Promise<{ files: { name: string; chars: number }[]; has_notes: boolean }> {
+  const form = new FormData();
+  files.forEach((f) => form.append("files", f));
+  form.append("notes", notes);
+  return postForm(`/api/agent-intake/${encodeURIComponent(agent)}/${encodeURIComponent(key)}`, form);
 }
 export function runBrandIqSkill(brand: string, skill: string): Promise<{ brand: string; skill: string; kit: BrandKit; reasoning: string[] }> {
   return postJSON(`/api/brand-kits/${encodeURIComponent(brand)}/skills/${encodeURIComponent(skill)}`, {});
@@ -92,6 +99,15 @@ export function getScoutSteps(): Promise<{ steps: AgentStepDef[]; skills: ScoutS
 }
 export function ackScout(brand: string, focus: string): Promise<AgentAck> {
   return postJSON(`/api/brands/${encodeURIComponent(brand)}/signal-scout/acknowledge`, { focus });
+}
+export function ackEngagement(planId: string): Promise<EngagementPlan> {
+  return postJSON(`/api/v3/engagement-plans/${encodeURIComponent(planId)}/agent/acknowledge`, {});
+}
+export function ackSegmentation(brand: string, text: string): Promise<AgentAck & { audience?: string }> {
+  return postJSON(`/api/segmentation-planner/acknowledge`, { brand, text });
+}
+export function ackAgentForm(agent: string, brand: string, planId: number | null, campaignId: number | null): Promise<AgentAck & { answers: { key: string; label?: string; value: string; source: string }[] }> {
+  return postJSON(`/api/v3/agents/${encodeURIComponent(agent)}/acknowledge`, { brand, plan_id: planId, campaign_id: campaignId });
 }
 export function getClientData(brand: string): Promise<Record<string, unknown>> {
   return getJSON(`/api/brand-kits/${encodeURIComponent(brand)}/client-data`);

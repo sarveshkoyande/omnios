@@ -340,7 +340,7 @@ def run_skill(brand: str, skill: str) -> dict:
         res = save("brand_plan", out, _PLAN_KEYS, status="from_brand_plan")
         read = []
         if plan.get("filename"):
-            read.append(f"{plan['filename']} ({len(plan.get('text') or ''):,} characters)")
+            read.append(f"{plan['filename']} ({len(plan.get('text') or ''):,} characters of text)")
         if (plan.get("notes") or "").strip():
             read.append("your notes")
         res["reasoning"].insert(0, f"Read {' and '.join(read)}.")

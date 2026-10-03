@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { getArtifact, getBrandTree } from "../../api";
 import { REGISTRY } from "../../agents";
 import { Icon } from "../../components/Icon";
+import { GlassDrop } from "../agentkit/AgentKit";
 import type { BrandSummary, BrandTree } from "../../types";
 import type { Favorite } from "../store";
 import { ccApi, sfApi, type Briefing, type CCItem, type CCState } from "./api";
@@ -21,7 +22,6 @@ import "./campaignPlanner.css";
 
 const HANDOFF = [{ id: "flow-planner", label: "Build the flow" }, { id: "brief-compiler", label: "Compile the brief" }];
 const STAGES = ["Intake", "Clarification", "Campaign brief", "Blueprint", "Deployment", "Salesforce"];
-const ACCEPT = ".pdf,.docx,.txt,.md";
 type Handoff = { brand: string; planId: number | null; campaignId: number | null };
 type Tab = "brief" | "blueprint";
 
@@ -47,33 +47,16 @@ function IntakePanel({ text, setText, file, setFile, autoAssume, setAutoAssume, 
   text: string; setText: (v: string) => void; file: File | null; setFile: (f: File | null) => void;
   autoAssume: boolean; setAutoAssume: (v: boolean) => void; disabled: boolean; onAnalyze: () => void;
 }) {
-  const [drag, setDrag] = useState(false);
-  const input = useRef<HTMLInputElement>(null);
   return (
-    <section className="v3-cc-intake">
+    <section className="v3-ak-intake">
       <div className="v3-cc-intake-head">
         <b>Campaign intake</b>
         <span>Upload the campaign brief or paste the details to begin the analysis.</span>
       </div>
-      <div className={`v3-cc-drop ${drag ? "drag" : ""}`}
-        onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
-        onDragLeave={(e) => { e.preventDefault(); setDrag(false); }}
-        onDrop={(e) => { e.preventDefault(); setDrag(false); const f = e.dataTransfer.files?.[0]; if (f) setFile(f); }}>
-        <Icon name="document" size={20} />
-        <b>Drag and drop a campaign document</b>
-        <span>PDF, DOCX, TXT or MD · up to 10MB</span>
-        <button type="button" className="v3-cc-btn" disabled={disabled} onClick={() => input.current?.click()}>Browse files</button>
-        <input ref={input} type="file" accept={ACCEPT} hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) setFile(f); e.target.value = ""; }} />
-        {file && (
-          <span className="v3-cc-file-chip"><Icon name="document" size={12} /> {file.name}
-            <button type="button" aria-label="Remove file" onClick={() => setFile(null)}><Icon name="close" size={10} /></button>
-          </span>
-        )}
-      </div>
-      <label className="v3-cc-intake-label" htmlFor="cc-intake-text">Campaign details {file ? "(optional instructions for the document)" : ""}</label>
-      <textarea id="cc-intake-text" rows={7} value={text} disabled={disabled} placeholder="Describe your campaign objectives, target audience, and journey requirements…"
-        onChange={(e) => setText(e.target.value)} />
-      <span className="v3-cc-hint">Include the brand, product, therapeutic area, objective, target market and the day-by-day journey for the most accurate briefing.</span>
+      <GlassDrop files={file ? [file] : []} setFiles={(f) => setFile(f[0] ?? null)} notes={text} setNotes={setText} multiple={false} disabled={disabled}
+        notesLabel={`Campaign details${file ? " (optional instructions for the document)" : ""}`}
+        placeholder="Describe your campaign objectives, target audience, and journey requirements…"
+        hint="Include the brand, product, therapeutic area, objective, target market and the day-by-day journey for the most accurate briefing." />
       <label className="v3-cc-toggle">
         <input type="checkbox" checked={autoAssume} disabled={disabled} onChange={(e) => setAutoAssume(e.target.checked)} />
         <span><b>Auto-assume</b> — let the agent fill gaps with sensible defaults and skip clarifying questions</span>

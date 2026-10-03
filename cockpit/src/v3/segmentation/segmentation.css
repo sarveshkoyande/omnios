@@ -68,3 +68,7 @@
 /* ---- composer extras ---- */
 .v3 .v3-seg-suggest { align-self: flex-end; white-space: nowrap; }
 .v3 .v3-seg-subhint { margin-top: 6px; }
+
+.v3 .v3-seg-row-sum { margin-left: auto; max-width: 60%; text-align: right; font-size: 11px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.v3 .v3-seg .v3-ak-row.current .v3-cc-thread { margin-top: 8px; }
+.v3 .v3-seg-out { min-width: 0; flex: 1 1 0; }

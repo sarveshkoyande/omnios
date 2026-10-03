@@ -1485,19 +1485,107 @@ def api_signal_scout_acknowledge(brand: str, body: SignalScoutStart):
 
 
 @app.post("/api/brand-kits/{brand}/brand-plan")
-async def api_brand_kit_upload_plan(brand: str, file: UploadFile | None = File(None), notes: str = Form("")):
-    """Brand IQ Agent intake: store the brand plan's text (PDF/DOCX/PPTX/TXT/MD) and the user's
-    notes for the brand_plan skill. Kept local under DATA_DIR."""
-    from strategy import kit_proposer
+async def api_brand_kit_upload_plan(brand: str, files: list[UploadFile] | None = File(None), notes: str = Form("")):
+    """Brand IQ Agent intake: store the brand plan and other documents' text (PDF/DOCX/PPTX/TXT/MD) and
+    the user's notes for the brand_plan skill. Kept local under DATA_DIR."""
+    from strategy import agent_intake, kit_proposer
     if not brand_kit.kit_for(brand):
         raise HTTPException(404, f"no brand kit for '{brand}'")
-    text = ""
-    if file is not None:
-        try:
-            text = extract_text(file.filename or "brand-plan.txt", await file.read(), max_chars=60000)
-        except ValueError as e:
-            raise HTTPException(400, str(e))
-    return kit_proposer.save_brand_plan(brand, file.filename if file else None, text, notes)
+    try:
+        meta, text = agent_intake.read_uploads([(f.filename or "document.txt", await f.read()) for f in files or []])
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    return kit_proposer.save_brand_plan(brand, ", ".join(m["name"] for m in meta) or None, text, notes)
+
+
+@app.post("/api/agent-intake/{agent}/{key}")
+async def api_agent_intake(agent: str, key: str, files: list[UploadFile] | None = File(None), notes: str = Form("")):
+    """Any step-by-step agent's intake: dropped documents + typed notes, stored for its acknowledgement."""
+    from strategy import agent_intake
+    try:
+        meta, text = agent_intake.read_uploads([(f.filename or "document.txt", await f.read()) for f in files or []])
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    return agent_intake.save(agent, key, meta, text, notes)
+
+
+@app.post("/api/v3/engagement-plans/{plan_id}/agent/acknowledge")
+def api_v3_engagement_acknowledge(plan_id: str):
+    from strategy import engagement_agent
+    try:
+        return engagement_agent.acknowledge(plan_id)
+    except KeyError:
+        raise HTTPException(404, "no such engagement plan")
+    except engagement_agent.LLMUnavailable as e:
+        raise HTTPException(503, f"The AI model couldn't be reached ({e}), so the agent couldn't read your input. Try again in a moment.")
+
+
+class SegAckRequest(BaseModel):
+    brand: str
+    text: str = ""
+
+
+@app.post("/api/segmentation-planner/acknowledge")
+def api_segmentation_acknowledge(body: SegAckRequest):
+    """Segmentation Agent step 1: read the described audience (+ documents), say what the data can and
+    can't select on, and propose the plain-English audience the agent will build."""
+    from strategy import agent_intake
+    from strategy.segmentation.dataset import load_snapshot
+    kit = brand_kit.kit_for(body.brand) or {}
+    cols = load_snapshot().get("columns") or {}
+    context = {"brand": body.brand, "typed_audience": body.text,
+               "data_columns": {c: (spec.get("values") or spec.get("range") or [])[:8] for c, spec in list(cols.items())[:60]},
+               "brand_iq_audiences": [{k: s.get(k) for k in ("name", "who", "why")} for s in kit.get("audience_segments") or []][:8],
+               "priority_audience": kit.get("primary_audience")}
+    intake = agent_intake.load("segmentation-planner", body.brand)
+    intake = {**intake, "notes": "\n".join(x for x in (body.text, intake.get("notes")) if x)}
+    try:
+        return agent_intake.acknowledge(
+            "You are the Segmentation Agent: you turn an audience into a Salesforce Data Cloud segment of US HCPs.",
+            context, intake,
+            "Say which of the audience's criteria the data columns can select on and which they can't (name the "
+            "columns). If no audience was given, propose one from the brand's Brand IQ audiences. Put the final "
+            "audience, in one plain-English sentence the agent will build, in `audience`.",
+            '"audience":""')
+    except agent_intake.LLMUnavailable as e:
+        raise HTTPException(503, f"The AI model couldn't be reached ({e}), so the agent couldn't read your input. Try again in a moment.")
+
+
+class FlowAckRequest(BaseModel):
+    brand: str
+    plan_id: int | None = None
+    campaign_id: int | None = None
+
+
+@app.post("/api/v3/agents/{agent_id}/acknowledge")
+def api_v3_agent_acknowledge(agent_id: str, body: FlowAckRequest):
+    """Form-based agents (Flow Agent) step 1: read the campaign's inputs, the person's documents and notes,
+    acknowledge, and propose answers for the inputs only the person can give -- each with its source."""
+    from strategy import agent_intake
+    tree = _hier(hierarchy.tree, body.brand)
+    plan = next((p for p in tree["engagement_plans"] if p["id"] == body.plan_id), None)
+    campaign = next((c for c in (plan or {}).get("campaigns", []) if c["id"] == body.campaign_id), None)
+    form = agent_forms.build_cards(agent_id, body.brand, plan, campaign)
+    points = [{k: p.get(k) for k in ("key", "label", "derivation", "value", "options", "recommendation")}
+              for st in form.get("stages") or [] for p in st.get("data_points") or []]
+    context = {"brand": body.brand, "engagement_plan": (plan or {}).get("name"), "campaign": (campaign or {}).get("name"),
+               "inputs": points}
+    key = f"{body.brand}:{body.campaign_id or 0}"
+    try:
+        out = agent_intake.acknowledge(
+            "You are the Flow Agent: you build a campaign's channel-by-channel journey for a US pharma brand.",
+            context, agent_intake.load(agent_id, key),
+            "Inputs with derivation 'derive' are already known. For each 'confirm' or 'ask' input, propose a value "
+            "ONLY if the documents, the notes or the input's recommendation support it, and say which in `source`; "
+            "leave out any you can't support (they stay 'Needs input'). In `have` and `missing`, talk about the "
+            "campaign's inputs by their labels.",
+            '"answers":[{"key":"","value":"","source":""}]', max_tokens=3000)
+    except agent_intake.LLMUnavailable as e:
+        raise HTTPException(503, f"The AI model couldn't be reached ({e}), so the agent couldn't read your input. Try again in a moment.")
+    valid = {p["key"]: p for p in points}
+    out["answers"] = [{**a, "label": valid[a["key"]].get("label") or a["key"]} for a in out.get("answers") or []
+                      if isinstance(a, dict) and a.get("key") in valid and a.get("value")]
+    return out
 
 
 @app.post("/api/brand-kits/{brand}/skills/{skill}")

@@ -124,6 +124,15 @@ def read(plan_id: str) -> dict:
     except Exception:  # noqa: BLE001 -- client data is additive
         pass
 
+    # What the person dropped or typed in the agent's intake (strategy/agent_intake.py).
+    import agent_intake
+    intake = agent_intake.load("engagement-planner", plan_id)
+    if (intake.get("text") or "").strip():
+        g.append(_item("intake:documents", "Your documents", ", ".join(f["name"] for f in intake.get("files") or []),
+                       intake["text"][:15000]))
+    if (intake.get("notes") or "").strip():
+        g.append(_item("intake:notes", "Your notes", "What you told the agent", intake["notes"]))
+
     gaps = []
     if not kit.get("patient_flow"):
         gaps.append({"what": "Patient flow (where patients are lost)", "page": "Brand Kit"})
@@ -138,6 +147,27 @@ def read(plan_id: str) -> dict:
     body["sources"] = g
     body["agent"] = {"step": "read", "gaps": gaps, "brand_iq_plan": bp.get("name") if bp else None}
     return ep.save(plan_id, body, f"Read Brand IQ ({len(g)} items)")
+
+
+def acknowledge(plan_id: str) -> dict:
+    """Step 1: read Brand IQ (plus the person's documents and notes), then say plainly what the plan can
+    rely on and what it can't, before any diagnosis. Saved in body.agent.ack."""
+    import agent_intake
+    plan = read(plan_id)
+    body = plan["body"]
+    by_page: dict = {}
+    for item in body.get("sources") or []:
+        by_page.setdefault(item.get("page"), []).append(item.get("label"))
+    context = {"brand": plan["brand"], "period": f"{plan['period_start']} to {plan['period_end']}", "months": plan["months"],
+               "brand_iq_sections": {k: sorted(set(v))[:12] for k, v in by_page.items()},
+               "known_gaps": body["agent"].get("gaps")}
+    ack = agent_intake.acknowledge(
+        "You are the Engagement Planner for a US pharma brand, about to plan the next months.", context,
+        agent_intake.load("engagement-planner", plan_id),
+        "Say which Brand IQ sections you will build on (patient flow, personas, brand plan, client data, US "
+        "geography, compliance) and which gaps will weaken the diagnosis.")
+    body["agent"] = {**body["agent"], "ack": ack}
+    return ep.save(plan_id, body, "Acknowledged the input")
 
 
 def _frame(plan: dict, fw: dict) -> dict:

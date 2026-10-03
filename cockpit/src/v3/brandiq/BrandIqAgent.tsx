@@ -5,7 +5,7 @@ import {
 } from "../../api";
 import { Icon } from "../../components/Icon";
 import type { BrandSummary } from "../../types";
-import { AckCard, ReasoningButton, ReasoningPanel, StepProgress, type ReasonEntry, type SkillStatus } from "../agentkit/AgentKit";
+import { AckCard, GlassDrop, ReasoningButton, ReasoningPanel, StepProgress, type ReasonEntry, type SkillStatus } from "../agentkit/AgentKit";
 import { BrandKitPage } from "../BrandKitPage";
 import "../campaignplanner/campaignPlanner.css";
 import "../iq.css";
@@ -18,16 +18,14 @@ import "./brandiq.css";
  *  3. the Brand Kit is the main canvas, re-read after every skill; Live reasoning is a slide-in panel. */
 
 type Phase = "intake" | "reading" | "ack" | "running" | "done";
-const ACCEPT = ".pdf,.docx,.pptx,.txt,.md";
 
 export function BrandIqAgent({ brands, activeBrand }: { brands: BrandSummary[]; activeBrand: string | null }) {
   const brand = activeBrand ?? brands[0]?.brand ?? null;
   const [steps, setSteps] = useState<AgentStepDef[]>([]);
   const [skills, setSkills] = useState<BrandIqSkill[]>([]);
   const [phase, setPhase] = useState<Phase>("intake");
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const [notes, setNotes] = useState("");
-  const [drag, setDrag] = useState(false);
   const [ack, setAck] = useState<AgentAck | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<Record<string, SkillStatus>>({});
@@ -37,12 +35,11 @@ export function BrandIqAgent({ brands, activeBrand }: { brands: BrandSummary[]; 
   const [rev, setRev] = useState(0);
   const [showReasoning, setShowReasoning] = useState(false);
   const [savedVersion, setSavedVersion] = useState<string | null>(null);
-  const input = useRef<HTMLInputElement>(null);
   const stop = useRef(false);
 
   useEffect(() => { getBrandIqSteps().then((r) => { setSteps(r.steps); setSkills(r.skills); }).catch(() => undefined); }, []);
   useEffect(() => {
-    setPhase("intake"); setFile(null); setNotes(""); setAck(null); setError(null); setStatus({}); setReasons({});
+    setPhase("intake"); setFiles([]); setNotes(""); setAck(null); setError(null); setStatus({}); setReasons({});
     setErrors({}); setCurrentStep(0); setSavedVersion(null); setShowReasoning(false);
   }, [brand]);
 
@@ -52,7 +49,7 @@ export function BrandIqAgent({ brands, activeBrand }: { brands: BrandSummary[]; 
     if (!brand) return;
     setPhase("reading"); setError(null);
     try {
-      await uploadBrandPlan(brand, file, notes);
+      await uploadBrandPlan(brand, files, notes);
       setAck(await ackBrandIq(brand));
       setPhase("ack");
     } catch (e) {
@@ -142,28 +139,13 @@ export function BrandIqAgent({ brands, activeBrand }: { brands: BrandSummary[]; 
             </ol>
 
             {(phase === "intake" || phase === "reading") && (
-              <section className="v3-cc-intake">
+              <section className="v3-ak-intake">
                 <div className="v3-cc-intake-head">
                   <b>Brand intake</b>
                   <span>Drop {brand}'s brand plan and/or tell the agent about the brand. Nothing to add? Just build: it works from secondary sources.</span>
                 </div>
-                <div className={`v3-cc-drop ${drag ? "drag" : ""}`}
-                  onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
-                  onDragLeave={(e) => { e.preventDefault(); setDrag(false); }}
-                  onDrop={(e) => { e.preventDefault(); setDrag(false); const f = e.dataTransfer.files?.[0]; if (f) setFile(f); }}>
-                  <Icon name="document" size={20} />
-                  <b>Drag and drop the brand plan</b>
-                  <span>PDF, DOCX, PPTX, TXT or MD · up to 10MB</span>
-                  <button type="button" className="v3-cc-btn" disabled={phase === "reading"} onClick={() => input.current?.click()}>Browse files</button>
-                  <input ref={input} type="file" accept={ACCEPT} hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) setFile(f); e.target.value = ""; }} />
-                  {file && (
-                    <span className="v3-cc-file-chip"><Icon name="document" size={12} /> {file.name}
-                      <button type="button" aria-label="Remove file" onClick={() => setFile(null)}><Icon name="close" size={10} /></button>
-                    </span>
-                  )}
-                </div>
-                <label className="v3-cc-intake-label" htmlFor="biq-notes">Tell the agent about the brand</label>
-                <textarea id="biq-notes" rows={6} value={notes} disabled={phase === "reading"} onChange={(e) => setNotes(e.target.value)}
+                <GlassDrop files={files} setFiles={setFiles} notes={notes} setNotes={setNotes} disabled={phase === "reading"}
+                  notesLabel="Tell the agent about the brand"
                   placeholder="Positioning, priority audiences, objectives, what's changed this year, anything the plan doesn't say…" />
                 <span className="v3-cc-hint">The brand plan is the source of truth: AI drafts never overwrite what it says. It stays on this server.</span>
                 <button type="button" className="v3-cc-btn primary wide" disabled={phase === "reading"} onClick={read}>

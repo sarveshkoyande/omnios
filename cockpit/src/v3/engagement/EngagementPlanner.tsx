@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   createEngagementPlan, engagementCheck, engagementChoose, engagementClassify, engagementDiagnose,
-  engagementDraft, engagementOptions, engagementRead, getEngagementFramework, getEngagementPlan,
-  listEngagementPlans, type EngagementPlan,
+  engagementDraft, engagementOptions, getEngagementFramework, getEngagementPlan,
+  listEngagementPlans, ackEngagement, uploadAgentIntake, type EngagementPlan,
 } from "../../api";
+import { AckCard, GlassDrop, ReasoningButton, ReasoningPanel, type Ack, type ReasonEntry } from "../agentkit/AgentKit";
 import { Icon } from "../../components/Icon";
 import type { BrandSummary } from "../../types";
 import "../campaignplanner/campaignPlanner.css";
@@ -18,8 +19,8 @@ import "./engagement.css";
 type Any = Record<string, unknown>;
 const txt = (v: unknown) => (v === null || v === undefined ? "" : String(v));
 const arr = (v: unknown) => (Array.isArray(v) ? (v as Any[]) : []);
-const STEPS = ["Frame", "Read", "Classify", "Diagnose", "Options", "Draft", "Check"];
-const STEP_INDEX: Record<string, number> = { read: 1, classify: 2, diagnose: 3, options: 4, decide: 4, draft: 5, check: 6 };
+const STEPS = ["Understand the brand", "Diagnose", "Choose the strategy", "Draft & check"];
+const STEP_INDEX: Record<string, number> = { read: 0, classify: 1, diagnose: 1, options: 2, decide: 2, draft: 3, check: 4 };
 type Tab = "diagnosis" | "overview" | "shifts" | "portfolio" | "timeline" | "budget" | "checks";
 
 function errText(e: unknown): string {
@@ -31,6 +32,9 @@ function errText(e: unknown): string {
   return s;
 }
 
+/** Engagement Planner, four agent steps: 1 understand (intake -> acknowledgement -> your OK), 2 diagnose
+ *  (situation + leaky bucket, with your corrections and answers), 3 choose the strategy, 4 draft & check.
+ *  The plan is the main canvas; Live reasoning is a slide-in panel. */
 export function EngagementPlanner({ brands, activeBrand, planId }: { brands: BrandSummary[]; activeBrand: string | null; planId?: string }) {
   const brand = activeBrand ?? brands[0]?.brand ?? null;
   const [plans, setPlans] = useState<EngagementPlan[]>([]);
@@ -39,11 +43,14 @@ export function EngagementPlanner({ brands, activeBrand, planId }: { brands: Bra
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [months, setMonths] = useState(6);
+  const [files, setFiles] = useState<File[]>([]);
+  const [notes, setNotes] = useState("");
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [override, setOverride] = useState<Record<string, string>>({});
   const [picked, setPicked] = useState<string[]>([]);
   const [note, setNote] = useState("");
   const [tab, setTab] = useState<Tab>("diagnosis");
+  const [showReasoning, setShowReasoning] = useState(false);
 
   const refreshList = useCallback(() => {
     if (!brand) return;
@@ -62,13 +69,15 @@ export function EngagementPlanner({ brands, activeBrand, planId }: { brands: Bra
 
   const body = (plan?.body ?? {}) as Any;
   const agent = (body.agent ?? {}) as Any;
+  const ack = (agent.ack ?? null) as Ack | null;
   const step = txt(agent.step);
-  const stepIdx = plan ? (STEP_INDEX[step] ?? 0) : 0;
   const cls = (body.classification ?? null) as Any | null;
   const bucket = (body.bucket ?? null) as Any | null;
   const options = arr(body.options);
   const rec = (body.recommendation ?? null) as Any | null;
   const drafted = step === "draft" || step === "check";
+  const stepIdx = plan ? (STEP_INDEX[step] ?? 0) : 0;
+  const allDone = step === "check";
 
   useEffect(() => { if (rec?.id && !picked.length) setPicked([txt(rec.id)]); }, [rec?.id]);  // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (drafted) setTab("overview"); }, [drafted]);
@@ -80,14 +89,23 @@ export function EngagementPlanner({ brands, activeBrand, planId }: { brands: Bra
     finally { setBusy(null); }
   };
 
+  /** Step 1: create the plan, store the documents + notes, and let the agent acknowledge what it has. */
   const start = async () => {
     if (!brand) return;
     const p = await run("Creating the plan…", () => createEngagementPlan({ brand, months }));
     if (!p) return;
     window.location.hash = `#/v3/agent/engagement-planner/${p.id}`;
-    if (!(await run("Reading Brand IQ…", () => engagementRead(p.id)))) return;
-    if (!(await run("Classifying the brand's situation…", () => engagementClassify(p.id)))) return;
-    await run("Diagnosing where patients are lost…", () => engagementDiagnose(p.id));
+    setBusy("Reading your documents and Brand IQ…");
+    try { await uploadAgentIntake("engagement-planner", p.id, files, notes); }
+    catch (e) { setError(errText(e)); setBusy(null); return; }
+    await run("Reading your documents and Brand IQ…", () => ackEngagement(p.id));
+  };
+
+  /** Step 2, after your OK. */
+  const confirm = async () => {
+    if (!plan) return;
+    if (!(await run("Classifying the brand's situation…", () => engagementClassify(plan.id)))) return;
+    await run("Diagnosing where patients are lost…", () => engagementDiagnose(plan.id));
   };
 
   const reclassify = async () => {
@@ -108,6 +126,36 @@ export function EngagementPlanner({ brands, activeBrand, planId }: { brands: Bra
 
   if (!brand) return <p className="v3-empty">Add a brand first: an engagement plan belongs to one brand.</p>;
   const lifecycle = arr(fw?.lifecycle), archetypes = arr(fw?.archetypes), access = arr(fw?.access);
+  const checks = (body.checks ?? null) as Any | null;
+
+  // What each finished step concluded, for the progress rows and the reasoning panel.
+  const summaries: string[] = [
+    ack?.understood ?? "",
+    bucket ? `${txt(bucket.indication)} · ${arr(bucket.leaks).length} leak(s)` : "",
+    arr((body.chosen_option as Any | undefined)?.ids).length ? `Chose ${arr((body.chosen_option as Any).ids).map(String).join(" + ")}` : "",
+    checks ? `${arr(checks.feasibility).length} feasibility issue(s), ${arr(checks.red_team).length} red-team point(s)` : "",
+  ];
+  const entries: ReasonEntry[] = [];
+  if (ack) entries.push({ id: "ack", title: "Understanding the brand", status: "done", lines: [ack.understood ?? "", ...(ack.approach ?? [])].filter(Boolean) });
+  if (cls) entries.push({ id: "cls", title: "Classifying the situation", status: "done",
+    lines: [`${txt((cls.labels as Any | undefined)?.lifecycle)} · ${txt((cls.labels as Any | undefined)?.archetype)} · ${txt((cls.labels as Any | undefined)?.access)}`,
+      ...arr(cls.evidence).map((e) => `${txt(e.point)} (${txt(e.source)})`)] });
+  if (bucket) entries.push({ id: "dx", title: "Diagnosing the leaky bucket", status: "done",
+    lines: [txt(bucket.why_this_indication), ...arr(bucket.leaks).map((l) => `${txt(l.id)} · ${txt(l.stage)}: ${txt(l.finding)}`)].filter(Boolean) });
+  if (options.length) entries.push({ id: "opt", title: "Root causes and options", status: "done",
+    lines: [...arr(body.root_causes).map((r) => `${txt(r.leak)} — ${txt(r.audience)}: ${txt(r.belief)}`), rec?.why ? `Recommend ${txt(rec.id)}: ${txt(rec.why)}` : ""].filter(Boolean) });
+  if (drafted) entries.push({ id: "draft", title: "Drafting the plan", status: "done", lines: [txt((body.situation as Any | undefined)?.narrative)].filter(Boolean) });
+  if (checks) entries.push({ id: "check", title: "Feasibility and red team", status: "done",
+    lines: arr(checks.red_team).map((r) => `[${txt(r.severity)}] ${txt(r.issue)} → ${txt(r.fix)}`) });
+  if (busy) entries.push({ id: "busy", title: busy, status: "running", lines: [] });
+
+  const row = (i: number) => (
+    <div key={i} className="v3-ak-row done">
+      <span className="v3-ak-dot"><Icon name="check" size={9} /></span>
+      <b>{STEPS[i]}</b>
+      {summaries[i] && <small className="v3-ep-row-sum">{summaries[i]}</small>}
+    </div>
+  );
 
   return (
     <div className="v3-ws v3-cc v3-ep">
@@ -121,6 +169,7 @@ export function EngagementPlanner({ brands, activeBrand, planId }: { brands: Bra
               {plans.map((p) => <option key={p.id} value={p.id}>{p.title} (v{p.version})</option>)}
             </select>
           )}
+          <ReasoningButton live={Boolean(busy)} onClick={() => setShowReasoning((v) => !v)} />
         </span>
       </div>
 
@@ -137,120 +186,144 @@ export function EngagementPlanner({ brands, activeBrand, planId }: { brands: Bra
 
             <ol className="v3-cc-stepper" aria-label="Engagement plan progress">
               {STEPS.map((s, i) => (
-                <li key={s} className={i < stepIdx ? "done" : i === stepIdx ? "active" : ""}>
-                  <span>{i < stepIdx ? <Icon name="check" size={9} /> : i + 1}</span>{s}
+                <li key={s} className={i < stepIdx || allDone ? "done" : i === stepIdx ? "active" : ""}>
+                  <span>{i < stepIdx || allDone ? <Icon name="check" size={9} /> : i + 1}</span>{s}
                 </li>
               ))}
             </ol>
 
-            {error && <p className="v3-cc-banner error">{error}</p>}
-            {busy && <p className="v3-ep-busy"><span className="v3-cc-spinner small" /> {busy}</p>}
-
             {!plan && (
-              <section className="v3-ep-card">
-                <b>Frame</b>
-                <label className="v3-ep-field"><span>Brand</span><em>{brand} (switch brand in the rail)</em></label>
+              <section className="v3-ak-intake">
+                <div className="v3-cc-intake-head">
+                  <b>Plan intake</b>
+                  <span>The agent reads {brand}'s Brand IQ. Add the brand plan and anything else it should know, or just start.</span>
+                </div>
                 <label className="v3-ep-field"><span>Period</span>
-                  <select value={months} onChange={(e) => setMonths(Number(e.target.value))}>
+                  <select value={months} disabled={!!busy} onChange={(e) => setMonths(Number(e.target.value))}>
                     {((fw?.period as Any | undefined)?.options_months as number[] | undefined ?? [3, 6, 9, 12]).map((m) => <option key={m} value={m}>{m} months{m === 6 ? " (default)" : ""}</option>)}
                   </select>
                 </label>
-                <button type="button" className="v3-cc-btn primary wide" disabled={!!busy} onClick={start}>Start planning</button>
+                <GlassDrop files={files} setFiles={setFiles} notes={notes} setNotes={setNotes} disabled={!!busy}
+                  notesLabel="What should this plan achieve?"
+                  placeholder="Objectives for the period, priority audiences, budget posture, what must happen (launches, congresses), what didn't work last time…" />
+                <button type="button" className="v3-cc-btn primary wide" disabled={!!busy} onClick={start}>
+                  {busy ? <><span className="v3-cc-spinner small" /> {busy}</> : "Start planning"}
+                </button>
               </section>
             )}
 
-            {plan && arr(body.sources).length > 0 && (
-              <section className="v3-ep-card">
-                <b>Read from Brand IQ</b>
-                <div className="v3-ep-srcs">
-                  {Object.entries(arr(body.sources).reduce<Record<string, number>>((m, s) => { m[txt(s.page)] = (m[txt(s.page)] ?? 0) + 1; return m; }, {}))
-                    .map(([page, n]) => <span key={page}>{page} · {n}</span>)}
-                </div>
-                {arr(agent.gaps).map((g) => <p key={txt(g.what)} className="v3-iq-needs">{txt(g.what)} ({txt(g.page)})</p>)}
-              </section>
-            )}
+            {plan && (
+              <div className="v3-ak-progress">
+                {Array.from({ length: Math.min(stepIdx, STEPS.length) }, (_, i) => row(i))}
 
-            {plan && cls && (
-              <section className="v3-ep-card">
-                <b>Brand situation {txt(cls.status) === "confirmed" ? "· confirmed" : txt(cls.status) === "from brand plan" ? "· from the brand plan" : "· proposed"}</b>
-                {([["lifecycle", "Lifecycle", lifecycle], ["archetype", "Therapy type", archetypes], ["access", "Access", access]] as [string, string, Any[]][]).map(([k, label, opts]) => (
-                  <label key={k} className="v3-ep-field"><span>{label}</span>
-                    <select value={override[k] ?? txt(cls[k])} onChange={(e) => setOverride((o) => ({ ...o, [k]: e.target.value }))} disabled={!!busy}>
-                      {!cls[k] && <option value="">Needs input</option>}
-                      {opts.map((o) => <option key={txt(o.id)} value={txt(o.id)}>{txt(o.label)}</option>)}
-                    </select>
-                  </label>
-                ))}
-                {arr(cls.evidence).length > 0 && <ul className="v3-ep-evidence">{arr(cls.evidence).map((e, i) => <li key={i}>{txt(e.point)} <small className="v3-muted">({txt(e.source)})</small></li>)}</ul>}
-                {Object.keys(override).length > 0 && <button type="button" className="v3-cc-btn wide" disabled={!!busy} onClick={reclassify}>Confirm and re-diagnose</button>}
-              </section>
-            )}
+                {stepIdx === 0 && (
+                  ack ? <AckCard ack={ack} onConfirm={confirm} onEdit={() => { window.location.hash = "#/v3/agent/engagement-planner"; }} />
+                    : !busy && <button type="button" className="v3-cc-btn primary wide" onClick={() => run("Reading your documents and Brand IQ…", () => ackEngagement(plan.id))}>Read Brand IQ</button>
+                )}
 
-            {plan && bucket && step === "diagnose" && (
-              <section className="v3-ep-card">
-                <b>{arr(bucket.questions).length ? "Questions from the diagnosis" : "The diagnosis is complete"}</b>
-                <p className="v3-muted">The diagnosis is on the right. Answer what you can; skip what you don't know.</p>
-                {arr(bucket.questions).map((q) => (
-                  <div key={txt(q.id)} className="v3-ep-q">
-                    <p>{txt(q.question)}</p>
-                    {Boolean(q.why) && <small className="v3-muted">{txt(q.why)}</small>}
-                    <div className="v3-ep-opts">
-                      {arr(q.options).map((o) => (
-                        <button key={String(o)} type="button" className={`v3-ep-opt ${answers[txt(q.id)] === String(o) ? "on" : ""}`}
-                          onClick={() => setAnswers((a) => ({ ...a, [txt(q.id)]: String(o) }))}>{String(o)}</button>
-                      ))}
-                    </div>
-                    <input className="v3-ep-input" placeholder="Or type your own answer" value={arr(q.options).map(String).includes(answers[txt(q.id)] ?? "") ? "" : (answers[txt(q.id)] ?? "")}
-                      onChange={(e) => setAnswers((a) => ({ ...a, [txt(q.id)]: e.target.value }))} />
+                {stepIdx === 1 && (
+                  <div className="v3-ak-row current">
+                    <div className="v3-ak-row-head"><span className="v3-ak-dot">{busy ? <span className="v3-cc-spinner small" /> : 2}</span><b>{STEPS[1]}</b></div>
+                    {cls && (
+                      <div className="v3-ep-sub">
+                        <em>Brand situation {txt(cls.status) === "confirmed" ? "· confirmed" : txt(cls.status) === "from brand plan" ? "· from the brand plan" : "· proposed"}</em>
+                        {([["lifecycle", "Lifecycle", lifecycle], ["archetype", "Therapy type", archetypes], ["access", "Access", access]] as [string, string, Any[]][]).map(([k, label, opts]) => (
+                          <label key={k} className="v3-ep-field"><span>{label}</span>
+                            <select value={override[k] ?? txt(cls[k])} onChange={(e) => setOverride((o) => ({ ...o, [k]: e.target.value }))} disabled={!!busy}>
+                              {!cls[k] && <option value="">Needs input</option>}
+                              {opts.map((o) => <option key={txt(o.id)} value={txt(o.id)}>{txt(o.label)}</option>)}
+                            </select>
+                          </label>
+                        ))}
+                        {Object.keys(override).length > 0 && <button type="button" className="v3-cc-btn wide" disabled={!!busy} onClick={reclassify}>Confirm and re-diagnose</button>}
+                      </div>
+                    )}
+                    {bucket && step === "diagnose" && (
+                      <div className="v3-ep-sub">
+                        <em>{arr(bucket.questions).length ? "Questions from the diagnosis" : "The diagnosis is complete"}</em>
+                        {arr(bucket.questions).map((q) => (
+                          <div key={txt(q.id)} className="v3-ep-q">
+                            <p>{txt(q.question)}</p>
+                            {Boolean(q.why) && <small className="v3-muted">{txt(q.why)}</small>}
+                            <div className="v3-ep-opts">
+                              {arr(q.options).map((o) => (
+                                <button key={String(o)} type="button" className={`v3-ep-opt ${answers[txt(q.id)] === String(o) ? "on" : ""}`}
+                                  onClick={() => setAnswers((a) => ({ ...a, [txt(q.id)]: String(o) }))}>{String(o)}</button>
+                              ))}
+                            </div>
+                            <input className="v3-ep-input" placeholder="Or type your own answer" value={arr(q.options).map(String).includes(answers[txt(q.id)] ?? "") ? "" : (answers[txt(q.id)] ?? "")}
+                              onChange={(e) => setAnswers((a) => ({ ...a, [txt(q.id)]: e.target.value }))} />
+                          </div>
+                        ))}
+                        <button type="button" className="v3-cc-btn primary wide" disabled={!!busy} onClick={seeOptions}>See strategic options</button>
+                      </div>
+                    )}
+                    {busy && <small className="v3-ep-busy-line">{busy}</small>}
                   </div>
-                ))}
-                <button type="button" className="v3-cc-btn primary wide" disabled={!!busy} onClick={seeOptions}>See strategic options</button>
-              </section>
-            )}
+                )}
 
-            {plan && options.length > 0 && (step === "options" || step === "decide") && (
-              <section className="v3-ep-card">
-                <b>Choose a strategy</b>
-                <p className="v3-muted">Pick one, or several to combine.</p>
-                {options.map((o) => {
-                  const on = picked.includes(txt(o.id));
-                  return (
-                    <button key={txt(o.id)} type="button" className={`v3-ep-option ${on ? "on" : ""}`}
-                      onClick={() => setPicked((p) => (on ? p.filter((x) => x !== txt(o.id)) : [...p, txt(o.id)]))}>
-                      <span className="v3-ep-option-top"><b>{txt(o.id)} · {txt(o.name)}</b>{rec?.id === o.id && <em>Recommended</em>}</span>
-                      <span>{txt(o.thesis)}</span>
-                      <span className="v3-ep-option-meta">Cost {txt(o.relative_cost)} · Risk {txt(o.risk)} · {txt(o.time_to_effect)}</span>
-                      <span className="v3-ep-option-give"><b>You give up:</b> {txt(o.trade_off)}</span>
-                    </button>
-                  );
-                })}
-                {Boolean(rec?.why) && <p className="v3-ep-rec"><b>Why {txt(rec?.id)}:</b> {txt(rec?.why)}</p>}
-                <input className="v3-ep-input" placeholder="Anything to add for the draft (optional)" value={note} onChange={(e) => setNote(e.target.value)} />
-                <button type="button" className="v3-cc-btn primary wide" disabled={!!busy || !picked.length} onClick={decideAndDraft}>Draft the plan</button>
-              </section>
-            )}
+                {stepIdx === 2 && (
+                  <div className="v3-ak-row current">
+                    <div className="v3-ak-row-head"><span className="v3-ak-dot">{busy ? <span className="v3-cc-spinner small" /> : 3}</span><b>{STEPS[2]}</b></div>
+                    {options.length > 0 && (
+                      <div className="v3-ep-sub">
+                        <em>Pick one, or several to combine</em>
+                        {options.map((o) => {
+                          const on = picked.includes(txt(o.id));
+                          return (
+                            <button key={txt(o.id)} type="button" className={`v3-ep-option ${on ? "on" : ""}`} disabled={!!busy}
+                              onClick={() => setPicked((p) => (on ? p.filter((x) => x !== txt(o.id)) : [...p, txt(o.id)]))}>
+                              <span className="v3-ep-option-top"><b>{txt(o.id)} · {txt(o.name)}</b>{rec?.id === o.id && <em>Recommended</em>}</span>
+                              <span>{txt(o.thesis)}</span>
+                              <span className="v3-ep-option-meta">Cost {txt(o.relative_cost)} · Risk {txt(o.risk)} · {txt(o.time_to_effect)}</span>
+                              <span className="v3-ep-option-give"><b>You give up:</b> {txt(o.trade_off)}</span>
+                            </button>
+                          );
+                        })}
+                        {Boolean(rec?.why) && <p className="v3-ep-rec"><b>Why {txt(rec?.id)}:</b> {txt(rec?.why)}</p>}
+                        <input className="v3-ep-input" placeholder="Anything to add for the draft (optional)" value={note} onChange={(e) => setNote(e.target.value)} />
+                        <button type="button" className="v3-cc-btn primary wide" disabled={!!busy || !picked.length} onClick={decideAndDraft}>Draft the plan</button>
+                      </div>
+                    )}
+                    {busy && <small className="v3-ep-busy-line">{busy}</small>}
+                  </div>
+                )}
 
-            {plan && drafted && (
-              <section className="v3-ep-card">
-                <b>Plan drafted{step === "check" ? " and checked" : ""}</b>
-                <p className="v3-muted">See Checks for feasibility issues and the red team. Each campaign can open the Campaign Planner.</p>
-                <button type="button" className="v3-cc-btn wide" disabled={!!busy} onClick={() => plan && run("Re-running options…", () => engagementOptions(plan.id, (agent.answers as Record<string, string>) ?? {}))}>Revisit the strategy</button>
-              </section>
+                {stepIdx === 3 && (
+                  <div className="v3-ak-row current">
+                    <div className="v3-ak-row-head"><span className="v3-ak-dot"><span className="v3-cc-spinner small" /></span><b>{STEPS[3]}</b></div>
+                    <small className="v3-ep-busy-line">{busy ?? "Waiting for the feasibility check…"}</small>
+                    {!busy && <button type="button" className="v3-cc-btn wide" onClick={() => plan && run("Checking feasibility and red-teaming…", () => engagementCheck(plan.id))}>Run the checks</button>}
+                  </div>
+                )}
+
+                {allDone && (
+                  <div className="v3-ak-done">
+                    <b>Plan drafted and checked.</b>
+                    <span className="v3-muted">See Checks for feasibility issues and the red team. Each campaign can open the Campaign Agent.</span>
+                    <button type="button" className="v3-cc-btn" onClick={() => setShowReasoning(true)}>See the reasoning</button>
+                    <button type="button" className="v3-cc-btn" disabled={!!busy} onClick={() => plan && run("Re-running options…", () => engagementOptions(plan.id, (agent.answers as Record<string, string>) ?? {}))}>Revisit the strategy</button>
+                  </div>
+                )}
+              </div>
             )}
+            {error && <p className="v3-cc-banner error">{error}</p>}
           </div>
         </aside>
 
         <section className="v3-ws-output v3-ep-out">
+          {busy && plan && <p className="v3-ak-canvas-note"><span className="v3-cc-spinner small" /> {busy}</p>}
           {!bucket ? (
             <div className="v3-ws-empty">
               <Icon name="map" size={28} />
-              <b>The diagnosis and plan appear here</b>
-              <span>The agent reads Brand IQ, classifies the brand's situation and maps where patients are lost before proposing any campaign.</span>
+              <b>The diagnosis and plan build here</b>
+              <span>Once you confirm what the agent has, it classifies the brand's situation and maps where patients are lost, then drafts the plan step by step.</span>
             </div>
           ) : (
             <PlanView plan={plan!} tab={tab} setTab={setTab} drafted={drafted} ladder={arr(fw?.adoption_ladder).map(String)} />
           )}
         </section>
+        {showReasoning && <ReasoningPanel entries={entries} live={Boolean(busy)} onClose={() => setShowReasoning(false)} />}
       </div>
     </div>
   );

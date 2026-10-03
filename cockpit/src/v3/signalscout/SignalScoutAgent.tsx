@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import {
-  ackScout, getScout, getScoutSteps, runScoutSkill, startScout, toggleScoutWorklist,
+  ackScout, getScout, uploadAgentIntake, getScoutSteps, runScoutSkill, startScout, toggleScoutWorklist,
   type AgentAck, type AgentStepDef, type ScoutReadout, type ScoutSkill,
 } from "../../api";
 import { Icon } from "../../components/Icon";
 import type { BrandSummary } from "../../types";
-import { AckCard, ReasoningButton, ReasoningPanel, StepProgress, type ReasonEntry, type SkillStatus } from "../agentkit/AgentKit";
+import { AckCard, GlassDrop, ReasoningButton, ReasoningPanel, StepProgress, type ReasonEntry, type SkillStatus } from "../agentkit/AgentKit";
 import "../campaignplanner/campaignPlanner.css";
 import "../brandiq/brandiq.css";
 import "./signalscout.css";
@@ -29,6 +29,7 @@ export function SignalScoutAgent({ brands, activeBrand }: { brands: BrandSummary
   const [skills, setSkills] = useState<ScoutSkill[]>([]);
   const [phase, setPhase] = useState<Phase>("intake");
   const [focus, setFocus] = useState("");
+  const [files, setFiles] = useState<File[]>([]);
   const [ack, setAck] = useState<AgentAck | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [readout, setReadout] = useState<ScoutReadout | null>(null);
@@ -42,7 +43,7 @@ export function SignalScoutAgent({ brands, activeBrand }: { brands: BrandSummary
 
   useEffect(() => { getScoutSteps().then((r) => { setSteps(r.steps); setSkills(r.skills); }).catch(() => undefined); }, []);
   useEffect(() => {
-    setPhase("intake"); setFocus(""); setAck(null); setError(null); setReadout(null); setPrevious(null);
+    setPhase("intake"); setFocus(""); setFiles([]); setAck(null); setError(null); setReadout(null); setPrevious(null);
     setStatus({}); setErrors({}); setCurrentStep(0); setShowReasoning(false);
     if (!brand) return;
     getScout(brand).then((r) => {
@@ -58,6 +59,7 @@ export function SignalScoutAgent({ brands, activeBrand }: { brands: BrandSummary
     if (!brand) return;
     setPhase("reading"); setError(null);
     try {
+      await uploadAgentIntake("signal-agent", brand, files, focus);
       setAck(await ackScout(brand, focus));
       setPhase("ack");
     } catch (e) {
@@ -149,16 +151,15 @@ export function SignalScoutAgent({ brands, activeBrand }: { brands: BrandSummary
             </ol>
 
             {(phase === "intake" || phase === "reading") && (
-              <section className="v3-cc-intake">
+              <section className="v3-ak-intake">
                 <div className="v3-cc-intake-head">
                   <b>Scan brief</b>
-                  <span>Signal Scout reads {brand}'s Brand IQ. Tell it what to look for, or leave it empty for an open scan.</span>
+                  <span>Signal Scout reads {brand}'s Brand IQ. Add documents and tell it what to look for, or leave it empty for an open scan.</span>
                 </div>
-                <label className="v3-cc-intake-label" htmlFor="ss-focus">What should the scan answer?</label>
-                <textarea id="ss-focus" rows={6} value={focus} disabled={phase === "reading"} onChange={(e) => setFocus(e.target.value)}
-                  placeholder="e.g. Is there whitespace against the market leader? What are competitors saying to cardiologists? What changed since the last congress?" />
-                <span className="v3-cc-hint">US market only. Channel activity is estimated from public knowledge, not observed media spend.</span>
-                {readout && <span className="v3-cc-hint">The last readout ({readout.started}) is on the right and is kept so the new one can say what changed.</span>}
+                <GlassDrop files={files} setFiles={setFiles} notes={focus} setNotes={setFocus} disabled={phase === "reading"}
+                  notesLabel="What should the scan answer?"
+                  placeholder="e.g. Is there whitespace against the market leader? What are competitors saying to cardiologists? What changed since the last congress?"
+                  hint={`US market only. Channel activity is estimated from public knowledge, not observed media spend.${readout ? ` The last readout (${readout.started}) is kept so the new one can say what changed.` : ""}`} />
                 <button type="button" className="v3-cc-btn primary wide" disabled={phase === "reading"} onClick={read}>
                   {phase === "reading" ? <><span className="v3-cc-spinner small" /> Reading your brief…</> : "Start scan"}
                 </button>

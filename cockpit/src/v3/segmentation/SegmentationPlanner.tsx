@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { getBrandTree } from "../../api";
+import { ackSegmentation, getBrandTree, uploadAgentIntake, type AgentAck } from "../../api";
 import { REGISTRY } from "../../agents";
 import { Icon } from "../../components/Icon";
 import type { BrandSummary, BrandTree } from "../../types";
 import type { Favorite } from "../store";
-import type { SegState } from "./api";
+import type { SegItem, SegState } from "./api";
+import { AckCard, GlassDrop, ReasoningButton, ReasoningPanel, type ReasonEntry } from "../agentkit/AgentKit";
+import "../agentkit/agentkit.css";
 import { SegConversation } from "./Conversation";
 import { CreatedList, CreatedSegmentCard, DatasetView, PendingSegment, downloadText } from "./SegmentPanel";
 import { useSegmentationPlanner } from "./useSegmentationPlanner";
@@ -17,7 +19,7 @@ import "./segmentation.css";
  *  definition, the segments created and the dataset on the right. Scoped to a brand and
  *  campaign like every workspace; the backend is strategy/segmentation. */
 
-const STAGES = ["Describe", "Consent", "SQL", "Name", "Size", "Create"];
+const STAGES = ["Understand the audience", "Consent & rules", "Build & size", "Create & publish"];
 // Camille's welcome examples named data the dataset doesn't have (cardiologists, New York);
 // these use its real values.
 const EXAMPLES = [
@@ -29,13 +31,30 @@ type Handoff = { brand: string; planId: number | null; campaignId: number | null
 type Tab = "segment" | "created" | "dataset";
 
 function stepIndex(st: SegState, runningKind: string | null): number {
-  if (runningKind === "create") return 5;
-  if (runningKind === "estimate") return 4;
-  if (runningKind === "generate") return 2;
-  if (st.stage === "confirm") return 5;
-  if (st.stage === "naming") return 3;
+  if (runningKind === "create") return 3;
+  if (runningKind === "estimate" || runningKind === "generate") return 2;
+  if (st.items[st.items.length - 1]?.kind === "success") return STAGES.length;
+  if (st.stage === "confirm") return 3;
+  if (st.stage === "naming") return 2;
   if (st.stage === "consent") return 1;
-  return st.items[st.items.length - 1]?.kind === "success" ? STAGES.length : 0;
+  return 0;
+}
+
+/** Which of the four steps each conversation item belongs to, so the left side shows only the
+ *  current step's cards (finished steps collapse to one row each). */
+function itemSteps(items: SegItem[]): number[] {
+  let seenCount = false;
+  return items.map((it) => {
+    switch (it.kind) {
+      case "user": return 0;
+      case "consent": return 1;
+      case "sql": case "name": return 2;
+      case "count": seenCount = true; return 2;
+      case "success": return 3;
+      case "progress": return seenCount ? 3 : 2;
+      default: return 2;
+    }
+  });
 }
 
 export function SegmentationPlanner({ handoff, brands, activeBrand, isFavorite, toggleFavorite }: {
@@ -98,12 +117,19 @@ export function SegmentationPlanner({ handoff, brands, activeBrand, isFavorite, 
   const [title, setTitle] = useState("");
   useEffect(() => { setTitle(session?.title ?? ""); }, [session?.id, session?.title]);
   const [composer, setComposer] = useState("");
+  const [files, setFiles] = useState<File[]>([]);
+  const [audienceText, setAudienceText] = useState("");
+  const [ack, setAck] = useState<(AgentAck & { audience?: string }) | null>(null);
+  const [audience, setAudience] = useState("");
+  const [reading, setReading] = useState(false);
+  const [ackError, setAckError] = useState<string | null>(null);
+  const [showReasoning, setShowReasoning] = useState(false);
   const [tab, setTab] = useState<Tab>("segment");
   const [exportOpen, setExportOpen] = useState(false);
   const threadEnd = useRef<HTMLDivElement>(null);
   const composerRef = useRef<HTMLTextAreaElement>(null);
 
-  useEffect(() => { setComposer(""); setTab("segment"); }, [session?.id]);
+  useEffect(() => { setComposer(""); setTab("segment"); setAck(null); setFiles([]); setAudienceText(""); }, [session?.id]);
   // Follow the work: the segment tab whenever a definition appears or a segment is created.
   const pendingSql = st?.pending?.sql_item;
   const created = st?.segments.length ?? 0;
@@ -120,6 +146,44 @@ export function SegmentationPlanner({ handoff, brands, activeBrand, isFavorite, 
   const latest = st?.segments[0] ?? null;
   const exportSql = st?.pending?.sql ?? latest?.sql ?? null;
   const exportName = st?.pending ? (st.pending.name || st.pending.segmentName) : latest?.segmentName ?? "segment";
+
+  const readIntake = async () => {
+    if (!brand) return;
+    setReading(true); setAckError(null);
+    try {
+      await uploadAgentIntake("segmentation-planner", brand, files, audienceText);
+      const a = await ackSegmentation(brand, audienceText);
+      setAck(a);
+      setAudience(a.audience || audienceText);
+    } catch (e) {
+      setAckError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setReading(false);
+    }
+  };
+  const confirmAudience = () => {
+    const t = audience.trim();
+    if (!t) return;
+    planner.query(t).then((ok) => { if (ok) setAck(null); });
+  };
+
+  const items = st?.items ?? [];
+  const steps = itemSteps(items);
+  const shownStep = Math.min(stepIdx, STAGES.length - 1);
+  const currentItems = items.filter((_, i) => steps[i] === shownStep);
+  const stepSummary = (i: number): string => {
+    if (i === 0) return items.find((x) => x.kind === "user")?.kind === "user" ? (items.find((x) => x.kind === "user") as { text: string }).text : "";
+    if (i === 1) { const c = items.find((x) => x.kind === "consent"); return c && c.kind === "consent" ? (c.answered?.length ? c.answered.join(", ") : "No consent filter") : ""; }
+    if (i === 2) { const c = [...items].reverse().find((x) => x.kind === "count"); return c && c.kind === "count" && c.count != null ? `${c.count.toLocaleString()} HCPs` : ""; }
+    return "";
+  };
+  const entries: ReasonEntry[] = [];
+  if (ack) entries.push({ id: "ack", title: "Understanding the audience", status: "done", lines: [ack.understood ?? "", ...(ack.approach ?? [])].filter(Boolean) });
+  items.forEach((it) => {
+    if (it.kind === "progress") entries.push({ id: it.id, title: it.title, status: it.status === "running" ? "running" : "done", lines: it.steps.map((x) => `${x.title}${x.details ? ` — ${x.details}` : ""}`) });
+    if (it.kind === "sql") entries.push({ id: it.id, title: `SQL for “${it.segmentName}”`, status: "done", lines: [it.explanation, ...it.problems, ...(it.warnings ?? [])].filter(Boolean) });
+    if (it.kind === "count") entries.push({ id: it.id, title: "Sizing the segment", status: "done", lines: [it.count != null ? `${it.count.toLocaleString()} HCPs match.` : "No count.", it.note ?? ""].filter(Boolean) });
+  });
 
   const saveTitle = () => {
     if (session && title.trim() && title.trim() !== session.title) planner.rename(title.trim());
@@ -177,6 +241,7 @@ export function SegmentationPlanner({ handoff, brands, activeBrand, isFavorite, 
               </div>
             )}
           </span>
+          <ReasoningButton live={busy || reading} onClick={() => setShowReasoning((v) => !v)} />
           <button type="button" disabled={!st || !st.items.length || running?.kind === "create"}
             onClick={() => { if (window.confirm("Start over? This clears the conversation. Segments already created in Data Cloud stay listed.")) planner.reset(); }}>
             Start over
@@ -260,21 +325,49 @@ export function SegmentationPlanner({ handoff, brands, activeBrand, isFavorite, 
             {!session && !planner.loadError && <p className="v3-muted">{brands.length ? "Opening the Segmentation Agent…" : "Add a brand first: the Segmentation Agent works inside a brand."}</p>}
 
             {st && !st.items.length && !busy ? (
-              <section className="v3-cc-intake v3-seg-welcome">
-                <div className="v3-cc-intake-head">
-                  <b>Create a Data Cloud segment</b>
-                  <span>Describe your target audience in plain English. The agent asks which email consent statuses to include, writes the Data Cloud SQL, sizes the segment and creates it once you confirm.</span>
-                </div>
-                <span className="v3-cc-hint">Try asking:</span>
-                {EXAMPLES.map((e) => (
-                  <button key={e} type="button" className="v3-seg-example" onClick={() => { setComposer(e); composerRef.current?.focus(); }}>“{e}”</button>
-                ))}
-              </section>
+              ack ? (
+                <>
+                  <AckCard ack={ack} onConfirm={confirmAudience} onEdit={() => setAck(null)} />
+                  <label className="v3-glass-label" htmlFor="seg-audience">The audience the agent will build (edit if needed)</label>
+                  <textarea id="seg-audience" className="v3-glass-text" rows={3} value={audience} onChange={(e) => setAudience(e.target.value)} />
+                </>
+              ) : (
+                <section className="v3-ak-intake v3-seg-welcome">
+                  <div className="v3-cc-intake-head">
+                    <b>Audience intake</b>
+                    <span>Describe the HCPs you want and add the brand plan or briefs. The agent checks what the data can select on before it writes any SQL.</span>
+                  </div>
+                  <GlassDrop files={files} setFiles={setFiles} notes={audienceText} setNotes={setAudienceText} disabled={reading}
+                    notesLabel="Who should be in the segment?" placeholder="Describe the audience in plain English…" />
+                  <span className="v3-cc-hint">Try:</span>
+                  {EXAMPLES.map((e) => (
+                    <button key={e} type="button" className="v3-seg-example" disabled={reading} onClick={() => setAudienceText(e)}>“{e}”</button>
+                  ))}
+                  <button type="button" className="v3-cc-btn primary wide" disabled={reading} onClick={readIntake}>
+                    {reading ? <><span className="v3-cc-spinner small" /> Reading your input…</> : "Build segment"}
+                  </button>
+                  {ackError && <p className="v3-cc-banner error">{ackError}</p>}
+                </section>
+              )
             ) : st && (
-              <SegConversation items={st.items} liveIds={planner.liveIds} busy={busy}
-                onConsent={(values) => { planner.consent(values); }}
-                onCreate={() => { planner.create(); }}
-                onDiscard={() => { planner.discard(); }} />
+              <div className="v3-ak-progress">
+                {STAGES.slice(0, shownStep).map((name, i) => (
+                  <div key={name} className="v3-ak-row done">
+                    <span className="v3-ak-dot"><Icon name="check" size={9} /></span><b>{name}</b>
+                    {stepSummary(i) && <small className="v3-seg-row-sum">{stepSummary(i)}</small>}
+                  </div>
+                ))}
+                <div className={`v3-ak-row ${stepIdx >= STAGES.length ? "done" : "current"}`}>
+                  <div className="v3-ak-row-head">
+                    <span className="v3-ak-dot">{stepIdx >= STAGES.length ? <Icon name="check" size={9} /> : busy ? <span className="v3-cc-spinner small" /> : shownStep + 1}</span>
+                    <b>{STAGES[shownStep]}</b>
+                  </div>
+                  <SegConversation items={currentItems} liveIds={planner.liveIds} busy={busy}
+                    onConsent={(values) => { planner.consent(values); }}
+                    onCreate={() => { planner.create(); }}
+                    onDiscard={() => { planner.discard(); }} />
+                </div>
+              </div>
             )}
             {busy && st && !st.items.some((i) => planner.liveIds.has(i.id) && i.kind === "progress") && (
               <div className="v3-ask-thinking"><span /><span /><span /></div>
@@ -288,7 +381,7 @@ export function SegmentationPlanner({ handoff, brands, activeBrand, isFavorite, 
             <div ref={threadEnd} />
           </div>
 
-          {st && (
+          {st && (st.items.length > 0 || busy) && (
             <div className="v3-cc-composer">
               {hint ? (
                 <div className="v3-cc-composer-hint">
@@ -318,7 +411,7 @@ export function SegmentationPlanner({ handoff, brands, activeBrand, isFavorite, 
           )}
         </aside>
 
-        <section className="v3-ws-output">
+        <section className="v3-ws-output v3-seg-out">
           <div className="v3-cc-out">
             <div className="v3-av-tabs" role="tablist">
               <button type="button" role="tab" aria-selected={tab === "segment"} className={tab === "segment" ? "active" : ""} onClick={() => setTab("segment")}>Segment</button>
@@ -355,6 +448,7 @@ export function SegmentationPlanner({ handoff, brands, activeBrand, isFavorite, 
             )}
           </div>
         </section>
+        {showReasoning && <ReasoningPanel entries={entries} live={busy || reading} onClose={() => setShowReasoning(false)} />}
       </div>
     </div>
   );

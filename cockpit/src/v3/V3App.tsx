@@ -1,3 +1,4 @@
+import { FlowAgent } from "./flowagent/FlowAgent";
 import { SignalScoutAgent } from "./signalscout/SignalScoutAgent";
 import { BrandIqAgent } from "./brandiq/BrandIqAgent";
 import { useEffect, useState } from "react";
@@ -54,6 +55,13 @@ export function V3App({ path }: { path: string[] }) {
           <SignalScoutAgent key="signal-agent" brands={brands} activeBrand={scope.activeBrand} />
         ) : isWorkspace && path[1] === "brand-iq" ? (
           <BrandIqAgent key="brand-iq" brands={brands} activeBrand={scope.activeBrand} />
+        ) : isWorkspace && path[1] === "flow-planner" && path[2] !== undefined && path[2] !== "for" ? (
+          <Workspace key={path.join("/")} agentId="flow-planner" artifactId={path[2]}
+            brands={brands} activeBrand={scope.activeBrand}
+            isFavorite={favs.isFavorite} toggleFavorite={favs.toggleFavorite} />
+        ) : isWorkspace && path[1] === "flow-planner" ? (
+          <FlowAgent key={path.join("/")} brands={brands} activeBrand={scope.activeBrand}
+            handoff={path[2] === "for" && path[3] ? { brand: path[3], planId: Number(path[4]) || null, campaignId: Number(path[5]) || null } : undefined} />
         ) : isWorkspace && path[1] === "engagement-planner" ? (
           <EngagementPlanner key="engagement-planner" planId={path[2]} brands={brands} activeBrand={scope.activeBrand} />
         ) : isWorkspace && path[1] === "briefing-agent" ? (

@@ -167,7 +167,10 @@ def run_skill(brand: str, skill: str) -> dict:
     if not rec.get("current"):
         rec = start(brand, "")
     cur = rec["current"]
-    payload = {"focus": cur.get("focus") or "", "brand_iq": _grounding(brand, kit), "earlier_steps": cur.get("sections") or {}}
+    import agent_intake
+    intake = agent_intake.load("signal-agent", brand)
+    payload = {"focus": cur.get("focus") or "", "brand_iq": _grounding(brand, kit), "earlier_steps": cur.get("sections") or {},
+               "your_documents": (intake.get("text") or "")[:15000], "your_notes": intake.get("notes") or ""}
     if skill == "history":
         prev = rec.get("previous") or {}
         payload = {"current_signals": (cur["sections"].get("synthesis") or {}).get("signals"),
@@ -201,18 +204,17 @@ def acknowledge(brand: str, focus: str) -> dict:
         raise KeyError(brand)
     g = _grounding(brand, kit)
     coverage = {k: bool(v) for k, v in g.items() if k not in ("brand",)}
+    import agent_intake
     rec = load(brand)
-    return complete_json(
-        "You are Signal Scout about to scan the US market for a pharma brand. Read the person's focus (may be empty) "
-        "and which Brand IQ inputs are present. Reply in plain words: what you understood the scan should answer "
-        "(if no focus, say you'll run an open scan for the most material signals), what Brand IQ gives you, what is "
-        "missing and what that means (e.g. no clinical data -> evidence comes from public knowledge, marked so), "
-        "and whether there is a previous readout to compare with. Reply with one JSON object.\n"
-        'Shape: {"mode":"focused|open","understood":"","have":[{"what":"","detail":""}],'
-        '"missing":[{"what":"","impact":""}],"approach":[""],"question":""}',
-        {"brand": brand, "focus": focus, "brand_iq_present": coverage,
-         "competitors": [c.get("name") for c in kit.get("competitors") or []][:10],
-         "previous_readout": bool((rec.get("current") or {}).get("sections"))}, max_tokens=1200)
+    context = {"brand": brand, "focus": focus, "brand_iq_present": coverage,
+               "competitors": [c.get("name") for c in kit.get("competitors") or []][:10],
+               "previous_readout": bool((rec.get("current") or {}).get("sections"))}
+    return agent_intake.acknowledge(
+        "You are Signal Scout about to scan the US market for a pharma brand.", context,
+        agent_intake.load("signal-agent", brand),
+        "Say what the scan should answer (no focus -> an open scan for the most material signals), what Brand IQ "
+        "gives you, what is missing and what that means (e.g. no clinical data -> evidence from public knowledge, "
+        "marked so), and whether there is a previous readout to compare with.")
 
 
 __all__ = ["SKILLS", "STEPS", "acknowledge", "load", "start", "run_skill", "toggle_worklist", "LLMUnavailable"]

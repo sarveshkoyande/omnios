@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Icon } from "../../components/Icon";
 import "./agentkit.css";
 
@@ -121,5 +121,50 @@ export function ReasoningButton({ live, onClick }: { live: boolean; onClick: () 
     <button type="button" className="v3-ak-reason-btn" onClick={onClick}>
       <Icon name="eye" size={13} /> Live reasoning{live && <span className="v3-cc-live-dot" />}
     </button>
+  );
+}
+
+export const DOC_ACCEPT = ".pdf,.docx,.pptx,.txt,.md";
+
+/** The glass drop zone every agent's intake uses: drag and drop the brand plan and other details
+ *  (several files), plus a text box. `multiple={false}` for agents that read one document. */
+export function GlassDrop({ files, setFiles, notes, setNotes, multiple = true, disabled, notesLabel, placeholder, hint }: {
+  files: File[]; setFiles: (f: File[]) => void; notes: string; setNotes: (v: string) => void;
+  multiple?: boolean; disabled?: boolean; notesLabel: string; placeholder: string; hint?: string;
+}) {
+  const [drag, setDrag] = useState(false);
+  const input = useRef<HTMLInputElement>(null);
+  const add = (list: FileList | null) => {
+    const picked = Array.from(list ?? []);
+    if (!picked.length) return;
+    setFiles(multiple ? [...files, ...picked.filter((f) => !files.some((x) => x.name === f.name))] : [picked[0]]);
+  };
+  return (
+    <div className="v3-glass-intake">
+      <div className={`v3-glass-drop ${drag ? "drag" : ""} ${disabled ? "off" : ""}`}
+        onDragOver={(e) => { e.preventDefault(); if (!disabled) setDrag(true); }}
+        onDragLeave={(e) => { e.preventDefault(); setDrag(false); }}
+        onDrop={(e) => { e.preventDefault(); setDrag(false); if (!disabled) add(e.dataTransfer.files); }}
+        onClick={() => !disabled && input.current?.click()} role="button" tabIndex={0}
+        onKeyDown={(e) => { if (e.key === "Enter" && !disabled) input.current?.click(); }}>
+        <span className="v3-glass-orb"><Icon name="document" size={22} /></span>
+        <b>Drag and drop the brand plan and other details</b>
+        <span>{multiple ? "Brand plan, briefs, research, notes" : "One document"} · PDF, DOCX, PPTX, TXT or MD · or <u>browse</u></span>
+        <input ref={input} type="file" accept={DOC_ACCEPT} multiple={multiple} hidden
+          onChange={(e) => { add(e.target.files); e.target.value = ""; }} />
+      </div>
+      {files.length > 0 && (
+        <div className="v3-glass-files">
+          {files.map((f) => (
+            <span key={f.name} className="v3-glass-chip"><Icon name="document" size={11} /> {f.name}
+              <button type="button" aria-label={`Remove ${f.name}`} disabled={disabled} onClick={() => setFiles(files.filter((x) => x !== f))}><Icon name="close" size={10} /></button>
+            </span>
+          ))}
+        </div>
+      )}
+      <label className="v3-glass-label">{notesLabel}</label>
+      <textarea className="v3-glass-text" rows={5} value={notes} disabled={disabled} placeholder={placeholder} onChange={(e) => setNotes(e.target.value)} />
+      {hint && <span className="v3-glass-hint">{hint}</span>}
+    </div>
   );
 }

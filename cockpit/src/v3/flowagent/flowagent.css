@@ -1,0 +1,11 @@
+.v3 .v3-flowagent-scope { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.v3 .v3-flowagent-scope label { display: flex; flex-direction: column; gap: 4px; font-size: 11.5px; font-weight: 600; color: var(--muted); }
+.v3 .v3-flowagent-scope label:first-child { grid-column: 1 / -1; }
+.v3 .v3-flowagent-scope select { font-family: inherit; font-size: 12.5px; padding: 6px 8px; border-radius: 10px; border: 0; background: rgba(255,255,255,0.75); box-shadow: 0 0 0 1px rgba(93,44,201,0.14); }
+.v3 .v3-flowagent-answers { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; padding: 12px; border-radius: var(--radius-md); background: rgba(255,255,255,0.7); box-shadow: 0 0 0 1px var(--neutral-200); font-size: 12px; }
+.v3 .v3-flowagent-answers em { font-style: normal; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.v3 .v3-flowagent-answers > div { display: flex; flex-direction: column; gap: 1px; }
+.v3 .v3-flowagent-answers b { text-transform: capitalize; }
+.v3 .v3-flowagent-answers small { color: var(--muted); }
+.v3 .v3-flowagent-sum { margin-left: auto; max-width: 55%; text-align: right; font-size: 11px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.v3 .v3-flowagent-out { min-width: 0; flex: 1 1 0; overflow: auto; }
