@@ -146,7 +146,7 @@ export function SegmentationPlanner({ handoff, brands, activeBrand, isFavorite, 
     return "";
   }, [st, busy, running?.kind]);
 
-  if (!agent) return <p className="v3-muted">The Segmentation Planner isn't registered.</p>;
+  if (!agent) return <p className="v3-muted">The Segmentation Agent isn't registered.</p>;
 
   return (
     <div className="v3-ws v3-cc v3-seg">
@@ -256,8 +256,8 @@ export function SegmentationPlanner({ handoff, brands, activeBrand, isFavorite, 
             {session && !dcOn && (
               <p className="v3-cc-banner warn">Data Cloud isn't connected on this server: the planner writes the SQL, but can't size or create segments. Set the DC_* settings to connect it.</p>
             )}
-            {planner.loadError && <p className="v3-cc-banner error">Couldn't open the Segmentation Planner: {planner.loadError}</p>}
-            {!session && !planner.loadError && <p className="v3-muted">{brands.length ? "Opening the Segmentation Planner…" : "Add a brand first: the Segmentation Planner works inside a brand."}</p>}
+            {planner.loadError && <p className="v3-cc-banner error">Couldn't open the Segmentation Agent: {planner.loadError}</p>}
+            {!session && !planner.loadError && <p className="v3-muted">{brands.length ? "Opening the Segmentation Agent…" : "Add a brand first: the Segmentation Agent works inside a brand."}</p>}
 
             {st && !st.items.length && !busy ? (
               <section className="v3-cc-intake v3-seg-welcome">

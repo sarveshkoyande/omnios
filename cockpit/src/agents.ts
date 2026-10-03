@@ -112,18 +112,19 @@ export const AGENTS: Record<Phase, LibraryAgent[]> = {
     },
   ],
   campaign: [
+    // Card hidden (the agent and its route still work):
+    // {
+    //   id: "campaign-planner", name: "Campaign Planner", icon: "target", status: "available",
+    //   summary: "Decides a campaign's objective, audience, messages, channels and timing, stage by stage.",
+    //   about: "Walks the campaign decision spine (campaign frame through risks): pre-fills what the brand kit and campaign already say, recommends what it can, and asks only what only you know. Its plan feeds the Flow Planner and the Brief Compiler.",
+    //   worksFrom: [
+    //     { label: "Brand kit", detail: "Lifecycle, pillars, core claim, objective, competitors and targets." },
+    //     { label: "Campaign decision spine", detail: "config/frameworks/campaign_spine.json (S0-S10)." },
+    //   ],
+    //   builtOn: "strategy/agent_forms.py, strategy/v3_artifacts.py",
+    // },
     {
-      id: "campaign-planner", name: "Campaign Planner", icon: "target", status: "available",
-      summary: "Decides a campaign's objective, audience, messages, channels and timing, stage by stage.",
-      about: "Walks the campaign decision spine (campaign frame through risks): pre-fills what the brand kit and campaign already say, recommends what it can, and asks only what only you know. Its plan feeds the Flow Planner and the Brief Compiler.",
-      worksFrom: [
-        { label: "Brand kit", detail: "Lifecycle, pillars, core claim, objective, competitors and targets." },
-        { label: "Campaign decision spine", detail: "config/frameworks/campaign_spine.json (S0-S10)." },
-      ],
-      builtOn: "strategy/agent_forms.py, strategy/v3_artifacts.py",
-    },
-    {
-      id: "briefing-agent", name: "Briefing Agent", icon: "document", status: "available",
+      id: "briefing-agent", name: "Campaign Agent", icon: "document", status: "available",
       summary: "Turns your campaign brief into an approved briefing document and a deployable Salesforce journey.",
       about: "Reads your brief, typed or uploaded, asks only about what's genuinely missing, reviews the remaining assumptions with you, and writes the Campaign Briefing Document. Once you approve it, seven agents (Document Analyst, Salesforce Architect, Flow QA Tester, Visual Designer, Tester Agent, Flow Validator and Technical Writer) build the Salesforce Flow specification and the journey diagram, ready to deploy to your org. Its briefing feeds the Flow Planner and the Brief Compiler.",
       worksFrom: [
@@ -133,18 +134,19 @@ export const AGENTS: Record<Phase, LibraryAgent[]> = {
       ],
       builtOn: "strategy/campaign_creator",
     },
+    // Card hidden (the agent and its route still work):
+    // {
+    //   id: "brief-compiler", name: "Brief Compiler", icon: "document", status: "available",
+    //   summary: "Turns the plan's decisions into a campaign brief an agency can execute.",
+    //   about: "Writes the Campaign Strategy and Campaign Brief from the plan's decisions: purpose, audience rules, messaging, deliverables, measurement and risks. Every section names the decision it came from.",
+    //   worksFrom: [
+    //     { label: "Plan decisions", detail: "Each landed decision with its inputs, framework and rationale." },
+    //     { label: "Measurement plan", detail: "The KPIs and targets the plan committed to." },
+    //   ],
+    //   builtOn: "strategy/campaign_artifacts.py",
+    // },
     {
-      id: "brief-compiler", name: "Brief Compiler", icon: "document", status: "available",
-      summary: "Turns the plan's decisions into a campaign brief an agency can execute.",
-      about: "Writes the Campaign Strategy and Campaign Brief from the plan's decisions: purpose, audience rules, messaging, deliverables, measurement and risks. Every section names the decision it came from.",
-      worksFrom: [
-        { label: "Plan decisions", detail: "Each landed decision with its inputs, framework and rationale." },
-        { label: "Measurement plan", detail: "The KPIs and targets the plan committed to." },
-      ],
-      builtOn: "strategy/campaign_artifacts.py",
-    },
-    {
-      id: "segmentation-planner", name: "Campaign Segmentation Planner", icon: "layers", status: "available",
+      id: "segmentation-planner", name: "Segmentation Agent", icon: "layers", status: "available",
       summary: "Turns a plain-English audience into a sized Salesforce Data Cloud segment.",
       about: "Describe the HCPs you want to reach. The agent asks which email consent statuses to include, writes the Data Cloud SQL on the HCP segmentation data, sizes the segment with a live count, and creates and publishes it in Data Cloud once you confirm. When Data Cloud rejects the SQL, its Tester Agent fixes it and tries again.",
       worksFrom: [
@@ -155,7 +157,7 @@ export const AGENTS: Record<Phase, LibraryAgent[]> = {
       builtOn: "strategy/segmentation",
     },
     {
-      id: "flow-planner", name: "Flow Planner", icon: "route", status: "available",
+      id: "flow-planner", name: "Flow Agent", icon: "route", status: "available",
       summary: "Walks brand → engagement plan → campaign, then builds the SOP segmentation + journey diagram.",
       about: "Opens on a blank canvas and asks, step by step, which brand, engagement plan and campaign to build a flow for, then generates the SOP-driven segmentation and journey diagram for it. It also drafts the channel-by-channel flow of sends, waits and decisions from the campaign's brief, audience and message ladder, and applies your changes as structured edits that survive a rebuild.",
       worksFrom: [
