@@ -1,11 +1,10 @@
-import { GLOSSARY } from "@omni-frontend/glossary";
 
 /** The Agent Library. Each card is kept to an icon, a name and one short line. The agents
  *  on the product list are "available" (they open a Read more page); every other agent the
  *  app already runs is shown as "wip". A Read more page only lists inputs the agent really
  *  uses in this codebase (`builtOn` names where); an agent that isn't built yet says so
  *  (`inDevelopment`) instead of showing invented activity. */
-export type Phase = "strategy" | "ops" | "intelligence";
+export type Phase = "strategy" | "campaign" | "ops" | "intelligence";
 
 export type AgentIcon =
   | "target" | "radar" | "persona" | "layers" | "smartphone" | "route" | "document"
@@ -41,14 +40,16 @@ export interface PhaseInfo {
 }
 
 export const PHASES: PhaseInfo[] = [
-  { id: "strategy", label: "Strategy & Planning", tagline: "Agents that turn a brief into a grounded, evidence-linked plan." },
-  { id: "ops", label: "Ops & Orchestration", tagline: "Agents that turn the plan into journeys, assets and live segments." },
-  { id: "intelligence", label: "Intelligence & Optimization", tagline: "Agents that read the market, the HCP universe and the spend." },
+  { id: "strategy", label: "Brand Strategy", tagline: "Agents that build the brand's knowledge, audiences, messages and engagement plan." },
+  { id: "campaign", label: "Campaign Planning", tagline: "Agents that turn one campaign into a plan, a briefing, a segment and a flow." },
+  { id: "ops", label: "Ops & Orchestration", tagline: "Agents that build, check, test and launch the journeys and assets." },
+  { id: "intelligence", label: "Reporting & Insights", tagline: "Agents that measure what happened and predict what to run next." },
 ];
 
 /** Per-phase accent ink, applied to the active phase tab and the hero heading. */
 export const PHASE_TINT: Record<Phase, string> = {
   strategy: "#3B4E8C",
+  campaign: "#8A5A1F",
   ops: "#206657",
   intelligence: "#6B4FA0",
 };
@@ -56,16 +57,39 @@ export const PHASE_TINT: Record<Phase, string> = {
 export const AGENTS: Record<Phase, LibraryAgent[]> = {
   strategy: [
     {
-      id: "engagement-plan-builder", name: "Engagement Plan Builder", icon: "target", status: "available",
-      summary: "Builds a brand's engagement plan section by section, from brief to a reviewed, evidence-linked document.",
-      about: `The shared planning engine behind every ${GLOSSARY.campaign_plan.label}. It takes the brief through chat, asks for what's missing, then composes the plan one section at a time, pausing at each decision for your answer.`,
+      id: "brand-iq", name: "Brand IQ Agent", icon: "sparkles", status: "available",
+      summary: "Builds the brand's knowledge base: brand plan, kit, Big Idea, personas, compliance and market intelligence.",
+      about: "Reads the brand plan (or, with no plan, public FDA, NIH, PubMed, ClinicalTrials.gov and CDC sources) and proposes the Brand Kit: positioning, evidence, voice, competition, the Big Idea with its reasoning, US geography and client data. Every other agent reads from what it builds.",
       worksFrom: [
-        { label: "Your brief", detail: "Brand, indication, lifecycle stage, audience, objective and budget, captured in the conversation." },
-        { label: "Brand kit", detail: "The brand's approved message house, personas and guardrails." },
-        { label: "Planning toolkit", detail: "The Customer Engagement Planning Toolkit's sections and the process knowledge behind them." },
+        { label: "Brand plan", detail: "An uploaded brand plan deck, when there is one." },
+        { label: "Public sources", detail: "FDA label, Drugs@FDA, NIH MeSH, PubMed (US), ClinicalTrials.gov, MedlinePlus, CDC PLACES." },
+        { label: "Company SOPs", detail: "config/compliance_profiles.json." },
       ],
-      builtOn: "strategy/studio_run.py, strategy/orchestrator.py, strategy/plan_document.py",
+      builtOn: "strategy/kit_proposer.py, strategy/brand_builder.py, strategy/public_sources.py, strategy/us_geography.py",
     },
+    {
+      id: "signal-agent", name: "Signal Scout", icon: "radar", status: "available",
+      summary: "Surfaces the market and competitive signals that should shape the plan.",
+      about: "Pulls together what's known about the therapy area, the competitive set and where the brand sits in its lifecycle, so the plan starts from the market as it is.",
+      worksFrom: [
+        { label: "Brand kit competitors", detail: "The named competitors in the brand kit, with threat level and detail." },
+        { label: "Market-intel store", detail: "Each brand's lifecycle-stage assessment, grounded in public market evidence." },
+        { label: "External evidence", detail: "Public-knowledge lookups when the kit has no signal for a question." },
+      ],
+      builtOn: "strategy/brand_lifecycle.py, strategy/external_evidence.py",
+    },
+    {
+      id: "brand-persona-builder", name: "Audience Segmentation Planner", icon: "persona", status: "available",
+      summary: "Builds the brand's HCP and patient personas, shared by every campaign.",
+      about: "Drafts HCP, patient and payer persona cards in the brand journey's Audience step (who they are, their tier, the voice that lands) and lets you refine one card by chat.",
+      worksFrom: [
+        { label: "Brand brief", detail: "Indication, primary audience and objective from the journey's Brief step." },
+        { label: "Brand plan documents", detail: "Any plan you upload, read for audience and persona detail." },
+        { label: "Persona library", detail: "The app's synthetic persona layer, for depth on drivers and channel preferences." },
+      ],
+      builtOn: "strategy/brand_journey.py, strategy/personas.py",
+    },
+    { id: "message-plan", name: "Message Plan", icon: "message", status: "wip", summary: "Builds the message house: core claim, pillars and proof points for each audience segment." },
     {
       id: "engagement-planner", name: "Engagement Planner", icon: "layers", status: "available",
       summary: "Plans the next 6 months for a brand: who to engage, what must change, which campaigns, when.",
@@ -76,6 +100,18 @@ export const AGENTS: Record<Phase, LibraryAgent[]> = {
       ],
       builtOn: "strategy/engagement_agent.py, strategy/engagement_plans.py",
     },
+    {
+      id: "channel-planner", name: "Channel Planner", icon: "smartphone", status: "available",
+      summary: "Chooses the channel mix and budget split for how the campaign goes to market.",
+      about: "Scores channels on purpose, availability, preference and potential, then offers go-to-market postures (field-led, event-led and so on), each with its own budget split.",
+      worksFrom: [
+        { label: "Channel Selection template", detail: "The toolkit's six named channels, scored by the channel-mix engine." },
+        { label: "Your brief", detail: "The channels and budget you named, as the starting lean." },
+      ],
+      builtOn: "strategy/channel_selection.py, strategy/rules.py",
+    },
+  ],
+  campaign: [
     {
       id: "campaign-planner", name: "Campaign Planner", icon: "target", status: "available",
       summary: "Decides a campaign's objective, audience, messages, channels and timing, stage by stage.",
@@ -98,29 +134,17 @@ export const AGENTS: Record<Phase, LibraryAgent[]> = {
       builtOn: "strategy/campaign_creator",
     },
     {
-      id: "signal-agent", name: "Signal Scout", icon: "radar", status: "available",
-      summary: "Surfaces the market and competitive signals that should shape the plan.",
-      about: "Pulls together what's known about the therapy area, the competitive set and where the brand sits in its lifecycle, so the plan starts from the market as it is.",
+      id: "brief-compiler", name: "Brief Compiler", icon: "document", status: "available",
+      summary: "Turns the plan's decisions into a campaign brief an agency can execute.",
+      about: "Writes the Campaign Strategy and Campaign Brief from the plan's decisions: purpose, audience rules, messaging, deliverables, measurement and risks. Every section names the decision it came from.",
       worksFrom: [
-        { label: "Brand kit competitors", detail: "The named competitors in the brand kit, with threat level and detail." },
-        { label: "Market-intel store", detail: "Each brand's lifecycle-stage assessment, grounded in public market evidence." },
-        { label: "External evidence", detail: "Public-knowledge lookups when the kit has no signal for a question." },
+        { label: "Plan decisions", detail: "Each landed decision with its inputs, framework and rationale." },
+        { label: "Measurement plan", detail: "The KPIs and targets the plan committed to." },
       ],
-      builtOn: "strategy/brand_lifecycle.py, strategy/external_evidence.py",
+      builtOn: "strategy/campaign_artifacts.py",
     },
     {
-      id: "brand-persona-builder", name: "Brand Persona Builder", icon: "persona", status: "available",
-      summary: "Builds the brand's HCP and patient personas, shared by every campaign.",
-      about: "Drafts HCP, patient and payer persona cards in the brand journey's Audience step (who they are, their tier, the voice that lands) and lets you refine one card by chat.",
-      worksFrom: [
-        { label: "Brand brief", detail: "Indication, primary audience and objective from the journey's Brief step." },
-        { label: "Brand plan documents", detail: "Any plan you upload, read for audience and persona detail." },
-        { label: "Persona library", detail: "The app's synthetic persona layer, for depth on drivers and channel preferences." },
-      ],
-      builtOn: "strategy/brand_journey.py, strategy/personas.py",
-    },
-    {
-      id: "segmentation-planner", name: "Segmentation Planner", icon: "layers", status: "available",
+      id: "segmentation-planner", name: "Campaign Segmentation Planner", icon: "layers", status: "available",
       summary: "Turns a plain-English audience into a sized Salesforce Data Cloud segment.",
       about: "Describe the HCPs you want to reach. The agent asks which email consent statuses to include, writes the Data Cloud SQL on the HCP segmentation data, sizes the segment with a live count, and creates and publishes it in Data Cloud once you confirm. When Data Cloud rejects the SQL, its Tester Agent fixes it and tries again.",
       worksFrom: [
@@ -131,50 +155,22 @@ export const AGENTS: Record<Phase, LibraryAgent[]> = {
       builtOn: "strategy/segmentation",
     },
     {
-      id: "channel-planner", name: "Channel Planner", icon: "smartphone", status: "available",
-      summary: "Chooses the channel mix and budget split for how the campaign goes to market.",
-      about: "Scores channels on purpose, availability, preference and potential, then offers go-to-market postures (field-led, event-led and so on), each with its own budget split.",
-      worksFrom: [
-        { label: "Channel Selection template", detail: "The toolkit's six named channels, scored by the channel-mix engine." },
-        { label: "Your brief", detail: "The channels and budget you named, as the starting lean." },
-      ],
-      builtOn: "strategy/channel_selection.py, strategy/rules.py",
-    },
-    {
-      id: "flow-planner", name: "Flow Planner", icon: "route", status: "available",
-      summary: "Drafts the channel-by-channel flow for a campaign by rules, then edits it by chat.",
-      about: "Builds a reproducible flow of sends, waits and decisions from the brand's confirmed brief, audience and message, and applies your changes as structured edits that survive a rebuild.",
-      worksFrom: [
-        { label: "Campaign snapshot", detail: "The brand content the campaign was built from." },
-        { label: "Message ladder", detail: "The message pillars, told in order across the sends." },
-        { label: "Node catalogue", detail: "Send, wait, decision, follow-up and exit blocks, each with a stable code." },
-      ],
-      builtOn: "strategy/campaign_ops.py, strategy/brand_journey.py",
-    },
-    {
-      id: "brief-compiler", name: "Brief Compiler", icon: "document", status: "available",
-      summary: "Turns the plan's decisions into a campaign brief an agency can execute.",
-      about: "Writes the Campaign Strategy and Campaign Brief from the plan's decisions: purpose, audience rules, messaging, deliverables, measurement and risks. Every section names the decision it came from.",
-      worksFrom: [
-        { label: "Plan decisions", detail: "Each landed decision with its inputs, framework and rationale." },
-        { label: "Measurement plan", detail: "The KPIs and targets the plan committed to." },
-      ],
-      builtOn: "strategy/campaign_artifacts.py",
-    },
-  ],
-  ops: [
-    {
       id: "flow-planner", name: "Flow Planner", icon: "route", status: "available",
       summary: "Walks brand → engagement plan → campaign, then builds the SOP segmentation + journey diagram.",
-      about: "Opens on a blank canvas and asks, step by step, which brand, engagement plan and campaign to build a flow for, then generates the SOP-driven segmentation and journey diagram for it.",
+      about: "Opens on a blank canvas and asks, step by step, which brand, engagement plan and campaign to build a flow for, then generates the SOP-driven segmentation and journey diagram for it. It also drafts the channel-by-channel flow of sends, waits and decisions from the campaign's brief, audience and message ladder, and applies your changes as structured edits that survive a rebuild.",
       worksFrom: [
         { label: "Your picks", detail: "The brand, engagement plan and campaign you select as the agent asks." },
         { label: "SOP rules", detail: "The Flow Planner SOP's fixed segmentation and journey rules." },
+        { label: "Message ladder", detail: "The message pillars, told in order across the sends." },
+        { label: "Node catalogue", detail: "Send, wait, decision, follow-up and exit blocks, each with a stable code." },
       ],
-      builtOn: "strategy/flow_sop",
+      builtOn: "strategy/flow_sop, strategy/campaign_ops.py, strategy/brand_journey.py",
     },
+  ],
+  ops: [
+    { id: "engagement-orchestration", name: "Intake Orchestrator", icon: "users", status: "wip", summary: "Takes in campaign requests and tracks the setup activity board, owners and deadlines." },
     {
-      id: "journey-builder", name: "Journey Builder", icon: "branch", status: "available",
+      id: "journey-builder", name: "SFMC Journey Builder", icon: "branch", status: "available",
       summary: "Builds and edits the live engagement journey diagram from plain-English instructions.",
       about: "Edits the Campaign Plan's journey diagram from what you tell it, and checks every change against the flowchart rules before saving it.",
       worksFrom: [
@@ -192,17 +188,19 @@ export const AGENTS: Record<Phase, LibraryAgent[]> = {
         { label: "Flow sends", detail: "Each email step in the campaign's flows." },
       ],
     },
+    { id: "mlr-review", name: "Content & MLR Review", icon: "eye", status: "wip", summary: "Pre-checks claims against the label and compliance guardrails before medical, legal and regulatory review." },
     { id: "litmus-test-agent", name: "Litmus Test Agent", icon: "flask", status: "wip", summary: "Checks emails render correctly across clients and devices before they go out." },
+    { id: "ab-testing", name: "A/B Testing", icon: "zap", status: "wip", summary: "Designs the test, sizes the sample and calls the winner." },
     { id: "segment-update-agent", name: "Segment Update Agent", icon: "refresh", status: "wip", summary: "Keeps campaign segments current as HCP data and engagement change." },
-    { id: "engagement-orchestration", name: "Engagement Orchestration", icon: "users", status: "wip", summary: "Tracks the setup activity board, owners and deadlines." },
   ],
   intelligence: [
+    { id: "reporting-insights", name: "Reporting & Insights", icon: "barChart", status: "wip", summary: "Answers questions about campaign performance from the KPI scorecard." },
+    { id: "predictive-campaigns", name: "Predictive Campaigns", icon: "sparkles", status: "wip", summary: "Forecasts campaign results and recommends what to run next, feeding the Engagement Planner." },
+    { id: "kpi-dashboard", name: "KPI Dashboard", icon: "star", status: "wip", summary: "Builds the scorecard, funnel and demographic cards." },
     { id: "hcp-360", name: "HCP 360", icon: "users", status: "wip", summary: "Answers questions about the HCP universe: who, where, how they prescribe and engage." },
     { id: "nba-for-platform", name: "NBA for Platform", icon: "sparkles", status: "wip", summary: "Recommends the next best action for each HCP across channels." },
     { id: "budget-agent", name: "Budget Agent", icon: "wallet", status: "wip", summary: "Allocates the campaign budget across channels to match the plan's posture." },
-    { id: "reporting-insights", name: "Reporting & Insights", icon: "barChart", status: "wip", summary: "Answers questions about campaign performance from the KPI scorecard." },
     { id: "persona-review", name: "Persona Review", icon: "eye", status: "wip", summary: "Reads a finished plan back through each persona's eyes." },
-    { id: "kpi-dashboard", name: "KPI Dashboard", icon: "star", status: "wip", summary: "Builds the scorecard, funnel and demographic cards." },
   ],
 };
 
@@ -220,6 +218,7 @@ export interface RegistryAgent extends LibraryAgent {
 
 /** Agents with a redesigned workspace open there; the rest keep their current screen. */
 const AGENT_ROUTES: Record<string, string> = {
+  "brand-iq": "#/v3/iq/kits",
   "engagement-planner": "#/v3/agent/engagement-planner",
   "campaign-planner": "#/v3/agent/campaign-planner",
   "segmentation-planner": "#/v3/agent/segmentation-planner",
