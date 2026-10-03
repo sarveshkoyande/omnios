@@ -403,4 +403,93 @@ def run_skill(brand: str, skill: str) -> dict:
     raise ValueError(f"Unknown skill '{skill}'")
 
 
-__all__ = ["propose", "run_skill", "SKILLS", "LLMUnavailable"]
+# --- Brand IQ Agent: four agent steps over the skills, acknowledgement, rebuild with snapshot ---
+STEPS = [
+    {"id": "understand", "name": "Understand the brand", "skills": ["brand_plan"]},
+    {"id": "evidence", "name": "Gather the evidence", "skills": ["label", "audience_intel", "us_geography"]},
+    {"id": "strategy", "name": "Build the brand strategy", "skills": ["evidence", "personas", "voice", "competition"]},
+    {"id": "idea", "name": "Create the Big Idea", "skills": ["big_idea", "client_data"]},
+]
+
+# Content the agent rebuilds. Identity and lookup fields (brand, generic, indications, the public-source
+# queries, territories, competitor names) stay so the evidence steps know what to look up.
+_REBUILT = ("positioning_statement", "core_claim", "key_objective", "unmet_need", "primary_audience", "brand_situation",
+            "strategic_imperatives", "kpis", "activities", "audience_segments", "clinical_data", "references",
+            "message_hierarchy", "personas", "care_continuum", "messages_by_persona", "voice", "tone_pillars", "voice_do",
+            "voice_dont", "guardrails", "competition_self", "tagline", "big_idea", "product_profile", "audience_intel",
+            "us_geography", "approval_dates")
+
+
+def _inventory(kit: dict) -> dict:
+    """What the kit already knows that the agent can build on (names only, no content)."""
+    q = kit.get("public_source_query") or {}
+    return {"generic_name": q.get("generic") or kit.get("generic"), "condition": (kit.get("audience_query") or {}).get("condition"),
+            "indications": [i.get("name") for i in kit.get("indications") or []],
+            "competitor_names": [c.get("name") for c in kit.get("competitors") or []][:12],
+            "company": kit.get("company"), "therapy_area": kit.get("therapy_area")}
+
+
+def acknowledge(brand: str) -> dict:
+    """Step 1's first move: read what the person gave (plan and/or notes, or nothing) and say plainly
+    what's available, what isn't, and how the kit will be built. LLM only (R1); no model -> LLMUnavailable."""
+    kit = brand_kit.kit_for(brand)
+    if not kit:
+        raise KeyError(brand)
+    plan = _load_brand_plan(brand) or {}
+    return complete_json(
+        "You are the Brand IQ Agent about to build a US pharma brand kit. Read what the person provided (an "
+        "uploaded brand plan's text and/or typed notes; either may be empty) and what the kit already knows. "
+        "Reply in plain words to the person: what you understood, what is available, what is missing, and how "
+        "you'll build. If nothing was provided, say you'll build from secondary sources only (FDA label, Drugs@FDA, "
+        "NIH MeSH, PubMed, ClinicalTrials.gov, MedlinePlus, CDC PLACES) and that AI drafts will be marked to "
+        "confirm. If the generic name or condition is missing, say which evidence steps can't run. Never invent "
+        "facts about the brand. Reply with one JSON object.\n"
+        'Shape: {"mode":"brand_plan|notes|secondary","understood":"","have":[{"what":"","detail":""}],'
+        '"missing":[{"what":"","impact":""}],"approach":[""],"question":""}',
+        {"brand": brand, "uploaded_file": plan.get("filename"), "plan_text": (plan.get("text") or "")[:20000],
+         "notes": plan.get("notes") or "", "kit_knows": _inventory(kit)}, max_tokens=1500)
+
+
+def _versions_dir(brand: str):
+    from paths import data_path
+    return data_path("kit_versions", brand)
+
+
+def reset_for_rebuild(brand: str) -> dict:
+    """Save the whole current kit as a restorable version, then empty the content the agent rebuilds."""
+    import json
+    from datetime import datetime
+    kit = brand_kit.kit_for(brand)
+    if not kit:
+        raise KeyError(brand)
+    d = _versions_dir(brand)
+    d.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    (d / f"{stamp}.json").write_text(json.dumps(kit, ensure_ascii=False), encoding="utf-8")
+    cleared = {}
+    for k in _REBUILT:
+        if k in kit:
+            v = kit[k]
+            cleared[k] = [] if isinstance(v, list) else {} if isinstance(v, dict) else ""
+    cleared["competitors"] = [{k: v for k, v in c.items() if k not in ("strength", "weakness", "counter", "threat")}
+                              for c in kit.get("competitors") or []]
+    cleared["proposals"] = {}
+    brand_kit.apply_diff(brand, cleared)
+    return {"saved_version": stamp}
+
+
+def list_versions(brand: str) -> list[str]:
+    d = _versions_dir(brand)
+    return sorted((p.stem for p in d.glob("*.json")), reverse=True) if d.exists() else []
+
+
+def restore_version(brand: str, version: str) -> dict:
+    import json
+    p = _versions_dir(brand) / f"{version}.json"
+    if not p.exists():
+        raise KeyError(version)
+    return brand_kit.apply_diff(brand, json.loads(p.read_text(encoding="utf-8")))
+
+
+__all__ = ["propose", "run_skill", "SKILLS", "STEPS", "acknowledge", "reset_for_rebuild", "list_versions",
+           "restore_version", "LLMUnavailable"]

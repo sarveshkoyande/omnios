@@ -1,0 +1,56 @@
+/* Signal Scout agent views, after the pilot UI's palette (purple / green / amber / blue / red). */
+.v3 .v3-ss { --ss-ink: #20283d; --ss-line: #e6e9ef; --ss-lav: #f2eef8; --ss-purple: #6f4ba5;
+  --ss-green: #23866e; --ss-green-bg: #e9f5f0; --ss-amber: #a76d20; --ss-amber-bg: #fbf2df;
+  --ss-blue: #2c76ad; --ss-blue-bg: #eaf3f9; --ss-red: #b84d63; --ss-red-bg: #fae9ed; }
+.v3 .v3-ss-focus { margin: 0 0 10px; font-size: 12px; color: var(--muted); }
+.v3 .v3-ss-view { display: flex; flex-direction: column; gap: 10px; padding-bottom: 24px; }
+.v3 .v3-ss-eyebrow { margin: 0; font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ss-purple); }
+.v3 .v3-ss-h { margin: 0 0 4px; font-size: 20px; color: var(--ss-ink); }
+.v3 .v3-ss-sec { display: flex; align-items: center; gap: 8px; margin: 14px 0 2px; font-size: 14px; color: var(--ss-ink); }
+.v3 .v3-ss-sec em { font-style: normal; font-size: 11px; font-weight: 700; color: var(--ss-purple); background: var(--ss-lav); border-radius: 6px; padding: 2px 6px; }
+.v3 .v3-ss-pending { margin: 0; font-size: 12px; color: var(--muted); font-style: italic; }
+.v3 .v3-ss-exec { padding: 16px 18px; border-radius: var(--radius-md); background: linear-gradient(135deg, #2b2348, #4a3478); color: #fff; }
+.v3 .v3-ss-exec .v3-ss-eyebrow { color: #cdbcf0; }
+.v3 .v3-ss-exec h3 { margin: 6px 0; font-size: 17px; line-height: 1.35; }
+.v3 .v3-ss-exec p { margin: 0 0 10px; font-size: 13px; line-height: 1.55; opacity: .9; }
+.v3 .v3-ss-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+.v3 .v3-ss-pills span { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 999px; background: var(--ss-lav); color: var(--ss-purple); }
+.v3 .v3-ss-exec .v3-ss-pills span { background: rgba(255,255,255,.14); color: #fff; }
+.v3 .v3-ss-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+.v3 .v3-ss-card, .v3 .v3-ss-study { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; padding: 12px 14px; border-radius: var(--radius-md); background: #fff; box-shadow: 0 0 0 1px var(--ss-line); }
+.v3 .v3-ss-card p, .v3 .v3-ss-study p { margin: 0; font-size: 12.5px; line-height: 1.5; color: var(--ss-ink); }
+.v3 .v3-ss-card small, .v3 .v3-ss-study small { font-size: 11px; color: var(--muted); }
+.v3 .v3-ss-card-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%; font-size: 11px; color: var(--muted); }
+.v3 .v3-ss-badge { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; padding: 2px 7px; border-radius: 999px; background: var(--neutral-100); color: var(--neutral-600); white-space: nowrap; }
+.v3 .v3-ss-badge.high, .v3 .v3-ss-badge.very-high, .v3 .v3-ss-badge.crowded, .v3 .v3-ss-badge.strengthened { background: var(--ss-red-bg); color: var(--ss-red); }
+.v3 .v3-ss-badge.medium, .v3 .v3-ss-badge.moderate, .v3 .v3-ss-badge.competitor-owned, .v3 .v3-ss-badge.contested, .v3 .v3-ss-badge.persistent { background: var(--ss-amber-bg); color: var(--ss-amber); }
+.v3 .v3-ss-badge.low, .v3 .v3-ss-badge.underrepresented, .v3 .v3-ss-badge.new { background: var(--ss-green-bg); color: var(--ss-green); }
+.v3 .v3-ss-badge.weakened, .v3 .v3-ss-badge.resolved { background: var(--ss-blue-bg); color: var(--ss-blue); }
+.v3 .v3-ss-fn { display: inline-flex; align-items: center; gap: 6px; }
+.v3 .v3-ss-fn i { font-style: normal; width: 18px; height: 18px; border-radius: 5px; display: grid; place-items: center; font-weight: 700; background: var(--ss-lav); color: var(--ss-purple); }
+.v3 .v3-ss-tag { font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 5px; background: var(--ss-blue-bg); color: var(--ss-blue); }
+.v3 .v3-ss-basis { font-size: 10.5px; color: var(--muted); }
+.v3 .v3-ss-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; width: 100%; }
+.v3 .v3-ss-kpis > div { display: flex; flex-direction: column; gap: 2px; padding: 12px; border-radius: var(--radius-md); background: var(--ss-lav); }
+.v3 .v3-ss-kpis b { font-size: 22px; color: var(--ss-purple); }
+.v3 .v3-ss-kpis span { font-size: 12px; color: var(--ss-ink); }
+.v3 .v3-ss-insight { padding: 10px 14px; border-left: 3px solid var(--ss-purple); background: var(--ss-lav); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+.v3 .v3-ss-insight em { font-style: normal; font-size: 11px; font-weight: 700; color: var(--ss-purple); }
+.v3 .v3-ss-insight p { margin: 4px 0 0; font-size: 13px; line-height: 1.5; }
+.v3 .v3-ss-records { display: flex; flex-direction: column; gap: 6px; }
+.v3 .v3-ss-records > div { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: var(--radius-sm); background: #fff; box-shadow: 0 0 0 1px var(--ss-line); }
+.v3 .v3-ss-records > div > div { flex: 1; }
+.v3 .v3-ss-records p { margin: 2px 0; font-size: 12.5px; }
+.v3 .v3-ss-records em { font-style: normal; font-size: 11px; color: var(--ss-green); white-space: nowrap; }
+.v3 .v3-ss-dl { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; margin: 0; font-size: 12px; }
+.v3 .v3-ss-dl dt { color: var(--muted); }
+.v3 .v3-ss-dl dd { margin: 0; font-weight: 600; }
+.v3 .v3-ss-chan { display: flex; justify-content: space-between; width: 100%; font-size: 12px; }
+.v3 .v3-ss-hist { display: flex; flex-direction: column; gap: 6px; }
+.v3 .v3-ss-hist-row { display: flex; gap: 10px; align-items: center; }
+.v3 .v3-ss-hist-row > div { flex: 1; padding: 10px 12px; border-radius: var(--radius-sm); background: #fff; box-shadow: 0 0 0 1px var(--ss-line); }
+.v3 .v3-ss-hist-row em { font-style: normal; font-size: 11px; font-weight: 700; color: var(--muted); }
+.v3 .v3-ss-hist-row p { margin: 2px 0 0; font-size: 12.5px; }
+.v3 .v3-ss-change { display: flex; gap: 10px; align-items: center; font-size: 12.5px; padding: 6px 2px; border-bottom: 1px solid var(--ss-line); }
+.v3 .v3-ss-change > span:last-child { color: var(--muted); }
+.v3 .v3-ss-decide { display: flex; flex-direction: column; gap: 4px; margin-top: 12px; padding: 14px 16px; border-radius: var(--radius-md); background: var(--ss-green-bg); color: var(--ss-green); font-size: 12.5px; }

@@ -63,9 +63,28 @@ def _read_kits(path) -> dict:
         return {}
 
 
+def _mtimes() -> tuple:
+    out = []
+    for path in (KITS_JSON, _local_kits_path()):
+        try:
+            out.append(path.stat().st_mtime_ns)
+        except OSError:
+            out.append(None)
+    return tuple(out)
+
+
 @functools.lru_cache(maxsize=1)
-def _load() -> dict:
+def _load_at(_stamp: tuple) -> dict:
     return {**_read_kits(KITS_JSON), **_read_kits(_local_kits_path())}
+
+
+def _load() -> dict:
+    # Keyed on the files' mtimes: this module is imported both as `brand_kit` and
+    # `strategy.brand_kit`, so a write through one must still be seen by the other.
+    return _load_at(_mtimes())
+
+
+_load.cache_clear = _load_at.cache_clear  # type: ignore[attr-defined]  (callers clear after writes)
 
 
 def list_brands() -> list[dict]:

@@ -53,6 +53,46 @@ export function uploadBrandPlan(brand: string, file: File | null, notes: string)
 export function runBrandIqSkill(brand: string, skill: string): Promise<{ brand: string; skill: string; kit: BrandKit; reasoning: string[] }> {
   return postJSON(`/api/brand-kits/${encodeURIComponent(brand)}/skills/${encodeURIComponent(skill)}`, {});
 }
+export interface ScoutSkill { id: string; name: string; does: string; view: "market" | "competitive" | "synthesis" }
+export interface ScoutReadout { focus: string; started: string; updated?: string; sections: Record<string, Record<string, unknown>>; reasoning: Record<string, string[]>; worklist: number[] }
+export function listScoutSkills(): Promise<{ skills: ScoutSkill[] }> {
+  return getJSON(`/api/signal-scout/skills`);
+}
+export function getScout(brand: string): Promise<{ current: ScoutReadout | null; previous: ScoutReadout | null }> {
+  return getJSON(`/api/brands/${encodeURIComponent(brand)}/signal-scout`);
+}
+export function startScout(brand: string, focus: string): Promise<{ current: ScoutReadout; previous: ScoutReadout | null }> {
+  return postJSON(`/api/brands/${encodeURIComponent(brand)}/signal-scout/start`, { focus });
+}
+export function runScoutSkill(brand: string, skill: string): Promise<{ readout: ScoutReadout; reasoning: string[] }> {
+  return postJSON(`/api/brands/${encodeURIComponent(brand)}/signal-scout/skills/${encodeURIComponent(skill)}`, {});
+}
+export function toggleScoutWorklist(brand: string, index: number): Promise<ScoutReadout> {
+  return postJSON(`/api/brands/${encodeURIComponent(brand)}/signal-scout/worklist/${index}`, {});
+}
+export interface AgentStepDef { id: string; name: string; skills: string[] }
+export interface AgentAck { mode?: string; understood?: string; question?: string; have?: { what: string; detail?: string }[]; missing?: { what: string; impact?: string }[]; approach?: string[] }
+export function getBrandIqSteps(): Promise<{ steps: AgentStepDef[]; skills: BrandIqSkill[] }> {
+  return getJSON(`/api/brand-iq/steps`);
+}
+export function ackBrandIq(brand: string): Promise<AgentAck> {
+  return postJSON(`/api/brand-kits/${encodeURIComponent(brand)}/brand-iq/acknowledge`, {});
+}
+export function resetBrandIq(brand: string): Promise<{ saved_version: string }> {
+  return postJSON(`/api/brand-kits/${encodeURIComponent(brand)}/brand-iq/reset`, {});
+}
+export function listKitVersions(brand: string): Promise<{ versions: string[] }> {
+  return getJSON(`/api/brand-kits/${encodeURIComponent(brand)}/versions`);
+}
+export function restoreKitVersion(brand: string, version: string): Promise<{ brand: string; kit: BrandKit }> {
+  return postJSON(`/api/brand-kits/${encodeURIComponent(brand)}/versions/${encodeURIComponent(version)}/restore`, {});
+}
+export function getScoutSteps(): Promise<{ steps: AgentStepDef[]; skills: ScoutSkill[] }> {
+  return getJSON(`/api/signal-scout/steps`);
+}
+export function ackScout(brand: string, focus: string): Promise<AgentAck> {
+  return postJSON(`/api/brands/${encodeURIComponent(brand)}/signal-scout/acknowledge`, { focus });
+}
 export function getClientData(brand: string): Promise<Record<string, unknown>> {
   return getJSON(`/api/brand-kits/${encodeURIComponent(brand)}/client-data`);
 }

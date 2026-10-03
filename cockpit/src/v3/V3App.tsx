@@ -1,3 +1,4 @@
+import { SignalScoutAgent } from "./signalscout/SignalScoutAgent";
 import { BrandIqAgent } from "./brandiq/BrandIqAgent";
 import { useEffect, useState } from "react";
 import { listBrands } from "../api";
@@ -49,7 +50,9 @@ export function V3App({ path }: { path: string[] }) {
         onSelectBrand={scope.selectBrand} favorites={favs.favorites} isFavorite={favs.isFavorite}
         toggleFavorite={favs.toggleFavorite} pinned={pinned} setPinned={setPinned} />
       <main className={`v3-main ${isWorkspace ? "v3-main-ws" : ""}`}>
-        {isWorkspace && path[1] === "brand-iq" ? (
+        {isWorkspace && path[1] === "signal-agent" ? (
+          <SignalScoutAgent key="signal-agent" brands={brands} activeBrand={scope.activeBrand} />
+        ) : isWorkspace && path[1] === "brand-iq" ? (
           <BrandIqAgent key="brand-iq" brands={brands} activeBrand={scope.activeBrand} />
         ) : isWorkspace && path[1] === "engagement-planner" ? (
           <EngagementPlanner key="engagement-planner" planId={path[2]} brands={brands} activeBrand={scope.activeBrand} />

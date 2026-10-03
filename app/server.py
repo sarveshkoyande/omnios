@@ -1380,6 +1380,110 @@ def api_brand_iq_skills():
     return {"skills": kit_proposer.SKILLS}
 
 
+class SignalScoutStart(BaseModel):
+    focus: str = ""
+
+
+@app.get("/api/signal-scout/skills")
+def api_signal_scout_skills():
+    from strategy import signal_scout
+    return {"skills": signal_scout.SKILLS}
+
+
+@app.get("/api/brands/{brand}/signal-scout")
+def api_signal_scout_get(brand: str):
+    from strategy import signal_scout
+    return signal_scout.load(brand)
+
+
+@app.post("/api/brands/{brand}/signal-scout/start")
+def api_signal_scout_start(brand: str, body: SignalScoutStart):
+    from strategy import signal_scout
+    try:
+        return signal_scout.start(brand, body.focus)
+    except KeyError:
+        raise HTTPException(404, f"no brand kit for '{brand}'")
+
+
+@app.post("/api/brands/{brand}/signal-scout/skills/{skill}")
+def api_signal_scout_skill(brand: str, skill: str):
+    from strategy import signal_scout
+    try:
+        return signal_scout.run_skill(brand, skill)
+    except KeyError:
+        raise HTTPException(404, f"no brand kit for '{brand}'")
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    except signal_scout.LLMUnavailable as e:
+        raise HTTPException(503, f"The AI model couldn't be reached ({e}), so this step wrote nothing. Try again in a moment.")
+
+
+@app.post("/api/brands/{brand}/signal-scout/worklist/{index}")
+def api_signal_scout_worklist(brand: str, index: int):
+    from strategy import signal_scout
+    return signal_scout.toggle_worklist(brand, index)
+
+
+@app.get("/api/brand-iq/steps")
+def api_brand_iq_steps():
+    from strategy import kit_proposer
+    return {"steps": kit_proposer.STEPS, "skills": kit_proposer.SKILLS}
+
+
+@app.post("/api/brand-kits/{brand}/brand-iq/acknowledge")
+def api_brand_iq_acknowledge(brand: str):
+    """Read what the person provided (already uploaded via /brand-plan) and say what's available."""
+    from strategy import kit_proposer
+    try:
+        return kit_proposer.acknowledge(brand)
+    except KeyError:
+        raise HTTPException(404, f"no brand kit for '{brand}'")
+    except kit_proposer.LLMUnavailable as e:
+        raise HTTPException(503, f"The AI model couldn't be reached ({e}), so the agent couldn't read your input. Try again in a moment.")
+
+
+@app.post("/api/brand-kits/{brand}/brand-iq/reset")
+def api_brand_iq_reset(brand: str):
+    """Save the current kit as a version, then empty the content the agent rebuilds."""
+    from strategy import kit_proposer
+    try:
+        return kit_proposer.reset_for_rebuild(brand)
+    except KeyError:
+        raise HTTPException(404, f"no brand kit for '{brand}'")
+
+
+@app.get("/api/brand-kits/{brand}/versions")
+def api_brand_kit_versions(brand: str):
+    from strategy import kit_proposer
+    return {"versions": kit_proposer.list_versions(brand)}
+
+
+@app.post("/api/brand-kits/{brand}/versions/{version}/restore")
+def api_brand_kit_restore(brand: str, version: str):
+    from strategy import kit_proposer
+    try:
+        return {"brand": brand, "kit": kit_proposer.restore_version(brand, version)}
+    except KeyError:
+        raise HTTPException(404, f"no saved version '{version}' for '{brand}'")
+
+
+@app.get("/api/signal-scout/steps")
+def api_signal_scout_steps():
+    from strategy import signal_scout
+    return {"steps": signal_scout.STEPS, "skills": signal_scout.SKILLS}
+
+
+@app.post("/api/brands/{brand}/signal-scout/acknowledge")
+def api_signal_scout_acknowledge(brand: str, body: SignalScoutStart):
+    from strategy import signal_scout
+    try:
+        return signal_scout.acknowledge(brand, body.focus)
+    except KeyError:
+        raise HTTPException(404, f"no brand kit for '{brand}'")
+    except signal_scout.LLMUnavailable as e:
+        raise HTTPException(503, f"The AI model couldn't be reached ({e}), so Signal Scout couldn't read your brief. Try again in a moment.")
+
+
 @app.post("/api/brand-kits/{brand}/brand-plan")
 async def api_brand_kit_upload_plan(brand: str, file: UploadFile | None = File(None), notes: str = Form("")):
     """Brand IQ Agent intake: store the brand plan's text (PDF/DOCX/PPTX/TXT/MD) and the user's

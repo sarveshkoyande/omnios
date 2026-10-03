@@ -69,14 +69,14 @@ export const AGENTS: Record<Phase, LibraryAgent[]> = {
     },
     {
       id: "signal-agent", name: "Signal Scout", icon: "radar", status: "available",
-      summary: "Surfaces the market and competitive signals that should shape the plan.",
-      about: "Pulls together what's known about the therapy area, the competitive set and where the brand sits in its lifecycle, so the plan starts from the market as it is.",
+      summary: "What changed in the market, and what should the team do? Signals, competitive landscape and actions.",
+      about: "Reads the brand's Brand IQ, then runs nine skills in turn: market and treatment landscape, clinical evidence, competitive set, positioning, message territory, channel activity, signal synthesis, team actions and what changed since the last readout. US market only.",
       worksFrom: [
-        { label: "Brand kit competitors", detail: "The named competitors in the brand kit, with threat level and detail." },
-        { label: "Market-intel store", detail: "Each brand's lifecycle-stage assessment, grounded in public market evidence." },
-        { label: "External evidence", detail: "Public-knowledge lookups when the kit has no signal for a question." },
+        { label: "Brand IQ", detail: "Label, clinical data, competitors, audiences, US geography and brand-plan fields." },
+        { label: "Your focus", detail: "An optional question to steer the scan." },
+        { label: "Previous readout", detail: "The last completed scan, so it can say what's new, persistent or resolved." },
       ],
-      builtOn: "strategy/brand_lifecycle.py, strategy/external_evidence.py",
+      builtOn: "strategy/signal_scout.py",
     },
     {
       id: "brand-persona-builder", name: "Audience Segmentation Planner", icon: "persona", status: "available",
@@ -216,6 +216,7 @@ export interface RegistryAgent extends LibraryAgent {
 /** Agents with a redesigned workspace open there; the rest keep their current screen. */
 const AGENT_ROUTES: Record<string, string> = {
   "brand-iq": "#/v3/agent/brand-iq",
+  "signal-agent": "#/v3/agent/signal-agent",
   "engagement-planner": "#/v3/agent/engagement-planner",
   "campaign-planner": "#/v3/agent/campaign-planner",
   "segmentation-planner": "#/v3/agent/segmentation-planner",

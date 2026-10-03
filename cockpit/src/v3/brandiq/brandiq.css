@@ -12,7 +12,7 @@
 .v3 .v3-biq-body p { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.45; }
 .v3 .v3-biq-kind { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; padding: 2px 6px; border-radius: var(--radius-xs); background: var(--neutral-100); color: var(--neutral-600); white-space: nowrap; }
 .v3 .v3-biq-kind.ai { background: var(--primary); color: var(--base-white); }
-.v3 .v3-biq-canvas { overflow: auto; padding: 16px 20px; }
+.v3 .v3-biq-canvas { overflow: auto; padding: 16px 20px; min-width: 0; flex: 1 1 0; }
 .v3 .v3-biq-live { position: sticky; top: 0; z-index: 2; margin: 0 0 10px; padding: 6px 10px; border-radius: var(--radius-sm); background: var(--base-white); box-shadow: 0 0 0 1px var(--primary); font-size: 12px; font-weight: 600; color: var(--primary); display: inline-flex; gap: 6px; align-items: center; }
 .v3 .v3-biq .v3-cc-stepper { margin-bottom: 12px; }
 .v3 .v3-biq-feed { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
