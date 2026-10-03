@@ -1509,6 +1509,18 @@ async def api_agent_intake(agent: str, key: str, files: list[UploadFile] | None 
     return agent_intake.save(agent, key, meta, text, notes)
 
 
+@app.post("/api/v3/engagement-plans/{plan_id}/publish")
+def api_v3_engagement_publish(plan_id: str):
+    """Save the plan and its campaigns to Brands & Campaigns (the brand hierarchy)."""
+    from strategy import engagement_agent, hierarchy as _h
+    try:
+        return engagement_agent.publish(plan_id)
+    except KeyError:
+        raise HTTPException(404, "no such engagement plan")
+    except (ValueError, _h.NotFound) as e:
+        raise HTTPException(400, str(e))
+
+
 @app.post("/api/v3/engagement-plans/{plan_id}/agent/acknowledge")
 def api_v3_engagement_acknowledge(plan_id: str):
     from strategy import engagement_agent

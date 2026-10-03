@@ -1,16 +1,27 @@
 import { useEffect, useState } from "react";
-import { listArtifacts, type V3ArtifactSummary } from "../api";
+import { listArtifacts, listEngagementPlans, type V3ArtifactSummary } from "../api";
 import { REGISTRY } from "../agents";
 import { Icon } from "../components/Icon";
 
-/** C15: every artifact the agents have produced, newest first, scoped to the active brand. */
+type WorkItem = Pick<V3ArtifactSummary, "id" | "agent" | "brand" | "title" | "updated_at" | "version"> & { href: string };
+
+/** C15: everything the agents have produced -- artifacts and engagement plans -- newest first,
+ *  scoped to the active brand. */
 export function MyWork({ activeBrand }: { activeBrand: string | null }) {
-  const [items, setItems] = useState<V3ArtifactSummary[] | null>(null);
+  const [items, setItems] = useState<WorkItem[] | null>(null);
 
   useEffect(() => {
     let live = true;
     setItems(null);
-    listArtifacts(activeBrand).then((r) => live && setItems(r.artifacts)).catch(() => live && setItems([]));
+    Promise.all([
+      listArtifacts(activeBrand).then((r) => r.artifacts.map((a) => ({ ...a, href: `#/v3/agent/${a.agent}/${a.id}` }))).catch(() => []),
+      listEngagementPlans(activeBrand ?? undefined).then((r) => r.plans.map((p) => ({
+        id: p.id, agent: "engagement-planner", brand: p.brand, title: p.title, updated_at: p.updated_at, version: p.version,
+        href: `#/v3/agent/engagement-planner/${p.id}`,
+      }))).catch(() => []),
+    ]).then(([a, p]) => {
+      if (live) setItems([...a, ...p].sort((x, y) => (x.updated_at < y.updated_at ? 1 : -1)));
+    });
     return () => { live = false; };
   }, [activeBrand]);
 
@@ -22,11 +33,11 @@ export function MyWork({ activeBrand }: { activeBrand: string | null }) {
       </div>
       <div className="v3-recent">
         {items === null && <div className="v3-recent-empty">Loading…</div>}
-        {items?.length === 0 && <div className="v3-recent-empty">Nothing generated yet{activeBrand ? ` for ${activeBrand}` : ""}. Open an agent and Generate to see it here.</div>}
+        {items?.length === 0 && <div className="v3-recent-empty">Nothing generated yet{activeBrand ? ` for ${activeBrand}` : ""}. Run an agent to see its work here.</div>}
         {items?.map((a) => {
           const agent = REGISTRY.find((x) => x.id === a.agent);
           return (
-            <a key={a.id} className="v3-recent-row" href={`#/v3/agent/${a.agent}/${a.id}`}>
+            <a key={`${a.agent}:${a.id}`} className="v3-recent-row" href={a.href}>
               <Icon name={agent?.icon ?? "document"} size={15} />
               <span className="v3-recent-name">{a.title}</span>
               <span className="v3-recent-meta">{!activeBrand && <em>{a.brand}</em>}{agent?.name ?? a.agent} · v{a.version}</span>

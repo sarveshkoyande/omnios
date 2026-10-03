@@ -100,6 +100,9 @@ export function getScoutSteps(): Promise<{ steps: AgentStepDef[]; skills: ScoutS
 export function ackScout(brand: string, focus: string): Promise<AgentAck> {
   return postJSON(`/api/brands/${encodeURIComponent(brand)}/signal-scout/acknowledge`, { focus });
 }
+export function publishEngagementPlan(planId: string): Promise<EngagementPlan> {
+  return postJSON(`/api/v3/engagement-plans/${encodeURIComponent(planId)}/publish`, {});
+}
 export function ackEngagement(planId: string): Promise<EngagementPlan> {
   return postJSON(`/api/v3/engagement-plans/${encodeURIComponent(planId)}/agent/acknowledge`, {});
 }

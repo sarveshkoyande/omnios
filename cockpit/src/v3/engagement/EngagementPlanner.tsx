@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   createEngagementPlan, engagementCheck, engagementChoose, engagementClassify, engagementDiagnose,
   engagementDraft, engagementOptions, getEngagementFramework, getEngagementPlan,
-  listEngagementPlans, ackEngagement, uploadAgentIntake, type EngagementPlan,
+  listEngagementPlans, ackEngagement, publishEngagementPlan, uploadAgentIntake, type EngagementPlan,
 } from "../../api";
 import { AckCard, GlassDrop, ReasoningButton, ReasoningPanel, type Ack, type ReasonEntry } from "../agentkit/AgentKit";
 import { Icon } from "../../components/Icon";
@@ -124,6 +124,9 @@ export function EngagementPlanner({ brands, activeBrand, planId }: { brands: Bra
     await run("Checking feasibility and red-teaming…", () => engagementCheck(plan.id));
   };
 
+  const published = (body.published ?? null) as Any | null;
+  const save = () => plan && run("Saving the plan and its campaigns…", () => publishEngagementPlan(plan.id));
+
   if (!brand) return <p className="v3-empty">Add a brand first: an engagement plan belongs to one brand.</p>;
   const lifecycle = arr(fw?.lifecycle), archetypes = arr(fw?.archetypes), access = arr(fw?.access);
   const checks = (body.checks ?? null) as Any | null;
@@ -168,6 +171,12 @@ export function EngagementPlanner({ brands, activeBrand, planId }: { brands: Bra
               <option value="">+ New plan</option>
               {plans.map((p) => <option key={p.id} value={p.id}>{p.title} (v{p.version})</option>)}
             </select>
+          )}
+          {drafted && (
+            <button type="button" className="v3-cc-btn primary" disabled={!!busy} onClick={save}
+              title="Save the plan and its campaigns to Brands & Campaigns">
+              {published ? "Save again" : "Save plan"}
+            </button>
           )}
           <ReasoningButton live={Boolean(busy)} onClick={() => setShowReasoning((v) => !v)} />
         </span>
@@ -300,7 +309,12 @@ export function EngagementPlanner({ brands, activeBrand, planId }: { brands: Bra
                 {allDone && (
                   <div className="v3-ak-done">
                     <b>Plan drafted and checked.</b>
-                    <span className="v3-muted">See Checks for feasibility issues and the red team. Each campaign can open the Campaign Agent.</span>
+                    {published ? (
+                      <span className="v3-ep-saved"><Icon name="check" size={12} /> Saved to <a href="#/v3/brands">Brands & Campaigns</a> with {Object.keys((published.campaigns ?? {}) as Any).length} campaign(s). The Campaign, Segmentation and Flow agents can work on them now.</span>
+                    ) : (
+                      <span className="v3-muted">Every step is kept as a version of this plan. Save it to put the plan and its campaigns in Brands & Campaigns, where the other agents pick them up.</span>
+                    )}
+                    <button type="button" className="v3-cc-btn primary" disabled={!!busy} onClick={save}>{published ? "Save again" : "Save plan & campaigns"}</button>
                     <button type="button" className="v3-cc-btn" onClick={() => setShowReasoning(true)}>See the reasoning</button>
                     <button type="button" className="v3-cc-btn" disabled={!!busy} onClick={() => plan && run("Re-running options…", () => engagementOptions(plan.id, (agent.answers as Record<string, string>) ?? {}))}>Revisit the strategy</button>
                   </div>

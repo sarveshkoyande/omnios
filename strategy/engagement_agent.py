@@ -439,3 +439,55 @@ def check(plan_id: str) -> dict:
 
 
 __all__ = ["read", "classify", "diagnose", "options", "choose", "draft", "check", "LLMUnavailable"]
+
+
+# --------------------------------------------------------------------------- Save
+
+def _month_bounds(ym: str | None, end: bool) -> str | None:
+    """'2026-11' -> '2026-11-01' (start) or '2026-11-30' (end); full dates pass through."""
+    import calendar
+    import datetime as dt
+    if not ym:
+        return None
+    try:
+        if len(ym) >= 10:
+            return dt.date.fromisoformat(ym[:10]).isoformat()
+        y, m = int(ym[:4]), int(ym[5:7])
+        return dt.date(y, m, calendar.monthrange(y, m)[1] if end else 1).isoformat()
+    except ValueError:
+        return None
+
+
+def publish(plan_id: str) -> dict:
+    """Save the plan to Brands & Campaigns: an engagement plan in the brand hierarchy (strategy/hierarchy.py)
+    plus one campaign per drafted campaign, so the Campaign, Segmentation and Flow agents can work on them.
+    Saving again updates the same records (names, dates) and adds new campaigns; it never deletes any."""
+    import hierarchy
+    plan = ep.get(plan_id)
+    if not plan:
+        raise KeyError(plan_id)
+    body = plan["body"]
+    link = dict(body.get("published") or {})
+    hp_id = link.get("plan_id")
+    try:
+        if hp_id:
+            hierarchy.update_plan(hp_id, name=plan["title"], period_start=plan["period_start"], period_end=plan["period_end"])
+        else:
+            raise hierarchy.NotFound("new")
+    except hierarchy.NotFound:
+        hp_id = hierarchy.create_plan(plan["brand"], plan["title"], plan["period_start"], plan["period_end"])["id"]
+    camps = dict(link.get("campaigns") or {})
+    for c in body.get("campaigns") or []:
+        cid = camps.get(str(c.get("id")))
+        name = c.get("name") or "Untitled campaign"
+        start, end = _month_bounds(c.get("start"), False), _month_bounds(c.get("end"), True)
+        try:
+            if not cid:
+                raise hierarchy.NotFound("new")
+            hierarchy.rename_campaign(cid, name)
+            hierarchy.schedule_campaign(cid, start, end)
+        except hierarchy.NotFound:
+            camps[str(c.get("id"))] = hierarchy.create_campaign(hp_id, name, start, end)["id"]
+    body["published"] = {"plan_id": hp_id, "campaigns": camps, "at": ep._now()}
+    return ep.save(plan_id, body, f"Saved to Brands & Campaigns ({len(camps)} campaign(s))", meta={"status": "saved"})
+
