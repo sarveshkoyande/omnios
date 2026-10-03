@@ -11,7 +11,8 @@ type NavItem = { id: string; label: string; icon: IconName };
 const MAIN_NAV: NavItem[] = [
   { id: "home", label: "Home", icon: "home" },
   { id: "work", label: "My work", icon: "folder" },
-  { id: "brands", label: "Brands & Campaigns", icon: "layers" },
+  { id: "live", label: "Live simulation", icon: "zap" },
+  { id: "brands", label: "Campaigns & Journeys", icon: "layers" },
   { id: "chat", label: "Chat", icon: "message" },
 ];
 

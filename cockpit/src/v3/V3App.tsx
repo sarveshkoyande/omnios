@@ -1,3 +1,4 @@
+import { LiveSimulation } from "./livesim/LiveSimulation";
 import { FlowAgent } from "./flowagent/FlowAgent";
 import { SignalScoutAgent } from "./signalscout/SignalScoutAgent";
 import { BrandIqAgent } from "./brandiq/BrandIqAgent";
@@ -24,7 +25,8 @@ import "./v3.css";
 const PAGES: Record<string, { title: string; phase: string; perBrand?: boolean }> = {
   home: { title: "Home", phase: "Phase 2" },
   work: { title: "My work", phase: "Phase 4" },
-  brands: { title: "Brands & Campaigns", phase: "Phase 6" },
+  brands: { title: "Campaigns & Journeys", phase: "Phase 6" },
+  live: { title: "Live simulation", phase: "Phase 8" },
   chat: { title: "Chat", phase: "Phase 5" },
   "iq/kits": { title: "Brand Kits", phase: "a later phase", perBrand: true },
   "iq/personas": { title: "Personas", phase: "a later phase", perBrand: true },
@@ -91,6 +93,8 @@ export function V3App({ path }: { path: string[] }) {
           <GuardrailsPage activeBrand={scope.activeBrand} brands={brands} />
         ) : current === "iq/intel" ? (
           <MarketIntelPage activeBrand={scope.activeBrand} brands={brands} />
+        ) : current === "live" ? (
+          <LiveSimulation brands={brands} activeBrand={scope.activeBrand} />
         ) : current === "brands" ? (
           <Brands brands={brands} activeBrand={scope.activeBrand} />
         ) : current === "work" ? (

@@ -141,6 +141,14 @@ when the LLM is unavailable or misconfigured.
   options → draft → feasibility + red team. `strategy/engagement_agent.py`, `engagement_plans.py`,
   `config/frameworks/engagement_archetypes.json`; routes `/api/v3/engagement-plans/*`.
 
+**Live simulation** (`#/v3/live`, `strategy/live_sim.py`): engagement plans → campaigns → journeys (the brand
+hierarchy) as an outline + timeline, plus a nightly check (12:00 am server time, background thread started on
+FastAPI startup; also `POST /api/live-sim/check`). The check changes only derived phases (from dates) by itself;
+drift, missing journeys, stale plans, Brand IQ changes and Signal Scout readouts become "updates waiting" with
+model proposals (Apply / Dismiss). Jardiance has a seeded DEMO tree (`seed_demo`, run on startup, idempotent,
+labelled Demo in the UI). Engagement Planner "Save plan" publishes a v3 plan + its campaigns into the hierarchy
+(`engagement_agent.publish`). State: `DATA_DIR/live_sim/state.json`.
+
 **LLM-only rule**: free text a person typed is read only by the model — no regex/keyword matching of it; with no
 model a step stops with a plain message instead of guessing. (MR !1's keyword fallbacks were removed.)
 

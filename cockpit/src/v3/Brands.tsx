@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { getBrandTree } from "../api";
 import type { BrandSummary, BrandTree } from "../types";
 
-/** Brands & Campaigns (Phase 7): the planning hierarchy for the active brand, with each campaign's
+/** Campaigns & Journeys (Phase 7): the planning hierarchy for the active brand, with each campaign's
  *  next steps handed to the agents and its full record still on the classic detail pages. */
 export function Brands({ brands, activeBrand }: { brands: BrandSummary[]; activeBrand: string | null }) {
   const brand = activeBrand ?? brands[0]?.brand ?? null;
@@ -18,7 +18,7 @@ export function Brands({ brands, activeBrand }: { brands: BrandSummary[]; active
   const e = encodeURIComponent;
   return (
     <div className="v3-brands">
-      <h1 className="v3-page-title">Brands &amp; Campaigns</h1>
+      <h1 className="v3-page-title">Campaigns &amp; Journeys</h1>
       <p className="v3-page-sub">
         {brand ? <>Engagement plans and campaigns for <b>{brand}</b>. Switch brand in the rail.</> : "No brands yet."}
         {brand && <> · <a href={`#/b/${e(brand)}`}>Open the classic brand overview</a></>}

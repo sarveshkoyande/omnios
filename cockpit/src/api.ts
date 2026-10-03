@@ -112,6 +112,19 @@ export function ackSegmentation(brand: string, text: string): Promise<AgentAck &
 export function ackAgentForm(agent: string, brand: string, planId: number | null, campaignId: number | null): Promise<AgentAck & { answers: { key: string; label?: string; value: string; source: string }[] }> {
   return postJSON(`/api/v3/agents/${encodeURIComponent(agent)}/acknowledge`, { brand, plan_id: planId, campaign_id: campaignId });
 }
+/** Live simulation (strategy/live_sim.py). */
+export function getLiveSim<T>(brand: string): Promise<T> {
+  return getJSON(`/api/live-sim?brand=${encodeURIComponent(brand)}`);
+}
+export function runLiveSimCheck(brand: string): Promise<unknown> {
+  return postJSON("/api/live-sim/check", { brand });
+}
+export function seedLiveSimDemo(brand: string): Promise<unknown> {
+  return postJSON(`/api/live-sim/demo/${encodeURIComponent(brand)}`, {});
+}
+export function resolveLiveSim(brand: string, updateId: string, action: "apply" | "dismiss"): Promise<unknown> {
+  return postJSON(`/api/live-sim/${encodeURIComponent(brand)}/updates/${encodeURIComponent(updateId)}/${action}`, {});
+}
 export function getClientData(brand: string): Promise<Record<string, unknown>> {
   return getJSON(`/api/brand-kits/${encodeURIComponent(brand)}/client-data`);
 }

@@ -174,7 +174,7 @@ export function EngagementPlanner({ brands, activeBrand, planId }: { brands: Bra
           )}
           {drafted && (
             <button type="button" className="v3-cc-btn primary" disabled={!!busy} onClick={save}
-              title="Save the plan and its campaigns to Brands & Campaigns">
+              title="Save the plan and its campaigns to Campaigns & Journeys">
               {published ? "Save again" : "Save plan"}
             </button>
           )}
@@ -310,9 +310,9 @@ export function EngagementPlanner({ brands, activeBrand, planId }: { brands: Bra
                   <div className="v3-ak-done">
                     <b>Plan drafted and checked.</b>
                     {published ? (
-                      <span className="v3-ep-saved"><Icon name="check" size={12} /> Saved to <a href="#/v3/brands">Brands & Campaigns</a> with {Object.keys((published.campaigns ?? {}) as Any).length} campaign(s). The Campaign, Segmentation and Flow agents can work on them now.</span>
+                      <span className="v3-ep-saved"><Icon name="check" size={12} /> Saved to <a href="#/v3/brands">Campaigns & Journeys</a> with {Object.keys((published.campaigns ?? {}) as Any).length} campaign(s). The Campaign, Segmentation and Flow agents can work on them now.</span>
                     ) : (
-                      <span className="v3-muted">Every step is kept as a version of this plan. Save it to put the plan and its campaigns in Brands & Campaigns, where the other agents pick them up.</span>
+                      <span className="v3-muted">Every step is kept as a version of this plan. Save it to put the plan and its campaigns in Campaigns & Journeys, where the other agents pick them up.</span>
                     )}
                     <button type="button" className="v3-cc-btn primary" disabled={!!busy} onClick={save}>{published ? "Save again" : "Save plan & campaigns"}</button>
                     <button type="button" className="v3-cc-btn" onClick={() => setShowReasoning(true)}>See the reasoning</button>

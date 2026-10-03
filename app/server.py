@@ -105,6 +105,16 @@ def _seed_on_boot() -> None:
         print(f"[startup] bootstrap: {bootstrap.run(background=True)}")
     except Exception as e:  # noqa: BLE001 -- startup must never fail on seeding
         print(f"[startup] bootstrap skipped ({e})")
+    try:
+        from strategy import live_sim
+        live_sim.start_scheduler()
+        try:
+            live_sim.seed_demo("Jardiance")  # a demo tree so Live simulation is not empty on a fresh disk
+        except Exception as e:  # noqa: BLE001
+            print(f"[startup] live simulation demo not seeded ({e})")
+        print(f"[startup] live simulation check scheduled for {live_sim.next_check()}")
+    except Exception as e:  # noqa: BLE001
+        print(f"[startup] live simulation scheduler not started ({e})")
 
 
 def _msg(role: str, text: str, extra: dict | None = None) -> dict:
@@ -1507,6 +1517,45 @@ async def api_agent_intake(agent: str, key: str, files: list[UploadFile] | None 
     except ValueError as e:
         raise HTTPException(400, str(e))
     return agent_intake.save(agent, key, meta, text, notes)
+
+
+class LiveSimCheck(BaseModel):
+    brand: str | None = None
+
+
+@app.get("/api/live-sim")
+def api_live_sim(brand: str):
+    """Live simulation: the brand's plans -> campaigns -> journeys with phases, plus the updates waiting
+    and the change log from the nightly check (strategy/live_sim.py)."""
+    from strategy import live_sim
+    return live_sim.view(brand)
+
+
+@app.post("/api/live-sim/demo/{brand}")
+def api_live_sim_demo(brand: str):
+    """Seed the demo plan -> campaign -> journey tree for a brand (Jardiance), once."""
+    from strategy import live_sim
+    try:
+        return live_sim.seed_demo(brand)
+    except KeyError:
+        raise HTTPException(404, f"no demo tree for '{brand}'")
+
+
+@app.post("/api/live-sim/check")
+def api_live_sim_check(body: LiveSimCheck):
+    from strategy import live_sim
+    return {"summary": live_sim.check([body.brand] if body.brand else None)}
+
+
+@app.post("/api/live-sim/{brand}/updates/{update_id}/{action}")
+def api_live_sim_resolve(brand: str, update_id: str, action: str):
+    from strategy import live_sim
+    try:
+        return live_sim.resolve(brand, update_id, action)
+    except KeyError:
+        raise HTTPException(404, "no such update")
+    except ValueError as e:
+        raise HTTPException(400, str(e))
 
 
 @app.post("/api/v3/engagement-plans/{plan_id}/publish")
