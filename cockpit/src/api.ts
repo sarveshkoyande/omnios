@@ -44,7 +44,13 @@ export interface BrandIqSkill { id: string; name: string; does: string; llm: boo
 export function listBrandIqSkills(): Promise<{ skills: BrandIqSkill[] }> {
   return getJSON(`/api/brand-iq/skills`);
 }
-export function runBrandIqSkill(brand: string, skill: string): Promise<{ brand: string; skill: string; kit: BrandKit }> {
+export function uploadBrandPlan(brand: string, file: File | null, notes: string): Promise<{ filename: string | null; chars: number; has_notes: boolean }> {
+  const form = new FormData();
+  if (file) form.append("file", file);
+  form.append("notes", notes);
+  return postForm(`/api/brand-kits/${encodeURIComponent(brand)}/brand-plan`, form);
+}
+export function runBrandIqSkill(brand: string, skill: string): Promise<{ brand: string; skill: string; kit: BrandKit; reasoning: string[] }> {
   return postJSON(`/api/brand-kits/${encodeURIComponent(brand)}/skills/${encodeURIComponent(skill)}`, {});
 }
 export function getClientData(brand: string): Promise<Record<string, unknown>> {

@@ -11,18 +11,20 @@ import io
 
 MAX_CHARS = 8000  # keep the extracted text within a sane size for one chat/LLM turn
 
-_SUPPORTED = {"pdf", "docx", "txt", "md"}
+_SUPPORTED = {"pdf", "docx", "pptx", "txt", "md"}
 
 
 def extract_text(filename: str, content: bytes, max_chars: int = MAX_CHARS) -> str:
     ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
     if ext not in _SUPPORTED:
-        raise ValueError(f"Unsupported file type: .{ext or 'unknown'} (supported: .pdf, .docx, .txt, .md)")
+        raise ValueError(f"Unsupported file type: .{ext or 'unknown'} (supported: .pdf, .docx, .pptx, .txt, .md)")
 
     if ext == "pdf":
         text = _extract_pdf(content)
     elif ext == "docx":
         text = _extract_docx(content)
+    elif ext == "pptx":
+        text = _extract_pptx(content)
     else:
         text = content.decode("utf-8", errors="ignore")
 
@@ -44,3 +46,21 @@ def _extract_docx(content: bytes) -> str:
 
     doc = Document(io.BytesIO(content))
     return "\n".join(p.text for p in doc.paragraphs)
+
+
+def _extract_pptx(content: bytes) -> str:
+    """Slide by slide, keeping the slide number so extracted facts can cite it."""
+    from pptx import Presentation
+
+    out = []
+    for n, slide in enumerate(Presentation(io.BytesIO(content)).slides, 1):
+        parts = []
+        for shape in slide.shapes:
+            if shape.has_text_frame and shape.text_frame.text.strip():
+                parts.append(shape.text_frame.text.strip())
+            if getattr(shape, "has_table", False) and shape.has_table:
+                for row in shape.table.rows:
+                    parts.append(" | ".join(c.text.strip() for c in row.cells))
+        if parts:
+            out.append(f"[Slide {n}]\n" + "\n".join(parts))
+    return "\n\n".join(out)

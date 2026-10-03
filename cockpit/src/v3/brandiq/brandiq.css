@@ -14,3 +14,13 @@
 .v3 .v3-biq-kind.ai { background: var(--primary); color: var(--base-white); }
 .v3 .v3-biq-canvas { overflow: auto; padding: 16px 20px; }
 .v3 .v3-biq-live { position: sticky; top: 0; z-index: 2; margin: 0 0 10px; padding: 6px 10px; border-radius: var(--radius-sm); background: var(--base-white); box-shadow: 0 0 0 1px var(--primary); font-size: 12px; font-weight: 600; color: var(--primary); display: inline-flex; gap: 6px; align-items: center; }
+.v3 .v3-biq .v3-cc-stepper { margin-bottom: 12px; }
+.v3 .v3-biq-feed { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+.v3 .v3-biq-card { width: 100%; padding: 12px 14px; border-radius: var(--radius-md); background: rgba(255,255,255,0.8); box-shadow: 0 0 0 1px var(--neutral-200); }
+.v3 .v3-biq-card.running { box-shadow: 0 0 0 1.5px var(--primary); }
+.v3 .v3-biq-card.done { box-shadow: 0 0 0 1px var(--success-foreground); }
+.v3 .v3-biq-card header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.v3 .v3-biq-card header b { flex: 1; font-size: 13.5px; }
+.v3 .v3-biq-card ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; line-height: 1.5; }
+.v3 .v3-biq-card.done .v3-biq-num { background: var(--success-foreground); color: var(--base-white); }
+.v3 .v3-biq-thinking { display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: var(--muted); }

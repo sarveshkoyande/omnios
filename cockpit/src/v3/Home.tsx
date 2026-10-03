@@ -37,12 +37,12 @@ function timeAgo(iso: string): string {
   return new Date(t).toLocaleDateString();
 }
 
-/** The three quick starts, shown as big buttons inside the Ask box. Each one sets its agent
+/** The quick starts, shown as big buttons inside the Ask box. Each one sets its agent
  *  as the box's context (same as picking it from the "/" menu). */
 const QUICK: { id: string; title: string; sub: string }[] = [
-  { id: "campaign-planner", title: "Plan a campaign", sub: "Objective, audience, messages, channels, timing" },
-  { id: "flow-planner", title: "Build a flow", sub: "Turn a campaign plan into a flow diagram" },
-  { id: "brief-compiler", title: "Compile a brief", sub: "An agency-ready brief from a campaign plan" },
+  { id: "engagement-planner", title: "Plan engagement", sub: "The next months for a brand: where patients are lost, which campaigns" },
+  { id: "briefing-agent", title: "Create a campaign", sub: "From a brief to an approved campaign, ready for Salesforce" },
+  { id: "flow-planner", title: "Build a flow", sub: "Turn a campaign into a journey diagram" },
 ];
 
 /** The slash-command name an agent answers to, e.g. "/flow-planner". */

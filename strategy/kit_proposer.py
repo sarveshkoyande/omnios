@@ -34,6 +34,8 @@ _SYS = ("You are a US pharmaceutical brand strategist drafting a brand kit for r
         "MLR. Use ONLY the evidence provided; cite it in every `source` field (e.g. 'FDA label · clinical studies "
         "(EMPEROR-Reduced)', 'PubMed 41165079', 'Brand IQ patient flow'). Never invent figures, trial names or "
         "claims. Efficacy claims must come from the label's clinical studies section and stay on-label. "
+        "Your JSON object MUST also have a top-level `reasoning` array: 3-6 short sentences on what evidence you used, "
+        "what you concluded and why. "
         "Reply with a single JSON object only.")
 
 
@@ -220,6 +222,8 @@ def propose(brand: str, force: bool = False) -> dict:
 
 # --- Brand IQ Agent: each step is a separate skill, run one at a time from the agent workspace ---
 SKILLS = [
+    {"id": "brand_plan", "name": "Read the brand plan", "llm": True,
+     "does": "Reads the uploaded brand plan and your notes: positioning, objectives, strategic imperatives, audiences, KPIs."},
     {"id": "label", "name": "Read the FDA label", "llm": False,
      "does": "Fetches the product profile from FDA label, Drugs@FDA, NIH MeSH and PubChem."},
     {"id": "audience_intel", "name": "Scan the HCP & patient landscape", "llm": False,
@@ -241,33 +245,134 @@ SKILLS = [
 ]
 
 
+def _plan_path(brand: str):
+    from paths import data_path
+    return data_path("brand_plans", f"{brand}.json")
+
+
+def save_brand_plan(brand: str, filename: str | None, text: str, notes: str) -> dict:
+    """Store the uploaded brand plan's text + the user's notes for the brand_plan skill. Local
+    only (DATA_DIR, gitignored): brand plans are confidential."""
+    import json
+    path = _plan_path(brand)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    rec = {"filename": filename, "text": text, "notes": notes, "date": ps._today()}
+    path.write_text(json.dumps(rec, ensure_ascii=False), encoding="utf-8")
+    return {"filename": filename, "chars": len(text), "has_notes": bool(notes.strip())}
+
+
+def _load_brand_plan(brand: str) -> dict | None:
+    import json
+    path = _plan_path(brand)
+    return json.loads(path.read_text(encoding="utf-8")) if path.exists() else None
+
+
+_PLAN_KEYS = ("company", "therapy_area", "indication", "positioning_statement", "core_claim", "key_objective",
+              "unmet_need", "primary_audience", "brand_situation", "strategic_imperatives", "kpis", "activities",
+              "audience_segments")
+
+
+def propose_from_brand_plan(brand: str, plan: dict) -> dict:
+    return complete_json(
+        "You are a US pharmaceutical brand strategist turning a brand plan into a structured brand kit. Use ONLY "
+        "the document and the notes; never invent figures. Every list item carries a `source` naming where it came "
+        "from (e.g. 'Brand plan slide 11', 'Your notes'). Leave out any field the document doesn't support. "
+        "Also include `reasoning`: 3-6 short sentences on what you read and how you mapped it. Reply with one JSON object.\n"
+        'Shape: {"company":"","therapy_area":"","indication":"","positioning_statement":"","core_claim":"",'
+        '"key_objective":"","unmet_need":"","primary_audience":"","brand_situation":{"narrative":"","drivers":[],"barriers":[]},'
+        '"strategic_imperatives":[{"name":"","insight":"","desired_behaviour":"","source":""}],'
+        '"kpis":[{"kpi":"","baseline":"","target":"","source":""}],'
+        '"activities":[{"name":"","channel":"","timing":"","imperative":"","source":""}],'
+        '"audience_segments":[{"name":"","who":"","source":""}],"reasoning":[]}',
+        {"brand": brand, "document": (plan.get("text") or "")[:60000], "notes": plan.get("notes") or ""},
+        max_tokens=6000)
+
+
+def _reasons(out: dict) -> list[str]:
+    r = out.get("reasoning")
+    if isinstance(r, list):
+        return [str(x) for x in r if x]
+    return [str(r)] if r else []
+
+
+def _summary(fields: dict) -> list[str]:
+    """When the model gave no reasoning: say plainly what the step wrote."""
+    out = []
+    for k, v in fields.items():
+        name = k.replace("_", " ")
+        if isinstance(v, list):
+            out.append(f"Drafted {len(v)} {name}.")
+        elif isinstance(v, dict):
+            out.append(f"Drafted {name}: {', '.join(list(v)[:6])}.")
+        elif isinstance(v, str) and v:
+            out.append(f"{name.capitalize()}: {v[:200]}")
+    return out
+
+
 def run_skill(brand: str, skill: str) -> dict:
-    """Run one Brand IQ skill for the brand and return the updated kit. LLM skills raise
-    LLMUnavailable with no model (nothing written); public-source skills raise on fetch errors."""
+    """Run one Brand IQ skill for the brand. Returns {"kit", "reasoning"}: the updated kit and what
+    the step read and concluded. LLM skills raise LLMUnavailable with no model (nothing written);
+    public-source skills raise on fetch errors."""
     kit = brand_kit.kit_for(brand)
     if not kit:
         raise KeyError(brand)
     proposals = dict(kit.get("proposals") or {})
+    from_plan = {k for k, v in proposals.items() if (v or {}).get("engine") == "kit_proposer.brand_plan"}
 
-    def save(section: str, out: dict, keys: tuple) -> dict:
-        fields = {k: out[k] for k in keys if k in out}
+    def save(section: str, out: dict, keys: tuple, status: str = "proposed") -> dict:
+        # what the brand plan said is the source of truth: drafts never overwrite it
+        fields = {k: out[k] for k in keys if k in out and out[k] not in (None, "", [], {})
+                  and (section == "brand_plan" or k not in from_plan)}
         for k in fields:
-            proposals[k] = {"status": "proposed", "engine": f"kit_proposer.{section}", "date": ps._today()}
-        return brand_kit.apply_diff(brand, {**fields, "proposals": proposals})
+            proposals[k] = {"status": status, "engine": f"kit_proposer.{section}", "date": ps._today()}
+        kept = [k for k in keys if k in from_plan and k in out and section != "brand_plan"]
+        reasons = _reasons(out) or _summary(fields)
+        if kept:
+            reasons.append(f"Kept the brand plan's {', '.join(kept)} rather than replacing it with a draft.")
+        return {"kit": brand_kit.apply_diff(brand, {**fields, "proposals": proposals}), "reasoning": reasons}
+
+    if skill == "brand_plan":
+        plan = _load_brand_plan(brand)
+        if not plan or not ((plan.get("text") or "").strip() or (plan.get("notes") or "").strip()):
+            return {"kit": kit, "reasoning": ["No brand plan or notes were provided, so this step was skipped. "
+                                              "The kit is built from public sources and AI drafts instead."]}
+        out = propose_from_brand_plan(brand, plan)
+        res = save("brand_plan", out, _PLAN_KEYS, status="from_brand_plan")
+        read = []
+        if plan.get("filename"):
+            read.append(f"{plan['filename']} ({len(plan.get('text') or ''):,} characters)")
+        if (plan.get("notes") or "").strip():
+            read.append("your notes")
+        res["reasoning"].insert(0, f"Read {' and '.join(read)}.")
+        return res
 
     if skill == "label":
         q = kit.get("public_source_query") or {}
         if not q.get("generic"):
             raise ValueError("This brand has no generic (INN) name set, so the FDA label can't be looked up.")
-        return brand_kit.apply_diff(brand, {"product_profile": ps.fetch_product_profile(q["generic"], q.get("condition") or kit.get("indication", ""))})
+        prof = ps.fetch_product_profile(q["generic"], q.get("condition") or kit.get("indication", ""))
+        got = [k for k, v in prof.items() if isinstance(v, dict) and v.get("value")]
+        reasons = [f"Looked up {q['generic']} on FDA label, Drugs@FDA, NIH MeSH and PubChem.",
+                   f"Found {len(got)} label sections: {', '.join(got[:8])}." if got else "No label sections came back."]
+        if prof.get("errors"):
+            reasons.append(f"Some sources failed: {prof['errors']}.")
+        return {"kit": brand_kit.apply_diff(brand, {"product_profile": prof}), "reasoning": reasons}
     if skill == "audience_intel":
         q = kit.get("audience_query") or {}
         if not q.get("condition"):
             raise ValueError("This brand has no condition set for the audience scan.")
-        return brand_kit.apply_diff(brand, {"audience_intel": ps.fetch_audience_intel(q["condition"], q.get("intervention", ""), q.get("pubmed_term") or q["condition"])})
+        intel = ps.fetch_audience_intel(q["condition"], q.get("intervention", ""), q.get("pubmed_term") or q["condition"])
+        counts = {k: len(v) for k, v in intel.items() if isinstance(v, list)}
+        reasons = [f"Searched PubMed, ClinicalTrials.gov and MedlinePlus for {q['condition']}."] + \
+                  [f"{k.replace('_', ' ').capitalize()}: {n} found." for k, n in counts.items()]
+        return {"kit": brand_kit.apply_diff(brand, {"audience_intel": intel}), "reasoning": reasons}
     if skill == "us_geography":
         import us_geography
-        return brand_kit.apply_diff(brand, {"us_geography": us_geography.build(brand, kit.get("indications") or [])})
+        geo = us_geography.build(brand, kit.get("indications") or [])
+        reasons = [f"Picked {len(geo['layers'])} CDC PLACES measures for {brand}'s conditions."] + \
+                  [f"{l.get('measure')}: top states {', '.join(s['state'] for s in (l.get('states') or [])[:5]) or 'none'}."
+                   for l in geo["layers"]]
+        return {"kit": brand_kit.apply_diff(brand, {"us_geography": geo}), "reasoning": reasons}
     if skill == "evidence":
         return save("evidence", propose_evidence(brand, kit),
                     ("clinical_data", "references", "message_hierarchy", "core_claim", "positioning_statement", "therapy_area", "primary_audience"))
@@ -285,11 +390,16 @@ def run_skill(brand: str, skill: str) -> dict:
     if skill == "competition":
         return save("competition", propose_competition(brand, kit), ("competitors", "competition_self"))
     if skill == "big_idea":
-        return big_idea(brand)
+        new = big_idea(brand)
+        rec = new.get("big_idea") or {}
+        return {"kit": new, "reasoning": [x for x in (f"Big Idea: “{rec.get('text')}”", f"Insight: {rec.get('insight')}",
+                                                       rec.get("reasoning")) if x and "None" not in x]}
     if skill == "client_data":
         import client_data
-        client_data.generate(brand, force=True)
-        return brand_kit.kit_for(brand) or kit
+        cd = client_data.generate(brand, force=True)
+        return {"kit": brand_kit.kit_for(brand) or kit,
+                "reasoning": ["No real HCP, access or field-force feed is connected, so synthetic client data was generated (flagged as synthetic).",
+                              f"Sections: {', '.join(k for k in cd if k not in ('brand', 'synthetic'))[:300]}."]}
     raise ValueError(f"Unknown skill '{skill}'")
 
 

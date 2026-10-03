@@ -1380,12 +1380,28 @@ def api_brand_iq_skills():
     return {"skills": kit_proposer.SKILLS}
 
 
+@app.post("/api/brand-kits/{brand}/brand-plan")
+async def api_brand_kit_upload_plan(brand: str, file: UploadFile | None = File(None), notes: str = Form("")):
+    """Brand IQ Agent intake: store the brand plan's text (PDF/DOCX/PPTX/TXT/MD) and the user's
+    notes for the brand_plan skill. Kept local under DATA_DIR."""
+    from strategy import kit_proposer
+    if not brand_kit.kit_for(brand):
+        raise HTTPException(404, f"no brand kit for '{brand}'")
+    text = ""
+    if file is not None:
+        try:
+            text = extract_text(file.filename or "brand-plan.txt", await file.read(), max_chars=60000)
+        except ValueError as e:
+            raise HTTPException(400, str(e))
+    return kit_proposer.save_brand_plan(brand, file.filename if file else None, text, notes)
+
+
 @app.post("/api/brand-kits/{brand}/skills/{skill}")
 def api_brand_kit_skill(brand: str, skill: str):
     """Run one Brand IQ skill and return the updated kit."""
     from strategy import kit_proposer
     try:
-        return {"brand": brand, "skill": skill, "kit": kit_proposer.run_skill(brand, skill)}
+        return {"brand": brand, "skill": skill, **kit_proposer.run_skill(brand, skill)}
     except KeyError:
         raise HTTPException(404, f"no brand kit for '{brand}'")
     except ValueError as e:
