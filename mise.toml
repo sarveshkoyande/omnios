@@ -1,0 +1,4 @@
+# Railway (Railpack) installs Python with mise. Some Python builds have no GitHub artifact
+# attestation, which makes `mise install` fail; skip that check for Python only.
+[settings]
+python.github_attestations = false
