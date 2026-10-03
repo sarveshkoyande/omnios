@@ -264,13 +264,15 @@ export function Home({ brands, activeBrand }: { brands: BrandSummary[]; activeBr
           {apps.map((a) => {
             const soon = a.tags.includes("coming-soon");
             return (
-              <div key={a.id} className={`v3-app ${soon ? "soon" : ""}`}>
+              <div key={a.id} className={`v3-app ${soon ? "soon" : ""}`} role="link" tabIndex={0} title={`About ${a.name}`}
+                onClick={() => { window.location.hash = `#/v3/app/${a.id}`; }}
+                onKeyDown={(e) => { if (e.key === "Enter") window.location.hash = `#/v3/app/${a.id}`; }}>
                 <span className="v3-app-top">
                   <span className="v3-app-icon"><Icon name={a.icon} size={16} /></span>
                   <span className="v3-tags">
                     {a.tags.includes("new") && <span className="v3-tag new">New</span>}
                     {soon ? <span className="v3-tag soon">Coming soon</span>
-                      : a.route && <button type="button" className="v3-tag launch" onClick={() => openAgent(a)} title={`Open ${a.name}`}>Launch</button>}
+                      : a.route && <button type="button" className="v3-tag launch" onClick={(e) => { e.stopPropagation(); openAgent(a); }} title={`Open ${a.name}`}>Launch</button>}
                   </span>
                 </span>
                 <b>{a.name}</b>

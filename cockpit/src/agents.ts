@@ -215,7 +215,7 @@ export interface RegistryAgent extends LibraryAgent {
 
 /** Agents with a redesigned workspace open there; the rest keep their current screen. */
 const AGENT_ROUTES: Record<string, string> = {
-  "brand-iq": "#/v3/iq/kits",
+  "brand-iq": "#/v3/agent/brand-iq",
   "engagement-planner": "#/v3/agent/engagement-planner",
   "campaign-planner": "#/v3/agent/campaign-planner",
   "segmentation-planner": "#/v3/agent/segmentation-planner",

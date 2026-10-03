@@ -1373,6 +1373,29 @@ def api_brand_kit_big_idea(brand: str):
         raise HTTPException(503, f"The AI model couldn't be reached ({e}), so no Big Idea was generated. Try again in a moment.")
 
 
+@app.get("/api/brand-iq/skills")
+def api_brand_iq_skills():
+    """The Brand IQ Agent's steps, each a separate skill (strategy/kit_proposer.SKILLS)."""
+    from strategy import kit_proposer
+    return {"skills": kit_proposer.SKILLS}
+
+
+@app.post("/api/brand-kits/{brand}/skills/{skill}")
+def api_brand_kit_skill(brand: str, skill: str):
+    """Run one Brand IQ skill and return the updated kit."""
+    from strategy import kit_proposer
+    try:
+        return {"brand": brand, "skill": skill, "kit": kit_proposer.run_skill(brand, skill)}
+    except KeyError:
+        raise HTTPException(404, f"no brand kit for '{brand}'")
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    except kit_proposer.LLMUnavailable as e:
+        raise HTTPException(503, f"The AI model couldn't be reached ({e}), so this step wrote nothing. Try again in a moment.")
+    except Exception as e:  # noqa: BLE001 -- public-source fetch failures
+        raise HTTPException(502, f"This step couldn't finish: {e}")
+
+
 @app.get("/api/brand-kits/{brand}/client-data")
 def api_brand_client_data(brand: str):
     """Client data for the planning engines: HCP deciles, accounts, access, field force, reach,

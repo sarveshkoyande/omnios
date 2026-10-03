@@ -40,6 +40,13 @@ export function proposeKitContent(brand: string, force = false): Promise<{ brand
 export function regenerateBigIdea(brand: string): Promise<{ brand: string; kit: BrandKit }> {
   return postJSON(`/api/brand-kits/${encodeURIComponent(brand)}/big-idea`, {});
 }
+export interface BrandIqSkill { id: string; name: string; does: string; llm: boolean }
+export function listBrandIqSkills(): Promise<{ skills: BrandIqSkill[] }> {
+  return getJSON(`/api/brand-iq/skills`);
+}
+export function runBrandIqSkill(brand: string, skill: string): Promise<{ brand: string; skill: string; kit: BrandKit }> {
+  return postJSON(`/api/brand-kits/${encodeURIComponent(brand)}/skills/${encodeURIComponent(skill)}`, {});
+}
 export function getClientData(brand: string): Promise<Record<string, unknown>> {
   return getJSON(`/api/brand-kits/${encodeURIComponent(brand)}/client-data`);
 }

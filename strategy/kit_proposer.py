@@ -218,4 +218,79 @@ def propose(brand: str, force: bool = False) -> dict:
     return brand_kit.apply_diff(brand, fields)
 
 
-__all__ = ["propose", "LLMUnavailable"]
+# --- Brand IQ Agent: each step is a separate skill, run one at a time from the agent workspace ---
+SKILLS = [
+    {"id": "label", "name": "Read the FDA label", "llm": False,
+     "does": "Fetches the product profile from FDA label, Drugs@FDA, NIH MeSH and PubChem."},
+    {"id": "audience_intel", "name": "Scan the HCP & patient landscape", "llm": False,
+     "does": "PubMed key opinion leaders, ClinicalTrials.gov trial footprint, MedlinePlus patient resources."},
+    {"id": "us_geography", "name": "Map US geography", "llm": False,
+     "does": "State-level prevalence for the brand's conditions from CDC PLACES."},
+    {"id": "evidence", "name": "Draft evidence & positioning", "llm": True,
+     "does": "Clinical data, references, message hierarchy, core claim and positioning from the label."},
+    {"id": "personas", "name": "Draft personas", "llm": True,
+     "does": "HCP, patient and caregiver personas, care continuum and messages by persona."},
+    {"id": "voice", "name": "Draft voice & guardrails", "llm": True,
+     "does": "Voice principles, tone by audience, vocabulary, guardrails from the label, unmet need."},
+    {"id": "competition", "name": "Analyse competition", "llm": True,
+     "does": "Competitor strengths, weaknesses, counters and threat level."},
+    {"id": "big_idea", "name": "Generate the Big Idea", "llm": True,
+     "does": "The Big Idea and tagline, with its reasoning and alternatives."},
+    {"id": "client_data", "name": "Load client data", "llm": False,
+     "does": "HCP deciles, accounts, access, field force and reach (synthetic until real feeds are connected)."},
+]
+
+
+def run_skill(brand: str, skill: str) -> dict:
+    """Run one Brand IQ skill for the brand and return the updated kit. LLM skills raise
+    LLMUnavailable with no model (nothing written); public-source skills raise on fetch errors."""
+    kit = brand_kit.kit_for(brand)
+    if not kit:
+        raise KeyError(brand)
+    proposals = dict(kit.get("proposals") or {})
+
+    def save(section: str, out: dict, keys: tuple) -> dict:
+        fields = {k: out[k] for k in keys if k in out}
+        for k in fields:
+            proposals[k] = {"status": "proposed", "engine": f"kit_proposer.{section}", "date": ps._today()}
+        return brand_kit.apply_diff(brand, {**fields, "proposals": proposals})
+
+    if skill == "label":
+        q = kit.get("public_source_query") or {}
+        if not q.get("generic"):
+            raise ValueError("This brand has no generic (INN) name set, so the FDA label can't be looked up.")
+        return brand_kit.apply_diff(brand, {"product_profile": ps.fetch_product_profile(q["generic"], q.get("condition") or kit.get("indication", ""))})
+    if skill == "audience_intel":
+        q = kit.get("audience_query") or {}
+        if not q.get("condition"):
+            raise ValueError("This brand has no condition set for the audience scan.")
+        return brand_kit.apply_diff(brand, {"audience_intel": ps.fetch_audience_intel(q["condition"], q.get("intervention", ""), q.get("pubmed_term") or q["condition"])})
+    if skill == "us_geography":
+        import us_geography
+        return brand_kit.apply_diff(brand, {"us_geography": us_geography.build(brand, kit.get("indications") or [])})
+    if skill == "evidence":
+        return save("evidence", propose_evidence(brand, kit),
+                    ("clinical_data", "references", "message_hierarchy", "core_claim", "positioning_statement", "therapy_area", "primary_audience"))
+    if skill == "personas":
+        return save("personas", propose_personas(brand, kit), ("personas", "care_continuum", "messages_by_persona"))
+    if skill == "voice":
+        out = propose_voice(brand, kit)
+        voc = (out.get("voice") or {}).get("vocabulary") or []
+        out["voice_do"] = [v.get("use") for v in voc if v.get("use")]
+        out["voice_dont"] = (out.get("voice") or {}).get("avoid") or []
+        if out.get("voice"):
+            out["voice"]["status"] = "to_confirm"
+            out["voice"]["note"] = "Drafted by Omni from the FDA label and public evidence — to confirm"
+        return save("voice", out, ("voice", "tone_pillars", "voice_do", "voice_dont", "guardrails", "unmet_need"))
+    if skill == "competition":
+        return save("competition", propose_competition(brand, kit), ("competitors", "competition_self"))
+    if skill == "big_idea":
+        return big_idea(brand)
+    if skill == "client_data":
+        import client_data
+        client_data.generate(brand, force=True)
+        return brand_kit.kit_for(brand) or kit
+    raise ValueError(f"Unknown skill '{skill}'")
+
+
+__all__ = ["propose", "run_skill", "SKILLS", "LLMUnavailable"]
