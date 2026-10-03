@@ -264,9 +264,9 @@ export function Home({ brands, activeBrand }: { brands: BrandSummary[]; activeBr
           {apps.map((a) => {
             const soon = a.tags.includes("coming-soon");
             return (
-              <div key={a.id} className={`v3-app ${soon ? "soon" : ""}`} role="link" tabIndex={0} title={`About ${a.name}`}
-                onClick={() => { window.location.hash = `#/v3/app/${a.id}`; }}
-                onKeyDown={(e) => { if (e.key === "Enter") window.location.hash = `#/v3/app/${a.id}`; }}>
+              <div key={a.id} className={`v3-app ${soon ? "soon" : ""}`} role="link" tabIndex={0} title={soon ? `About ${a.name}` : `Open ${a.name}`}
+                onClick={() => (soon ? (window.location.hash = `#/v3/app/${a.id}`) : openAgent(a))}
+                onKeyDown={(e) => { if (e.key === "Enter") (soon ? (window.location.hash = `#/v3/app/${a.id}`) : openAgent(a)); }}>
                 <span className="v3-app-top">
                   <span className="v3-app-icon"><Icon name={a.icon} size={16} /></span>
                   <span className="v3-tags">
