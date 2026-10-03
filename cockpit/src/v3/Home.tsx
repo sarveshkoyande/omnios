@@ -88,7 +88,10 @@ export function Home({ brands, activeBrand }: { brands: BrandSummary[]; activeBr
     return () => { live = false; };
   }, [scopeBrands, activeBrand]);
 
-  const openAgent = (a: RegistryAgent) => { window.location.hash = a.route ?? `#/v3/app/${a.id}`; };
+  const openAgent = (a: RegistryAgent) => {
+    const to = a.route ?? `#/v3/app/${a.id}`;
+    if (to.startsWith("#")) window.location.hash = to; else window.location.href = to;
+  };
 
   const resetBox = () => {
     setAsk("");
@@ -261,18 +264,18 @@ export function Home({ brands, activeBrand }: { brands: BrandSummary[]; activeBr
           {apps.map((a) => {
             const soon = a.tags.includes("coming-soon");
             return (
-              <button key={a.id} type="button" className={`v3-app ${soon ? "soon" : ""}`} disabled={soon}
-                onClick={() => openAgent(a)} title={soon ? "Coming soon" : `Open ${a.name}`}>
+              <div key={a.id} className={`v3-app ${soon ? "soon" : ""}`}>
                 <span className="v3-app-top">
                   <span className="v3-app-icon"><Icon name={a.icon} size={16} /></span>
                   <span className="v3-tags">
                     {a.tags.includes("new") && <span className="v3-tag new">New</span>}
-                    {soon && <span className="v3-tag soon">Coming soon</span>}
+                    {soon ? <span className="v3-tag soon">Coming soon</span>
+                      : a.route && <button type="button" className="v3-tag launch" onClick={() => openAgent(a)} title={`Open ${a.name}`}>Launch</button>}
                   </span>
                 </span>
                 <b>{a.name}</b>
                 <span className="v3-app-sub">{a.summary}</span>
-              </button>
+              </div>
             );
           })}
         </div>

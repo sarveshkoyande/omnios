@@ -191,16 +191,11 @@ export const AGENTS: Record<Phase, LibraryAgent[]> = {
     { id: "mlr-review", name: "Content & MLR Review", icon: "eye", status: "wip", summary: "Pre-checks claims against the label and compliance guardrails before medical, legal and regulatory review." },
     { id: "litmus-test-agent", name: "Litmus Test Agent", icon: "flask", status: "wip", summary: "Checks emails render correctly across clients and devices before they go out." },
     { id: "ab-testing", name: "A/B Testing", icon: "zap", status: "wip", summary: "Designs the test, sizes the sample and calls the winner." },
-    { id: "segment-update-agent", name: "Segment Update Agent", icon: "refresh", status: "wip", summary: "Keeps campaign segments current as HCP data and engagement change." },
   ],
   intelligence: [
     { id: "reporting-insights", name: "Reporting & Insights", icon: "barChart", status: "wip", summary: "Answers questions about campaign performance from the KPI scorecard." },
     { id: "predictive-campaigns", name: "Predictive Campaigns", icon: "sparkles", status: "wip", summary: "Forecasts campaign results and recommends what to run next, feeding the Engagement Planner." },
-    { id: "kpi-dashboard", name: "KPI Dashboard", icon: "star", status: "wip", summary: "Builds the scorecard, funnel and demographic cards." },
     { id: "hcp-360", name: "HCP 360", icon: "users", status: "wip", summary: "Answers questions about the HCP universe: who, where, how they prescribe and engage." },
-    { id: "nba-for-platform", name: "NBA for Platform", icon: "sparkles", status: "wip", summary: "Recommends the next best action for each HCP across channels." },
-    { id: "budget-agent", name: "Budget Agent", icon: "wallet", status: "wip", summary: "Allocates the campaign budget across channels to match the plan's posture." },
-    { id: "persona-review", name: "Persona Review", icon: "eye", status: "wip", summary: "Reads a finished plan back through each persona's eyes." },
   ],
 };
 
@@ -219,6 +214,12 @@ export interface RegistryAgent extends LibraryAgent {
 /** Agents with a redesigned workspace open there; the rest keep their current screen. */
 const AGENT_ROUTES: Record<string, string> = {
   "brand-iq": "#/v3/iq/kits",
+  "signal-agent": "#/v3/iq/intel",
+  "brand-persona-builder": "#/v3/iq/personas",
+  // Channel selection runs as the Campaign Planner's channels stage; it has no screen of its own.
+  "channel-planner": "#/v3/agent/campaign-planner",
+  // The journey editor lives in the project workspace's Operations tab.
+  "journey-builder": "/v2",
   "engagement-planner": "#/v3/agent/engagement-planner",
   "campaign-planner": "#/v3/agent/campaign-planner",
   "segmentation-planner": "#/v3/agent/segmentation-planner",
