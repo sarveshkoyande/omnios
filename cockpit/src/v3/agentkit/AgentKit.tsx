@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { getBrandReadiness, type BrandReadiness } from "../../api";
 import { Icon } from "../../components/Icon";
 import "./agentkit.css";
 
@@ -128,9 +129,11 @@ export const DOC_ACCEPT = ".pdf,.docx,.pptx,.txt,.md";
 
 /** The glass drop zone every agent's intake uses: drag and drop the brand plan and other details
  *  (several files), plus a text box. `multiple={false}` for agents that read one document. */
-export function GlassDrop({ files, setFiles, notes, setNotes, multiple = true, disabled, notesLabel, placeholder, hint }: {
+export function GlassDrop({ files, setFiles, notes, setNotes, multiple = true, disabled, notesLabel, placeholder, hint,
+  dropLabel = "Drag and drop the brand plan and other details", dropSub }: {
   files: File[]; setFiles: (f: File[]) => void; notes: string; setNotes: (v: string) => void;
   multiple?: boolean; disabled?: boolean; notesLabel: string; placeholder: string; hint?: string;
+  dropLabel?: string; dropSub?: string;
 }) {
   const [drag, setDrag] = useState(false);
   const input = useRef<HTMLInputElement>(null);
@@ -148,8 +151,8 @@ export function GlassDrop({ files, setFiles, notes, setNotes, multiple = true, d
         onClick={() => !disabled && input.current?.click()} role="button" tabIndex={0}
         onKeyDown={(e) => { if (e.key === "Enter" && !disabled) input.current?.click(); }}>
         <span className="v3-glass-orb"><Icon name="document" size={22} /></span>
-        <b>Drag and drop the brand plan and other details</b>
-        <span>{multiple ? "Brand plan, briefs, research, notes" : "One document"} · PDF, DOCX, PPTX, TXT or MD · or <u>browse</u></span>
+        <b>{dropLabel}</b>
+        <span>{dropSub ?? (multiple ? "Briefs, research, notes" : "One document")} · PDF, DOCX, PPTX, TXT or MD · or <u>browse</u></span>
         <input ref={input} type="file" accept={DOC_ACCEPT} multiple={multiple} hidden
           onChange={(e) => { add(e.target.files); e.target.value = ""; }} />
       </div>
@@ -166,5 +169,65 @@ export function GlassDrop({ files, setFiles, notes, setNotes, multiple = true, d
       <textarea className="v3-glass-text" rows={5} value={notes} disabled={disabled} placeholder={placeholder} onChange={(e) => setNotes(e.target.value)} />
       {hint && <span className="v3-glass-hint">{hint}</span>}
     </div>
+  );
+}
+
+const READY_ICON: Record<string, string> = { ok: "✓", partial: "◐", missing: "✕", synthetic: "~" };
+
+/** "Ready from Brand IQ": what the brand's Brand IQ already holds, so an agent can start straight away.
+ *  The brand plan is uploaded once, in the Brand IQ Agent; anything missing links there. */
+export function ReadyFromBrandIQ({ brand, compact }: { brand: string; compact?: boolean }) {
+  const [r, setR] = useState<BrandReadiness | null>(null);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    setR(null); setFailed(false);
+    getBrandReadiness(brand).then(setR).catch(() => setFailed(true));
+  }, [brand]);
+  if (failed) return null;
+  return (
+    <section className={`v3-ready ${compact ? "compact" : ""} ${r && !r.has_brand_plan ? "warn" : ""}`}>
+      <div className="v3-ready-head">
+        <b>{r ? (r.has_brand_plan ? "Ready from Brand IQ" : "Brand IQ loaded, no brand plan yet") : "Reading Brand IQ…"}</b>
+        <span>{brand}{r?.updated ? ` · updated ${new Date(r.updated).toLocaleDateString(undefined, { day: "numeric", month: "short" })}` : ""}</span>
+      </div>
+      {r && (
+        <ul>
+          {r.items.map((i) => (
+            <li key={i.id} className={i.status}>
+              <span className="v3-ready-mark">{READY_ICON[i.status]}</span>
+              <b>{i.label}</b>
+              <small>{i.detail}{i.fix && <> · <a href={i.fix}>{i.id === "brand_plan" ? "Add it in the Brand IQ Agent" : "Fix in Brand IQ"}</a></>}</small>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+/** The standard agent intake: Ready from Brand IQ, the start button, and optional extra details
+ *  (documents + notes) behind a toggle. */
+export function ReadyIntake({ brand, startLabel, busyLabel, busy, onStart, files, setFiles, notes, setNotes,
+  addLabel, notesLabel, placeholder, dropLabel, defaultOpen, children }: {
+  brand: string; startLabel: string; busyLabel?: string | null; busy?: boolean; onStart: () => void;
+  files: File[]; setFiles: (f: File[]) => void; notes: string; setNotes: (v: string) => void;
+  addLabel: string; notesLabel: string; placeholder: string; dropLabel?: string; defaultOpen?: boolean;
+  children?: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(Boolean(defaultOpen));
+  return (
+    <section className="v3-ak-intake">
+      <ReadyFromBrandIQ brand={brand} />
+      {children}
+      {open ? (
+        <GlassDrop files={files} setFiles={setFiles} notes={notes} setNotes={setNotes} disabled={busy}
+          notesLabel={notesLabel} placeholder={placeholder} dropLabel={dropLabel ?? "Drag and drop briefs or other details"} />
+      ) : (
+        <button type="button" className="v3-ready-add" disabled={busy} onClick={() => setOpen(true)}>+ {addLabel} <em>(optional)</em></button>
+      )}
+      <button type="button" className="v3-cc-btn primary wide" disabled={busy} onClick={onStart}>
+        {busy ? <><span className="v3-cc-spinner small" /> {busyLabel ?? "Working…"}</> : startLabel}
+      </button>
+    </section>
   );
 }

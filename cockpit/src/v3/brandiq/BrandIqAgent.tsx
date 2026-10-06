@@ -145,6 +145,7 @@ export function BrandIqAgent({ brands, activeBrand }: { brands: BrandSummary[]; 
                   <span>Drop {brand}'s brand plan and/or tell the agent about the brand. Nothing to add? Just build: it works from secondary sources.</span>
                 </div>
                 <GlassDrop files={files} setFiles={setFiles} notes={notes} setNotes={setNotes} disabled={phase === "reading"}
+                  dropLabel="Drag and drop the brand plan" dropSub="The brand plan, plus any supporting documents"
                   notesLabel="Tell the agent about the brand"
                   placeholder="Positioning, priority audiences, objectives, what's changed this year, anything the plan doesn't say…" />
                 <span className="v3-cc-hint">The brand plan is the source of truth: AI drafts never overwrite what it says. It stays on this server.</span>

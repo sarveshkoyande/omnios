@@ -5,7 +5,7 @@ import { Icon } from "../../components/Icon";
 import type { BrandSummary, BrandTree } from "../../types";
 import type { Favorite } from "../store";
 import type { SegItem, SegState } from "./api";
-import { AckCard, GlassDrop, ReasoningButton, ReasoningPanel, type ReasonEntry } from "../agentkit/AgentKit";
+import { AckCard, GlassDrop, ReadyFromBrandIQ, ReasoningButton, ReasoningPanel, type ReasonEntry } from "../agentkit/AgentKit";
 import "../agentkit/agentkit.css";
 import { SegConversation } from "./Conversation";
 import { CreatedList, CreatedSegmentCard, DatasetView, PendingSegment, downloadText } from "./SegmentPanel";
@@ -122,6 +122,7 @@ export function SegmentationPlanner({ handoff, brands, activeBrand, isFavorite, 
   const [ack, setAck] = useState<(AgentAck & { audience?: string }) | null>(null);
   const [audience, setAudience] = useState("");
   const [reading, setReading] = useState(false);
+  const [segDocs, setSegDocs] = useState(false);
   const [ackError, setAckError] = useState<string | null>(null);
   const [showReasoning, setShowReasoning] = useState(false);
   const [tab, setTab] = useState<Tab>("segment");
@@ -333,16 +334,21 @@ export function SegmentationPlanner({ handoff, brands, activeBrand, isFavorite, 
                 </>
               ) : (
                 <section className="v3-ak-intake v3-seg-welcome">
-                  <div className="v3-cc-intake-head">
-                    <b>Audience intake</b>
-                    <span>Describe the HCPs you want and add the brand plan or briefs. The agent checks what the data can select on before it writes any SQL.</span>
-                  </div>
-                  <GlassDrop files={files} setFiles={setFiles} notes={audienceText} setNotes={setAudienceText} disabled={reading}
-                    notesLabel="Who should be in the segment?" placeholder="Describe the audience in plain English…" />
+                  {brand && <ReadyFromBrandIQ brand={brand} compact />}
+                  <label className="v3-glass-label" htmlFor="seg-intake">Who should be in the segment?</label>
+                  <textarea id="seg-intake" className="v3-glass-text" rows={3} value={audienceText} disabled={reading}
+                    placeholder="Describe the audience in plain English, or leave it empty and the agent proposes one from Brand IQ…"
+                    onChange={(e) => setAudienceText(e.target.value)} />
                   <span className="v3-cc-hint">Try:</span>
                   {EXAMPLES.map((e) => (
                     <button key={e} type="button" className="v3-seg-example" disabled={reading} onClick={() => setAudienceText(e)}>“{e}”</button>
                   ))}
+                  {segDocs ? (
+                    <GlassDrop files={files} setFiles={setFiles} notes="" setNotes={() => undefined} disabled={reading}
+                      dropLabel="Drag and drop a brief or audience definition" notesLabel="" placeholder="" />
+                  ) : (
+                    <button type="button" className="v3-ready-add" onClick={() => setSegDocs(true)}>+ Add a brief or audience document <em>(optional)</em></button>
+                  )}
                   <button type="button" className="v3-cc-btn primary wide" disabled={reading} onClick={readIntake}>
                     {reading ? <><span className="v3-cc-spinner small" /> Reading your input…</> : "Build segment"}
                   </button>

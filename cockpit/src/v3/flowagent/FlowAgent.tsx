@@ -6,7 +6,7 @@ import {
 import { Icon } from "../../components/Icon";
 import { FlowEditorChat } from "../../components/flowplanner/FlowEditorChat";
 import type { BrandSummary, BrandTree } from "../../types";
-import { AckCard, GlassDrop, ReasoningButton, ReasoningPanel, type ReasonEntry, type SkillStatus } from "../agentkit/AgentKit";
+import { AckCard, GlassDrop, ReadyFromBrandIQ, ReasoningButton, ReasoningPanel, type ReasonEntry, type SkillStatus } from "../agentkit/AgentKit";
 import { ArtifactViewer } from "../ArtifactViewer";
 import "../campaignplanner/campaignPlanner.css";
 import "../agentkit/agentkit.css";
@@ -34,6 +34,7 @@ export function FlowAgent({ brands, activeBrand, handoff }: { brands: BrandSumma
   const [phase, setPhase] = useState<Phase>("intake");
   const [files, setFiles] = useState<File[]>([]);
   const [notes, setNotes] = useState("");
+  const [showDetails, setShowDetails] = useState(false);
   const [ack, setAck] = useState<(AgentAck & { answers: { key: string; label?: string; value: string; source: string }[] }) | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<SkillStatus[]>(["idle", "idle", "idle", "idle"]);
@@ -191,8 +192,8 @@ export function FlowAgent({ brands, activeBrand, handoff }: { brands: BrandSumma
             {(phase === "intake" || phase === "reading") && (
               <section className="v3-ak-intake">
                 <div className="v3-cc-intake-head">
-                  <b>Campaign intake</b>
-                  <span>Pick the campaign, then add the brief and anything else the agent should know.</span>
+                  <b>Which campaign?</b>
+                  <span>Pick the campaign. The agent reads the campaign plan and Brand IQ, so it's ready to build.</span>
                 </div>
                 <div className="v3-flowagent-scope">
                   <label>Brand
@@ -215,12 +216,17 @@ export function FlowAgent({ brands, activeBrand, handoff }: { brands: BrandSumma
                   </label>
                 </div>
                 {tree && !campaign && <p className="v3-cc-banner info">{brand} has no campaign yet. Create one from an engagement plan first.</p>}
-                <GlassDrop files={files} setFiles={setFiles} notes={notes} setNotes={setNotes} disabled={phase === "reading"}
-                  notesLabel="Tell the agent about the journey"
-                  placeholder="Channels to use or avoid, cadence, timing, the moments that matter, what the HCP should do at the end…"
-                  hint={artifact ? `This campaign already has a flow (v${artifact.version}); building again saves a new version.` : undefined} />
+                <ReadyFromBrandIQ brand={brand} compact />
+                {showDetails ? (
+                  <GlassDrop files={files} setFiles={setFiles} notes={notes} setNotes={setNotes} disabled={phase === "reading"}
+                    notesLabel="Tell the agent about the journey" dropLabel="Drag and drop the campaign brief or other details"
+                    placeholder="Channels to use or avoid, cadence, timing, the moments that matter, what the HCP should do at the end…" />
+                ) : (
+                  <button type="button" className="v3-ready-add" onClick={() => setShowDetails(true)}>+ Add journey notes or a brief <em>(optional)</em></button>
+                )}
+                {artifact && <span className="v3-cc-hint">This campaign already has a flow (v{artifact.version}); building again saves a new version.</span>}
                 <button type="button" className="v3-cc-btn primary wide" disabled={phase === "reading" || !campaign} onClick={read}>
-                  {phase === "reading" ? <><span className="v3-cc-spinner small" /> Reading your input…</> : "Build flow"}
+                  {phase === "reading" ? <><span className="v3-cc-spinner small" /> Reading the campaign…</> : "Build flow"}
                 </button>
               </section>
             )}

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { getArtifact, getBrandTree } from "../../api";
 import { REGISTRY } from "../../agents";
 import { Icon } from "../../components/Icon";
-import { GlassDrop } from "../agentkit/AgentKit";
+import { GlassDrop, ReadyFromBrandIQ } from "../agentkit/AgentKit";
 import type { BrandSummary, BrandTree } from "../../types";
 import type { Favorite } from "../store";
 import { ccApi, sfApi, type Briefing, type CCItem, type CCState } from "./api";
@@ -43,7 +43,8 @@ function saveBlob(name: string, data: unknown) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-function IntakePanel({ text, setText, file, setFile, autoAssume, setAutoAssume, disabled, onAnalyze }: {
+function IntakePanel({ brand, text, setText, file, setFile, autoAssume, setAutoAssume, disabled, onAnalyze }: {
+  brand: string | null;
   text: string; setText: (v: string) => void; file: File | null; setFile: (f: File | null) => void;
   autoAssume: boolean; setAutoAssume: (v: boolean) => void; disabled: boolean; onAnalyze: () => void;
 }) {
@@ -53,7 +54,9 @@ function IntakePanel({ text, setText, file, setFile, autoAssume, setAutoAssume, 
         <b>Campaign intake</b>
         <span>Upload the campaign brief or paste the details to begin the analysis.</span>
       </div>
+      {brand && <ReadyFromBrandIQ brand={brand} compact />}
       <GlassDrop files={file ? [file] : []} setFiles={(f) => setFile(f[0] ?? null)} notes={text} setNotes={setText} multiple={false} disabled={disabled}
+        dropLabel="Drag and drop the campaign brief" dropSub="One brief"
         notesLabel={`Campaign details${file ? " (optional instructions for the document)" : ""}`}
         placeholder="Describe your campaign objectives, target audience, and journey requirements…"
         hint="Include the brand, product, therapeutic area, objective, target market and the day-by-day journey for the most accurate briefing." />
@@ -341,7 +344,7 @@ export function CampaignPlanner({ artifactId, handoff, brands, activeBrand, isFa
             {!session && !planner.loadError && <p className="v3-muted">{brands.length ? "Opening the Campaign Planner…" : "Add a brand first: the Campaign Planner works inside a brand."}</p>}
 
             {st && st.stage === "intake" && !st.items.length && !busy ? (
-              <IntakePanel text={intakeText} setText={setIntakeText} file={intakeFile} setFile={setIntakeFile}
+              <IntakePanel brand={brand} text={intakeText} setText={setIntakeText} file={intakeFile} setFile={setIntakeFile}
                 autoAssume={autoAssume} setAutoAssume={setAutoAssume} disabled={busy}
                 onAnalyze={() => planner.analyze(intakeText, intakeFile, autoAssume)} />
             ) : st && (

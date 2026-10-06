@@ -5,7 +5,7 @@ import {
 } from "../../api";
 import { Icon } from "../../components/Icon";
 import type { BrandSummary } from "../../types";
-import { AckCard, GlassDrop, ReasoningButton, ReasoningPanel, StepProgress, type ReasonEntry, type SkillStatus } from "../agentkit/AgentKit";
+import { AckCard, ReadyIntake, ReasoningButton, ReasoningPanel, StepProgress, type ReasonEntry, type SkillStatus } from "../agentkit/AgentKit";
 import "../campaignplanner/campaignPlanner.css";
 import "../brandiq/brandiq.css";
 import "./signalscout.css";
@@ -151,19 +151,13 @@ export function SignalScoutAgent({ brands, activeBrand }: { brands: BrandSummary
             </ol>
 
             {(phase === "intake" || phase === "reading") && (
-              <section className="v3-ak-intake">
-                <div className="v3-cc-intake-head">
-                  <b>Scan brief</b>
-                  <span>Signal Scout reads {brand}'s Brand IQ. Add documents and tell it what to look for, or leave it empty for an open scan.</span>
-                </div>
-                <GlassDrop files={files} setFiles={setFiles} notes={focus} setNotes={setFocus} disabled={phase === "reading"}
-                  notesLabel="What should the scan answer?"
-                  placeholder="e.g. Is there whitespace against the market leader? What are competitors saying to cardiologists? What changed since the last congress?"
-                  hint={`US market only. Channel activity is estimated from public knowledge, not observed media spend.${readout ? ` The last readout (${readout.started}) is kept so the new one can say what changed.` : ""}`} />
-                <button type="button" className="v3-cc-btn primary wide" disabled={phase === "reading"} onClick={read}>
-                  {phase === "reading" ? <><span className="v3-cc-spinner small" /> Reading your brief…</> : "Start scan"}
-                </button>
-              </section>
+              <ReadyIntake brand={brand} startLabel="Start scan" busy={phase === "reading"} busyLabel="Reading your brief…" onStart={read}
+                files={files} setFiles={setFiles} notes={focus} setNotes={setFocus}
+                addLabel="Add a focus or competitor materials" notesLabel="What should the scan answer?"
+                dropLabel="Drag and drop competitor materials or other details"
+                placeholder="e.g. Is there whitespace against the market leader? What are competitors saying to cardiologists? What changed since the last congress?">
+                <span className="v3-cc-hint">US market only. With no focus it runs an open scan for the most material signals.{readout ? ` The last readout (${readout.started}) is kept so the new one can say what changed.` : ""}</span>
+              </ReadyIntake>
             )}
 
             {phase === "ack" && ack && <AckCard ack={ack} onConfirm={build} onEdit={() => setPhase("intake")} />}

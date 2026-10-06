@@ -1494,6 +1494,17 @@ def api_signal_scout_acknowledge(brand: str, body: SignalScoutStart):
         raise HTTPException(503, f"The AI model couldn't be reached ({e}), so Signal Scout couldn't read your brief. Try again in a moment.")
 
 
+@app.get("/api/brand-kits/{brand}/readiness")
+def api_brand_readiness(brand: str):
+    """What Brand IQ already holds for the brand (brand plan, kit, audiences, patient flow, compliance,
+    client data), so agents open with "Ready from Brand IQ" instead of asking for the plan again."""
+    from strategy import brand_readiness
+    try:
+        return brand_readiness.readiness(brand)
+    except KeyError:
+        raise HTTPException(404, f"no brand kit for '{brand}'")
+
+
 @app.post("/api/brand-kits/{brand}/brand-plan")
 async def api_brand_kit_upload_plan(brand: str, files: list[UploadFile] | None = File(None), notes: str = Form("")):
     """Brand IQ Agent intake: store the brand plan and other documents' text (PDF/DOCX/PPTX/TXT/MD) and

@@ -4,7 +4,7 @@ import {
 } from "../../api";
 import { Icon } from "../../components/Icon";
 import type { BrandSummary } from "../../types";
-import { AckCard, GlassDrop, ReasoningButton, ReasoningPanel, type ReasonEntry } from "../agentkit/AgentKit";
+import { AckCard, ReadyIntake, ReasoningButton, ReasoningPanel, type ReasonEntry } from "../agentkit/AgentKit";
 import { MermaidView } from "../campaignplanner/MermaidView";
 import "../campaignplanner/campaignPlanner.css";
 import "../agentkit/agentkit.css";
@@ -157,18 +157,10 @@ export function EngagementPlanner2({ brands, activeBrand, planId }: { brands: Br
             </ol>
 
             {!plan && (
-              <section className="v3-ak-intake">
-                <div className="v3-cc-intake-head">
-                  <b>Brand plan intake</b>
-                  <span>The framework starts from the brand plan. Drop it with anything else the agent should know, or start from {brand}'s Brand IQ.</span>
-                </div>
-                <GlassDrop files={files} setFiles={setFiles} notes={notes} setNotes={setNotes} disabled={!!busy}
-                  notesLabel="Which campaign is this?"
-                  placeholder="e.g. Grow Jardiance use in heart failure among community cardiologists; existing brand; first wave in Q1 2027…" />
-                <button type="button" className="v3-cc-btn primary wide" disabled={!!busy} onClick={start}>
-                  {busy ? <><span className="v3-cc-spinner small" /> {busy}</> : "Start planning"}
-                </button>
-              </section>
+              <ReadyIntake brand={brand} startLabel="Start planning" busy={!!busy} busyLabel={busy} onStart={start}
+                files={files} setFiles={setFiles} notes={notes} setNotes={setNotes}
+                addLabel="Add campaign details or briefs" notesLabel="Which campaign is this?"
+                placeholder="e.g. Grow Jardiance use in heart failure among community cardiologists; first wave in Q1 2027…" />
             )}
 
             {plan && (
