@@ -188,7 +188,7 @@ export function EngagementPlanner({ brands, activeBrand, planId }: { brands: Bra
             <div className="v3-ws-head">
               <span className="v3-app-icon lg"><Icon name="map" size={20} /></span>
               <div className="v3-ws-head-text">
-                <h1>Engagement Planner</h1>
+                <h1>Engagement Planner (Old)</h1>
                 <p>Finds where {brand} loses patients, why, and what would move the people behind it — then plans the next months around it.</p>
               </div>
             </div>

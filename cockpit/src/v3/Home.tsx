@@ -40,7 +40,7 @@ function timeAgo(iso: string): string {
 /** The quick starts, shown as big buttons inside the Ask box. Each one sets its agent
  *  as the box's context (same as picking it from the "/" menu). */
 const QUICK: { id: string; title: string; sub: string }[] = [
-  { id: "engagement-planner", title: "Plan engagement", sub: "The next months for a brand: where patients are lost, which campaigns" },
+  { id: "engagement-planner-2", title: "Plan engagement", sub: "From the brand plan to a build-ready campaign brief" },
   { id: "briefing-agent", title: "Create a campaign", sub: "From a brief to an approved campaign, ready for Salesforce" },
   { id: "flow-planner", title: "Build a flow", sub: "Turn a campaign into a journey diagram" },
 ];

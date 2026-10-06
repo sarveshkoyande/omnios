@@ -172,7 +172,7 @@ export function LiveSimulation({ brands, activeBrand }: { brands: BrandSummary[]
                       const ups = updatesFor(c.id);
                       return (
                         <div key={c.id}>
-                          <a className="v3-ls-row campaign" href={`#/v3/agent/briefing-agent/for/${encodeURIComponent(brand)}/${p.id}/${c.id}`} title="Open in the Campaign Agent">
+                          <a className="v3-ls-row campaign" href={`#/v3/agent/briefing-agent/for/${encodeURIComponent(brand)}/${p.id}/${c.id}`} title="Open in the Campaign Planning Agent">
                             <div className="v3-ls-name">
                               <span className="v3-ls-indent" />
                               <Icon name="target" size={13} />
@@ -188,7 +188,7 @@ export function LiveSimulation({ brands, activeBrand }: { brands: BrandSummary[]
                           {c.flows.map((f) => {
                             const m = view.journey_meta[String(f.id)];
                             return (
-                              <a key={f.id} className="v3-ls-row journey" href={`#/v3/agent/flow-planner/for/${encodeURIComponent(brand)}/${p.id}/${c.id}`} title="Open in the Flow Agent">
+                              <a key={f.id} className="v3-ls-row journey" href={`#/v3/agent/flow-planner/for/${encodeURIComponent(brand)}/${p.id}/${c.id}`} title="Open in the Flow Planner Agent">
                                 <div className="v3-ls-name">
                                   <span className="v3-ls-indent" /><span className="v3-ls-indent" />
                                   <Icon name="route" size={12} />

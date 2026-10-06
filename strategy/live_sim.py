@@ -156,7 +156,7 @@ def check(brands: list[str] | None = None, use_ai: bool = True) -> dict:
                         uid = _uid("no_journey", cid)
                         found[uid] = {"id": uid, "kind": "no_journey", "campaign_id": c["id"], "plan_id": plan["id"],
                                       "title": f"“{c['name']}” has no journey yet",
-                                      "detail": f"It is {ph}. Build its journey in the Flow Agent.",
+                                      "detail": f"It is {ph}. Build its journey in the Flow Planner Agent.",
                                       "action": "open", "href": f"#/v3/agent/flow-planner/for/{key}/{plan['id']}/{c['id']}"}
             # engagement plans built on an older Brand IQ plan
             for p in ep.list_plans(key):

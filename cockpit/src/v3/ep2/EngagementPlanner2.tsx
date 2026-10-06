@@ -140,7 +140,7 @@ export function EngagementPlanner2({ brands, activeBrand, planId }: { brands: Br
             <div className="v3-ws-head">
               <span className="v3-app-icon lg"><Icon name="layers" size={20} /></span>
               <div className="v3-ws-head-text">
-                <h1>Engagement Planner 2</h1>
+                <h1>Engagement Planning Agent</h1>
                 <p>Runs the CampaignFlow framework for one {brand} campaign: from the brand plan to a build-ready campaign brief, one approved step at a time.</p>
               </div>
             </div>

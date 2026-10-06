@@ -18,7 +18,7 @@ const MAIN_NAV: NavItem[] = [
 
 /** A2 / BR6: brand knowledge, always for the active brand. */
 const BRAND_IQ: NavItem[] = [
-  { id: "iq/kits", label: "Brand Kits", icon: "document" },
+  { id: "iq/kits", label: "Brand IQ", icon: "document" },
   { id: "iq/personas", label: "Personas", icon: "persona" },
   { id: "iq/guardrails", label: "Compliance Guardrails", icon: "shield" },
   { id: "iq/intel", label: "Market Intelligence", icon: "radar" },
@@ -102,7 +102,7 @@ export function Rail({ current, brands, activeBrand, recentBrands, onSelectBrand
         <div className="v3-nav-group">{MAIN_NAV.map(link)}</div>
 
         <div className="v3-nav-group">
-          {expanded ? <div className="v3-nav-label">Brand IQ</div> : <div className="v3-nav-divider" />}
+          {expanded ? <div className="v3-nav-label">Brand Kit</div> : <div className="v3-nav-divider" />}
           {BRAND_IQ.map(link)}
         </div>
 

@@ -157,12 +157,12 @@ export function FlowAgent({ brands, activeBrand, handoff }: { brands: BrandSumma
   if (status[3] !== "idle") entries.push({ id: "check", title: "Checking guidelines", status: status[3],
     lines: check ? [check.summary, ...check.issues.map((i) => `[${i.severity}] ${i.label}: ${i.issue} → ${i.suggestion}`)].filter(Boolean) : [] });
 
-  if (!brand) return <p className="v3-empty">Add a brand first: the Flow Agent builds a campaign's journey.</p>;
+  if (!brand) return <p className="v3-empty">Add a brand first: the Flow Planner Agent builds a campaign's journey.</p>;
 
   return (
     <div className="v3-ws v3-cc v3-flowagent">
       <div className="v3-ws-top">
-        <span className="v3-ep-title">Flow Agent — {campaign?.name ?? brand}</span>
+        <span className="v3-ep-title">Flow Planner Agent — {campaign?.name ?? brand}</span>
         {artifact && <span className="v3-ws-save">Flow v{artifact.version}</span>}
         <span className="v3-ws-top-actions">
           {artifact?.campaign_id && <button type="button" className="v3-cc-btn" onClick={() => { setEditOpen((v) => !v); setShowReasoning(false); }}>Edit the flow</button>}
@@ -175,12 +175,12 @@ export function FlowAgent({ brands, activeBrand, handoff }: { brands: BrandSumma
             <div className="v3-ws-head">
               <span className="v3-app-icon lg"><Icon name="route" size={20} /></span>
               <div className="v3-ws-head-text">
-                <h1>Flow Agent</h1>
+                <h1>Flow Planner Agent</h1>
                 <p>Builds the campaign's channel-by-channel journey from the brief, the campaign plan and your notes, then checks it against {brand}'s guidelines.</p>
               </div>
             </div>
 
-            <ol className="v3-cc-stepper" aria-label="Flow Agent progress">
+            <ol className="v3-cc-stepper" aria-label="Flow Planner Agent progress">
               {STEPS.map((s, i) => (
                 <li key={s} className={i < stepIdx ? "done" : i === stepIdx && phase !== "done" ? "active" : ""}>
                   <span>{i < stepIdx ? <Icon name="check" size={9} /> : i + 1}</span>{s}

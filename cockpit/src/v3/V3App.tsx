@@ -29,7 +29,7 @@ const PAGES: Record<string, { title: string; phase: string; perBrand?: boolean }
   brands: { title: "Campaigns & Journeys", phase: "Phase 6" },
   live: { title: "Live simulation", phase: "Phase 8" },
   chat: { title: "Chat", phase: "Phase 5" },
-  "iq/kits": { title: "Brand Kits", phase: "a later phase", perBrand: true },
+  "iq/kits": { title: "Brand IQ", phase: "a later phase", perBrand: true },
   "iq/personas": { title: "Personas", phase: "a later phase", perBrand: true },
   "iq/guardrails": { title: "Compliance Guardrails", phase: "a later phase", perBrand: true },
   "iq/intel": { title: "Market Intelligence", phase: "a later phase", perBrand: true },
