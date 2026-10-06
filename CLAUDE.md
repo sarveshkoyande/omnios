@@ -167,10 +167,12 @@ say to prefer the brand plan and say so.
 
 **Brand Kit tabs** (`cockpit/src/v3/kit/`, docs/redesign/brand-kit-reorg.md): seven context pages: Brand IQ (`iq/kits`, the
 brand on a page), Market, Audiences (`iq/personas`), Message & Voice, Channels, Product & Proof, Compliance (`iq/guardrails`);
-`iq/intel` falls back to Market. Each tab: the brief + "what it means for campaigns" (kit.context, `context` skill), then
-sections declared once in `SECTIONS` (`kit/shared.tsx`: title, icon, kit keys, drafting skill) which drive the section index,
+`iq/intel` falls back to Market. The Brand IQ tab opens with the brief + "what it means for campaigns" (kit.context,
+`context` skill; the other tabs have no brief). Each tab lists sections declared once in `SECTIONS` (`kit/shared.tsx`: title, icon, kit keys, drafting skill) which drive the section index,
 source badges, "Still needed" and the completeness strip. Long text reads as bullets from kit.bullets (`digest` skill; the
-original is one click away). Channels come from the `channels` skill (brand plan activities win). `BrandKitPage.tsx` only
+original is one click away). Channels = the best-practice framework `config/frameworks/channel_playbook.json` (adoption-stage jobs, channel playbook,
+lifecycle mix, orchestration rules, measurement; `GET /api/frameworks/channel-playbook`) with the brand layer from the
+`channels` skill on top (brand plan activities win; cards carry `framework_id`). `BrandKitPage.tsx` only
 re-exports for old imports.
 
 **LLM-only rule**: free text a person typed is read only by the model — no regex/keyword matching of it; with no

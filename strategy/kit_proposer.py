@@ -223,7 +223,7 @@ def propose(brand: str, force: bool = False) -> dict:
 # --- Context pages (docs/redesign/brand-kit-reorg.md): channels, per-tab briefs, bullet digests ---
 _BULLET_RULES = ("Write for a busy pharma marketer: plain words, no unexplained abbreviations, one idea per bullet. "
                  "Each bullet is {\"lead\": a bold 2-4 word phrase, \"text\": the rest}. Put figures first. ")
-TABS = ("brandiq", "market", "audiences", "message", "channels", "product", "compliance")
+TABS = ("brandiq",)  # the brief sits on the Brand IQ tab only (the other tabs speak for themselves)
 
 
 def _plan_layer(kit: dict) -> dict:
@@ -261,24 +261,36 @@ def _reach(brand: str) -> dict:
         return {}
 
 
+def channel_playbook() -> dict:
+    """The best-practice channel framework (config/frameworks/channel_playbook.json)."""
+    import json
+    p = Path(__file__).resolve().parent.parent / "config" / "frameworks" / "channel_playbook.json"
+    return json.loads(p.read_text(encoding="utf-8"))
+
+
 def propose_channels(brand: str, kit: dict) -> dict:
     k = _plan_layer(kit)
     cp = _compliance(brand)
+    pb = channel_playbook()
     out = complete_json(
         _SYS + "\nYou are now the brand's channel strategist. Build the channel view a marketer plans with. The "
         "brand plan's activities are the source of truth: keep every channel they name, and only add channels the "
         "audiences, journey and proof points clearly call for (mark those source 'AI draft'). " + _BULLET_RULES +
         "Draft: brief (max 3 bullets, <=15 words each: which channels carry the strategy and why); mix (one row per "
         "audience x channel that matters: audience, channel, role = awareness|education|conversion|retention, "
-        "reach_pct from the client reach data if given else null, source); cards (one per channel, 4-8: channel, "
+        "reach_pct from the client reach data if given else null, source); cards (one per channel, 4-8: framework_id = the playbook channel id it matches or "", channel, "
         "role, audiences, formats (<=3), cadence, kpi, worked (from proof points, or ''), rule (from the compliance "
         "channel rules, or ''), source); journey (3-5 journey stages: stage, audience, channels (list), why <=15 "
         "words); moments (congresses, awareness days, data read-outs, launches from the plan; you may add "
-        "well-known fixed awareness days for the condition, source 'AI draft': name, when, type, source).\n"
+        "well-known fixed awareness days for the condition, source 'AI draft': name, when, type, source). Use the "
+        "best-practice playbook provided as the frame: name channels as the playbook does where they match (keep the "
+        "plan's own names in brackets), pick the brand's lifecycle stage (stage + stage_why <=15 words), and say which "
+        "audience segments sit on which adoption rung (ladder_focus, with why <=15 words).\n"
         'Shape: {"brief":[{"lead":"","text":""}],"mix":[{"audience":"","channel":"","role":"","reach_pct":null,'
-        '"source":""}],"cards":[{"channel":"","role":"","audiences":[""],"formats":[""],"cadence":"","kpi":"",'
+        '"source":""}],"cards":[{"framework_id":"","channel":"","role":"","audiences":[""],"formats":[""],"cadence":"","kpi":"",'
         '"worked":"","rule":"","source":""}],"journey":[{"stage":"","audience":"","channels":[""],"why":""}],'
-        '"moments":[{"name":"","when":"","type":"","source":""}],"reasoning":[]}',
+        '"moments":[{"name":"","when":"","type":"","source":""}],"stage":"launch|growth|mature|loe","stage_why":"",'
+        '"ladder_focus":[{"rung":"aware|interested|trial|adopt|advocate","segments":[""],"why":""}],"reasoning":[]}',
         {"brand": brand, "activities": _short(k.get("activities"), 220), "strategic_imperatives": _short(k.get("strategic_imperatives")),
          "audience_segments": _short(k.get("audience_segments")),
          "personas": _short({a: [{f: p.get(f) for f in ("name", "moment", "barrier", "tier")} for p in (k.get("personas") or {}).get(a) or []]
@@ -286,7 +298,9 @@ def propose_channels(brand: str, kit: dict) -> dict:
          "care_continuum": _short(k.get("care_continuum")), "proof_points": _short(k.get("proof_points")),
          "calendar": _short(k.get("calendar")), "kpis": _short(k.get("kpis")),
          "client_reach": _reach(brand), "compliance_channel_rules": _short(cp.get("channel_rules")),
-         "indication": k.get("indication"), "therapy_area": k.get("therapy_area")}, max_tokens=6000)
+         "indication": k.get("indication"), "therapy_area": k.get("therapy_area"), "lifecycle_stage": k.get("lifecycle_stage"),
+         "playbook": {"channels": [{x: c[x] for x in ("id", "name", "audience", "lifecycle")} for c in pb["channels"]],
+                      "ladder": [{x: r[x] for x in ("id", "goal", "hcp", "patient")} for r in pb["ladder"]]}}, max_tokens=6000)
     out["status"] = "proposed"
     out["generated_at"] = ps._today()
     return out
@@ -320,12 +334,9 @@ def propose_context(brand: str, kit: dict) -> dict:
         "You are a senior US pharma brand marketer writing the context page for each tab of a brand kit, for "
         "colleagues about to plan campaigns. Use ONLY the kit content provided. Where sources disagree, the brand "
         "plan wins and you say so. Never invent figures. " + _BULLET_RULES +
-        "For each tab write: brief (max 3 bullets, <=15 words each: what is going on) and implications (3-5 bullets "
-        "<=20 words: kind = 'do' or 'watch', text, cites = the kit section it rests on, e.g. 'Patient flow'). Tabs: "
-        "brandiq (the whole brand), market (situation, patient flow, geography, competition, access, forecast), "
-        "audiences (segments, personas, journey, KOLs), message (positioning, Big Idea, messages, voice), channels "
-        "(channel mix, moments, activities), product (label, indications, evidence), compliance (guardrails, SOPs, "
-        "channel rules). Skip a tab only if the kit has nothing for it. Also write on_a_page for the brandiq tab: "
+        "For the brandiq tab write: brief (max 3 bullets, <=15 words each: what is going on) and implications (3-5 bullets "
+        "<=20 words: kind = 'do' or 'watch', text, cites = the kit section it rests on, e.g. 'Patient flow'), covering "
+        "the whole brand: what a campaign planner must know first, not a restatement of each section. Also write on_a_page: "
         "problem, objective, audience, message, channels, proof, watch_outs -- each <=20 words.\n"
         'Shape: {"tabs":{"<tab>":{"brief":[{"lead":"","text":""}],"implications":[{"kind":"do","text":"","cites":""}]}},'
         '"on_a_page":{"problem":"","objective":"","audience":"","message":"","channels":"","proof":"","watch_outs":""},'
@@ -652,5 +663,5 @@ def restore_version(brand: str, version: str) -> dict:
     return brand_kit.apply_diff(brand, json.loads(p.read_text(encoding="utf-8")))
 
 
-__all__ = ["propose", "run_skill", "TABS", "SKILLS", "STEPS", "acknowledge", "reset_for_rebuild", "list_versions",
+__all__ = ["propose", "run_skill", "TABS", "channel_playbook", "SKILLS", "STEPS", "acknowledge", "reset_for_rebuild", "list_versions",
            "restore_version", "LLMUnavailable"]

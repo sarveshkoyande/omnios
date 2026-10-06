@@ -41,7 +41,7 @@ export const TABS: { id: TabId; route: string; title: string; question: string; 
   { id: "compliance", route: "iq/guardrails", title: "Compliance", question: "What must every campaign respect?", icon: "shield" },
 ];
 
-type Spec = string[] | "sop" | "synthetic";
+type Spec = string[] | "sop" | "synthetic" | "framework";
 type SectionDef = { tab: TabId; title: string; icon: IconName; keys: Spec; skill?: string };
 export const SECTIONS: Record<string, SectionDef> = {
   unmet: { tab: "brandiq", title: "Unmet need", icon: "alertTriangle", keys: ["unmet_need"], skill: "voice" },
@@ -75,11 +75,15 @@ export const SECTIONS: Record<string, SectionDef> = {
   words: { tab: "message", title: "Words to use and avoid", icon: "message", keys: ["voice.vocabulary", "voice.avoid", "voice_do", "voice_dont"], skill: "voice" },
 
   chstrategy: { tab: "channels", title: "Channel strategy", icon: "route", keys: ["channels.brief"], skill: "channels" },
+  chladder: { tab: "channels", title: "Channel jobs by adoption stage", icon: "trendUp", keys: "framework" },
   chmix: { tab: "channels", title: "Channel mix by audience", icon: "layers", keys: ["channels.mix"], skill: "channels" },
-  chcards: { tab: "channels", title: "Channel playbook", icon: "mail", keys: ["channels.cards"], skill: "channels" },
+  chplaybook: { tab: "channels", title: "Channel playbook", icon: "megaphone", keys: "framework" },
+  chlife: { tab: "channels", title: "Mix by lifecycle stage", icon: "barChart", keys: "framework" },
   chjourney: { tab: "channels", title: "Journey × channel", icon: "route", keys: ["channels.journey"], skill: "channels" },
-  moments: { tab: "channels", title: "Key moments", icon: "star", keys: ["channels.moments"], skill: "channels" },
+  moments: { tab: "channels", title: "Key moments", icon: "calendar", keys: ["channels.moments"], skill: "channels" },
   activities: { tab: "channels", title: "What the plan commits to", icon: "check", keys: ["activities"] },
+  chorch: { tab: "channels", title: "Orchestration rules", icon: "branch", keys: "framework" },
+  chmeasure: { tab: "channels", title: "How to measure", icon: "target", keys: "framework" },
 
   profile: { tab: "product", title: "Product profile", icon: "flask", keys: ["product_profile"], skill: "label" },
   indications: { tab: "product", title: "Indications", icon: "document", keys: ["indications"] },
@@ -149,19 +153,20 @@ function useSkill() {
 /* ------------------------------------------------------------------ source badges */
 /* In priority order: 1 brand plan, 2 public data, 3 AI draft. When they disagree the brand plan wins
  * (AI drafts never overwrite brand-plan fields; public refreshes only write their own blocks). */
-type Tier = "plan" | "public" | "ai" | "sop" | "synthetic";
+type Tier = "plan" | "public" | "ai" | "sop" | "synthetic" | "framework";
 const PUBLIC_LABEL: Record<string, string> = {
   product_profile: "FDA · NIH", indications: "FDA label", patient_flow: "PubMed", us_geography: "CDC",
   audience_intel: "PubMed · ClinicalTrials.gov · MedlinePlus", competitors: "PubMed",
 };
 const PLAN_KEYS = new Set(["strategic_imperatives", "kpis", "forecast", "growth_opportunities", "activities", "proof_points", "market_share"]);
-const TIER_RANK: Tier[] = ["plan", "sop", "public", "ai", "synthetic"];
-const TIER_ICON: Record<Tier, IconName> = { plan: "document", sop: "shield", public: "search", ai: "sparkles", synthetic: "flask" };
+const TIER_RANK: Tier[] = ["plan", "sop", "public", "framework", "ai", "synthetic"];
+const TIER_ICON: Record<Tier, IconName> = { plan: "document", sop: "shield", public: "search", ai: "sparkles", synthetic: "flask", framework: "lightbulb" };
 
 function sectionSource(kit: Any | null, spec: Spec): { tier: Tier; label: string; title: string } | null {
   if (!kit) return null;
   if (spec === "sop") return { tier: "sop", label: "Company SOPs", title: "From the company's compliance profile" };
   if (spec === "synthetic") return { tier: "synthetic", label: "Synthetic", title: "A stand-in until real client data is connected" };
+  if (spec === "framework") return { tier: "framework", label: "Best practice", title: "Omni's best-practice framework: guidance, not brand data. The brand plan wins." };
   const proposals = (kit.proposals ?? {}) as Record<string, Any>;
   const hasPlan = Boolean(kit.plan_meta) || arr(kit.plans).length > 0;
   const found: { tier: Tier; key: string }[] = [];
@@ -208,6 +213,11 @@ function SourceLegend() {
 export const Needs = ({ what }: { what?: string }) => <span className="v3-iq-none" title={what ? `Not captured yet: ${what}` : "Not captured yet"}>Not captured</span>;
 export const Src = ({ s }: { s: unknown }) => (s ? <small className="v3-iq-src">{txt(s)}</small> : null);
 export const SiTag = ({ id }: { id: unknown }) => <span className={`v3-iq-si v3-iq-si-${SI_TONE[txt(id)] ?? "other"}`}>{txt(id)}</span>;
+
+/** A field label with its icon, so every template reads the same way. */
+export const Lbl = ({ icon, children }: { icon: IconName; children: React.ReactNode }) => (
+  <em className="v3-iq-lbl"><Icon name={icon} size={12} />{children}</em>
+);
 
 /** The sources of a list's rows, once, for the section footer. */
 export function sourcesOf(rows: Any[], key = "source"): string {
@@ -338,8 +348,8 @@ function ContextBrief({ tab }: { tab: TabId }) {
   const c = ((ctx.tabs ?? {}) as Record<string, Any>)[tab];
   if (!c) return (
     <div className="v3-iq-brief empty">
-      <span><Icon name="sparkles" size={13} /> No brief for this tab yet. Omni can write one from what the kit holds.</span>
-      <button type="button" className="v3-iq-btn" disabled={Boolean(sk.busy)} onClick={() => sk.run("context")}>{sk.busy ? "Writing…" : "Write the briefs"}</button>
+      <span><Icon name="sparkles" size={13} /> No brief yet. Omni can write one from what the kit holds.</span>
+      <button type="button" className="v3-iq-btn" disabled={Boolean(sk.busy)} onClick={() => sk.run("context")}>{sk.busy ? "Writing…" : "Write the brief"}</button>
       {sk.err && <small className="v3-iq-err">{sk.err}</small>}
     </div>
   );
@@ -429,7 +439,7 @@ export function Shell({ tab, p, children, extraHead }: { tab: TabId; p: KitState
             <KitCtx.Provider value={p.kit}>
               {tab === "brandiq" && <SourceLegend />}
               {tab === "brandiq" && <ProposalBar p={p} />}
-              <ContextBrief tab={tab} />
+              {tab === "brandiq" && <ContextBrief tab={tab} />}
               <SectionIndex tab={tab} />
               {children(p.kit)}
               <StillNeeded tab={tab} />

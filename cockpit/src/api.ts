@@ -148,6 +148,9 @@ export interface BrandReadiness { brand: string; items: ReadinessItem[]; updated
 export function getBrandReadiness(brand: string): Promise<BrandReadiness> {
   return getJSON(`/api/brand-kits/${encodeURIComponent(brand)}/readiness`);
 }
+export function getChannelPlaybook(): Promise<Record<string, unknown>> {
+  return getJSON("/api/frameworks/channel-playbook");
+}
 export function getClientData(brand: string): Promise<Record<string, unknown>> {
   return getJSON(`/api/brand-kits/${encodeURIComponent(brand)}/client-data`);
 }

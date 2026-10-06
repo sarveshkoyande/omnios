@@ -1,0 +1,662 @@
+{
+  "name": "Omni channel playbook",
+  "source": "Omni best-practice framework for US pharma omnichannel. Guidance, not brand data: the brand plan wins.",
+  "ladder": [
+    {
+      "id": "aware",
+      "name": "Aware",
+      "goal": "Knows the unmet need and that the brand exists",
+      "hcp": [
+        "endemic",
+        "programmatic",
+        "congress",
+        "print",
+        "search"
+      ],
+      "patient": [
+        "search",
+        "social",
+        "dtc_tv",
+        "advocacy"
+      ],
+      "success": "Target-list reach, unaided awareness"
+    },
+    {
+      "id": "interested",
+      "name": "Interested",
+      "goal": "Believes the data applies to their patients",
+      "hcp": [
+        "rep_f2f",
+        "webinar",
+        "rte",
+        "hcp_site",
+        "msl"
+      ],
+      "patient": [
+        "patient_site",
+        "social",
+        "crm"
+      ],
+      "success": "Engaged HCPs, time with key content"
+    },
+    {
+      "id": "trial",
+      "name": "Trial",
+      "goal": "Prescribes for a first patient",
+      "hcp": [
+        "rep_f2f",
+        "remote_rep",
+        "ehr",
+        "rte"
+      ],
+      "patient": [
+        "psp",
+        "crm",
+        "patient_site"
+      ],
+      "success": "First prescriptions, hub enrolments"
+    },
+    {
+      "id": "adopt",
+      "name": "Adopt",
+      "goal": "Routine choice for the right patients",
+      "hcp": [
+        "rte",
+        "brand_email",
+        "ehr",
+        "remote_rep"
+      ],
+      "patient": [
+        "crm",
+        "psp"
+      ],
+      "success": "Repeat prescriptions, share of new patients, persistence"
+    },
+    {
+      "id": "advocate",
+      "name": "Advocate",
+      "goal": "Recommends it to peers",
+      "hcp": [
+        "webinar",
+        "congress",
+        "msl"
+      ],
+      "patient": [
+        "advocacy",
+        "social"
+      ],
+      "success": "Speaker participation, peer referrals"
+    }
+  ],
+  "lifecycle": [
+    {
+      "id": "launch",
+      "name": "Launch",
+      "focus": "Build awareness and first experience fast: experts, congress, rep and the HCP site lead."
+    },
+    {
+      "id": "growth",
+      "name": "Growth",
+      "focus": "Scale reach and frequency: digital and point-of-care carry the message between rep visits."
+    },
+    {
+      "id": "mature",
+      "name": "Mature",
+      "focus": "Efficiency: remote and triggered channels keep loyal prescribers; patients stay on treatment."
+    },
+    {
+      "id": "loe",
+      "name": "Loss of exclusivity",
+      "focus": "Protect the base at low cost: CRM, support services and email."
+    }
+  ],
+  "channels": [
+    {
+      "id": "rep_f2f",
+      "name": "Rep visit (face to face)",
+      "audience": "HCP",
+      "icon": "persona",
+      "lifecycle": {
+        "launch": "lead",
+        "growth": "lead",
+        "mature": "support",
+        "loe": "light"
+      },
+      "use_when": "Priority HCPs who need the story explained and objections handled in person.",
+      "formats": [
+        "Detail aid",
+        "Leave-behind",
+        "Sample / starter kit"
+      ],
+      "cadence": "Every 4–6 weeks for top-decile HCPs",
+      "kpis": [
+        "Calls on target list",
+        "Call quality",
+        "Message recall"
+      ],
+      "watch_out": "Most expensive touch: reserve for high-value HCPs; reps use approved materials only."
+    },
+    {
+      "id": "remote_rep",
+      "name": "Remote rep / e-detail",
+      "audience": "HCP",
+      "icon": "video",
+      "lifecycle": {
+        "launch": "support",
+        "growth": "support",
+        "mature": "lead",
+        "loe": "support"
+      },
+      "use_when": "HCPs who restrict access or sit outside rep territories.",
+      "formats": [
+        "Video call detail",
+        "Interactive e-detail",
+        "Chat"
+      ],
+      "cadence": "Monthly, or on request",
+      "kpis": [
+        "Remote calls completed",
+        "Time in detail"
+      ],
+      "watch_out": "Same MLR-approved content as face to face; record consent to contact."
+    },
+    {
+      "id": "rte",
+      "name": "Rep-triggered email",
+      "audience": "HCP",
+      "icon": "mail",
+      "lifecycle": {
+        "launch": "support",
+        "growth": "lead",
+        "mature": "lead",
+        "loe": "support"
+      },
+      "use_when": "Following up a conversation with the exact topic discussed.",
+      "formats": [
+        "Approved email templates",
+        "Content links",
+        "Meeting invites"
+      ],
+      "cadence": "Within 48 hours of a call",
+      "kpis": [
+        "Open rate",
+        "Click rate",
+        "Follow-up meetings booked"
+      ],
+      "watch_out": "Reps choose from approved templates and can't edit the text."
+    },
+    {
+      "id": "brand_email",
+      "name": "Brand email (HQ)",
+      "audience": "HCP",
+      "icon": "mail",
+      "lifecycle": {
+        "launch": "support",
+        "growth": "support",
+        "mature": "lead",
+        "loe": "lead"
+      },
+      "use_when": "Keeping consented HCPs updated at scale between rep contacts.",
+      "formats": [
+        "Newsletter",
+        "Data update",
+        "Event invite"
+      ],
+      "cadence": "1–2 a month at most",
+      "kpis": [
+        "Open rate",
+        "Click rate",
+        "Unsubscribe rate"
+      ],
+      "watch_out": "Opt-in only; respect frequency caps across all channels."
+    },
+    {
+      "id": "webinar",
+      "name": "Webinars & speaker programs",
+      "audience": "HCP",
+      "icon": "video",
+      "lifecycle": {
+        "launch": "lead",
+        "growth": "support",
+        "mature": "light",
+        "loe": "light"
+      },
+      "use_when": "New data, complex cases or a new treatment approach that needs peer voices.",
+      "formats": [
+        "Expert webinar",
+        "Case discussion",
+        "Speaker dinner"
+      ],
+      "cadence": "Quarterly, around data moments",
+      "kpis": [
+        "Registrations",
+        "Attendance",
+        "Questions asked",
+        "Prescribing after attending"
+      ],
+      "watch_out": "Speaker programs follow the PhRMA Code and fair-market-value rules."
+    },
+    {
+      "id": "congress",
+      "name": "Congresses & medical meetings",
+      "audience": "HCP",
+      "icon": "calendar",
+      "lifecycle": {
+        "launch": "lead",
+        "growth": "support",
+        "mature": "light",
+        "loe": "light"
+      },
+      "use_when": "Data read-outs and meeting the experts who shape guidelines.",
+      "formats": [
+        "Booth",
+        "Symposium",
+        "Poster",
+        "Expert meetings"
+      ],
+      "cadence": "Key annual congresses",
+      "kpis": [
+        "Booth visits",
+        "Symposium attendance",
+        "Leads captured"
+      ],
+      "watch_out": "Keep promotional and medical (non-promotional) activities separate."
+    },
+    {
+      "id": "endemic",
+      "name": "HCP portals & endemic media",
+      "audience": "HCP",
+      "icon": "monitor",
+      "lifecycle": {
+        "launch": "lead",
+        "growth": "lead",
+        "mature": "support",
+        "loe": "light"
+      },
+      "use_when": "Reaching HCPs where they already read clinical content (e.g. Medscape, Doximity).",
+      "formats": [
+        "Sponsored content",
+        "Display",
+        "Email via the portal"
+      ],
+      "cadence": "Always on during campaign flights",
+      "kpis": [
+        "Reach of target list",
+        "Engagement",
+        "Lift in awareness"
+      ],
+      "watch_out": "Buy against your target list, not general audiences."
+    },
+    {
+      "id": "programmatic",
+      "name": "Programmatic / NPI-targeted display",
+      "audience": "HCP",
+      "icon": "monitor",
+      "lifecycle": {
+        "launch": "support",
+        "growth": "lead",
+        "mature": "support",
+        "loe": "light"
+      },
+      "use_when": "Adding frequency against a target list between personal touches.",
+      "formats": [
+        "Banner",
+        "Video",
+        "Retargeting"
+      ],
+      "cadence": "Always on, frequency-capped",
+      "kpis": [
+        "Target-list match rate",
+        "Viewable impressions",
+        "Site visits"
+      ],
+      "watch_out": "Ad carries fair balance or a clear link to it."
+    },
+    {
+      "id": "ehr",
+      "name": "EHR / point-of-care messaging",
+      "audience": "HCP",
+      "icon": "document",
+      "lifecycle": {
+        "launch": "support",
+        "growth": "lead",
+        "mature": "lead",
+        "loe": "support"
+      },
+      "use_when": "Reminding HCPs at the moment of the treatment decision.",
+      "formats": [
+        "Point-of-care message",
+        "Formulary note",
+        "Patient-education print"
+      ],
+      "cadence": "Triggered by the relevant diagnosis or visit",
+      "kpis": [
+        "Messages served",
+        "Prescriptions after exposure"
+      ],
+      "watch_out": "Must not interfere with clinical decision support; vendor rules apply."
+    },
+    {
+      "id": "hcp_site",
+      "name": "HCP website & resources",
+      "audience": "HCP",
+      "icon": "globe",
+      "lifecycle": {
+        "launch": "lead",
+        "growth": "support",
+        "mature": "support",
+        "loe": "support"
+      },
+      "use_when": "The home for data, dosing, access and support that every other channel points to.",
+      "formats": [
+        "Data pages",
+        "Dosing tools",
+        "Access & reimbursement",
+        "Downloadables"
+      ],
+      "cadence": "Always on; refresh with new data",
+      "kpis": [
+        "Visits from target HCPs",
+        "Time on site",
+        "Resource downloads"
+      ],
+      "watch_out": "Gate HCP-only content; keep ISI visible."
+    },
+    {
+      "id": "print",
+      "name": "Journals & print",
+      "audience": "HCP",
+      "icon": "document",
+      "lifecycle": {
+        "launch": "support",
+        "growth": "light",
+        "mature": "light",
+        "loe": "light"
+      },
+      "use_when": "Launch credibility and specialties that still read print.",
+      "formats": [
+        "Journal ad",
+        "Supplement",
+        "Reprint carrier"
+      ],
+      "cadence": "Around launches and key data",
+      "kpis": [
+        "Reach",
+        "Recall"
+      ],
+      "watch_out": "Full prescribing information or brief summary required."
+    },
+    {
+      "id": "msl",
+      "name": "Medical science liaisons",
+      "audience": "HCP",
+      "icon": "flask",
+      "lifecycle": {
+        "launch": "lead",
+        "growth": "support",
+        "mature": "light",
+        "loe": "light"
+      },
+      "use_when": "Scientific exchange with experts; answers to off-label questions.",
+      "formats": [
+        "Scientific exchange",
+        "Advisory boards",
+        "Medical information"
+      ],
+      "cadence": "Expert-led, on request",
+      "kpis": [
+        "Expert interactions",
+        "Insights captured"
+      ],
+      "watch_out": "Non-promotional: never used as a sales channel."
+    },
+    {
+      "id": "dtc_tv",
+      "name": "TV & connected TV",
+      "audience": "Patient",
+      "icon": "monitor",
+      "lifecycle": {
+        "launch": "support",
+        "growth": "lead",
+        "mature": "support",
+        "loe": "light"
+      },
+      "use_when": "Large, diagnosed patient populations who need prompting to talk to their doctor.",
+      "formats": [
+        "TV spot",
+        "Connected TV",
+        "Online video"
+      ],
+      "cadence": "Flighted campaigns",
+      "kpis": [
+        "Reach",
+        "Brand awareness",
+        "Doctor conversations"
+      ],
+      "watch_out": "Major statement of risks and adequate provision (FDA)."
+    },
+    {
+      "id": "search",
+      "name": "Paid search",
+      "audience": "Both",
+      "icon": "search",
+      "lifecycle": {
+        "launch": "lead",
+        "growth": "lead",
+        "mature": "lead",
+        "loe": "support"
+      },
+      "use_when": "Capturing people already looking for the condition or the brand.",
+      "formats": [
+        "Branded search",
+        "Unbranded condition search"
+      ],
+      "cadence": "Always on",
+      "kpis": [
+        "Impressions share",
+        "Click rate",
+        "Conversions to site"
+      ],
+      "watch_out": "Branded ads need fair balance via the landing page."
+    },
+    {
+      "id": "social",
+      "name": "Paid & organic social",
+      "audience": "Patient",
+      "icon": "smartphone",
+      "lifecycle": {
+        "launch": "support",
+        "growth": "lead",
+        "mature": "support",
+        "loe": "light"
+      },
+      "use_when": "Awareness days, community and short educational content.",
+      "formats": [
+        "Short video",
+        "Carousel",
+        "Community posts"
+      ],
+      "cadence": "Weekly, peaks around awareness days",
+      "kpis": [
+        "Reach",
+        "Engagement",
+        "Site visits"
+      ],
+      "watch_out": "Comment moderation and adverse-event reporting process needed."
+    },
+    {
+      "id": "patient_site",
+      "name": "Patient website",
+      "audience": "Patient",
+      "icon": "globe",
+      "lifecycle": {
+        "launch": "lead",
+        "growth": "lead",
+        "mature": "support",
+        "loe": "support"
+      },
+      "use_when": "Explaining the condition and treatment in plain words; the destination for patient media.",
+      "formats": [
+        "Condition explainer",
+        "Doctor discussion guide",
+        "Savings / support sign-up"
+      ],
+      "cadence": "Always on",
+      "kpis": [
+        "Visits",
+        "Discussion guides downloaded",
+        "Support sign-ups"
+      ],
+      "watch_out": "Plain language; ISI on every page."
+    },
+    {
+      "id": "crm",
+      "name": "Patient CRM (email & SMS)",
+      "audience": "Patient",
+      "icon": "mail",
+      "lifecycle": {
+        "launch": "support",
+        "growth": "lead",
+        "mature": "lead",
+        "loe": "lead"
+      },
+      "use_when": "Helping patients start and stay on treatment.",
+      "formats": [
+        "Welcome series",
+        "Refill reminder",
+        "Adherence tips"
+      ],
+      "cadence": "Journey-triggered",
+      "kpis": [
+        "Opt-ins",
+        "Persistence",
+        "Refill rate"
+      ],
+      "watch_out": "Documented opt-in; texts follow TCPA rules."
+    },
+    {
+      "id": "psp",
+      "name": "Patient support & hub services",
+      "audience": "Patient",
+      "icon": "heartPulse",
+      "lifecycle": {
+        "launch": "lead",
+        "growth": "lead",
+        "mature": "lead",
+        "loe": "lead"
+      },
+      "use_when": "Removing access, cost and onboarding barriers.",
+      "formats": [
+        "Hub enrolment",
+        "Benefits check",
+        "Copay support",
+        "Nurse educator"
+      ],
+      "cadence": "From prescription onwards",
+      "kpis": [
+        "Enrolments",
+        "Time to first dose",
+        "Abandonment rate"
+      ],
+      "watch_out": "Copay programs exclude government-insured patients."
+    },
+    {
+      "id": "advocacy",
+      "name": "Advocacy & community partnerships",
+      "audience": "Patient",
+      "icon": "users",
+      "lifecycle": {
+        "launch": "lead",
+        "growth": "support",
+        "mature": "support",
+        "loe": "light"
+      },
+      "use_when": "Rare and serious conditions where patient groups are the trusted voice.",
+      "formats": [
+        "Awareness-day campaigns",
+        "Co-created education",
+        "Sponsorships"
+      ],
+      "cadence": "Around awareness days and events",
+      "kpis": [
+        "Partnerships",
+        "Reach through partners"
+      ],
+      "watch_out": "Groups keep editorial independence; disclose funding."
+    }
+  ],
+  "orchestration": [
+    {
+      "rule": "Follow the rep with digital",
+      "detail": "Send a rep-triggered email within 48 hours of a call, on the topic discussed."
+    },
+    {
+      "rule": "Surround sound",
+      "detail": "Reach priority HCPs on 2–3 channels within the same two weeks, with one message."
+    },
+    {
+      "rule": "Cap frequency across channels",
+      "detail": "Set one monthly cap per HCP across every channel; pause after an opt-out or a no-see flag."
+    },
+    {
+      "rule": "Next best action, not a calendar",
+      "detail": "Let engagement (opens, attendance, prescribing) decide the next channel and message."
+    },
+    {
+      "rule": "Consent first",
+      "detail": "Email and SMS only with documented opt-in; honour opt-outs fast (CAN-SPAM, TCPA)."
+    },
+    {
+      "rule": "Approved, balanced, unedited",
+      "detail": "Every promotional piece carries fair balance and MLR approval; nobody edits approved copy."
+    },
+    {
+      "rule": "One story for HCPs and patients",
+      "detail": "Time patient media so the patient's question meets an HCP who has already heard the data."
+    },
+    {
+      "rule": "Test and learn",
+      "detail": "Change one thing at a time and keep a hold-out group to measure real lift."
+    }
+  ],
+  "measurement": [
+    {
+      "level": "Reach",
+      "question": "Did we reach the right people?",
+      "metrics": [
+        "Target-list coverage",
+        "Frequency",
+        "Share of voice"
+      ]
+    },
+    {
+      "level": "Engagement",
+      "question": "Did they engage?",
+      "metrics": [
+        "Open and click rates",
+        "Time with content",
+        "Webinar attendance",
+        "Call quality"
+      ]
+    },
+    {
+      "level": "Behaviour",
+      "question": "Did they act?",
+      "metrics": [
+        "New-to-brand prescriptions",
+        "Hub enrolments",
+        "Sample requests"
+      ]
+    },
+    {
+      "level": "Business",
+      "question": "Did it pay off?",
+      "metrics": [
+        "New-patient share",
+        "Persistence",
+        "Revenue",
+        "Return per channel"
+      ]
+    }
+  ]
+}

@@ -3074,326 +3074,98 @@
           "brandiq": {
             "brief": [
               {
-                "lead": "Cablivi treats aTTP",
-                "text": "It's for acute acquired thrombotic thrombocytopenic purpura, a rare, life-threatening emergency."
+                "lead": "Acute life-threatening emergency",
+                "text": "aTTP is rare, sudden, and has up to 90% mortality if untreated, 10-25% even with PEX + immunosuppression."
               },
               {
-                "lead": "Reduce death, organ damage",
-                "text": "Cablivi aims to reduce mortality and prevent long-term organ damage from microthrombi."
+                "lead": "Cablivi saves lives",
+                "text": "Adding Cablivi to standard care significantly reduces mortality, PEX days, ICU and hospital stays."
               },
               {
-                "lead": "Late-stage growth brand",
-                "text": "The brand is in a growth phase, expanding use and launching in new markets."
+                "lead": "Growth opportunity",
+                "text": "Despite strong efficacy, frontline use for all events and timely diagnosis remain key growth drivers."
               }
             ],
             "implications": [
               {
                 "kind": "do",
-                "text": "Focus messaging on aTTP's emergency nature to drive faster diagnosis.",
-                "cites": "unmet_need"
+                "text": "Increase ER/ICU awareness of aTTP as an urgent medical emergency. (64% -> 85%)",
+                "cites": "FIND imperative; ER/ICU awareness KPI"
               },
               {
                 "kind": "do",
-                "text": "Highlight Cablivi's unique mechanism of action and proven outcomes.",
-                "cites": "big_idea"
+                "text": "Promote frontline Cablivi use for all aTTP events, at clinical diagnosis, not waiting for ADAMTS13 results.",
+                "cites": "TREAT imperative; Frontline use KPI"
               },
               {
                 "kind": "do",
-                "text": "Support global launch excellence in Taiwan, Turkey, and China.",
-                "cites": "objectives"
+                "text": "Address cost concerns and the habit of reserving Cablivi for severe patients.",
+                "cites": "TREAT imperative; Cost concerns barrier; HCPs not prescribing due to cost KPI"
+              },
+              {
+                "kind": "do",
+                "text": "Reinforce adherence to the label for treatment duration (>=35 days) to prevent exacerbations.",
+                "cites": "MAINTAIN imperative; Average treatment duration KPI"
               },
               {
                 "kind": "watch",
-                "text": "Monitor late recognition and waiting-to-treat barriers closely.",
-                "cites": "unmet_need"
-              }
-            ]
-          },
-          "market": {
-            "brief": [
-              {
-                "lead": "aTTP is an emergency",
-                "text": "It's a rare, acute, life-threatening condition with high mortality if untreated."
-              },
-              {
-                "lead": "Growth and new launches",
-                "text": "Sales forecast to grow to 354 M EUR by 2029; launching in Taiwan, Turkey, China."
-              },
-              {
-                "lead": "Access is hospital-based",
-                "text": "Treatment occurs in hospitals/ICUs; cost and reserving for severe cases are barriers."
-              }
-            ],
-            "implications": [
-              {
-                "kind": "do",
-                "text": "Target ER/ICU staff to increase awareness of TMA/aTTP.",
-                "cites": "objectives"
-              },
-              {
-                "kind": "do",
-                "text": "Emphasize Cablivi's cost-effectiveness in reducing PEX and ICU days.",
-                "cites": "market_access"
-              },
-              {
-                "kind": "do",
-                "text": "Build frontline use now, especially against pipeline competitors like rADAMTS13.",
-                "cites": "competitors"
-              },
-              {
-                "kind": "watch",
-                "text": "Address HCP cost concerns and the tendency to reserve Cablivi.",
-                "cites": "market_access"
-              }
-            ]
-          },
-          "audiences": {
-            "brief": [
-              {
-                "lead": "Four HCP segments",
-                "text": "Diagnosers/Referrers, Treaters (Altruist/Cautioner), and Experts are key targets."
-              },
-              {
-                "lead": "Patient, caregiver needs",
-                "text": "Patients and caregivers need support at discharge, fearing relapse."
-              },
-              {
-                "lead": "Address specific barriers",
-                "text": "Each segment faces unique barriers, from low awareness to cost concerns."
-              }
-            ],
-            "implications": [
-              {
-                "kind": "do",
-                "text": "Help Diagnosers/Referrers recognize aTTP early, stressing urgency.",
-                "cites": "personas.hcp"
-              },
-              {
-                "kind": "do",
-                "text": "Build Treater confidence for frontline Cablivi use at clinical diagnosis.",
-                "cites": "personas.hcp"
-              },
-              {
-                "kind": "do",
-                "text": "Engage Experts with new data, like Mayari and RWE on duration.",
-                "cites": "personas.hcp"
-              },
-              {
-                "kind": "do",
-                "text": "Support patients and caregivers with information on exacerbation risk.",
-                "cites": "personas.patient"
-              }
-            ]
-          },
-          "message": {
-            "brief": [
-              {
-                "lead": "Frontline for all aTTP",
-                "text": "Position Cablivi as frontline treatment for all aTTP patients to prevent damage."
-              },
-              {
-                "lead": "First-in-class, best outcomes",
-                "text": "Highlight Cablivi's unique MoA, reduction in mortality, and guideline recommendations."
-              },
-              {
-                "lead": "Urgent, data-backed voice",
-                "text": "Communicate urgently, clinically, and confidently with evidence for every claim."
-              }
-            ],
-            "implications": [
-              {
-                "kind": "do",
-                "text": "Emphasize Cablivi inhibits microthrombi and prevents organ damage.",
-                "cites": "core_claim"
-              },
-              {
-                "kind": "do",
-                "text": "Lead with urgency: 'aTTP is a medical emergency - every hour counts.'",
-                "cites": "voice"
-              },
-              {
-                "kind": "do",
-                "text": "Promote treatment for 'every event, frontline, at clinical diagnosis.'",
-                "cites": "voice"
-              },
-              {
-                "kind": "watch",
-                "text": "Avoid aspirational or off-label claims, even when showing mechanism.",
-                "cites": "voice"
-              }
-            ]
-          },
-          "channels": {
-            "brief": [
-              {
-                "lead": "Omnichannel approach",
-                "text": "Mix of digital, F2F, and AI targets HCPs, patients, and caregivers."
-              },
-              {
-                "lead": "Digital for HCP education",
-                "text": "Webinars, websites, and AI tools are key for HCP awareness and education."
-              },
-              {
-                "lead": "Social for patient awareness",
-                "text": "Unbranded social media campaigns raise awareness on key dates."
-              }
-            ],
-            "implications": [
-              {
-                "kind": "do",
-                "text": "Scale up Cablivi.AI for real-time patient prediction in new markets.",
-                "cites": "channels.cards"
-              },
-              {
-                "kind": "do",
-                "text": "Utilize serious games and AI avatars to educate ER/ICU HCPs.",
-                "cites": "channels.cards"
-              },
-              {
-                "kind": "do",
-                "text": "Leverage webinars and advisory boards for treater education on best practice.",
-                "cites": "channels.cards"
-              },
-              {
-                "kind": "watch",
-                "text": "Ensure all digital content is HCP-gated where appropriate and compliant.",
-                "cites": "channels.cards"
-              }
-            ]
-          },
-          "product": {
-            "brief": [
-              {
-                "lead": "Indicated for aTTP",
-                "text": "Cablivi is for adults and pediatric patients (12+) with aTTP."
-              },
-              {
-                "lead": "Combination therapy",
-                "text": "Used with plasma exchange (PEX) and immunosuppressive therapy."
-              },
-              {
-                "lead": "Strong clinical evidence",
-                "text": "HERCULES data shows reduced PEX/ICU days; Capla1000 showed reduced mortality."
-              }
-            ],
-            "implications": [
-              {
-                "kind": "do",
-                "text": "Always emphasize Cablivi's use in combination with PEX and IST.",
-                "cites": "label_indication"
-              },
-              {
-                "kind": "do",
-                "text": "Highlight evidence of reduced PEX, ICU, and hospital days.",
-                "cites": "clinical"
-              },
-              {
-                "kind": "do",
-                "text": "Share Capla1000 data on reduced 3-month mortality.",
-                "cites": "clinical"
-              },
-              {
-                "kind": "watch",
-                "text": "Do not promote Cablivi without PEX; Mayari results are pending and off-label.",
-                "cites": "guardrails.donts"
-              }
-            ]
-          },
-          "compliance": {
-            "brief": [
-              {
-                "lead": "Follow local approvals",
-                "text": "All actions require local approval before implementation."
-              },
-              {
-                "lead": "No off-label promotion",
-                "text": "Do not promote Cablivi without PEX or make aspirational claims."
-              },
-              {
-                "lead": "Strict channel rules",
-                "text": "Email, social media, and web content have specific regulatory guardrails."
-              }
-            ],
-            "implications": [
-              {
-                "kind": "do",
-                "text": "Ensure all promotional materials have MLR approval codes and expiry dates.",
-                "cites": "compliance.prelaunch_checklist"
-              },
-              {
-                "kind": "do",
-                "text": "Include full ISI or a link to it on all promotional assets.",
-                "cites": "compliance.prelaunch_checklist"
-              },
-              {
-                "kind": "do",
-                "text": "Obtain email consent before sending promotional emails and honor opt-outs.",
-                "cites": "compliance.channel_rules"
-              },
-              {
-                "kind": "watch",
-                "text": "Reps may not edit claims in approved email templates.",
-                "cites": "compliance.channel_rules"
-              },
-              {
-                "kind": "watch",
-                "text": "Unbranded social ads carry no product name; branded ads need ISI.",
-                "cites": "compliance.channel_rules"
+                "text": "Monitor evolving competitive landscape, especially Takeda's rADAMTS13 post-2029.",
+                "cites": "Competitors"
               }
             ]
           }
         },
         "on_a_page": {
-          "problem": "aTTP is a deadly emergency; patients are diagnosed/treated too late.",
-          "objective": "Improve ER/ICU awareness and drive frontline use for all aTTP events.",
-          "audience": "Diagnosers, Treaters (Altruists, Cautioners), Experts, Patients, Caregivers.",
-          "message": "Cablivi is first/best-in-class, reducing aTTP morbidities and mortality.",
-          "channels": "AI, digital, F2F, social media for HCP education and patient awareness.",
-          "proof": "HERCULES showed reduced PEX/ICU days; Capla1000 showed reduced mortality.",
-          "watch_outs": "Late recognition, waiting to treat, cost concerns, off-label promotion."
+          "problem": "aTTP is a medical emergency with high mortality, often recognized and treated late.",
+          "objective": "Find naive patients faster and ensure 100% frontline Cablivi for all aTTP events.",
+          "audience": "ER/ICU diagnosers, haematology treaters (Altruist, Cautioner, Hero segments).",
+          "message": "Cablivi is the first & best-in-class treatment, reducing aTTP morbidities and mortality.",
+          "channels": "AI-powered digital, webinars, HCP website, paid social, rep visits.",
+          "proof": "Reduced mortality (4.2x), fewer PEX days (-38%), ICU days (-65%), hospital days (-31%).",
+          "watch_outs": "Do not promote off-label or make aspirational claims; ensure MLR approval and ISI."
         },
         "generated_at": "2026-10-06"
       },
       "channels": {
         "brief": [
           {
-            "lead": "Omnichannel approach",
-            "text": "Channels target HCPs and patients via digital, F2F, and AI to improve diagnosis and treatment."
+            "lead": "Digital platforms",
+            "text": "Central for HCP finding and treatment, leveraging AI for targeted reach and diagnosis support."
           },
           {
-            "lead": "Digital focus",
-            "text": "Webinars, websites, and AI tools are key for HCP education and real-time support."
+            "lead": "Webinars",
+            "text": "Key for HCP education and best practice sharing, driving adoption."
           },
           {
-            "lead": "Patient engagement",
-            "text": "Social media drives awareness for patients and caregivers during key awareness days."
+            "lead": "Social Media",
+            "text": "Essential for patient awareness and engagement around rare disease days."
           }
         ],
         "mix": [
           {
             "audience": "Diagnoser/Referrer - Altruist",
-            "channel": "OneAI platform + Veeva alerts",
-            "role": "conversion",
+            "channel": "Digital / web (AI-powered avatar)",
+            "role": "awareness",
             "reach_pct": null,
             "source": "Brand plan deck, slide 18 - activities"
           },
           {
             "audience": "Diagnoser/Referrer - Altruist",
-            "channel": "Webinar (SpotMe)",
+            "channel": "OneAI platform + Veeva alerts",
+            "role": "awareness",
+            "reach_pct": null,
+            "source": "Brand plan deck, slide 18 - activities"
+          },
+          {
+            "audience": "Diagnoser/Referrer - Altruist",
+            "channel": "Webinars & speaker programs",
             "role": "education",
             "reach_pct": 43,
             "source": "Brand plan deck, slide 18 - activities"
           },
           {
             "audience": "Diagnoser/Referrer - Altruist",
-            "channel": "Digital / web",
-            "role": "education",
-            "reach_pct": null,
-            "source": "Brand plan deck, slide 18 - activities"
-          },
-          {
-            "audience": "Diagnoser/Referrer - Altruist",
-            "channel": "Web",
+            "channel": "HCP website & resources",
             "role": "education",
             "reach_pct": null,
             "source": "Brand plan deck, slide 18 - activities"
@@ -3407,8 +3179,8 @@
           },
           {
             "audience": "Treater - Altruist",
-            "channel": "Webinar (SpotMe)",
-            "role": "education",
+            "channel": "Webinars & speaker programs",
+            "role": "conversion",
             "reach_pct": 84,
             "source": "Brand plan deck, slide 20 - activities"
           },
@@ -3427,102 +3199,41 @@
             "source": "Brand plan deck, slide 20 - content"
           },
           {
-            "audience": "Treater - Cautioner",
-            "channel": "Webinar (SpotMe)",
-            "role": "education",
-            "reach_pct": 27,
-            "source": "Brand plan deck, slide 20 - activities"
-          },
-          {
-            "audience": "Treater - Cautioner",
-            "channel": "F2F / hybrid",
-            "role": "education",
-            "reach_pct": null,
-            "source": "Brand plan deck, slide 20 - activities"
-          },
-          {
-            "audience": "Treater - Cautioner",
-            "channel": "Digital",
-            "role": "education",
-            "reach_pct": null,
-            "source": "Brand plan deck, slide 20 - content"
-          },
-          {
             "audience": "Treater/Expert - Hero",
-            "channel": "F2F",
+            "channel": "Rep visit (face to face)",
             "role": "education",
-            "reach_pct": null,
-            "source": "Brand plan deck, slide 20 - activities"
-          },
-          {
-            "audience": "Treater/Expert - Hero",
-            "channel": "F2F / hybrid",
-            "role": "education",
-            "reach_pct": null,
+            "reach_pct": 28,
             "source": "Brand plan deck, slide 20 - activities"
           },
           {
             "audience": "Acute aTTP patient",
-            "channel": "Social media",
+            "channel": "Paid & organic social",
             "role": "awareness",
             "reach_pct": null,
             "source": "Brand plan deck, slide 19 - activities"
-          },
-          {
-            "audience": "Family caregiver",
-            "channel": "Social media",
-            "role": "awareness",
-            "reach_pct": null,
-            "source": "Brand plan deck, slide 19 - activities"
-          },
-          {
-            "audience": "Diagnoser/Referrer - Altruist",
-            "channel": "Email",
-            "role": "education",
-            "reach_pct": 29,
-            "source": "AI draft"
-          },
-          {
-            "audience": "Treater - Altruist",
-            "channel": "Email",
-            "role": "education",
-            "reach_pct": 47,
-            "source": "AI draft"
-          },
-          {
-            "audience": "Treater - Cautioner",
-            "channel": "Email",
-            "role": "education",
-            "reach_pct": 48,
-            "source": "AI draft"
-          },
-          {
-            "audience": "Treater/Expert - Hero",
-            "channel": "Email",
-            "role": "education",
-            "reach_pct": 60,
-            "source": "AI draft"
           }
         ],
         "cards": [
           {
+            "framework_id": null,
             "channel": "OneAI platform + Veeva alerts",
-            "role": "conversion",
+            "role": "awareness",
             "audiences": [
               "Diagnoser/Referrer - Altruist"
             ],
             "formats": [
-              "Real-time patient prediction",
+              "AI-powered predictions",
               "HCO-level alerts"
             ],
-            "cadence": "Real-time",
+            "cadence": "Real-time alerts",
             "kpi": "Cablivi.AI live in 5 new markets by end '26",
             "worked": "",
             "rule": "",
-            "source": "Brand plan deck, slide 18 - activities; Brand plan deck, slide 23 - KPIs"
+            "source": "Brand plan deck, slide 18 - activities"
           },
           {
-            "channel": "Webinar (SpotMe)",
+            "framework_id": "webinar",
+            "channel": "Webinars & speaker programs (SpotMe)",
             "role": "education",
             "audiences": [
               "Diagnoser/Referrer - Altruist",
@@ -3531,49 +3242,83 @@
               "Treater/Expert - Hero"
             ],
             "formats": [
-              "Live case discussions",
-              "Best practice presentations"
+              "Live webinars",
+              "Case discussions"
             ],
             "cadence": "Q1, Q3 2026",
-            "kpi": "ER/ICU awareness of TMA/aTTP to 85% by Q4 2026",
-            "worked": "The Hematology Podcast: 22K downloads since 2021",
+            "kpi": "ER/ICU awareness of TMA/aTTP to 85% by Q4 2026; Frontline use 50% naive / 65% relapsed by Q4 2026",
+            "worked": "",
             "rule": "Speaker slides MLR-approved; off-label questions routed to Medical Information",
-            "source": "Brand plan deck, slide 18 - activities; Brand plan deck, slide 20 - activities; Brand plan deck, slide 23 - KPIs; Brand plan deck, slide 35 - best practice; PhRMA Code; recommended practice"
+            "source": "Brand plan deck, slide 18 - activities; Brand plan deck, slide 20 - activities"
           },
           {
-            "channel": "Digital / web",
+            "framework_id": "hcp_site",
+            "channel": "HCP website & resources (understandingTTP.com)",
             "role": "education",
             "audiences": [
               "Diagnoser/Referrer - Altruist"
             ],
             "formats": [
-              "AI-powered avatar",
-              "Serious game (GO DOCTOR!)"
+              "New cases",
+              "ER/ICU focus",
+              "SEO content"
             ],
-            "cadence": "Q2-Q3 2026 (avatar), 2026 (game)",
+            "cadence": "Q1-Q2 2026 updates",
             "kpi": "ER/ICU awareness of TMA/aTTP to 85% by Q4 2026",
-            "worked": "GO DOCTOR! serious game: 10,359 gameplays, 92% improved knowledge",
-            "rule": "HCP-only content behind an HCP gate",
-            "source": "Brand plan deck, slide 18 - activities; Brand plan deck, slide 23 - KPIs; Brand plan deck, slide 32 - best practice; Recommended practice"
-          },
-          {
-            "channel": "Web",
-            "role": "education",
-            "audiences": [
-              "Diagnoser/Referrer - Altruist"
-            ],
-            "formats": [
-              "Website content (understandingTTP.com)",
-              "SEO updates",
-              "New case studies"
-            ],
-            "cadence": "Q1-Q2 2026",
-            "kpi": "ER/ICU awareness of TMA/aTTP to 85% by Q4 2026",
-            "worked": "Google campaign (DE): ~540k impressions, 501 conversions",
+            "worked": "",
             "rule": "HCP-only content behind an HCP gate; patient site in plain language with full ISI",
-            "source": "Brand plan deck, slide 18 - activities; Brand plan deck, slide 23 - KPIs; Brand plan deck, slide 33 - best practice; Recommended practice"
+            "source": "Brand plan deck, slide 18 - activities"
           },
           {
+            "framework_id": null,
+            "channel": "Digital / web (AI-powered avatar)",
+            "role": "awareness",
+            "audiences": [
+              "Diagnoser/Referrer - Altruist"
+            ],
+            "formats": [
+              "Interactive avatar"
+            ],
+            "cadence": "Q2-Q3 2026 launch",
+            "kpi": "ER/ICU awareness of TMA/aTTP to 85% by Q4 2026",
+            "worked": "",
+            "rule": "",
+            "source": "Brand plan deck, slide 18 - activities"
+          },
+          {
+            "framework_id": null,
+            "channel": "Digital / web (GO DOCTOR! serious game)",
+            "role": "education",
+            "audiences": [
+              "Diagnoser/Referrer - Altruist"
+            ],
+            "formats": [
+              "Serious game"
+            ],
+            "cadence": "2026 localization",
+            "kpi": "ER/ICU awareness of TMA/aTTP to 85% by Q4 2026",
+            "worked": "10,359 gameplays, 28K visits, 92% improved knowledge",
+            "rule": "",
+            "source": "Brand plan deck, slide 18 - activities; Brand plan deck, slide 32 - best practice"
+          },
+          {
+            "framework_id": "social",
+            "channel": "Paid & organic social",
+            "role": "awareness",
+            "audiences": [
+              "Acute aTTP patient"
+            ],
+            "formats": [
+              "Awareness campaigns"
+            ],
+            "cadence": "February, September 2026",
+            "kpi": null,
+            "worked": "",
+            "rule": "Unbranded ads carry no product name or claim; branded ads need ISI or a one-click link; retargeting only with retargeting opt-in",
+            "source": "Brand plan deck, slide 19 - activities"
+          },
+          {
+            "framework_id": null,
             "channel": "Print / digital / RTE",
             "role": "awareness",
             "audiences": [
@@ -3581,33 +3326,17 @@
             ],
             "formats": [
               "Ruler",
-              "RTE",
               "Poster"
             ],
             "cadence": "Q1-Q2 2026",
             "kpi": "ER/ICU awareness of TMA/aTTP to 85% by Q4 2026",
             "worked": "",
-            "rule": "",
-            "source": "Brand plan deck, slide 19 - content; Brand plan deck, slide 23 - KPIs"
+            "rule": "Approved templates only; reps may not edit claims",
+            "source": "Brand plan deck, slide 19 - content"
           },
           {
-            "channel": "Social media",
-            "role": "awareness",
-            "audiences": [
-              "Acute aTTP patient",
-              "Family caregiver"
-            ],
-            "formats": [
-              "Awareness campaigns (Rare Disease Day, International TTP Day)"
-            ],
-            "cadence": "Feb, Sep 2026",
-            "kpi": "Get PATIENTS to increase awareness of aTTP burden of disease",
-            "worked": "",
-            "rule": "Unbranded ads carry no product name or claim; branded ads need ISI or a one-click link; retargeting only with retargeting opt-in",
-            "source": "Brand plan deck, slide 19 - activities; Brand plan deck, slide 15 - activation; FDA guidance on character-limited media; SOP-01 Q50610"
-          },
-          {
-            "channel": "F2F / hybrid",
+            "framework_id": null,
+            "channel": "F2F / hybrid (Commercial advisory board)",
             "role": "education",
             "audiences": [
               "Treater - Altruist",
@@ -3615,49 +3344,46 @@
               "Treater/Expert - Hero"
             ],
             "formats": [
-              "Commercial advisory boards",
-              "KOL speaker tours"
+              "Advisory board meetings"
             ],
-            "cadence": "Q2, Mid 2026",
-            "kpi": "Patient penetration 47% US / 49% key markets by end '26",
+            "cadence": "Q2 2026",
+            "kpi": "HCPs not prescribing due to cost down to 15% by Q4 2026",
             "worked": "",
             "rule": "Speaker slides MLR-approved; off-label questions routed to Medical Information",
-            "source": "Brand plan deck, slide 20 - activities; Brand plan deck, slide 23 - KPIs; PhRMA Code; recommended practice"
+            "source": "Brand plan deck, slide 20 - activities"
           },
           {
-            "channel": "Digital",
+            "framework_id": "rep_f2f",
+            "channel": "Rep visit (face to face) (KOL speaker tour)",
+            "role": "education",
+            "audiences": [
+              "Treater/Expert - Hero"
+            ],
+            "formats": [
+              "Peer-to-peer education"
+            ],
+            "cadence": "Mid 2026",
+            "kpi": "Frontline use 50% naive / 65% relapsed by Q4 2026",
+            "worked": "",
+            "rule": "",
+            "source": "Brand plan deck, slide 20 - activities"
+          },
+          {
+            "framework_id": "programmatic",
+            "channel": "Digital (revamp global campaign)",
             "role": "education",
             "audiences": [
               "Treater - Altruist",
               "Treater - Cautioner"
             ],
             "formats": [
-              "MoA campaign (microthrombi, organ damage, mortality)"
+              "MoA focus content"
             ],
             "cadence": "H2 2025 - Q2 2026",
             "kpi": "Frontline use 50% naive / 65% relapsed by Q4 2026",
             "worked": "",
-            "rule": "",
-            "source": "Brand plan deck, slide 20 - content; Brand plan deck, slide 23 - KPIs"
-          },
-          {
-            "channel": "Email",
-            "role": "education",
-            "audiences": [
-              "Diagnoser/Referrer - Altruist",
-              "Treater - Altruist",
-              "Treater - Cautioner",
-              "Treater/Expert - Hero"
-            ],
-            "formats": [
-              "Educational content",
-              "Webinar invitations"
-            ],
-            "cadence": "No more than 1 promotional email per HCP per week",
-            "kpi": "ER/ICU awareness of TMA/aTTP to 85% by Q4 2026",
-            "worked": "",
-            "rule": "Send only with email consent; include unsubscribe; honour opt-outs within 10 business days; ISI or a link to it in every promotional email; Approved templates only; reps may not edit claims",
-            "source": "CAN-SPAM Act; FDA OPDP fair-balance expectations; Recommended practice; flow rules campaign_type_cadence"
+            "rule": "Unbranded ads carry no product name or claim; branded ads need ISI or a one-click link; retargeting only with retargeting opt-in",
+            "source": "Brand plan deck, slide 20 - content"
           }
         ],
         "journey": [
@@ -3666,91 +3392,108 @@
             "audience": "Diagnoser/Referrer - Altruist",
             "channels": [
               "OneAI platform + Veeva alerts",
-              "Webinar (SpotMe)",
-              "Digital / web",
-              "Web",
-              "Print / digital / RTE",
-              "Email"
+              "Digital / web (AI-powered avatar)",
+              "Digital / web (GO DOCTOR! serious game)",
+              "HCP website & resources (understandingTTP.com)",
+              "Print / digital / RTE"
             ],
-            "why": "Increase awareness of aTTP as an emergency."
+            "why": "Educate ER/ICU to identify aTTP, understand urgency."
           },
           {
             "stage": "Find the right treatment",
             "audience": "Treater - Altruist",
             "channels": [
-              "Webinar (SpotMe)",
-              "F2F / hybrid",
-              "Digital",
-              "Email"
+              "Webinars & speaker programs",
+              "Digital (revamp global campaign)"
             ],
-            "why": "Build confidence for frontline Cablivi use."
-          },
-          {
-            "stage": "Find the right treatment",
-            "audience": "Treater - Cautioner",
-            "channels": [
-              "Webinar (SpotMe)",
-              "F2F / hybrid",
-              "Digital",
-              "Email"
-            ],
-            "why": "Address cost concerns, provide evidence."
+            "why": "Build confidence for frontline Cablivi use for all patients."
           },
           {
             "stage": "Take treatment and see it work",
             "audience": "Treater/Expert - Hero",
             "channels": [
-              "F2F",
-              "F2F / hybrid",
-              "Email"
+              "Rep visit (face to face) (KOL speaker tour)",
+              "F2F / hybrid (Commercial advisory board)"
             ],
-            "why": "Share new data, reinforce best practice."
+            "why": "Reinforce best practices, address cost concerns, secure full treatment."
           },
           {
             "stage": "Recognise the problem",
             "audience": "Acute aTTP patient",
             "channels": [
-              "Social media"
+              "Paid & organic social"
             ],
-            "why": "Educate patients on disease burden and symptoms."
+            "why": "Increase general patient awareness of aTTP."
           }
         ],
         "moments": [
           {
             "name": "Rare Disease Day awareness",
             "when": "Feb 2026",
-            "type": "Patient Awareness",
+            "type": "Awareness Day",
             "source": "Brand plan deck, slide 19 - activities"
           },
           {
             "name": "International TTP Day campaign",
             "when": "Sep 2026",
-            "type": "Patient Awareness",
+            "type": "Awareness Day",
             "source": "Brand plan deck, slide 19 - activities"
           },
           {
-            "name": "Global treater webinar on best practice",
+            "name": "Global treater webinar",
             "when": "Q1 2026",
-            "type": "HCP Education",
+            "type": "Webinar",
             "source": "Brand plan deck, slide 20 - activities"
           },
           {
             "name": "Commercial advisory board",
             "when": "Q2 2026",
-            "type": "HCP Education",
+            "type": "Advisory Board",
             "source": "Brand plan deck, slide 20 - activities"
-          },
-          {
-            "name": "ER/ICU global webinar",
-            "when": "Q3 2026",
-            "type": "HCP Education",
-            "source": "Brand plan deck, slide 18 - activities"
           },
           {
             "name": "AI-powered avatar launch",
             "when": "Q2-Q3 2026",
-            "type": "HCP Education",
+            "type": "Launch",
             "source": "Brand plan deck, slide 18 - activities"
+          },
+          {
+            "name": "ER/ICU global webinar",
+            "when": "Q3 2026",
+            "type": "Webinar",
+            "source": "Brand plan deck, slide 18 - activities"
+          }
+        ],
+        "stage": "growth",
+        "stage_why": "Expanding Cablivi.AI, new markets, and deepening adoption drive growth.",
+        "ladder_focus": [
+          {
+            "rung": "aware",
+            "segments": [
+              "Diagnoser/Referrer - Altruist"
+            ],
+            "why": "Goal to recognize TTP as an emergency."
+          },
+          {
+            "rung": "adopt",
+            "segments": [
+              "Treater - Altruist"
+            ],
+            "why": "Drive frontline Cablivi use for all patients."
+          },
+          {
+            "rung": "trial",
+            "segments": [
+              "Treater - Cautioner"
+            ],
+            "why": "Address cost concerns to increase trial."
+          },
+          {
+            "rung": "advocate",
+            "segments": [
+              "Treater/Expert - Hero"
+            ],
+            "why": "Engage experts to champion optimal treatment."
           }
         ],
         "status": "proposed",
@@ -6721,6 +6464,11 @@
           "status": "ai_generated",
           "engine": "kit_proposer.big_idea",
           "date": "2026-10-02"
+        },
+        "channels": {
+          "status": "proposed",
+          "engine": "kit_proposer.channels",
+          "date": "2026-10-06"
         }
       },
       "big_idea": {
@@ -6776,6 +6524,458 @@
             "generated_at": "2026-10-02"
           }
         ]
+      },
+      "context": {
+        "tabs": {
+          "brandiq": {
+            "brief": [
+              {
+                "lead": "Unmet needs persist:",
+                "text": "Many patients with T2DM and HF are not on optimal therapy, or are not persistent. (Unmet Need)"
+              },
+              {
+                "lead": "Multi-indication opportunity:",
+                "text": "Jardiance treats T2DM, CVD, and HF, but real-world trial eligibility for SGLT2i is low. (Unmet Need, Patient flow)"
+              },
+              {
+                "lead": "Growth stage focus:",
+                "text": "Brand is established, but patient persistence is a key challenge at 47%. (Situation, Patient flow)"
+              }
+            ],
+            "implications": [
+              {
+                "kind": "do",
+                "text": "Educate HCPs on broad eligibility, especially for heart failure patients without high NT-proBNP.",
+                "cites": "Unmet Need, Patient flow, Personas"
+              },
+              {
+                "kind": "do",
+                "text": "Target cardiologists and PCPs specifically for the heart failure indication.",
+                "cites": "Segments, Personas"
+              },
+              {
+                "kind": "do",
+                "text": "Develop patient support programs to improve 12-month persistence.",
+                "cites": "Unmet Need, Patient flow, Channels"
+              },
+              {
+                "kind": "watch",
+                "text": "Monitor direct competitors like dapagliflozin and canagliflozin closely for new data.",
+                "cites": "Competitors"
+              },
+              {
+                "kind": "do",
+                "text": "Leverage oral formulation as a counter to injectable GLP-1 RA discontinuation rates.",
+                "cites": "Unmet Need, Competitors"
+              }
+            ]
+          }
+        },
+        "on_a_page": {},
+        "generated_at": "2026-10-06"
+      },
+      "channels": {
+        "brief": [
+          {
+            "lead": "Omnichannel HCP engagement:",
+            "text": "Mix of high-reach digital (Remote rep / e-detail, Paid social) and in-person (Rep visit (F2F)) channels targets HCPs for education and adoption."
+          },
+          {
+            "lead": "Patient awareness focus:",
+            "text": "Patient Website and Paid social drive awareness and interest for patients in their treatment journey."
+          },
+          {
+            "lead": "Point-of-care integration:",
+            "text": "EHR / point-of-care messaging is critical for conversion at the decision point for all HCPs."
+          }
+        ],
+        "mix": [
+          {
+            "audience": "Cardiologists treating heart failure",
+            "channel": "Remote rep / e-detail",
+            "role": "education",
+            "reach_pct": 83,
+            "source": "client_reach"
+          },
+          {
+            "audience": "Cardiologists treating heart failure",
+            "channel": "Paid social",
+            "role": "awareness",
+            "reach_pct": 55,
+            "source": "client_reach"
+          },
+          {
+            "audience": "Cardiologists treating heart failure",
+            "channel": "Rep visit (F2F)",
+            "role": "education",
+            "reach_pct": 27,
+            "source": "client_reach"
+          },
+          {
+            "audience": "Cardiologists treating heart failure",
+            "channel": "EHR / point-of-care messaging",
+            "role": "conversion",
+            "reach_pct": 26,
+            "source": "client_reach"
+          },
+          {
+            "audience": "Endocrinologists treating type 2 diabetes with CVD",
+            "channel": "Webinars & speaker programs",
+            "role": "education",
+            "reach_pct": 55,
+            "source": "client_reach"
+          },
+          {
+            "audience": "Endocrinologists treating type 2 diabetes with CVD",
+            "channel": "Paid social",
+            "role": "awareness",
+            "reach_pct": 60,
+            "source": "client_reach"
+          },
+          {
+            "audience": "Endocrinologists treating type 2 diabetes with CVD",
+            "channel": "Rep visit (F2F)",
+            "role": "retention",
+            "reach_pct": 39,
+            "source": "client_reach"
+          },
+          {
+            "audience": "Endocrinologists treating type 2 diabetes with CVD",
+            "channel": "EHR / point-of-care messaging",
+            "role": "conversion",
+            "reach_pct": 39,
+            "source": "client_reach"
+          },
+          {
+            "audience": "General Practitioners / Primary Care Physicians",
+            "channel": "Remote rep / e-detail",
+            "role": "education",
+            "reach_pct": 58,
+            "source": "client_reach"
+          },
+          {
+            "audience": "General Practitioners / Primary Care Physicians",
+            "channel": "Paid social",
+            "role": "awareness",
+            "reach_pct": 58,
+            "source": "client_reach"
+          },
+          {
+            "audience": "General Practitioners / Primary Care Physicians",
+            "channel": "Brand email (HQ)",
+            "role": "education",
+            "reach_pct": 53,
+            "source": "client_reach"
+          },
+          {
+            "audience": "General Practitioners / Primary Care Physicians",
+            "channel": "EHR / point-of-care messaging",
+            "role": "conversion",
+            "reach_pct": 16,
+            "source": "client_reach"
+          },
+          {
+            "audience": "Adult Patients with Heart Failure",
+            "channel": "Patient website",
+            "role": "awareness",
+            "reach_pct": null,
+            "source": "AI draft"
+          },
+          {
+            "audience": "Adult Patients with Heart Failure",
+            "channel": "Paid & organic social",
+            "role": "awareness",
+            "reach_pct": null,
+            "source": "AI draft"
+          },
+          {
+            "audience": "Adult Patients with Type 2 Diabetes and CVD",
+            "channel": "Patient website",
+            "role": "education",
+            "reach_pct": null,
+            "source": "AI draft"
+          },
+          {
+            "audience": "Adult Patients with Type 2 Diabetes and CVD",
+            "channel": "Patient CRM (email & SMS)",
+            "role": "retention",
+            "reach_pct": null,
+            "source": "AI draft"
+          }
+        ],
+        "cards": [
+          {
+            "framework_id": "remote_rep",
+            "channel": "Remote rep / e-detail",
+            "role": "education",
+            "audiences": [
+              "Cardiologists treating heart failure",
+              "General Practitioners / Primary Care Physicians"
+            ],
+            "formats": [
+              "Virtual calls",
+              "Digital presentations"
+            ],
+            "cadence": "Ongoing, triggered by engagement",
+            "kpi": "HCP engagement rate, Rx increase",
+            "worked": "",
+            "rule": "",
+            "source": "client_reach · AI draft"
+          },
+          {
+            "framework_id": "social",
+            "channel": "Paid & organic social",
+            "role": "awareness",
+            "audiences": [
+              "Cardiologists treating heart failure",
+              "Endocrinologists treating type 2 diabetes with CVD",
+              "General Practitioners / Primary Care Physicians",
+              "Adult Patients with Heart Failure",
+              "Adult Patients with Type 2 Diabetes and CVD"
+            ],
+            "formats": [
+              "Educational posts",
+              "Patient stories",
+              "Interactive content"
+            ],
+            "cadence": "Daily/weekly",
+            "kpi": "Reach, engagement, website traffic",
+            "worked": "",
+            "rule": "",
+            "source": "client_reach · AI draft"
+          },
+          {
+            "framework_id": "rep_f2f",
+            "channel": "Rep visit (face to face)",
+            "role": "education",
+            "audiences": [
+              "Cardiologists treating heart failure",
+              "Endocrinologists treating type 2 diabetes with CVD"
+            ],
+            "formats": [
+              "Clinical discussions",
+              "Detailing aids"
+            ],
+            "cadence": "Quarterly visits",
+            "kpi": "Rx increase, formulary adherence",
+            "worked": "",
+            "rule": "",
+            "source": "client_reach · AI draft"
+          },
+          {
+            "framework_id": "ehr",
+            "channel": "EHR / point-of-care messaging",
+            "role": "conversion",
+            "audiences": [
+              "Cardiologists treating heart failure",
+              "Endocrinologists treating type 2 diabetes with CVD",
+              "General Practitioners / Primary Care Physicians"
+            ],
+            "formats": [
+              "Clinical decision support alerts",
+              "Prescribing information"
+            ],
+            "cadence": "Real-time during patient encounter",
+            "kpi": "Rx initiation rate",
+            "worked": "",
+            "rule": "",
+            "source": "client_reach · AI draft"
+          },
+          {
+            "framework_id": "webinar",
+            "channel": "Webinars & speaker programs",
+            "role": "education",
+            "audiences": [
+              "Endocrinologists treating type 2 diabetes with CVD"
+            ],
+            "formats": [
+              "Live webinars",
+              "On-demand content"
+            ],
+            "cadence": "Monthly/Bi-monthly",
+            "kpi": "Attendance, knowledge scores",
+            "worked": "",
+            "rule": "",
+            "source": "client_reach · AI draft"
+          },
+          {
+            "framework_id": "brand_email",
+            "channel": "Brand email (HQ)",
+            "role": "education",
+            "audiences": [
+              "General Practitioners / Primary Care Physicians"
+            ],
+            "formats": [
+              "Clinical updates",
+              "Patient case studies"
+            ],
+            "cadence": "Bi-weekly/Monthly",
+            "kpi": "Open rates, click-through rates",
+            "worked": "",
+            "rule": "",
+            "source": "client_reach · AI draft"
+          },
+          {
+            "framework_id": "patient_site",
+            "channel": "Patient website",
+            "role": "awareness",
+            "audiences": [
+              "Adult Patients with Heart Failure",
+              "Adult Patients with Type 2 Diabetes and CVD"
+            ],
+            "formats": [
+              "Disease info",
+              "Treatment options",
+              "Patient testimonials"
+            ],
+            "cadence": "Always available",
+            "kpi": "Website traffic, page views",
+            "worked": "",
+            "rule": "",
+            "source": "AI draft"
+          },
+          {
+            "framework_id": "crm",
+            "channel": "Patient CRM (email & SMS)",
+            "role": "retention",
+            "audiences": [
+              "Adult Patients with Type 2 Diabetes and CVD"
+            ],
+            "formats": [
+              "Adherence reminders",
+              "Educational tips"
+            ],
+            "cadence": "Weekly/Bi-weekly",
+            "kpi": "Adherence rates, patient satisfaction",
+            "worked": "Persistence at 12 months for SGLT2i in T2DM with CV risk and obesity is 47%.",
+            "rule": "",
+            "source": "PubMed 41165079 (2026)"
+          },
+          {
+            "framework_id": "congress",
+            "channel": "Congresses & medical meetings",
+            "role": "awareness",
+            "audiences": [
+              "Cardiologists treating heart failure",
+              "Endocrinologists treating type 2 diabetes with CVD",
+              "General Practitioners / Primary Care Physicians"
+            ],
+            "formats": [
+              "Scientific presentations",
+              "Booth exhibits"
+            ],
+            "cadence": "As per calendar",
+            "kpi": "Attendance, booth interactions",
+            "worked": "",
+            "rule": "",
+            "source": "AI draft"
+          }
+        ],
+        "journey": [
+          {
+            "stage": "Prevalent Disease Identification",
+            "audience": "General Practitioners / Primary Care Physicians",
+            "channels": [
+              "Programmatic / NPI-targeted display",
+              "Paid & organic social"
+            ],
+            "why": "Increase awareness of HF diagnosis and management."
+          },
+          {
+            "stage": "Diagnosis and Initial Management",
+            "audience": "Cardiologists treating heart failure",
+            "channels": [
+              "Remote rep / e-detail",
+              "Webinars & speaker programs",
+              "EHR / point-of-care messaging"
+            ],
+            "why": "Educate on Jardiance for HF; facilitate appropriate diagnosis."
+          },
+          {
+            "stage": "Treatment Initiation",
+            "audience": "Endocrinologists treating type 2 diabetes with CVD",
+            "channels": [
+              "Rep visit (face to face)",
+              "EHR / point-of-care messaging",
+              "HCP website & resources"
+            ],
+            "why": "Drive first-time prescribing and overcome barriers."
+          },
+          {
+            "stage": "Long-term Persistence and Adherence",
+            "audience": "Adult Patients with Type 2 Diabetes and CVD",
+            "channels": [
+              "Patient CRM (email & SMS)",
+              "Patient support & hub services",
+              "Patient website"
+            ],
+            "why": "Support ongoing adherence and patient education."
+          },
+          {
+            "stage": "Long-term Persistence and Adherence",
+            "audience": "Adult Patients with Heart Failure",
+            "channels": [
+              "Patient website",
+              "Advocacy & community partnerships"
+            ],
+            "why": "Sustain patient engagement and provide resources."
+          }
+        ],
+        "moments": [
+          {
+            "name": "American Heart Association (AHA) Scientific Sessions",
+            "when": "November",
+            "type": "Congress",
+            "source": "AI draft"
+          },
+          {
+            "name": "American Diabetes Association (ADA) Scientific Sessions",
+            "when": "June",
+            "type": "Congress",
+            "source": "AI draft"
+          },
+          {
+            "name": "Heart Failure Awareness Week",
+            "when": "February",
+            "type": "Awareness Day",
+            "source": "AI draft"
+          },
+          {
+            "name": "World Diabetes Day",
+            "when": "November 14",
+            "type": "Awareness Day",
+            "source": "AI draft"
+          }
+        ],
+        "stage": "growth",
+        "stage_why": "Expanding indications beyond T2DM to heart failure, requiring broader HCP and patient education.",
+        "ladder_focus": [
+          {
+            "rung": "aware",
+            "segments": [
+              "General Practitioners / Primary Care Physicians",
+              "Adult Patients with Heart Failure"
+            ],
+            "why": "GPs need multi-indication education; HF patients are unaware of specific options."
+          },
+          {
+            "rung": "interested",
+            "segments": [
+              "Cardiologists treating heart failure",
+              "Adult Patients with Type 2 Diabetes and CVD"
+            ],
+            "why": "Cardiologists are new to HF indication; patients seek broader benefits."
+          },
+          {
+            "rung": "adopt",
+            "segments": [
+              "Endocrinologists treating type 2 diabetes with CVD"
+            ],
+            "why": "Endocrinologists are already prescribers for T2D, need to reinforce routine use."
+          }
+        ],
+        "status": "proposed",
+        "generated_at": "2026-10-06"
       }
     },
     "Keytruda": {

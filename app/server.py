@@ -1733,6 +1733,13 @@ def api_v3_agent_acknowledge(agent_id: str, body: FlowAckRequest):
     return out
 
 
+@app.get("/api/frameworks/channel-playbook")
+def api_channel_playbook():
+    """The best-practice channel framework the Channels tab and the channels skill use."""
+    from strategy import kit_proposer
+    return kit_proposer.channel_playbook()
+
+
 @app.post("/api/brand-kits/{brand}/skills/{skill}")
 def api_brand_kit_skill(brand: str, skill: str):
     """Run one Brand IQ skill and return the updated kit."""

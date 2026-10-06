@@ -2,15 +2,15 @@ import { useContext } from "react";
 import { Icon } from "../../components/Icon";
 import {
   KitCtx, Needs, Sec, Shell, SiTag, SI_TONE, TABS, Tbl, arr, at, filled, needs, sectionsOf, sourcesOf, txt, useKit,
-  Digest, type Any, type PageProps,
+  Digest, Lbl, type Any, type IconName, type PageProps,
 } from "./shared";
 
 /** Brand IQ: the brand on a page. Identity, the one-page brief (problem → watch-outs), unmet need,
  *  objectives, the current plan, and how complete each tab of the kit is. */
 
-const ONE_PAGE: [string, string][] = [
-  ["problem", "Problem"], ["objective", "Objective"], ["audience", "Audience"], ["message", "Message"],
-  ["channels", "Channels"], ["proof", "Proof"], ["watch_outs", "Watch-outs"],
+const ONE_PAGE: [string, string, IconName][] = [
+  ["problem", "Problem", "alertTriangle"], ["objective", "Objective", "target"], ["audience", "Audience", "users"], ["message", "Message", "message"],
+  ["channels", "Channels", "megaphone"], ["proof", "Proof", "flask"], ["watch_outs", "Watch-outs", "shield"],
 ];
 
 /** Each tile: the model's condensed line when the briefs exist, else the kit field it rests on. */
@@ -88,9 +88,9 @@ export function BrandIqTab(props: PageProps) {
         </section>
 
         <section className="v3-iq-onpage" aria-label="The brand on a page">
-          {ONE_PAGE.map(([id, label]) => (
+          {ONE_PAGE.map(([id, label, icon]) => (
             <article key={id} className={id === "watch_outs" ? "watch" : ""}>
-              <em>{label}</em>
+              <Lbl icon={icon}>{label}</Lbl>
               <p>{page[id] || <Needs />}</p>
             </article>
           ))}

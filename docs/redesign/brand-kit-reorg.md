@@ -92,3 +92,11 @@ marks them as AI drafts. Brand-plan activities are never overwritten.
     steps (strategy step);
   - add `POST /api/brand-kits/{brand}/context/{tab}` to rewrite one brief on demand.
 - The Brand IQ Agent canvas shows the Brand IQ overview, with the tabs available inside it.
+
+## Review round (2026-10-06)
+
+- The brief stays on the Brand IQ tab only; on the other tabs it restated the sections below it.
+- Channels now rests on a best-practice framework (`config/frameworks/channel_playbook.json`), shown for every brand:
+  channel jobs by adoption stage, a playbook card per channel (use when, formats, cadence, measure, watch out),
+  mix by lifecycle stage, orchestration rules, and how to measure. The brand's own plan sits inside the cards.
+- Field labels in every template carry an icon.

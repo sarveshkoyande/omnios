@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { getClientData } from "../../api";
-import { Digest, Needs, Sec, Shell, SiTag, SI_TONE, Tbl, arr, sourcesOf, txt, useKit, type Any, type PageProps } from "./shared";
+import { Digest, Lbl, Needs, Sec, Shell, SiTag, SI_TONE, Tbl, arr, sourcesOf, txt, useKit, type Any, type PageProps } from "./shared";
 
 /** Market: where we are winning and losing, and where the headroom is. */
 
@@ -24,13 +24,13 @@ function UsGeography({ kit }: { kit: Any }) {
         )}
         <div className="v3-iq-tf">
           <div>
-            <em>Most adults affected (estimated)</em>
+            <Lbl icon="users">Most adults affected (estimated)</Lbl>
             <div className="v3-iq-hbars">
               {byCases.map((s) => <div key={txt(s.state)}><span>{txt(s.name)}</span><i style={{ width: `${(Number(s.est_cases) / maxCases) * 100}%` }} /><b>{(Number(s.est_cases) / 1000).toFixed(0)}k</b></div>)}
             </div>
           </div>
           <div>
-            <em>Highest prevalence</em>
+            <Lbl icon="map">Highest prevalence</Lbl>
             {byRate.map((s) => <div key={txt(s.state)} className="v3-iq-ref"><code>{txt(s.state)}</code><div><b>{txt(s.prevalence_pct)}%</b><span>{txt(s.name)} · {txt(s.region)}</span></div></div>)}
           </div>
         </div>
@@ -49,8 +49,8 @@ function ClientData({ brand }: { brand: string }) {
       const segs = (d.hcps_by_segment ?? {}) as Record<string, Any>;
       return (<>
         <div className="v3-iq-stats">
-          <div><em>Field force</em><b>{txt(field.reps)} reps</b><span>~{Number(field.capacity_calls_per_month).toLocaleString()} calls / month</span></div>
-          <div><em>Market share by region</em><b className="sm">{Object.entries((d.market_share_pct_by_region ?? {}) as Record<string, number>).map(([r, v]) => `${r} ${v}%`).join(" · ")}</b></div>
+          <div><Lbl icon="persona">Field force</Lbl><b>{txt(field.reps)} reps</b><span>~{Number(field.capacity_calls_per_month).toLocaleString()} calls / month</span></div>
+          <div><Lbl icon="map">Market share by region</Lbl><b className="sm">{Object.entries((d.market_share_pct_by_region ?? {}) as Record<string, number>).map(([r, v]) => `${r} ${v}%`).join(" · ")}</b></div>
         </div>
         <div className="v3-iq-dodont" style={{ marginTop: 12 }}>
           <div><h3 className="v3-iq-h3">HCPs by segment</h3><Tbl rows={Object.entries(segs).map(([name, v]) => ({ name, hcps: Number(v.hcps).toLocaleString(), top: Number(v.top3_deciles).toLocaleString() }))} cols={[["name", "Segment"], ["hcps", "HCPs"], ["top", "Top 3 deciles"]]} /></div>
@@ -76,15 +76,15 @@ export function MarketTab(props: PageProps) {
           const bs = k.brand_situation as Any;
           return (<>
             <div className="v3-iq-facts">
-              <div><em>Lifecycle</em><span>{txt(bs.lifecycle) || <Needs />}</span></div>
-              <div><em>Therapy type</em><span>{txt(bs.archetype) || <Needs />}</span></div>
-              <div><em>Access</em><span>{txt(bs.access) || <Needs />}</span></div>
+              <div><Lbl icon="trendUp">Lifecycle</Lbl><span>{txt(bs.lifecycle) || <Needs />}</span></div>
+              <div><Lbl icon="flask">Therapy type</Lbl><span>{txt(bs.archetype) || <Needs />}</span></div>
+              <div><Lbl icon="wallet">Access</Lbl><span>{txt(bs.access) || <Needs />}</span></div>
             </div>
             {txt(bs.narrative) && <div style={{ marginTop: 10 }}><Digest path="brand_situation.narrative" text={bs.narrative} /></div>}
             {arr(bs.drivers).length + arr(bs.barriers).length > 0 && (
               <div className="v3-iq-dodont" style={{ marginTop: 10 }}>
-                <div><h3 className="v3-iq-h3">Working for us</h3><ul className="v3-iq-bul">{arr(bs.drivers).map((x, i) => <li key={i}>{txt(typeof x === "object" ? (x as Any).point ?? (x as Any).text : x)}</li>)}</ul></div>
-                <div><h3 className="v3-iq-h3">Working against us</h3><ul className="v3-iq-bul">{arr(bs.barriers).map((x, i) => <li key={i}>{txt(typeof x === "object" ? (x as Any).point ?? (x as Any).text : x)}</li>)}</ul></div>
+                <div><Lbl icon="trendUp">Working for us</Lbl><ul className="v3-iq-bul">{arr(bs.drivers).map((x, i) => <li key={i}>{txt(typeof x === "object" ? (x as Any).point ?? (x as Any).text : x)}</li>)}</ul></div>
+                <div><Lbl icon="alertTriangle">Working against us</Lbl><ul className="v3-iq-bul">{arr(bs.barriers).map((x, i) => <li key={i}>{txt(typeof x === "object" ? (x as Any).point ?? (x as Any).text : x)}</li>)}</ul></div>
               </div>
             )}
             {arr(bs.evidence).length > 0 && <ul className="v3-iq-bul" style={{ marginTop: 10 }}>{arr(bs.evidence).map((e, i) => <li key={i}>{txt(e.point)}</li>)}</ul>}
@@ -133,9 +133,9 @@ export function MarketTab(props: PageProps) {
           const m = k.market_access as Any;
           return (
             <div className="v3-iq-access">
-              <div><em>Value story</em><Digest path="market_access.value_story" text={m.value_story} /></div>
-              <div><em>Access barriers</em><ul className="v3-iq-bul">{arr(m.barriers).map((b) => <li key={String(b)}>{String(b)}</li>)}</ul></div>
-              <div><em>Launches</em><ul className="v3-iq-bul">{arr(m.launches).map((l) => <li key={txt(l.country)}><b>{txt(l.country)}</b> {txt(l.timing)}</li>)}</ul></div>
+              <div><Lbl icon="lightbulb">Value story</Lbl><Digest path="market_access.value_story" text={m.value_story} /></div>
+              <div><Lbl icon="alertTriangle">Access barriers</Lbl><ul className="v3-iq-bul">{arr(m.barriers).map((b) => <li key={String(b)}>{String(b)}</li>)}</ul></div>
+              <div><Lbl icon="calendar">Launches</Lbl><ul className="v3-iq-bul">{arr(m.launches).map((l) => <li key={txt(l.country)}><b>{txt(l.country)}</b> {txt(l.timing)}</li>)}</ul></div>
             </div>
           );
         }}</Sec>
@@ -162,8 +162,8 @@ export function MarketTab(props: PageProps) {
         <Sec id="kpis" sub="Baseline → target" foot={sourcesOf(arr(k.kpis), "data_source")}>{() => (<>
           {(ms || txt(k.success_measure)) && (
             <div className="v3-iq-stats" style={{ marginBottom: 12 }}>
-              <div><em>Market share</em><b>{ms ? txt(ms.current) : <Needs />}</b>{ms && <span>Target: {txt(ms.target)}</span>}</div>
-              <div><em>Success measure</em><b className="sm">{txt(k.success_measure) || <Needs />}</b></div>
+              <div><Lbl icon="barChart">Market share</Lbl><b>{ms ? txt(ms.current) : <Needs />}</b>{ms && <span>Target: {txt(ms.target)}</span>}</div>
+              <div><Lbl icon="target">Success measure</Lbl><b className="sm">{txt(k.success_measure) || <Needs />}</b></div>
             </div>
           )}
           {arr(k.kpis).length > 0 && (

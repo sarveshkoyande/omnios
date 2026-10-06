@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { refreshPublicSources } from "../../api";
-import { Digest, LabelText, Needs, Sec, Shell, Tbl, arr, needs, txt, useKit, type Any, type PageProps } from "./shared";
+import { Digest, LabelText, Lbl, Needs, Sec, Shell, Tbl, arr, needs, txt, useKit, type Any, type PageProps } from "./shared";
 
 /** Product & Proof: what we can claim, and what backs it. */
 export function ProductTab(props: PageProps) {
@@ -30,7 +30,7 @@ export function ProductTab(props: PageProps) {
           </dl>
           <div className="v3-iq-pp">
             <div className="v3-iq-pp-mol">
-              <em>Molecule & structure</em>
+              <Lbl icon="flask">Molecule & structure</Lbl>
               {struct?.kind === "small_molecule" ? (<>
                 <img src={txt(struct.image)} alt={`${txt(k.generic)} 2D structure`} />
                 <p><b>{txt(struct.formula)}</b> · {txt(struct.weight)} g/mol</p>
@@ -40,9 +40,9 @@ export function ProductTab(props: PageProps) {
               </>)}
             </div>
             <div className="v3-iq-pp-grid">
-              <div><em>How it works</em><LabelText k={k} field="mechanism_of_action" /></div>
-              <div><em>Approved for</em><LabelText k={k} field="indication" /></div>
-              <div><em>Dosing & forms</em><LabelText k={k} field="dosing" /></div>
+              <div><Lbl icon="zap">How it works</Lbl><LabelText k={k} field="mechanism_of_action" /></div>
+              <div><Lbl icon="check">Approved for</Lbl><LabelText k={k} field="indication" /></div>
+              <div><Lbl icon="clock">Dosing & forms</Lbl><LabelText k={k} field="dosing" /></div>
             </div>
           </div>
         </>)}</Sec>
@@ -54,11 +54,11 @@ export function ProductTab(props: PageProps) {
         <Sec id="label">{() => (<>
           <div className="v3-iq-label">
             <article className={needs(k.approved_indication) ? "missing" : "ok"}>
-              <em>Approved indication</em>
+              <Lbl icon="check">Approved indication</Lbl>
               {needs(k.approved_indication) ? <p>Not captured yet — the agents won't check copy against it until it's added.</p> : <Digest path="approved_indication" text={k.approved_indication} />}
             </article>
             <article className={needs(k.safety_reference) ? "missing" : "ok"}>
-              <em>Safety reference</em>
+              <Lbl icon="shield">Safety reference</Lbl>
               {needs(k.safety_reference) ? <p>Not captured yet.</p> : <Digest path="safety_reference" text={k.safety_reference} />}
             </article>
           </div>

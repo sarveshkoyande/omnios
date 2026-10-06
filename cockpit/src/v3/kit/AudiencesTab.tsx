@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { refreshAudienceSources } from "../../api";
-import { Bul, Needs, Sec, Shell, SiTag, Src, Tbl, arr, at, txt, useKit, type Any, type PageProps } from "./shared";
+import { Icon } from "../../components/Icon";
+import { Bul, Lbl, Needs, Sec, Shell, SiTag, Src, Tbl, arr, at, txt, useKit, type Any, type PageProps } from "./shared";
 
 /** Audiences: who we are talking to and what moves them. */
 
@@ -17,17 +18,17 @@ function PersonaCard({ x }: { x: Any }) {
         {Boolean(x.tier) && <span className={`v3-iq-tier ${txt(x.tier).toLowerCase()}`}>{txt(x.tier)}</span>}
       </header>
       {Boolean(x.voice) && <blockquote title="Illustrative">“{txt(x.voice)}”</blockquote>}
-      {sis.length > 0 && <div className="v3-iq-persona-si">Targeted by {sis.map((s) => <SiTag key={s} id={s} />)}</div>}
+      {sis.length > 0 && <div className="v3-iq-persona-si"><Icon name="target" size={12} />Targeted by {sis.map((s) => <SiTag key={s} id={s} />)}</div>}
       <div className="v3-iq-pcard-grid">
-        <div><em>How they behave</em>{arr(x.behaviours).length ? <Bul items={arr(x.behaviours)} max={3} /> : <Needs />}</div>
+        <div><Lbl icon="eye">How they behave</Lbl>{arr(x.behaviours).length ? <Bul items={arr(x.behaviours)} max={3} /> : <Needs />}</div>
         <div>
-          <em>What holds them back</em><p>{txt(x.barrier) || <Needs />}</p>
-          <em>Moment that matters</em><p>{txt(x.moment) || <Needs />}</p>
+          <Lbl icon="alertTriangle">What holds them back</Lbl><p>{txt(x.barrier) || <Needs />}</p>
+          <Lbl icon="clock">Moment that matters</Lbl><p>{txt(x.moment) || <Needs />}</p>
         </div>
       </div>
       <div className="v3-iq-pcard-msg">
-        <em>Key message</em><p>{txt(x.key_message) || <Needs />}</p>
-        {txt(x.tone) && <div className="v3-iq-pcard-row"><span><b>Tone</b> {txt(x.tone)}</span></div>}
+        <Lbl icon="message">Key message</Lbl><p>{txt(x.key_message) || <Needs />}</p>
+        {txt(x.tone) && <div className="v3-iq-pcard-row"><span className="v3-iq-lblrow"><Icon name="mic" size={12} /><b>Tone</b> {txt(x.tone)}</span></div>}
       </div>
       <Src s={x.source} />
     </article>
@@ -56,10 +57,10 @@ export function AudiencesTab(props: PageProps) {
       const refreshBtn = <button type="button" className="v3-iq-btn" onClick={refresh} disabled={busy}>{busy ? "Refreshing…" : "Refresh"}</button>;
       return (<>
         <div className="v3-iq-aud-summary">
-          <div><b>{ps.hcp?.length ?? 0}</b><span>HCP personas</span></div>
-          <div><b>{(ps.patient?.length ?? 0) + (ps.caregiver?.length ?? 0)}</b><span>Patient & caregiver</span></div>
-          <div><b>{arr(kol?.authors).length || "—"}</b><span>Opinion leaders</span></div>
-          <div><b>{arr(tf?.sites_by_country).length || "—"}</b><span>Countries with trial sites</span></div>
+          <div><Icon name="users" size={16} /><b>{ps.hcp?.length ?? 0}</b><span>HCP personas</span></div>
+          <div><Icon name="heartPulse" size={16} /><b>{(ps.patient?.length ?? 0) + (ps.caregiver?.length ?? 0)}</b><span>Patient & caregiver</span></div>
+          <div><Icon name="star" size={16} /><b>{arr(kol?.authors).length || "—"}</b><span>Opinion leaders</span></div>
+          <div><Icon name="map" size={16} /><b>{arr(tf?.sites_by_country).length || "—"}</b><span>Countries with trial sites</span></div>
         </div>
         {txt(k.primary_audience) && !txt(k.primary_audience).startsWith("Needs input") && <p className="v3-iq-lede"><b>Primary audience:</b> {txt(k.primary_audience)}</p>}
         {err && <p className="v3-iq-err">Couldn't refresh: {err}</p>}
@@ -106,7 +107,7 @@ export function AudiencesTab(props: PageProps) {
               ))}
             </div>
             <div>
-              <em>Principal investigators</em>
+              <Lbl icon="persona">Principal investigators</Lbl>
               {arr(tf!.investigators).length ? arr(tf!.investigators).map((i) => (
                 <div key={txt(i.nct)} className="v3-iq-ref"><code>{txt(i.nct)}</code><div><b>{txt(i.name)}</b><span>{txt(i.affiliation)}</span></div></div>
               )) : <p className="v3-iq-note">Most trials list a sponsor contact rather than a named investigator.</p>}
