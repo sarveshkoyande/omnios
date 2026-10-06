@@ -149,11 +149,16 @@ model proposals (Apply / Dismiss). Jardiance has a seeded DEMO tree (`seed_demo`
 labelled Demo in the UI). Engagement Planner "Save plan" publishes a v3 plan + its campaigns into the hierarchy
 (`engagement_agent.publish`). State: `DATA_DIR/live_sim/state.json`.
 
-**Engagement Planner 2** (`#/v3/agent/engagement-planner-2`, `strategy/campaignflow.py`): the CampaignFlow
-30-minute framework (`config/frameworks/campaignflow.json`: six steps + 24 underlying rules) as an agent: intake →
-acknowledgement → objective card → audience segmentation → channel plan → journey design → omnichannel rules →
-campaign brief. Each step is a draft until approved (redo with feedback marks later steps stale). Plans in
-`DATA_DIR/campaignflow/<id>.json`; Save publishes the campaign + one flow per named journey into the hierarchy.
+**Engagement Planning, Segmentation Planner and Channel Mix agents** (`strategy/planning_agents.py`,
+`cockpit/src/v3/planning/PlanningAgent.tsx`; routes `#/v3/agent/engagement-planner-2|brand-persona-builder|channel-planner`,
+API `/api/planning/{agent}/records/*`): one engine. Engagement Planning = objectives -> focus -> approach -> portfolio for the
+period; `focus` IS the Segmentation Planner Agent and `approach` IS the Channel Mix Agent (same step functions, also run
+standalone; the latest result per brand is shared via `/api/planning/latest/{brand}`). They REUSE the Brand Kit (personas,
+ladder stages aware/interested/trial/adopt/advocate, message matrix, channel playbook, claim check) and only prioritise.
+Every agent has a chat box (`chat`): the model routes a message to answer / redo a step with guidance / jump / auto-run;
+guidance is kept and passed to later steps. Save publishes the plan + campaigns to the hierarchy. The CampaignFlow framework
+(`strategy/campaignflow.py`, `/api/ep2/*`, `config/frameworks/campaignflow.json`) is kept for the campaign-level agents
+(Segmentation/Channel at campaign level, Flow Planner journeys + rules, brief); it no longer has a screen.
 
 **Agent intake**: the brand plan is uploaded once, in the Brand IQ Agent. Every agent opens with one command bar
 (`CommandBar` in `cockpit/src/v3/agentkit/AgentKit.tsx`): an optional text box, a Brand IQ chip (green = brand plan

@@ -1590,6 +1590,91 @@ def _ep2_call(fn, *args):
         raise HTTPException(503, f"The AI model couldn't be reached ({e}), so this step wrote nothing. Try again in a moment.")
 
 
+# --- Engagement Planning, Segmentation and Channel agents (strategy/planning_agents.py) ---
+class PACreate(BaseModel):
+    brand: str
+    months: int = 6
+    title: str | None = None
+
+
+class PARun(BaseModel):
+    feedback: str | None = None
+    force: bool = False
+
+
+class PAChat(BaseModel):
+    message: str
+
+
+def _pa_call(fn, *args):
+    from strategy import planning_agents
+    try:
+        return fn(*args)
+    except KeyError:
+        raise HTTPException(404, "no such record or brand")
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    except planning_agents.LLMUnavailable as e:
+        raise HTTPException(503, f"The AI model couldn't be reached ({e}), so nothing was written. Try again in a moment.")
+
+
+@app.get("/api/planning/latest/{brand}")
+def api_pa_latest(brand: str):
+    from strategy import planning_agents
+    return planning_agents.latest(brand_kit.canonical_key(brand) or brand)
+
+
+@app.get("/api/planning/{agent}/records")
+def api_pa_list(agent: str, brand: str | None = None):
+    from strategy import planning_agents
+    return {"records": _pa_call(planning_agents.list_records, agent, brand)}
+
+
+@app.post("/api/planning/{agent}/records")
+def api_pa_create(agent: str, body: PACreate):
+    from strategy import planning_agents
+    return _pa_call(planning_agents.create, agent, body.brand, body.months, body.title)
+
+
+@app.get("/api/planning/{agent}/records/{pid}")
+def api_pa_get(agent: str, pid: str):
+    from strategy import planning_agents
+    return _pa_call(planning_agents.get, agent, pid)
+
+
+@app.post("/api/planning/{agent}/records/{pid}/acknowledge")
+def api_pa_ack(agent: str, pid: str):
+    from strategy import planning_agents
+    return _pa_call(planning_agents.acknowledge, agent, pid)
+
+
+@app.post("/api/planning/{agent}/records/{pid}/steps/{step}/run")
+def api_pa_run(agent: str, pid: str, step: str, body: PARun):
+    from strategy import planning_agents
+    return _pa_call(planning_agents.run_step, agent, pid, step, body.feedback, body.force)
+
+
+@app.post("/api/planning/{agent}/records/{pid}/steps/{step}/approve")
+def api_pa_approve(agent: str, pid: str, step: str):
+    from strategy import planning_agents
+    return _pa_call(planning_agents.approve, agent, pid, step)
+
+
+@app.post("/api/planning/{agent}/records/{pid}/chat")
+def api_pa_chat(agent: str, pid: str, body: PAChat):
+    from strategy import planning_agents
+    return _pa_call(planning_agents.chat, agent, pid, body.message)
+
+
+@app.post("/api/planning/{agent}/records/{pid}/publish")
+def api_pa_publish(agent: str, pid: str):
+    from strategy import planning_agents, hierarchy as _h
+    try:
+        return _pa_call(planning_agents.publish, agent, pid)
+    except _h.NotFound as e:
+        raise HTTPException(400, str(e))
+
+
 @app.get("/api/ep2/framework")
 def api_ep2_framework():
     """Engagement Planner 2: the CampaignFlow framework the agent runs (config/frameworks/campaignflow.json)."""

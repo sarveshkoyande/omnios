@@ -279,3 +279,41 @@ export function ReadyIntake({ brand, startLabel, busyLabel, busy, onStart, files
     </CommandBar>
   );
 }
+
+/** The chat box every planning agent keeps open: steer it in your own words at any point. The model reads
+ *  the message (no keyword rules) and answers, redoes a step, jumps ahead or switches auto-run. */
+export interface ChatMsg { role: "you" | "agent"; text: string; intent?: string; step?: string | null }
+export function AgentChat({ messages, onSend, busy, placeholder, suggestions = [] }: {
+  messages: ChatMsg[]; onSend: (text: string) => void; busy?: boolean; placeholder?: string; suggestions?: string[];
+}) {
+  const [text, setText] = useState("");
+  const end = useRef<HTMLDivElement>(null);
+  useEffect(() => { end.current?.scrollIntoView({ block: "nearest" }); }, [messages.length]);
+  const send = (t: string) => { const v = t.trim(); if (!v || busy) return; onSend(v); setText(""); };
+  return (
+    <div className="v3-achat">
+      {messages.length > 0 && (
+        <div className="v3-achat-thread">
+          {messages.map((m, i) => (
+            <div key={i} className={`v3-achat-msg ${m.role}`}>
+              {m.role === "agent" && <span className="v3-achat-av"><Icon name="sparkles" size={11} /></span>}
+              <p>{m.text}</p>
+            </div>
+          ))}
+          <div ref={end} />
+        </div>
+      )}
+      {!messages.length && suggestions.length > 0 && (
+        <div className="v3-achat-sugg">{suggestions.map((s) => <button key={s} type="button" disabled={busy} onClick={() => send(s)}>{s}</button>)}</div>
+      )}
+      <div className="v3-achat-box">
+        <textarea rows={2} value={text} disabled={busy} placeholder={placeholder ?? "Tell the agent what to change, ask why, or say “run everything”…"}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(text); } }} />
+        <button type="button" className="v3-achat-send" disabled={busy || !text.trim()} onClick={() => send(text)} aria-label="Send">
+          {busy ? <span className="v3-cc-spinner small" /> : <Icon name="arrowRight" size={14} />}
+        </button>
+      </div>
+    </div>
+  );
+}

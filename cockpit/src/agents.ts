@@ -57,35 +57,37 @@ export const AGENTS: Record<Phase, LibraryAgent[]> = {
     {
       id: "engagement-planner-2", name: "Engagement Planning Agent", icon: "layers", status: "available",
       summary: "Transforms the brand plan into an actionable engagement strategy across audience, messaging, channels and journeys.",
-      about: "Reads the brand plan and Brand IQ, then runs the six CampaignFlow steps for one campaign. Each step reads only the approved step before it; you approve each draft or ask for changes. Gaps become questions, never inventions. Saving puts the campaign and its named journeys into Campaigns & Journeys and Live simulation.",
+      about: "Turns the brand plan into the engagement strategy for the period, in four steps you approve or steer in the chat: objectives, where to focus, message & channels, and the campaign portfolio. It reuses the Brand Kit as given (personas, ladder stages, messages, channel playbook) and calls the Segmentation Planner Agent and the Channel Mix Agent for steps 2 and 3. Saving puts the plan and its campaigns into Campaigns & Journeys and Live simulation.",
       worksFrom: [
-        { label: "Brand plan", detail: "Uploaded documents and your notes, plus Brand IQ's brand-plan fields." },
-        { label: "CampaignFlow framework", detail: "config/frameworks/campaignflow.json: the six steps and their 24 underlying rules." },
-        { label: "Client data", detail: "Synthetic HCP counts, reach and field force until real feeds are connected." },
+        { label: "Brand Kit", detail: "Strategic imperatives, KPIs, unmet need, patient flow, personas, ladder stages, message matrix, channel mix, key moments, claim check." },
+        { label: "Segmentation Planner Agent", detail: "Step 2: who gets focus and the ladder move each must make." },
+        { label: "Channel Mix Agent", detail: "Step 3: lead message and channels for each focus segment." },
+        { label: "Your guidance", detail: "Anything you type in the chat, kept for every later step." },
       ],
-      builtOn: "strategy/campaignflow.py",
+      builtOn: "strategy/planning_agents.py",
     },
     {
       id: "brand-persona-builder", name: "Segmentation Planner Agent", icon: "persona", status: "available",
       summary: "Plans target audience segmentation and prioritization for campaign activation.",
-      about: "Drafts HCP, patient and payer persona cards in the brand journey's Audience step (who they are, their tier, the voice that lands) and lets you refine one card by chat.",
+      about: "Decides which audiences get focus and the ladder move each must make (aware → interested → trial → adopt → advocate), from the Brand Kit's personas as given — it never re-segments. Runs on its own or as step 2 of the Engagement Planning Agent; the latest result is shared with the Channel Mix Agent.",
       worksFrom: [
-        { label: "Brand brief", detail: "Indication, primary audience and objective from the journey's Brief step." },
-        { label: "Brand plan documents", detail: "Any plan you upload, read for audience and persona detail." },
-        { label: "Persona library", detail: "The app's synthetic persona layer, for depth on drivers and channel preferences." },
+        { label: "Brand Kit", detail: "Personas, segments, current ladder stages, unmet need, patient flow." },
+        { label: "Objectives", detail: "From the latest engagement plan, else the brand plan's KPIs." },
+        { label: "Client data", detail: "Segment sizes (synthetic until real feeds are connected)." },
       ],
-      builtOn: "strategy/brand_journey.py, strategy/personas.py",
+      builtOn: "strategy/planning_agents.py",
     },
     { id: "message-plan", name: "Campaign Messaging Agent", icon: "message", status: "wip", summary: "Translates brand messaging and guardrails into campaign-specific messages." },
     {
       id: "channel-planner", name: "Channel Mix Agent", icon: "smartphone", status: "available",
       summary: "Determines the optimal channel mix for campaign activation.",
-      about: "Scores channels on purpose, availability, preference and potential, then offers go-to-market postures (field-led, event-led and so on), each with its own budget split.",
+      about: "Picks the lead message and the channels for each focus segment, using the channel playbook's jobs per ladder stage, the brand's channel mix and lifecycle stage, reach and the compliance claim check. Runs on its own or as step 3 of the Engagement Planning Agent.",
       worksFrom: [
-        { label: "Channel Selection template", detail: "The toolkit's six named channels, scored by the channel-mix engine." },
-        { label: "Your brief", detail: "The channels and budget you named, as the starting lean." },
+        { label: "Focus segments", detail: "From the Segmentation Planner Agent or the latest engagement plan." },
+        { label: "Brand Kit", detail: "Message matrix, messages by persona, channel mix, channel playbook, claim check." },
+        { label: "Client data", detail: "Channel reach by segment (synthetic until real feeds are connected)." },
       ],
-      builtOn: "strategy/channel_selection.py, strategy/rules.py",
+      builtOn: "strategy/planning_agents.py, config/frameworks/channel_playbook.json",
     },
     {
       id: "briefing-agent", name: "Campaign Planning Agent", icon: "document", status: "available",
@@ -230,8 +232,10 @@ const AGENT_ROUTES: Record<string, string> = {
   "flow-planner": "#/v3/agent/flow-planner",
   "briefing-agent": "#/v3/agent/briefing-agent",
   "brief-compiler": "#/v3/agent/brief-compiler",
+  "brand-persona-builder": "#/v3/agent/brand-persona-builder",
+  "channel-planner": "#/v3/agent/channel-planner",
 };
-const NEW_AGENTS = new Set(["engagement-planner-2", "engagement-planner", "campaign-planner", "segmentation-planner", "flow-planner", "briefing-agent", "brief-compiler"]);
+const NEW_AGENTS = new Set(["engagement-planner-2", "engagement-planner", "campaign-planner", "segmentation-planner", "flow-planner", "briefing-agent", "brief-compiler", "brand-persona-builder", "channel-planner"]);
 
 export const REGISTRY: RegistryAgent[] = (() => {
   const byId = new Map<string, RegistryAgent>();

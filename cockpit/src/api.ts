@@ -539,3 +539,32 @@ export const engagementOptions = (id: string, answers: Record<string, string>) =
 export const engagementChoose = (id: string, ids: string[], note?: string) => epStep(id, "choose", { ids, note: note ?? null });
 export const engagementDraft = (id: string) => epStep(id, "draft");
 export const engagementCheck = (id: string) => epStep(id, "check");
+
+/* Engagement Planning, Segmentation and Channel agents (strategy/planning_agents.py) */
+export interface PAStep { status: "draft" | "approved" | "stale"; output: Record<string, unknown>; reasoning: string[]; feedback?: string | null; run_at?: string; by?: string }
+export interface PAChatMsg { role: "you" | "agent"; text: string; intent?: string; step?: string | null; at: string }
+export interface PARecord {
+  id: string; agent: string; brand: string; title: string; version: number; updated_at: string;
+  period: { start: string; end: string; months: number }; ack: AgentAck | null; steps: Record<string, PAStep>;
+  guidance: { text: string; step: string | null; at: string }[]; chat: PAChatMsg[]; auto: boolean;
+  published: { plan_id: number; campaigns: Record<string, number>; at: string } | null;
+}
+export type PAAction = { type: "run"; step: string; feedback?: string; force?: boolean } | { type: "run_all" } | null;
+const pa = (agent: string) => `/api/planning/${encodeURIComponent(agent)}/records`;
+export function paList(agent: string, brand?: string): Promise<{ records: { id: string; title: string; version: number; approved: number; of: number; updated_at: string }[] }> {
+  return getJSON(`${pa(agent)}${brand ? `?brand=${encodeURIComponent(brand)}` : ""}`);
+}
+export function paCreate(agent: string, brand: string, months = 6): Promise<PARecord> { return postJSON(pa(agent), { brand, months }); }
+export function paGet(agent: string, id: string): Promise<PARecord> { return getJSON(`${pa(agent)}/${encodeURIComponent(id)}`); }
+export function paAck(agent: string, id: string): Promise<PARecord> { return postJSON(`${pa(agent)}/${encodeURIComponent(id)}/acknowledge`, {}); }
+export function paRun(agent: string, id: string, step: string, feedback?: string, force = false): Promise<PARecord> {
+  return postJSON(`${pa(agent)}/${encodeURIComponent(id)}/steps/${step}/run`, { feedback: feedback || null, force });
+}
+export function paApprove(agent: string, id: string, step: string): Promise<PARecord> { return postJSON(`${pa(agent)}/${encodeURIComponent(id)}/steps/${step}/approve`, {}); }
+export function paChat(agent: string, id: string, message: string): Promise<{ record: PARecord; reply: string; action: PAAction }> {
+  return postJSON(`${pa(agent)}/${encodeURIComponent(id)}/chat`, { message });
+}
+export function paPublish(agent: string, id: string): Promise<PARecord> { return postJSON(`${pa(agent)}/${encodeURIComponent(id)}/publish`, {}); }
+export function paLatest(brand: string): Promise<Record<string, { output: Record<string, unknown>; from: { agent: string; id: string; title: string }; at: string }>> {
+  return getJSON(`/api/planning/latest/${encodeURIComponent(brand)}`);
+}

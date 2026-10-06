@@ -1,4 +1,4 @@
-import { EngagementPlanner2 } from "./ep2/EngagementPlanner2";
+import { PlanningAgent, PLANNING_AGENTS } from "./planning/PlanningAgent";
 import { LiveSimulation } from "./livesim/LiveSimulation";
 import { FlowAgent } from "./flowagent/FlowAgent";
 import { SignalScoutAgent } from "./signalscout/SignalScoutAgent";
@@ -64,8 +64,8 @@ export function V3App({ path }: { path: string[] }) {
         ) : isWorkspace && path[1] === "flow-planner" ? (
           <FlowAgent key={path.join("/")} brands={brands} activeBrand={scope.activeBrand}
             handoff={path[2] === "for" && path[3] ? { brand: path[3], planId: Number(path[4]) || null, campaignId: Number(path[5]) || null } : undefined} />
-        ) : isWorkspace && path[1] === "engagement-planner-2" ? (
-          <EngagementPlanner2 key="engagement-planner-2" planId={path[2]} brands={brands} activeBrand={scope.activeBrand} />
+        ) : isWorkspace && PLANNING_AGENTS[path[1]] ? (
+          <PlanningAgent key={path[1]} agentId={path[1]} recordId={path[2]} brands={brands} activeBrand={scope.activeBrand} />
         ) : isWorkspace && path[1] === "engagement-planner" ? (
           <EngagementPlanner key="engagement-planner" planId={path[2]} brands={brands} activeBrand={scope.activeBrand} />
         ) : isWorkspace && path[1] === "briefing-agent" ? (
