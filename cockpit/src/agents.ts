@@ -4,7 +4,7 @@
  *  app already runs is shown as "wip". A Read more page only lists inputs the agent really
  *  uses in this codebase (`builtOn` names where); an agent that isn't built yet says so
  *  (`inDevelopment`) instead of showing invented activity. */
-export type Phase = "strategy" | "campaign" | "ops" | "intelligence";
+export type Phase = "strategy" | "ops" | "intelligence";
 
 export type AgentIcon =
   | "target" | "radar" | "persona" | "layers" | "smartphone" | "route" | "document"
@@ -40,16 +40,14 @@ export interface PhaseInfo {
 }
 
 export const PHASES: PhaseInfo[] = [
-  { id: "strategy", label: "Brand Strategy", tagline: "Agents that build the brand's knowledge, audiences, messages and engagement plan." },
-  { id: "campaign", label: "Campaign Planning", tagline: "Agents that turn one campaign into a plan, a briefing, a segment and a flow." },
-  { id: "ops", label: "Ops & Orchestration", tagline: "Agents that build, check, test and launch the journeys and assets." },
+  { id: "strategy", label: "Planning & Strategy", tagline: "Agents that build the brand's knowledge and plan, then turn each campaign into a briefing, a segment and a flow." },
+  { id: "ops", label: "Operations & Orchestration", tagline: "Agents that build, check, test and launch the journeys and assets." },
   { id: "intelligence", label: "Reporting & Insights", tagline: "Agents that measure what happened and predict what to run next." },
 ];
 
 /** Per-phase accent ink, applied to the active phase tab and the hero heading. */
 export const PHASE_TINT: Record<Phase, string> = {
   strategy: "#3B4E8C",
-  campaign: "#8A5A1F",
   ops: "#206657",
   intelligence: "#6B4FA0",
 };
@@ -101,6 +99,17 @@ export const AGENTS: Record<Phase, LibraryAgent[]> = {
       builtOn: "strategy/engagement_agent.py, strategy/engagement_plans.py",
     },
     {
+      id: "engagement-planner-2", name: "Engagement Planner 2", icon: "layers", status: "available",
+      summary: "Runs the CampaignFlow framework: objective card, audience, channels, journeys, omnichannel rules and a build-ready brief.",
+      about: "Reads the brand plan and Brand IQ, then runs the six CampaignFlow steps for one campaign. Each step reads only the approved step before it; you approve each draft or ask for changes. Gaps become questions, never inventions. Saving puts the campaign and its named journeys into Campaigns & Journeys and Live simulation.",
+      worksFrom: [
+        { label: "Brand plan", detail: "Uploaded documents and your notes, plus Brand IQ's brand-plan fields." },
+        { label: "CampaignFlow framework", detail: "config/frameworks/campaignflow.json: the six steps and their 24 underlying rules." },
+        { label: "Client data", detail: "Synthetic HCP counts, reach and field force until real feeds are connected." },
+      ],
+      builtOn: "strategy/campaignflow.py",
+    },
+    {
       id: "channel-planner", name: "Channel Planner", icon: "smartphone", status: "available",
       summary: "Chooses the channel mix and budget split for how the campaign goes to market.",
       about: "Scores channels on purpose, availability, preference and potential, then offers go-to-market postures (field-led, event-led and so on), each with its own budget split.",
@@ -110,8 +119,6 @@ export const AGENTS: Record<Phase, LibraryAgent[]> = {
       ],
       builtOn: "strategy/channel_selection.py, strategy/rules.py",
     },
-  ],
-  campaign: [
     // Card hidden (the agent and its route still work):
     // {
     //   id: "campaign-planner", name: "Campaign Planner", icon: "target", status: "available",
@@ -218,13 +225,14 @@ const AGENT_ROUTES: Record<string, string> = {
   "brand-iq": "#/v3/agent/brand-iq",
   "signal-agent": "#/v3/agent/signal-agent",
   "engagement-planner": "#/v3/agent/engagement-planner",
+  "engagement-planner-2": "#/v3/agent/engagement-planner-2",
   "campaign-planner": "#/v3/agent/campaign-planner",
   "segmentation-planner": "#/v3/agent/segmentation-planner",
   "flow-planner": "#/v3/agent/flow-planner",
   "briefing-agent": "#/v3/agent/briefing-agent",
   "brief-compiler": "#/v3/agent/brief-compiler",
 };
-const NEW_AGENTS = new Set(["engagement-planner", "campaign-planner", "segmentation-planner", "flow-planner", "briefing-agent", "brief-compiler"]);
+const NEW_AGENTS = new Set(["engagement-planner-2", "engagement-planner", "campaign-planner", "segmentation-planner", "flow-planner", "briefing-agent", "brief-compiler"]);
 
 export const REGISTRY: RegistryAgent[] = (() => {
   const byId = new Map<string, RegistryAgent>();

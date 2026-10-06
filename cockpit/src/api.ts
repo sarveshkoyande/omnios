@@ -125,6 +125,24 @@ export function seedLiveSimDemo(brand: string): Promise<unknown> {
 export function resolveLiveSim(brand: string, updateId: string, action: "apply" | "dismiss"): Promise<unknown> {
   return postJSON(`/api/live-sim/${encodeURIComponent(brand)}/updates/${encodeURIComponent(updateId)}/${action}`, {});
 }
+/** Engagement Planner 2: the CampaignFlow six-step framework (strategy/campaignflow.py). */
+export interface EP2Step { status: "draft" | "approved" | "stale"; output: Record<string, unknown>; reasoning: string[]; feedback?: string | null; run_at?: string }
+export interface EP2Plan {
+  id: string; brand: string; title: string; version: number; created_at: string; updated_at: string;
+  ack: AgentAck | null; steps: Record<string, EP2Step>; published: { plan_id: number; campaign_id: number; flows: Record<string, number> } | null;
+}
+export function ep2Framework(): Promise<Record<string, unknown>> { return getJSON("/api/ep2/framework"); }
+export function ep2List(brand?: string): Promise<{ plans: { id: string; brand: string; title: string; version: number; updated_at: string; approved: number }[] }> {
+  return getJSON(`/api/ep2/plans${brand ? `?brand=${encodeURIComponent(brand)}` : ""}`);
+}
+export function ep2Create(brand: string, title?: string): Promise<EP2Plan> { return postJSON("/api/ep2/plans", { brand, title }); }
+export function ep2Get(id: string): Promise<EP2Plan> { return getJSON(`/api/ep2/plans/${encodeURIComponent(id)}`); }
+export function ep2Ack(id: string): Promise<EP2Plan> { return postJSON(`/api/ep2/plans/${encodeURIComponent(id)}/acknowledge`, {}); }
+export function ep2Run(id: string, step: string, feedback?: string): Promise<EP2Plan> {
+  return postJSON(`/api/ep2/plans/${encodeURIComponent(id)}/steps/${step}/run`, { feedback: feedback || null });
+}
+export function ep2Approve(id: string, step: string): Promise<EP2Plan> { return postJSON(`/api/ep2/plans/${encodeURIComponent(id)}/steps/${step}/approve`, {}); }
+export function ep2Publish(id: string): Promise<EP2Plan> { return postJSON(`/api/ep2/plans/${encodeURIComponent(id)}/publish`, {}); }
 export function getClientData(brand: string): Promise<Record<string, unknown>> {
   return getJSON(`/api/brand-kits/${encodeURIComponent(brand)}/client-data`);
 }

@@ -59,16 +59,18 @@ def measures() -> list[dict]:
 def _cache_path(measure: str) -> Path:
     p = data_path("geo_cache")
     p.mkdir(parents=True, exist_ok=True)
-    return p / f"places_{measure}.json"
+    return p / f"places_v2_{measure}.json"  # v2: cases from the adult population (totalpop18plus)
 
 
 def state_prevalence(measure: str) -> dict:
     """Crude adult prevalence by state for one PLACES measure, with an estimated adult count.
-    Cached under DATA_DIR (CDC releases yearly)."""
+    PLACES prevalence is among adults (18+), so both the state roll-up and the case estimate use the
+    adult population (`totalpop18plus`); `population` stays the total population. Cached under DATA_DIR
+    (CDC releases yearly)."""
     cache = _cache_path(measure)
     if cache.exists():
         return json.loads(cache.read_text(encoding="utf-8"))
-    rows = _get({"$select": "stateabbr, data_value, totalpopulation, year",
+    rows = _get({"$select": "stateabbr, data_value, totalpopulation, totalpop18plus, year",
                  "$where": f"measureid='{measure}' AND data_value_type='Crude prevalence'", "$limit": 5000})
     agg: dict[str, dict] = {}
     year = None
@@ -78,21 +80,38 @@ def state_prevalence(measure: str) -> dict:
             continue
         try:
             v, pop = float(r["data_value"]), float(r["totalpopulation"])
+            adults = float(r.get("totalpop18plus") or 0)
         except (KeyError, TypeError, ValueError):
             continue
+        if not adults:
+            continue  # without the adult count the estimate would count children too
         year = r.get("year") or year
-        a = agg.setdefault(st, {"pop": 0.0, "cases": 0.0})
+        a = agg.setdefault(st, {"pop": 0.0, "adults": 0.0, "cases": 0.0})
         a["pop"] += pop
-        a["cases"] += pop * v / 100
+        a["adults"] += adults
+        a["cases"] += adults * v / 100
     states = sorted(({"state": st, "name": US_STATES[st], "region": CENSUS_REGION.get(st),
-                      "prevalence_pct": round(a["cases"] / a["pop"] * 100, 1) if a["pop"] else None,
-                      "est_cases": int(a["cases"]), "population": int(a["pop"])} for st, a in agg.items()),
+                      "prevalence_pct": round(a["cases"] / a["adults"] * 100, 1) if a["adults"] else None,
+                      "est_cases": int(a["cases"]), "adult_population": int(a["adults"]),
+                      "population": int(a["pop"])} for st, a in agg.items()),
                     key=lambda x: -x["est_cases"])
     out = {"measure": measure, "year": year, "states": states,
-           "source": f"CDC PLACES county data {year or ''}, crude prevalence rolled up to states (population-weighted)",
+           "source": f"CDC PLACES county data {year or ''}, adult crude prevalence rolled up to states (weighted by adult population); cases = prevalence x adults 18+",
            "url": PLACES_PAGE}
     cache.write_text(json.dumps(out), encoding="utf-8")
     return out
+
+
+def refresh_layers(geo: dict) -> dict:
+    """Recompute an existing geography's numbers from CDC, keeping the measures already chosen."""
+    layers = []
+    for layer in (geo or {}).get("layers") or []:
+        keep = {k: v for k, v in layer.items() if k not in ("states", "year", "source", "url", "error")}
+        try:
+            layers.append({**keep, **state_prevalence(layer["measure"])})
+        except Exception as e:  # noqa: BLE001
+            layers.append({**layer, "error": str(e)})
+    return {**(geo or {}), "layers": layers, "population_by_state": _population(layers)}
 
 
 def pick_measures(brand: str, indications: list[dict]) -> list[dict]:

@@ -149,10 +149,19 @@ model proposals (Apply / Dismiss). Jardiance has a seeded DEMO tree (`seed_demo`
 labelled Demo in the UI). Engagement Planner "Save plan" publishes a v3 plan + its campaigns into the hierarchy
 (`engagement_agent.publish`). State: `DATA_DIR/live_sim/state.json`.
 
+**Engagement Planner 2** (`#/v3/agent/engagement-planner-2`, `strategy/campaignflow.py`): the CampaignFlow
+30-minute framework (`config/frameworks/campaignflow.json`: six steps + 24 underlying rules) as an agent: intake →
+acknowledgement → objective card → audience segmentation → channel plan → journey design → omnichannel rules →
+campaign brief. Each step is a draft until approved (redo with feedback marks later steps stale). Plans in
+`DATA_DIR/campaignflow/<id>.json`; Save publishes the campaign + one flow per named journey into the hierarchy.
+
 **LLM-only rule**: free text a person typed is read only by the model — no regex/keyword matching of it; with no
 model a step stops with a plain message instead of guessing. (MR !1's keyword fallbacks were removed.)
 
-**Brand IQ data**: kits in `config/brand_kits.json`. Public sources (`strategy/public_sources.py`,
+**Brand IQ data**: kits in `config/brand_kits.json`. On a deployed server (any `RAILWAY_*` env var, or
+`OMNI_KIT_OVERLAY=1`) `brand_kit.apply_diff` writes edits to `DATA_DIR/brand_kits_overlay.json` (field-level, laid
+over the committed kit on load) and new brands to `DATA_DIR/brand_kits_local.json`, so they survive redeploys;
+locally edits still go into `config/brand_kits.json` so they can be committed. Public sources (`strategy/public_sources.py`,
 `brand_builder.py`): FDA label/Drugs@FDA, NIH MeSH, PubMed (US studies only), ClinicalTrials.gov, MedlinePlus;
 US geography from CDC PLACES (`us_geography.py`). **Client data is synthetic** (`client_data.py`, flagged
 `"synthetic": true`) until real HCP/access/field/consent feeds exist. Company SOPs: `config/compliance_profiles.json`.

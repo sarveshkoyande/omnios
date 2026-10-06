@@ -4267,15 +4267,17 @@
                 "name": "California",
                 "region": "West",
                 "prevalence_pct": 11.7,
-                "est_cases": 4566729,
+                "est_cases": 3571061,
+                "adult_population": 30519524,
                 "population": 38965193
               },
               {
                 "state": "TX",
                 "name": "Texas",
                 "region": "South",
-                "prevalence_pct": 12.8,
-                "est_cases": 3895180,
+                "prevalence_pct": 12.7,
+                "est_cases": 2922262,
+                "adult_population": 22942146,
                 "population": 30503258
               },
               {
@@ -4283,7 +4285,8 @@
                 "name": "Florida",
                 "region": "South",
                 "prevalence_pct": 13.5,
-                "est_cases": 3048282,
+                "est_cases": 2460085,
+                "adult_population": 18229883,
                 "population": 22610726
               },
               {
@@ -4291,7 +4294,8 @@
                 "name": "New York",
                 "region": "Northeast",
                 "prevalence_pct": 11.5,
-                "est_cases": 2250311,
+                "est_cases": 1790169,
+                "adult_population": 15611308,
                 "population": 19571216
               },
               {
@@ -4299,47 +4303,53 @@
                 "name": "Ohio",
                 "region": "Midwest",
                 "prevalence_pct": 13.2,
-                "est_cases": 1560832,
+                "est_cases": 1220001,
+                "adult_population": 9207681,
                 "population": 11785935
+              },
+              {
+                "state": "IL",
+                "name": "Illinois",
+                "region": "Midwest",
+                "prevalence_pct": 11.7,
+                "est_cases": 1146933,
+                "adult_population": 9844167,
+                "population": 12549689
               },
               {
                 "state": "GA",
                 "name": "Georgia",
                 "region": "South",
                 "prevalence_pct": 13.3,
-                "est_cases": 1466016,
+                "est_cases": 1128497,
+                "adult_population": 8490546,
                 "population": 11029227
-              },
-              {
-                "state": "IL",
-                "name": "Illinois",
-                "region": "Midwest",
-                "prevalence_pct": 11.6,
-                "est_cases": 1461860,
-                "population": 12549689
               },
               {
                 "state": "NC",
                 "name": "North Carolina",
                 "region": "South",
                 "prevalence_pct": 12.0,
-                "est_cases": 1302638,
+                "est_cases": 1022497,
+                "adult_population": 8498868,
                 "population": 10835491
               },
               {
                 "state": "MI",
                 "name": "Michigan",
                 "region": "Midwest",
-                "prevalence_pct": 12.0,
-                "est_cases": 1200541,
+                "prevalence_pct": 11.9,
+                "est_cases": 946933,
+                "adult_population": 7925350,
                 "population": 10037261
               },
               {
                 "state": "VA",
                 "name": "Virginia",
                 "region": "South",
-                "prevalence_pct": 12.4,
-                "est_cases": 1084625,
+                "prevalence_pct": 12.5,
+                "est_cases": 851712,
+                "adult_population": 6834154,
                 "population": 8715698
               },
               {
@@ -4347,7 +4357,8 @@
                 "name": "New Jersey",
                 "region": "Northeast",
                 "prevalence_pct": 10.9,
-                "est_cases": 1015441,
+                "est_cases": 794658,
+                "adult_population": 7280551,
                 "population": 9290841
               },
               {
@@ -4355,7 +4366,8 @@
                 "name": "Tennessee",
                 "region": "South",
                 "prevalence_pct": 13.6,
-                "est_cases": 969663,
+                "est_cases": 756520,
+                "adult_population": 5555761,
                 "population": 7126489
               },
               {
@@ -4363,7 +4375,8 @@
                 "name": "Indiana",
                 "region": "Midwest",
                 "prevalence_pct": 13.0,
-                "est_cases": 889854,
+                "est_cases": 684062,
+                "adult_population": 5274945,
                 "population": 6862199
               },
               {
@@ -4371,71 +4384,80 @@
                 "name": "Arizona",
                 "region": "West",
                 "prevalence_pct": 11.3,
-                "est_cases": 840857,
+                "est_cases": 661849,
+                "adult_population": 5848310,
                 "population": 7431344
               },
               {
                 "state": "MD",
                 "name": "Maryland",
                 "region": "South",
-                "prevalence_pct": 12.4,
-                "est_cases": 769368,
+                "prevalence_pct": 12.5,
+                "est_cases": 600502,
+                "adult_population": 4818337,
                 "population": 6180253
-              },
-              {
-                "state": "AL",
-                "name": "Alabama",
-                "region": "South",
-                "prevalence_pct": 14.8,
-                "est_cases": 754150,
-                "population": 5108468
-              },
-              {
-                "state": "MO",
-                "name": "Missouri",
-                "region": "Midwest",
-                "prevalence_pct": 12.1,
-                "est_cases": 749025,
-                "population": 6196156
               },
               {
                 "state": "SC",
                 "name": "South Carolina",
                 "region": "South",
                 "prevalence_pct": 13.9,
-                "est_cases": 747180,
+                "est_cases": 588600,
+                "adult_population": 4229354,
                 "population": 5373555
+              },
+              {
+                "state": "AL",
+                "name": "Alabama",
+                "region": "South",
+                "prevalence_pct": 14.8,
+                "est_cases": 586945,
+                "adult_population": 3977628,
+                "population": 5108468
               },
               {
                 "state": "WA",
                 "name": "Washington",
                 "region": "West",
                 "prevalence_pct": 9.5,
-                "est_cases": 744006,
+                "est_cases": 585192,
+                "adult_population": 6164810,
                 "population": 7812880
               },
               {
-                "state": "LA",
-                "name": "Louisiana",
-                "region": "South",
-                "prevalence_pct": 15.2,
-                "est_cases": 695792,
-                "population": 4573749
+                "state": "MO",
+                "name": "Missouri",
+                "region": "Midwest",
+                "prevalence_pct": 12.1,
+                "est_cases": 582795,
+                "adult_population": 4821686,
+                "population": 6196156
               },
               {
                 "state": "MA",
                 "name": "Massachusetts",
                 "region": "Northeast",
                 "prevalence_pct": 9.8,
-                "est_cases": 685279,
+                "est_cases": 553587,
+                "adult_population": 5659598,
                 "population": 7001399
+              },
+              {
+                "state": "LA",
+                "name": "Louisiana",
+                "region": "South",
+                "prevalence_pct": 15.2,
+                "est_cases": 533884,
+                "adult_population": 3506600,
+                "population": 4573749
               },
               {
                 "state": "WI",
                 "name": "Wisconsin",
                 "region": "Midwest",
                 "prevalence_pct": 11.4,
-                "est_cases": 675564,
+                "est_cases": 532386,
+                "adult_population": 4661826,
                 "population": 5910955
               },
               {
@@ -4443,31 +4465,35 @@
                 "name": "Minnesota",
                 "region": "Midwest",
                 "prevalence_pct": 10.1,
-                "est_cases": 579629,
+                "est_cases": 448228,
+                "adult_population": 4436981,
                 "population": 5737915
-              },
-              {
-                "state": "OK",
-                "name": "Oklahoma",
-                "region": "South",
-                "prevalence_pct": 12.8,
-                "est_cases": 518627,
-                "population": 4053824
               },
               {
                 "state": "CO",
                 "name": "Colorado",
                 "region": "West",
                 "prevalence_pct": 8.6,
-                "est_cases": 507273,
+                "est_cases": 401622,
+                "adult_population": 4662926,
                 "population": 5877610
+              },
+              {
+                "state": "OK",
+                "name": "Oklahoma",
+                "region": "South",
+                "prevalence_pct": 12.8,
+                "est_cases": 394874,
+                "adult_population": 3087217,
+                "population": 4053824
               },
               {
                 "state": "OR",
                 "name": "Oregon",
                 "region": "West",
                 "prevalence_pct": 11.2,
-                "est_cases": 473919,
+                "est_cases": 380329,
+                "adult_population": 3401528,
                 "population": 4233358
               },
               {
@@ -4475,7 +4501,8 @@
                 "name": "Mississippi",
                 "region": "South",
                 "prevalence_pct": 15.5,
-                "est_cases": 456273,
+                "est_cases": 350433,
+                "adult_population": 2259864,
                 "population": 2939690
               },
               {
@@ -4483,7 +4510,8 @@
                 "name": "Arkansas",
                 "region": "South",
                 "prevalence_pct": 13.3,
-                "est_cases": 406524,
+                "est_cases": 313534,
+                "adult_population": 2362124,
                 "population": 3067732
               },
               {
@@ -4491,7 +4519,8 @@
                 "name": "Nevada",
                 "region": "West",
                 "prevalence_pct": 12.0,
-                "est_cases": 384884,
+                "est_cases": 302231,
+                "adult_population": 2508220,
                 "population": 3194176
               },
               {
@@ -4499,7 +4528,8 @@
                 "name": "Connecticut",
                 "region": "Northeast",
                 "prevalence_pct": 10.2,
-                "est_cases": 367337,
+                "est_cases": 294017,
+                "adult_population": 2894190,
                 "population": 3617176
               },
               {
@@ -4507,7 +4537,8 @@
                 "name": "Iowa",
                 "region": "Midwest",
                 "prevalence_pct": 11.2,
-                "est_cases": 360297,
+                "est_cases": 278124,
+                "adult_population": 2476882,
                 "population": 3207004
               },
               {
@@ -4515,23 +4546,17 @@
                 "name": "Kansas",
                 "region": "Midwest",
                 "prevalence_pct": 11.4,
-                "est_cases": 335016,
+                "est_cases": 255210,
+                "adult_population": 2246209,
                 "population": 2940546
-              },
-              {
-                "state": "UT",
-                "name": "Utah",
-                "region": "West",
-                "prevalence_pct": 8.5,
-                "est_cases": 290205,
-                "population": 3417734
               },
               {
                 "state": "WV",
                 "name": "West Virginia",
                 "region": "South",
                 "prevalence_pct": 15.9,
-                "est_cases": 281257,
+                "est_cases": 225175,
+                "adult_population": 1417859,
                 "population": 1770071
               },
               {
@@ -4539,23 +4564,35 @@
                 "name": "New Mexico",
                 "region": "West",
                 "prevalence_pct": 13.2,
-                "est_cases": 278914,
+                "est_cases": 219121,
+                "adult_population": 1663024,
                 "population": 2114371
+              },
+              {
+                "state": "UT",
+                "name": "Utah",
+                "region": "West",
+                "prevalence_pct": 8.5,
+                "est_cases": 211619,
+                "adult_population": 2484582,
+                "population": 3417734
               },
               {
                 "state": "NE",
                 "name": "Nebraska",
                 "region": "Midwest",
                 "prevalence_pct": 10.7,
-                "est_cases": 211304,
+                "est_cases": 159915,
+                "adult_population": 1497381,
                 "population": 1978379
               },
               {
                 "state": "ID",
                 "name": "Idaho",
                 "region": "West",
-                "prevalence_pct": 10.2,
-                "est_cases": 199587,
+                "prevalence_pct": 10.1,
+                "est_cases": 151905,
+                "adult_population": 1497384,
                 "population": 1964726
               },
               {
@@ -4563,7 +4600,8 @@
                 "name": "Hawaii",
                 "region": "West",
                 "prevalence_pct": 12.4,
-                "est_cases": 177548,
+                "est_cases": 141227,
+                "adult_population": 1141525,
                 "population": 1435138
               },
               {
@@ -4571,39 +4609,44 @@
                 "name": "Maine",
                 "region": "Northeast",
                 "prevalence_pct": 11.2,
-                "est_cases": 156922,
+                "est_cases": 128855,
+                "adult_population": 1146670,
                 "population": 1395722
-              },
-              {
-                "state": "DE",
-                "name": "Delaware",
-                "region": "South",
-                "prevalence_pct": 13.1,
-                "est_cases": 135146,
-                "population": 1031890
               },
               {
                 "state": "NH",
                 "name": "New Hampshire",
                 "region": "Northeast",
                 "prevalence_pct": 9.4,
-                "est_cases": 131741,
+                "est_cases": 108121,
+                "adult_population": 1150004,
                 "population": 1402054
+              },
+              {
+                "state": "DE",
+                "name": "Delaware",
+                "region": "South",
+                "prevalence_pct": 13.1,
+                "est_cases": 107453,
+                "adult_population": 819952,
+                "population": 1031890
               },
               {
                 "state": "RI",
                 "name": "Rhode Island",
                 "region": "Northeast",
                 "prevalence_pct": 11.1,
-                "est_cases": 122100,
+                "est_cases": 99228,
+                "adult_population": 892124,
                 "population": 1095962
               },
               {
                 "state": "MT",
                 "name": "Montana",
                 "region": "West",
-                "prevalence_pct": 10.0,
-                "est_cases": 113068,
+                "prevalence_pct": 9.9,
+                "est_cases": 89258,
+                "adult_population": 897161,
                 "population": 1132812
               },
               {
@@ -4611,7 +4654,8 @@
                 "name": "South Dakota",
                 "region": "Midwest",
                 "prevalence_pct": 11.7,
-                "est_cases": 107866,
+                "est_cases": 81379,
+                "adult_population": 697420,
                 "population": 919318
               },
               {
@@ -4619,15 +4663,17 @@
                 "name": "North Dakota",
                 "region": "Midwest",
                 "prevalence_pct": 9.8,
-                "est_cases": 77006,
+                "est_cases": 58714,
+                "adult_population": 599192,
                 "population": 783926
               },
               {
                 "state": "AK",
                 "name": "Alaska",
                 "region": "West",
-                "prevalence_pct": 9.5,
-                "est_cases": 69582,
+                "prevalence_pct": 9.4,
+                "est_cases": 52679,
+                "adult_population": 557899,
                 "population": 733406
               },
               {
@@ -4635,7 +4681,8 @@
                 "name": "Wyoming",
                 "region": "West",
                 "prevalence_pct": 10.9,
-                "est_cases": 63899,
+                "est_cases": 49627,
+                "adult_population": 454508,
                 "population": 584057
               },
               {
@@ -4643,7 +4690,8 @@
                 "name": "Vermont",
                 "region": "Northeast",
                 "prevalence_pct": 8.8,
-                "est_cases": 57056,
+                "est_cases": 46906,
+                "adult_population": 532828,
                 "population": 647464
               },
               {
@@ -4651,11 +4699,12 @@
                 "name": "District of Columbia",
                 "region": "South",
                 "prevalence_pct": 7.8,
-                "est_cases": 52959,
+                "est_cases": 43085,
+                "adult_population": 552380,
                 "population": 678972
               }
             ],
-            "source": "CDC PLACES county data 2023, crude prevalence rolled up to states (population-weighted)",
+            "source": "CDC PLACES county data 2023, adult crude prevalence rolled up to states (weighted by adult population); cases = prevalence x adults 18+",
             "url": "https://www.cdc.gov/places/"
           },
           {
@@ -4670,7 +4719,8 @@
                 "name": "California",
                 "region": "West",
                 "prevalence_pct": 30.5,
-                "est_cases": 11889466,
+                "est_cases": 9302530,
+                "adult_population": 30519524,
                 "population": 38965193
               },
               {
@@ -4678,7 +4728,8 @@
                 "name": "Texas",
                 "region": "South",
                 "prevalence_pct": 33.1,
-                "est_cases": 10103499,
+                "est_cases": 7598184,
+                "adult_population": 22942146,
                 "population": 30503258
               },
               {
@@ -4686,7 +4737,8 @@
                 "name": "Florida",
                 "region": "South",
                 "prevalence_pct": 36.6,
-                "est_cases": 8271610,
+                "est_cases": 6679839,
+                "adult_population": 18229883,
                 "population": 22610726
               },
               {
@@ -4694,7 +4746,8 @@
                 "name": "New York",
                 "region": "Northeast",
                 "prevalence_pct": 32.6,
-                "est_cases": 6380112,
+                "est_cases": 5083422,
+                "adult_population": 15611308,
                 "population": 19571216
               },
               {
@@ -4702,7 +4755,8 @@
                 "name": "Ohio",
                 "region": "Midwest",
                 "prevalence_pct": 37.2,
-                "est_cases": 4386051,
+                "est_cases": 3428557,
+                "adult_population": 9207681,
                 "population": 11785935
               },
               {
@@ -4710,23 +4764,26 @@
                 "name": "Illinois",
                 "region": "Midwest",
                 "prevalence_pct": 33.0,
-                "est_cases": 4135864,
+                "est_cases": 3243695,
+                "adult_population": 9844167,
                 "population": 12549689
               },
               {
                 "state": "GA",
                 "name": "Georgia",
                 "region": "South",
-                "prevalence_pct": 37.3,
-                "est_cases": 4118341,
+                "prevalence_pct": 37.4,
+                "est_cases": 3171423,
+                "adult_population": 8490546,
                 "population": 11029227
               },
               {
                 "state": "NC",
                 "name": "North Carolina",
                 "region": "South",
-                "prevalence_pct": 36.7,
-                "est_cases": 3981205,
+                "prevalence_pct": 36.8,
+                "est_cases": 3125664,
+                "adult_population": 8498868,
                 "population": 10835491
               },
               {
@@ -4734,7 +4791,8 @@
                 "name": "Michigan",
                 "region": "Midwest",
                 "prevalence_pct": 36.7,
-                "est_cases": 3683453,
+                "est_cases": 2907358,
+                "adult_population": 7925350,
                 "population": 10037261
               },
               {
@@ -4742,15 +4800,17 @@
                 "name": "Virginia",
                 "region": "South",
                 "prevalence_pct": 35.4,
-                "est_cases": 3083424,
+                "est_cases": 2420923,
+                "adult_population": 6834154,
                 "population": 8715698
               },
               {
                 "state": "NJ",
                 "name": "New Jersey",
                 "region": "Northeast",
-                "prevalence_pct": 32.9,
-                "est_cases": 3052891,
+                "prevalence_pct": 32.8,
+                "est_cases": 2391374,
+                "adult_population": 7280551,
                 "population": 9290841
               },
               {
@@ -4758,7 +4818,8 @@
                 "name": "Tennessee",
                 "region": "South",
                 "prevalence_pct": 39.5,
-                "est_cases": 2812134,
+                "est_cases": 2193517,
+                "adult_population": 5555761,
                 "population": 7126489
               },
               {
@@ -4766,15 +4827,17 @@
                 "name": "Indiana",
                 "region": "Midwest",
                 "prevalence_pct": 37.8,
-                "est_cases": 2594036,
+                "est_cases": 1993859,
+                "adult_population": 5274945,
                 "population": 6862199
               },
               {
                 "state": "AZ",
                 "name": "Arizona",
                 "region": "West",
-                "prevalence_pct": 32.7,
-                "est_cases": 2431637,
+                "prevalence_pct": 32.8,
+                "est_cases": 1916033,
+                "adult_population": 5848310,
                 "population": 7431344
               },
               {
@@ -4782,7 +4845,8 @@
                 "name": "Washington",
                 "region": "West",
                 "prevalence_pct": 30.5,
-                "est_cases": 2385590,
+                "est_cases": 1881399,
+                "adult_population": 6164810,
                 "population": 7812880
               },
               {
@@ -4790,7 +4854,8 @@
                 "name": "Maryland",
                 "region": "South",
                 "prevalence_pct": 36.8,
-                "est_cases": 2272256,
+                "est_cases": 1772829,
+                "adult_population": 4818337,
                 "population": 6180253
               },
               {
@@ -4798,39 +4863,44 @@
                 "name": "Missouri",
                 "region": "Midwest",
                 "prevalence_pct": 36.5,
-                "est_cases": 2263537,
+                "est_cases": 1761198,
+                "adult_population": 4821686,
                 "population": 6196156
-              },
-              {
-                "state": "AL",
-                "name": "Alabama",
-                "region": "South",
-                "prevalence_pct": 43.3,
-                "est_cases": 2211075,
-                "population": 5108468
               },
               {
                 "state": "MA",
                 "name": "Massachusetts",
                 "region": "Northeast",
                 "prevalence_pct": 30.9,
-                "est_cases": 2166030,
+                "est_cases": 1750128,
+                "adult_population": 5659598,
                 "population": 7001399
+              },
+              {
+                "state": "AL",
+                "name": "Alabama",
+                "region": "South",
+                "prevalence_pct": 43.3,
+                "est_cases": 1721415,
+                "adult_population": 3977628,
+                "population": 5108468
               },
               {
                 "state": "SC",
                 "name": "South Carolina",
                 "region": "South",
                 "prevalence_pct": 38.5,
-                "est_cases": 2069206,
+                "est_cases": 1629693,
+                "adult_population": 4229354,
                 "population": 5373555
               },
               {
                 "state": "WI",
                 "name": "Wisconsin",
                 "region": "Midwest",
-                "prevalence_pct": 33.4,
-                "est_cases": 1971730,
+                "prevalence_pct": 33.3,
+                "est_cases": 1554570,
+                "adult_population": 4661826,
                 "population": 5910955
               },
               {
@@ -4838,7 +4908,8 @@
                 "name": "Louisiana",
                 "region": "South",
                 "prevalence_pct": 42.6,
-                "est_cases": 1948060,
+                "est_cases": 1493783,
+                "adult_population": 3506600,
                 "population": 4573749
               },
               {
@@ -4846,15 +4917,17 @@
                 "name": "Minnesota",
                 "region": "Midwest",
                 "prevalence_pct": 31.0,
-                "est_cases": 1777999,
+                "est_cases": 1375302,
+                "adult_population": 4436981,
                 "population": 5737915
               },
               {
                 "state": "CO",
                 "name": "Colorado",
                 "region": "West",
-                "prevalence_pct": 27.1,
-                "est_cases": 1591129,
+                "prevalence_pct": 27.0,
+                "est_cases": 1260676,
+                "adult_population": 4662926,
                 "population": 5877610
               },
               {
@@ -4862,7 +4935,8 @@
                 "name": "Oklahoma",
                 "region": "South",
                 "prevalence_pct": 38.5,
-                "est_cases": 1558801,
+                "est_cases": 1187088,
+                "adult_population": 3087217,
                 "population": 4053824
               },
               {
@@ -4870,7 +4944,8 @@
                 "name": "Oregon",
                 "region": "West",
                 "prevalence_pct": 32.7,
-                "est_cases": 1384426,
+                "est_cases": 1111924,
+                "adult_population": 3401528,
                 "population": 4233358
               },
               {
@@ -4878,7 +4953,8 @@
                 "name": "Mississippi",
                 "region": "South",
                 "prevalence_pct": 44.9,
-                "est_cases": 1320057,
+                "est_cases": 1014195,
+                "adult_population": 2259864,
                 "population": 2939690
               },
               {
@@ -4886,7 +4962,8 @@
                 "name": "Arkansas",
                 "region": "South",
                 "prevalence_pct": 41.4,
-                "est_cases": 1268612,
+                "est_cases": 978117,
+                "adult_population": 2362124,
                 "population": 3067732
               },
               {
@@ -4894,31 +4971,35 @@
                 "name": "Connecticut",
                 "region": "Northeast",
                 "prevalence_pct": 32.0,
-                "est_cases": 1157358,
+                "est_cases": 926722,
+                "adult_population": 2894190,
                 "population": 3617176
-              },
-              {
-                "state": "IA",
-                "name": "Iowa",
-                "region": "Midwest",
-                "prevalence_pct": 33.9,
-                "est_cases": 1087774,
-                "population": 3207004
               },
               {
                 "state": "NV",
                 "name": "Nevada",
                 "region": "West",
                 "prevalence_pct": 34.0,
-                "est_cases": 1085867,
+                "est_cases": 852885,
+                "adult_population": 2508220,
                 "population": 3194176
+              },
+              {
+                "state": "IA",
+                "name": "Iowa",
+                "region": "Midwest",
+                "prevalence_pct": 33.9,
+                "est_cases": 839827,
+                "adult_population": 2476882,
+                "population": 3207004
               },
               {
                 "state": "KS",
                 "name": "Kansas",
                 "region": "Midwest",
                 "prevalence_pct": 34.4,
-                "est_cases": 1012118,
+                "est_cases": 772165,
+                "adult_population": 2246209,
                 "population": 2940546
               },
               {
@@ -4926,7 +5007,8 @@
                 "name": "Utah",
                 "region": "West",
                 "prevalence_pct": 27.3,
-                "est_cases": 932184,
+                "est_cases": 679503,
+                "adult_population": 2484582,
                 "population": 3417734
               },
               {
@@ -4934,7 +5016,8 @@
                 "name": "West Virginia",
                 "region": "South",
                 "prevalence_pct": 44.0,
-                "est_cases": 779389,
+                "est_cases": 624020,
+                "adult_population": 1417859,
                 "population": 1770071
               },
               {
@@ -4942,7 +5025,8 @@
                 "name": "New Mexico",
                 "region": "West",
                 "prevalence_pct": 34.3,
-                "est_cases": 725973,
+                "est_cases": 571235,
+                "adult_population": 1663024,
                 "population": 2114371
               },
               {
@@ -4950,7 +5034,8 @@
                 "name": "Nebraska",
                 "region": "Midwest",
                 "prevalence_pct": 32.6,
-                "est_cases": 644639,
+                "est_cases": 488136,
+                "adult_population": 1497381,
                 "population": 1978379
               },
               {
@@ -4958,7 +5043,8 @@
                 "name": "Idaho",
                 "region": "West",
                 "prevalence_pct": 31.5,
-                "est_cases": 617963,
+                "est_cases": 471212,
+                "adult_population": 1497384,
                 "population": 1964726
               },
               {
@@ -4966,7 +5052,8 @@
                 "name": "Maine",
                 "region": "Northeast",
                 "prevalence_pct": 35.7,
-                "est_cases": 497805,
+                "est_cases": 409014,
+                "adult_population": 1146670,
                 "population": 1395722
               },
               {
@@ -4974,7 +5061,8 @@
                 "name": "New Hampshire",
                 "region": "Northeast",
                 "prevalence_pct": 33.0,
-                "est_cases": 462002,
+                "est_cases": 379074,
+                "adult_population": 1150004,
                 "population": 1402054
               },
               {
@@ -4982,7 +5070,8 @@
                 "name": "Hawaii",
                 "region": "West",
                 "prevalence_pct": 31.5,
-                "est_cases": 451900,
+                "est_cases": 359444,
+                "adult_population": 1141525,
                 "population": 1435138
               },
               {
@@ -4990,23 +5079,26 @@
                 "name": "Delaware",
                 "region": "South",
                 "prevalence_pct": 38.1,
-                "est_cases": 392993,
+                "est_cases": 312714,
+                "adult_population": 819952,
                 "population": 1031890
               },
               {
                 "state": "RI",
                 "name": "Rhode Island",
                 "region": "Northeast",
-                "prevalence_pct": 33.7,
-                "est_cases": 369764,
+                "prevalence_pct": 33.8,
+                "est_cases": 301096,
+                "adult_population": 892124,
                 "population": 1095962
               },
               {
                 "state": "MT",
                 "name": "Montana",
                 "region": "West",
-                "prevalence_pct": 32.0,
-                "est_cases": 362082,
+                "prevalence_pct": 31.9,
+                "est_cases": 286344,
+                "adult_population": 897161,
                 "population": 1132812
               },
               {
@@ -5014,7 +5106,8 @@
                 "name": "South Dakota",
                 "region": "Midwest",
                 "prevalence_pct": 33.3,
-                "est_cases": 306113,
+                "est_cases": 231970,
+                "adult_population": 697420,
                 "population": 919318
               },
               {
@@ -5022,15 +5115,17 @@
                 "name": "North Dakota",
                 "region": "Midwest",
                 "prevalence_pct": 31.8,
-                "est_cases": 249348,
+                "est_cases": 190425,
+                "adult_population": 599192,
                 "population": 783926
               },
               {
                 "state": "AK",
                 "name": "Alaska",
                 "region": "West",
-                "prevalence_pct": 32.6,
-                "est_cases": 238972,
+                "prevalence_pct": 32.5,
+                "est_cases": 181583,
+                "adult_population": 557899,
                 "population": 733406
               },
               {
@@ -5038,7 +5133,8 @@
                 "name": "Vermont",
                 "region": "Northeast",
                 "prevalence_pct": 31.4,
-                "est_cases": 203299,
+                "est_cases": 167177,
+                "adult_population": 532828,
                 "population": 647464
               },
               {
@@ -5046,19 +5142,21 @@
                 "name": "District of Columbia",
                 "region": "South",
                 "prevalence_pct": 28.5,
-                "est_cases": 193507,
+                "est_cases": 157428,
+                "adult_population": 552380,
                 "population": 678972
               },
               {
                 "state": "WY",
                 "name": "Wyoming",
                 "region": "West",
-                "prevalence_pct": 31.8,
-                "est_cases": 185562,
+                "prevalence_pct": 31.7,
+                "est_cases": 144253,
+                "adult_population": 454508,
                 "population": 584057
               }
             ],
-            "source": "CDC PLACES county data 2023, crude prevalence rolled up to states (population-weighted)",
+            "source": "CDC PLACES county data 2023, adult crude prevalence rolled up to states (weighted by adult population); cases = prevalence x adults 18+",
             "url": "https://www.cdc.gov/places/"
           },
           {
@@ -5073,31 +5171,35 @@
                 "name": "California",
                 "region": "West",
                 "prevalence_pct": 5.6,
-                "est_cases": 2175207,
+                "est_cases": 1700960,
+                "adult_population": 30519524,
                 "population": 38965193
+              },
+              {
+                "state": "FL",
+                "name": "Florida",
+                "region": "South",
+                "prevalence_pct": 7.5,
+                "est_cases": 1362864,
+                "adult_population": 18229883,
+                "population": 22610726
               },
               {
                 "state": "TX",
                 "name": "Texas",
                 "region": "South",
                 "prevalence_pct": 5.6,
-                "est_cases": 1712348,
+                "est_cases": 1287566,
+                "adult_population": 22942146,
                 "population": 30503258
-              },
-              {
-                "state": "FL",
-                "name": "Florida",
-                "region": "South",
-                "prevalence_pct": 7.4,
-                "est_cases": 1683172,
-                "population": 22610726
               },
               {
                 "state": "NY",
                 "name": "New York",
                 "region": "Northeast",
                 "prevalence_pct": 6.1,
-                "est_cases": 1190896,
+                "est_cases": 948642,
+                "adult_population": 15611308,
                 "population": 19571216
               },
               {
@@ -5105,7 +5207,8 @@
                 "name": "Ohio",
                 "region": "Midwest",
                 "prevalence_pct": 7.1,
-                "est_cases": 840690,
+                "est_cases": 657311,
+                "adult_population": 9207681,
                 "population": 11785935
               },
               {
@@ -5113,15 +5216,17 @@
                 "name": "Illinois",
                 "region": "Midwest",
                 "prevalence_pct": 5.9,
-                "est_cases": 736716,
+                "est_cases": 577910,
+                "adult_population": 9844167,
                 "population": 12549689
               },
               {
                 "state": "NC",
                 "name": "North Carolina",
                 "region": "South",
-                "prevalence_pct": 6.5,
-                "est_cases": 708310,
+                "prevalence_pct": 6.6,
+                "est_cases": 557339,
+                "adult_population": 8498868,
                 "population": 10835491
               },
               {
@@ -5129,7 +5234,8 @@
                 "name": "Michigan",
                 "region": "Midwest",
                 "prevalence_pct": 7.0,
-                "est_cases": 702965,
+                "est_cases": 555250,
+                "adult_population": 7925350,
                 "population": 10037261
               },
               {
@@ -5137,7 +5243,8 @@
                 "name": "Georgia",
                 "region": "South",
                 "prevalence_pct": 6.1,
-                "est_cases": 667431,
+                "est_cases": 514595,
+                "adult_population": 8490546,
                 "population": 11029227
               },
               {
@@ -5145,7 +5252,8 @@
                 "name": "Virginia",
                 "region": "South",
                 "prevalence_pct": 6.1,
-                "est_cases": 530565,
+                "est_cases": 417671,
+                "adult_population": 6834154,
                 "population": 8715698
               },
               {
@@ -5153,7 +5261,8 @@
                 "name": "New Jersey",
                 "region": "Northeast",
                 "prevalence_pct": 5.6,
-                "est_cases": 521262,
+                "est_cases": 407986,
+                "adult_population": 7280551,
                 "population": 9290841
               },
               {
@@ -5161,7 +5270,8 @@
                 "name": "Tennessee",
                 "region": "South",
                 "prevalence_pct": 7.0,
-                "est_cases": 496090,
+                "est_cases": 388076,
+                "adult_population": 5555761,
                 "population": 7126489
               },
               {
@@ -5169,7 +5279,8 @@
                 "name": "Arizona",
                 "region": "West",
                 "prevalence_pct": 6.4,
-                "est_cases": 475310,
+                "est_cases": 374980,
+                "adult_population": 5848310,
                 "population": 7431344
               },
               {
@@ -5177,31 +5288,35 @@
                 "name": "Indiana",
                 "region": "Midwest",
                 "prevalence_pct": 6.8,
-                "est_cases": 464071,
+                "est_cases": 357063,
+                "adult_population": 5274945,
                 "population": 6862199
-              },
-              {
-                "state": "MO",
-                "name": "Missouri",
-                "region": "Midwest",
-                "prevalence_pct": 6.8,
-                "est_cases": 422959,
-                "population": 6196156
               },
               {
                 "state": "WA",
                 "name": "Washington",
                 "region": "West",
                 "prevalence_pct": 5.4,
-                "est_cases": 420857,
+                "est_cases": 331648,
+                "adult_population": 6164810,
                 "population": 7812880
+              },
+              {
+                "state": "MO",
+                "name": "Missouri",
+                "region": "Midwest",
+                "prevalence_pct": 6.8,
+                "est_cases": 328979,
+                "adult_population": 4821686,
+                "population": 6196156
               },
               {
                 "state": "MA",
                 "name": "Massachusetts",
                 "region": "Northeast",
                 "prevalence_pct": 5.8,
-                "est_cases": 406294,
+                "est_cases": 328375,
+                "adult_population": 5659598,
                 "population": 7001399
               },
               {
@@ -5209,7 +5324,8 @@
                 "name": "Wisconsin",
                 "region": "Midwest",
                 "prevalence_pct": 6.6,
-                "est_cases": 390216,
+                "est_cases": 307974,
+                "adult_population": 4661826,
                 "population": 5910955
               },
               {
@@ -5217,7 +5333,8 @@
                 "name": "Alabama",
                 "region": "South",
                 "prevalence_pct": 7.3,
-                "est_cases": 373318,
+                "est_cases": 290683,
+                "adult_population": 3977628,
                 "population": 5108468
               },
               {
@@ -5225,7 +5342,8 @@
                 "name": "South Carolina",
                 "region": "South",
                 "prevalence_pct": 6.8,
-                "est_cases": 363558,
+                "est_cases": 286796,
+                "adult_population": 4229354,
                 "population": 5373555
               },
               {
@@ -5233,31 +5351,35 @@
                 "name": "Maryland",
                 "region": "South",
                 "prevalence_pct": 5.8,
-                "est_cases": 359550,
+                "est_cases": 280746,
+                "adult_population": 4818337,
                 "population": 6180253
-              },
-              {
-                "state": "LA",
-                "name": "Louisiana",
-                "region": "South",
-                "prevalence_pct": 7.5,
-                "est_cases": 342296,
-                "population": 4573749
               },
               {
                 "state": "MN",
                 "name": "Minnesota",
                 "region": "Midwest",
                 "prevalence_pct": 5.9,
-                "est_cases": 340214,
+                "est_cases": 263361,
+                "adult_population": 4436981,
                 "population": 5737915
+              },
+              {
+                "state": "LA",
+                "name": "Louisiana",
+                "region": "South",
+                "prevalence_pct": 7.5,
+                "est_cases": 262427,
+                "adult_population": 3506600,
+                "population": 4573749
               },
               {
                 "state": "CO",
                 "name": "Colorado",
                 "region": "West",
                 "prevalence_pct": 5.1,
-                "est_cases": 302115,
+                "est_cases": 239810,
+                "adult_population": 4662926,
                 "population": 5877610
               },
               {
@@ -5265,7 +5387,8 @@
                 "name": "Oklahoma",
                 "region": "South",
                 "prevalence_pct": 7.3,
-                "est_cases": 294501,
+                "est_cases": 224314,
+                "adult_population": 3087217,
                 "population": 4053824
               },
               {
@@ -5273,7 +5396,8 @@
                 "name": "Oregon",
                 "region": "West",
                 "prevalence_pct": 6.5,
-                "est_cases": 274094,
+                "est_cases": 220217,
+                "adult_population": 3401528,
                 "population": 4233358
               },
               {
@@ -5281,7 +5405,8 @@
                 "name": "Arkansas",
                 "region": "South",
                 "prevalence_pct": 7.7,
-                "est_cases": 235471,
+                "est_cases": 181825,
+                "adult_population": 2362124,
                 "population": 3067732
               },
               {
@@ -5289,31 +5414,35 @@
                 "name": "Mississippi",
                 "region": "South",
                 "prevalence_pct": 7.5,
-                "est_cases": 219884,
+                "est_cases": 168981,
+                "adult_population": 2259864,
                 "population": 2939690
-              },
-              {
-                "state": "IA",
-                "name": "Iowa",
-                "region": "Midwest",
-                "prevalence_pct": 6.6,
-                "est_cases": 211193,
-                "population": 3207004
               },
               {
                 "state": "CT",
                 "name": "Connecticut",
                 "region": "Northeast",
                 "prevalence_pct": 5.8,
-                "est_cases": 208550,
+                "est_cases": 167019,
+                "adult_population": 2894190,
                 "population": 3617176
+              },
+              {
+                "state": "IA",
+                "name": "Iowa",
+                "region": "Midwest",
+                "prevalence_pct": 6.6,
+                "est_cases": 163096,
+                "adult_population": 2476882,
+                "population": 3207004
               },
               {
                 "state": "NV",
                 "name": "Nevada",
                 "region": "West",
                 "prevalence_pct": 6.4,
-                "est_cases": 203428,
+                "est_cases": 159951,
+                "adult_population": 2508220,
                 "population": 3194176
               },
               {
@@ -5321,23 +5450,17 @@
                 "name": "Kansas",
                 "region": "Midwest",
                 "prevalence_pct": 6.4,
-                "est_cases": 188828,
+                "est_cases": 144083,
+                "adult_population": 2246209,
                 "population": 2940546
-              },
-              {
-                "state": "UT",
-                "name": "Utah",
-                "region": "West",
-                "prevalence_pct": 4.6,
-                "est_cases": 158638,
-                "population": 3417734
               },
               {
                 "state": "WV",
                 "name": "West Virginia",
                 "region": "South",
                 "prevalence_pct": 8.7,
-                "est_cases": 154563,
+                "est_cases": 123778,
+                "adult_population": 1417859,
                 "population": 1770071
               },
               {
@@ -5345,15 +5468,26 @@
                 "name": "New Mexico",
                 "region": "West",
                 "prevalence_pct": 7.2,
-                "est_cases": 152717,
+                "est_cases": 120192,
+                "adult_population": 1663024,
                 "population": 2114371
+              },
+              {
+                "state": "UT",
+                "name": "Utah",
+                "region": "West",
+                "prevalence_pct": 4.7,
+                "est_cases": 115715,
+                "adult_population": 2484582,
+                "population": 3417734
               },
               {
                 "state": "ID",
                 "name": "Idaho",
                 "region": "West",
                 "prevalence_pct": 6.2,
-                "est_cases": 121938,
+                "est_cases": 93013,
+                "adult_population": 1497384,
                 "population": 1964726
               },
               {
@@ -5361,7 +5495,8 @@
                 "name": "Nebraska",
                 "region": "Midwest",
                 "prevalence_pct": 6.1,
-                "est_cases": 120625,
+                "est_cases": 91404,
+                "adult_population": 1497381,
                 "population": 1978379
               },
               {
@@ -5369,7 +5504,8 @@
                 "name": "Maine",
                 "region": "Northeast",
                 "prevalence_pct": 7.6,
-                "est_cases": 105563,
+                "est_cases": 86722,
+                "adult_population": 1146670,
                 "population": 1395722
               },
               {
@@ -5377,7 +5513,8 @@
                 "name": "Hawaii",
                 "region": "West",
                 "prevalence_pct": 6.2,
-                "est_cases": 89032,
+                "est_cases": 70808,
+                "adult_population": 1141525,
                 "population": 1435138
               },
               {
@@ -5385,7 +5522,8 @@
                 "name": "New Hampshire",
                 "region": "Northeast",
                 "prevalence_pct": 6.0,
-                "est_cases": 84119,
+                "est_cases": 69086,
+                "adult_population": 1150004,
                 "population": 1402054
               },
               {
@@ -5393,15 +5531,17 @@
                 "name": "Montana",
                 "region": "West",
                 "prevalence_pct": 6.6,
-                "est_cases": 74383,
+                "est_cases": 58825,
+                "adult_population": 897161,
                 "population": 1132812
               },
               {
                 "state": "DE",
                 "name": "Delaware",
                 "region": "South",
-                "prevalence_pct": 6.8,
-                "est_cases": 70642,
+                "prevalence_pct": 6.9,
+                "est_cases": 56343,
+                "adult_population": 819952,
                 "population": 1031890
               },
               {
@@ -5409,7 +5549,8 @@
                 "name": "Rhode Island",
                 "region": "Northeast",
                 "prevalence_pct": 6.3,
-                "est_cases": 69038,
+                "est_cases": 56226,
+                "adult_population": 892124,
                 "population": 1095962
               },
               {
@@ -5417,7 +5558,8 @@
                 "name": "South Dakota",
                 "region": "Midwest",
                 "prevalence_pct": 6.8,
-                "est_cases": 62465,
+                "est_cases": 47300,
+                "adult_population": 697420,
                 "population": 919318
               },
               {
@@ -5425,31 +5567,35 @@
                 "name": "North Dakota",
                 "region": "Midwest",
                 "prevalence_pct": 6.1,
-                "est_cases": 47951,
+                "est_cases": 36636,
+                "adult_population": 599192,
                 "population": 783926
-              },
-              {
-                "state": "AK",
-                "name": "Alaska",
-                "region": "West",
-                "prevalence_pct": 5.8,
-                "est_cases": 42245,
-                "population": 733406
               },
               {
                 "state": "VT",
                 "name": "Vermont",
                 "region": "Northeast",
                 "prevalence_pct": 6.3,
-                "est_cases": 40891,
+                "est_cases": 33620,
+                "adult_population": 532828,
                 "population": 647464
+              },
+              {
+                "state": "AK",
+                "name": "Alaska",
+                "region": "West",
+                "prevalence_pct": 5.7,
+                "est_cases": 32019,
+                "adult_population": 557899,
+                "population": 733406
               },
               {
                 "state": "WY",
                 "name": "Wyoming",
                 "region": "West",
                 "prevalence_pct": 6.5,
-                "est_cases": 38073,
+                "est_cases": 29599,
+                "adult_population": 454508,
                 "population": 584057
               },
               {
@@ -5457,11 +5603,12 @@
                 "name": "District of Columbia",
                 "region": "South",
                 "prevalence_pct": 3.8,
-                "est_cases": 25800,
+                "est_cases": 20990,
+                "adult_population": 552380,
                 "population": 678972
               }
             ],
-            "source": "CDC PLACES county data 2023, crude prevalence rolled up to states (population-weighted)",
+            "source": "CDC PLACES county data 2023, adult crude prevalence rolled up to states (weighted by adult population); cases = prevalence x adults 18+",
             "url": "https://www.cdc.gov/places/"
           }
         ],
@@ -5471,8 +5618,8 @@
           "FL": 22610726,
           "NY": 19571216,
           "OH": 11785935,
-          "GA": 11029227,
           "IL": 12549689,
+          "GA": 11029227,
           "NC": 10835491,
           "MI": 10037261,
           "VA": 8715698,
@@ -5481,16 +5628,16 @@
           "IN": 6862199,
           "AZ": 7431344,
           "MD": 6180253,
-          "AL": 5108468,
-          "MO": 6196156,
           "SC": 5373555,
+          "AL": 5108468,
           "WA": 7812880,
-          "LA": 4573749,
+          "MO": 6196156,
           "MA": 7001399,
+          "LA": 4573749,
           "WI": 5910955,
           "MN": 5737915,
-          "OK": 4053824,
           "CO": 5877610,
+          "OK": 4053824,
           "OR": 4233358,
           "MS": 2939690,
           "AR": 3067732,
@@ -5498,15 +5645,15 @@
           "CT": 3617176,
           "IA": 3207004,
           "KS": 2940546,
-          "UT": 3417734,
           "WV": 1770071,
           "NM": 2114371,
+          "UT": 3417734,
           "NE": 1978379,
           "ID": 1964726,
           "HI": 1435138,
           "ME": 1395722,
-          "DE": 1031890,
           "NH": 1402054,
+          "DE": 1031890,
           "RI": 1095962,
           "MT": 1132812,
           "SD": 919318,
@@ -7598,7 +7745,8 @@
                 "name": "California",
                 "region": "West",
                 "prevalence_pct": 6.4,
-                "est_cases": 2493259,
+                "est_cases": 1956473,
+                "adult_population": 30519524,
                 "population": 38965193
               },
               {
@@ -7606,15 +7754,17 @@
                 "name": "Florida",
                 "region": "South",
                 "prevalence_pct": 9.1,
-                "est_cases": 2047372,
+                "est_cases": 1661461,
+                "adult_population": 18229883,
                 "population": 22610726
               },
               {
                 "state": "TX",
                 "name": "Texas",
                 "region": "South",
-                "prevalence_pct": 6.0,
-                "est_cases": 1842947,
+                "prevalence_pct": 6.1,
+                "est_cases": 1390489,
+                "adult_population": 22942146,
                 "population": 30503258
               },
               {
@@ -7622,7 +7772,8 @@
                 "name": "New York",
                 "region": "Northeast",
                 "prevalence_pct": 7.7,
-                "est_cases": 1508383,
+                "est_cases": 1204872,
+                "adult_population": 15611308,
                 "population": 19571216
               },
               {
@@ -7630,7 +7781,8 @@
                 "name": "Ohio",
                 "region": "Midwest",
                 "prevalence_pct": 8.7,
-                "est_cases": 1030310,
+                "est_cases": 805467,
+                "adult_population": 9207681,
                 "population": 11785935
               },
               {
@@ -7638,7 +7790,8 @@
                 "name": "Illinois",
                 "region": "Midwest",
                 "prevalence_pct": 7.6,
-                "est_cases": 950059,
+                "est_cases": 744832,
+                "adult_population": 9844167,
                 "population": 12549689
               },
               {
@@ -7646,7 +7799,8 @@
                 "name": "Michigan",
                 "region": "Midwest",
                 "prevalence_pct": 8.9,
-                "est_cases": 895568,
+                "est_cases": 708376,
+                "adult_population": 7925350,
                 "population": 10037261
               },
               {
@@ -7654,7 +7808,8 @@
                 "name": "North Carolina",
                 "region": "South",
                 "prevalence_pct": 7.9,
-                "est_cases": 853840,
+                "est_cases": 672677,
+                "adult_population": 8498868,
                 "population": 10835491
               },
               {
@@ -7662,7 +7817,8 @@
                 "name": "Georgia",
                 "region": "South",
                 "prevalence_pct": 7.0,
-                "est_cases": 772337,
+                "est_cases": 595770,
+                "adult_population": 8490546,
                 "population": 11029227
               },
               {
@@ -7670,7 +7826,8 @@
                 "name": "New Jersey",
                 "region": "Northeast",
                 "prevalence_pct": 7.5,
-                "est_cases": 692463,
+                "est_cases": 542699,
+                "adult_population": 7280551,
                 "population": 9290841
               },
               {
@@ -7678,7 +7835,8 @@
                 "name": "Virginia",
                 "region": "South",
                 "prevalence_pct": 7.7,
-                "est_cases": 668572,
+                "est_cases": 525673,
+                "adult_population": 6834154,
                 "population": 8715698
               },
               {
@@ -7686,7 +7844,8 @@
                 "name": "Arizona",
                 "region": "West",
                 "prevalence_pct": 8.8,
-                "est_cases": 653089,
+                "est_cases": 515456,
+                "adult_population": 5848310,
                 "population": 7431344
               },
               {
@@ -7694,7 +7853,8 @@
                 "name": "Washington",
                 "region": "West",
                 "prevalence_pct": 7.9,
-                "est_cases": 617623,
+                "est_cases": 488195,
+                "adult_population": 6164810,
                 "population": 7812880
               },
               {
@@ -7702,7 +7862,8 @@
                 "name": "Massachusetts",
                 "region": "Northeast",
                 "prevalence_pct": 8.5,
-                "est_cases": 597649,
+                "est_cases": 483015,
+                "adult_population": 5659598,
                 "population": 7001399
               },
               {
@@ -7710,7 +7871,8 @@
                 "name": "Tennessee",
                 "region": "South",
                 "prevalence_pct": 8.2,
-                "est_cases": 585527,
+                "est_cases": 457956,
+                "adult_population": 5555761,
                 "population": 7126489
               },
               {
@@ -7718,7 +7880,8 @@
                 "name": "Indiana",
                 "region": "Midwest",
                 "prevalence_pct": 8.3,
-                "est_cases": 566282,
+                "est_cases": 435656,
+                "adult_population": 5274945,
                 "population": 6862199
               },
               {
@@ -7726,7 +7889,8 @@
                 "name": "Missouri",
                 "region": "Midwest",
                 "prevalence_pct": 8.6,
-                "est_cases": 531658,
+                "est_cases": 413570,
+                "adult_population": 4821686,
                 "population": 6196156
               },
               {
@@ -7734,7 +7898,8 @@
                 "name": "Wisconsin",
                 "region": "Midwest",
                 "prevalence_pct": 8.6,
-                "est_cases": 505527,
+                "est_cases": 399420,
+                "adult_population": 4661826,
                 "population": 5910955
               },
               {
@@ -7742,7 +7907,8 @@
                 "name": "Minnesota",
                 "region": "Midwest",
                 "prevalence_pct": 8.5,
-                "est_cases": 486091,
+                "est_cases": 376102,
+                "adult_population": 4436981,
                 "population": 5737915
               },
               {
@@ -7750,31 +7916,35 @@
                 "name": "Maryland",
                 "region": "South",
                 "prevalence_pct": 7.6,
-                "est_cases": 470712,
+                "est_cases": 367131,
+                "adult_population": 4818337,
                 "population": 6180253
-              },
-              {
-                "state": "SC",
-                "name": "South Carolina",
-                "region": "South",
-                "prevalence_pct": 8.5,
-                "est_cases": 459425,
-                "population": 5373555
               },
               {
                 "state": "CO",
                 "name": "Colorado",
                 "region": "West",
                 "prevalence_pct": 7.8,
-                "est_cases": 457665,
+                "est_cases": 363770,
+                "adult_population": 4662926,
                 "population": 5877610
+              },
+              {
+                "state": "SC",
+                "name": "South Carolina",
+                "region": "South",
+                "prevalence_pct": 8.6,
+                "est_cases": 362690,
+                "adult_population": 4229354,
+                "population": 5373555
               },
               {
                 "state": "AL",
                 "name": "Alabama",
                 "region": "South",
                 "prevalence_pct": 8.2,
-                "est_cases": 418799,
+                "est_cases": 326187,
+                "adult_population": 3977628,
                 "population": 5108468
               },
               {
@@ -7782,7 +7952,8 @@
                 "name": "Oregon",
                 "region": "West",
                 "prevalence_pct": 8.9,
-                "est_cases": 376412,
+                "est_cases": 302616,
+                "adult_population": 3401528,
                 "population": 4233358
               },
               {
@@ -7790,31 +7961,35 @@
                 "name": "Louisiana",
                 "region": "South",
                 "prevalence_pct": 7.5,
-                "est_cases": 343104,
+                "est_cases": 262847,
+                "adult_population": 3506600,
                 "population": 4573749
-              },
-              {
-                "state": "OK",
-                "name": "Oklahoma",
-                "region": "South",
-                "prevalence_pct": 7.8,
-                "est_cases": 315212,
-                "population": 4053824
               },
               {
                 "state": "CT",
                 "name": "Connecticut",
                 "region": "Northeast",
                 "prevalence_pct": 8.5,
-                "est_cases": 307129,
+                "est_cases": 245963,
+                "adult_population": 2894190,
                 "population": 3617176
+              },
+              {
+                "state": "OK",
+                "name": "Oklahoma",
+                "region": "South",
+                "prevalence_pct": 7.8,
+                "est_cases": 240198,
+                "adult_population": 3087217,
+                "population": 4053824
               },
               {
                 "state": "IA",
                 "name": "Iowa",
                 "region": "Midwest",
                 "prevalence_pct": 8.7,
-                "est_cases": 280331,
+                "est_cases": 216505,
+                "adult_population": 2476882,
                 "population": 3207004
               },
               {
@@ -7822,39 +7997,44 @@
                 "name": "Arkansas",
                 "region": "South",
                 "prevalence_pct": 8.2,
-                "est_cases": 251465,
+                "est_cases": 194042,
+                "adult_population": 2362124,
                 "population": 3067732
-              },
-              {
-                "state": "UT",
-                "name": "Utah",
-                "region": "West",
-                "prevalence_pct": 7.2,
-                "est_cases": 244986,
-                "population": 3417734
-              },
-              {
-                "state": "KS",
-                "name": "Kansas",
-                "region": "Midwest",
-                "prevalence_pct": 8.1,
-                "est_cases": 238756,
-                "population": 2940546
               },
               {
                 "state": "NV",
                 "name": "Nevada",
                 "region": "West",
                 "prevalence_pct": 7.4,
-                "est_cases": 235286,
+                "est_cases": 185202,
+                "adult_population": 2508220,
                 "population": 3194176
+              },
+              {
+                "state": "KS",
+                "name": "Kansas",
+                "region": "Midwest",
+                "prevalence_pct": 8.1,
+                "est_cases": 182586,
+                "adult_population": 2246209,
+                "population": 2940546
+              },
+              {
+                "state": "UT",
+                "name": "Utah",
+                "region": "West",
+                "prevalence_pct": 7.2,
+                "est_cases": 178642,
+                "adult_population": 2484582,
+                "population": 3417734
               },
               {
                 "state": "MS",
                 "name": "Mississippi",
                 "region": "South",
                 "prevalence_pct": 7.6,
-                "est_cases": 223241,
+                "est_cases": 171648,
+                "adult_population": 2259864,
                 "population": 2939690
               },
               {
@@ -7862,31 +8042,35 @@
                 "name": "West Virginia",
                 "region": "South",
                 "prevalence_pct": 9.6,
-                "est_cases": 169670,
+                "est_cases": 135885,
+                "adult_population": 1417859,
                 "population": 1770071
-              },
-              {
-                "state": "NE",
-                "name": "Nebraska",
-                "region": "Midwest",
-                "prevalence_pct": 8.3,
-                "est_cases": 163217,
-                "population": 1978379
               },
               {
                 "state": "ID",
                 "name": "Idaho",
                 "region": "West",
                 "prevalence_pct": 8.3,
-                "est_cases": 162445,
+                "est_cases": 124138,
+                "adult_population": 1497384,
                 "population": 1964726
+              },
+              {
+                "state": "NE",
+                "name": "Nebraska",
+                "region": "Midwest",
+                "prevalence_pct": 8.3,
+                "est_cases": 123718,
+                "adult_population": 1497381,
+                "population": 1978379
               },
               {
                 "state": "NM",
                 "name": "New Mexico",
                 "region": "West",
                 "prevalence_pct": 7.4,
-                "est_cases": 155458,
+                "est_cases": 122906,
+                "adult_population": 1663024,
                 "population": 2114371
               },
               {
@@ -7894,7 +8078,8 @@
                 "name": "Maine",
                 "region": "Northeast",
                 "prevalence_pct": 9.9,
-                "est_cases": 138734,
+                "est_cases": 114045,
+                "adult_population": 1146670,
                 "population": 1395722
               },
               {
@@ -7902,7 +8087,8 @@
                 "name": "New Hampshire",
                 "region": "Northeast",
                 "prevalence_pct": 9.8,
-                "est_cases": 137227,
+                "est_cases": 112673,
+                "adult_population": 1150004,
                 "population": 1402054
               },
               {
@@ -7910,7 +8096,8 @@
                 "name": "Montana",
                 "region": "West",
                 "prevalence_pct": 9.3,
-                "est_cases": 105264,
+                "est_cases": 83467,
+                "adult_population": 897161,
                 "population": 1132812
               },
               {
@@ -7918,31 +8105,35 @@
                 "name": "Hawaii",
                 "region": "West",
                 "prevalence_pct": 6.7,
-                "est_cases": 96086,
+                "est_cases": 76412,
+                "adult_population": 1141525,
                 "population": 1435138
+              },
+              {
+                "state": "RI",
+                "name": "Rhode Island",
+                "region": "Northeast",
+                "prevalence_pct": 8.4,
+                "est_cases": 74677,
+                "adult_population": 892124,
+                "population": 1095962
               },
               {
                 "state": "DE",
                 "name": "Delaware",
                 "region": "South",
                 "prevalence_pct": 9.1,
-                "est_cases": 93638,
+                "est_cases": 74662,
+                "adult_population": 819952,
                 "population": 1031890
-              },
-              {
-                "state": "RI",
-                "name": "Rhode Island",
-                "region": "Northeast",
-                "prevalence_pct": 8.3,
-                "est_cases": 91387,
-                "population": 1095962
               },
               {
                 "state": "SD",
                 "name": "South Dakota",
                 "region": "Midwest",
-                "prevalence_pct": 9.1,
-                "est_cases": 83909,
+                "prevalence_pct": 9.2,
+                "est_cases": 63912,
+                "adult_population": 697420,
                 "population": 919318
               },
               {
@@ -7950,15 +8141,17 @@
                 "name": "Vermont",
                 "region": "Northeast",
                 "prevalence_pct": 9.9,
-                "est_cases": 64002,
+                "est_cases": 52667,
+                "adult_population": 532828,
                 "population": 647464
               },
               {
                 "state": "ND",
                 "name": "North Dakota",
                 "region": "Midwest",
-                "prevalence_pct": 8.1,
-                "est_cases": 63808,
+                "prevalence_pct": 8.2,
+                "est_cases": 48871,
+                "adult_population": 599192,
                 "population": 783926
               },
               {
@@ -7966,7 +8159,8 @@
                 "name": "Wyoming",
                 "region": "West",
                 "prevalence_pct": 8.9,
-                "est_cases": 52090,
+                "est_cases": 40522,
+                "adult_population": 454508,
                 "population": 584057
               },
               {
@@ -7974,7 +8168,8 @@
                 "name": "Alaska",
                 "region": "West",
                 "prevalence_pct": 7.0,
-                "est_cases": 51069,
+                "est_cases": 38959,
+                "adult_population": 557899,
                 "population": 733406
               },
               {
@@ -7982,11 +8177,12 @@
                 "name": "District of Columbia",
                 "region": "South",
                 "prevalence_pct": 5.6,
-                "est_cases": 38022,
+                "est_cases": 30933,
+                "adult_population": 552380,
                 "population": 678972
               }
             ],
-            "source": "CDC PLACES county data 2023, crude prevalence rolled up to states (population-weighted)",
+            "source": "CDC PLACES county data 2023, adult crude prevalence rolled up to states (weighted by adult population); cases = prevalence x adults 18+",
             "url": "https://www.cdc.gov/places/"
           }
         ],
@@ -8011,29 +8207,29 @@
           "WI": 5910955,
           "MN": 5737915,
           "MD": 6180253,
-          "SC": 5373555,
           "CO": 5877610,
+          "SC": 5373555,
           "AL": 5108468,
           "OR": 4233358,
           "LA": 4573749,
-          "OK": 4053824,
           "CT": 3617176,
+          "OK": 4053824,
           "IA": 3207004,
           "AR": 3067732,
-          "UT": 3417734,
-          "KS": 2940546,
           "NV": 3194176,
+          "KS": 2940546,
+          "UT": 3417734,
           "MS": 2939690,
           "WV": 1770071,
-          "NE": 1978379,
           "ID": 1964726,
+          "NE": 1978379,
           "NM": 2114371,
           "ME": 1395722,
           "NH": 1402054,
           "MT": 1132812,
           "HI": 1435138,
-          "DE": 1031890,
           "RI": 1095962,
+          "DE": 1031890,
           "SD": 919318,
           "VT": 647464,
           "ND": 783926,

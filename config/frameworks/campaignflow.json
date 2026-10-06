@@ -1,0 +1,109 @@
+{
+  "id": "campaignflow_30min_v2",
+  "name": "CampaignFlow 30-Minute Planning Framework",
+  "source": "CampaignFlow_30_Minute_Planning_Framework_v2 (Omni OS). Internal planning synthesis, not medical, legal, regulatory or promotional approval.",
+  "principle": "Six steps from the brand plan to build-ready activation. Each step answers one question, consumes the APPROVED output before it, and hands a concrete artefact to the next. If a step cannot be filled, go back to the owner of the missing decision. Gaps become questions, never inventions.",
+  "from_brand_plan": ["Eligible brand audience (specialties and roles: primary prescriber vs adjacent pathway)", "Campaign objective (why)", "Strategic imperatives", "KPIs and targets", "Medical and compliance guardrails", "Therapy area and market"],
+  "not_from_brand_plan": ["Campaign start and end dates", "Segment sizes against the live target list", "Channel-level budget", "Consent coverage", "Content approval status", "Cadence and frequency", "Digital affinity, movability and final channel mix"],
+  "vocabulary": [
+    ["Customer engagement plan", "Executable HCP journey", "The journey is one part of the engagement plan."],
+    ["Campaign objective", "Objective, goal", "Keeps it separate from the brand objective."],
+    ["Target audience", "Universe, population", "What the field and CRM teams call it."],
+    ["Segment", "Bucket, cluster, cohort", "Existing: lifecycle stages. Launch: Primary / Secondary / Tertiary."],
+    ["Strategic priority", "Investment priority", "What the brand wants for a lifecycle state (Activate / Grow / Retain / Support / Reactivate / Enable)."],
+    ["Investment priority", "Tier codes", "How much to invest: High / Standard / Low, from step 02."],
+    ["Digital affinity", "Reachability, movability", "Scored in step 03 to weight digital-led vs field-led mix."],
+    ["Movability", "Strategic priority", "Scored in step 04; adjusts journey intensity and cadence only."],
+    ["Entry / exit criteria", "Entry state, exit state", "Exit is meaningful only, not silence."],
+    ["Next journey", "Drop off", "Where the HCP goes after a valid exit."],
+    ["Omnichannel Plan / Orchestration Specification", "Platform configuration", "The approved business-rule layer."],
+    ["Campaign brief", "Executable journey", "The build-ready Campaign Operations handoff; references rule IDs."]
+  ],
+  "steps": [
+    {
+      "n": 1, "id": "objective", "name": "Campaign objective card", "minutes": 6, "owner": "Brand and omnichannel planning",
+      "question": "What must this campaign achieve, for whom, and under which brand strategy and guardrails?",
+      "reads": "The brand plan: therapy area, market, brand objective, target audience, strategic imperatives, KPIs and targets, medical and compliance guardrails.",
+      "decides": ["Audience prioritization: who to influence, from brand eligibility and therapy-area opportunity", "Behavioural ambition: what change to drive", "Strategic imperative: why the campaign matters", "Success alignment: inherit the brand plan's KPIs"],
+      "produces": "One seven-field card: campaign objective, target audience (primary prescriber and adjacent pathway), current behaviour, desired behaviour, strategic imperative, messaging & guardrails, channel priorities. Everything quoted or synthesized from the brand plan; anything missing raised as a question.",
+      "rules": ["Use the brand's own words, not generic phrasing.", "Activate / Grow / Retain / Support / Reactivate are strategic priorities, not segment names.", "Capture primary prescribers AND adjacent pathway roles; step 02 builds separate universes from this field.", "Channel priorities here are high-level brand priorities only; the final mix is decided in step 03.", "Campaign start dates are set in the engagement plan, not the brand plan: allow MLR clearance (e.g. 45 days) after approval."]
+    },
+    {
+      "n": 2, "id": "audience", "name": "Target audience segmentation", "minutes": 8, "owner": "Omnichannel planning with Business Insights",
+      "question": "Who is in scope, how are they segmented, and who gets greater campaign focus?",
+      "reads": "The approved objective card; HCP and market data (existing brands) or IQVIA (launch brands); consent and eligibility.",
+      "modes": {
+        "existing": {
+          "decisions": ["Target universe: eligible HCPs; primary prescriber universe vs separate adjacent pathway universe (an HCP in both is primary)", "Lifecycle segmentation by prescribing + engagement: Awareness, Trialist, Adopter, Advocate, Stopper (one HCP, one segment)", "Strategic priority mapped from the brand plan to the lifecycle segment", "Prioritization: brand opportunity x HCP reachability -> matrix position -> investment priority (High / Standard / Low) and desired progression"],
+          "lifecycle": [
+            {"segment": "Awareness", "definition": "No brand prescriptions yet; eligible HCP with potential to adopt.", "strategic_priority": "Activate", "progression": "Awareness -> Trialist"},
+            {"segment": "Trialist", "definition": "Early brand experience; initial Rx or sample, no sustained adoption.", "strategic_priority": "Grow", "progression": "Trialist -> Adopter"},
+            {"segment": "Adopter", "definition": "Consistent brand prescribing; sustained Rx behaviour.", "strategic_priority": "Retain", "progression": "Adopter -> Advocate"},
+            {"segment": "Advocate", "definition": "Sustained adoption with demonstrated engagement and advocacy.", "strategic_priority": "Support", "progression": "Retain / sustain"},
+            {"segment": "Stopper", "definition": "Previously prescribed; no recent Rx.", "strategic_priority": "Reactivate", "progression": "Stopper -> Trialist"}
+          ],
+          "adjacent": "Adjacent pathway roles are a separate universe with strategic priority Enable, scored on pathway influence signals (referrals, tests, protocols), with pathway KPIs, not brand Rx.",
+          "scoring": {
+            "brand_opportunity": "High: high prescribing potential and adoption opportunity. Medium: moderate. Low: limited potential or established adoption. Signals: Rx potential, brand share, adoption opportunity, patient opportunity.",
+            "hcp_reachability": "High: multiple viable routes. Medium: one viable route. Low: limited reachable routes. Signals: consent, rep access, digital access, engagement history."
+          }
+        },
+        "launch": {
+          "decisions": ["Eligibility gates (IQVIA): specialty, therapy-area relevance, geography, relevant category/class prescribing. Fail any gate -> out of universe.", "Opportunity segmentation: Primary (01, initial launch investment), Secondary (02, subsequent expansion), Tertiary (03, broader coverage, lighter intensity). Segment = launch priority."],
+          "rule": "IQVIA only. Do not infer engagement history, digital affinity, reachability, lifecycle stage or journey state. Journey design waits for engagement or brand-response data."
+        }
+      },
+      "rules": ["Eligibility, consent, identity and compliance are gates before scoring: no consent -> suppress / consent acquisition; no reachable consented channel -> hold / suppress.", "Only brand opportunity and HCP reachability determine the matrix position; the matrix does not create strategic priority.", "Scoring cut-offs are business-owned and market-specific: do not invent thresholds.", "Digital affinity is scored in step 03; movability in step 04."],
+      "produces": "Existing: lifecycle segment, strategic priority, matrix position, investment priority, desired progression (plus adjacent universe with Enable). Launch: eligibility status, launch segment, launch priority, supporting IQVIA attributes."
+    },
+    {
+      "n": 3, "id": "channels", "name": "Channel planning", "minutes": 6, "owner": "Omnichannel planning with Marketing Operations",
+      "question": "For this audience and desired progression, which channels deliver the approved message?",
+      "reads": "Segmented target list (lifecycle, strategic priority, desired progression, investment priority), approved message modules, brand channel priorities (candidates, not the final mix).",
+      "engagement_needs": [["Awareness -> Trialist", "Discovery, education, initial interest"], ["Trialist -> Adopter", "Education, barrier removal, conversion"], ["Adopter -> Advocate", "Confidence, evidence, advocacy"], ["Stopper -> Trialist", "Re-engagement, barrier identification, recovery"], ["Retain / sustain", "Reinforcement, ongoing support"]],
+      "checks": ["01 Message fit: can the channel deliver the approved message for this movement? Remove channels with no relevant message role.", "02 HCP engagement: how does this HCP engage across channels? Weight the mix to observed engagement.", "03 Consent & access: can we legally and operationally reach this HCP on this channel? Remove channels blocked by consent, market rules or missing access.", "04 Execution feasibility: can it be activated within operational constraints? Remove or adjust on capacity and coordination."],
+      "investment_intensity": {"High": "Coordinated field + digital where eligible.", "Standard": "Digital-first; field on signal or high value.", "Low": "Single low-cost channel; signal-triggered only."},
+      "digital_affinity": "High: digital-led mix (email, webinar, portal lead). Medium: balanced digital and field. Low: field- or event-weighted for the same strategic priority.",
+      "channel_jobs": [["Email HOE", "Nurture, scaled education"], ["Email VAE", "Nudge, rep-triggered contextual follow-up"], ["Field Call", "Conversion, barrier removal, dialogue"], ["Website / Portal", "Depth, conversion destination (CTA destination, not counted in live mix)"], ["Webinar / Virtual", "Evidence, education at scale"], ["HCP Media", "Reach, discovery"], ["Congress / Peer-to-peer", "Peer credibility, evidence, advocacy"], ["MSL Exchange", "Non-promotional scientific engagement"]],
+      "rules": ["Progression defines the engagement need; channel planning decides how to deliver it.", "Hard constraints are gates; they cannot be offset by opportunity or reachability. No approved module -> no channel.", "Live mix: 2 channels by default, 3 maximum per audience x progression.", "Email HOE and Email VAE are separate channels (different consent, owners, costs, roles). Never write just 'email'."],
+      "produces": "Channel plan: selected channels x message modules per audience x progression (2 default, 3 max); execution constraints (frequency, coordination, suppression); gap register (missing consent, content or channel access)."
+    },
+    {
+      "n": 4, "id": "journeys", "name": "Journey design", "minutes": 8, "owner": "MSDM and campaign operations",
+      "question": "How do we engage: signal -> next-best tactic -> wait / hold -> next interaction -> progression?",
+      "reads": "Channel plan and execution constraints from step 03; segmented target list (desired progression, priorities); approved content modules and CTAs; consent records; engagement history.",
+      "journey_types": [
+        {"type": "Welcome", "who": "New / newly eligible HCP", "orchestrates": "First education sequence (e.g. MOA -> Efficacy -> Dosing), 7-day waits; no signal -> hold 14 days, alternate content/channel, rep follow-up", "next": "The next approved journey"},
+        {"type": "Nurture", "who": "Newly enrolled CRM / web registrant", "orchestrates": "Timed core sequence with survey and content checks; a qualifying survey opens a two-step invitation and automated follow-up without stopping the core", "next": "Story Follow-up, or remain in Nurture"},
+        {"type": "Story Follow-up", "who": "Completed webform or positive survey", "orchestrates": "Automated follow-up, open/complete checks, one reminder after 7 days, then human review and pursue / close", "next": "Manual follow-up or meaningful exit"},
+        {"type": "Awareness", "who": "Eligible audience not yet awareness-qualified", "orchestrates": "Lead email, 7-day no-open retry, 21-day no-open field suggestion, rep-triggered email and landing page writing to the CDP; awareness assigned only on an approved evidence rule", "next": "The next approved journey"}
+      ],
+      "plays": [["Initiate", "First live tactic after entry"], ["Reinforce", "Follow-up after a high-intent signal (click, download, site depth)"], ["Escalate", "Alternate route after a wait with no signal; HCP stays in the journey"], ["Exit / handoff", "Opt out, fatigue hold, journey complete, next-journey handoff"]],
+      "branches": [["Access seeker", "Access CTA click + access-tool site action", "Move to access-support / Education path; suppress generic module only"], ["Non-engager (intensity)", "Five touchpoints / 180 days with no interaction", "Lower-intensity re-engagement / evergreen path; still in the universe"], ["Cross-channel entry", "Rep visit logged or congress scan during a digital journey", "Pause or branch per field coordination; store entry source"], ["Progression signal", "Rx movement or segment reclassification", "Exit current journey; enter Retention, Advocacy or Reactivation"]],
+      "movability": "High: standard cadence, full progression path. Medium: moderated cadence or narrower tactic set. Low (structural barrier): lighter touch or access-support module. Strategic priority unchanged.",
+      "rules": ["Non-engagement is not exit: no open / no click -> wait, retry or another approved channel.", "Exit is meaningful only: sequence complete, next-journey handoff, opt-out, policy inactivity. Completing one journey exits that journey only.", "Opt-out (by the HCP, a consent action) and exit criteria (set by us) are separate fields.", "Step 04 sequences the approved channel plan; it does not re-select channels.", "Wait periods are configurable; example timings are templates (mark them CONFIGURABLE).", "Field coordination: e.g. pause overlapping email 72 hours around a logged rep visit.", "Non-engager policy: 180-day look-back; five touchpoints with no interaction -> lower intensity; a second quiet cycle -> deliberate policy exit.", "Build Welcome first; add other journeys only when their survey, content, identity, consent and field signals are trusted."],
+      "produces": "Customer engagement plan: journey catalog (entry, orchestration, exit, next journey), tactic catalog (segment, channel, content, CTA, wait/hold, signal, fatigue, next tactic), journey sequences, branch catalog, journey-rule requirements for step 05, measurement (progression, CTA completion, handoffs, not opens alone), gap register."
+    },
+    {
+      "n": 5, "id": "omnichannel", "name": "Omnichannel planning", "minutes": 7, "owner": "Brand Manager + Campaign Orchestrator / Omnichannel lead",
+      "question": "What IF/THEN rules govern signal -> tactic -> wait -> next interaction across the approved channels?",
+      "reads": "Approved customer engagement plan; channel plan and content modules; segmented list and progression; consent, contact, Medical and PV policies; CRM / CDP / SFMC capability constraints.",
+      "decides": [["Signal meaning", "Meaningful engagement, weak evidence, bot/fake open, no-response, access need, progression", "Event and evidence dictionary"], ["Tactic vs touchpoint", "Tactic = intended action; touchpoint = what the HCP experiences", "Tactic-to-touchpoint map"], ["Channel sequencing", "Which channel starts, follows a signal, covers no response", "Channel sequence"], ["Response branch", "Which signal advances, holds, changes module, triggers field, moves journey", "IF/THEN branch rule"], ["Non-response", "Wait, retry, reduce intensity, other approved channel; silence alone does not exit", "Wait / fatigue rule"], ["Reclassification", "Which qualified evidence changes state or hands off", "Transition rule"], ["Suppression / collision", "Consent, cap, quiet-hour, field/event, content-expiry, portfolio controls", "Hard policy rule"], ["Safe outcome", "When no action is eligible or confidence is insufficient", "WAIT / NO_ACTION / suppress / human review"]],
+      "rules": ["Business rules, not platform build: no SFMC / CRM / CDP configuration, QA records, budget/KPI baselines or MLR approval.", "Rules before ranking: eligibility, consent, caps, content status, market/indication, suppression and MI/PV routing are hard gates, never traded for predicted engagement.", "Single rule source: stable rule IDs here; step 06 references them.", "Blocking gaps return upstream to steps 01-04."],
+      "approvals": "Brand Manager + Omnichannel / Campaign Orchestrator approve business fidelity; Journey Design Authority and policy owners approve rule boundaries.",
+      "produces": "Omnichannel Plan / Orchestration Specification: event dictionary, per-channel business-rule catalog with rule IDs, approved journey/action/content/channel links, policy controls and safe outcomes."
+    },
+    {
+      "n": 6, "id": "brief", "name": "Campaign brief", "minutes": 6, "owner": "Campaign Orchestrator / Campaign Operations with Data and Compliance",
+      "question": "What must Campaign Operations configure, test, approve and release so the planned journeys work exactly as intended?",
+      "reads": "Approved Omnichannel Plan; frozen step 01-04 sources; audience/data source and event availability; content approval, consent and policy metadata; platform constraints.",
+      "actions": ["Freeze approved sources, versions, owners", "Package rules by ID (journey, tactic, content)", "Bind implementation (data, events, platform)", "Test (QA / UAT expected results, sign-off)", "Release (approve, go-live, rollback)"],
+      "sections": [["Executive summary", "Campaign objective, target audience, strategic priority, desired progression, scope and valid window", "Brand / Engagement"], ["Audience & eligibility", "Target list/version, inclusion/exclusion, lifecycle or launch segment, consent purpose, suppression sources", "Business Insights + Privacy"], ["Journey & tactics", "Approved journey, tactic and rule IDs plus platform fields to implement them", "Campaign Operations; Omnichannel validates"], ["Content & channels", "Approved asset/module/version and channel IDs, language, market, expiry, delivery mapping", "Content/MLR + Campaign Operations"], ["Orchestration-rule references", "Read-only step 05 rule IDs for IF/THEN, caps, collision, fatigue, suppression, MI/PV, safe fallback", "Omnichannel/policy owners approve; Operations implements"], ["Data & signals", "Source fields, event definitions, identity matching, timestamps, quality flags, refresh/latency", "Data / CDP"], ["Measurement", "Decision exposure, progression, CTA/outcome, guardrails, experiment/control, reporting windows", "Analytics"], ["QA / UAT & release", "Test scenarios, expected results, approvers, defects, go/no-go, activation, rollback", "Campaign Operations + QA"], ["Decision configuration", "Optional machine-readable action/journey/policy catalog", "Data/AI + Technology"]],
+      "qa_scenarios": [["Consent withdrawn immediately before send", "Final gate blocks execution"], ["Asset expires after recommendation", "Block or select an approved fallback"], ["One weak open only", "No forced high-intent progression"], ["Repeated non-response", "Wait / lower intensity / alternate channel; HCP remains in target audience"], ["Rep visit collides with digital tactic", "Pause or reschedule under field-coordination policy"], ["All candidate actions blocked", "NO_ACTION with rule reasons"], ["Potential medical / off-label question", "Promotional path pauses; route to Medical Information"], ["Potential AE / product complaint", "Immediate PV / Quality route"], ["Duplicate or late event", "No duplicate action; preserve event-time ordering"]],
+      "definition_of_done": ["Business-ready: audience, purpose, content, channels, journey logic, measures and owners in business language", "Build-ready: every trigger, wait, branch, suppression, exit, data field and expected result explicit enough to configure and test", "Decision-ready: if agentic NBA is used, the permitted action/content/channel space and NO_ACTION behaviour are machine-readable and versioned", "Release-ready: QA/UAT passes, approvals attached, monitoring active, rollback prepared"],
+      "rules": ["Package, do not re-decide: a missing business rule returns to step 05.", "Hard gates remove an action; they are never soft score penalties.", "Explicit preference wins over predicted digital affinity.", "Final recheck of consent, suppression, cap and asset expiry immediately before execution."],
+      "produces": "Campaign Brief: the nine sections, rule-ID build mapping per journey, QA/UAT scenarios with expected results, approvals and release/rollback, definition of done."
+    }
+  ],
+  "open_items": [["Segment counts against a live target list", "Needs a real target list and data refresh", "Business Insights"], ["Consent coverage by channel", "Channel roles need known opt-in", "Marketing Operations"], ["Content inventory against tactics", "Modules may not exist or may be in MLR", "Content and MLR operations"], ["Look-back windows (180 days engagement, 4 weeks prescribing)", "Each brand confirms its own", "Brand team with planning"]]
+}

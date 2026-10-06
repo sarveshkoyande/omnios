@@ -20,6 +20,7 @@ from __future__ import annotations
 import datetime
 import functools
 import json
+import os
 import pathlib
 import sys
 
@@ -63,9 +64,26 @@ def _read_kits(path) -> dict:
         return {}
 
 
+def _overlay_path():
+    """Kit edits made on a deployed server (Brand IQ Agent, Big Idea, public-source refreshes, restores).
+    The committed config/brand_kits.json is replaced on every deploy, so on a server these edits live
+    under DATA_DIR (the persistent volume) as field-level changes laid over the committed kit."""
+    from paths import data_path
+    return data_path("brand_kits_overlay.json")
+
+
+def _use_overlay() -> bool:
+    """Write kit edits to the overlay on a deployed server (Railway sets RAILWAY_* variables, or set
+    OMNI_KIT_OVERLAY=1). Locally they keep going into config/brand_kits.json so they can be committed."""
+    flag = os.environ.get("OMNI_KIT_OVERLAY", "").strip().lower()
+    if flag in ("0", "false", "no"):
+        return False
+    return flag in ("1", "true", "yes") or any(k.startswith("RAILWAY_") for k in os.environ)
+
+
 def _mtimes() -> tuple:
     out = []
-    for path in (KITS_JSON, _local_kits_path()):
+    for path in (KITS_JSON, _local_kits_path(), _overlay_path()):
         try:
             out.append(path.stat().st_mtime_ns)
         except OSError:
@@ -75,7 +93,12 @@ def _mtimes() -> tuple:
 
 @functools.lru_cache(maxsize=1)
 def _load_at(_stamp: tuple) -> dict:
-    return {**_read_kits(KITS_JSON), **_read_kits(_local_kits_path())}
+    kits = {**_read_kits(KITS_JSON), **_read_kits(_local_kits_path())}
+    for name, fields in _read_kits(_overlay_path()).items():
+        key = next((k for k in kits if k.lower() == name.lower()), None)
+        if key is not None and isinstance(fields, dict):
+            kits[key] = {**kits[key], **fields}
+    return kits
 
 
 def _load() -> dict:
@@ -133,7 +156,22 @@ def apply_diff(brand: str, fields: dict) -> dict:
     restart -- the staleness gap that made an earlier session's direct-JSON-edit need a
     manual restart to show up."""
     # A local-only kit is edited in place in its own (gitignored) file.
-    target = _local_kits_path() if brand.strip().lower() in {k.lower() for k in _read_kits(_local_kits_path())} else KITS_JSON
+    if brand.strip().lower() in {k.lower() for k in _read_kits(_local_kits_path())}:
+        target = _local_kits_path()
+    elif _use_overlay():
+        # Deployed server: keep the edit on the persistent volume, over the committed kit.
+        key = canonical_key(brand)
+        if key is None:
+            raise KeyError(f"no brand kit for '{brand}'")
+        path = _overlay_path()
+        path.parent.mkdir(parents=True, exist_ok=True)
+        data = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {"kits": {}}
+        data.setdefault("kits", {}).setdefault(key, {}).update(fields)
+        path.write_text(json.dumps(data, ensure_ascii=False) + "\n", encoding="utf-8")
+        _load.cache_clear()
+        return _load()[key]
+    else:
+        target = KITS_JSON
     if not target.exists():
         raise FileNotFoundError(str(target))
     data = json.loads(target.read_text(encoding="utf-8"))
@@ -169,12 +207,19 @@ def create_brand(brand: str, territories: list[str] | None = None) -> dict:
     name = brand.strip()
     if not name:
         raise ValueError("brand name is required")
-    if not KITS_JSON.exists():
-        raise FileNotFoundError(str(KITS_JSON))
-    data = json.loads(KITS_JSON.read_text(encoding="utf-8"))
-    kits = data.setdefault("kits", {})
-    if any(k.lower() == name.lower() for k in kits):
+    if any(k.lower() == name.lower() for k in _load()):
         raise KeyError(f"a brand kit named '{name}' already exists")
+    # On a deployed server a new brand lives on the persistent volume (DATA_DIR), not in the
+    # committed config that every deploy replaces.
+    target = _local_kits_path() if _use_overlay() else KITS_JSON
+    if target == KITS_JSON and not KITS_JSON.exists():
+        raise FileNotFoundError(str(KITS_JSON))
+    if target.exists():
+        data = json.loads(target.read_text(encoding="utf-8"))
+    else:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        data = {"kits": {}}
+    kits = data.setdefault("kits", {})
 
     skeleton = {
         "source_label": f"{name} (new, not yet set up)",
@@ -211,7 +256,7 @@ def create_brand(brand: str, territories: list[str] | None = None) -> dict:
         "identity": {"palette": [], "typography": ""},
     }
     kits[name] = skeleton
-    KITS_JSON.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    target.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     _load.cache_clear()
     return skeleton
 

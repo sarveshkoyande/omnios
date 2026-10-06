@@ -1558,6 +1558,79 @@ def api_live_sim_resolve(brand: str, update_id: str, action: str):
         raise HTTPException(400, str(e))
 
 
+class EP2Create(BaseModel):
+    brand: str
+    title: str | None = None
+
+
+class EP2Run(BaseModel):
+    feedback: str | None = None
+
+
+def _ep2_call(fn, *args):
+    from strategy import campaignflow
+    try:
+        return fn(*args)
+    except KeyError:
+        raise HTTPException(404, "no such plan or brand")
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    except campaignflow.LLMUnavailable as e:
+        raise HTTPException(503, f"The AI model couldn't be reached ({e}), so this step wrote nothing. Try again in a moment.")
+
+
+@app.get("/api/ep2/framework")
+def api_ep2_framework():
+    """Engagement Planner 2: the CampaignFlow framework the agent runs (config/frameworks/campaignflow.json)."""
+    from strategy import campaignflow
+    return campaignflow.framework()
+
+
+@app.get("/api/ep2/plans")
+def api_ep2_list(brand: str | None = None):
+    from strategy import campaignflow
+    return {"plans": campaignflow.list_plans(brand)}
+
+
+@app.post("/api/ep2/plans")
+def api_ep2_create(body: EP2Create):
+    from strategy import campaignflow
+    return _ep2_call(campaignflow.create, body.brand, body.title)
+
+
+@app.get("/api/ep2/plans/{pid}")
+def api_ep2_get(pid: str):
+    from strategy import campaignflow
+    rec = campaignflow.get(pid)
+    if not rec:
+        raise HTTPException(404, "no such plan")
+    return rec
+
+
+@app.post("/api/ep2/plans/{pid}/acknowledge")
+def api_ep2_ack(pid: str):
+    from strategy import campaignflow
+    return _ep2_call(campaignflow.acknowledge, pid)
+
+
+@app.post("/api/ep2/plans/{pid}/steps/{step}/run")
+def api_ep2_run(pid: str, step: str, body: EP2Run):
+    from strategy import campaignflow
+    return _ep2_call(campaignflow.run_step, pid, step, body.feedback)
+
+
+@app.post("/api/ep2/plans/{pid}/steps/{step}/approve")
+def api_ep2_approve(pid: str, step: str):
+    from strategy import campaignflow
+    return _ep2_call(campaignflow.approve, pid, step)
+
+
+@app.post("/api/ep2/plans/{pid}/publish")
+def api_ep2_publish(pid: str):
+    from strategy import campaignflow
+    return _ep2_call(campaignflow.publish, pid)
+
+
 @app.post("/api/v3/engagement-plans/{plan_id}/publish")
 def api_v3_engagement_publish(plan_id: str):
     """Save the plan and its campaigns to Brands & Campaigns (the brand hierarchy)."""
