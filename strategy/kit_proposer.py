@@ -220,6 +220,151 @@ def propose(brand: str, force: bool = False) -> dict:
     return brand_kit.apply_diff(brand, fields)
 
 
+# --- Context pages (docs/redesign/brand-kit-reorg.md): channels, per-tab briefs, bullet digests ---
+_BULLET_RULES = ("Write for a busy pharma marketer: plain words, no unexplained abbreviations, one idea per bullet. "
+                 "Each bullet is {\"lead\": a bold 2-4 word phrase, \"text\": the rest}. Put figures first. ")
+TABS = ("brandiq", "market", "audiences", "message", "channels", "product", "compliance")
+
+
+def _plan_layer(kit: dict) -> dict:
+    """The active plan's content (activities, KPIs, imperatives...) laid over the kit, as the pages read it."""
+    plans = kit.get("plans") or []
+    plan = next((x for x in plans if x.get("id") == kit.get("active_plan")), plans[0] if plans else None)
+    return {**kit, **(plan or {})}
+
+
+def _short(v, n: int = 300):
+    """A compact copy for prompts: long strings clipped, long lists cut."""
+    if isinstance(v, str):
+        return v[:n]
+    if isinstance(v, list):
+        return [_short(x, n) for x in v[:12]]
+    if isinstance(v, dict):
+        return {k: _short(x, n) for k, x in v.items() if k not in ("history", "errors", "states")}
+    return v
+
+
+def _compliance(brand: str) -> dict:
+    try:
+        import compliance
+        return compliance.for_brand(brand) or {}
+    except Exception:  # noqa: BLE001 -- the profile is optional context
+        return {}
+
+
+def _reach(brand: str) -> dict:
+    try:
+        import client_data
+        d = client_data.load(brand) or {}
+        return {"channel_reach_pct": d.get("channel_reach_pct"), "synthetic": d.get("synthetic", True)}
+    except Exception:  # noqa: BLE001
+        return {}
+
+
+def propose_channels(brand: str, kit: dict) -> dict:
+    k = _plan_layer(kit)
+    cp = _compliance(brand)
+    out = complete_json(
+        _SYS + "\nYou are now the brand's channel strategist. Build the channel view a marketer plans with. The "
+        "brand plan's activities are the source of truth: keep every channel they name, and only add channels the "
+        "audiences, journey and proof points clearly call for (mark those source 'AI draft'). " + _BULLET_RULES +
+        "Draft: brief (max 3 bullets, <=15 words each: which channels carry the strategy and why); mix (one row per "
+        "audience x channel that matters: audience, channel, role = awareness|education|conversion|retention, "
+        "reach_pct from the client reach data if given else null, source); cards (one per channel, 4-8: channel, "
+        "role, audiences, formats (<=3), cadence, kpi, worked (from proof points, or ''), rule (from the compliance "
+        "channel rules, or ''), source); journey (3-5 journey stages: stage, audience, channels (list), why <=15 "
+        "words); moments (congresses, awareness days, data read-outs, launches from the plan; you may add "
+        "well-known fixed awareness days for the condition, source 'AI draft': name, when, type, source).\n"
+        'Shape: {"brief":[{"lead":"","text":""}],"mix":[{"audience":"","channel":"","role":"","reach_pct":null,'
+        '"source":""}],"cards":[{"channel":"","role":"","audiences":[""],"formats":[""],"cadence":"","kpi":"",'
+        '"worked":"","rule":"","source":""}],"journey":[{"stage":"","audience":"","channels":[""],"why":""}],'
+        '"moments":[{"name":"","when":"","type":"","source":""}],"reasoning":[]}',
+        {"brand": brand, "activities": _short(k.get("activities"), 220), "strategic_imperatives": _short(k.get("strategic_imperatives")),
+         "audience_segments": _short(k.get("audience_segments")),
+         "personas": _short({a: [{f: p.get(f) for f in ("name", "moment", "barrier", "tier")} for p in (k.get("personas") or {}).get(a) or []]
+                             for a in ("hcp", "patient", "caregiver")}),
+         "care_continuum": _short(k.get("care_continuum")), "proof_points": _short(k.get("proof_points")),
+         "calendar": _short(k.get("calendar")), "kpis": _short(k.get("kpis")),
+         "client_reach": _reach(brand), "compliance_channel_rules": _short(cp.get("channel_rules")),
+         "indication": k.get("indication"), "therapy_area": k.get("therapy_area")}, max_tokens=6000)
+    out["status"] = "proposed"
+    out["generated_at"] = ps._today()
+    return out
+
+
+def _context_pack(brand: str, kit: dict) -> dict:
+    k = _plan_layer(kit)
+    pick = lambda v, f: [{x: i.get(x) for x in f} for i in (v or []) if isinstance(i, dict)][:10]  # noqa: E731
+    return _short({
+        "brand": brand, "generic": k.get("generic"), "company": k.get("company"), "indication": k.get("indication"),
+        "lifecycle": k.get("lifecycle_stage"), "unmet_need": k.get("unmet_need"), "situation": k.get("brand_situation"),
+        "objectives": k.get("key_objectives") or k.get("key_objective"), "imperatives": pick(k.get("strategic_imperatives"), ("id", "imperative", "segment", "driver", "barrier")),
+        "kpis": k.get("kpis"), "forecast": k.get("forecast"), "growth": k.get("growth_opportunities"),
+        "patient_flow": [{"stages": [{x: s.get(x) for x in ("stage", "value", "unit", "what")} for s in f.get("stages") or []]} for f in k.get("patient_flow") or []],
+        "us_geography": [{"measure": l.get("measure"), "top_states": [s.get("name") for s in (l.get("states") or [])[:5]]} for l in (k.get("us_geography") or {}).get("layers") or []],
+        "competitors": pick(k.get("competitors"), ("name", "type", "threat", "counter", "strength")),
+        "market_access": k.get("market_access"), "proof_points": k.get("proof_points"),
+        "segments": k.get("audience_segments"),
+        "personas": {a: pick((k.get("personas") or {}).get(a), ("name", "barrier", "moment", "key_message")) for a in ("hcp", "patient", "caregiver")},
+        "positioning": k.get("positioning_statement"), "core_claim": k.get("core_claim"), "big_idea": k.get("tagline"),
+        "messages": k.get("message_hierarchy"), "voice": {x: (k.get("voice") or {}).get(x) for x in ("register", "principles")},
+        "channels": {x: (k.get("channels") or {}).get(x) for x in ("brief", "cards", "moments")}, "activities": pick(k.get("activities"), ("activity", "channel", "audience", "timing")),
+        "clinical": k.get("clinical_data"), "label_indication": _label(k, "indication", 1200), "guardrails": k.get("guardrails"),
+        "compliance": {x: _compliance(brand).get(x) for x in ("channel_rules", "prelaunch_checklist")},
+    })
+
+
+def propose_context(brand: str, kit: dict) -> dict:
+    """The brief at the top of each Brand Kit tab: what is going on and what it means for campaigns."""
+    out = complete_json(
+        "You are a senior US pharma brand marketer writing the context page for each tab of a brand kit, for "
+        "colleagues about to plan campaigns. Use ONLY the kit content provided. Where sources disagree, the brand "
+        "plan wins and you say so. Never invent figures. " + _BULLET_RULES +
+        "For each tab write: brief (max 3 bullets, <=15 words each: what is going on) and implications (3-5 bullets "
+        "<=20 words: kind = 'do' or 'watch', text, cites = the kit section it rests on, e.g. 'Patient flow'). Tabs: "
+        "brandiq (the whole brand), market (situation, patient flow, geography, competition, access, forecast), "
+        "audiences (segments, personas, journey, KOLs), message (positioning, Big Idea, messages, voice), channels "
+        "(channel mix, moments, activities), product (label, indications, evidence), compliance (guardrails, SOPs, "
+        "channel rules). Skip a tab only if the kit has nothing for it. Also write on_a_page for the brandiq tab: "
+        "problem, objective, audience, message, channels, proof, watch_outs -- each <=20 words.\n"
+        'Shape: {"tabs":{"<tab>":{"brief":[{"lead":"","text":""}],"implications":[{"kind":"do","text":"","cites":""}]}},'
+        '"on_a_page":{"problem":"","objective":"","audience":"","message":"","channels":"","proof":"","watch_outs":""},'
+        '"reasoning":[]}',
+        _context_pack(brand, kit), max_tokens=7000)
+    tabs = {t: v for t, v in (out.get("tabs") or {}).items() if t in TABS and isinstance(v, dict)}
+    return {"context": {"tabs": tabs, "on_a_page": out.get("on_a_page") or {}, "generated_at": ps._today()},
+            "reasoning": out.get("reasoning")}
+
+
+# Long text fields shown as key-point bullets (the original stays one click away).
+_DIGEST_PATHS = ("unmet_need.summary", "brand_situation.narrative", "market_access.value_story", "positioning_statement",
+                 "product_profile.molecule_description.value", "product_profile.mechanism_of_action.value",
+                 "product_profile.indication.value", "product_profile.dosing.value", "product_profile.warnings.value",
+                 "approved_indication", "safety_reference")
+
+
+def _at(kit: dict, path: str):
+    v = kit
+    for part in path.split("."):
+        v = v.get(part) if isinstance(v, dict) else None
+    return v
+
+
+def propose_digest(brand: str, kit: dict) -> dict:
+    long = {p: _at(kit, p) for p in _DIGEST_PATHS}
+    long = {p: v[:9000] for p, v in long.items() if isinstance(v, str) and len(v) > 220}
+    if not long:
+        return {"bullets": dict(kit.get("bullets") or {}), "reasoning": ["No long text to condense yet."]}
+    out = complete_json(
+        "You condense long pharma brand-kit text into key points for marketers. Keep the meaning exactly, keep every "
+        "figure and limitation that matters (dose, population, boxed warning, contraindication), add nothing. "
+        + _BULLET_RULES + "For each field give 3-5 bullets of <=20 words each.\n"
+        'Shape: {"bullets":{"<field path>":[{"lead":"","text":""}]},"reasoning":[]}',
+        {"brand": brand, "fields": long}, max_tokens=6000)
+    bullets = {**(kit.get("bullets") or {}), **{p: b for p, b in (out.get("bullets") or {}).items() if p in long and isinstance(b, list)}}
+    return {"bullets": bullets, "reasoning": out.get("reasoning") or [f"Condensed {len(long)} long fields into bullets."]}
+
+
 # --- Brand IQ Agent: each step is a separate skill, run one at a time from the agent workspace ---
 SKILLS = [
     {"id": "brand_plan", "name": "Read the brand plan", "llm": True,
@@ -238,10 +383,16 @@ SKILLS = [
      "does": "Voice principles, tone by audience, vocabulary, guardrails from the label, unmet need."},
     {"id": "competition", "name": "Analyse competition", "llm": True,
      "does": "Competitor strengths, weaknesses, counters and threat level."},
+    {"id": "channels", "name": "Plan the channels", "llm": True,
+     "does": "Channel mix by audience, a card per channel, journey x channel and key moments, from the plan's activities."},
     {"id": "big_idea", "name": "Generate the Big Idea", "llm": True,
      "does": "The Big Idea and tagline, with its reasoning and alternatives."},
     {"id": "client_data", "name": "Load client data", "llm": False,
      "does": "HCP deciles, accounts, access, field force and reach (synthetic until real feeds are connected)."},
+    {"id": "digest", "name": "Turn long text into bullets", "llm": True,
+     "does": "Key-point bullets for the label, value story and other long text; the original stays one click away."},
+    {"id": "context", "name": "Write the context briefs", "llm": True,
+     "does": "For each Brand Kit tab: what is going on and what it means for campaigns, in short bullets."},
 ]
 
 
@@ -389,6 +540,16 @@ def run_skill(brand: str, skill: str) -> dict:
         return save("voice", out, ("voice", "tone_pillars", "voice_do", "voice_dont", "guardrails", "unmet_need"))
     if skill == "competition":
         return save("competition", propose_competition(brand, kit), ("competitors", "competition_self"))
+    if skill == "channels":
+        out = propose_channels(brand, kit)
+        return save("channels", {"channels": out, "reasoning": out.pop("reasoning", None)}, ("channels",))
+    if skill == "digest":
+        out = propose_digest(brand, kit)
+        return {"kit": brand_kit.apply_diff(brand, {"bullets": out["bullets"]}), "reasoning": _reasons(out)}
+    if skill == "context":
+        out = propose_context(brand, kit)
+        return {"kit": brand_kit.apply_diff(brand, {"context": out["context"]}),
+                "reasoning": _reasons(out) or [f"Wrote briefs for {len(out['context']['tabs'])} tabs."]}
     if skill == "big_idea":
         new = big_idea(brand)
         rec = new.get("big_idea") or {}
@@ -408,7 +569,7 @@ STEPS = [
     {"id": "understand", "name": "Understand the brand", "skills": ["brand_plan"]},
     {"id": "evidence", "name": "Gather the evidence", "skills": ["label", "audience_intel", "us_geography"]},
     {"id": "strategy", "name": "Build the brand strategy", "skills": ["evidence", "personas", "voice", "competition"]},
-    {"id": "idea", "name": "Create the Big Idea", "skills": ["big_idea", "client_data"]},
+    {"id": "idea", "name": "Big Idea, channels & briefs", "skills": ["big_idea", "client_data", "channels", "digest", "context"]},
 ]
 
 # Content the agent rebuilds. Identity and lookup fields (brand, generic, indications, the public-source
@@ -417,7 +578,7 @@ _REBUILT = ("positioning_statement", "core_claim", "key_objective", "unmet_need"
             "strategic_imperatives", "kpis", "activities", "audience_segments", "clinical_data", "references",
             "message_hierarchy", "personas", "care_continuum", "messages_by_persona", "voice", "tone_pillars", "voice_do",
             "voice_dont", "guardrails", "competition_self", "tagline", "big_idea", "product_profile", "audience_intel",
-            "us_geography", "approval_dates")
+            "us_geography", "approval_dates", "channels", "context", "bullets")
 
 
 def _inventory(kit: dict) -> dict:
@@ -491,5 +652,5 @@ def restore_version(brand: str, version: str) -> dict:
     return brand_kit.apply_diff(brand, json.loads(p.read_text(encoding="utf-8")))
 
 
-__all__ = ["propose", "run_skill", "SKILLS", "STEPS", "acknowledge", "reset_for_rebuild", "list_versions",
+__all__ = ["propose", "run_skill", "TABS", "SKILLS", "STEPS", "acknowledge", "reset_for_rebuild", "list_versions",
            "restore_version", "LLMUnavailable"]

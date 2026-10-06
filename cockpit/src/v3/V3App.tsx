@@ -8,7 +8,8 @@ import { listBrands } from "../api";
 import type { BrandSummary } from "../types";
 import { AppDetail } from "./AppDetail";
 import { Brands } from "./Brands";
-import { BrandKitPage, GuardrailsPage, MarketIntelPage, PersonasPage } from "./BrandKitPage";
+import { TAB_PAGE } from "./kit/KitTabs";
+import { TABS as KIT_TABS } from "./kit/shared";
 import { Chat } from "./Chat";
 import { Home } from "./Home";
 import { MyWork } from "./MyWork";
@@ -29,10 +30,8 @@ const PAGES: Record<string, { title: string; phase: string; perBrand?: boolean }
   brands: { title: "Campaigns & Journeys", phase: "Phase 6" },
   live: { title: "Live simulation", phase: "Phase 8" },
   chat: { title: "Chat", phase: "Phase 5" },
-  "iq/kits": { title: "Brand IQ", phase: "a later phase", perBrand: true },
-  "iq/personas": { title: "Personas", phase: "a later phase", perBrand: true },
-  "iq/guardrails": { title: "Compliance Guardrails", phase: "a later phase", perBrand: true },
-  "iq/intel": { title: "Market Intelligence", phase: "a later phase", perBrand: true },
+  ...Object.fromEntries(KIT_TABS.map((t) => [t.route, { title: t.title, phase: "", perBrand: true }])),
+  "iq/intel": { title: "Market", phase: "", perBrand: true },
 };
 
 export function V3App({ path }: { path: string[] }) {
@@ -88,14 +87,12 @@ export function V3App({ path }: { path: string[] }) {
             isFavorite={favs.isFavorite} toggleFavorite={favs.toggleFavorite} />
         ) : current === "chat" ? (
           <Chat activeBrand={scope.activeBrand} />
-        ) : current === "iq/kits" ? (
-          <BrandKitPage activeBrand={scope.activeBrand} brands={brands} />
-        ) : current === "iq/personas" ? (
-          <PersonasPage activeBrand={scope.activeBrand} brands={brands} />
-        ) : current === "iq/guardrails" ? (
-          <GuardrailsPage activeBrand={scope.activeBrand} brands={brands} />
-        ) : current === "iq/intel" ? (
-          <MarketIntelPage activeBrand={scope.activeBrand} brands={brands} />
+        ) : current.startsWith("iq/") ? ((() => {
+          // the Brand Kit tabs; "iq/intel" (Market Intelligence) now lives on Market
+          const tab = KIT_TABS.find((t) => t.route === current) ?? KIT_TABS.find((t) => t.id === "market")!;
+          const Page = TAB_PAGE[tab.id];
+          return <Page key={current} activeBrand={scope.activeBrand} brands={brands} />;
+        })()
         ) : current === "live" ? (
           <LiveSimulation brands={brands} activeBrand={scope.activeBrand} />
         ) : current === "brands" ? (

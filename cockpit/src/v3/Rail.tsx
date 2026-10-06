@@ -19,9 +19,12 @@ const MAIN_NAV: NavItem[] = [
 /** A2 / BR6: brand knowledge, always for the active brand. */
 const BRAND_IQ: NavItem[] = [
   { id: "iq/kits", label: "Brand IQ", icon: "document" },
-  { id: "iq/personas", label: "Personas", icon: "persona" },
-  { id: "iq/guardrails", label: "Compliance Guardrails", icon: "shield" },
-  { id: "iq/intel", label: "Market Intelligence", icon: "radar" },
+  { id: "iq/market", label: "Market", icon: "radar" },
+  { id: "iq/personas", label: "Audiences", icon: "persona" },
+  { id: "iq/message", label: "Message & Voice", icon: "message" },
+  { id: "iq/channels", label: "Channels", icon: "mail" },
+  { id: "iq/product", label: "Product & Proof", icon: "flask" },
+  { id: "iq/guardrails", label: "Compliance", icon: "shield" },
 ];
 
 /** "+ New" quick starts. Flow and brief open the current working agents until their

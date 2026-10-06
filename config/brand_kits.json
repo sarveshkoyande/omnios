@@ -2975,7 +2975,787 @@
           "tier": "Secondary",
           "status": "from brand plan"
         }
-      ]
+      ],
+      "proposals": {
+        "channels": {
+          "status": "proposed",
+          "engine": "kit_proposer.channels",
+          "date": "2026-10-06"
+        }
+      },
+      "bullets": {
+        "product_profile.molecule_description.value": [
+          {
+            "lead": "28 kDa",
+            "text": "molecular weight for caplacizumab-yhdp, a vWF-directed antibody fragment."
+          },
+          {
+            "lead": "11 mg",
+            "text": "caplacizumab-yhdp per single-dose vial, provided as a sterile, white, lyophilized powder."
+          },
+          {
+            "lead": "11 mg/mL",
+            "text": "final concentration after reconstitution with 1 mL Sterile Water for Injection, USP."
+          },
+          {
+            "lead": "pH 6.5",
+            "text": "approximate pH of the reconstituted solution."
+          },
+          {
+            "lead": "Preservative-free",
+            "text": "and produced in Escherichia coli by recombinant DNA technology."
+          }
+        ],
+        "product_profile.indication.value": [
+          {
+            "lead": "Adult and pediatric",
+            "text": "patients 12 years and older are indicated for CABLIVI."
+          },
+          {
+            "lead": "aTTP treatment",
+            "text": "CABLIVI is indicated for acquired thrombotic thrombocytopenic purpura (aTTP)."
+          },
+          {
+            "lead": "Combination therapy",
+            "text": "CABLIVI is used with plasma exchange and immunosuppressive therapy."
+          },
+          {
+            "lead": "vWF-directed",
+            "text": "CABLIVI is an antibody fragment targeting von Willebrand factor (vWF)."
+          }
+        ],
+        "product_profile.dosing.value": [
+          {
+            "lead": "First day",
+            "text": "11 mg IV bolus 15 minutes pre-plasma exchange, then 11 mg SC post-plasma exchange."
+          },
+          {
+            "lead": "Subsequent days",
+            "text": "11 mg SC once daily post-plasma exchange during the plasma exchange period."
+          },
+          {
+            "lead": "Post-exchange",
+            "text": "11 mg SC once daily for 30 days after the last plasma exchange."
+          },
+          {
+            "lead": "Extended treatment",
+            "text": "Maximum 28 additional days if ADAMTS13 activity levels remain suppressed."
+          },
+          {
+            "lead": "Discontinue if",
+            "text": "patient experiences more than 2 aTTP recurrences while on CABLIVI."
+          }
+        ],
+        "product_profile.warnings.value": [
+          {
+            "lead": "Hemorrhage risk",
+            "text": "CABLIVI increases bleeding risk; serious and fatal bleeding can occur."
+          },
+          {
+            "lead": "58% vs 43%",
+            "text": "overall bleeding events in CABLIVI vs. placebo patients in clinical studies."
+          },
+          {
+            "lead": "Interrupt treatment",
+            "text": "if clinically significant bleeding occurs."
+          },
+          {
+            "lead": "7 days prior",
+            "text": "withhold CABLIVI before elective surgery, dental procedures, or invasive interventions."
+          },
+          {
+            "lead": "Avoid concomitant",
+            "text": "use with antiplatelet agents, thrombolytic drugs, heparin, or anticoagulants."
+          }
+        ]
+      },
+      "context": {
+        "tabs": {
+          "brandiq": {
+            "brief": [
+              {
+                "lead": "Cablivi treats aTTP",
+                "text": "It's for acute acquired thrombotic thrombocytopenic purpura, a rare, life-threatening emergency."
+              },
+              {
+                "lead": "Reduce death, organ damage",
+                "text": "Cablivi aims to reduce mortality and prevent long-term organ damage from microthrombi."
+              },
+              {
+                "lead": "Late-stage growth brand",
+                "text": "The brand is in a growth phase, expanding use and launching in new markets."
+              }
+            ],
+            "implications": [
+              {
+                "kind": "do",
+                "text": "Focus messaging on aTTP's emergency nature to drive faster diagnosis.",
+                "cites": "unmet_need"
+              },
+              {
+                "kind": "do",
+                "text": "Highlight Cablivi's unique mechanism of action and proven outcomes.",
+                "cites": "big_idea"
+              },
+              {
+                "kind": "do",
+                "text": "Support global launch excellence in Taiwan, Turkey, and China.",
+                "cites": "objectives"
+              },
+              {
+                "kind": "watch",
+                "text": "Monitor late recognition and waiting-to-treat barriers closely.",
+                "cites": "unmet_need"
+              }
+            ]
+          },
+          "market": {
+            "brief": [
+              {
+                "lead": "aTTP is an emergency",
+                "text": "It's a rare, acute, life-threatening condition with high mortality if untreated."
+              },
+              {
+                "lead": "Growth and new launches",
+                "text": "Sales forecast to grow to 354 M EUR by 2029; launching in Taiwan, Turkey, China."
+              },
+              {
+                "lead": "Access is hospital-based",
+                "text": "Treatment occurs in hospitals/ICUs; cost and reserving for severe cases are barriers."
+              }
+            ],
+            "implications": [
+              {
+                "kind": "do",
+                "text": "Target ER/ICU staff to increase awareness of TMA/aTTP.",
+                "cites": "objectives"
+              },
+              {
+                "kind": "do",
+                "text": "Emphasize Cablivi's cost-effectiveness in reducing PEX and ICU days.",
+                "cites": "market_access"
+              },
+              {
+                "kind": "do",
+                "text": "Build frontline use now, especially against pipeline competitors like rADAMTS13.",
+                "cites": "competitors"
+              },
+              {
+                "kind": "watch",
+                "text": "Address HCP cost concerns and the tendency to reserve Cablivi.",
+                "cites": "market_access"
+              }
+            ]
+          },
+          "audiences": {
+            "brief": [
+              {
+                "lead": "Four HCP segments",
+                "text": "Diagnosers/Referrers, Treaters (Altruist/Cautioner), and Experts are key targets."
+              },
+              {
+                "lead": "Patient, caregiver needs",
+                "text": "Patients and caregivers need support at discharge, fearing relapse."
+              },
+              {
+                "lead": "Address specific barriers",
+                "text": "Each segment faces unique barriers, from low awareness to cost concerns."
+              }
+            ],
+            "implications": [
+              {
+                "kind": "do",
+                "text": "Help Diagnosers/Referrers recognize aTTP early, stressing urgency.",
+                "cites": "personas.hcp"
+              },
+              {
+                "kind": "do",
+                "text": "Build Treater confidence for frontline Cablivi use at clinical diagnosis.",
+                "cites": "personas.hcp"
+              },
+              {
+                "kind": "do",
+                "text": "Engage Experts with new data, like Mayari and RWE on duration.",
+                "cites": "personas.hcp"
+              },
+              {
+                "kind": "do",
+                "text": "Support patients and caregivers with information on exacerbation risk.",
+                "cites": "personas.patient"
+              }
+            ]
+          },
+          "message": {
+            "brief": [
+              {
+                "lead": "Frontline for all aTTP",
+                "text": "Position Cablivi as frontline treatment for all aTTP patients to prevent damage."
+              },
+              {
+                "lead": "First-in-class, best outcomes",
+                "text": "Highlight Cablivi's unique MoA, reduction in mortality, and guideline recommendations."
+              },
+              {
+                "lead": "Urgent, data-backed voice",
+                "text": "Communicate urgently, clinically, and confidently with evidence for every claim."
+              }
+            ],
+            "implications": [
+              {
+                "kind": "do",
+                "text": "Emphasize Cablivi inhibits microthrombi and prevents organ damage.",
+                "cites": "core_claim"
+              },
+              {
+                "kind": "do",
+                "text": "Lead with urgency: 'aTTP is a medical emergency - every hour counts.'",
+                "cites": "voice"
+              },
+              {
+                "kind": "do",
+                "text": "Promote treatment for 'every event, frontline, at clinical diagnosis.'",
+                "cites": "voice"
+              },
+              {
+                "kind": "watch",
+                "text": "Avoid aspirational or off-label claims, even when showing mechanism.",
+                "cites": "voice"
+              }
+            ]
+          },
+          "channels": {
+            "brief": [
+              {
+                "lead": "Omnichannel approach",
+                "text": "Mix of digital, F2F, and AI targets HCPs, patients, and caregivers."
+              },
+              {
+                "lead": "Digital for HCP education",
+                "text": "Webinars, websites, and AI tools are key for HCP awareness and education."
+              },
+              {
+                "lead": "Social for patient awareness",
+                "text": "Unbranded social media campaigns raise awareness on key dates."
+              }
+            ],
+            "implications": [
+              {
+                "kind": "do",
+                "text": "Scale up Cablivi.AI for real-time patient prediction in new markets.",
+                "cites": "channels.cards"
+              },
+              {
+                "kind": "do",
+                "text": "Utilize serious games and AI avatars to educate ER/ICU HCPs.",
+                "cites": "channels.cards"
+              },
+              {
+                "kind": "do",
+                "text": "Leverage webinars and advisory boards for treater education on best practice.",
+                "cites": "channels.cards"
+              },
+              {
+                "kind": "watch",
+                "text": "Ensure all digital content is HCP-gated where appropriate and compliant.",
+                "cites": "channels.cards"
+              }
+            ]
+          },
+          "product": {
+            "brief": [
+              {
+                "lead": "Indicated for aTTP",
+                "text": "Cablivi is for adults and pediatric patients (12+) with aTTP."
+              },
+              {
+                "lead": "Combination therapy",
+                "text": "Used with plasma exchange (PEX) and immunosuppressive therapy."
+              },
+              {
+                "lead": "Strong clinical evidence",
+                "text": "HERCULES data shows reduced PEX/ICU days; Capla1000 showed reduced mortality."
+              }
+            ],
+            "implications": [
+              {
+                "kind": "do",
+                "text": "Always emphasize Cablivi's use in combination with PEX and IST.",
+                "cites": "label_indication"
+              },
+              {
+                "kind": "do",
+                "text": "Highlight evidence of reduced PEX, ICU, and hospital days.",
+                "cites": "clinical"
+              },
+              {
+                "kind": "do",
+                "text": "Share Capla1000 data on reduced 3-month mortality.",
+                "cites": "clinical"
+              },
+              {
+                "kind": "watch",
+                "text": "Do not promote Cablivi without PEX; Mayari results are pending and off-label.",
+                "cites": "guardrails.donts"
+              }
+            ]
+          },
+          "compliance": {
+            "brief": [
+              {
+                "lead": "Follow local approvals",
+                "text": "All actions require local approval before implementation."
+              },
+              {
+                "lead": "No off-label promotion",
+                "text": "Do not promote Cablivi without PEX or make aspirational claims."
+              },
+              {
+                "lead": "Strict channel rules",
+                "text": "Email, social media, and web content have specific regulatory guardrails."
+              }
+            ],
+            "implications": [
+              {
+                "kind": "do",
+                "text": "Ensure all promotional materials have MLR approval codes and expiry dates.",
+                "cites": "compliance.prelaunch_checklist"
+              },
+              {
+                "kind": "do",
+                "text": "Include full ISI or a link to it on all promotional assets.",
+                "cites": "compliance.prelaunch_checklist"
+              },
+              {
+                "kind": "do",
+                "text": "Obtain email consent before sending promotional emails and honor opt-outs.",
+                "cites": "compliance.channel_rules"
+              },
+              {
+                "kind": "watch",
+                "text": "Reps may not edit claims in approved email templates.",
+                "cites": "compliance.channel_rules"
+              },
+              {
+                "kind": "watch",
+                "text": "Unbranded social ads carry no product name; branded ads need ISI.",
+                "cites": "compliance.channel_rules"
+              }
+            ]
+          }
+        },
+        "on_a_page": {
+          "problem": "aTTP is a deadly emergency; patients are diagnosed/treated too late.",
+          "objective": "Improve ER/ICU awareness and drive frontline use for all aTTP events.",
+          "audience": "Diagnosers, Treaters (Altruists, Cautioners), Experts, Patients, Caregivers.",
+          "message": "Cablivi is first/best-in-class, reducing aTTP morbidities and mortality.",
+          "channels": "AI, digital, F2F, social media for HCP education and patient awareness.",
+          "proof": "HERCULES showed reduced PEX/ICU days; Capla1000 showed reduced mortality.",
+          "watch_outs": "Late recognition, waiting to treat, cost concerns, off-label promotion."
+        },
+        "generated_at": "2026-10-06"
+      },
+      "channels": {
+        "brief": [
+          {
+            "lead": "Omnichannel approach",
+            "text": "Channels target HCPs and patients via digital, F2F, and AI to improve diagnosis and treatment."
+          },
+          {
+            "lead": "Digital focus",
+            "text": "Webinars, websites, and AI tools are key for HCP education and real-time support."
+          },
+          {
+            "lead": "Patient engagement",
+            "text": "Social media drives awareness for patients and caregivers during key awareness days."
+          }
+        ],
+        "mix": [
+          {
+            "audience": "Diagnoser/Referrer - Altruist",
+            "channel": "OneAI platform + Veeva alerts",
+            "role": "conversion",
+            "reach_pct": null,
+            "source": "Brand plan deck, slide 18 - activities"
+          },
+          {
+            "audience": "Diagnoser/Referrer - Altruist",
+            "channel": "Webinar (SpotMe)",
+            "role": "education",
+            "reach_pct": 43,
+            "source": "Brand plan deck, slide 18 - activities"
+          },
+          {
+            "audience": "Diagnoser/Referrer - Altruist",
+            "channel": "Digital / web",
+            "role": "education",
+            "reach_pct": null,
+            "source": "Brand plan deck, slide 18 - activities"
+          },
+          {
+            "audience": "Diagnoser/Referrer - Altruist",
+            "channel": "Web",
+            "role": "education",
+            "reach_pct": null,
+            "source": "Brand plan deck, slide 18 - activities"
+          },
+          {
+            "audience": "Diagnoser/Referrer - Altruist",
+            "channel": "Print / digital / RTE",
+            "role": "awareness",
+            "reach_pct": null,
+            "source": "Brand plan deck, slide 19 - content"
+          },
+          {
+            "audience": "Treater - Altruist",
+            "channel": "Webinar (SpotMe)",
+            "role": "education",
+            "reach_pct": 84,
+            "source": "Brand plan deck, slide 20 - activities"
+          },
+          {
+            "audience": "Treater - Altruist",
+            "channel": "F2F / hybrid",
+            "role": "education",
+            "reach_pct": null,
+            "source": "Brand plan deck, slide 20 - activities"
+          },
+          {
+            "audience": "Treater - Altruist",
+            "channel": "Digital",
+            "role": "education",
+            "reach_pct": null,
+            "source": "Brand plan deck, slide 20 - content"
+          },
+          {
+            "audience": "Treater - Cautioner",
+            "channel": "Webinar (SpotMe)",
+            "role": "education",
+            "reach_pct": 27,
+            "source": "Brand plan deck, slide 20 - activities"
+          },
+          {
+            "audience": "Treater - Cautioner",
+            "channel": "F2F / hybrid",
+            "role": "education",
+            "reach_pct": null,
+            "source": "Brand plan deck, slide 20 - activities"
+          },
+          {
+            "audience": "Treater - Cautioner",
+            "channel": "Digital",
+            "role": "education",
+            "reach_pct": null,
+            "source": "Brand plan deck, slide 20 - content"
+          },
+          {
+            "audience": "Treater/Expert - Hero",
+            "channel": "F2F",
+            "role": "education",
+            "reach_pct": null,
+            "source": "Brand plan deck, slide 20 - activities"
+          },
+          {
+            "audience": "Treater/Expert - Hero",
+            "channel": "F2F / hybrid",
+            "role": "education",
+            "reach_pct": null,
+            "source": "Brand plan deck, slide 20 - activities"
+          },
+          {
+            "audience": "Acute aTTP patient",
+            "channel": "Social media",
+            "role": "awareness",
+            "reach_pct": null,
+            "source": "Brand plan deck, slide 19 - activities"
+          },
+          {
+            "audience": "Family caregiver",
+            "channel": "Social media",
+            "role": "awareness",
+            "reach_pct": null,
+            "source": "Brand plan deck, slide 19 - activities"
+          },
+          {
+            "audience": "Diagnoser/Referrer - Altruist",
+            "channel": "Email",
+            "role": "education",
+            "reach_pct": 29,
+            "source": "AI draft"
+          },
+          {
+            "audience": "Treater - Altruist",
+            "channel": "Email",
+            "role": "education",
+            "reach_pct": 47,
+            "source": "AI draft"
+          },
+          {
+            "audience": "Treater - Cautioner",
+            "channel": "Email",
+            "role": "education",
+            "reach_pct": 48,
+            "source": "AI draft"
+          },
+          {
+            "audience": "Treater/Expert - Hero",
+            "channel": "Email",
+            "role": "education",
+            "reach_pct": 60,
+            "source": "AI draft"
+          }
+        ],
+        "cards": [
+          {
+            "channel": "OneAI platform + Veeva alerts",
+            "role": "conversion",
+            "audiences": [
+              "Diagnoser/Referrer - Altruist"
+            ],
+            "formats": [
+              "Real-time patient prediction",
+              "HCO-level alerts"
+            ],
+            "cadence": "Real-time",
+            "kpi": "Cablivi.AI live in 5 new markets by end '26",
+            "worked": "",
+            "rule": "",
+            "source": "Brand plan deck, slide 18 - activities; Brand plan deck, slide 23 - KPIs"
+          },
+          {
+            "channel": "Webinar (SpotMe)",
+            "role": "education",
+            "audiences": [
+              "Diagnoser/Referrer - Altruist",
+              "Treater - Altruist",
+              "Treater - Cautioner",
+              "Treater/Expert - Hero"
+            ],
+            "formats": [
+              "Live case discussions",
+              "Best practice presentations"
+            ],
+            "cadence": "Q1, Q3 2026",
+            "kpi": "ER/ICU awareness of TMA/aTTP to 85% by Q4 2026",
+            "worked": "The Hematology Podcast: 22K downloads since 2021",
+            "rule": "Speaker slides MLR-approved; off-label questions routed to Medical Information",
+            "source": "Brand plan deck, slide 18 - activities; Brand plan deck, slide 20 - activities; Brand plan deck, slide 23 - KPIs; Brand plan deck, slide 35 - best practice; PhRMA Code; recommended practice"
+          },
+          {
+            "channel": "Digital / web",
+            "role": "education",
+            "audiences": [
+              "Diagnoser/Referrer - Altruist"
+            ],
+            "formats": [
+              "AI-powered avatar",
+              "Serious game (GO DOCTOR!)"
+            ],
+            "cadence": "Q2-Q3 2026 (avatar), 2026 (game)",
+            "kpi": "ER/ICU awareness of TMA/aTTP to 85% by Q4 2026",
+            "worked": "GO DOCTOR! serious game: 10,359 gameplays, 92% improved knowledge",
+            "rule": "HCP-only content behind an HCP gate",
+            "source": "Brand plan deck, slide 18 - activities; Brand plan deck, slide 23 - KPIs; Brand plan deck, slide 32 - best practice; Recommended practice"
+          },
+          {
+            "channel": "Web",
+            "role": "education",
+            "audiences": [
+              "Diagnoser/Referrer - Altruist"
+            ],
+            "formats": [
+              "Website content (understandingTTP.com)",
+              "SEO updates",
+              "New case studies"
+            ],
+            "cadence": "Q1-Q2 2026",
+            "kpi": "ER/ICU awareness of TMA/aTTP to 85% by Q4 2026",
+            "worked": "Google campaign (DE): ~540k impressions, 501 conversions",
+            "rule": "HCP-only content behind an HCP gate; patient site in plain language with full ISI",
+            "source": "Brand plan deck, slide 18 - activities; Brand plan deck, slide 23 - KPIs; Brand plan deck, slide 33 - best practice; Recommended practice"
+          },
+          {
+            "channel": "Print / digital / RTE",
+            "role": "awareness",
+            "audiences": [
+              "Diagnoser/Referrer - Altruist"
+            ],
+            "formats": [
+              "Ruler",
+              "RTE",
+              "Poster"
+            ],
+            "cadence": "Q1-Q2 2026",
+            "kpi": "ER/ICU awareness of TMA/aTTP to 85% by Q4 2026",
+            "worked": "",
+            "rule": "",
+            "source": "Brand plan deck, slide 19 - content; Brand plan deck, slide 23 - KPIs"
+          },
+          {
+            "channel": "Social media",
+            "role": "awareness",
+            "audiences": [
+              "Acute aTTP patient",
+              "Family caregiver"
+            ],
+            "formats": [
+              "Awareness campaigns (Rare Disease Day, International TTP Day)"
+            ],
+            "cadence": "Feb, Sep 2026",
+            "kpi": "Get PATIENTS to increase awareness of aTTP burden of disease",
+            "worked": "",
+            "rule": "Unbranded ads carry no product name or claim; branded ads need ISI or a one-click link; retargeting only with retargeting opt-in",
+            "source": "Brand plan deck, slide 19 - activities; Brand plan deck, slide 15 - activation; FDA guidance on character-limited media; SOP-01 Q50610"
+          },
+          {
+            "channel": "F2F / hybrid",
+            "role": "education",
+            "audiences": [
+              "Treater - Altruist",
+              "Treater - Cautioner",
+              "Treater/Expert - Hero"
+            ],
+            "formats": [
+              "Commercial advisory boards",
+              "KOL speaker tours"
+            ],
+            "cadence": "Q2, Mid 2026",
+            "kpi": "Patient penetration 47% US / 49% key markets by end '26",
+            "worked": "",
+            "rule": "Speaker slides MLR-approved; off-label questions routed to Medical Information",
+            "source": "Brand plan deck, slide 20 - activities; Brand plan deck, slide 23 - KPIs; PhRMA Code; recommended practice"
+          },
+          {
+            "channel": "Digital",
+            "role": "education",
+            "audiences": [
+              "Treater - Altruist",
+              "Treater - Cautioner"
+            ],
+            "formats": [
+              "MoA campaign (microthrombi, organ damage, mortality)"
+            ],
+            "cadence": "H2 2025 - Q2 2026",
+            "kpi": "Frontline use 50% naive / 65% relapsed by Q4 2026",
+            "worked": "",
+            "rule": "",
+            "source": "Brand plan deck, slide 20 - content; Brand plan deck, slide 23 - KPIs"
+          },
+          {
+            "channel": "Email",
+            "role": "education",
+            "audiences": [
+              "Diagnoser/Referrer - Altruist",
+              "Treater - Altruist",
+              "Treater - Cautioner",
+              "Treater/Expert - Hero"
+            ],
+            "formats": [
+              "Educational content",
+              "Webinar invitations"
+            ],
+            "cadence": "No more than 1 promotional email per HCP per week",
+            "kpi": "ER/ICU awareness of TMA/aTTP to 85% by Q4 2026",
+            "worked": "",
+            "rule": "Send only with email consent; include unsubscribe; honour opt-outs within 10 business days; ISI or a link to it in every promotional email; Approved templates only; reps may not edit claims",
+            "source": "CAN-SPAM Act; FDA OPDP fair-balance expectations; Recommended practice; flow rules campaign_type_cadence"
+          }
+        ],
+        "journey": [
+          {
+            "stage": "Recognise the problem",
+            "audience": "Diagnoser/Referrer - Altruist",
+            "channels": [
+              "OneAI platform + Veeva alerts",
+              "Webinar (SpotMe)",
+              "Digital / web",
+              "Web",
+              "Print / digital / RTE",
+              "Email"
+            ],
+            "why": "Increase awareness of aTTP as an emergency."
+          },
+          {
+            "stage": "Find the right treatment",
+            "audience": "Treater - Altruist",
+            "channels": [
+              "Webinar (SpotMe)",
+              "F2F / hybrid",
+              "Digital",
+              "Email"
+            ],
+            "why": "Build confidence for frontline Cablivi use."
+          },
+          {
+            "stage": "Find the right treatment",
+            "audience": "Treater - Cautioner",
+            "channels": [
+              "Webinar (SpotMe)",
+              "F2F / hybrid",
+              "Digital",
+              "Email"
+            ],
+            "why": "Address cost concerns, provide evidence."
+          },
+          {
+            "stage": "Take treatment and see it work",
+            "audience": "Treater/Expert - Hero",
+            "channels": [
+              "F2F",
+              "F2F / hybrid",
+              "Email"
+            ],
+            "why": "Share new data, reinforce best practice."
+          },
+          {
+            "stage": "Recognise the problem",
+            "audience": "Acute aTTP patient",
+            "channels": [
+              "Social media"
+            ],
+            "why": "Educate patients on disease burden and symptoms."
+          }
+        ],
+        "moments": [
+          {
+            "name": "Rare Disease Day awareness",
+            "when": "Feb 2026",
+            "type": "Patient Awareness",
+            "source": "Brand plan deck, slide 19 - activities"
+          },
+          {
+            "name": "International TTP Day campaign",
+            "when": "Sep 2026",
+            "type": "Patient Awareness",
+            "source": "Brand plan deck, slide 19 - activities"
+          },
+          {
+            "name": "Global treater webinar on best practice",
+            "when": "Q1 2026",
+            "type": "HCP Education",
+            "source": "Brand plan deck, slide 20 - activities"
+          },
+          {
+            "name": "Commercial advisory board",
+            "when": "Q2 2026",
+            "type": "HCP Education",
+            "source": "Brand plan deck, slide 20 - activities"
+          },
+          {
+            "name": "ER/ICU global webinar",
+            "when": "Q3 2026",
+            "type": "HCP Education",
+            "source": "Brand plan deck, slide 18 - activities"
+          },
+          {
+            "name": "AI-powered avatar launch",
+            "when": "Q2-Q3 2026",
+            "type": "HCP Education",
+            "source": "Brand plan deck, slide 18 - activities"
+          }
+        ],
+        "status": "proposed",
+        "generated_at": "2026-10-06"
+      }
     },
     "Jardiance": {
       "source_label": "Jardiance: public sources only (FDA, Drugs@FDA, NIH MeSH, PubMed)",

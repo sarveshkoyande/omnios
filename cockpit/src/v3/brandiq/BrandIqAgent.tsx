@@ -6,12 +6,12 @@ import {
 import { Icon } from "../../components/Icon";
 import type { BrandSummary } from "../../types";
 import { AckCard, CommandBar, ReasoningButton, ReasoningPanel, StepProgress, type ReasonEntry, type SkillStatus } from "../agentkit/AgentKit";
-import { BrandKitPage } from "../BrandKitPage";
+import { KitTabs } from "../kit/KitTabs";
 import "../campaignplanner/campaignPlanner.css";
 import "../iq.css";
 import "./brandiq.css";
 
-/** The Brand IQ Agent. Four agent steps (strategy/kit_proposer.STEPS) over ten skills:
+/** The Brand IQ Agent. Four agent steps (strategy/kit_proposer.STEPS) over thirteen skills:
  *  1. you drop the brand plan and/or type (or nothing); the agent reads it and acknowledges what's
  *     available and what isn't (LLM, no fixed rules) and waits for your OK;
  *  2. it saves the current kit as a restorable version and rebuilds the kit from scratch, step by step;
@@ -158,7 +158,7 @@ export function BrandIqAgent({ brands, activeBrand }: { brands: BrandSummary[]; 
             {phase === "done" && (
               <div className="v3-ak-done">
                 <b>{brand}'s kit is rebuilt.</b>
-                <span className="v3-muted">AI-drafted sections are marked "Proposed — to confirm" on the kit. Review them before agents rely on them.</span>
+                <span className="v3-muted">Every Brand Kit tab now opens with a short brief. Sections marked ✨ AI draft need a look before agents rely on them.</span>
                 <button type="button" className="v3-cc-btn" onClick={() => setShowReasoning(true)}>See the reasoning</button>
                 {savedVersion && <button type="button" className="v3-cc-btn" onClick={restore}>Restore the previous kit</button>}
                 <button type="button" className="v3-cc-btn" onClick={() => { setPhase("intake"); setAck(null); }}>Build again</button>
@@ -170,7 +170,7 @@ export function BrandIqAgent({ brands, activeBrand }: { brands: BrandSummary[]; 
 
         <section className="v3-ws-output v3-biq-canvas">
           {running && <p className="v3-ak-canvas-note"><span className="v3-cc-spinner small" /> Building — {steps[currentStep]?.name ?? ""}</p>}
-          <BrandKitPage key={`${brand}:${rev}`} activeBrand={brand} brands={brands} />
+          <KitTabs rev={rev} activeBrand={brand} brands={brands} />
         </section>
         {showReasoning && <ReasoningPanel entries={entries} live={running} onClose={() => setShowReasoning(false)} />}
       </div>

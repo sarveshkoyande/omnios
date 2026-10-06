@@ -1,0 +1,131 @@
+/* Brand Kit context pages (docs/redesign/brand-kit-reorg.md). Readable at a glance: short bullets,
+ * one block style, sources in a quiet footer. */
+
+.v3-iq-none { color: var(--neutral-500); font-size: 12px; font-style: normal; }
+.v3-iq-err { display: block; color: #b42318; font-size: 12px; margin-top: 6px; }
+.v3-iq-kicker { display: block; font-style: normal; font-size: 10.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--neutral-500); margin-bottom: 6px; }
+
+/* Bullets */
+.v3-iq-bul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 5px; font-size: 13px; line-height: 1.5; color: #1f2937; }
+.v3-iq-bul li::marker { color: var(--primary); }
+.v3-iq-bul b { font-weight: 600; color: #111827; margin-right: 2px; }
+.v3-iq-fulltext { margin-top: 8px !important; padding: 10px 12px; border-radius: 8px; background: #f7f8fa; }
+td .v3-iq-bul { font-size: 12.5px; gap: 3px; }
+
+/* Block footer: sources and dates, once per section */
+.v3-iq-foot { margin-top: 12px; padding-top: 8px; border-top: 1px solid #eef0f3; font-size: 11px; color: var(--neutral-500); }
+.v3-iq-foot a { color: inherit; }
+
+/* The brief */
+.v3-iq-brief { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 28px; padding: 18px 20px; border-radius: 12px;
+  background: linear-gradient(135deg, var(--primary-light-background, #eef2ff), #fff 70%); box-shadow: 0 0 0 1px #e0e4f5; }
+.v3-iq-brief-col > em { display: block; font-style: normal; font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--primary); margin-bottom: 8px; }
+.v3-iq-brief-col .v3-iq-bul { font-size: 14px; gap: 7px; }
+.v3-iq-brief > footer { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; font-size: 11px; color: var(--neutral-500); }
+.v3-iq-brief > footer .v3-iq-srcbadge { margin-left: 0; }
+.v3-iq-brief.empty { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 16px; font-size: 13px; color: var(--neutral-700); }
+.v3-iq-brief.empty span { display: inline-flex; align-items: center; gap: 6px; }
+.v3-iq-impl { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 7px; font-size: 13px; line-height: 1.45; }
+.v3-iq-impl li { display: flex; gap: 8px; align-items: baseline; }
+.v3-iq-impl .k { flex: none; min-width: 46px; text-align: center; font-size: 10.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; padding: 2px 6px; border-radius: 5px; }
+.v3-iq-impl li.do .k { background: #e6f6ef; color: #0f8a5f; }
+.v3-iq-impl li.watch .k { background: #fff4e5; color: #9a5b00; }
+.v3-iq-impl small { color: var(--neutral-500); font-size: 11px; }
+
+/* Section index */
+.v3-iq-secidx { display: flex; flex-wrap: wrap; gap: 6px; position: sticky; top: 0; z-index: 2; padding: 8px 0; background: var(--bg, #f8f9fb); }
+.v3-iq-secidx button { font: inherit; font-size: 12px; padding: 4px 10px; border-radius: 999px; border: 1px solid #e6e8ec; background: #fff; color: #374151; cursor: pointer; }
+.v3-iq-secidx button:hover { border-color: var(--primary); color: var(--primary); }
+.v3-iq-block { scroll-margin-top: 52px; }
+
+/* Still needed */
+.v3-iq-still { padding: 14px 16px; border-radius: 10px; border: 1px dashed #d6d9e0; background: #fbfbfc; }
+.v3-iq-still h3 { margin: 0 0 8px; font-size: 13px; font-weight: 600; color: #374151; }
+.v3-iq-still ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.v3-iq-still li { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 13px; color: #4b5563; padding: 4px 0; border-bottom: 1px solid #f0f1f4; }
+.v3-iq-still li:last-child { border-bottom: none; }
+
+/* Brand on a page */
+.v3-iq-onpage { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.v3-iq-onpage article { padding: 12px 14px; border-radius: 10px; background: #fff; box-shadow: 0 0 0 1px #e6e8ec; border-top: 2px solid var(--primary); }
+.v3-iq-onpage article.watch { border-top-color: #d97706; }
+.v3-iq-onpage em { font-style: normal; font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--neutral-500); }
+.v3-iq-onpage p { margin: 6px 0 0; font-size: 13.5px; line-height: 1.45; color: #111827; font-weight: 500; }
+
+/* Completeness strip */
+.v3-iq-complete { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.v3-iq-complete a { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border-radius: 8px; background: #fff; box-shadow: 0 0 0 1px #e6e8ec; color: #111827; text-decoration: none; font-size: 12.5px; }
+.v3-iq-complete a:hover { box-shadow: 0 0 0 1px var(--primary); }
+.v3-iq-complete-top { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+.v3-iq-complete i { display: block; height: 4px; border-radius: 4px; background: #eef0f3; overflow: hidden; }
+.v3-iq-complete s { display: block; height: 100%; background: var(--primary); text-decoration: none; }
+.v3-iq-complete a.low s { background: #d97706; }
+.v3-iq-complete a.full s { background: #0f8a5f; }
+.v3-iq-complete small { color: var(--neutral-500); font-size: 11px; }
+
+/* Objectives */
+.v3-iq-objlist { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 10px; }
+.v3-iq-objlist li { display: flex; flex-direction: column; gap: 2px; font-size: 13px; }
+.v3-iq-objlist b { font-weight: 600; color: #111827; }
+.v3-iq-objlist span { color: #374151; }
+.v3-iq-objlist small { color: var(--neutral-500); font-size: 11px; }
+
+/* Patient flow as a funnel of cards */
+.v3-iq-funnel { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+.v3-iq-funnel li { display: flex; flex-direction: column; gap: 3px; padding: 12px; border-radius: 8px; background: #fff; box-shadow: 0 0 0 1px #e6e8ec; position: relative; }
+.v3-iq-funnel b { font-size: 18px; font-weight: 600; color: #111827; }
+.v3-iq-funnel span { font-size: 12.5px; font-weight: 600; color: #374151; }
+.v3-iq-funnel small { font-size: 11.5px; color: var(--neutral-500); line-height: 1.4; }
+
+/* Channels */
+.v3-iq-chmx { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.v3-iq-chmx th, .v3-iq-chmx td { padding: 8px 10px; border-bottom: 1px solid #eef0f3; text-align: left; vertical-align: top; }
+.v3-iq-chmx thead th { font-size: 11.5px; font-weight: 600; color: #374151; white-space: nowrap; }
+.v3-iq-chmx tbody th { font-weight: 600; color: #111827; white-space: nowrap; }
+.v3-iq-chmx td small { display: block; margin-top: 3px; color: var(--neutral-500); font-size: 11px; }
+.v3-iq-role { display: inline-block; font-size: 10.5px; font-weight: 600; padding: 2px 7px; border-radius: 5px; text-transform: capitalize; background: #f3f4f6; color: #374151; }
+.v3-iq-role.awareness { background: #e8f0fe; color: #1d4ed8; }
+.v3-iq-role.education { background: #f1eafe; color: #6d28d9; }
+.v3-iq-role.conversion { background: #e6f6ef; color: #0f8a5f; }
+.v3-iq-role.retention { background: #fff4e5; color: #9a5b00; }
+.v3-iq-rolelegend { display: flex; gap: 6px; margin-top: 8px; }
+.v3-iq-chcards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+.v3-iq-chcards article { display: flex; flex-direction: column; gap: 8px; padding: 14px; border-radius: 10px; background: #fff; box-shadow: 0 0 0 1px #e6e8ec; }
+.v3-iq-chcards header { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.v3-iq-chcards header b { font-size: 14px; }
+.v3-iq-chcards-aud { color: var(--neutral-500); font-size: 11.5px; }
+.v3-iq-chcards-rule { margin: 0; font-size: 11.5px; color: #6b7280; padding: 6px 8px; border-radius: 6px; background: #f7f8fa; }
+.v3-iq-moments { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.v3-iq-moments li { display: grid; grid-template-columns: 120px 1fr auto; gap: 12px; align-items: baseline; padding: 8px 0; border-bottom: 1px solid #f0f1f4; font-size: 13px; }
+.v3-iq-moments li:last-child { border-bottom: none; }
+.v3-iq-moments time { font-weight: 600; color: var(--primary); font-size: 12.5px; }
+.v3-iq-moments small { color: var(--neutral-500); font-size: 11.5px; }
+
+/* Misc */
+.v3-iq-posline.two { grid-template-columns: 1.4fr 1fr; }
+.v3-iq-idfacts.flat { padding-left: 0; border-left: none; margin-bottom: 14px; }
+
+/* Brand Kit tabs inside the Brand IQ Agent canvas */
+.v3-biq-kittabs { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 12px; }
+.v3-biq-kittabs button { font: inherit; font-size: 12.5px; padding: 6px 12px; border-radius: 8px; border: 1px solid transparent; background: transparent; color: #4b5563; cursor: pointer; }
+.v3-biq-kittabs button.active { background: #fff; border-color: #e6e8ec; color: #111827; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+
+@media (max-width: 760px) {
+  .v3-iq-brief { grid-template-columns: 1fr; }
+  .v3-iq-moments li { grid-template-columns: 1fr; gap: 2px; }
+}
+
+/* Channel mix: one row per audience, channels as chips coloured by their job */
+.v3-iq-chmx { display: flex; flex-direction: column; }
+.v3-iq-chmx-row { display: grid; grid-template-columns: 220px 1fr; gap: 12px; padding: 10px 0; border-bottom: 1px solid #f0f1f4; align-items: baseline; }
+.v3-iq-chmx-row:last-child { border-bottom: none; }
+.v3-iq-chmx-row > b { font-size: 13px; font-weight: 600; color: #111827; }
+.v3-iq-chmx-row > div { display: flex; flex-wrap: wrap; gap: 6px; }
+.v3-iq-chip-role { display: inline-flex; align-items: baseline; gap: 5px; font-size: 12px; font-weight: 500; padding: 3px 9px; border-radius: 999px; background: #f3f4f6; color: #374151; }
+.v3-iq-chip-role small { font-size: 10.5px; opacity: .75; }
+.v3-iq-chip-role.awareness { background: #e8f0fe; color: #1d4ed8; }
+.v3-iq-chip-role.education { background: #f1eafe; color: #6d28d9; }
+.v3-iq-chip-role.conversion { background: #e6f6ef; color: #0f8a5f; }
+.v3-iq-chip-role.retention { background: #fff4e5; color: #9a5b00; }
+.v3-iq-secidx { background: rgba(246, 245, 252, .94); backdrop-filter: blur(8px); margin: 0 -4px; padding: 8px 4px; border-radius: 10px; }
+@media (max-width: 760px) { .v3-iq-chmx-row { grid-template-columns: 1fr; gap: 6px; } }
