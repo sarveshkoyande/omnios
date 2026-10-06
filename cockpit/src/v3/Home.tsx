@@ -40,9 +40,9 @@ function timeAgo(iso: string): string {
 /** The quick starts, shown as big buttons inside the Ask box. Each one sets its agent
  *  as the box's context (same as picking it from the "/" menu). */
 const QUICK: { id: string; title: string; sub: string }[] = [
-  { id: "engagement-planner-2", title: "Plan engagement", sub: "From the brand plan to a build-ready campaign brief" },
-  { id: "briefing-agent", title: "Create a campaign", sub: "From a brief to an approved campaign, ready for Salesforce" },
-  { id: "flow-planner", title: "Build a flow", sub: "Turn a campaign into a journey diagram" },
+  { id: "engagement-planner-2", title: "Build Engagement Strategy", sub: "Translate the brand plan into an actionable engagement strategy." },
+  { id: "flow-planner", title: "Design Campaign Journey", sub: "Translate the campaign brief into a connected, activation-ready journey." },
+  { id: "signal-agent", title: "Campaign Performance & HCP Insights", sub: "Turn campaign and HCP signals into actionable insights to optimize performance." },
 ];
 
 /** The slash-command name an agent answers to, e.g. "/flow-planner". */
@@ -169,7 +169,7 @@ export function Home({ brands, activeBrand }: { brands: BrandSummary[]; activeBr
                 onKeyDown={onKeyDown}
                 placeholder={context
                   ? `Add a note for ${context.name} (optional), then Send`
-                  : activeBrand ? `Ask Omni anything about ${activeBrand}… or type / for agents` : "Ask Omni anything… or type / for agents"} />
+                  : "Ask Omni to plan, create, or optimize your campaign — or type / to explore agents."} />
               <button type="submit" className="v3-ask-send" disabled={!context && (!ask.trim() || slashQuery !== null || reply?.status === "thinking")}>
                 {context ? "Open" : "Send"}
               </button>

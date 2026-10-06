@@ -55,8 +55,19 @@ export const PHASE_TINT: Record<Phase, string> = {
 export const AGENTS: Record<Phase, LibraryAgent[]> = {
   strategy: [
     {
+      id: "brand-iq", name: "Brand IQ Agent", icon: "sparkles", status: "available",
+      summary: "Builds a unified brand context layer for campaign planning and orchestration.",
+      about: "Reads the brand plan (or, with no plan, public FDA, NIH, PubMed, ClinicalTrials.gov and CDC sources) and proposes the Brand Kit: positioning, evidence, voice, competition, the Big Idea with its reasoning, US geography and client data. Every other agent reads from what it builds.",
+      worksFrom: [
+        { label: "Brand plan", detail: "An uploaded brand plan deck, when there is one." },
+        { label: "Public sources", detail: "FDA label, Drugs@FDA, NIH MeSH, PubMed (US), ClinicalTrials.gov, MedlinePlus, CDC PLACES." },
+        { label: "Company SOPs", detail: "config/compliance_profiles.json." },
+      ],
+      builtOn: "strategy/kit_proposer.py, strategy/brand_builder.py, strategy/public_sources.py, strategy/us_geography.py",
+    },
+    {
       id: "engagement-planner-2", name: "Engagement Planning Agent", icon: "layers", status: "available",
-      summary: "Runs the CampaignFlow framework: objective card, audience, channels, journeys, omnichannel rules and a build-ready brief.",
+      summary: "Transforms the brand plan into an actionable engagement strategy across audience, messaging, channels and journeys.",
       about: "Reads the brand plan and Brand IQ, then runs the six CampaignFlow steps for one campaign. Each step reads only the approved step before it; you approve each draft or ask for changes. Gaps become questions, never inventions. Saving puts the campaign and its named journeys into Campaigns & Journeys and Live simulation.",
       worksFrom: [
         { label: "Brand plan", detail: "Uploaded documents and your notes, plus Brand IQ's brand-plan fields." },
@@ -66,8 +77,8 @@ export const AGENTS: Record<Phase, LibraryAgent[]> = {
       builtOn: "strategy/campaignflow.py",
     },
     {
-      id: "brand-persona-builder", name: "Audience Segmentation Planner", icon: "persona", status: "available",
-      summary: "Builds the brand's HCP and patient personas, shared by every campaign.",
+      id: "brand-persona-builder", name: "Segmentation Planner Agent", icon: "persona", status: "available",
+      summary: "Plans target audience segmentation and prioritization for campaign activation.",
       about: "Drafts HCP, patient and payer persona cards in the brand journey's Audience step (who they are, their tier, the voice that lands) and lets you refine one card by chat.",
       worksFrom: [
         { label: "Brand brief", detail: "Indication, primary audience and objective from the journey's Brief step." },
@@ -76,10 +87,21 @@ export const AGENTS: Record<Phase, LibraryAgent[]> = {
       ],
       builtOn: "strategy/brand_journey.py, strategy/personas.py",
     },
-    { id: "message-plan", name: "Message Plan", icon: "message", status: "wip", summary: "Builds the message house: core claim, pillars and proof points for each audience segment." },
     {
-      id: "channel-planner", name: "Channel Planner", icon: "smartphone", status: "available",
-      summary: "Chooses the channel mix and budget split for how the campaign goes to market.",
+      id: "segmentation-planner", name: "Segmentation Builder Agent", icon: "layers", status: "available",
+      summary: "Builds prioritized campaign audiences from defined segmentation rules.",
+      about: "Describe the HCPs you want to reach. The agent asks which email consent statuses to include, writes the Data Cloud SQL on the HCP segmentation data, sizes the segment with a live count, and creates and publishes it in Data Cloud once you confirm. When Data Cloud rejects the SQL, its Tester Agent fixes it and tries again.",
+      worksFrom: [
+        { label: "Your request", detail: "The audience in your own words, plus the consent statuses you pick and the segment's name." },
+        { label: "Data Cloud dataset", detail: "The HCP segmentation data model object's columns and their real values, read from Data Cloud." },
+        { label: "Salesforce Data Cloud", detail: "The Query API for the record count and the Segments API to create and publish the segment." },
+      ],
+      builtOn: "strategy/segmentation",
+    },
+    { id: "message-plan", name: "Campaign Messaging Agent", icon: "message", status: "wip", summary: "Translates brand messaging and guardrails into campaign-specific messages." },
+    {
+      id: "channel-planner", name: "Channel Mix Agent", icon: "smartphone", status: "available",
+      summary: "Determines the optimal channel mix for campaign activation.",
       about: "Scores channels on purpose, availability, preference and potential, then offers go-to-market postures (field-led, event-led and so on), each with its own budget split.",
       worksFrom: [
         { label: "Channel Selection template", detail: "The toolkit's six named channels, scored by the channel-mix engine." },
@@ -89,7 +111,7 @@ export const AGENTS: Record<Phase, LibraryAgent[]> = {
     },
     {
       id: "briefing-agent", name: "Campaign Planning Agent", icon: "document", status: "available",
-      summary: "Turns your campaign brief into an approved briefing document and a deployable Salesforce journey.",
+      summary: "Translates campaign strategy into a build-ready campaign brief.",
       about: "Reads your brief, typed or uploaded, asks only about what's genuinely missing, reviews the remaining assumptions with you, and writes the Campaign Briefing Document. Once you approve it, seven agents (Document Analyst, Salesforce Architect, Flow QA Tester, Visual Designer, Tester Agent, Flow Validator and Technical Writer) build the Salesforce Flow specification and the journey diagram, ready to deploy to your org. Its briefing feeds the Flow Planner and the Brief Compiler.",
       worksFrom: [
         { label: "Your brief", detail: "Typed requirements or an uploaded PDF, DOCX, TXT or MD brief, plus your answers to the agent's questions." },
@@ -99,19 +121,8 @@ export const AGENTS: Record<Phase, LibraryAgent[]> = {
       builtOn: "strategy/campaign_creator",
     },
     {
-      id: "segmentation-planner", name: "Segmentation Agent", icon: "layers", status: "available",
-      summary: "Turns a plain-English audience into a sized Salesforce Data Cloud segment.",
-      about: "Describe the HCPs you want to reach. The agent asks which email consent statuses to include, writes the Data Cloud SQL on the HCP segmentation data, sizes the segment with a live count, and creates and publishes it in Data Cloud once you confirm. When Data Cloud rejects the SQL, its Tester Agent fixes it and tries again.",
-      worksFrom: [
-        { label: "Your request", detail: "The audience in your own words, plus the consent statuses you pick and the segment's name." },
-        { label: "Data Cloud dataset", detail: "The HCP segmentation data model object's columns and their real values, read from Data Cloud." },
-        { label: "Salesforce Data Cloud", detail: "The Query API for the record count and the Segments API to create and publish the segment." },
-      ],
-      builtOn: "strategy/segmentation",
-    },
-    {
       id: "flow-planner", name: "Flow Planner Agent", icon: "route", status: "available",
-      summary: "Walks brand → engagement plan → campaign, then builds the SOP segmentation + journey diagram.",
+      summary: "Translates the campaign brief into campaign flow logic, including triggers, branches, waits and next actions.",
       about: "Opens on a blank canvas and asks, step by step, which brand, engagement plan and campaign to build a flow for, then generates the SOP-driven segmentation and journey diagram for it. It also drafts the channel-by-channel flow of sends, waits and decisions from the campaign's brief, audience and message ladder, and applies your changes as structured edits that survive a rebuild.",
       worksFrom: [
         { label: "Your picks", detail: "The brand, engagement plan and campaign you select as the agent asks." },
@@ -122,15 +133,14 @@ export const AGENTS: Record<Phase, LibraryAgent[]> = {
       builtOn: "strategy/flow_sop, strategy/campaign_ops.py, strategy/brand_journey.py",
     },
     {
-      id: "brand-iq", name: "Brand IQ Agent", icon: "sparkles", status: "available",
-      summary: "Builds the brand's knowledge base: brand plan, kit, Big Idea, personas, compliance and market intelligence.",
-      about: "Reads the brand plan (or, with no plan, public FDA, NIH, PubMed, ClinicalTrials.gov and CDC sources) and proposes the Brand Kit: positioning, evidence, voice, competition, the Big Idea with its reasoning, US geography and client data. Every other agent reads from what it builds.",
+      id: "brief-compiler", name: "Campaign Briefing Agent", icon: "document", status: "available",
+      summary: "Generates the campaign brief from the approved campaign engagement plan.",
+      about: "Writes the Campaign Strategy and Campaign Brief from the plan's decisions: purpose, audience rules, messaging, deliverables, measurement and risks. Every section names the decision it came from.",
       worksFrom: [
-        { label: "Brand plan", detail: "An uploaded brand plan deck, when there is one." },
-        { label: "Public sources", detail: "FDA label, Drugs@FDA, NIH MeSH, PubMed (US), ClinicalTrials.gov, MedlinePlus, CDC PLACES." },
-        { label: "Company SOPs", detail: "config/compliance_profiles.json." },
+        { label: "Plan decisions", detail: "Each landed decision with its inputs, framework and rationale." },
+        { label: "Measurement plan", detail: "The KPIs and targets the plan committed to." },
       ],
-      builtOn: "strategy/kit_proposer.py, strategy/brand_builder.py, strategy/public_sources.py, strategy/us_geography.py",
+      builtOn: "strategy/campaign_artifacts.py",
     },
     {
       id: "engagement-planner", name: "Engagement Planner (Old)", icon: "layers", status: "available",
@@ -153,23 +163,12 @@ export const AGENTS: Record<Phase, LibraryAgent[]> = {
     //   ],
     //   builtOn: "strategy/agent_forms.py, strategy/v3_artifacts.py",
     // },
-    // Card hidden (the agent and its route still work):
-    // {
-    //   id: "brief-compiler", name: "Brief Compiler", icon: "document", status: "available",
-    //   summary: "Turns the plan's decisions into a campaign brief an agency can execute.",
-    //   about: "Writes the Campaign Strategy and Campaign Brief from the plan's decisions: purpose, audience rules, messaging, deliverables, measurement and risks. Every section names the decision it came from.",
-    //   worksFrom: [
-    //     { label: "Plan decisions", detail: "Each landed decision with its inputs, framework and rationale." },
-    //     { label: "Measurement plan", detail: "The KPIs and targets the plan committed to." },
-    //   ],
-    //   builtOn: "strategy/campaign_artifacts.py",
-    // },
   ],
   ops: [
     { id: "engagement-orchestration", name: "Intake Orchestrator", icon: "users", status: "wip", summary: "Takes in campaign requests and tracks the setup activity board, owners and deadlines." },
     {
       id: "journey-builder", name: "SFMC Journey Builder", icon: "branch", status: "available",
-      summary: "Builds and edits the live engagement journey diagram from plain-English instructions.",
+      summary: "Builds activation-ready Salesforce journeys from the campaign journey.",
       about: "Edits the Campaign Plan's journey diagram from what you tell it, and checks every change against the flowchart rules before saving it.",
       worksFrom: [
         { label: "Journey diagram", detail: "The campaign's current diagram, read as a compact graph." },
@@ -179,7 +178,7 @@ export const AGENTS: Record<Phase, LibraryAgent[]> = {
     },
     {
       id: "email-template-builder", name: "Email Template Builder", icon: "mail", status: "available", inDevelopment: true,
-      summary: "Builds on-brand, compliant email templates for each send in a journey.",
+      summary: "Creates on-brand, compliant email templates for campaign activation.",
       about: "Will assemble email templates for each send in a flow from the brand's approved message house and claims, in the brand's voice.",
       worksFrom: [
         { label: "Brand kit", detail: "Message house, approved claims, voice do's and don'ts." },
@@ -193,7 +192,7 @@ export const AGENTS: Record<Phase, LibraryAgent[]> = {
   intelligence: [
     {
       id: "signal-agent", name: "Signal Scout", icon: "radar", status: "available",
-      summary: "What changed in the market, and what should the team do? Signals, competitive landscape and actions.",
+      summary: "Detects meaningful market and competitive signals and translates them into campaign actions.",
       about: "Reads the brand's Brand IQ, then runs nine skills in turn: market and treatment landscape, clinical evidence, competitive set, positioning, message territory, channel activity, signal synthesis, team actions and what changed since the last readout. US market only.",
       worksFrom: [
         { label: "Brand IQ", detail: "Label, clinical data, competitors, audiences, US geography and brand-plan fields." },
