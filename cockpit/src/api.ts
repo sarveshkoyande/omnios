@@ -151,6 +151,9 @@ export function getBrandReadiness(brand: string): Promise<BrandReadiness> {
 export function getChannelPlaybook(): Promise<Record<string, unknown>> {
   return getJSON("/api/frameworks/channel-playbook");
 }
+export function getCompliancePlaybook(): Promise<Record<string, unknown>> {
+  return getJSON("/api/frameworks/compliance-playbook");
+}
 export function getClientData(brand: string): Promise<Record<string, unknown>> {
   return getJSON(`/api/brand-kits/${encodeURIComponent(brand)}/client-data`);
 }

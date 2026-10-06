@@ -2981,6 +2981,11 @@
           "status": "proposed",
           "engine": "kit_proposer.channels",
           "date": "2026-10-06"
+        },
+        "compliance_check": {
+          "status": "proposed",
+          "engine": "kit_proposer.compliance",
+          "date": "2026-10-06"
         }
       },
       "bullets": {
@@ -3494,6 +3499,101 @@
               "Treater/Expert - Hero"
             ],
             "why": "Engage experts to champion optimal treatment."
+          }
+        ],
+        "status": "proposed",
+        "generated_at": "2026-10-06"
+      },
+      "compliance_check": {
+        "claim_checks": [
+          {
+            "where": "Core claim",
+            "claim": "Cablivi inhibits microthrombi formation and prevents organ damage",
+            "verdict": "ok",
+            "why": "Mechanism of action described in label and implied benefit.",
+            "fix": ""
+          },
+          {
+            "where": "Big Idea",
+            "claim": "First & Best-In-Class treatment reducing aTTP morbidities and mortality to improve & save lives",
+            "verdict": "caution",
+            "why": "\"Best-in-Class\" is promotional; \"improve & save lives\" needs direct support.",
+            "fix": "Remove 'Best-In-Class'; rephrase 'improve & save lives' or add supporting data."
+          },
+          {
+            "where": "Positioning",
+            "claim": "Frontline Cablivi for ALL aTTP patients to inhibit microthrombi formation and prevent organ damage",
+            "verdict": "caution",
+            "why": "\"ALL aTTP patients\" is broad; label specifies 'adult and pediatric patients 12 years of age and older'.",
+            "fix": "Qualify 'ALL aTTP patients' to reflect the indicated age group."
+          },
+          {
+            "where": "Message pillar: Unique MoA",
+            "claim": "First and only approved targeted therapy (anti-vWF Nanobody) to inhibit microthrombi in aTTP",
+            "verdict": "ok",
+            "why": "Label supports mechanism of action and 'first and only' status.",
+            "fix": ""
+          },
+          {
+            "where": "Message pillar: Outcomes",
+            "claim": "Reduction in mortality, refractoriness, exacerbations and recurrences during treatment",
+            "verdict": "caution",
+            "why": "Mortality reduction not explicitly stated in provided label sections.",
+            "fix": "Verify mortality claim with clinical study data/label. Remove if not supported."
+          },
+          {
+            "where": "Message pillar: Guidelines",
+            "claim": "Recommended in ISTH TTP guidelines for initial and relapsing events",
+            "verdict": "ok",
+            "why": "Referencing external guidelines is acceptable if accurate.",
+            "fix": ""
+          },
+          {
+            "where": "Message pillar: Resource value",
+            "claim": "Fewer PEX days (-38%), ICU stay (-65%) and hospital stay (-31%) vs PEX + IST alone",
+            "verdict": "ok",
+            "why": "Specific numerical claims are acceptable if from clinical data.",
+            "fix": ""
+          }
+        ],
+        "key_risks": [
+          {
+            "lead": "Serious Hemorrhage",
+            "text": "Cablivi increases the risk of bleeding, which can be serious and fatal. In clinical studies, severe bleeding (epistaxis, gingival bleeding, GI hemorrhage, metrorrhagia) occurred in 1% of subjects each. Postmarketing cases of life-threatening and fatal bleeding have been reported. (5.1)"
+          },
+          {
+            "lead": "Increased Bleeding Risk",
+            "text": "The risk of bleeding is heightened in patients with underlying coagulopathies or those on concomitant antiplatelet agents, thrombolytic drugs, heparin, or anticoagulants. Avoid concurrent use with these agents. (5.1)"
+          },
+          {
+            "lead": "Surgical Interruption",
+            "text": "Withhold Cablivi for 7 days prior to elective surgery, dental procedures, or other invasive interventions. If emergency surgery is needed, consider von Willebrand factor concentrate. (5.1)"
+          },
+          {
+            "lead": "Hypersensitivity Contraindication",
+            "text": "Cablivi is contraindicated in patients with a previous severe hypersensitivity reaction to caplacizumab-yhdp or any excipients. (4)"
+          }
+        ],
+        "channel_notes": [
+          {
+            "channel_id": "hcp_site",
+            "note": "Ensure balanced risk info on bleeding prominently displayed."
+          },
+          {
+            "channel_id": "programmatic",
+            "note": "Use approved language only; avoid aspirational claims like 'Best-in-Class'."
+          },
+          {
+            "channel_id": "rep_f2f",
+            "note": "Reps must clearly state Cablivi is 'in combination with PEX + IST'."
+          },
+          {
+            "channel_id": "social",
+            "note": "Concise, compliant messaging with clear risk disclosure."
+          },
+          {
+            "channel_id": "webinar",
+            "note": "Speakers must adhere strictly to on-label claims and indication."
           }
         ],
         "status": "proposed",
@@ -6469,6 +6569,11 @@
           "status": "proposed",
           "engine": "kit_proposer.channels",
           "date": "2026-10-06"
+        },
+        "compliance_check": {
+          "status": "proposed",
+          "engine": "kit_proposer.compliance",
+          "date": "2026-10-06"
         }
       },
       "big_idea": {
@@ -6972,6 +7077,124 @@
               "Endocrinologists treating type 2 diabetes with CVD"
             ],
             "why": "Endocrinologists are already prescribers for T2D, need to reinforce routine use."
+          }
+        ],
+        "status": "proposed",
+        "generated_at": "2026-10-06"
+      },
+      "compliance_check": {
+        "claim_checks": [
+          {
+            "where": "Core claim",
+            "claim": "Jardiance provides comprehensive benefits by reducing the risk of cardiovascular death and hospitalization for heart failure in adults with heart failure, reducing cardiovascular death in adults with type 2 diabetes and established cardiovascular disease, and improving glycemic control in adults with type 2 diabetes.",
+            "verdict": "ok",
+            "why": "All elements of this claim are directly supported by the approved indications.",
+            "fix": ""
+          },
+          {
+            "where": "Big Idea",
+            "claim": "Jardiance: Comprehensive Heart and Diabetes Protection. Redefining Lifelong Care.",
+            "verdict": "ok",
+            "why": "The claim aligns with the breadth of indications, 'redefining lifelong care' is puffery.",
+            "fix": ""
+          },
+          {
+            "where": "Positioning",
+            "claim": "For adult patients with heart failure or type 2 diabetes mellitus with established cardiovascular disease who need improved cardiovascular outcomes and glycemic control, Jardiance is the SGLT2 inhibitor that provides statistically significant reductions in cardiovascular death, hospitalization for heart failure, and HbA1c because of its proven efficacy across these indications.",
+            "verdict": "ok",
+            "why": "All benefits are supported by approved indications and general knowledge of SGLT2 efficacy.",
+            "fix": ""
+          },
+          {
+            "where": "Message pillar: Cardiovascular Benefit in Heart Failure",
+            "claim": "JARDIANCE reduces the risk of cardiovascular death and hospitalization for heart failure in adults with heart failure.",
+            "verdict": "ok",
+            "why": "Directly supported by the first indication statement.",
+            "fix": ""
+          },
+          {
+            "where": "Message pillar: Cardiovascular Benefit in Type 2 Diabetes with CVD",
+            "claim": "JARDIANCE reduces the risk of cardiovascular death in adults with type 2 diabetes mellitus and established cardiovascular disease.",
+            "verdict": "ok",
+            "why": "Directly supported by the second indication statement.",
+            "fix": ""
+          },
+          {
+            "where": "Message pillar: Glycemic Control",
+            "claim": "JARDIANCE improves glycemic control as an adjunct to diet and exercise in adults with type 2 diabetes mellitus.",
+            "verdict": "ok",
+            "why": "Directly supported by the third indication statement.",
+            "fix": ""
+          },
+          {
+            "where": "Message pillar: HbA1c Reduction",
+            "claim": "JARDIANCE 25 mg reduced HbA1c by -0.9% compared to placebo in a monotherapy study.",
+            "verdict": "caution",
+            "why": "Specific data requires a label citation and context on study population/design.",
+            "fix": "Add label citation for clinical trial data."
+          },
+          {
+            "where": "Message pillar: Body Weight Reduction",
+            "claim": "JARDIANCE 25 mg resulted in a -3.9% change from baseline in body weight compared to a 2.0% change for glimepiride at Week 52.",
+            "verdict": "caution",
+            "why": "Specific data requires a label citation and context on study population/design.",
+            "fix": "Add label citation for clinical trial data."
+          }
+        ],
+        "key_risks": [
+          {
+            "lead": "Ketoacidosis Risk",
+            "text": "Assess all patients for ketoacidosis, even if blood glucose levels are normal. Discontinue JARDIANCE if suspected, evaluate, and treat promptly. Consider risk factors before starting and temporarily discontinue for surgery or acute illness. JARDIANCE is not for type 1 diabetes as it increases ketoacidosis risk in these patients. (Warnings and Precautions 5.1)"
+          },
+          {
+            "lead": "Volume Depletion",
+            "text": "JARDIANCE can cause intravascular volume depletion, potentially leading to symptomatic hypotension or acute kidney injury. Assess volume status and renal function before initiating in patients with impaired renal function, the elderly, or those on loop diuretics. Monitor for symptoms after starting therapy. (Warnings and Precautions 5.2)"
+          },
+          {
+            "lead": "Urosepsis, Pyelonephritis",
+            "text": "Serious urinary tract infections requiring hospitalization have occurred. Evaluate patients for signs/symptoms of UTIs and treat promptly. (Warnings and Precautions 5.3)"
+          },
+          {
+            "lead": "Hypoglycemia Risk",
+            "text": "When JARDIANCE is used with insulin or insulin secretagogues, consider reducing the dose of these concomitant medications to lower the risk of hypoglycemia. (Warnings and Precautions 5.4)"
+          },
+          {
+            "lead": "Fournier's Gangrene",
+            "text": "Serious, life-threatening cases of necrotizing fasciitis of the perineum have been reported. Assess patients with perineal pain/tenderness, erythema, or swelling with fever/malaise. Institute prompt treatment if suspected. (Warnings and Precautions 5.5)"
+          },
+          {
+            "lead": "Contraindications",
+            "text": "Do not use in patients with hypersensitivity to empagliflozin or any excipients (e.g., angioedema) or in patients on dialysis. (Contraindications 4)"
+          }
+        ],
+        "channel_notes": [
+          {
+            "channel_id": "rep_f2f",
+            "note": "Reps must clearly articulate all three indications and key safety info."
+          },
+          {
+            "channel_id": "brand_email",
+            "note": "Ensure fair balance of benefits and risks, especially ketoacidosis."
+          },
+          {
+            "channel_id": "webinar",
+            "note": "Speakers need to cover full prescribing information for comprehensive claims."
+          },
+          {
+            "channel_id": "congress",
+            "note": "Poster and presentation content must align with all approved indications."
+          },
+          {
+            "channel_id": "patient_site",
+            "note": "Simplify complex risks for patient understanding, especially DKA symptoms."
+          },
+          {
+            "channel_id": "social",
+            "note": "Character limits mean careful phrasing to ensure fair balance."
+          },
+          {
+            "channel_id": "ehr",
+            "note": "Integrate key warnings like eGFR limitations and DKA risk factors."
           }
         ],
         "status": "proposed",

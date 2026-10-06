@@ -201,3 +201,20 @@ td .v3-iq-bul { font-size: 12.5px; gap: 3px; }
 .v3-iq-measure small { font-size: 11.5px; color: var(--neutral-500); }
 @media (max-width: 900px) { .v3-iq-measure { grid-template-columns: 1fr 1fr; } }
 .v3-iq-srcbadge.framework { background: #ecfdf5; color: #065f46; }
+
+/* Compliance: claim check */
+.v3-iq-claims { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.v3-iq-claims li { display: flex; gap: 12px; align-items: flex-start; padding: 10px 12px; border-radius: 8px; background: #fff; box-shadow: 0 0 0 1px #e6e8ec; border-left: 3px solid #d97706; }
+.v3-iq-claims li.ok { border-left-color: #0f8a5f; }
+.v3-iq-claims li.risk { border-left-color: #d92d20; }
+.v3-iq-claims .v { flex: none; display: inline-flex; align-items: center; gap: 4px; min-width: 92px; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 5px; background: #fff4e5; color: #9a5b00; }
+.v3-iq-claims li.ok .v { background: #e6f6ef; color: #0f8a5f; }
+.v3-iq-claims li.risk .v { background: #fef3f2; color: #b42318; }
+.v3-iq-claims small { font-size: 11px; color: var(--neutral-500); }
+.v3-iq-claims p { margin: 2px 0 4px; font-size: 13px; font-weight: 500; color: #111827; }
+.v3-iq-claims .why, .v3-iq-claims .fix { display: block; font-size: 12.5px; color: #4b5563; line-height: 1.45; }
+.v3-iq-claims .fix b { color: #111827; }
+.v3-iq-keyrisks { margin-top: 12px; padding: 12px; border-radius: 8px; background: #fffaf0; box-shadow: 0 0 0 1px #f3d9a7; display: flex; flex-direction: column; gap: 6px; }
+.v3-iq-refs { display: inline-flex; align-items: center; gap: 4px; margin-top: auto; font-size: 11px; color: var(--neutral-500); }
+.v3-iq-refs svg { color: var(--primary); }
+.v3-iq-note-sm { font-size: 12.5px; color: #1f2937; line-height: 1.45; }

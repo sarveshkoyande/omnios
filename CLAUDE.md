@@ -172,7 +172,10 @@ brand on a page), Market, Audiences (`iq/personas`), Message & Voice, Channels, 
 source badges, "Still needed" and the completeness strip. Long text reads as bullets from kit.bullets (`digest` skill; the
 original is one click away). Channels = the best-practice framework `config/frameworks/channel_playbook.json` (adoption-stage jobs, channel playbook,
 lifecycle mix, orchestration rules, measurement; `GET /api/frameworks/channel-playbook`) with the brand layer from the
-`channels` skill on top (brand plan activities win; cards carry `framework_id`). `BrandKitPage.tsx` only
+`channels` skill on top (brand plan activities win; cards carry `framework_id`). Compliance = the company SOPs (when assigned) plus
+`config/frameworks/compliance_playbook.json` (claims & fair balance, rules by channel, review cycle, data & consent, adverse
+events, regulations) for every brand, with the `compliance` skill's claim check (kit.compliance_check: verdict per claim
+against the label, key risks, channel notes) as a first read for MLR. Frameworks are served by `GET /api/frameworks/{name}`. `BrandKitPage.tsx` only
 re-exports for old imports.
 
 **LLM-only rule**: free text a person typed is read only by the model — no regex/keyword matching of it; with no

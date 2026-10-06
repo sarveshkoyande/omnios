@@ -261,11 +261,50 @@ def _reach(brand: str) -> dict:
         return {}
 
 
+FRAMEWORKS = {"channel-playbook": "channel_playbook.json", "compliance-playbook": "compliance_playbook.json"}
+
+
+def framework(name: str) -> dict:
+    """A best-practice framework from config/frameworks (FRAMEWORKS names the allowed ones)."""
+    import json
+    p = Path(__file__).resolve().parent.parent / "config" / "frameworks" / FRAMEWORKS[name]
+    return json.loads(p.read_text(encoding="utf-8"))
+
+
 def channel_playbook() -> dict:
     """The best-practice channel framework (config/frameworks/channel_playbook.json)."""
-    import json
-    p = Path(__file__).resolve().parent.parent / "config" / "frameworks" / "channel_playbook.json"
-    return json.loads(p.read_text(encoding="utf-8"))
+    return framework("channel-playbook")
+
+
+def propose_compliance(brand: str, kit: dict) -> dict:
+    """Brand layer over the compliance playbook: a claim check against the label, the label's key risks for
+    fair balance, and what each channel must watch for this brand. Drafted for MLR review, never a decision."""
+    k = _plan_layer(kit)
+    pb = framework("compliance-playbook")
+    claims = [{"where": "Core claim", "claim": k.get("core_claim")}, {"where": "Big Idea", "claim": k.get("tagline")},
+              {"where": "Positioning", "claim": k.get("positioning_statement")}] + \
+             [{"where": f"Message pillar: {m.get('pillar')}", "claim": m.get("claim")} for m in k.get("message_hierarchy") or [] if isinstance(m, dict)]
+    claims = [c for c in claims if isinstance(c.get("claim"), str) and c["claim"].strip() and not c["claim"].startswith("Needs input")][:12]
+    used = {c.get("framework_id") for c in (k.get("channels") or {}).get("cards") or [] if isinstance(c, dict)}
+    out = complete_json(
+        "You are a US pharma regulatory reviewer preparing notes for an MLR (medical, legal, regulatory) review. Use "
+        "ONLY the label text, guardrails and claims provided; cite the label section you rely on. You give a first "
+        "read, never an approval. " + _BULLET_RULES +
+        "Write: claim_checks (one per claim given: where, claim, verdict = ok | caution | risk, why <=20 words, "
+        "fix <=20 words or ''); key_risks (3-5 bullets from the label that fair balance must carry: boxed warning, "
+        "contraindications, main warnings); channel_notes (for the brand's channels, or the most relevant 4-6 playbook "
+        "channels if none are given: channel_id from the playbook, note <=20 words on what to watch for THIS brand).\n"
+        'Shape: {"claim_checks":[{"where":"","claim":"","verdict":"ok","why":"","fix":""}],"key_risks":[{"lead":"","text":""}],'
+        '"channel_notes":[{"channel_id":"","note":""}],"reasoning":[]}',
+        {"brand": brand, "claims": claims, "label_indication": _label(k, "indication", 3000),
+         "label_warnings": _label(k, "warnings", 6000), "label_boxed_warning": _label(k, "boxed_warning", 1500),
+         "label_contraindications": _label(k, "contraindications", 1500), "approved_indication": k.get("approved_indication"),
+         "guardrails": _short(k.get("guardrails")), "brand_channels": sorted(x for x in used if x),
+         "playbook_channels": [{"id": c["id"], "name": c["name"]} for c in pb["channels"]]}, max_tokens=5000)
+    return {"compliance_check": {"claim_checks": out.get("claim_checks") or [], "key_risks": out.get("key_risks") or [],
+                                 "channel_notes": out.get("channel_notes") or [], "status": "proposed",
+                                 "generated_at": ps._today()},
+            "reasoning": out.get("reasoning")}
 
 
 def propose_channels(brand: str, kit: dict) -> dict:
@@ -400,6 +439,8 @@ SKILLS = [
      "does": "The Big Idea and tagline, with its reasoning and alternatives."},
     {"id": "client_data", "name": "Load client data", "llm": False,
      "does": "HCP deciles, accounts, access, field force and reach (synthetic until real feeds are connected)."},
+    {"id": "compliance", "name": "Check claims for MLR", "llm": True,
+     "does": "A first read of the brand's claims against the label, the key risks for fair balance, and channel watch-outs."},
     {"id": "digest", "name": "Turn long text into bullets", "llm": True,
      "does": "Key-point bullets for the label, value story and other long text; the original stays one click away."},
     {"id": "context", "name": "Write the context briefs", "llm": True,
@@ -554,6 +595,8 @@ def run_skill(brand: str, skill: str) -> dict:
     if skill == "channels":
         out = propose_channels(brand, kit)
         return save("channels", {"channels": out, "reasoning": out.pop("reasoning", None)}, ("channels",))
+    if skill == "compliance":
+        return save("compliance", propose_compliance(brand, kit), ("compliance_check",))
     if skill == "digest":
         out = propose_digest(brand, kit)
         return {"kit": brand_kit.apply_diff(brand, {"bullets": out["bullets"]}), "reasoning": _reasons(out)}
@@ -580,7 +623,7 @@ STEPS = [
     {"id": "understand", "name": "Understand the brand", "skills": ["brand_plan"]},
     {"id": "evidence", "name": "Gather the evidence", "skills": ["label", "audience_intel", "us_geography"]},
     {"id": "strategy", "name": "Build the brand strategy", "skills": ["evidence", "personas", "voice", "competition"]},
-    {"id": "idea", "name": "Big Idea, channels & briefs", "skills": ["big_idea", "client_data", "channels", "digest", "context"]},
+    {"id": "idea", "name": "Big Idea, channels & briefs", "skills": ["big_idea", "client_data", "channels", "compliance", "digest", "context"]},
 ]
 
 # Content the agent rebuilds. Identity and lookup fields (brand, generic, indications, the public-source
@@ -589,7 +632,7 @@ _REBUILT = ("positioning_statement", "core_claim", "key_objective", "unmet_need"
             "strategic_imperatives", "kpis", "activities", "audience_segments", "clinical_data", "references",
             "message_hierarchy", "personas", "care_continuum", "messages_by_persona", "voice", "tone_pillars", "voice_do",
             "voice_dont", "guardrails", "competition_self", "tagline", "big_idea", "product_profile", "audience_intel",
-            "us_geography", "approval_dates", "channels", "context", "bullets")
+            "us_geography", "approval_dates", "channels", "compliance_check", "context", "bullets")
 
 
 def _inventory(kit: dict) -> dict:
@@ -663,5 +706,5 @@ def restore_version(brand: str, version: str) -> dict:
     return brand_kit.apply_diff(brand, json.loads(p.read_text(encoding="utf-8")))
 
 
-__all__ = ["propose", "run_skill", "TABS", "channel_playbook", "SKILLS", "STEPS", "acknowledge", "reset_for_rebuild", "list_versions",
+__all__ = ["propose", "run_skill", "TABS", "channel_playbook", "framework", "FRAMEWORKS", "SKILLS", "STEPS", "acknowledge", "reset_for_rebuild", "list_versions",
            "restore_version", "LLMUnavailable"]

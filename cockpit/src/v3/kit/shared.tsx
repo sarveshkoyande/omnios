@@ -91,13 +91,19 @@ export const SECTIONS: Record<string, SectionDef> = {
   clinical: { tab: "product", title: "Clinical evidence", icon: "flask", keys: ["clinical_data"], skill: "evidence" },
   references: { tab: "product", title: "References", icon: "link", keys: ["references"], skill: "evidence" },
 
+  dodont: { tab: "compliance", title: "Do and don't", icon: "check", keys: ["guardrails.dos", "guardrails.donts"], skill: "voice" },
+  claimcheck: { tab: "compliance", title: "Claim check", icon: "shield", keys: ["compliance_check.claim_checks"], skill: "compliance" },
+  cmpclaims: { tab: "compliance", title: "Claims & fair balance", icon: "scale", keys: "framework" },
+  cmpchannels: { tab: "compliance", title: "Rules by channel", icon: "megaphone", keys: "framework" },
+  cmpcycle: { tab: "compliance", title: "Review cycle", icon: "branch", keys: "framework" },
   approval: { tab: "compliance", title: "Approval workflow", icon: "branch", keys: "sop" },
   prelaunch: { tab: "compliance", title: "Pre-launch checklist", icon: "check", keys: "sop" },
   sops: { tab: "compliance", title: "Campaign SOPs", icon: "document", keys: "sop" },
   eligibility: { tab: "compliance", title: "Eligibility & suppressions", icon: "users", keys: "sop" },
   chrules: { tab: "compliance", title: "Channel rules", icon: "mail", keys: "sop" },
-  dodont: { tab: "compliance", title: "Do and don't", icon: "check", keys: ["guardrails.dos", "guardrails.donts"], skill: "voice" },
-  regs: { tab: "compliance", title: "Regulatory baseline", icon: "scale", keys: "sop" },
+  cmpdata: { tab: "compliance", title: "Data, privacy & consent", icon: "eye", keys: "framework" },
+  cmpae: { tab: "compliance", title: "Adverse events", icon: "alertTriangle", keys: "framework" },
+  regs: { tab: "compliance", title: "Regulations", icon: "scale", keys: "framework" },
 };
 export const sectionsOf = (tab: TabId) => Object.entries(SECTIONS).filter(([, d]) => d.tab === tab);
 export function filled(kit: Any | null, keys: Spec): boolean {

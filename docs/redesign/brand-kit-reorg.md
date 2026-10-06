@@ -100,3 +100,5 @@ marks them as AI drafts. Brand-plan activities are never overwritten.
   channel jobs by adoption stage, a playbook card per channel (use when, formats, cadence, measure, watch out),
   mix by lifecycle stage, orchestration rules, and how to measure. The brand's own plan sits inside the cards.
 - Field labels in every template carry an icon.
+- Compliance follows the same pattern: a best-practice framework (`config/frameworks/compliance_playbook.json`) for every
+  brand, the company's SOPs when assigned, and a claim check against the label drafted for MLR (the `compliance` skill).

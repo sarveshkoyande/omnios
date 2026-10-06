@@ -1,0 +1,65 @@
+{
+  "name": "Omni compliance playbook",
+  "source": "Omni best-practice framework for US prescription-drug promotion. Guidance, not legal advice: the company's SOPs and MLR decide.",
+  "review_cycle": [
+    {"step": "Brief & references", "what": "Objective, audience, channel and the references every claim will rest on.", "owner": "Brand / agency"},
+    {"step": "Draft, claims annotated", "what": "Every claim linked to the exact page and line of its reference.", "owner": "Agency"},
+    {"step": "Medical review", "what": "Is it accurate, current and supported by the evidence?", "owner": "Medical"},
+    {"step": "Legal review", "what": "Claims, risk wording, rights to images and music, contests and offers.", "owner": "Legal"},
+    {"step": "Regulatory review", "what": "Consistent with the label, fair balance, ISI and PI; whether Form FDA 2253 is needed.", "owner": "Regulatory"},
+    {"step": "Final approval & job code", "what": "Approved version locked with a job code and an expiry date.", "owner": "MLR chair"},
+    {"step": "Submit Form FDA 2253", "what": "Promotional pieces sent to FDA's Office of Prescription Drug Promotion at first use.", "owner": "Regulatory"},
+    {"step": "Re-review or withdraw", "what": "Re-review at expiry or when the label changes; pull every copy everywhere when withdrawn.", "owner": "Brand"}
+  ],
+  "claims": [
+    {"rule": "On-label only", "detail": "Every claim matches the approved indication, population and dosing. No off-label use in promotion."},
+    {"rule": "Substantiated and referenced", "detail": "Efficacy claims rest on adequate, well-controlled evidence, cited to the page."},
+    {"rule": "Fair balance", "detail": "Risks get prominence and readability comparable to benefits, in the same piece."},
+    {"rule": "ISI and full PI", "detail": "Important safety information visible or one click away on every asset; prescribing information linked."},
+    {"rule": "No overstating, no minimising", "detail": "No 'safe', 'cure' or 'no side effects'; no burying or softening of risks."},
+    {"rule": "Comparisons need head-to-head data", "detail": "Superiority or comparative claims only with direct comparative evidence."},
+    {"rule": "Medical answers off-label questions", "detail": "Unsolicited off-label questions go to Medical Information, not the rep or the brand team."},
+    {"rule": "Patient materials in plain words", "detail": "Consumer pieces use plain language and keep the risk information understandable."}
+  ],
+  "channels": [
+    {"id": "rep_f2f", "name": "Rep visit (face to face)", "icon": "persona", "rules": ["Approved detail aids and leave-behinds only", "Meals and items of value follow the PhRMA Code and are reported under Open Payments", "Off-label questions referred to Medical Information"], "refs": "PhRMA Code · Sunshine Act · Anti-Kickback Statute"},
+    {"id": "rte", "name": "Rep-triggered email", "icon": "mail", "rules": ["Approved templates; reps choose, never edit", "Sent only to HCPs who opted in", "ISI and PI link in every email"], "refs": "21 CFR 202.1 · CAN-SPAM"},
+    {"id": "brand_email", "name": "Brand email (HQ)", "icon": "mail", "rules": ["Documented opt-in and a working unsubscribe", "Opt-outs honoured within 10 business days", "Frequency caps shared with rep email"], "refs": "CAN-SPAM"},
+    {"id": "webinar", "name": "Webinars & speaker programs", "icon": "video", "rules": ["Speakers trained and use approved slides", "Fair-market-value fees; attendee meals within PhRMA limits", "Off-label questions answered by Medical, not the speaker"], "refs": "PhRMA Code · OIG guidance on speaker programs · Sunshine Act"},
+    {"id": "congress", "name": "Congresses & medical meetings", "icon": "calendar", "rules": ["Promotional booth separate from medical (non-promotional) activity", "Only approved materials on the booth", "Country rules apply at international meetings"], "refs": "PhRMA Code · congress rules"},
+    {"id": "display", "name": "Display, programmatic & endemic", "icon": "monitor", "rules": ["Benefit and risk balanced within the ad, or a prominent link to risk information", "HCP-only content shown only to verified HCPs", "Keep a record of every live creative and placement"], "refs": "21 CFR 202.1 · FDA guidance on space-limited media"},
+    {"id": "search", "name": "Paid search", "icon": "search", "rules": ["Branded ads that name a benefit need risk information or a direct path to it", "Avoid naming the condition and brand together without balance", "Pre-approve keyword lists"], "refs": "FDA untitled letters on search ads"},
+    {"id": "social", "name": "Paid & organic social", "icon": "smartphone", "rules": ["Benefit and risk together where space allows; otherwise link to full risk", "Comments moderated; adverse events reported", "Influencers disclose they are paid and use approved claims only"], "refs": "FDA social-media draft guidance · FTC endorsement guides"},
+    {"id": "dtc_tv", "name": "TV & connected TV", "icon": "monitor", "rules": ["Major statement of risks in audio and text, clear and neutral", "Adequate provision: where to find full prescribing information", "Submit to OPDP; consider advisory review before first airing"], "refs": "21 CFR 202.1(e) · FDA DTC final rule"},
+    {"id": "patient_site", "name": "Patient website", "icon": "globe", "rules": ["ISI on every page; full PI and Medication Guide linked", "Plain language", "Forms collect only what's needed, with consent"], "refs": "21 CFR 202.1 · state privacy laws"},
+    {"id": "crm", "name": "Patient CRM (email & SMS)", "icon": "mail", "rules": ["Prior express written consent for marketing texts", "Health data handled as sensitive; consent kept on record", "Easy opt-out in every message"], "refs": "TCPA · CAN-SPAM · state health-data laws"},
+    {"id": "psp", "name": "Patient support & hub", "icon": "heartPulse", "rules": ["HIPAA authorisation before using patient data for marketing", "Copay help excludes government-insured patients", "Nurse educators don't promote or give medical advice beyond the label"], "refs": "HIPAA · Anti-Kickback Statute"},
+    {"id": "ehr", "name": "EHR / point of care", "icon": "document", "rules": ["Messages don't interfere with clinical decision-making", "Vendor and EHR rules on sponsored content apply", "Clearly marked as sponsored"], "refs": "Anti-Kickback Statute · vendor policies"},
+    {"id": "msl", "name": "Medical science liaisons", "icon": "flask", "rules": ["Non-promotional: scientific exchange only", "Off-label discussion only in response to unsolicited questions", "No sales targets or call plans shared with sales"], "refs": "FDA guidance on unsolicited requests"}
+  ],
+  "data_privacy": [
+    {"rule": "Consent on record", "detail": "Capture when and how each person agreed to be contacted, per channel."},
+    {"rule": "Fast opt-outs", "detail": "Unsubscribes flow to every channel and vendor; email within 10 business days at most (CAN-SPAM)."},
+    {"rule": "Texts need written consent", "detail": "Marketing SMS only with prior express written consent (TCPA)."},
+    {"rule": "Patient data", "detail": "Data from providers or pharmacies needs a HIPAA authorisation before marketing use."},
+    {"rule": "State health-data laws", "detail": "Consumer health data falls under state laws such as CCPA/CPRA and Washington's My Health My Data Act."},
+    {"rule": "Transfers of value", "detail": "Meals, fees and travel for HCPs are tracked and reported to CMS Open Payments."}
+  ],
+  "adverse_events": [
+    {"rule": "Any channel, any mention", "detail": "An adverse event or product complaint seen anywhere goes to pharmacovigilance, typically within one business day (company SOP sets the clock)."},
+    {"rule": "Moderate what you host", "detail": "Brand social pages, comment sections and chat are monitored on a set schedule."},
+    {"rule": "Train every vendor", "detail": "Agencies, call centres and hub staff complete AE-reporting training before go-live."},
+    {"rule": "Scope listening up front", "detail": "Decide which sources are monitored; whatever is monitored must be reviewed for AEs."}
+  ],
+  "regulations": [
+    {"name": "FD&C Act · 21 CFR 202.1", "region": "US", "what": "Prescription-drug advertising: consistent with the label, fair balance, brief summary.", "url": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-C/part-202"},
+    {"name": "Form FDA 2253 · 21 CFR 314.81", "region": "US", "what": "Promotional materials submitted to FDA at first use.", "url": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-D/part-314"},
+    {"name": "FDA OPDP", "region": "US", "what": "Office of Prescription Drug Promotion: reviews promotion, issues untitled and warning letters.", "url": "https://www.fda.gov/about-fda/center-drug-evaluation-and-research-cder/office-prescription-drug-promotion-opdp"},
+    {"name": "PhRMA Code", "region": "US", "what": "Voluntary code for interactions with HCPs: meals, speaker programs, items of value.", "url": "https://phrma.org/codes"},
+    {"name": "Anti-Kickback Statute", "region": "US", "what": "No payment or item of value to induce prescribing of federally reimbursed drugs.", "url": "https://oig.hhs.gov/compliance/physician-education/fraud-abuse-laws/"},
+    {"name": "Sunshine Act · Open Payments", "region": "US", "what": "Transfers of value to HCPs and teaching hospitals reported to CMS.", "url": "https://www.cms.gov/openpayments"},
+    {"name": "HIPAA", "region": "US", "what": "Protected health information from covered entities; authorisation for marketing use.", "url": "https://www.hhs.gov/hipaa/index.html"},
+    {"name": "CAN-SPAM Act", "region": "US", "what": "Commercial email: honest headers, a working opt-out, honoured fast.", "url": "https://www.ftc.gov/business-guidance/resources/can-spam-act-compliance-guide-business"},
+    {"name": "TCPA", "region": "US", "what": "Consent for marketing calls and texts.", "url": "https://www.fcc.gov/general/telemarketing-and-robocalls"}
+  ]
+}

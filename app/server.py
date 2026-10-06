@@ -1733,11 +1733,13 @@ def api_v3_agent_acknowledge(agent_id: str, body: FlowAckRequest):
     return out
 
 
-@app.get("/api/frameworks/channel-playbook")
-def api_channel_playbook():
-    """The best-practice channel framework the Channels tab and the channels skill use."""
+@app.get("/api/frameworks/{name}")
+def api_framework(name: str):
+    """A best-practice framework the Brand Kit tabs and their skills use (channel-playbook, compliance-playbook)."""
     from strategy import kit_proposer
-    return kit_proposer.channel_playbook()
+    if name not in kit_proposer.FRAMEWORKS:
+        raise HTTPException(404, f"no framework '{name}'")
+    return kit_proposer.framework(name)
 
 
 @app.post("/api/brand-kits/{brand}/skills/{skill}")
