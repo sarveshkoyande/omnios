@@ -160,7 +160,7 @@ export function EngagementPlanner2({ brands, activeBrand, planId }: { brands: Br
               <ReadyIntake brand={brand} startLabel="Start planning" busy={!!busy} busyLabel={busy} onStart={start}
                 files={files} setFiles={setFiles} notes={notes} setNotes={setNotes}
                 addLabel="Add campaign details or briefs" notesLabel="Which campaign is this?"
-                placeholder="e.g. Grow Jardiance use in heart failure among community cardiologists; first wave in Q1 2027…" />
+                placeholder="Which campaign is this? Leave empty to plan from Brand IQ." />
             )}
 
             {plan && (

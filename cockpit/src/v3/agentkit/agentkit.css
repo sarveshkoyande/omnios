@@ -77,3 +77,30 @@
 .v3 .v3-ready-dot.missing { background: #dc2626; }
 .v3 .v3-ready-add { align-self: flex-start; border: 0; background: transparent; cursor: pointer; font-family: inherit; font-size: 12.5px; font-weight: 600; color: var(--primary); padding: 2px 0; }
 .v3 .v3-ready-add em { font-style: normal; font-weight: 400; color: var(--muted); }
+
+/* Command bar (option C) */
+.v3 .v3-cmd-wrap { display: flex; flex-direction: column; gap: 8px; }
+.v3 .v3-cmd { display: flex; flex-direction: column; gap: 8px; padding: 10px 10px 8px 12px; border-radius: 14px; background: var(--base-white, #fff);
+  box-shadow: 0 0 0 1px rgba(93,44,201,0.18), 0 6px 18px rgba(93,44,201,0.08); transition: box-shadow .15s; }
+.v3 .v3-cmd:focus-within { box-shadow: 0 0 0 2px rgba(93,44,201,0.45), 0 6px 18px rgba(93,44,201,0.1); }
+.v3 .v3-cmd.drag { box-shadow: 0 0 0 2px #8b5cf6, 0 10px 26px rgba(93,44,201,0.2); }
+.v3 .v3-cmd textarea { border: 0; outline: none; resize: none; font-family: inherit; font-size: 13.5px; line-height: 1.5; background: transparent; color: inherit; padding: 2px 0; }
+.v3 .v3-cmd-files { display: flex; flex-wrap: wrap; gap: 6px; }
+.v3 .v3-cmd-file { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border-radius: 999px; font-size: 11.5px; background: #f3f0ff; color: var(--primary); }
+.v3 .v3-cmd-file button { border: 0; background: transparent; cursor: pointer; color: var(--muted); padding: 0; display: grid; place-items: center; }
+.v3 .v3-cmd-bar { display: flex; align-items: center; gap: 6px; }
+.v3 .v3-cmd-chip { display: inline-flex; align-items: center; gap: 5px; border: 0; cursor: pointer; font-family: inherit; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: #dcfce7; color: #166534; }
+.v3 .v3-cmd-chip.warn { background: #fef3c7; color: #92400e; }
+.v3 .v3-cmd-chip em { font-style: normal; font-weight: 500; }
+.v3 .v3-cmd-icon { border: 0; background: transparent; cursor: pointer; color: var(--muted); display: grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; }
+.v3 .v3-cmd-icon:hover { background: #f3f0ff; color: var(--primary); }
+.v3 .v3-cmd-space { flex: 1; }
+.v3 .v3-cmd-go { display: inline-flex; align-items: center; gap: 6px; border: 0; cursor: pointer; font-family: inherit; font-size: 12.5px; font-weight: 600; padding: 7px 12px; border-radius: 10px; background: var(--primary); color: var(--base-white); }
+.v3 .v3-cmd-go:disabled { opacity: .55; cursor: default; }
+.v3 .v3-cmd-gaps { display: flex; flex-direction: column; gap: 4px; padding: 8px 10px; border-radius: 10px; background: #fffbeb; font-size: 12px; }
+.v3 .v3-cmd-gaps a { display: inline-flex; align-items: center; gap: 6px; color: var(--neutral-700, #3f3f46); text-decoration: none; }
+.v3 .v3-cmd-gaps a:hover { color: var(--primary); }
+.v3 .v3-cmd-hint { font-size: 11.5px; color: var(--muted); }
+.v3 .v3-cmd-examples { display: flex; flex-wrap: wrap; gap: 6px; }
+.v3 .v3-cmd-examples button { border: 0; cursor: pointer; font-family: inherit; font-size: 11.5px; padding: 3px 9px; border-radius: 999px; background: rgba(255,255,255,0.8); box-shadow: 0 0 0 1px var(--neutral-200); color: var(--neutral-700, #3f3f46); }
+.v3 .v3-cmd-examples button:hover { box-shadow: 0 0 0 1px var(--primary); color: var(--primary); }

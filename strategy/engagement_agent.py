@@ -187,7 +187,7 @@ def _role(plan: dict) -> str:
             "marked SYNTHETIC is a realistic stand-in: use it, and say so where it drives a choice. "
             "You reason like a brand team: find where patients are lost, "
             "why, which audience's belief or behaviour causes it, and what would move them. Use ONLY the grounding "
-            "(Brand IQ) and the user's answers; never invent facts, figures or claims. Cite grounding ids. "
+            "(Brand IQ) and the user's answers; never invent facts, figures or claims. If the brand plan and public data disagree, use the brand plan and say so; AI drafts rank last. Cite grounding ids. "
             "ALWAYS reply with a single JSON object matching the requested shape -- no prose, no markdown.")
 
 

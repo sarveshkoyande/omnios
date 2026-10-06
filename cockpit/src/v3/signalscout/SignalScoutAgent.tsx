@@ -155,8 +155,7 @@ export function SignalScoutAgent({ brands, activeBrand }: { brands: BrandSummary
                 files={files} setFiles={setFiles} notes={focus} setNotes={setFocus}
                 addLabel="Add a focus or competitor materials" notesLabel="What should the scan answer?"
                 dropLabel="Drag and drop competitor materials or other details"
-                placeholder="e.g. Is there whitespace against the market leader? What are competitors saying to cardiologists? What changed since the last congress?">
-                <span className="v3-cc-hint">US market only. With no focus it runs an open scan for the most material signals.{readout ? ` The last readout (${readout.started}) is kept so the new one can say what changed.` : ""}</span>
+                placeholder="What should the scan look for? Leave empty for an open scan.">
               </ReadyIntake>
             )}
 

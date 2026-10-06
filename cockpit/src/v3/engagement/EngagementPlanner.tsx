@@ -205,7 +205,7 @@ export function EngagementPlanner({ brands, activeBrand, planId }: { brands: Bra
               <ReadyIntake brand={brand} startLabel="Start planning" busy={!!busy} busyLabel={busy} onStart={start}
                 files={files} setFiles={setFiles} notes={notes} setNotes={setNotes}
                 addLabel="Add objectives or other details" notesLabel="What should this plan achieve?"
-                placeholder="Objectives for the period, priority audiences, budget posture, what must happen (launches, congresses), what didn't work last time…">
+                placeholder="What should this plan achieve? Leave empty to plan from Brand IQ.">
                 <label className="v3-ep-field"><span>Period</span>
                   <select value={months} disabled={!!busy} onChange={(e) => setMonths(Number(e.target.value))}>
                     {((fw?.period as Any | undefined)?.options_months as number[] | undefined ?? [3, 6, 9, 12]).map((m) => <option key={m} value={m}>{m} months{m === 6 ? " (default)" : ""}</option>)}

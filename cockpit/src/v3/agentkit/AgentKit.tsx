@@ -199,29 +199,83 @@ export function ReadyFromBrandIQ({ brand }: { brand: string; compact?: boolean }
   );
 }
 
-/** The standard agent intake: Ready from Brand IQ, the start button, and optional extra details
- *  (documents + notes) behind a toggle. */
-export function ReadyIntake({ brand, startLabel, busyLabel, busy, onStart, files, setFiles, notes, setNotes,
-  addLabel, notesLabel, placeholder, dropLabel, defaultOpen, children }: {
+/** Option C: the command bar every agent opens with. One box: what you want (optional), the brand's Brand IQ
+ *  as a chip (gaps on click), a paperclip for documents, and go. Leave it empty and press go. */
+export function CommandBar({ brand, value, setValue, files, setFiles, onGo, busy, busyLabel, placeholder,
+  multiple = true, attachLabel = "Attach documents", goLabel = "Start", disabled, hideBrandIQ, children }: {
+  brand: string | null; value: string; setValue: (v: string) => void; files: File[]; setFiles: (f: File[]) => void;
+  onGo: () => void; busy?: boolean; busyLabel?: string | null; placeholder: string; multiple?: boolean;
+  attachLabel?: string; goLabel?: string; disabled?: boolean; hideBrandIQ?: boolean; children?: React.ReactNode;
+}) {
+  const [r, setR] = useState<BrandReadiness | null>(null);
+  const [showGaps, setShowGaps] = useState(false);
+  const [drag, setDrag] = useState(false);
+  const input = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    setR(null);
+    if (brand && !hideBrandIQ) getBrandReadiness(brand).then(setR).catch(() => setR(null));
+  }, [brand, hideBrandIQ]);
+  const gaps = (r?.items ?? []).filter((i) => i.status === "missing" || i.status === "partial");
+  const add = (list: FileList | null) => {
+    const picked = Array.from(list ?? []);
+    if (picked.length) setFiles(multiple ? [...files, ...picked.filter((f) => !files.some((x) => x.name === f.name))] : [picked[0]]);
+  };
+  const go = () => { if (!busy && !disabled) onGo(); };
+  return (
+    <div className="v3-cmd-wrap">
+      {children}
+      <div className={`v3-cmd ${drag ? "drag" : ""}`}
+        onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
+        onDragLeave={(e) => { e.preventDefault(); setDrag(false); }}
+        onDrop={(e) => { e.preventDefault(); setDrag(false); if (!busy) add(e.dataTransfer.files); }}>
+        <textarea rows={3} value={value} disabled={busy} placeholder={placeholder} onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); go(); } }} />
+        {files.length > 0 && (
+          <div className="v3-cmd-files">
+            {files.map((f) => (
+              <span key={f.name} className="v3-cmd-file"><Icon name="document" size={11} /> {f.name}
+                <button type="button" aria-label={`Remove ${f.name}`} disabled={busy} onClick={() => setFiles(files.filter((x) => x !== f))}><Icon name="close" size={10} /></button>
+              </span>
+            ))}
+          </div>
+        )}
+        <div className="v3-cmd-bar">
+          {brand && !hideBrandIQ && (
+            <button type="button" className={`v3-cmd-chip ${r && !r.has_brand_plan ? "warn" : ""}`} onClick={() => setShowGaps((v) => !v)}
+              title={gaps.length ? gaps.map((g) => `${g.label}: ${g.detail}`).join("\n") : "Everything Brand IQ needs is loaded"}>
+              {r ? <><Icon name="check" size={11} /> {brand} Brand IQ{gaps.length ? <em> · {gaps.length} gap{gaps.length > 1 ? "s" : ""}</em> : null}</> : `${brand} Brand IQ…`}
+            </button>
+          )}
+          <button type="button" className="v3-cmd-icon" aria-label={attachLabel} title={attachLabel} disabled={busy} onClick={() => input.current?.click()}>
+            <Icon name="paperclip" size={15} />
+          </button>
+          <input ref={input} type="file" accept={DOC_ACCEPT} multiple={multiple} hidden onChange={(e) => { add(e.target.files); e.target.value = ""; }} />
+          <span className="v3-cmd-space" />
+          <button type="button" className="v3-cmd-go" disabled={busy || disabled} onClick={go}>
+            {busy ? <><span className="v3-cc-spinner small" /> {busyLabel ?? "Working…"}</> : <>{goLabel} <Icon name="arrowRight" size={13} /></>}
+          </button>
+        </div>
+      </div>
+      {showGaps && gaps.length > 0 && (
+        <div className="v3-cmd-gaps">
+          {gaps.map((g) => <a key={g.id} href={g.fix ?? "#/v3/agent/brand-iq"}><i className={`v3-ready-dot ${g.status}`} /> {g.label} — fix in Brand IQ</a>)}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** The standard agent intake, now the command bar. */
+export function ReadyIntake({ brand, startLabel, busyLabel, busy, onStart, files, setFiles, notes, setNotes, placeholder, children }: {
   brand: string; startLabel: string; busyLabel?: string | null; busy?: boolean; onStart: () => void;
   files: File[]; setFiles: (f: File[]) => void; notes: string; setNotes: (v: string) => void;
-  addLabel: string; notesLabel: string; placeholder: string; dropLabel?: string; defaultOpen?: boolean;
+  addLabel?: string; notesLabel?: string; placeholder: string; dropLabel?: string; defaultOpen?: boolean;
   children?: React.ReactNode;
 }) {
-  const [open, setOpen] = useState(Boolean(defaultOpen));
   return (
-    <section className="v3-ak-intake">
-      <ReadyFromBrandIQ brand={brand} />
+    <CommandBar brand={brand} value={notes} setValue={setNotes} files={files} setFiles={setFiles} onGo={onStart}
+      busy={busy} busyLabel={busyLabel} placeholder={placeholder} goLabel={startLabel}>
       {children}
-      {open ? (
-        <GlassDrop files={files} setFiles={setFiles} notes={notes} setNotes={setNotes} disabled={busy}
-          notesLabel={notesLabel} placeholder={placeholder} dropLabel={dropLabel ?? "Drag and drop briefs or other details"} />
-      ) : (
-        <button type="button" className="v3-ready-add" disabled={busy} onClick={() => setOpen(true)}>+ {addLabel} <em>(optional)</em></button>
-      )}
-      <button type="button" className="v3-cc-btn primary wide" disabled={busy} onClick={onStart}>
-        {busy ? <><span className="v3-cc-spinner small" /> {busyLabel ?? "Working…"}</> : startLabel}
-      </button>
-    </section>
+    </CommandBar>
   );
 }

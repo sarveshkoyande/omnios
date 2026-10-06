@@ -5,7 +5,7 @@ import {
 } from "../../api";
 import { Icon } from "../../components/Icon";
 import type { BrandSummary } from "../../types";
-import { AckCard, GlassDrop, ReasoningButton, ReasoningPanel, StepProgress, type ReasonEntry, type SkillStatus } from "../agentkit/AgentKit";
+import { AckCard, CommandBar, ReasoningButton, ReasoningPanel, StepProgress, type ReasonEntry, type SkillStatus } from "../agentkit/AgentKit";
 import { BrandKitPage } from "../BrandKitPage";
 import "../campaignplanner/campaignPlanner.css";
 import "../iq.css";
@@ -140,18 +140,9 @@ export function BrandIqAgent({ brands, activeBrand }: { brands: BrandSummary[]; 
 
             {(phase === "intake" || phase === "reading") && (
               <section className="v3-ak-intake">
-                <div className="v3-cc-intake-head">
-                  <b>Brand intake</b>
-                  <span>Drop {brand}'s brand plan and/or tell the agent about the brand. Nothing to add? Just build: it works from secondary sources.</span>
-                </div>
-                <GlassDrop files={files} setFiles={setFiles} notes={notes} setNotes={setNotes} disabled={phase === "reading"}
-                  dropLabel="Drag and drop the brand plan" dropSub="The brand plan, plus any supporting documents"
-                  notesLabel="Tell the agent about the brand"
-                  placeholder="Positioning, priority audiences, objectives, what's changed this year, anything the plan doesn't say…" />
-                <span className="v3-cc-hint">The brand plan is the source of truth: AI drafts never overwrite what it says. It stays on this server.</span>
-                <button type="button" className="v3-cc-btn primary wide" disabled={phase === "reading"} onClick={read}>
-                  {phase === "reading" ? <><span className="v3-cc-spinner small" /> Reading your input…</> : "Build brand kit"}
-                </button>
+                <CommandBar brand={brand} hideBrandIQ value={notes} setValue={setNotes} files={files} setFiles={setFiles}
+                  onGo={read} busy={phase === "reading"} busyLabel="Reading…" goLabel="Build brand kit" attachLabel="Attach the brand plan"
+                  placeholder={`Attach ${brand}'s brand plan with the paperclip, or tell the agent about the brand. Leave empty to build from public sources.`} />
               </section>
             )}
 

@@ -155,11 +155,15 @@ acknowledgement → objective card → audience segmentation → channel plan �
 campaign brief. Each step is a draft until approved (redo with feedback marks later steps stale). Plans in
 `DATA_DIR/campaignflow/<id>.json`; Save publishes the campaign + one flow per named journey into the hierarchy.
 
-**Agent intake**: the brand plan is uploaded once, in the Brand IQ Agent. Every other agent opens with "Ready from
-Brand IQ" (`ReadyFromBrandIQ` / `ReadyIntake` in `cockpit/src/v3/agentkit/AgentKit.tsx`, backed by
-`GET /api/brand-kits/{brand}/readiness` → `strategy/brand_readiness.py`): what Brand IQ holds (brand plan, kit,
-audiences, patient flow, compliance, client data) with links to fix gaps; missing brand plan warns but never blocks.
-Extra documents/notes are optional, behind "+ Add … (optional)".
+**Agent intake**: the brand plan is uploaded once, in the Brand IQ Agent. Every agent opens with one command bar
+(`CommandBar` in `cockpit/src/v3/agentkit/AgentKit.tsx`): an optional text box, a Brand IQ chip (green = brand plan
+present, amber = not; click for gaps, from `GET /api/brand-kits/{brand}/readiness` → `strategy/brand_readiness.py`),
+a paperclip for documents, and go. A missing brand plan warns but never blocks.
+
+**Source priority** (Brand IQ page badges, `sectionSource` in `BrandKitPage.tsx`): 1 brand plan, 2 public data
+(FDA/NIH/PubMed/CDC), 3 AI draft (proposals not from the brand plan, or a section marked to_confirm/proposed).
+The brand plan wins when sources disagree: AI drafts never overwrite brand-plan fields, and the agents' prompts
+say to prefer the brand plan and say so.
 
 **LLM-only rule**: free text a person typed is read only by the model — no regex/keyword matching of it; with no
 model a step stops with a plain message instead of guessing. (MR !1's keyword fallbacks were removed.)

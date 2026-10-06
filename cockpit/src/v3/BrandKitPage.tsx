@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { getBrandKit, getClientData, getCompliance, proposeKitContent, regenerateBigIdea, refreshAudienceSources, refreshPublicSources } from "../api";
 import { Icon } from "../components/Icon";
 import "./iq.css";
@@ -71,7 +71,7 @@ function BigIdeaTile({ kit, p }: { kit: Any; p: ReturnType<typeof useKit> }) {
     <div className="v3-iq-bigidea">
       <div className="v3-iq-bigidea-top">
         <em>Big Idea</em>
-        {Boolean(bi) && <span className="v3-iq-tier">AI-generated</span>}
+        {Boolean(bi) && <span className="v3-iq-srcbadge ai" title="Drafted by Omni (priority 3) — confirm before use"><Icon name="sparkles" size={11} />AI draft · confirm</span>}
         <button type="button" className="v3-iq-more" disabled={busy} onClick={regen}>{busy ? "Generating…" : txt(kit.tagline) ? "Regenerate" : "Generate"}</button>
       </div>
       <p className="v3-iq-bigidea-text">{txt(kit.tagline) || <Needs />}</p>
@@ -109,8 +109,8 @@ function ProposalBar({ p }: { p: ReturnType<typeof useKit> }) {
   return (
     <div className="v3-iq-banner warn v3-iq-propbar">
       <span>{n
-        ? <><b>{n} sections proposed by Omni</b> from the FDA label and US evidence — review and confirm before use: {Object.keys(proposals).map((k) => k.replace(/_/g, " ")).join(", ")}.</>
-        : <><b>No brand plan uploaded.</b> Omni can draft the empty sections (personas, positioning, messages, voice, guardrails, unmet need, competition) from public evidence, each marked as proposed.</>}</span>
+        ? <><b>{Object.values(proposals).filter((v) => !txt((v as Any)?.engine).includes("brand_plan")).length} AI-drafted items</b> to confirm — sections marked ✨ AI draft below.</>
+        : <><b>No brand plan yet.</b> Omni can draft the empty sections from public evidence.</>}</span>
       <button type="button" className="v3-iq-btn" disabled={busy} onClick={run}>{busy ? "Drafting…" : n ? "Fill remaining gaps" : "Propose missing content"}</button>
       {err && <small>{err}</small>}
     </div>
@@ -129,9 +129,10 @@ function Shell({ title, sub, p, children }: { title: string; sub: string; p: Ret
         </div>
         <PlanSwitcher p={p} />
       </header>
+      {p.kit && <SourceLegend />}
       {p.kit && <ProposalBar p={p} />}
       {p.error ? <p className="v3-empty">Couldn't load {p.brand}: {p.error}</p>
-        : !p.kit ? <p className="v3-empty">Loading…</p> : children(p.kit)}
+        : !p.kit ? <p className="v3-empty">Loading…</p> : <KitCtx.Provider value={p.kit}>{children(p.kit)}</KitCtx.Provider>}
     </div>
   );
 }
@@ -148,11 +149,81 @@ const BLOCK_ICON: [string, IconName][] = [
   ["Competitive", "scale"], ["Clinical", "flask"], ["What has worked", "star"], ["Message pillars", "sparkles"],
   ["Key messages", "message"], ["Tone", "mic"], ["Strategic", "target"], ["Activation", "route"],
 ];
+/* Source badges, in priority order: 1 brand plan, 2 public data, 3 AI draft. When they disagree the brand
+ * plan wins (AI drafts never overwrite brand-plan fields; public refreshes only write their own blocks). */
+type Tier = "plan" | "public" | "ai" | "sop" | "synthetic";
+const KitCtx = createContext<Any | null>(null);
+const PUBLIC_LABEL: Record<string, string> = {
+  product_profile: "FDA · NIH", indications: "FDA label", patient_flow: "PubMed", us_geography: "CDC",
+  audience_intel: "PubMed · ClinicalTrials.gov · MedlinePlus", competitors: "PubMed",
+};
+const PLAN_KEYS = new Set(["__plan", "strategic_imperatives", "kpis", "forecast", "growth_opportunities", "activities", "proof_points"]);
+const SECTION_SOURCE: [string, string[] | Tier][] = [
+  ["Unmet need", ["unmet_need"]], ["Brand situation", ["brand_situation"]], ["Indications", ["indications"]],
+  ["Patient flow", ["patient_flow"]], ["Key objectives", ["key_objectives", "key_objective"]], ["Product profile", ["product_profile"]],
+  ["Competition", ["competitors", "competition_self"]], ["Market access", ["market_access"]],
+  ["Positioning", ["positioning_statement", "core_claim", "message_hierarchy"]], ["Evidence", ["clinical_data", "references"]],
+  ["Voice", ["voice", "tone_pillars"]], ["Current plan", ["__plan"]], ["Audience segments", ["audience_segments"]],
+  ["Healthcare", ["personas"]], ["Patients", ["personas"]], ["Key opinion", ["audience_intel"]], ["Where the treaters", ["audience_intel"]],
+  ["Patient education", ["audience_intel"]], ["Approval workflow", "sop"], ["Pre-launch", "sop"], ["Campaign SOPs", "sop"],
+  ["Eligibility", "sop"], ["Channel rules", "sop"], ["Label", ["product_profile"]], ["Do", ["guardrails"]], ["Don't", ["guardrails"]],
+  ["Words", ["voice_do", "voice_dont", "voice"]], ["References", ["references"]], ["Regulatory", ["product_profile"]],
+  ["US geography", ["us_geography"]], ["Client data", "synthetic"], ["Sales forecast", ["forecast"]], ["Where growth", ["growth_opportunities"]],
+  ["KPIs", ["kpis"]], ["Competitive", ["competitors"]], ["Clinical", ["clinical_data"]], ["What has worked", ["proof_points"]],
+];
+const TIER_RANK: Tier[] = ["plan", "sop", "public", "ai", "synthetic"];
+const TIER_ICON: Record<Tier, IconName> = { plan: "document", sop: "shield", public: "search", ai: "sparkles", synthetic: "flask" };
+
+function sectionSource(kit: Any | null, title: string): { tier: Tier; label: string; title: string } | null {
+  if (!kit) return null;
+  const entry = SECTION_SOURCE.find(([t]) => title.startsWith(t));
+  if (!entry) return null;
+  const spec = entry[1];
+  if (spec === "sop") return { tier: "sop", label: "Company SOPs", title: "From the company's compliance profile" };
+  if (spec === "synthetic") return { tier: "synthetic", label: "Synthetic", title: "A stand-in until real client data is connected" };
+  const proposals = (kit.proposals ?? {}) as Record<string, Any>;
+  const hasPlan = Boolean(kit.plan_meta) || arr(kit.plans).length > 0;
+  const found: { tier: Tier; key: string }[] = [];
+  for (const k of spec as string[]) {
+    const pr = proposals[k];
+    const own = kit[k] as Any | undefined;
+    if (pr) found.push({ tier: txt(pr.engine).includes("brand_plan") ? "plan" : "ai", key: k });
+    else if (own && typeof own === "object" && ["to_confirm", "proposed", "ai_generated"].includes(txt(own.status))) found.push({ tier: "ai", key: k });
+    else if (PLAN_KEYS.has(k)) { if (hasPlan) found.push({ tier: "plan", key: k }); }
+    else if (k in PUBLIC_LABEL) { if (!needs(kit[k])) found.push({ tier: "public", key: k }); }
+    else if (hasPlan && !needs(kit[k])) found.push({ tier: "plan", key: k });
+  }
+  if (!found.length) return null;
+  const best = TIER_RANK.find((t) => found.some((f) => f.tier === t)) as Tier;
+  const others = Array.from(new Set(found.map((f) => f.tier).filter((t) => t !== best)));
+  const label = best === "plan" ? "Brand plan" : best === "ai" ? "AI draft · confirm"
+    : Array.from(new Set(found.filter((f) => f.tier === "public").map((f) => PUBLIC_LABEL[f.key]))).join(" · ");
+  const why = best === "plan" ? "From the brand plan (priority 1)" : best === "public" ? "From public sources (priority 2)" : "Drafted by Omni (priority 3) — confirm before use";
+  return { tier: best, label, title: others.length ? `${why}. Also: ${others.map((t) => (t === "ai" ? "AI draft" : t === "public" ? "public data" : t)).join(", ")}.` : why };
+}
+
+function SourceBadge({ title }: { title: string }) {
+  const src = sectionSource(useContext(KitCtx), title);
+  if (!src) return null;
+  return <span className={`v3-iq-srcbadge ${src.tier}`} title={src.title}><Icon name={TIER_ICON[src.tier]} size={11} />{src.label}</span>;
+}
+
+function SourceLegend() {
+  return (
+    <div className="v3-iq-legend">
+      <span className="v3-iq-srcbadge plan"><Icon name="document" size={11} />1 · Brand plan</span>
+      <span className="v3-iq-srcbadge public"><Icon name="search" size={11} />2 · Public data</span>
+      <span className="v3-iq-srcbadge ai"><Icon name="sparkles" size={11} />3 · AI draft</span>
+      <small>The brand plan wins when sources disagree</small>
+    </div>
+  );
+}
+
 function Block({ title, sub, children, action }: { title: string; sub?: string; children: React.ReactNode; action?: React.ReactNode }) {
   const icon = BLOCK_ICON.find(([t]) => title.startsWith(t))?.[1] ?? "layers";
   return (
     <section className="v3-iq-block">
-      <h2><span className="v3-iq-h-icon"><Icon name={icon} size={15} /></span>{title}{sub && <span className="v3-iq-h-sub">{sub}</span>}{action && <div className="v3-iq-block-act">{action}</div>}</h2>
+      <h2><span className="v3-iq-h-icon"><Icon name={icon} size={15} /></span>{title}<SourceBadge title={title} />{sub && <span className="v3-iq-h-sub">{sub}</span>}{action && <div className="v3-iq-block-act">{action}</div>}</h2>
       {children}
     </section>
   );
@@ -256,7 +327,7 @@ export function BrandKitPage(props: PageProps) {
         {Boolean(k.brand_situation) && (() => {
           const bs = k.brand_situation as Any;
           return (
-            <Block title="Brand situation" sub={txt(bs.status) === "proposed" ? "Proposed from public sources — confirm in the Engagement Planner" : txt(bs.status)}>
+            <Block title="Brand situation">
               <div className="v3-iq-facts">
                 <div><em>Lifecycle</em><span>{txt(bs.lifecycle) || <Needs />}</span></div>
                 <div><em>Therapy type</em><span>{txt(bs.archetype) || <Needs />}</span></div>
@@ -302,7 +373,7 @@ export function BrandKitPage(props: PageProps) {
         </Block>
 
         {/* 3. Product profile (public sources) */}
-        <Block title="Product profile" sub="FDA label, Drugs@FDA, NIH MeSH, PubChem"
+        <Block title="Product profile"
           action={<button type="button" className="v3-iq-btn" onClick={refresh} disabled={refreshing}>{refreshing ? "Refreshing…" : "Refresh from public sources"}</button>}>
           {refreshError && <p className="v3-iq-needs">Couldn't refresh: {refreshError}</p>}
           {Object.keys((pp.errors as Any) ?? {}).length > 0 && <p className="v3-iq-needs">Some sources didn't answer: {Object.keys(pp.errors as Any).join(", ")}</p>}
@@ -331,7 +402,7 @@ export function BrandKitPage(props: PageProps) {
         </Block>
 
         {/* 4. Competition: comparison grid, our brand first */}
-        <Block title="Competition" sub="Threat levels proposed by the agent — confirm or change">
+        <Block title="Competition">
           {arr(k.competitors).length ? (() => {
             const self = k.competition_self as Any | undefined;
             const cols = [...(self ? [{ ...self, _self: true }] : []), ...arr(k.competitors)];
@@ -391,7 +462,7 @@ export function BrandKitPage(props: PageProps) {
         {(() => {
           const v = k.voice as Any | undefined;
           return (
-            <Block title="Voice & tone" sub={v?.status === "to_confirm" ? "Drafted from the brand plan — to confirm" : undefined}>
+            <Block title="Voice & tone">
               <div className="v3-iq-voice-top">
                 <div><em>Personality</em><b>{txt((k.brand_personification as Any | undefined)?.archetype) || "—"}</b>
                   <div className="v3-iq-chips">{(k.tone_pillars as string[] | undefined ?? []).map((t) => <span key={t}>{t}</span>)}</div></div>
@@ -539,7 +610,7 @@ export function PersonasPage(props: PageProps) {
           </>)}
         </Block>
 
-        <Block title="Key opinion leaders" sub="Most-published authors, last 6 years (PubMed)"
+        <Block title="Key opinion leaders" sub="Last 6 years"
           action={<button type="button" className="v3-iq-btn" onClick={refresh} disabled={busy}>{busy ? "Refreshing…" : "Refresh from public sources"}</button>}>
           {err && <p className="v3-iq-needs">Couldn't refresh: {err}</p>}
           {Object.keys((ai?.errors as Any) ?? {}).length > 0 && <p className="v3-iq-needs">Some sources didn't answer: {Object.keys(ai!.errors as Any).join(", ")}</p>}
@@ -560,7 +631,7 @@ export function PersonasPage(props: PageProps) {
           </>) : <Needs what="no publication data yet" />}
         </Block>
 
-        <Block title="Where the treaters are" sub="Trial sites and investigators (ClinicalTrials.gov)">
+        <Block title="Where the treaters are" sub="Trial sites">
           {tf ? (
             <div className="v3-iq-tf">
               <div className="v3-iq-hbars">
@@ -579,7 +650,7 @@ export function PersonasPage(props: PageProps) {
           ) : <Needs what="no trial data yet" />}
         </Block>
 
-        <Block title="Patient education resources" sub="MedlinePlus (NIH)">
+        <Block title="Patient education resources">
           {pr.length ? <div className="v3-iq-comp">{pr.map((r) => (
             <article key={txt(r.url)}><b><a href={txt(r.url)} target="_blank" rel="noreferrer">{txt(r.title)} ↗</a></b><Src s="MedlinePlus, National Library of Medicine" /></article>
           ))}</div> : <Needs what="no patient resources found" />}
@@ -681,7 +752,7 @@ export function GuardrailsPage(props: PageProps) {
           </Block>
         </>)}
 
-        <Block title="Label & safety" sub="Brand-level, from the FDA label">
+        <Block title="Label & safety">
           <div className="v3-iq-label">
             {label.map(([l, v]) => (
               <article key={l} className={needs(v) ? "missing" : "ok"}>
@@ -772,7 +843,7 @@ function ClientData({ brand }: { brand: string }) {
   const reach = (d.channel_reach_pct ?? {}) as Record<string, Record<string, number>>;
   const channels = Object.keys(Object.values(reach)[0] ?? {});
   return (
-    <Block title="Client data" sub={d.synthetic ? "SYNTHETIC stand-in — replace with real HCP, access, field and consent data" : "Connected"}>
+    <Block title="Client data">
       {Boolean(d.synthetic) && <div className="v3-iq-banner warn">{txt(d.note)}</div>}
       <div className="v3-iq-stats" style={{ marginTop: 10 }}>
         <div><em>Field force</em><b>{txt(field.reps)} reps</b><span>~{Number(field.capacity_calls_per_month).toLocaleString()} calls / month</span></div>

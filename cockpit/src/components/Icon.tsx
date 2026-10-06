@@ -30,6 +30,7 @@ const PATHS: Record<string, React.ReactNode> = {
   user: <><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7" /></>,
   chevronDown: <path d="m6 9 6 6 6-6" />,
   arrowRight: <path d="M5 12h14M13 6l6 6-6 6" />,
+  paperclip: <path d="M21 11.5 12.5 20a5 5 0 0 1-7-7l8.5-8.5a3.5 3.5 0 0 1 5 5L10.5 18a2 2 0 0 1-3-3L15 7.5" />,
   plus: <path d="M12 5v14M5 12h14" />,
   arrowLeft: <path d="M19 12H5M11 6l-6 6 6 6" />,
   search: <><circle cx="10.5" cy="10.5" r="6.5" /><path d="m20 20-4.8-4.8" /></>,

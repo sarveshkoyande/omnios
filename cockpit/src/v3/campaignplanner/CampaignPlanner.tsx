@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { getArtifact, getBrandTree } from "../../api";
 import { REGISTRY } from "../../agents";
 import { Icon } from "../../components/Icon";
-import { GlassDrop, ReadyFromBrandIQ } from "../agentkit/AgentKit";
+import { CommandBar } from "../agentkit/AgentKit";
 import type { BrandSummary, BrandTree } from "../../types";
 import type { Favorite } from "../store";
 import { ccApi, sfApi, type Briefing, type CCItem, type CCState } from "./api";
@@ -50,23 +50,13 @@ function IntakePanel({ brand, text, setText, file, setFile, autoAssume, setAutoA
 }) {
   return (
     <section className="v3-ak-intake">
-      <div className="v3-cc-intake-head">
-        <b>Campaign intake</b>
-        <span>Upload the campaign brief or paste the details to begin the analysis.</span>
-      </div>
-      {brand && <ReadyFromBrandIQ brand={brand} compact />}
-      <GlassDrop files={file ? [file] : []} setFiles={(f) => setFile(f[0] ?? null)} notes={text} setNotes={setText} multiple={false} disabled={disabled}
-        dropLabel="Drag and drop the campaign brief" dropSub="One brief"
-        notesLabel={`Campaign details${file ? " (optional instructions for the document)" : ""}`}
-        placeholder="Describe your campaign objectives, target audience, and journey requirements…"
-        hint="Include the brand, product, therapeutic area, objective, target market and the day-by-day journey for the most accurate briefing." />
+      <CommandBar brand={brand} value={text} setValue={setText} files={file ? [file] : []} setFiles={(f) => setFile(f[0] ?? null)}
+        multiple={false} attachLabel="Attach the campaign brief" onGo={onAnalyze} busy={disabled} goLabel="Analyze"
+        disabled={!text.trim() && !file} placeholder="Describe the campaign, or attach the brief with the paperclip." />
       <label className="v3-cc-toggle">
         <input type="checkbox" checked={autoAssume} disabled={disabled} onChange={(e) => setAutoAssume(e.target.checked)} />
-        <span><b>Auto-assume</b> — let the agent fill gaps with sensible defaults and skip clarifying questions</span>
+        <span><b>Auto-assume</b> · skip clarifying questions</span>
       </label>
-      <button type="button" className="v3-cc-btn primary wide" disabled={disabled || (!text.trim() && !file)} onClick={onAnalyze}>
-        Analyze campaign
-      </button>
     </section>
   );
 }
