@@ -172,11 +172,11 @@ export function GlassDrop({ files, setFiles, notes, setNotes, multiple = true, d
   );
 }
 
-const READY_ICON: Record<string, string> = { ok: "✓", partial: "◐", missing: "✕", synthetic: "~" };
+const READY_SHORT: Record<string, string> = { brand_plan: "Plan", kit: "Kit", audiences: "Audiences", patient_flow: "Patient flow", compliance: "Compliance", client_data: "Client data" };
 
-/** "Ready from Brand IQ": what the brand's Brand IQ already holds, so an agent can start straight away.
- *  The brand plan is uploaded once, in the Brand IQ Agent; anything missing links there. */
-export function ReadyFromBrandIQ({ brand, compact }: { brand: string; compact?: boolean }) {
+/** "Ready from Brand IQ" in one line: a status pill and a chip per source. Details are on hover; a missing
+ *  source is a link to fix it. The brand plan is uploaded once, in the Brand IQ Agent. */
+export function ReadyFromBrandIQ({ brand }: { brand: string; compact?: boolean }) {
   const [r, setR] = useState<BrandReadiness | null>(null);
   const [failed, setFailed] = useState(false);
   useEffect(() => {
@@ -185,23 +185,17 @@ export function ReadyFromBrandIQ({ brand, compact }: { brand: string; compact?: 
   }, [brand]);
   if (failed) return null;
   return (
-    <section className={`v3-ready ${compact ? "compact" : ""} ${r && !r.has_brand_plan ? "warn" : ""}`}>
-      <div className="v3-ready-head">
-        <b>{r ? (r.has_brand_plan ? "Ready from Brand IQ" : "Brand IQ loaded, no brand plan yet") : "Reading Brand IQ…"}</b>
-        <span>{brand}{r?.updated ? ` · updated ${new Date(r.updated).toLocaleDateString(undefined, { day: "numeric", month: "short" })}` : ""}</span>
-      </div>
-      {r && (
-        <ul>
-          {r.items.map((i) => (
-            <li key={i.id} className={i.status}>
-              <span className="v3-ready-mark">{READY_ICON[i.status]}</span>
-              <b>{i.label}</b>
-              <small>{i.detail}{i.fix && <> · <a href={i.fix}>{i.id === "brand_plan" ? "Add it in the Brand IQ Agent" : "Fix in Brand IQ"}</a></>}</small>
-            </li>
-          ))}
-        </ul>
-      )}
-    </section>
+    <div className={`v3-ready ${r && !r.has_brand_plan ? "warn" : ""}`}>
+      <span className="v3-ready-pill" title={r && !r.has_brand_plan ? "No brand plan in Brand IQ: drafts use the kit and public sources" : undefined}>
+        {r ? (r.has_brand_plan ? <><Icon name="check" size={11} /> Ready from Brand IQ</> : "Brand IQ · no plan yet") : "Reading Brand IQ…"}
+      </span>
+      {r?.items.map((i) => {
+        const chip = <><i className={`v3-ready-dot ${i.status}`} />{READY_SHORT[i.id] ?? i.label}</>;
+        return i.fix && i.status !== "ok"
+          ? <a key={i.id} className="v3-ready-chip" href={i.fix} title={`${i.detail} — click to fix`}>{chip}</a>
+          : <span key={i.id} className="v3-ready-chip" title={i.detail}>{chip}</span>;
+      })}
+    </div>
   );
 }
 
