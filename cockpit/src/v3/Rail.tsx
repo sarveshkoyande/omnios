@@ -18,10 +18,11 @@ const MAIN_NAV: NavItem[] = [
 
 /** A2 / BR6: brand knowledge, always for the active brand. */
 const BRAND_IQ: NavItem[] = [
-  { id: "iq/kits", label: "Brand IQ", icon: "document" },
+  { id: "iq/kits", label: "Brand Compass", icon: "document" },
   { id: "iq/market", label: "Market", icon: "radar" },
   { id: "iq/personas", label: "Audiences", icon: "persona" },
-  { id: "iq/message", label: "Message & Voice", icon: "message" },
+  // REMOVED 2026-10-07 (kept for reference): Message & Voice tab.
+  // { id: "iq/message", label: "Message & Voice", icon: "message" },
   { id: "iq/channels", label: "Channels", icon: "mail" },
   { id: "iq/product", label: "Product & Proof", icon: "flask" },
   { id: "iq/guardrails", label: "Compliance", icon: "shield" },

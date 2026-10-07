@@ -342,7 +342,7 @@ function Notes({ o }: { o: Any }) {
   return (
     <div className="v3-pa-notes">
       {qs.length > 0 && <div><b><Icon name="alertTriangle" size={12} /> Questions (not invented)</b>{qs.map((q, i) => <p key={i}>{txt(q.question)}{q.why ? <small> — {txt(q.why)}</small> : null}</p>)}</div>}
-      {kn.length > 0 && <div><b><Icon name="document" size={12} /> Notes for the Brand Kit</b>{kn.map((q, i) => <p key={i}>{txt(q.what)}: {txt(q.note)} <a href="#/v3/iq/kits">Fix in Brand IQ</a></p>)}</div>}
+      {kn.length > 0 && <div><b><Icon name="document" size={12} /> Notes for the Brand Kit</b>{kn.map((q, i) => <p key={i}>{txt(q.what)}: {txt(q.note)} <a href="#/v3/iq/kits">Fix in Brand Compass</a></p>)}</div>}
     </div>
   );
 }
@@ -433,7 +433,7 @@ function ApproachView({ o, by }: { o: Any; by?: string }) {
           return (
             <article key={i}>
               <header><span className="v3-pa-id">{txt(x.segment_id)}</span><b>{txt(x.persona)}</b><small className="v3-pa-movetag">{txt(x.move)}</small></header>
-              <div className="v3-pa-msg"><Icon name="message" size={13} /><div><Kit href="#/v3/iq/message">{txt(lm.pillar)}</Kit><p>{txt(lm.message)}</p></div></div>
+              <div className="v3-pa-msg"><Icon name="message" size={13} /><div><Kit href="#/v3/iq/kits">{txt(lm.pillar)}</Kit><p>{txt(lm.message)}</p></div></div>
               <ul className="v3-pa-chans">
                 {arr(x.channels).map((c, j) => (
                   <li key={j} className={txt(c.weight)}><b>{txt(c.channel)}</b><span>{txt(c.job)}</span><small>{txt(c.weight)}</small></li>

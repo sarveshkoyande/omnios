@@ -32,7 +32,7 @@ from llm_json import LLMUnavailable, complete_json  # noqa: E402
 
 _SYS = ("You are a US pharmaceutical brand strategist drafting a brand kit for review by the brand team and "
         "MLR. Use ONLY the evidence provided; cite it in every `source` field (e.g. 'FDA label · clinical studies "
-        "(EMPEROR-Reduced)', 'PubMed 41165079', 'Brand IQ patient flow'). Never invent figures, trial names or "
+        "(EMPEROR-Reduced)', 'PubMed 41165079', 'Brand Compass patient flow'). Never invent figures, trial names or "
         "claims. Efficacy claims must come from the label's clinical studies section and stay on-label. "
         "Your JSON object MUST also have a top-level `reasoning` array: 3-6 short sentences on what evidence you used, "
         "what you concluded and why. "
@@ -223,7 +223,7 @@ def propose(brand: str, force: bool = False) -> dict:
 # --- Context pages (docs/redesign/brand-kit-reorg.md): channels, per-tab briefs, bullet digests ---
 _BULLET_RULES = ("Write for a busy pharma marketer: plain words, no unexplained abbreviations, one idea per bullet. "
                  "Each bullet is {\"lead\": a bold 2-4 word phrase, \"text\": the rest}. Put figures first. ")
-TABS = ("brandiq",)  # the brief sits on the Brand IQ tab only (the other tabs speak for themselves)
+TABS = ("brandiq",)  # the brief sits on the Brand Compass tab only (the other tabs speak for themselves)
 
 
 def _plan_layer(kit: dict) -> dict:
@@ -415,7 +415,7 @@ def propose_digest(brand: str, kit: dict) -> dict:
     return {"bullets": bullets, "reasoning": out.get("reasoning") or [f"Condensed {len(long)} long fields into bullets."]}
 
 
-# --- Brand IQ Agent: each step is a separate skill, run one at a time from the agent workspace ---
+# --- Brand Compass Agent: each step is a separate skill, run one at a time from the agent workspace ---
 SKILLS = [
     {"id": "brand_plan", "name": "Read the brand plan", "llm": True,
      "does": "Reads the uploaded brand plan and your notes: positioning, objectives, strategic imperatives, audiences, KPIs."},
@@ -513,7 +513,7 @@ def _summary(fields: dict) -> list[str]:
 
 
 def run_skill(brand: str, skill: str) -> dict:
-    """Run one Brand IQ skill for the brand. Returns {"kit", "reasoning"}: the updated kit and what
+    """Run one Brand Compass skill for the brand. Returns {"kit", "reasoning"}: the updated kit and what
     the step read and concluded. LLM skills raise LLMUnavailable with no model (nothing written);
     public-source skills raise on fetch errors."""
     kit = brand_kit.kit_for(brand)
@@ -618,7 +618,7 @@ def run_skill(brand: str, skill: str) -> dict:
     raise ValueError(f"Unknown skill '{skill}'")
 
 
-# --- Brand IQ Agent: four agent steps over the skills, acknowledgement, rebuild with snapshot ---
+# --- Brand Compass Agent: four agent steps over the skills, acknowledgement, rebuild with snapshot ---
 STEPS = [
     {"id": "understand", "name": "Understand the brand", "skills": ["brand_plan"]},
     {"id": "evidence", "name": "Gather the evidence", "skills": ["label", "audience_intel", "us_geography"]},
@@ -652,7 +652,7 @@ def acknowledge(brand: str) -> dict:
         raise KeyError(brand)
     plan = _load_brand_plan(brand) or {}
     return complete_json(
-        "You are the Brand IQ Agent about to build a US pharma brand kit. Read what the person provided (an "
+        "You are the Brand Compass Agent about to build a US pharma brand kit. Read what the person provided (an "
         "uploaded brand plan's text and/or typed notes; either may be empty) and what the kit already knows. "
         "Reply in plain words to the person: what you understood, what is available, what is missing, and how "
         "you'll build. If nothing was provided, say you'll build from secondary sources only (FDA label, Drugs@FDA, "

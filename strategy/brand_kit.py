@@ -65,7 +65,7 @@ def _read_kits(path) -> dict:
 
 
 def _overlay_path():
-    """Kit edits made on a deployed server (Brand IQ Agent, Big Idea, public-source refreshes, restores).
+    """Kit edits made on a deployed server (Brand Compass Agent, Big Idea, public-source refreshes, restores).
     The committed config/brand_kits.json is replaced on every deploy, so on a server these edits live
     under DATA_DIR (the persistent volume) as field-level changes laid over the committed kit."""
     from paths import data_path

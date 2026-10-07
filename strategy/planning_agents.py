@@ -1,6 +1,6 @@
 """Engagement Planning, Segmentation and Channel agents: one engine, three agents, steps that call each other.
 
-The Brand Kit (Brand IQ) is the brand context; these agents choose, prioritise and sequence from it and never
+The Brand Kit (Brand Compass) is the brand context; these agents choose, prioritise and sequence from it and never
 rebuild it (docs/redesign/brand-kit-reorg.md, "Engagement Planning"). Each agent is a list of steps:
 
   engagement-planner-2 (Engagement Planning Agent)  objectives -> focus -> approach -> portfolio
@@ -224,7 +224,7 @@ def _grounding(rec: dict) -> dict:
 
 # ------------------------------------------------------------------ the steps
 
-_ROLE = ("You are a senior US pharma brand and omnichannel strategist. The Brand Kit (Brand IQ) is the brand's context: "
+_ROLE = ("You are a senior US pharma brand and omnichannel strategist. The Brand Kit (Brand Compass) is the brand's context: "
          "REUSE it as given -- personas, ladder stages, messages, channel roles -- and never re-segment the audience "
          "or invent a new message. Your job is to choose, prioritise and sequence. Where the brand plan and other sources "
          "disagree, the brand plan wins and you say so. Never invent figures or dates; anything missing goes in "

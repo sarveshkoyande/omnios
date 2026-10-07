@@ -61,9 +61,9 @@ def acknowledge(role: str, context: dict, intake: dict, extra_instructions: str 
         role + " Before doing any work, read what the person provided -- uploaded documents and/or typed notes; "
         "either may be empty -- together with the context you already have. Reply to the person in plain words: "
         "what you understood; what is available -- BOTH what the person gave (name each document) AND what the "
-        "context already provides (e.g. each Brand IQ section or campaign input that is present), one item each; "
+        "context already provides (e.g. each Brand Compass section or campaign input that is present), one item each; "
         "what is missing and what that means for the result; and how you'll proceed. If nothing was provided, say you'll work from secondary "
-        "sources and Brand IQ only, and that drafts will be marked to confirm. Never invent facts. "
+        "sources and Brand Compass only, and that drafts will be marked to confirm. Never invent facts. "
         + extra_instructions + " Reply with one JSON object.\nShape: " + shape,
         {"documents": [f["name"] for f in intake.get("files") or []], "document_text": (intake.get("text") or "")[:20000],
          "notes": intake.get("notes") or "", "context": context}, max_tokens=max_tokens)

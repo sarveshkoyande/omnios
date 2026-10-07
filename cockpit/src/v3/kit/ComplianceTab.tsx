@@ -190,7 +190,7 @@ export function ComplianceTab(props: PageProps) {
           )}</Sec>
         )}
 
-        <p className="v3-iq-note">Label & safety and references are on <a href="#/v3/iq/product">Product & Proof</a>; words to use and avoid on <a href="#/v3/iq/message">Message & Voice</a>. Best practice here is guidance, not legal advice: the company's SOPs and MLR decide.</p>
+        <p className="v3-iq-note">Label & safety and references are on <a href="#/v3/iq/product">Product & Proof</a>. Best practice here is guidance, not legal advice: the company's SOPs and MLR decide.</p>
       </>);
     }}</Shell>
   );

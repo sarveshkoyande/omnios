@@ -502,7 +502,7 @@ export interface EngagementPlan {
   period_start: string; period_end: string; months: number; status: string;
   brand_iq_plan: string | null; created_at: string; updated_at: string;
   version: number; version_reason?: string; version_at?: string;
-  /** True when the brand's active Brand IQ plan has changed since this plan was built. */
+  /** True when the brand's active Brand Compass plan has changed since this plan was built. */
   stale?: boolean;
   body?: Record<string, unknown>;
 }

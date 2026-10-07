@@ -9,7 +9,7 @@ What the check does, per brand:
                   campaign's snapshot and rebuild its rules journeys (hierarchy.refresh_snapshot)
       no_journey  a campaign that isn't over has no journey yet              -> open the Flow Agent
       brand_iq    the brand kit changed since the last check                 -> review the campaigns
-      plan_stale  an engagement plan was built on an older Brand IQ plan     -> open the planner
+      plan_stale  an engagement plan was built on an older Brand Compass plan     -> open the planner
       signals     Signal Scout has a newer readout                           -> open Signal Scout
   * Asks the model (when available) to propose what to change for drift and signal updates, citing the
     evidence; without a model the update still appears, saying no proposal was written (R2).
@@ -158,18 +158,18 @@ def check(brands: list[str] | None = None, use_ai: bool = True) -> dict:
                                       "title": f"“{c['name']}” has no journey yet",
                                       "detail": f"It is {ph}. Build its journey in the Flow Planner Agent.",
                                       "action": "open", "href": f"#/v3/agent/flow-planner/for/{key}/{plan['id']}/{c['id']}"}
-            # engagement plans built on an older Brand IQ plan
+            # engagement plans built on an older Brand Compass plan
             for p in ep.list_plans(key):
                 full = ep.get(p["id"]) or {}
                 if full.get("stale"):
                     uid = _uid("plan_stale", p["id"], full.get("brand_iq_plan"))
                     found[uid] = {"id": uid, "kind": "plan_stale", "title": f"“{p['title']}” was built on an older brand plan",
-                                  "detail": "The brand's active Brand IQ plan changed. Revisit the strategy.",
+                                  "detail": "The brand's active Brand Compass plan changed. Revisit the strategy.",
                                   "action": "open", "href": f"#/v3/agent/engagement-planner/{p['id']}"}
-            # Brand IQ changed since the last check
+            # Brand Compass changed since the last check
             if last and kit_mtime and kit_mtime > last:
                 uid = _uid("brand_iq", key, kit_mtime)
-                found[uid] = {"id": uid, "kind": "brand_iq", "title": "Brand IQ was updated",
+                found[uid] = {"id": uid, "kind": "brand_iq", "title": "Brand Compass was updated",
                               "detail": "The brand kit changed since the last check; campaigns built before it may need a refresh.",
                               "action": "open", "href": "#/v3/iq/kits"}
             # Signal Scout readout newer than the last check

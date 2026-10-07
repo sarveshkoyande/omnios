@@ -1,4 +1,4 @@
-"""Brand IQ core (docs/redesign/engagement-plan-v2.md section 3): build or enrich a brand kit from
+"""Brand Compass core (docs/redesign/engagement-plan-v2.md section 3): build or enrich a brand kit from
 public sources only -- for brands with no uploaded brand plan (Jardiance, Keytruda).
 
 What it does, per brand:

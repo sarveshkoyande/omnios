@@ -9,7 +9,7 @@ replace it by writing real data with the same shape to DATA_DIR/client_data/<bra
 "synthetic": false.
 
 Shapes are scaled from public inputs where available (state adult population from CDC PLACES, the
-brand's audience segments from Brand IQ) so the synthetic numbers are proportionate, not arbitrary.
+brand's audience segments from Brand Compass) so the synthetic numbers are proportionate, not arbitrary.
 """
 from __future__ import annotations
 

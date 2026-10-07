@@ -12,9 +12,9 @@ import "../iq.css";
 import "./engagement.css";
 
 /** The Engagement Planner v2 (docs/redesign/engagement-plan-v2.md): the next N months for one
- *  pharma brand. Left: the agent conversation -- read Brand IQ, classify the brand's situation,
+ *  pharma brand. Left: the agent conversation -- read Brand Compass, classify the brand's situation,
  *  diagnose where patients are lost, root causes and strategic options, you choose, it drafts,
- *  then feasibility + red team. Right: the diagnosis and the plan. Brand IQ is the only input. */
+ *  then feasibility + red team. Right: the diagnosis and the plan. Brand Compass is the only input. */
 
 type Any = Record<string, unknown>;
 const txt = (v: unknown) => (v === null || v === undefined ? "" : String(v));
@@ -95,10 +95,10 @@ export function EngagementPlanner({ brands, activeBrand, planId }: { brands: Bra
     const p = await run("Creating the plan…", () => createEngagementPlan({ brand, months }));
     if (!p) return;
     window.location.hash = `#/v3/agent/engagement-planner/${p.id}`;
-    setBusy("Reading your documents and Brand IQ…");
+    setBusy("Reading your documents and Brand Compass…");
     try { await uploadAgentIntake("engagement-planner", p.id, files, notes); }
     catch (e) { setError(errText(e)); setBusy(null); return; }
-    await run("Reading your documents and Brand IQ…", () => ackEngagement(p.id));
+    await run("Reading your documents and Brand Compass…", () => ackEngagement(p.id));
   };
 
   /** Step 2, after your OK. */
@@ -205,7 +205,7 @@ export function EngagementPlanner({ brands, activeBrand, planId }: { brands: Bra
               <ReadyIntake brand={brand} startLabel="Start planning" busy={!!busy} busyLabel={busy} onStart={start}
                 files={files} setFiles={setFiles} notes={notes} setNotes={setNotes}
                 addLabel="Add objectives or other details" notesLabel="What should this plan achieve?"
-                placeholder="What should this plan achieve? Leave empty to plan from Brand IQ.">
+                placeholder="What should this plan achieve? Leave empty to plan from Brand Compass.">
                 <label className="v3-ep-field"><span>Period</span>
                   <select value={months} disabled={!!busy} onChange={(e) => setMonths(Number(e.target.value))}>
                     {((fw?.period as Any | undefined)?.options_months as number[] | undefined ?? [3, 6, 9, 12]).map((m) => <option key={m} value={m}>{m} months{m === 6 ? " (default)" : ""}</option>)}
@@ -220,7 +220,7 @@ export function EngagementPlanner({ brands, activeBrand, planId }: { brands: Bra
 
                 {stepIdx === 0 && (
                   ack ? <AckCard ack={ack} onConfirm={confirm} onEdit={() => { window.location.hash = "#/v3/agent/engagement-planner"; }} />
-                    : !busy && <button type="button" className="v3-cc-btn primary wide" onClick={() => run("Reading your documents and Brand IQ…", () => ackEngagement(plan.id))}>Read Brand IQ</button>
+                    : !busy && <button type="button" className="v3-cc-btn primary wide" onClick={() => run("Reading your documents and Brand Compass…", () => ackEngagement(plan.id))}>Read Brand Compass</button>
                 )}
 
                 {stepIdx === 1 && (

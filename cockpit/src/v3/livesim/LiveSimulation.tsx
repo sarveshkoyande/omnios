@@ -26,7 +26,7 @@ const DAY = 86400000;
 const fmt = (d: string | null) => (d ? new Date(d).toLocaleDateString(undefined, { month: "short", year: "2-digit" }) : "—");
 const when = (d: string | null) => (d ? new Date(d).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" }) : "never");
 const PHASE_LABEL: Record<string, string> = { running: "Running", planned: "Planned", ended: "Ended", unscheduled: "Unscheduled", closed: "Closed" };
-const KIND_LABEL: Record<string, string> = { drift: "Brand content changed", no_journey: "Missing journey", brand_iq: "Brand IQ", plan_stale: "Plan out of date", signals: "Signal Scout", demo: "Demo" };
+const KIND_LABEL: Record<string, string> = { drift: "Brand content changed", no_journey: "Missing journey", brand_iq: "Brand Compass", plan_stale: "Plan out of date", signals: "Signal Scout", demo: "Demo" };
 
 export function LiveSimulation({ brands, activeBrand }: { brands: BrandSummary[]; activeBrand: string | null }) {
   const [brand, setBrand] = useState<string | null>(activeBrand);

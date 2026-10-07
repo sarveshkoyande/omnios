@@ -6,9 +6,9 @@ import "./kit.css";
 
 /** Shared pieces of the Brand Kit tabs (docs/redesign/brand-kit-reorg.md). Every tab is a context
  *  page: the brief and what it means for campaigns first, then the evidence, then one "Still needed"
- *  box. Sections are declared once in SECTIONS (title, icon, the kit keys they read, the Brand IQ skill
+ *  box. Sections are declared once in SECTIONS (title, icon, the kit keys they read, the Brand Compass skill
  *  that can draft them), which drives the section index, the source badges, "Still needed" and the
- *  completeness strip on the Brand IQ tab. */
+ *  completeness strip on the Brand Compass tab. */
 
 export type Any = Record<string, unknown>;
 export type IconName = Parameters<typeof Icon>[0]["name"];
@@ -32,10 +32,11 @@ export function emptyDeep(v: unknown): boolean {
 /* ------------------------------------------------------------------ tabs and sections */
 export type TabId = "brandiq" | "market" | "audiences" | "message" | "channels" | "product" | "compliance";
 export const TABS: { id: TabId; route: string; title: string; question: string; icon: IconName }[] = [
-  { id: "brandiq", route: "iq/kits", title: "Brand IQ", question: "The brand on a page", icon: "document" },
+  { id: "brandiq", route: "iq/kits", title: "Brand Compass", question: "The brand on a page", icon: "document" },
   { id: "market", route: "iq/market", title: "Market", question: "Where are we winning and losing, and where is the headroom?", icon: "radar" },
   { id: "audiences", route: "iq/personas", title: "Audiences", question: "Who are we talking to, and what moves them?", icon: "persona" },
-  { id: "message", route: "iq/message", title: "Message & Voice", question: "What do we say, and how?", icon: "message" },
+  // REMOVED 2026-10-07 (kept for reference): Message & Voice tab.
+  // { id: "message", route: "iq/message", title: "Message & Voice", question: "What do we say, and how?", icon: "message" },
   { id: "channels", route: "iq/channels", title: "Channels", question: "Where and when do we reach them?", icon: "mail" },
   { id: "product", route: "iq/product", title: "Product & Proof", question: "What can we claim, and what backs it?", icon: "flask" },
   { id: "compliance", route: "iq/guardrails", title: "Compliance", question: "What must every campaign respect?", icon: "shield" },
@@ -45,8 +46,9 @@ type Spec = string[] | "sop" | "synthetic" | "framework";
 type SectionDef = { tab: TabId; title: string; icon: IconName; keys: Spec; skill?: string };
 export const SECTIONS: Record<string, SectionDef> = {
   unmet: { tab: "brandiq", title: "Unmet need", icon: "alertTriangle", keys: ["unmet_need"], skill: "voice" },
-  objectives: { tab: "brandiq", title: "Key objectives", icon: "target", keys: ["key_objectives", "key_objective"] },
-  plan: { tab: "brandiq", title: "Current plan", icon: "map", keys: ["strategic_imperatives"] },
+  // REMOVED 2026-10-07 (kept for reference): Key objectives and Current plan on the Brand Compass tab.
+  // objectives: { tab: "brandiq", title: "Key objectives", icon: "target", keys: ["key_objectives", "key_objective"] },
+  // plan: { tab: "brandiq", title: "Current plan", icon: "map", keys: ["strategic_imperatives"] },
 
   situation: { tab: "market", title: "Brand situation", icon: "radar", keys: ["brand_situation"] },
   flow: { tab: "market", title: "Where patients drop off", icon: "route", keys: ["patient_flow"] },
@@ -67,12 +69,13 @@ export const SECTIONS: Record<string, SectionDef> = {
   treaters: { tab: "audiences", title: "Where the treaters are", icon: "map", keys: ["audience_intel.trial_footprint.value"], skill: "audience_intel" },
   education: { tab: "audiences", title: "Patient education", icon: "document", keys: ["audience_intel.patient_resources.value"], skill: "audience_intel" },
 
-  positioning: { tab: "message", title: "Positioning", icon: "sparkles", keys: ["positioning_statement", "core_claim"], skill: "evidence" },
-  bigidea: { tab: "message", title: "Big Idea", icon: "sparkles", keys: ["tagline"], skill: "big_idea" },
-  matrix: { tab: "message", title: "Message matrix", icon: "layers", keys: ["message_hierarchy"], skill: "evidence" },
-  bypersona: { tab: "message", title: "Messages by audience", icon: "message", keys: ["messages_by_persona"], skill: "personas" },
-  voice: { tab: "message", title: "Voice & tone", icon: "mic", keys: ["voice", "tone_pillars"], skill: "voice" },
-  words: { tab: "message", title: "Words to use and avoid", icon: "message", keys: ["voice.vocabulary", "voice.avoid", "voice_do", "voice_dont"], skill: "voice" },
+  // REMOVED 2026-10-07 (kept for reference): Message & Voice sections.
+  // positioning: { tab: "message", title: "Positioning", icon: "sparkles", keys: ["positioning_statement", "core_claim"], skill: "evidence" },
+  // bigidea: { tab: "message", title: "Big Idea", icon: "sparkles", keys: ["tagline"], skill: "big_idea" },
+  // matrix: { tab: "message", title: "Message matrix", icon: "layers", keys: ["message_hierarchy"], skill: "evidence" },
+  // bypersona: { tab: "message", title: "Messages by audience", icon: "message", keys: ["messages_by_persona"], skill: "personas" },
+  // voice: { tab: "message", title: "Voice & tone", icon: "mic", keys: ["voice", "tone_pillars"], skill: "voice" },
+  // words: { tab: "message", title: "Words to use and avoid", icon: "message", keys: ["voice.vocabulary", "voice.avoid", "voice_do", "voice_dont"], skill: "voice" },
 
   chstrategy: { tab: "channels", title: "Channel strategy", icon: "route", keys: ["channels.brief"], skill: "channels" },
   chladder: { tab: "channels", title: "Channel jobs by adoption stage", icon: "trendUp", keys: "framework" },
@@ -142,7 +145,7 @@ export const KitCtx = createContext<Any | null>(null);
 const StateCtx = createContext<KitState | null>(null);
 export const useKitState = () => useContext(StateCtx);
 
-/** Runs one Brand IQ skill and swaps in the updated kit. */
+/** Runs one Brand Compass skill and swaps in the updated kit. */
 function useSkill() {
   const p = useKitState();
   const [busy, setBusy] = useState<string | null>(null);
@@ -347,7 +350,8 @@ function ProposalBar({ p }: { p: KitState }) {
 }
 
 /** The brief and what it means for campaigns (the `context` skill, kit.context.tabs[tab]). */
-function ContextBrief({ tab }: { tab: TabId }) {
+/** REMOVED 2026-10-07 (kept for reference): not shown anywhere now; the `context` skill still feeds the on-a-page tiles. */
+export function ContextBrief({ tab }: { tab: TabId }) {
   const kit = useContext(KitCtx);
   const sk = useSkill();
   const ctx = (kit?.context ?? {}) as Any;
@@ -416,7 +420,7 @@ function StillNeeded({ tab }: { tab: TabId }) {
             <span>{d.title}</span>
             {d.skill
               ? <button type="button" className="v3-iq-more" disabled={Boolean(sk.busy)} onClick={() => sk.run(d.skill!)}>{sk.busy === d.skill ? "Drafting…" : "Draft it"}</button>
-              : <a className="v3-iq-more" href="#/v3/agent/brand-iq">From the brand plan · Brand IQ Agent</a>}
+              : <a className="v3-iq-more" href="#/v3/agent/brand-iq">From the brand plan · Brand Compass Agent</a>}
           </li>
         ))}
       </ul>
@@ -445,7 +449,8 @@ export function Shell({ tab, p, children, extraHead }: { tab: TabId; p: KitState
             <KitCtx.Provider value={p.kit}>
               {tab === "brandiq" && <SourceLegend />}
               {tab === "brandiq" && <ProposalBar p={p} />}
-              {tab === "brandiq" && <ContextBrief tab={tab} />}
+              {/* REMOVED 2026-10-07 (kept for reference): the brief at the top of the Brand Compass tab.
+              {tab === "brandiq" && <ContextBrief tab={tab} />} */}
               <SectionIndex tab={tab} />
               {children(p.kit)}
               <StillNeeded tab={tab} />

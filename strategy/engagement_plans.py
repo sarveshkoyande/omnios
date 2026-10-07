@@ -6,8 +6,8 @@ A new store (`engagement_plans.db`), deliberately separate from the existing eng
 records in strategy/hierarchy.py, which stay as they are (decision 3). Every save is a new
 version, like v3 artifacts, so history, compare and restore come for free.
 
-Brand IQ is the single input (decision: the brand plan reaches the engagement plan only through
-Brand IQ's plan layer). Each plan records which Brand IQ plan it was built on, so it can be
+Brand Compass is the single input (decision: the brand plan reaches the engagement plan only through
+Brand Compass's plan layer). Each plan records which Brand Compass plan it was built on, so it can be
 flagged stale when the brand's active plan changes.
 """
 from __future__ import annotations
@@ -49,7 +49,7 @@ EMPTY_BODY = {
     "measurement": {"kpi_tree": [], "review_cadence": None},
     "risks": [],           # {risk, likelihood, impact, owner, mitigation}
     "assumptions": [],     # {text, status: proposed|accepted|changed, note}
-    "sources": [],         # {label, page, detail} -- which Brand IQ pages fed the draft
+    "sources": [],         # {label, page, detail} -- which Brand Compass pages fed the draft
 }
 
 _DB = None

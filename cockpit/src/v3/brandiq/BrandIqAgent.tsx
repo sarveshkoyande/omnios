@@ -11,7 +11,7 @@ import "../campaignplanner/campaignPlanner.css";
 import "../iq.css";
 import "./brandiq.css";
 
-/** The Brand IQ Agent. Four agent steps (strategy/kit_proposer.STEPS) over thirteen skills:
+/** The Brand Compass Agent. Four agent steps (strategy/kit_proposer.STEPS) over thirteen skills:
  *  1. you drop the brand plan and/or type (or nothing); the agent reads it and acknowledges what's
  *     available and what isn't (LLM, no fixed rules) and waits for your OK;
  *  2. it saves the current kit as a restorable version and rebuilds the kit from scratch, step by step;
@@ -110,12 +110,12 @@ export function BrandIqAgent({ brands, activeBrand }: { brands: BrandSummary[]; 
   ];
   const stepIdx = phase === "intake" || phase === "reading" || phase === "ack" ? 0 : currentStep;
 
-  if (!brand) return <p className="v3-empty">Add a brand first: the Brand IQ Agent builds one brand's kit.</p>;
+  if (!brand) return <p className="v3-empty">Add a brand first: the Brand Compass Agent builds one brand's kit.</p>;
 
   return (
     <div className="v3-ws v3-cc v3-biq">
       <div className="v3-ws-top">
-        <span className="v3-ep-title">Brand IQ — {brand}</span>
+        <span className="v3-ep-title">Brand Compass — {brand}</span>
         {savedVersion && <span className="v3-ws-save">Previous kit saved ({savedVersion})</span>}
         <span className="v3-ws-top-actions"><ReasoningButton live={running} onClick={() => setShowReasoning((v) => !v)} /></span>
       </div>
@@ -125,12 +125,12 @@ export function BrandIqAgent({ brands, activeBrand }: { brands: BrandSummary[]; 
             <div className="v3-ws-head">
               <span className="v3-app-icon lg"><Icon name="sparkles" size={20} /></span>
               <div className="v3-ws-head-text">
-                <h1>Brand IQ Agent</h1>
+                <h1>Brand Compass Agent</h1>
                 <p>Builds {brand}'s brand kit from the brand plan and public sources. Every other agent reads what it builds.</p>
               </div>
             </div>
 
-            <ol className="v3-cc-stepper" aria-label="Brand IQ progress">
+            <ol className="v3-cc-stepper" aria-label="Brand Compass progress">
               {steps.map((s, i) => (
                 <li key={s.id} className={i < stepIdx || phase === "done" ? "done" : i === stepIdx ? "active" : ""}>
                   <span>{i < stepIdx || phase === "done" ? <Icon name="check" size={9} /> : i + 1}</span>{s.name}

@@ -3,7 +3,7 @@ import { getBrandReadiness, type BrandReadiness } from "../../api";
 import { Icon } from "../../components/Icon";
 import "./agentkit.css";
 
-/** Shared pieces for step-by-step agents (Brand IQ Agent, Signal Scout): the acknowledgement card the
+/** Shared pieces for step-by-step agents (Brand Compass Agent, Signal Scout): the acknowledgement card the
  *  agent shows before it builds, the progress list (only finished steps + the current one), and the
  *  Live reasoning slide-in panel (same look as the Campaign Agent's). */
 
@@ -174,8 +174,8 @@ export function GlassDrop({ files, setFiles, notes, setNotes, multiple = true, d
 
 const READY_SHORT: Record<string, string> = { brand_plan: "Plan", kit: "Kit", audiences: "Audiences", patient_flow: "Patient flow", compliance: "Compliance", client_data: "Client data" };
 
-/** "Ready from Brand IQ" in one line: a status pill and a chip per source. Details are on hover; a missing
- *  source is a link to fix it. The brand plan is uploaded once, in the Brand IQ Agent. */
+/** "Ready from Brand Compass" in one line: a status pill and a chip per source. Details are on hover; a missing
+ *  source is a link to fix it. The brand plan is uploaded once, in the Brand Compass Agent. */
 export function ReadyFromBrandIQ({ brand }: { brand: string; compact?: boolean }) {
   const [r, setR] = useState<BrandReadiness | null>(null);
   const [failed, setFailed] = useState(false);
@@ -186,8 +186,8 @@ export function ReadyFromBrandIQ({ brand }: { brand: string; compact?: boolean }
   if (failed) return null;
   return (
     <div className={`v3-ready ${r && !r.has_brand_plan ? "warn" : ""}`}>
-      <span className="v3-ready-pill" title={r && !r.has_brand_plan ? "No brand plan in Brand IQ: drafts use the kit and public sources" : undefined}>
-        {r ? (r.has_brand_plan ? <><Icon name="check" size={11} /> Ready from Brand IQ</> : "Brand IQ · no plan yet") : "Reading Brand IQ…"}
+      <span className="v3-ready-pill" title={r && !r.has_brand_plan ? "No brand plan in Brand Compass: drafts use the kit and public sources" : undefined}>
+        {r ? (r.has_brand_plan ? <><Icon name="check" size={11} /> Ready from Brand Compass</> : "Brand Compass · no plan yet") : "Reading Brand Compass…"}
       </span>
       {r?.items.map((i) => {
         const chip = <><i className={`v3-ready-dot ${i.status}`} />{READY_SHORT[i.id] ?? i.label}</>;
@@ -199,7 +199,7 @@ export function ReadyFromBrandIQ({ brand }: { brand: string; compact?: boolean }
   );
 }
 
-/** Option C: the command bar every agent opens with. One box: what you want (optional), the brand's Brand IQ
+/** Option C: the command bar every agent opens with. One box: what you want (optional), the brand's Brand Compass
  *  as a chip (gaps on click), a paperclip for documents, and go. Leave it empty and press go. */
 export function CommandBar({ brand, value, setValue, files, setFiles, onGo, busy, busyLabel, placeholder,
   multiple = true, attachLabel = "Attach documents", goLabel = "Start", disabled, hideBrandIQ, children }: {
@@ -242,8 +242,8 @@ export function CommandBar({ brand, value, setValue, files, setFiles, onGo, busy
         <div className="v3-cmd-bar">
           {brand && !hideBrandIQ && (
             <button type="button" className={`v3-cmd-chip ${r && !r.has_brand_plan ? "warn" : ""}`} onClick={() => setShowGaps((v) => !v)}
-              title={gaps.length ? gaps.map((g) => `${g.label}: ${g.detail}`).join("\n") : "Everything Brand IQ needs is loaded"}>
-              {r ? <><Icon name="check" size={11} /> {brand} Brand IQ{gaps.length ? <em> · {gaps.length} gap{gaps.length > 1 ? "s" : ""}</em> : null}</> : `${brand} Brand IQ…`}
+              title={gaps.length ? gaps.map((g) => `${g.label}: ${g.detail}`).join("\n") : "Everything Brand Compass needs is loaded"}>
+              {r ? <><Icon name="check" size={11} /> {brand} Brand Compass{gaps.length ? <em> · {gaps.length} gap{gaps.length > 1 ? "s" : ""}</em> : null}</> : `${brand} Brand Compass…`}
             </button>
           )}
           <button type="button" className="v3-cmd-icon" aria-label={attachLabel} title={attachLabel} disabled={busy} onClick={() => input.current?.click()}>
@@ -258,7 +258,7 @@ export function CommandBar({ brand, value, setValue, files, setFiles, onGo, busy
       </div>
       {showGaps && gaps.length > 0 && (
         <div className="v3-cmd-gaps">
-          {gaps.map((g) => <a key={g.id} href={g.fix ?? "#/v3/agent/brand-iq"}><i className={`v3-ready-dot ${g.status}`} /> {g.label} — fix in Brand IQ</a>)}
+          {gaps.map((g) => <a key={g.id} href={g.fix ?? "#/v3/agent/brand-iq"}><i className={`v3-ready-dot ${g.status}`} /> {g.label} — fix in Brand Compass</a>)}
         </div>
       )}
     </div>

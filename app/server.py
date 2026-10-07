@@ -1385,7 +1385,7 @@ def api_brand_kit_big_idea(brand: str):
 
 @app.get("/api/brand-iq/skills")
 def api_brand_iq_skills():
-    """The Brand IQ Agent's steps, each a separate skill (strategy/kit_proposer.SKILLS)."""
+    """The Brand Compass Agent's steps, each a separate skill (strategy/kit_proposer.SKILLS)."""
     from strategy import kit_proposer
     return {"skills": kit_proposer.SKILLS}
 
@@ -1496,8 +1496,8 @@ def api_signal_scout_acknowledge(brand: str, body: SignalScoutStart):
 
 @app.get("/api/brand-kits/{brand}/readiness")
 def api_brand_readiness(brand: str):
-    """What Brand IQ already holds for the brand (brand plan, kit, audiences, patient flow, compliance,
-    client data), so agents open with "Ready from Brand IQ" instead of asking for the plan again."""
+    """What Brand Compass already holds for the brand (brand plan, kit, audiences, patient flow, compliance,
+    client data), so agents open with "Ready from Brand Compass" instead of asking for the plan again."""
     from strategy import brand_readiness
     try:
         return brand_readiness.readiness(brand)
@@ -1507,7 +1507,7 @@ def api_brand_readiness(brand: str):
 
 @app.post("/api/brand-kits/{brand}/brand-plan")
 async def api_brand_kit_upload_plan(brand: str, files: list[UploadFile] | None = File(None), notes: str = Form("")):
-    """Brand IQ Agent intake: store the brand plan and other documents' text (PDF/DOCX/PPTX/TXT/MD) and
+    """Brand Compass Agent intake: store the brand plan and other documents' text (PDF/DOCX/PPTX/TXT/MD) and
     the user's notes for the brand_plan skill. Kept local under DATA_DIR."""
     from strategy import agent_intake, kit_proposer
     if not brand_kit.kit_for(brand):
@@ -1774,7 +1774,7 @@ def api_segmentation_acknowledge(body: SegAckRequest):
             "You are the Segmentation Agent: you turn an audience into a Salesforce Data Cloud segment of US HCPs.",
             context, intake,
             "Say which of the audience's criteria the data columns can select on and which they can't (name the "
-            "columns). If no audience was given, propose one from the brand's Brand IQ audiences. Put the final "
+            "columns). If no audience was given, propose one from the brand's Brand Compass audiences. Put the final "
             "audience, in one plain-English sentence the agent will build, in `audience`.",
             '"audience":""')
     except agent_intake.LLMUnavailable as e:
@@ -1829,7 +1829,7 @@ def api_framework(name: str):
 
 @app.post("/api/brand-kits/{brand}/skills/{skill}")
 def api_brand_kit_skill(brand: str, skill: str):
-    """Run one Brand IQ skill and return the updated kit."""
+    """Run one Brand Compass skill and return the updated kit."""
     from strategy import kit_proposer
     try:
         return {"brand": brand, "skill": skill, **kit_proposer.run_skill(brand, skill)}

@@ -1,11 +1,11 @@
 import { useContext } from "react";
 import { Icon } from "../../components/Icon";
 import {
-  KitCtx, Needs, Sec, Shell, SiTag, SI_TONE, TABS, Tbl, arr, at, filled, needs, sectionsOf, sourcesOf, txt, useKit,
+  KitCtx, Needs, Sec, Shell, TABS, /* SiTag, SI_TONE: used by the removed Current plan section */ Tbl, arr, at, filled, needs, sectionsOf, sourcesOf, txt, useKit,
   Digest, Lbl, type Any, type IconName, type PageProps,
 } from "./shared";
 
-/** Brand IQ: the brand on a page. Identity, the one-page brief (problem → watch-outs), unmet need,
+/** Brand Compass: the brand on a page. Identity, the one-page brief (problem → watch-outs), unmet need,
  *  objectives, the current plan, and how complete each tab of the kit is. */
 
 const ONE_PAGE: [string, string, IconName][] = [
@@ -57,12 +57,14 @@ export function BrandIqTab(props: PageProps) {
       const pp = (k.product_profile ?? {}) as Record<string, Any>;
       const mesh = (pp.mesh_condition?.value ?? null) as Any | null;
       const approval = (pp.us_approval?.value ?? null) as Any | null;
+      /* REMOVED 2026-10-07 (kept for reference): used by the Key objectives and Current plan sections below.
       const plan = k.plan_meta as Any | null;
       const sis = arr(k.strategic_imperatives);
       const fc = k.forecast as { sales_meur?: Record<string, number> } | undefined;
       const years = fc?.sales_meur ? Object.keys(fc.sales_meur) : [];
       const maxSale = Math.max(1, ...years.map((y) => fc!.sales_meur![y]));
       const objectives = arr(k.key_objectives);
+      */
       const page = onAPage(k);
       return (<>
         <section className="v3-iq-profile v3-iq-id2">
@@ -111,6 +113,7 @@ export function BrandIqTab(props: PageProps) {
           </>);
         }}</Sec>
 
+        {/* REMOVED 2026-10-07 (kept for reference): Key objectives and Current plan sections.
         <Sec id="objectives" foot={sourcesOf(objectives)}>{() => objectives.length ? (
           <ol className="v3-iq-objlist">
             {objectives.map((o, i) => (
@@ -148,6 +151,7 @@ export function BrandIqTab(props: PageProps) {
             )}
           </>)}</Sec>
         )}
+        */}
       </>);
     }}</Shell>
   );

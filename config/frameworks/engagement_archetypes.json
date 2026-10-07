@@ -2,7 +2,7 @@
   "id": "engagement_archetypes",
   "kind": "engagement",
   "name": "Pharma engagement-plan archetypes",
-  "note": "docs/redesign/engagement-plan-v2.md section 1. A brand is classified on lifecycle x therapy archetype x access; the archetype picks the patient-flow stages (the 'leaky bucket'), typical leaks, audiences and Brand IQ modules. Editable without code. No 'agents' key on purpose (agent_forms only matches the campaign spine).",
+  "note": "docs/redesign/engagement-plan-v2.md section 1. A brand is classified on lifecycle x therapy archetype x access; the archetype picks the patient-flow stages (the 'leaky bucket'), typical leaks, audiences and Brand Compass modules. Editable without code. No 'agents' key on purpose (agent_forms only matches the campaign spine).",
   "period": {"default_months": 6, "options_months": [3, 6, 9, 12]},
   "lifecycle": [
     {"id": "pre_launch", "label": "Pre-launch", "focus": "Shape the market: disease awareness, unmet need, KOL advocacy, access readiness"},

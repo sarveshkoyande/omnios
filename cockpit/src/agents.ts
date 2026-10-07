@@ -134,7 +134,7 @@ export const AGENTS: Record<Phase, LibraryAgent[]> = {
       builtOn: "strategy/flow_sop, strategy/campaign_ops.py, strategy/brand_journey.py",
     },
     {
-      id: "brand-iq", name: "Brand IQ Agent", icon: "sparkles", status: "available",
+      id: "brand-iq", name: "Brand Compass Agent", icon: "sparkles", status: "available",
       summary: "Builds a unified brand context layer for campaign planning and orchestration.",
       about: "Reads the brand plan (or, with no plan, public FDA, NIH, PubMed, ClinicalTrials.gov and CDC sources) and proposes the Brand Kit: positioning, evidence, voice, competition, the Big Idea with its reasoning, US geography and client data. Every other agent reads from what it builds.",
       worksFrom: [
@@ -147,9 +147,9 @@ export const AGENTS: Record<Phase, LibraryAgent[]> = {
     {
       id: "engagement-planner", name: "Engagement Planner (Old)", icon: "layers", status: "available",
       summary: "Plans the next 6 months for a brand: who to engage, what must change, which campaigns, when.",
-      about: "Reads Brand IQ (the brand plan, kit, personas, compliance and market intelligence), asks only what's genuinely missing, reviews its assumptions with you, then drafts objectives, the audience-by-objective shift map, the campaign portfolio, a timeline and a relative budget. Each campaign opens the Campaign Planner.",
+      about: "Reads Brand Compass (the brand plan, kit, personas, compliance and market intelligence), asks only what's genuinely missing, reviews its assumptions with you, then drafts objectives, the audience-by-objective shift map, the campaign portfolio, a timeline and a relative budget. Each campaign opens the Campaign Planner.",
       worksFrom: [
-        { label: "Brand IQ", detail: "The active brand plan, Brand Kit, Personas, Compliance Guardrails and Market Intelligence." },
+        { label: "Brand Compass", detail: "The active brand plan, Brand Kit, Personas, Compliance Guardrails and Market Intelligence." },
         { label: "Industry framework", detail: "config/frameworks/engagement_<industry>.json (pharma, investment banking)." },
       ],
       builtOn: "strategy/engagement_agent.py, strategy/engagement_plans.py",
@@ -195,9 +195,9 @@ export const AGENTS: Record<Phase, LibraryAgent[]> = {
     {
       id: "signal-agent", name: "Signal Scout", icon: "radar", status: "available",
       summary: "Detects meaningful market and competitive signals and translates them into campaign actions.",
-      about: "Reads the brand's Brand IQ, then runs nine skills in turn: market and treatment landscape, clinical evidence, competitive set, positioning, message territory, channel activity, signal synthesis, team actions and what changed since the last readout. US market only.",
+      about: "Reads the brand's Brand Compass, then runs nine skills in turn: market and treatment landscape, clinical evidence, competitive set, positioning, message territory, channel activity, signal synthesis, team actions and what changed since the last readout. US market only.",
       worksFrom: [
-        { label: "Brand IQ", detail: "Label, clinical data, competitors, audiences, US geography and brand-plan fields." },
+        { label: "Brand Compass", detail: "Label, clinical data, competitors, audiences, US geography and brand-plan fields." },
         { label: "Your focus", detail: "An optional question to steer the scan." },
         { label: "Previous readout", detail: "The last completed scan, so it can say what's new, persistent or resolved." },
       ],

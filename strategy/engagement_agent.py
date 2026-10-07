@@ -1,8 +1,8 @@
 """The Engagement Planner agent, v2 (docs/redesign/engagement-plan-v2.md section 2).
 
     1 Frame       engagement_plans.create()
-    2 Read        read()        Brand IQ only, structured reads, every item gets a citable id
-    3 Classify    classify()    lifecycle x archetype x access (from Brand IQ, else proposed)
+    2 Read        read()        Brand Compass only, structured reads, every item gets a citable id
+    3 Classify    classify()    lifecycle x archetype x access (from Brand Compass, else proposed)
     4 Diagnose    diagnose()    the patient-flow bucket: stages, conversions, top leaks, gaps,
                                 and questions that come FROM the diagnosis (<= 3)
     5 Options     options()     root causes of the top leaks + 2-3 strategic options with trade-offs
@@ -11,7 +11,7 @@
                                 portfolio, timeline, relative budget, KPI tree, risks
     8 Check       check()       feasibility (deterministic) + red team (model)
 
-Nothing here is brand-specific: everything comes from Brand IQ and the archetype framework.
+Nothing here is brand-specific: everything comes from Brand Compass and the archetype framework.
 Rules R1/R2: free text is read only by the model; no model -> LLMUnavailable (the API returns a
 plain 503) and nothing is guessed. Each step is saved as a plan version.
 """
@@ -51,7 +51,7 @@ def _active_plan(plan: dict, kit: dict) -> dict:
 # --------------------------------------------------------------------------- 2 Read
 
 def read(plan_id: str) -> dict:
-    """Gather Brand IQ into a cited grounding list. Works for any brand: sections a kit doesn't
+    """Gather Brand Compass into a cited grounding list. Works for any brand: sections a kit doesn't
     have are simply absent (and listed as gaps), never filled in."""
     plan = ep.get(plan_id)
     if not plan:
@@ -146,11 +146,11 @@ def read(plan_id: str) -> dict:
     body = plan["body"]
     body["sources"] = g
     body["agent"] = {"step": "read", "gaps": gaps, "brand_iq_plan": bp.get("name") if bp else None}
-    return ep.save(plan_id, body, f"Read Brand IQ ({len(g)} items)")
+    return ep.save(plan_id, body, f"Read Brand Compass ({len(g)} items)")
 
 
 def acknowledge(plan_id: str) -> dict:
-    """Step 1: read Brand IQ (plus the person's documents and notes), then say plainly what the plan can
+    """Step 1: read Brand Compass (plus the person's documents and notes), then say plainly what the plan can
     rely on and what it can't, before any diagnosis. Saved in body.agent.ack."""
     import agent_intake
     plan = read(plan_id)
@@ -164,7 +164,7 @@ def acknowledge(plan_id: str) -> dict:
     ack = agent_intake.acknowledge(
         "You are the Engagement Planner for a US pharma brand, about to plan the next months.", context,
         agent_intake.load("engagement-planner", plan_id),
-        "Say which Brand IQ sections you will build on (patient flow, personas, brand plan, client data, US "
+        "Say which Brand Compass sections you will build on (patient flow, personas, brand plan, client data, US "
         "geography, compliance) and which gaps will weaken the diagnosis.")
     body["agent"] = {**body["agent"], "ack": ack}
     return ep.save(plan_id, body, "Acknowledged the input")
@@ -187,14 +187,14 @@ def _role(plan: dict) -> str:
             "marked SYNTHETIC is a realistic stand-in: use it, and say so where it drives a choice. "
             "You reason like a brand team: find where patients are lost, "
             "why, which audience's belief or behaviour causes it, and what would move them. Use ONLY the grounding "
-            "(Brand IQ) and the user's answers; never invent facts, figures or claims. If the brand plan and public data disagree, use the brand plan and say so; AI drafts rank last. Cite grounding ids. "
+            "(Brand Compass) and the user's answers; never invent facts, figures or claims. If the brand plan and public data disagree, use the brand plan and say so; AI drafts rank last. Cite grounding ids. "
             "ALWAYS reply with a single JSON object matching the requested shape -- no prose, no markdown.")
 
 
 # --------------------------------------------------------------------------- 3 Classify
 
 def classify(plan_id: str, override: dict | None = None) -> dict:
-    """Use the brand's situation from Brand IQ (or propose one); the user may override."""
+    """Use the brand's situation from Brand Compass (or propose one); the user may override."""
     plan = ep.get(plan_id)
     if not plan["body"].get("sources"):
         plan = read(plan_id)

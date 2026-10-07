@@ -335,7 +335,7 @@ export function SegmentationPlanner({ handoff, brands, activeBrand, isFavorite, 
                 <section className="v3-ak-intake v3-seg-welcome">
                   <CommandBar brand={brand} value={audienceText} setValue={setAudienceText} files={files} setFiles={setFiles}
                     onGo={readIntake} busy={reading} busyLabel="Reading…" goLabel="Build segment"
-                    placeholder="Who should be in the segment? Leave empty and the agent proposes one from Brand IQ." />
+                    placeholder="Who should be in the segment? Leave empty and the agent proposes one from Brand Compass." />
                   <div className="v3-cmd-examples">
                     {EXAMPLES.map((e) => <button key={e} type="button" disabled={reading} onClick={() => setAudienceText(e)}>{e}</button>)}
                   </div>

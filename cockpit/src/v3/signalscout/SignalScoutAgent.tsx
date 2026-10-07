@@ -12,7 +12,7 @@ import "./signalscout.css";
 
 /** Signal Scout agent (rebuilt from the Signal Scout pilot UI): what changed in the market, and what
  *  should the brand team do about it. Four agent steps (strategy/signal_scout.STEPS) over nine skills:
- *  you give a focus (or none), the agent acknowledges what Brand IQ gives it and waits for your OK, then
+ *  you give a focus (or none), the agent acknowledges what Brand Compass gives it and waits for your OK, then
  *  a fresh readout is built step by step. The pilot's three views are the main canvas; Live reasoning
  *  is a slide-in panel. */
 

@@ -2,7 +2,7 @@
 
 Rebuilt as an agent from the Signal Scout pilot UI (three views: Synthesis & action, Market and
 treatment landscape, Competitive landscape, plus signal history). Each step is a separate skill run
-one at a time from the agent workspace, each grounded in the brand's Brand IQ kit (label, clinical
+one at a time from the agent workspace, each grounded in the brand's Brand Compass kit (label, clinical
 data, competitors, audience intel, US geography, brand plan fields) and in the earlier steps' output.
 
 US only, pharma only. Rules: the model uses ONLY the evidence given and its well-established public
@@ -58,7 +58,7 @@ STEPS = [
 _SYS = ("You are Signal Scout, a US pharmaceutical competitive and market intelligence analyst working for the "
         "brand team. Scope: the United States only. Use the evidence provided first; you may add well-established "
         "public knowledge (approved products, mechanisms, routes, published pivotal trials) but mark each item's "
-        "`basis` as 'Brand IQ' or 'Public knowledge'. If the brand plan and public data disagree, the brand plan wins. Never invent trial names, figures or claims; when unsure, leave "
+        "`basis` as 'Brand Compass' or 'Public knowledge'. If the brand plan and public data disagree, the brand plan wins. Never invent trial names, figures or claims; when unsure, leave "
         "a value out and say so. Your JSON object MUST have a top-level `reasoning` array: 3-6 short sentences on what "
         "you used, what you concluded and why. Reply with a single JSON object only.")
 
@@ -67,7 +67,7 @@ _SHAPES = {
                '(value + label, e.g. share of patients not at goal), one market insight, and 3-5 evidence records.\n'
                'Shape: {"indicators":[{"value":"","label":"","source":"","basis":""}],"insight":"",'
                '"evidence_records":[{"type":"CLINICAL|MARKET|REG|GUIDELINE","title":"","detail":"","status":"","source":""}],"reasoning":[]}'),
-    "clinical": ('List the brand\'s key clinical evidence (from the label / clinical data in Brand IQ): 1-3 studies with '
+    "clinical": ('List the brand\'s key clinical evidence (from the label / clinical data in Brand Compass): 1-3 studies with '
                  'their headline metrics exactly as published.\n'
                  'Shape: {"studies":[{"name":"","phase":"","publication":"","relevance":"High|Medium|Low",'
                  '"metrics":[{"value":"","label":""}],"source":""}],"reasoning":[]}'),
@@ -198,7 +198,7 @@ def toggle_worklist(brand: str, index: int) -> dict:
 
 
 def acknowledge(brand: str, focus: str) -> dict:
-    """Step 1: read the focus (or none) and Brand IQ's coverage; say what the scan can and can't rely on."""
+    """Step 1: read the focus (or none) and Brand Compass's coverage; say what the scan can and can't rely on."""
     kit = brand_kit.kit_for(brand)
     if not kit:
         raise KeyError(brand)
@@ -212,7 +212,7 @@ def acknowledge(brand: str, focus: str) -> dict:
     return agent_intake.acknowledge(
         "You are Signal Scout about to scan the US market for a pharma brand.", context,
         agent_intake.load("signal-agent", brand),
-        "Say what the scan should answer (no focus -> an open scan for the most material signals), what Brand IQ "
+        "Say what the scan should answer (no focus -> an open scan for the most material signals), what Brand Compass "
         "gives you, what is missing and what that means (e.g. no clinical data -> evidence from public knowledge, "
         "marked so), and whether there is a previous readout to compare with.")
 

@@ -13,7 +13,7 @@ export const TAB_PAGE: Record<TabId, (p: PageProps) => React.ReactNode> = {
   channels: ChannelsTab, product: ProductTab, compliance: ComplianceTab,
 };
 
-/** All seven Brand Kit tabs in one place (the Brand IQ Agent's canvas). `rev` reloads the open tab
+/** All seven Brand Kit tabs in one place (the Brand Compass Agent's canvas). `rev` reloads the open tab
  *  after each agent step without losing which tab is open. */
 export function KitTabs({ rev = 0, ...props }: PageProps & { rev?: number }) {
   const [tab, setTab] = useState<TabId>("brandiq");

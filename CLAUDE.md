@@ -170,8 +170,12 @@ a paperclip for documents, and go. A missing brand plan warns but never blocks.
 The brand plan wins when sources disagree: AI drafts never overwrite brand-plan fields, and the agents' prompts
 say to prefer the brand plan and say so.
 
-**Brand Kit tabs** (`cockpit/src/v3/kit/`, docs/redesign/brand-kit-reorg.md): seven context pages: Brand IQ (`iq/kits`, the
-brand on a page), Market, Audiences (`iq/personas`), Message & Voice, Channels, Product & Proof, Compliance (`iq/guardrails`);
+**Naming**: the product name "Brand IQ" was renamed **Brand Compass** in every user-facing string (2026-10-07; the
+client owns a product called Brand IQ). Code ids, routes and file names (`brand-iq`, `iq/kits`, `BrandIqTab`, `kit_proposer`)
+are unchanged. "Removed" UI is commented out with a dated `REMOVED ... (kept for reference)` note, not deleted.
+
+**Brand Kit tabs** (`cockpit/src/v3/kit/`, docs/redesign/brand-kit-reorg.md): context pages: Brand Compass (`iq/kits`, the
+brand on a page), Market, Audiences (`iq/personas`), Channels, Product & Proof, Compliance (`iq/guardrails`);
 `iq/intel` falls back to Market. The Brand IQ tab opens with the brief + "what it means for campaigns" (kit.context,
 `context` skill; the other tabs have no brief). Each tab lists sections declared once in `SECTIONS` (`kit/shared.tsx`: title, icon, kit keys, drafting skill) which drive the section index,
 source badges, "Still needed" and the completeness strip. Long text reads as bullets from kit.bullets (`digest` skill; the

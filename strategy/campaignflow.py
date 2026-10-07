@@ -4,7 +4,7 @@
 Six steps, each reading the APPROVED output of the step before:
   1 Campaign objective card   2 Target audience segmentation   3 Channel planning
   4 Journey design            5 Omnichannel planning           6 Campaign brief
-Every step is one model call grounded in Brand IQ (brand plan fields, kit, personas, compliance, client
+Every step is one model call grounded in Brand Compass (brand plan fields, kit, personas, compliance, client
 data -- SYNTHETIC until real feeds exist -- and the person's documents and notes), the framework's own
 rules for that step, and the approved earlier steps. A step's output is a draft until the person approves
 it; a step can be redone with feedback. Gaps become questions, never inventions (rule R2: no model ->
@@ -235,8 +235,8 @@ _SHAPES = {
 
 _ROLE = ("You are Engagement Planner 2, a senior US pharma omnichannel planner running the CampaignFlow 30-minute "
          "planning framework. It plans HCP engagement (prescribers and adjacent pathway roles), not patient "
-         "programmes. Follow the framework step and its rules exactly. Use ONLY the grounding (Brand IQ, "
-         "the person's documents and notes) and the APPROVED earlier steps; cite sources. If the brand plan and public data disagree, use the brand plan and say so; AI drafts in Brand IQ rank last. Never invent figures, "
+         "programmes. Follow the framework step and its rules exactly. Use ONLY the grounding (Brand Compass, "
+         "the person's documents and notes) and the APPROVED earlier steps; cite sources. If the brand plan and public data disagree, use the brand plan and say so; AI drafts in Brand Compass rank last. Never invent figures, "
          "dates, thresholds, consent coverage or content approval status: when something is missing, put it in the "
          "questions or gap register with an owner. Client data marked SYNTHETIC may be used for illustrative counts, "
          "and you must say so where it is used. Use the brand's own words. Reply with ONE JSON object matching the "

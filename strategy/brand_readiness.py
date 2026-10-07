@@ -1,5 +1,5 @@
-"""What Brand IQ already holds for a brand, so every agent can open with "Ready from Brand IQ" instead of
-asking for the brand plan again. The brand plan is uploaded once, in the Brand IQ Agent; the other agents
+"""What Brand Compass already holds for a brand, so every agent can open with "Ready from Brand Compass" instead of
+asking for the brand plan again. The brand plan is uploaded once, in the Brand Compass Agent; the other agents
 read it from here.
 
 Each item is ok / partial / missing / synthetic with a one-line detail and, when something is missing,
@@ -38,7 +38,7 @@ def readiness(brand: str) -> dict:
     view = {**kit, **(active or {})}
     items = []
 
-    # Brand plan: a structured plan in the kit, or one uploaded through the Brand IQ Agent.
+    # Brand plan: a structured plan in the kit, or one uploaded through the Brand Compass Agent.
     uploaded = None
     up = data_path("brand_plans", f"{key}.json")
     if up.exists():
@@ -56,7 +56,7 @@ def readiness(brand: str) -> dict:
                       "detail": f"{uploaded.get('filename') or 'Your notes'} · read into {len(from_plan)} kit sections"})
     else:
         items.append({"id": "brand_plan", "label": "Brand plan", "status": "missing",
-                      "detail": "No brand plan in Brand IQ yet: agents work from the kit and public sources, drafts marked to confirm",
+                      "detail": "No brand plan in Brand Compass yet: agents work from the kit and public sources, drafts marked to confirm",
                       "fix": _FIX})
 
     core = {"Positioning": view.get("positioning_statement"), "Core claim": view.get("core_claim"),
